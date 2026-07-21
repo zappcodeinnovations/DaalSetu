@@ -1,0 +1,534 @@
+import 'package:agro_broker/modules/Auth/register/controller/register_controller.dart';
+import 'package:flutter/material.dart';
+
+class AppColors {
+  static const Color background = Color(0xFF0F131F); 
+  static const Color cardSurface = Color(0xFF151A27); 
+  static const Color primaryBlue = Color(0xFF1661EF); 
+  static const Color textWhite = Colors.white;
+  static const Color textGrey = Color(0xFF8A94A6);
+  static const Color border = Color(0xFF242A38);
+  static const Color successGreen = Color(0xFF00C853);
+}
+
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
+
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final RegisterController _controller = RegisterController();
+
+  Future<void> _selectDate() async {
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime(2000),
+      firstDate: DateTime(1950),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: AppColors.primaryBlue,
+              onPrimary: Colors.white,
+              surface: AppColors.cardSurface,
+              onSurface: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedDate != null) {
+      setState(() {
+        _controller.dobController.text =
+            pickedDate.toIso8601String().split("T").first;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: AppColors.background,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          "Register New User",
+          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        // actions: [
+        //   Container(
+        //     margin: const EdgeInsets.only(right: 16, top: 12, bottom: 12),
+        //     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        //     decoration: BoxDecoration(
+        //       color: const Color(0xFF132238),
+        //       borderRadius: BorderRadius.circular(4),
+        //       border: Border.all(color: Colors.blue.withOpacity(0.3)),
+        //     ),
+        //     child: const Center(
+        //       child: Text(
+        //         "ADMIN",
+        //         style: TextStyle(color: AppColors.primaryBlue, fontSize: 10, fontWeight: FontWeight.bold),
+        //       ),
+        //     ),
+        //   )
+        // ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _controller.formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildLabel("USER TYPE"),
+              const SizedBox(height: 8),
+              _buildRoleSelector(),
+
+              const SizedBox(height: 25),
+              _buildSectionHeader(Icons.person, "PERSONAL DETAILS"),
+              const SizedBox(height: 20),
+
+              // First Name & Last Name Row
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildDarkTextField(
+                      controller: _controller.firstNameController,
+                      label: "First Name",
+                      hint: "First Name",
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: _buildDarkTextField(
+                      controller: _controller.lastNameController,
+                      label: "Last Name",
+                      hint: "Last Name",
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 15),
+
+              _buildDarkTextField(
+                controller: _controller.mobileController,
+                label: "Mobile Number",
+                hint: "Enter Your Mobile Number",
+                keyboard: TextInputType.phone,
+              ),
+              const SizedBox(height: 15),
+
+              _buildDarkTextField(
+                controller: _controller.emailController,
+                label: "Email Address",
+                hint: "Enter Your Email Address",
+                keyboard: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 15),
+
+              // Gender & DOB Row
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildDropdownField(
+                      label: "Gender",
+                      value: _controller.selectedGender,
+                      items: ["male", "female", "other"],
+                      onChanged: (val) => setState(() => _controller.selectedGender = val),
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: _buildReadOnlyField(
+                      controller: _controller.dobController,
+                      label: "Date of Birth",
+                      hint: "Select Date",
+                      icon: Icons.calendar_today_outlined,
+                      onTap: _selectDate,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 30),
+              _buildSectionHeader(Icons.business, "BUSINESS DETAILS"),
+              const SizedBox(height: 20),
+
+              _buildDarkTextField(
+                controller: _controller.panController,
+                label: "PAN Number",
+                hint: "ABCDE1234E",
+              ),
+              const SizedBox(height: 15),
+
+              _buildDarkTextField(
+                controller: _controller.gstController,
+                label: "GST Number",
+                hint: "22AAAAA0000A1Z5",
+              ),
+
+              const SizedBox(height: 30),
+              _buildSectionHeader(Icons.description, "VERIFICATION DOCUMENTS"),
+              const SizedBox(height: 20),
+
+              _buildDocumentCard(
+                title: "PAN Image",
+                icon: Icons.credit_card,
+                hasImage: _controller.panImagePath != null,
+                onTap: () async {
+                  await _controller.pickImage(true);
+                  setState(() {});
+                },
+              ),
+              const SizedBox(height: 15),
+              _buildDocumentCard(
+                title: "GST Image",
+                icon: Icons.receipt_long,
+                hasImage: _controller.gstImagePath != null,
+                onTap: () async {
+                  await _controller.pickImage(false);
+                  setState(() {});
+                },
+              ),
+
+              const SizedBox(height: 40),
+              _buildSubmitButton(),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- WIDGET BUILDERS ---
+
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        color: AppColors.textGrey,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 1.0,
+      ),
+    );
+  }
+
+Widget _buildRoleSelector() {
+  return Container(
+    height: 50,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: AppColors.primaryBlue.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: AppColors.primaryBlue),
+    ),
+    child: const Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.admin_panel_settings,
+          color: AppColors.primaryBlue,
+          size: 20,
+        ),
+        SizedBox(width: 8),
+        Text(
+          "ADMIN",
+          style: TextStyle(
+            color: AppColors.primaryBlue,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            letterSpacing: 1.2,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+
+  Widget _buildSectionHeader(IconData icon, String title) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: AppColors.primaryBlue, size: 20),
+            const SizedBox(width: 10),
+            Text(
+              title,
+              style: const TextStyle(
+                color: AppColors.textGrey,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        const Divider(color: AppColors.border, height: 1),
+      ],
+    );
+  }
+
+  Widget _buildDarkTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    TextInputType keyboard = TextInputType.text,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(color: AppColors.textGrey, fontSize: 13)),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboard,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: Colors.grey.shade700),
+            filled: true,
+            fillColor: AppColors.cardSurface,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.primaryBlue),
+            ),
+          ),
+          validator: (value) => value!.isEmpty ? "Required" : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReadOnlyField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required VoidCallback onTap,
+    IconData? icon,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(color: AppColors.textGrey, fontSize: 13)),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          readOnly: true,
+          onTap: onTap,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: Colors.grey.shade700),
+            filled: true,
+            fillColor: AppColors.cardSurface,
+            suffixIcon: icon != null ? Icon(icon, color: Colors.grey.shade600, size: 20) : null,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.primaryBlue),
+            ),
+          ),
+          validator: (value) => value!.isEmpty ? "Required" : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDropdownField({
+    required String label,
+    required String? value,
+    required List<String> items,
+    required Function(String?) onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(color: AppColors.textGrey, fontSize: 13)),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: value,
+          dropdownColor: AppColors.cardSurface,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.cardSurface,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.primaryBlue),
+            ),
+          ),
+          items: items.map((item) => DropdownMenuItem(
+            value: item,
+            child: Text(item[0].toUpperCase() + item.substring(1)),
+          )).toList(),
+          onChanged: onChanged,
+          icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey.shade600),
+          validator: (val) => val == null ? "Required" : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDocumentCard({
+    required String title,
+    required IconData icon,
+    required bool hasImage,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.cardSurface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF132238),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: AppColors.primaryBlue),
+            ),
+            const SizedBox(width: 15),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
+                  const SizedBox(height: 4),
+                  if (hasImage)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.successGreen.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        "UPLOADED",
+                        style: TextStyle(color: AppColors.successGreen, fontSize: 10, fontWeight: FontWeight.bold),
+                      ),
+                    )
+                  else
+                    const Text(
+                      "Tap to upload",
+                      style: TextStyle(color: AppColors.textGrey, fontSize: 12),
+                    ),
+                ],
+              ),
+            ),
+            Icon(
+              hasImage ? Icons.remove_red_eye : Icons.upload_file,
+              color: Colors.grey.shade500,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 55,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryBlue,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 4,
+          shadowColor: AppColors.primaryBlue.withOpacity(0.4),
+        ),
+        onPressed: _controller.isLoading
+            ? null
+            : () async {
+                setState(() => _controller.isLoading = true);
+                try {
+                  final user = await _controller.register();
+                  if (user != null) {
+                    if(mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Registration Successful")),
+                      );
+                      Navigator.pop(context);
+                    }
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(e.toString())),
+                  );
+                }
+                setState(() => _controller.isLoading = false);
+              },
+        child: _controller.isLoading
+            ? const CircularProgressIndicator(color: Colors.white)
+            : const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Confirm Registration",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  SizedBox(width: 8),
+                  Icon(Icons.check_circle, color: Colors.white, size: 20),
+                ],
+              ),
+      ),
+    );
+  }
+}
