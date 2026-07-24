@@ -13,6 +13,9 @@ import 'package:agro_broker/modules/onboarding/view/onboarding_screen.dart';
 import 'package:agro_broker/modules/Auth/register/view/register_page.dart';
 import 'package:agro_broker/modules/profile/view/profile_page.dart';
 import 'package:agro_broker/modules/splashscreen/view/splash_screen.dart';
+import 'package:agro_broker/modules/seller/dashboard/view/seller_dashboard_view.dart';
+import 'package:agro_broker/modules/seller/company/view/seller_company_view.dart';
+import 'package:agro_broker/modules/seller/categories/view/seller_category_view.dart';
 import 'package:get/get.dart';
 import 'app_routes.dart';
 
@@ -60,5 +63,10 @@ class AppPages {
     GetPage(name: AppRoutes.subcategory, page: () => SubCategoryScreen()),
     GetPage(name: AppRoutes.users, page: () => UserScreen()),
     GetPage(name: AppRoutes.users_details, page: () => UserDetailScreen()),
+
+    // SELLER PANEL
+    GetPage(name: AppRoutes.sellerDashboard, page: () => const SellerDashboardView()),
+    GetPage(name: AppRoutes.sellerCompany, page: () => const SellerCompanyView()),
+    GetPage(name: AppRoutes.sellerCategory, page: () => const SellerCategoryView()),
   ];
 }

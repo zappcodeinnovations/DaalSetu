@@ -1,3 +1,4 @@
+import 'package:iconly/iconly.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -6,7 +7,7 @@ class GlobalErrorHandler {
   static void showServerError() {
     Get.dialog(
       _buildErrorDialog(
-        icon: Icons.cloud_off_rounded,
+        icon: IconlyLight.danger,
         iconColor: Colors.red,
         title: "Server Not Responding",
         message:
@@ -20,7 +21,7 @@ class GlobalErrorHandler {
   static void showNoInternet() {
     Get.dialog(
       _buildErrorDialog(
-        icon: Icons.wifi_off_rounded,
+        icon: IconlyLight.danger,
         iconColor: Colors.orange,
         title: "No Internet Connection",
         message:

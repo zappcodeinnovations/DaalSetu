@@ -1,14 +1,16 @@
+import 'package:iconly/iconly.dart';
 import 'package:agro_broker/modules/Auth/register/controller/register_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class AppColors {
-  static const Color background = Color(0xFF0F131F); 
-  static const Color cardSurface = Color(0xFF151A27); 
-  static const Color primaryBlue = Color(0xFF1661EF); 
-  static const Color textWhite = Colors.white;
-  static const Color textGrey = Color(0xFF8A94A6);
-  static const Color border = Color(0xFF242A38);
-  static const Color successGreen = Color(0xFF00C853);
+  static Color get background => Get.theme.scaffoldBackgroundColor;
+  static Color get cardSurface => Get.theme.cardColor;
+  static Color get primaryBlue => Get.theme.primaryColor;
+  static Color get textWhite => Get.theme.textTheme.bodyLarge?.color ?? Colors.white;
+  static Color get textGrey => Get.theme.textTheme.bodyMedium?.color ?? Colors.grey;
+  static Color get border => Get.theme.dividerColor;
+  static Color get successGreen => Colors.green;
 }
 
 class RegisterScreen extends StatefulWidget {
@@ -30,7 +32,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
+            colorScheme: ColorScheme.dark(
               primary: AppColors.primaryBlue,
               onPrimary: Colors.white,
               surface: AppColors.cardSurface,
@@ -64,30 +66,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         elevation: 0,
         backgroundColor: AppColors.background,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(IconlyLight.arrow_left, color: AppColors.textWhite),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           "Register New User",
-          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(color: AppColors.textWhite, fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        // actions: [
-        //   Container(
-        //     margin: const EdgeInsets.only(right: 16, top: 12, bottom: 12),
-        //     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        //     decoration: BoxDecoration(
-        //       color: const Color(0xFF132238),
-        //       borderRadius: BorderRadius.circular(4),
-        //       border: Border.all(color: Colors.blue.withOpacity(0.3)),
-        //     ),
-        //     child: const Center(
-        //       child: Text(
-        //         "ADMIN",
-        //         style: TextStyle(color: AppColors.primaryBlue, fontSize: 10, fontWeight: FontWeight.bold),
-        //       ),
-        //     ),
-        //   )
-        // ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -101,7 +86,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               _buildRoleSelector(),
 
               const SizedBox(height: 25),
-              _buildSectionHeader(Icons.person, "PERSONAL DETAILS"),
+              _buildSectionHeader(IconlyLight.profile, "PERSONAL DETAILS"),
               const SizedBox(height: 20),
 
               // First Name & Last Name Row
@@ -159,7 +144,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _controller.dobController,
                       label: "Date of Birth",
                       hint: "Select Date",
-                      icon: Icons.calendar_today_outlined,
+                      icon: IconlyLight.calendar,
                       onTap: _selectDate,
                     ),
                   ),
@@ -167,7 +152,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
 
               const SizedBox(height: 30),
-              _buildSectionHeader(Icons.business, "BUSINESS DETAILS"),
+              _buildSectionHeader(IconlyLight.work, "BUSINESS DETAILS"),
               const SizedBox(height: 20),
 
               _buildDarkTextField(
@@ -184,12 +169,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
 
               const SizedBox(height: 30),
-              _buildSectionHeader(Icons.description, "VERIFICATION DOCUMENTS"),
+              _buildSectionHeader(IconlyLight.document, "VERIFICATION DOCUMENTS"),
               const SizedBox(height: 20),
 
               _buildDocumentCard(
                 title: "PAN Image",
-                icon: Icons.credit_card,
+                icon: IconlyLight.wallet,
                 hasImage: _controller.panImagePath != null,
                 onTap: () async {
                   await _controller.pickImage(true);
@@ -199,7 +184,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 15),
               _buildDocumentCard(
                 title: "GST Image",
-                icon: Icons.receipt_long,
+                icon: IconlyLight.document,
                 hasImage: _controller.gstImagePath != null,
                 onTap: () async {
                   await _controller.pickImage(false);
@@ -222,7 +207,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildLabel(String text) {
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         color: AppColors.textGrey,
         fontSize: 12,
         fontWeight: FontWeight.w600,
@@ -231,38 +216,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-Widget _buildRoleSelector() {
-  return Container(
-    height: 50,
-    alignment: Alignment.center,
-    decoration: BoxDecoration(
-      color: AppColors.primaryBlue.withOpacity(0.1),
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: AppColors.primaryBlue),
-    ),
-    child: const Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          Icons.admin_panel_settings,
-          color: AppColors.primaryBlue,
-          size: 20,
-        ),
-        SizedBox(width: 8),
-        Text(
-          "ADMIN",
-          style: TextStyle(
+  Widget _buildRoleSelector() {
+    return Container(
+      height: 50,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AppColors.primaryBlue.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.primaryBlue),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            IconlyLight.shield_done,
             color: AppColors.primaryBlue,
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-            letterSpacing: 1.2,
+            size: 20,
           ),
-        ),
-      ],
-    ),
-  );
-}
-
+          const SizedBox(width: 8),
+          Text(
+            "ADMIN",
+            style: TextStyle(
+              color: AppColors.primaryBlue,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildSectionHeader(IconData icon, String title) {
     return Column(
@@ -274,7 +258,7 @@ Widget _buildRoleSelector() {
             const SizedBox(width: 10),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textGrey,
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
@@ -284,7 +268,7 @@ Widget _buildRoleSelector() {
           ],
         ),
         const SizedBox(height: 10),
-        const Divider(color: AppColors.border, height: 1),
+        Divider(color: AppColors.border, height: 1),
       ],
     );
   }
@@ -298,12 +282,12 @@ Widget _buildRoleSelector() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textGrey, fontSize: 13)),
+        Text(label, style: TextStyle(color: AppColors.textGrey, fontSize: 13)),
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
           keyboardType: keyboard,
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: AppColors.textWhite),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: Colors.grey.shade700),
@@ -312,15 +296,15 @@ Widget _buildRoleSelector() {
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: AppColors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.primaryBlue),
+              borderSide: BorderSide(color: AppColors.primaryBlue),
             ),
           ),
           validator: (value) => value!.isEmpty ? "Required" : null,
@@ -339,13 +323,13 @@ Widget _buildRoleSelector() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textGrey, fontSize: 13)),
+        Text(label, style: TextStyle(color: AppColors.textGrey, fontSize: 13)),
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
           readOnly: true,
           onTap: onTap,
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: AppColors.textWhite),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: Colors.grey.shade700),
@@ -355,15 +339,15 @@ Widget _buildRoleSelector() {
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: AppColors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.primaryBlue),
+              borderSide: BorderSide(color: AppColors.primaryBlue),
             ),
           ),
           validator: (value) => value!.isEmpty ? "Required" : null,
@@ -381,27 +365,27 @@ Widget _buildRoleSelector() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textGrey, fontSize: 13)),
+        Text(label, style: TextStyle(color: AppColors.textGrey, fontSize: 13)),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           value: value,
           dropdownColor: AppColors.cardSurface,
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: AppColors.textWhite),
           decoration: InputDecoration(
             filled: true,
             fillColor: AppColors.cardSurface,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: AppColors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.primaryBlue),
+              borderSide: BorderSide(color: AppColors.primaryBlue),
             ),
           ),
           items: items.map((item) => DropdownMenuItem(
@@ -409,7 +393,7 @@ Widget _buildRoleSelector() {
             child: Text(item[0].toUpperCase() + item.substring(1)),
           )).toList(),
           onChanged: onChanged,
-          icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey.shade600),
+          icon: Icon(IconlyLight.arrow_down_2, color: Colors.grey.shade600),
           validator: (val) => val == null ? "Required" : null,
         ),
       ],
@@ -458,13 +442,13 @@ Widget _buildRoleSelector() {
                         color: AppColors.successGreen.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: const Text(
+                      child: Text(
                         "UPLOADED",
                         style: TextStyle(color: AppColors.successGreen, fontSize: 10, fontWeight: FontWeight.bold),
                       ),
                     )
                   else
-                    const Text(
+                    Text(
                       "Tap to upload",
                       style: TextStyle(color: AppColors.textGrey, fontSize: 12),
                     ),
@@ -472,7 +456,7 @@ Widget _buildRoleSelector() {
               ),
             ),
             Icon(
-              hasImage ? Icons.remove_red_eye : Icons.upload_file,
+              hasImage ? IconlyLight.show : IconlyLight.upload,
               color: Colors.grey.shade500,
             ),
           ],
@@ -525,7 +509,7 @@ Widget _buildRoleSelector() {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   SizedBox(width: 8),
-                  Icon(Icons.check_circle, color: Colors.white, size: 20),
+                  Icon(IconlyLight.tick_square, color: Colors.white, size: 20),
                 ],
               ),
       ),

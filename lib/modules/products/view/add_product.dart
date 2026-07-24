@@ -1,3 +1,4 @@
+import 'package:iconly/iconly.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -101,7 +102,7 @@ class AddProductScreen extends StatelessWidget {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
-                                    Icons.image_outlined,
+                                    IconlyLight.image,
                                     size: 40,
                                     color: theme.colorScheme.primary,
                                   ),
@@ -140,7 +141,7 @@ class AddProductScreen extends StatelessWidget {
                       controller: titleController,
                       decoration: InputDecoration(
                         labelText: "Product Title",
-                        prefixIcon: const Icon(Icons.inventory_2_outlined),
+                        prefixIcon: const Icon(IconlyLight.category),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -155,7 +156,7 @@ class AddProductScreen extends StatelessWidget {
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         labelText: "Base Amount",
-                        prefixIcon: const Icon(Icons.currency_rupee),
+                        prefixIcon: const Icon(IconlyLight.wallet),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -169,7 +170,7 @@ class AddProductScreen extends StatelessWidget {
                       controller: locationController,
                       decoration: InputDecoration(
                         labelText: "Loading Location",
-                        prefixIcon: const Icon(Icons.location_on_outlined),
+                        prefixIcon: const Icon(IconlyLight.location),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -205,7 +206,7 @@ class AddProductScreen extends StatelessWidget {
 
                     //     decoration: InputDecoration(
                     //       labelText: "Select Category",
-                    //       prefixIcon: const Icon(Icons.category_outlined),
+                    //       prefixIcon: const Icon(IconlyLight.category),
                     //       border: OutlineInputBorder(
                     //         borderRadius: BorderRadius.circular(12),
                     //       ),

@@ -1,9 +1,13 @@
+import 'dart:ui';
+import 'package:iconly/iconly.dart';
 import 'package:agro_broker/modules/users/view/user_view.dart';
 import 'package:agro_broker/modules/dashboard/model/dashboard_model.dart';
 import 'package:agro_broker/modules/profile/controller/profile_controller.dart';
 import 'package:agro_broker/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:agro_broker/theme/glass_widgets.dart';
 import 'dart:math' as math;
 import '../controller/dashboard_controller.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -14,15 +18,12 @@ class AdminDashboardScreen extends StatelessWidget {
   final DashboardController controller = Get.put(DashboardController());
   final ProfileController profileController = Get.put(ProfileController());
 
-  static const Color bgColor = Color(0xFF0F1522);
-  static const Color cardColor = Color(0xFF161E2E);
   static const Color primaryBlue = Color(0xFFFFB300); // Changed to primaryYellow
   static const Color accentYellow = Color(0xFFFFD54F);
   static const Color accentGreen = Color(0xFF10B981);
   static const Color accentRed = Color(0xFFE53935);
   static const Color textWhite = Colors.white;
   static const Color textGrey = Color(0xFF9CA3AF);
-  static const Color borderColor = Color(0xFF2D3748);
 
   @override
   Widget build(BuildContext context) {
@@ -163,7 +164,7 @@ class AdminDashboardScreen extends StatelessWidget {
 
         return RefreshIndicator(
           color: primaryBlue,
-          backgroundColor: cardColor,
+          backgroundColor: theme.cardColor,
           onRefresh: controller.fetchDashboard,
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
@@ -1551,9 +1552,10 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomNavBar() {
+  Widget _buildBottomNavBar(BuildContext context) {
+    final theme = Theme.of(context);
     return BottomAppBar(
-      color: cardColor,
+      color: theme.cardColor,
       shape: const CircularNotchedRectangle(),
       notchMargin: 8.0,
       child: SizedBox(

@@ -40,4 +40,9 @@ abstract class AppRoutes {
   static const settings = '/settings';
   static const support = '/support';
   static const about = '/about';
+
+  // SELLER PANEL
+  static const sellerDashboard = '/seller/dashboard';
+  static const sellerCompany = '/seller/company';
+  static const sellerCategory = '/seller/category';
 }

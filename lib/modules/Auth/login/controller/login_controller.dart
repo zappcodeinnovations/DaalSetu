@@ -1,3 +1,4 @@
+import 'package:iconly/iconly.dart';
 import 'package:agro_broker/modules/Auth/login/model/login_model.dart';
 import 'package:agro_broker/services/auth_services.dart';
 import 'package:agro_broker/utils/app_preferences.dart';
@@ -40,7 +41,7 @@ class LoginController extends GetxController {
         return;
       }
 
-      if (response.user.role != "admin") {
+      if (response.user.role != "admin" && response.user.role != "seller") {
         await AppPreferences.logout();
 
         Get.dialog(
@@ -63,7 +64,7 @@ class LoginController extends GetxController {
                       color: const Color(0xFF1661EF).withOpacity(0.15),
                     ),
                     child: const Icon(
-                      Icons.admin_panel_settings,
+                      IconlyLight.shield_done,
                       size: 40,
                       color: Color(0xFF1661EF),
                     ),
@@ -85,7 +86,7 @@ class LoginController extends GetxController {
 
                   /// MESSAGE
                   const Text(
-                    "Only Admin accounts are allowed to login to this portal.",
+                    "Only Admin and Seller accounts are allowed to login to this portal.",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
@@ -126,7 +127,7 @@ class LoginController extends GetxController {
         return;
       }
 
-      // Save tokens only if admin
+      // Save tokens
       await AppPreferences.saveLoginData(
         accessToken: response.access,
         refreshToken: response.refresh,

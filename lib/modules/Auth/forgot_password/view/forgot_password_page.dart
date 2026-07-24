@@ -1,6 +1,8 @@
-import 'package:agro_broker/modules/Auth/login/view/login_screen.dart';
+import 'package:iconly/iconly.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:agro_broker/theme/glass_widgets.dart';
 import '../controller/forgot_password_controller.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
@@ -10,173 +12,161 @@ class ForgotPasswordScreen extends StatelessWidget {
     ForgotPasswordController(),
   );
 
-  // Define colors based on the image
-  final Color backgroundColor = const Color(0xFF0F172A); // Dark Navy
-  final Color inputFillColor = const Color(
-    0xFF1E293B,
-  ); // Lighter Navy for input
-  final Color primaryGreen = const Color(0xFF388E3C); // Button Green
-  final Color textGrey = const Color(0xFF94A3B8); // Muted text
-
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            color: Colors.white,
-            size: 20,
-          ),
-          onPressed: () => Get.back(),
-        ),
-        title: const Text(
-          "Forgot Password",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: isDark
+                ? [const Color(0xFF1A1206), const Color(0xFF0D1117)]
+                : [const Color(0xFFFFF8E1), Colors.white],
           ),
         ),
-        centerTitle:
-            false, // Image aligns title to left/center depending on platform, default usually fine
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 40),
-
-              /// 🔹 Title
-              const Text(
-                "Reset Your Password",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              /// 🔹 Subtitle
-              Text(
-                "Enter your registered email address. If the account exists, password will be sent.",
-                style: TextStyle(
-                  fontSize: 15,
-                  color: textGrey,
-                  height: 1.5, // Better line spacing
-                ),
-              ),
-
-              const SizedBox(height: 40),
-
-              /// 🔹 Email Field
-              TextField(
-                controller: controller.emailController,
-                keyboardType: TextInputType.emailAddress,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: inputFillColor,
-                  hintText: "Email address",
-                  hintStyle: TextStyle(color: textGrey),
-                  prefixIcon: Icon(Icons.mail_outline, color: textGrey),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 18),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.white24),
+        child: Stack(
+          children: [
+            // Decorative circle
+            Positioned(
+              top: -60,
+              left: -40,
+              child: Container(
+                width: 160,
+                height: 160,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      theme.colorScheme.primary.withValues(alpha: 0.12),
+                      theme.colorScheme.primary.withValues(alpha: 0),
+                    ],
                   ),
                 ),
               ),
+            ),
 
-              const SizedBox(height: 30),
-
-              /// 🔹 Submit Button
-              Obx(
-                () => SizedBox(
-                  width: double.infinity,
-                  height: 55,
-                  child: ElevatedButton(
-                    onPressed: controller.isLoading.value
-                        ? null // Disable click while loading
-                        : controller.submitForgotPassword,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
-                      disabledBackgroundColor: AppColors.primaryBlue
-                          .withOpacity(0.8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
+            SafeArea(
+              child: Column(
+                children: [
+                  // AppBar
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 4),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            IconlyLight.arrow_left_2,
+                            color: theme.iconTheme.color,
+                          ),
+                          onPressed: () => Get.back(),
+                        ),
+                        Text(
+                          "Forgot Password",
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: theme.textTheme.bodyLarge?.color,
+                          ),
+                        ),
+                      ],
                     ),
-                    child: controller.isLoading.value
-                        ? Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                              SizedBox(width: 12),
-                              Text(
-                                "SENDING...",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                            ],
-                          )
-                        : const Text(
-                            "Send Password",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
+                  ),
+
+                  // Content
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 30),
+
+                          Text(
+                            "Reset Your Password",
+                            style: GoogleFonts.poppins(
+                              fontSize: 26,
                               fontWeight: FontWeight.bold,
+                              color: theme.textTheme.bodyLarge?.color,
                             ),
                           ),
-                  ),
-                ),
-              ),
+                          const SizedBox(height: 10),
+                          Text(
+                            "Enter your registered email address. If the account exists, password will be sent.",
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              color: theme.textTheme.bodyMedium?.color,
+                              height: 1.5,
+                            ),
+                          ),
 
-              const SizedBox(height: 30),
+                          const SizedBox(height: 32),
 
-              /// 🔹 Back to Login
-              Center(
-                child: TextButton(
-                  onPressed: () => Get.back(),
-                  child: Text(
-                    "Back to Login",
-                    style: TextStyle(
-                      color: AppColors.primaryBlue,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                          // Glass Form Card
+                          GlassCard(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              children: [
+                                GlassTextField(
+                                  controller: controller.emailController,
+                                  hintText: "Email address",
+                                  prefixIcon: IconlyLight.message,
+                                  keyboardType: TextInputType.emailAddress,
+                                ),
+                                const SizedBox(height: 24),
+
+                                Obx(
+                                  () => GlassButton(
+                                    isLoading: controller.isLoading.value,
+                                    onPressed:
+                                        controller.submitForgotPassword,
+                                    gradientColors: [
+                                      theme.colorScheme.primary,
+                                      const Color(0xFFFF8F00),
+                                    ],
+                                    child: Text(
+                                      "Send Password",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          Center(
+                            child: TextButton(
+                              onPressed: () => Get.back(),
+                              child: Text(
+                                "Back to Login",
+                                style: GoogleFonts.inter(
+                                  color: theme.colorScheme.primary,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-
-              const Spacer(),
-
-              /// 🔹 Footer Copyright
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -1,3 +1,4 @@
+import 'package:iconly/iconly.dart';
 import 'package:agro_broker/modules/contracts/view/contract_details_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -79,7 +80,7 @@ class ContractsScreen extends StatelessWidget {
                   selectedContracts.length == controller.contracts.length;
 
               return IconButton(
-                icon: Icon(allSelected ? Icons.deselect : Icons.select_all),
+                icon: Icon(allSelected ? IconlyLight.close_square : IconlyLight.tick_square),
                 onPressed: () {
                   if (allSelected) {
                     selectedContracts.clear();
@@ -98,7 +99,7 @@ class ContractsScreen extends StatelessWidget {
               if (!isSelectionMode.value) return const SizedBox();
 
               return IconButton(
-                icon: const Icon(Icons.delete),
+                icon: const Icon(IconlyLight.delete),
                 onPressed: () {
                   for (var id in selectedContracts) {
                     controller.deleteContract(id);
@@ -129,7 +130,7 @@ class ContractsScreen extends StatelessWidget {
                   onChanged: (_) => selectedFilter.refresh(),
                   decoration: InputDecoration(
                     hintText: "Search ID, Commodity or Dealer",
-                    prefixIcon: const Icon(Icons.search),
+                    prefixIcon: const Icon(IconlyLight.search),
                     filled: true,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -251,8 +252,8 @@ class ContractsScreen extends StatelessWidget {
                                         ),
                                         child: Icon(
                                           isSelected
-                                              ? Icons.check_circle
-                                              : Icons.radio_button_unchecked,
+                                              ? IconlyLight.tick_square
+                                              : IconlyLight.discovery,
                                           color: isSelected
                                               ? theme.colorScheme.primary
                                               : Colors.grey,
@@ -322,14 +323,14 @@ class ContractsScreen extends StatelessWidget {
                                       children: [
                                         Expanded(
                                           child: _userTile(
-                                            icon: Icons.person,
+                                            icon: IconlyLight.profile,
                                             title: "Seller",
                                             value: contract.displaySellerId,
                                           ),
                                         ),
                                         Expanded(
                                           child: _userTile(
-                                            icon: Icons.store,
+                                            icon: IconlyLight.work,
                                             title: "Buyer",
                                             value: contract.displayBuyerId,
                                           ),
@@ -363,16 +364,16 @@ class ContractsScreen extends StatelessWidget {
                                     /// ROUTE
                                     Row(
                                       children: [
-                                        const Icon(Icons.location_on, size: 18),
+                                        const Icon(IconlyLight.location, size: 18),
                                         const SizedBox(width: 6),
                                         Text(contract.loadingFrom),
                                         const Spacer(),
-                                        const Icon(Icons.arrow_forward),
+                                        const Icon(IconlyLight.arrow_right_2),
                                         const Spacer(),
                                         Text(contract.loadingTo),
                                         const SizedBox(width: 6),
                                         const Icon(
-                                          Icons.local_shipping,
+                                          IconlyLight.send,
                                           size: 18,
                                         ),
                                       ],

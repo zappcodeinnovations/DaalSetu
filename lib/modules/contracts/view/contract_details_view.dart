@@ -1,3 +1,4 @@
+import 'package:iconly/iconly.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/contract_controller.dart';
@@ -157,7 +158,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
           CircleAvatar(
             radius: 26,
             backgroundColor: theme.colorScheme.primary,
-            child: const Icon(Icons.person, color: Colors.white),
+            child: const Icon(IconlyLight.profile, color: Colors.white),
           ),
           const SizedBox(height: 10),
           Text(title, style: theme.textTheme.bodySmall),
@@ -246,7 +247,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(contract.loadingFrom),
-              const Icon(Icons.arrow_forward),
+              const Icon(IconlyLight.arrow_right_2),
               Text(contract.loadingTo),
             ],
           ),

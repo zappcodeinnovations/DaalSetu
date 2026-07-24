@@ -1,3 +1,4 @@
+import 'package:iconly/iconly.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/subcategory_controller.dart';
@@ -101,7 +102,7 @@ class SubCategoryScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: const Icon(
-                Icons.category_outlined,
+                IconlyLight.category,
                 color: Colors.white,
                 size: 26,
               ),
@@ -128,7 +129,7 @@ class SubCategoryScreen extends StatelessWidget {
                   Row(
                     children: [
                       Icon(
-                        Icons.folder_open,
+                        IconlyLight.folder,
                         size: 14,
                         color: theme.colorScheme.primary,
                       ),
@@ -149,7 +150,7 @@ class SubCategoryScreen extends StatelessWidget {
                   Row(
                     children: [
                       Icon(
-                        Icons.calendar_today,
+                        IconlyLight.calendar,
                         size: 12,
                         color: theme.textTheme.bodySmall?.color,
                       ),
@@ -168,7 +169,7 @@ class SubCategoryScreen extends StatelessWidget {
 
             /// 🔹 ARROW
             Icon(
-              Icons.arrow_forward_ios_rounded,
+              IconlyLight.arrow_right_2,
               size: 16,
               color: theme.iconTheme.color?.withOpacity(0.6),
             ),
@@ -187,7 +188,7 @@ class SubCategoryScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.category_outlined,
+            IconlyLight.category,
             size: 80,
             color: theme.colorScheme.primary.withOpacity(0.3),
           ),

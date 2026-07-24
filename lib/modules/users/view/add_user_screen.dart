@@ -1,3 +1,4 @@
+import 'package:iconly/iconly.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -117,7 +118,7 @@ class AddUserScreen extends StatelessWidget {
       child: Column(
         children: [
           Icon(
-            Icons.person_add_alt_1,
+            IconlyLight.add_user,
             size: 40,
             color: theme.colorScheme.primary,
           ),
@@ -204,7 +205,7 @@ class AddUserScreen extends StatelessWidget {
             value: -1,
             child: Row(
               children: [
-                Icon(Icons.add, size: 18),
+                Icon(IconlyLight.plus, size: 18),
                 SizedBox(width: 6),
                 Text("Create New Tag"),
               ],

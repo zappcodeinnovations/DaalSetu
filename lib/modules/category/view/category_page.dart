@@ -1,3 +1,4 @@
+import 'package:iconly/iconly.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/category_controller.dart';
@@ -34,7 +35,7 @@ class CategoryScreen extends StatelessWidget {
           //   padding:
           //       const EdgeInsets.only(right: 12),
           //   child: IconButton(
-          //     icon: Icon(Icons.add,
+          //     icon: Icon(IconlyLight.plus,
           //         color:
           //             theme.colorScheme.primary),
           //     onPressed: () {},
@@ -137,7 +138,7 @@ class CategoryScreen extends StatelessWidget {
           hintStyle:
               theme.textTheme.bodySmall,
           prefixIcon: Icon(
-            Icons.search,
+            IconlyLight.search,
             color:
                 theme.iconTheme.color,
           ),
@@ -293,7 +294,7 @@ class CategoryScreen extends StatelessWidget {
             MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.category_outlined,
+            IconlyLight.category,
             size: 80,
             color: theme
                 .colorScheme.primary

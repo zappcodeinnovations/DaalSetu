@@ -1,3 +1,4 @@
+import 'package:iconly/iconly.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/kyc_user_controller.dart';
@@ -223,7 +224,7 @@ class KycUsersScreen extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: theme.colorScheme.error),
+            Icon(IconlyLight.danger, color: theme.colorScheme.error),
             const SizedBox(width: 8),
             const Text("Reject KYC"),
           ],

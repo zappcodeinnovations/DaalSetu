@@ -1,3 +1,4 @@
+import 'package:iconly/iconly.dart';
 import 'package:agro_broker/modules/users/model/user_model.dart';
 import 'package:agro_broker/modules/users/view/add_user_screen.dart';
 import 'package:flutter/material.dart';
@@ -30,7 +31,7 @@ class UserScreen extends StatelessWidget {
           // Get.toNamed('/add-user');
           Get.to(() => AddUserScreen());
         },
-        icon: const Icon(Icons.person_add_alt_1),
+        icon: const Icon(IconlyLight.add_user),
         label: const Text("Add User"),
         backgroundColor: theme.colorScheme.primary,
       ),
@@ -134,7 +135,7 @@ class UserScreen extends StatelessWidget {
             ),
 
             Icon(
-              Icons.arrow_forward_ios_rounded,
+              IconlyLight.arrow_right_2,
               size: 14,
               color: theme.iconTheme.color,
             ),

@@ -1,3 +1,4 @@
+import 'package:iconly/iconly.dart';
 import 'package:flutter/material.dart';
 
 enum BranchStatus { active, watchlist, critical }
@@ -38,7 +39,7 @@ class _BranchesScreenState extends State<BranchesScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
         backgroundColor: theme.colorScheme.primary,
-        child: const Icon(Icons.add),
+        child: const Icon(IconlyLight.plus),
       ),
       body: SafeArea(
         child: Column(
@@ -75,7 +76,7 @@ class _BranchesScreenState extends State<BranchesScreen> {
       style: theme.textTheme.bodyMedium,
       decoration: InputDecoration(
         hintText: "Search by location or admin...",
-        prefixIcon: Icon(Icons.search, color: theme.iconTheme.color),
+        prefixIcon: Icon(IconlyLight.search, color: theme.iconTheme.color),
         filled: true,
         fillColor: theme.cardColor,
         border: OutlineInputBorder(
@@ -144,7 +145,7 @@ class _BranchesScreenState extends State<BranchesScreen> {
             backgroundColor:
                 theme.colorScheme.primary.withOpacity(0.15),
             child: Icon(
-              Icons.location_city,
+              IconlyLight.work,
               color: theme.colorScheme.primary,
             ),
           ),
@@ -168,7 +169,7 @@ class _BranchesScreenState extends State<BranchesScreen> {
               ],
             ),
           ),
-          Icon(Icons.arrow_forward_ios_rounded,
+          Icon(IconlyLight.arrow_right_2,
               size: 16, color: theme.iconTheme.color),
         ],
       ),

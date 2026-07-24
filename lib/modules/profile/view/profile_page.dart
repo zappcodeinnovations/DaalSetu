@@ -1,3 +1,4 @@
+import 'package:iconly/iconly.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/profile_controller.dart';
@@ -17,7 +18,7 @@ class ProfileScreen extends StatelessWidget {
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
+          icon: Icon(IconlyLight.arrow_left, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
         ),
         title: Text(
@@ -29,7 +30,7 @@ class ProfileScreen extends StatelessWidget {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.more_vert, color: theme.iconTheme.color),
+            icon: Icon(IconlyLight.more_circle, color: theme.iconTheme.color),
             onPressed: () {},
           ),
         ],
@@ -99,7 +100,7 @@ class ProfileScreen extends StatelessWidget {
                 title: "ACCOUNT STATUS",
                 value: user.accountStatus,
                 trailing: Icon(
-                  Icons.verified,
+                  IconlyLight.tick_square,
                   color: theme.colorScheme.secondary,
                 ),
               ),
@@ -126,7 +127,7 @@ class ProfileScreen extends StatelessWidget {
 
               _buildDocumentCard(
                 context,
-                icon: Icons.credit_card,
+                icon: IconlyLight.wallet,
                 title: "PAN Card",
                 subtitle: "Verified • PDF (1.2 MB)",
               ),
@@ -135,7 +136,7 @@ class ProfileScreen extends StatelessWidget {
 
               _buildDocumentCard(
                 context,
-                icon: Icons.description,
+                icon: IconlyLight.document,
                 title: "GST Certificate",
                 subtitle: "Verified • JPG (2.4 MB)",
               ),
@@ -340,7 +341,7 @@ class ProfileScreen extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            approved ? Icons.check_circle_outline : Icons.pending_outlined,
+            approved ? IconlyLight.tick_square : IconlyLight.time_circle,
             color: statusColor,
           ),
           const SizedBox(width: 10),
@@ -415,7 +416,7 @@ class ProfileScreen extends StatelessWidget {
           Expanded(
             child: ElevatedButton.icon(
               onPressed: () {},
-              icon: const Icon(Icons.edit, size: 18),
+              icon: const Icon(IconlyLight.edit, size: 18),
               label: const Text("Edit Profile"),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -429,7 +430,7 @@ class ProfileScreen extends StatelessWidget {
           Expanded(
             child: OutlinedButton.icon(
               onPressed: () {},
-              icon: const Icon(Icons.logout, size: 18),
+              icon: const Icon(IconlyLight.logout, size: 18),
               label: const Text("Logout"),
               style: OutlinedButton.styleFrom(
                 foregroundColor: theme.colorScheme.error,

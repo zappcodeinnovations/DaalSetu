@@ -1,3 +1,4 @@
+import 'package:iconly/iconly.dart';
 import 'package:agro_broker/modules/users/model/tag_model.dart';
 import 'package:agro_broker/services/tag_services.dart';
 import 'package:flutter/material.dart';
@@ -279,7 +280,7 @@ class UserDetailScreen extends StatelessWidget {
                       color: color,
                       fontWeight: FontWeight.w600,
                     ),
-                    deleteIcon: const Icon(Icons.close),
+                    deleteIcon: const Icon(IconlyLight.close_square),
                     onDeleted: () {
                       _removeTag(tag.id);
                     },

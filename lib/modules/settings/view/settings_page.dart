@@ -1,6 +1,10 @@
+import 'dart:ui';
+import 'package:iconly/iconly.dart';
 import 'package:agro_broker/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:agro_broker/theme/glass_widgets.dart';
 import '../../../theme/theme_controller.dart';
 import '../../../utils/app_preferences.dart';
 import '../../Auth/login/view/login_screen.dart';
@@ -15,7 +19,7 @@ class SettingsScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -23,50 +27,61 @@ class SettingsScreen extends StatelessWidget {
             /// PAGE TITLE
             Text(
               "Settings",
-              style: theme.textTheme.headlineSmall?.copyWith(
+              style: GoogleFonts.poppins(
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
+                color: theme.textTheme.bodyLarge?.color,
               ),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 4),
             Text(
               "Manage your administrative preferences",
-              style: theme.textTheme.bodyMedium,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: theme.textTheme.bodyMedium?.color,
+              ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 28),
 
             /// ACCOUNT SECTION
             _sectionLabel(context, "ACCOUNT"),
-            _buildGroupedCard(context, [
-              _buildTile(
-                context,
-                icon: Icons.person,
-                title: "Profile",
-                subtitle: "View and edit profile details",
-                onTap: () {
-                  Get.toNamed(AppRoutes.profile_page);
-                },
+            const SizedBox(height: 10),
+            GlassCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  _buildTile(
+                    context,
+                    icon: IconlyLight.profile,
+                    title: "Profile",
+                    subtitle: "View and edit profile details",
+                    onTap: () => Get.toNamed(AppRoutes.profile_page),
+                  ),
+                  _glassDivider(context),
+                  _buildTile(
+                    context,
+                    icon: IconlyLight.lock,
+                    title: "Change Password",
+                    subtitle: "Update your account password",
+                    onTap: () => Get.toNamed(AppRoutes.change_password),
+                  ),
+                ],
               ),
-              _buildDivider(context),
-              _buildTile(
-                context,
-                icon: Icons.lock,
-                title: "Change Password",
-                subtitle: "Update your account password",
-                onTap: () {
-                  Get.toNamed(AppRoutes.change_password);
-                },
-              ),
-            ]),
+            ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 26),
 
-            /// APPEARANCE SECTION
+            /// APPEARANCE
             _sectionLabel(context, "APPEARANCE"),
-            _buildGroupedCard(context, [
-              Obx(
+            const SizedBox(height: 10),
+            GlassCard(
+              padding: EdgeInsets.zero,
+              child: Obx(
                 () => _buildSwitchTile(
                   context,
-                  icon: Icons.dark_mode,
+                  icon: theme.brightness == Brightness.dark
+                      ? IconlyLight.hide
+                      : IconlyLight.show,
                   title: "Dark Mode",
                   subtitle: "Enable dark theme",
                   value: themeController.themeMode.value == ThemeMode.dark,
@@ -79,119 +94,144 @@ class SettingsScreen extends StatelessWidget {
                   },
                 ),
               ),
-            ]),
+            ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 26),
 
-            /// APP INFO SECTION
+            /// APP INFO
             _sectionLabel(context, "APP INFORMATION"),
-            _buildGroupedCard(context, [
-              _buildTile(
-                context,
-                icon: Icons.info,
-                title: "About App",
-                onTap: () =>
-                    _showInfoDialog(context, "About App", "Version 1.0"),
+            const SizedBox(height: 10),
+            GlassCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  _buildTile(
+                    context,
+                    icon: IconlyLight.info_square,
+                    title: "About App",
+                    onTap: () => _showInfoDialog(
+                        context, "About App", "DaalSetu Admin v1.0"),
+                  ),
+                  _glassDivider(context),
+                  _buildTile(
+                    context,
+                    icon: IconlyLight.document,
+                    title: "Terms & Conditions",
+                    onTap: () => _showInfoDialog(
+                        context, "Terms", "Details here..."),
+                  ),
+                  _glassDivider(context),
+                  _buildTile(
+                    context,
+                    icon: IconlyLight.shield_done,
+                    title: "Privacy Policy",
+                    onTap: () => _showInfoDialog(
+                        context, "Privacy", "Details here..."),
+                  ),
+                ],
               ),
-              _buildDivider(context),
-              _buildTile(
-                context,
-                icon: Icons.description,
-                title: "Terms & Conditions",
-                onTap: () =>
-                    _showInfoDialog(context, "Terms", "Details here..."),
-              ),
-              _buildDivider(context),
-              _buildTile(
-                context,
-                icon: Icons.privacy_tip,
-                title: "Privacy Policy",
-                onTap: () =>
-                    _showInfoDialog(context, "Privacy", "Details here..."),
-              ),
-            ]),
+            ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 26),
 
             /// SUPPORT
             _sectionLabel(context, "SUPPORT"),
-            _buildGroupedCard(context, [
-              _buildTile(
+            const SizedBox(height: 10),
+            GlassCard(
+              padding: EdgeInsets.zero,
+              child: _buildTile(
                 context,
-                icon: Icons.support_agent,
+                icon: IconlyLight.call,
                 title: "Help & Support",
                 subtitle: "Contact support team",
                 onTap: () {},
               ),
-            ]),
+            ),
 
-            const SizedBox(height: 40),
+            const SizedBox(height: 32),
 
             /// LOGOUT BUTTON
-            SizedBox(
+            Container(
               width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.error.withOpacity(0.1),
-                  foregroundColor: theme.colorScheme.error,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
+              height: 52,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                color: theme.colorScheme.error.withValues(alpha: 0.08),
+                border: Border.all(
+                  color: theme.colorScheme.error.withValues(alpha: 0.2),
                 ),
-                onPressed: () async {
-                  await AppPreferences.logout();
-                  Get.offAll(() => LoginScreen());
-                },
-                child: const Text("Log Out"),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () async {
+                    await AppPreferences.logout();
+                    Get.offAll(() => LoginScreen());
+                  },
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          IconlyLight.logout,
+                          color: theme.colorScheme.error,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          "Log Out",
+                          style: GoogleFonts.poppins(
+                            color: theme.colorScheme.error,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
 
             const SizedBox(height: 20),
             Center(
-              child: Text("Version 1.0.0", style: theme.textTheme.bodySmall),
+              child: Text(
+                "Version 1.0.0",
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: theme.textTheme.bodySmall?.color,
+                ),
+              ),
             ),
+            const SizedBox(height: 80), // Space for floating nav bar
           ],
         ),
       ),
     );
   }
 
-  /// SECTION LABEL
   Widget _sectionLabel(BuildContext context, String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12, left: 4),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          fontWeight: FontWeight.bold,
-          letterSpacing: 1.2,
-        ),
+    return Text(
+      label,
+      style: GoogleFonts.inter(
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.5,
+        color: Theme.of(context).textTheme.bodySmall?.color,
       ),
     );
   }
 
-  /// CARD CONTAINER
-  Widget _buildGroupedCard(BuildContext context, List<Widget> children) {
-    final theme = Theme.of(context);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.2)),
-      ),
-      child: Column(children: children),
-    );
-  }
-
-  Widget _buildDivider(BuildContext context) {
+  Widget _glassDivider(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Divider(
       height: 1,
       thickness: 1,
-      color: Theme.of(context).dividerColor,
-      indent: 60,
+      color: isDark
+          ? Colors.white.withValues(alpha: 0.06)
+          : Colors.black.withValues(alpha: 0.05),
+      indent: 64,
     );
   }
 
@@ -206,25 +246,29 @@ class SettingsScreen extends StatelessWidget {
 
     return ListTile(
       onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.primary.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(icon, color: theme.colorScheme.primary, size: 22),
-      ),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      leading: GlassIconBox(icon: icon),
       title: Text(
         title,
-        style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+        style: GoogleFonts.inter(
+          fontWeight: FontWeight.w500,
+          fontSize: 15,
+          color: theme.textTheme.bodyLarge?.color,
+        ),
       ),
       subtitle: subtitle != null
-          ? Text(subtitle, style: theme.textTheme.bodySmall)
+          ? Text(
+              subtitle,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: theme.textTheme.bodySmall?.color,
+              ),
+            )
           : null,
       trailing: Icon(
-        Icons.arrow_forward_ios,
-        size: 14,
+        IconlyLight.arrow_right_2,
+        size: 16,
         color: theme.iconTheme.color,
       ),
     );
@@ -241,61 +285,87 @@ class SettingsScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.primary.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(icon, color: theme.colorScheme.primary, size: 22),
-      ),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      leading: GlassIconBox(icon: icon),
       title: Text(
         title,
-        style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+        style: GoogleFonts.inter(
+          fontWeight: FontWeight.w500,
+          fontSize: 15,
+          color: theme.textTheme.bodyLarge?.color,
+        ),
       ),
-      subtitle: Text(subtitle, style: theme.textTheme.bodySmall),
-      trailing: Switch(
-        value: value,
-        onChanged: onChanged,
-        activeColor: theme.colorScheme.primary,
+      subtitle: Text(
+        subtitle,
+        style: GoogleFonts.inter(
+          fontSize: 12,
+          color: theme.textTheme.bodySmall?.color,
+        ),
       ),
+      trailing: Switch(value: value, onChanged: onChanged),
     );
   }
 
-  void _showInfoDialog(BuildContext context, String title, String content) {
+  void _showInfoDialog(
+      BuildContext context, String title, String content) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     Get.dialog(
       Dialog(
-        backgroundColor: theme.cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
+        backgroundColor: Colors.transparent,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.white.withValues(alpha: 0.85),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.4),
                 ),
               ),
-              const SizedBox(height: 10),
-              Text(content, style: theme.textTheme.bodyMedium),
-              const SizedBox(height: 20),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => Get.back(),
-                  child: Text(
-                    "Close",
-                    style: TextStyle(color: theme.colorScheme.primary),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 10),
+                  Text(
+                    content,
+                    style: GoogleFonts.inter(
+                      color: theme.textTheme.bodyMedium?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => Get.back(),
+                      child: Text(
+                        "Close",
+                        style: GoogleFonts.inter(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
