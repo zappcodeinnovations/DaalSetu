@@ -37,38 +37,48 @@ class MainNavigationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(
-      () => Scaffold(
-        backgroundColor: Colors.transparent,
-        extendBody: true,
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: Theme.of(context).brightness == Brightness.dark
-                  ? [
-                      const Color(0xFF1A1206),
-                      const Color(0xFF0D1117),
-                      const Color(0xFF0D1117),
-                    ]
-                  : [
-                      const Color(0xFFFFF8E1),
-                      const Color(0xFFFFFCF5),
-                      Colors.white,
-                    ],
+      () {
+        if (navController.isLoading.value) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        return Scaffold(
+          backgroundColor: Colors.transparent,
+          extendBody: true,
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: Theme.of(context).brightness == Brightness.dark
+                    ? [
+                        const Color(0xFF1A1206),
+                        const Color(0xFF0D1117),
+                        const Color(0xFF0D1117),
+                      ]
+                    : [
+                        const Color(0xFFFFF8E1),
+                        const Color(0xFFFFFCF5),
+                        Colors.white,
+                      ],
+              ),
+            ),
+            child: IndexedStack(
+              index: navController.selectedIndex.value,
+              children: _getPages(navController.userRole.value),
             ),
           ),
-          child: IndexedStack(
-            index: navController.selectedIndex.value,
-            children: _getPages(navController.userRole.value),
+          bottomNavigationBar: _GlassNavBar(
+            currentIndex: navController.selectedIndex.value,
+            role: navController.userRole.value,
+            onTap: navController.changeIndex,
           ),
-        ),
-        bottomNavigationBar: _GlassNavBar(
-          currentIndex: navController.selectedIndex.value,
-          role: navController.userRole.value,
-          onTap: navController.changeIndex,
-        ),
-      ),
+        );
+      },
     );
   }
 }
