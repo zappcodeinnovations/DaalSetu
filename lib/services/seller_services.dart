@@ -67,7 +67,7 @@ class SellerServices {
   /// ============================================================
   static Future<SellerCompanyModel> updateCompany(int id, Map<String, dynamic> data) async {
     final response = await ApiClient.put(
-      endpoint: "/api/company/$id/",
+      endpoint: ApiUrls.companyDetails(id),
       data: data,
       requireAuth: true,
     );
@@ -79,7 +79,7 @@ class SellerServices {
   /// ============================================================
   static Future<void> setPrimaryCompany(int id) async {
     await ApiClient.post(
-      endpoint: "/api/company/$id/set-primary/",
+      endpoint: ApiUrls.setPrimaryCompany(id),
       body: {},
       requireAuth: true,
     );
@@ -90,7 +90,7 @@ class SellerServices {
   /// ============================================================
   static Future<SellerCompanyModel> getCompanyById(int id) async {
     final response = await ApiClient.get(
-      endpoint: "/api/company/$id/",
+      endpoint: ApiUrls.companyDetails(id),
       requireAuth: true,
     );
 
@@ -123,7 +123,7 @@ class SellerServices {
   }
 
   /// ============================================================
-  /// CATEGORIES TREE
+  /// CATEGORIES TREE (GET)
   /// ============================================================
   static Future<List<dynamic>> getCategoriesTree() async {
     final response = await ApiClient.get(
@@ -143,26 +143,25 @@ class SellerServices {
   }
 
   /// ============================================================
-  /// CREATE CATEGORY
+  /// GET CATEGORY BY ID
   /// ============================================================
-  static Future<Map<String, dynamic>> createCategory(Map<String, dynamic> data) async {
-    final response = await ApiClient.post(
-      endpoint: ApiUrls.categories,
-      body: data,
+  static Future<Map<String, dynamic>> getCategoryById(int id) async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.categoryDetails(id),
       requireAuth: true,
     );
 
     if (response == null || response is! Map<String, dynamic>) {
       throw Exception("Invalid response format");
     }
-    
+
     return response;
   }
 
   /// ============================================================
-  /// SEARCH CATEGORY
+  /// SEARCH CATEGORIES
   /// ============================================================
-  static Future<List<dynamic>> searchCategory(String query) async {
+  static Future<List<dynamic>> searchCategories(String query) async {
     final response = await ApiClient.get(
       endpoint: "${ApiUrls.categories}?search=$query",
       requireAuth: true,
@@ -171,11 +170,70 @@ class SellerServices {
     if (response == null) {
       throw Exception("Failed to search categories");
     }
-    
+
     if (response is List) {
       return response;
-    } else {
-      return [];
+    } else if (response is Map<String, dynamic> && response.containsKey("data")) {
+      return response["data"];
     }
+    return [];
+  }
+
+  /// ============================================================
+  /// CREATE SUB CATEGORY
+  /// ============================================================
+  static Future<Map<String, dynamic>> createSubCategory(int parentId, String name) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.createSubCategory(parentId),
+      body: {"category_name": name},
+      requireAuth: true,
+    );
+
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Invalid response format");
+    }
+
+    return response;
+  }
+
+  /// ============================================================
+  /// UPDATE CATEGORY (PUT)
+  /// ============================================================
+  static Future<Map<String, dynamic>> updateCategory(int id, String name) async {
+    final response = await ApiClient.put(
+      endpoint: ApiUrls.categoryDetails(id),
+      data: {"category_name": name},
+      requireAuth: true,
+    );
+
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Invalid response format");
+    }
+
+    return response;
+  }
+
+  /// ============================================================
+  /// DELETE CATEGORY
+  /// ============================================================
+  static Future<void> deleteCategory(int id, {bool deleteSubcategories = false}) async {
+    await ApiClient.delete(
+      endpoint: "${ApiUrls.categoryDetails(id)}${deleteSubcategories ? "?delete_subcategories=true" : ""}",
+      requireAuth: true,
+    );
+  }
+
+  /// ============================================================
+  /// UPLOAD CATEGORY IMAGE
+  /// ============================================================
+  static Future<Map<String, dynamic>> uploadCategoryImage(int id, String imagePath) async {
+    final response = await ApiClient.postMultipart(
+      endpoint: ApiUrls.categoryImage(id),
+      fields: {},
+      files: {"image": imagePath},
+      requireAuth: true,
+    );
+
+    return response;
   }
 }

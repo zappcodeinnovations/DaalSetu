@@ -20,6 +20,9 @@ class ApiClient {
   }) async {
     try {
       final uri = Uri.parse(ApiUrls.baseUrl + endpoint);
+      print("🔗 API CALL (MULTIPART): $endpoint");
+      print("📤 FIELDS: $fields");
+      print("📤 FILES: $files");
 
       final request = http.MultipartRequest('POST', uri);
 
@@ -273,16 +276,31 @@ class ApiClient {
   /// ===============================
   static dynamic _handleResponse(http.Response response) {
     final statusCode = response.statusCode;
+    final body = response.body;
 
     if (statusCode >= 200 && statusCode < 300) {
-      return jsonDecode(response.body);
+      return body.isNotEmpty ? jsonDecode(body) : {};
     } else {
       print("❌ API RESPONSE ERROR");
       print("📥 STATUS CODE: $statusCode");
-      print("📥 BODY: ${response.body}");
+      print("📥 BODY: $body");
+
+      String errorMessage = "Unexpected Error";
+      try {
+        final decoded = jsonDecode(body);
+        if (decoded is Map && decoded.containsKey('detail')) {
+          errorMessage = decoded['detail'];
+        } else if (decoded is Map && decoded.containsKey('message')) {
+          errorMessage = decoded['message'];
+        } else {
+          errorMessage = body;
+        }
+      } catch (_) {
+        errorMessage = body;
+      }
 
       if (statusCode == 400) {
-        throw Exception("Bad Request: ${response.body}");
+        throw Exception(errorMessage);
       } else if (statusCode == 401) {
         throw Exception("Unauthorized");
       } else if (statusCode == 403) {
@@ -290,9 +308,9 @@ class ApiClient {
       } else if (statusCode == 404) {
         throw Exception("Not Found");
       } else if (statusCode >= 500) {
-        throw Exception("Server Error: ${response.body}");
+        throw Exception("Server Error: $errorMessage");
       } else {
-        throw Exception("Unexpected Error: ${response.body}");
+        throw Exception(errorMessage);
       }
     }
   }

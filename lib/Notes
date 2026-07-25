@@ -1,0 +1,13 @@
+when i tap in Add Sub-Category and edit Category the popup is not proper i want to the popup is glosy efect and fix alignment
+and when i search a Categories so that is not work
+it return a deffrent UI why this is only for main or root categories
+POST https://daalsetu.zappcode.in/api/categories/
+{
+    "category_name": "Grains",
+    "is_active": "true",
+    "brand_ids": [1, 2]
+}
+this is body
+this is for add Category in appbar action[
+elevated button ]
+and the image is not display proper why in categories tree

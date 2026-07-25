@@ -36,4 +36,10 @@ class ApiUrls {
   static const String companyPrimary = "/api/company/primary/";
   static const String categoriesDashboard = "/api/categories/dashboard/";
   static const String categoriesTree = "/api/categories/tree/";
+
+  static String companyDetails(int id) => "/api/company/$id/";
+  static String setPrimaryCompany(int id) => "/api/company/$id/set-primary/";
+  static String categoryDetails(int id) => "/api/categories/$id/";
+  static String createSubCategory(int parentId) => "/api/categories/$parentId/sub-category/";
+  static String categoryImage(int id) => "/api/categories/$id/image/";
 }
