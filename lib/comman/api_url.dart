@@ -36,6 +36,9 @@ class ApiUrls {
   static const String companyPrimary = "/api/company/primary/";
   static const String categoriesDashboard = "/api/categories/dashboard/";
   static const String categoriesTree = "/api/categories/tree/";
+  static const String sellerBranches = "/api/seller/branches/";
+  static const String branchRequestByCode = "/api/seller/branches/request-by-code/";
+  static const String sellerChallans = "/api/seller/delivery-challans/";
 
   // Brands
   static const String brandsDropdown = "/api/brands/dropdown/";
@@ -55,4 +58,10 @@ class ApiUrls {
   static String categoryDetails(int id) => "/api/categories/$id/";
   static String createSubCategory(int parentId) => "/api/categories/$parentId/sub-category/";
   static String categoryImage(int id) => "/api/categories/$id/image/";
+
+  static String branchDetails(int id) => "/api/seller/branches/$id/";
+  static String cancelBranchRequest(int id) => "/api/seller/branches/$id/cancel-request/";
+  static String leaveBranch(int id) => "/api/seller/branches/$id/leave/";
+  static String challanDetails(int id) => "/api/seller/delivery-challans/$id/";
+  static String dispatchChallan(int id) => "/api/seller/delivery-challans/$id/dispatch/";
 }

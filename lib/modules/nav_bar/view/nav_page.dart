@@ -3,6 +3,8 @@ import 'package:iconly/iconly.dart';
 import 'package:agro_broker/modules/seller/dashboard/view/seller_dashboard_view.dart';
 import 'package:agro_broker/modules/seller/company/view/seller_company_view.dart';
 import 'package:agro_broker/modules/seller/categories/view/seller_category_view.dart';
+import 'package:agro_broker/modules/seller/branches/view/seller_branch_view.dart';
+import 'package:agro_broker/modules/seller/delivery/view/seller_delivery_view.dart';
 import 'package:agro_broker/modules/contracts/view/contract_view.dart';
 import 'package:agro_broker/modules/dashboard/view/dashboard_page.dart';
 import 'package:agro_broker/modules/kyc_users/view/kyc_user_view.dart';
@@ -15,6 +17,7 @@ import 'package:agro_broker/modules/buyer/dashboard/view/buyer_dashboard_view.da
 import 'package:agro_broker/modules/buyer/offers/view/buyer_offers_view.dart';
 import 'package:agro_broker/modules/buyer/delivery_challan/view/buyer_delivery_challan_view.dart';
 import 'package:agro_broker/modules/settings/view/settings_page.dart';
+import 'package:agro_broker/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -54,6 +57,86 @@ class MainNavigationScreen extends StatelessWidget {
     ];
   }
 
+  Widget _buildSellerDrawer(BuildContext context) {
+    final theme = Theme.of(context);
+    return Drawer(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      child: Column(
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFB300).withValues(alpha: 0.1),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Color(0xFFFFB300),
+                    child: Icon(Icons.storefront, color: Colors.white, size: 30),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    "Seller Menu",
+                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(IconlyLight.location, color: Color(0xFFFFB300)),
+            title: const Text("My Branches"),
+            subtitle: const Text("Manage locations & requests"),
+            onTap: () {
+              Get.back();
+              Get.toNamed(AppRoutes.sellerBranches);
+            },
+          ),
+          ListTile(
+            leading: const Icon(IconlyLight.activity, color: Color(0xFFFFB300)),
+            title: const Text("Logistics"),
+            subtitle: const Text("Delivery challans & tracking"),
+            onTap: () {
+              Get.back();
+              Get.toNamed(AppRoutes.sellerLogistics);
+            },
+          ),
+          ListTile(
+            leading: const Icon(IconlyLight.bag, color: Color(0xFFFFB300)),
+            title: const Text("My Products"),
+            subtitle: const Text("Manage your inventory"),
+            onTap: () {
+              Get.back();
+              Get.toNamed(AppRoutes.sellerProducts);
+            },
+          ),
+          ListTile(
+            leading: const Icon(IconlyLight.document, color: Color(0xFFFFB300)),
+            title: const Text("Contracts"),
+            subtitle: const Text("View all deal contracts"),
+            onTap: () {
+              Get.back();
+              Get.toNamed(AppRoutes.sellerContracts);
+            },
+          ),
+          const Spacer(),
+          const Divider(),
+          ListTile(
+            leading: const Icon(IconlyLight.logout, color: Colors.red),
+            title: const Text("Logout", style: TextStyle(color: Colors.red)),
+            onTap: () {
+              // Standard logout logic
+              Get.back();
+            },
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Obx(
@@ -67,8 +150,10 @@ class MainNavigationScreen extends StatelessWidget {
         }
 
         return Scaffold(
+          key: navController.userRole.value == 'seller' ? GlobalKey<ScaffoldState>() : null,
           backgroundColor: Colors.transparent,
           extendBody: true,
+          drawer: navController.userRole.value == 'seller' ? _buildSellerDrawer(context) : null,
           body: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(

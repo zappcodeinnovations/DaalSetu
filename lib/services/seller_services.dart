@@ -272,4 +272,143 @@ class SellerServices {
 
     return response;
   }
+
+  /// ============================================================
+  /// GET SELLER BRANCHES
+  /// ============================================================
+  static Future<Map<String, dynamic>> getBranches() async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.sellerBranches,
+      requireAuth: true,
+    );
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Invalid response format");
+    }
+    return response;
+  }
+
+  /// ============================================================
+  /// REQUEST JOIN BRANCH BY CODE
+  /// ============================================================
+  static Future<void> requestJoinBranch(String code) async {
+    await ApiClient.post(
+      endpoint: ApiUrls.branchRequestByCode,
+      body: {"branch_code": code},
+      requireAuth: true,
+    );
+  }
+
+  /// ============================================================
+  /// LEAVE BRANCH
+  /// ============================================================
+  static Future<void> leaveBranch(int id) async {
+    await ApiClient.post(
+      endpoint: ApiUrls.leaveBranch(id),
+      body: {},
+      requireAuth: true,
+    );
+  }
+
+  /// ============================================================
+  /// CANCEL BRANCH REQUEST
+  /// ============================================================
+  static Future<void> cancelBranchRequest(int id) async {
+    await ApiClient.post(
+      endpoint: ApiUrls.cancelBranchRequest(id),
+      body: {},
+      requireAuth: true,
+    );
+  }
+
+  /// ============================================================
+  /// GET DELIVERY CHALLANS
+  /// ============================================================
+  static Future<List<dynamic>> getDeliveryChallans() async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.sellerChallans,
+      requireAuth: true,
+    );
+    if (response == null) {
+      throw Exception("Failed to fetch challans");
+    }
+    if (response is Map<String, dynamic>) {
+      if (response.containsKey("results")) {
+        return response["results"] is List ? response["results"] : [];
+      } else if (response.containsKey("data")) {
+        return response["data"] is List ? response["data"] : [];
+      }
+    }
+    return response is List ? response : [];
+  }
+
+  /// ============================================================
+  /// GET CHALLAN DETAILS
+  /// ============================================================
+  static Future<Map<String, dynamic>> getChallanDetails(int id) async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.challanDetails(id),
+      requireAuth: true,
+    );
+    return response;
+  }
+
+  /// ============================================================
+  /// DISPATCH CHALLAN
+  /// ============================================================
+  static Future<void> dispatchChallan(int id) async {
+    await ApiClient.post(
+      endpoint: ApiUrls.dispatchChallan(id),
+      body: {},
+      requireAuth: true,
+    );
+  }
+
+  /// ============================================================
+  /// GET PRODUCTS
+  /// ============================================================
+  static Future<List<dynamic>> getProducts() async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.products,
+      requireAuth: true,
+    );
+    if (response == null) {
+      throw Exception("Failed to fetch products");
+    }
+    if (response is Map<String, dynamic> && response.containsKey("data")) {
+      return response["data"] is List ? response["data"] : [];
+    }
+    return response is List ? response : [];
+  }
+
+  /// ============================================================
+  /// CREATE PRODUCT
+  /// ============================================================
+  static Future<void> createProduct(Map<String, dynamic> data) async {
+    await ApiClient.post(
+      endpoint: ApiUrls.products,
+      body: data,
+      requireAuth: true,
+    );
+  }
+
+  /// ============================================================
+  /// GET CONTRACTS
+  /// ============================================================
+  static Future<List<dynamic>> getContracts() async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.contracts,
+      requireAuth: true,
+    );
+    if (response == null) {
+      throw Exception("Failed to fetch contracts");
+    }
+    if (response is Map<String, dynamic>) {
+      if (response.containsKey("results")) {
+        return response["results"] is List ? response["results"] : [];
+      } else if (response.containsKey("data")) {
+        return response["data"] is List ? response["data"] : [];
+      }
+    }
+    return response is List ? response : [];
+  }
 }

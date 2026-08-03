@@ -1,3 +1,4 @@
+import 'package:agro_broker/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
@@ -43,6 +44,10 @@ class SellerDashboardView extends StatelessWidget {
         }),
         actions: [
           IconButton(
+            onPressed: () => Scaffold.of(context).openDrawer(),
+            icon: Icon(IconlyLight.more_square, color: theme.iconTheme.color),
+          ),
+          IconButton(
             onPressed: () {},
             icon: Icon(IconlyLight.notification, color: theme.iconTheme.color),
           ),
@@ -78,6 +83,8 @@ class SellerDashboardView extends StatelessWidget {
               children: [
                 _buildHeaderCard(context, data.header),
                 const SizedBox(height: 24),
+                _buildQuickLinks(context),
+                const SizedBox(height: 24),
                 _sectionTitle(context, "Overview KPIs"),
                 const SizedBox(height: 12),
                 _buildResponsiveKpiGrid(context, data.kpis),
@@ -96,6 +103,105 @@ class SellerDashboardView extends StatelessWidget {
           ),
         );
       }),
+    );
+  }
+
+  Widget _buildQuickLinks(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _quickLinkCard(
+                context,
+                "My Branches",
+                IconlyLight.location,
+                const Color(0xFFFFB300),
+                () => Get.toNamed(AppRoutes.sellerBranches),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _quickLinkCard(
+                context,
+                "Logistics",
+                IconlyLight.activity,
+                const Color(0xFF1661EF),
+                () => Get.toNamed(AppRoutes.sellerLogistics),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _quickLinkCard(
+                context,
+                "My Products",
+                IconlyLight.bag,
+                const Color(0xFF10B981),
+                () => Get.toNamed(AppRoutes.sellerProducts),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _quickLinkCard(
+                context,
+                "Contracts",
+                IconlyLight.document,
+                const Color(0xFFE53935),
+                () => Get.toNamed(AppRoutes.sellerContracts),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _quickLinkCard(BuildContext context, String title, IconData icon, Color color, VoidCallback onTap) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+          boxShadow: isDark ? [] : [
+            BoxShadow(
+              color: color.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -172,14 +278,19 @@ class SellerDashboardView extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(IconlyLight.shield_done, color: Colors.white, size: 16),
                 const SizedBox(width: 6),
-                Text(
-                  "${header.profileCompletion}%",
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                Flexible(
+                  child: Text(
+                    "${header.profileCompletion}%",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

@@ -16,6 +16,10 @@ import 'package:agro_broker/modules/splashscreen/view/splash_screen.dart';
 import 'package:agro_broker/modules/seller/dashboard/view/seller_dashboard_view.dart';
 import 'package:agro_broker/modules/seller/company/view/seller_company_view.dart';
 import 'package:agro_broker/modules/seller/categories/view/seller_category_view.dart';
+import 'package:agro_broker/modules/seller/branches/view/seller_branch_view.dart';
+import 'package:agro_broker/modules/seller/delivery/view/seller_delivery_view.dart';
+import 'package:agro_broker/modules/seller/products/view/seller_product_view.dart';
+import 'package:agro_broker/modules/seller/contracts/view/seller_contract_view.dart';
 import 'package:agro_broker/modules/transporter/dashboard/view/transporter_dashboard_view.dart';
 import 'package:agro_broker/modules/transporter/branch/view/transporter_branch_view.dart';
 import 'package:agro_broker/modules/transporter/brands/view/transporter_brands_view.dart';
@@ -91,6 +95,10 @@ class AppPages {
     GetPage(name: AppRoutes.sellerDashboard, page: () => const SellerDashboardView()),
     GetPage(name: AppRoutes.sellerCompany, page: () => const SellerCompanyView()),
     GetPage(name: AppRoutes.sellerCategory, page: () => const SellerCategoryView()),
+    GetPage(name: AppRoutes.sellerBranches, page: () => const SellerBranchView()),
+    GetPage(name: AppRoutes.sellerLogistics, page: () => const SellerDeliveryView()),
+    GetPage(name: AppRoutes.sellerProducts, page: () => const SellerProductView()),
+    GetPage(name: AppRoutes.sellerContracts, page: () => const SellerContractView()),
 
     // TRANSPORTER PANEL
     GetPage(name: AppRoutes.transporterDashboard, page: () => const TransporterDashboardView()),
