@@ -36,4 +36,14 @@ class ApiUrls {
   static const String companyPrimary = "/api/company/primary/";
   static const String categoriesDashboard = "/api/categories/dashboard/";
   static const String categoriesTree = "/api/categories/tree/";
+
+  // Buyer Panel
+  static const String buyerDashboard = "/api/buyer/dashboard/";
+  static const String buyerOffers = "/api/buyer-offers/";
+  static const String buyerOffersCreate = "/api/buyer-offers/create/";
+  static const String buyerDeliveryChallans = "/api/buyer/delivery-challans/";
+  static const String buyerMyInterests = "/api/offers/my-interests/list/";
+  static const String buyerTodayOffers = "/api/offers/today/";
+  static const String buyerPendingOffers = "/api/offers/pending/";
+  static const String buyerPreviousOffers = "/api/offers/previous/";
 }

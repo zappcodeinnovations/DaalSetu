@@ -8,6 +8,12 @@ import 'package:agro_broker/modules/dashboard/view/dashboard_page.dart';
 import 'package:agro_broker/modules/kyc_users/view/kyc_user_view.dart';
 import 'package:agro_broker/modules/nav_bar/controller/nav_controller.dart';
 import 'package:agro_broker/modules/products/view/product_view.dart';
+import 'package:agro_broker/modules/transporter/dashboard/view/transporter_dashboard_view.dart';
+import 'package:agro_broker/modules/transporter/drivers/view/transporter_drivers_view.dart';
+import 'package:agro_broker/modules/transporter/vehicles/view/transporter_vehicles_view.dart';
+import 'package:agro_broker/modules/buyer/dashboard/view/buyer_dashboard_view.dart';
+import 'package:agro_broker/modules/buyer/offers/view/buyer_offers_view.dart';
+import 'package:agro_broker/modules/buyer/delivery_challan/view/buyer_delivery_challan_view.dart';
 import 'package:agro_broker/modules/settings/view/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -23,6 +29,20 @@ class MainNavigationScreen extends StatelessWidget {
         SellerDashboardView(),
         SellerCompanyView(),
         SellerCategoryView(),
+      ] + [SettingsScreen()];
+    }
+    if (role == 'transporter') {
+      return const [
+        TransporterDashboardView(),
+        TransporterDriversView(),
+        TransporterVehiclesView(),
+      ] + [SettingsScreen()];
+    }
+    if (role == 'buyer') {
+      return const [
+        BuyerDashboardView(),
+        BuyerOffersView(),
+        BuyerDeliveryChallanView(),
       ] + [SettingsScreen()];
     }
     return [
@@ -91,6 +111,22 @@ class _GlassNavBar extends StatelessWidget {
         _NavItem(icon: IconlyLight.category, activeIcon: IconlyBold.category, label: 'Dashboard'),
         _NavItem(icon: IconlyLight.home, activeIcon: IconlyBold.home, label: 'Company'),
         _NavItem(icon: IconlyLight.document, activeIcon: IconlyBold.document, label: 'Category'),
+        _NavItem(icon: IconlyLight.setting, activeIcon: IconlyBold.setting, label: 'Settings'),
+      ];
+    }
+    if (role == 'transporter') {
+      return const [
+        _NavItem(icon: IconlyLight.category, activeIcon: IconlyBold.category, label: 'Dashboard'),
+        _NavItem(icon: IconlyLight.user_1, activeIcon: IconlyBold.user_3, label: 'Drivers'),
+        _NavItem(icon: IconlyLight.discovery, activeIcon: IconlyBold.discovery, label: 'Vehicles'),
+        _NavItem(icon: IconlyLight.setting, activeIcon: IconlyBold.setting, label: 'Settings'),
+      ];
+    }
+    if (role == 'buyer') {
+      return const [
+        _NavItem(icon: IconlyLight.category, activeIcon: IconlyBold.category, label: 'Dashboard'),
+        _NavItem(icon: IconlyLight.ticket_star, activeIcon: IconlyBold.ticket_star, label: 'Offers'),
+        _NavItem(icon: IconlyLight.document, activeIcon: IconlyBold.document, label: 'Challan'),
         _NavItem(icon: IconlyLight.setting, activeIcon: IconlyBold.setting, label: 'Settings'),
       ];
     }

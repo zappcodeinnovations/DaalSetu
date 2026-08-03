@@ -45,4 +45,31 @@ abstract class AppRoutes {
   static const sellerDashboard = '/seller/dashboard';
   static const sellerCompany = '/seller/company';
   static const sellerCategory = '/seller/category';
+
+  // TRANSPORTER PANEL
+  static const transporterDashboard = '/transporter/dashboard';
+  static const transporterBranch = '/transporter/branch';
+  static const transporterBrands = '/transporter/brands';
+  static const transporterCategory = '/transporter/category';
+  static const transporterCompany = '/transporter/company';
+  static const transporterKyc = '/transporter/kyc';
+  static const transporterContracts = '/transporter/contracts';
+  static const transporterNotifications = '/transporter/notifications';
+  static const transporterOffers = '/transporter/offers';
+  static const transporterProducts = '/transporter/products';
+  static const transporterRfq = '/transporter/rfq';
+  static const transporterUsers = '/transporter/users';
+  static const transporterDrivers = '/transporter/drivers';
+  static const transporterVehicles = '/transporter/vehicles';
+
+  // BUYER PANEL
+  static const buyerDashboard = '/buyer/dashboard';
+  static const buyerOffers = '/buyer/offers';
+  static const buyerMyInterests = '/buyer/offers/my-interests';
+  static const buyerTodayOffers = '/buyer/offers/today';
+  static const buyerPendingOffers = '/buyer/offers/pending';
+  static const buyerPreviousOffers = '/buyer/offers/previous';
+  static const buyerDeliveryChallan = '/buyer/delivery-challan';
+  static const buyerOrders = '/buyer/orders';
+  static const buyerTransportTracking = '/buyer/transport-tracking';
 }
