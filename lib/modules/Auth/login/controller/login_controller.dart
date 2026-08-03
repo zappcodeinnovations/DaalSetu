@@ -41,7 +41,7 @@ class LoginController extends GetxController {
         return;
       }
 
-      if (response.user.role != "admin" && response.user.role != "seller") {
+      if (response.user.role != "admin" && response.user.role != "seller" && response.user.role != "buyer") {
         await AppPreferences.logout();
 
         Get.dialog(

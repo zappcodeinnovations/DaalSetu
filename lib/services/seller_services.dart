@@ -4,6 +4,42 @@ import 'package:agro_broker/modules/seller/company/model/seller_company_model.da
 
 class SellerServices {
   /// ============================================================
+  /// GET BRANDS DROPDOWN
+  /// ============================================================
+  static Future<List<dynamic>> getBrandsDropdown() async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.brandsDropdown,
+      requireAuth: true,
+    );
+
+    if (response == null) {
+      throw Exception("Failed to fetch brands");
+    }
+
+    if (response is Map<String, dynamic> && response["success"] == true) {
+      return response["data"] is List ? response["data"] : [];
+    }
+    return [];
+  }
+
+  /// ============================================================
+  /// CREATE CATEGORY (ROOT)
+  /// ============================================================
+  static Future<Map<String, dynamic>> createCategory(Map<String, dynamic> data) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.categories,
+      body: data,
+      requireAuth: true,
+    );
+
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Invalid response format");
+    }
+
+    return response;
+  }
+
+  /// ============================================================
   /// GET SELLER DASHBOARD
   /// ============================================================
   static Future<Map<String, dynamic>> getDashboard() async {

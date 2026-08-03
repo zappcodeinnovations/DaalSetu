@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
@@ -23,6 +24,22 @@ class SellerCategoryView extends StatelessWidget {
           "Categories",
           style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+            child: ElevatedButton.icon(
+              onPressed: () => _showAddRootDialog(context),
+              icon: const Icon(Icons.add, size: 18, color: Colors.white),
+              label: const Text("Add Category", style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+            ),
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: controller.fetchAllData,
@@ -115,37 +132,137 @@ class SellerCategoryView extends StatelessWidget {
 
   Widget _buildSearchResults(BuildContext context) {
     final controller = Get.find<SellerCategoryController>();
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
       itemCount: controller.searchResults.length,
-      separatorBuilder: (context, index) => const Divider(),
       itemBuilder: (context, index) {
         final category = controller.searchResults[index];
-        return ListTile(
-          title: Text(category.name),
-          subtitle: Text(category.fullPath),
-          trailing: PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (value) {
-              if (value == 'edit') {
-                _showEditDialog(context, category.id, category.name);
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'edit',
-                child: Row(
-                  children: [
-                    Icon(IconlyLight.edit, size: 18),
-                    SizedBox(width: 8),
-                    Text("Edit"),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
+        // Reusing the same node structure for search results
+        return _buildSearchResultNode(context, category);
       },
+    );
+  }
+
+  Widget _buildSearchResultNode(BuildContext context, CategoryDetailModel category) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final controller = Get.find<SellerCategoryController>();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+        ),
+        boxShadow: isDark ? [] : [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: Container(
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: primaryColor.withOpacity(0.3)),
+          ),
+          child: CircleAvatar(
+            backgroundColor: primaryColor.withOpacity(0.1),
+            child: category.imageUrl != null && category.imageUrl!.isNotEmpty
+                ? ClipOval(
+                    child: Image.network(
+                      category.imageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const Icon(IconlyLight.category, color: primaryColor),
+                    ),
+                  )
+                : const Icon(IconlyLight.category, color: primaryColor),
+          ),
+        ),
+        title: Text(
+          category.name,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 6),
+            _categoryInfoRow(IconlyLight.category, "${category.childrenCount} sub-categories", theme),
+            _categoryInfoRow(
+              category.status == 'active' ? Icons.check_circle_outline : Icons.pending_actions,
+              "Status: ${category.status.toUpperCase()}",
+              theme,
+              textColor: category.status == 'active' ? Colors.green : Colors.orange,
+            ),
+          ],
+        ),
+        trailing: PopupMenuButton<String>(
+          onSelected: (value) {
+            switch (value) {
+              case 'add':
+                _showAddSubDialog(context, category.id);
+                break;
+              case 'edit':
+                _showEditDialog(context, category.id, category.name);
+                break;
+              case 'image':
+                controller.uploadImage(category.id);
+                break;
+              case 'delete':
+                _showDeleteConfirm(context, category.id);
+                break;
+            }
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'add',
+              child: Row(
+                children: [
+                  Icon(Icons.add_circle_outline, size: 20),
+                  SizedBox(width: 8),
+                  Text("Add Sub-Category"),
+                ],
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'edit',
+              child: Row(
+                children: [
+                  Icon(IconlyLight.edit, size: 20),
+                  SizedBox(width: 8),
+                  Text("Edit Category"),
+                ],
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'image',
+              child: Row(
+                children: [
+                  Icon(IconlyLight.image, size: 20),
+                  SizedBox(width: 8),
+                  Text("Upload Image"),
+                ],
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'delete',
+              child: Row(
+                children: [
+                  Icon(IconlyLight.delete, size: 20, color: Colors.red),
+                  SizedBox(width: 8),
+                  Text("Delete", style: TextStyle(color: Colors.red)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -194,8 +311,14 @@ class SellerCategoryView extends StatelessWidget {
             ),
             child: CircleAvatar(
               backgroundColor: primaryColor.withOpacity(0.1),
-              child: node.image != null
-                  ? ClipOval(child: Image.network(node.image!, fit: BoxFit.cover))
+              child: node.image != null && node.image!.isNotEmpty
+                  ? ClipOval(
+                      child: Image.network(
+                        node.image!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => const Icon(IconlyLight.category, color: primaryColor),
+                      ),
+                    )
                   : const Icon(IconlyLight.category, color: primaryColor),
             ),
           ),
@@ -304,43 +427,161 @@ class SellerCategoryView extends StatelessWidget {
     );
   }
 
+  void _showAddRootDialog(BuildContext context) {
+    final controller = Get.find<SellerCategoryController>();
+    controller.categoryNameController.clear();
+    controller.selectedBrandIds.clear();
+
+    _showGlossyDialog(
+      context: context,
+      title: "Add Root Category",
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: controller.categoryNameController,
+            decoration: InputDecoration(
+              hintText: "Enter Category Name",
+              filled: true,
+              fillColor: Theme.of(context).cardColor.withOpacity(0.5),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              prefixIcon: const Icon(IconlyLight.category),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Text("Select Brands", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          ),
+          const SizedBox(height: 8),
+          Obx(() {
+            if (controller.brandsList.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.symmetric(vertical: 30),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.red.withOpacity(0.1)),
+                ),
+                child: const Column(
+                  children: [
+                    Icon(IconlyLight.info_square, color: Colors.red, size: 24),
+                    SizedBox(height: 8),
+                    Text("Brands not Found", style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500)),
+                  ],
+                ),
+              );
+            }
+
+            return Container(
+              constraints: const BoxConstraints(maxHeight: 200),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ListView.builder(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                itemCount: controller.brandsList.length,
+                itemBuilder: (context, index) {
+                  final brand = controller.brandsList[index];
+                  return CheckboxListTile(
+                    title: Text(brand.brandName, style: const TextStyle(fontSize: 14)),
+                    value: controller.selectedBrandIds.contains(brand.id),
+                    onChanged: (val) => controller.toggleBrandSelection(brand.id),
+                    activeColor: primaryColor,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    dense: true,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  );
+                },
+              ),
+            );
+          }),
+        ],
+      ),
+      onConfirm: controller.addRootCategory,
+    );
+  }
+
   void _showAddSubDialog(BuildContext context, int parentId) {
     final controller = Get.find<SellerCategoryController>();
     controller.categoryNameController.clear();
-    Get.defaultDialog(
+    _showGlossyDialog(
+      context: context,
       title: "Add Sub-Category",
       content: TextField(
         controller: controller.categoryNameController,
-        decoration: const InputDecoration(
-          hintText: "Enter Category Name",
-          border: OutlineInputBorder(),
+        decoration: InputDecoration(
+          hintText: "Enter Sub-Category Name",
+          filled: true,
+          fillColor: Theme.of(context).cardColor.withOpacity(0.5),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
         ),
       ),
-      textConfirm: "ADD",
-      confirmTextColor: Colors.white,
-      buttonColor: primaryColor,
       onConfirm: () => controller.addSubCategory(parentId),
-      textCancel: "CANCEL",
     );
   }
 
   void _showEditDialog(BuildContext context, int id, String currentName) {
     final controller = Get.find<SellerCategoryController>();
     controller.categoryNameController.text = currentName;
-    Get.defaultDialog(
+    _showGlossyDialog(
+      context: context,
       title: "Edit Category",
       content: TextField(
         controller: controller.categoryNameController,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           hintText: "Enter Category Name",
-          border: OutlineInputBorder(),
+          filled: true,
+          fillColor: Theme.of(context).cardColor.withOpacity(0.5),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
         ),
       ),
-      textConfirm: "UPDATE",
-      confirmTextColor: Colors.white,
-      buttonColor: primaryColor,
       onConfirm: () => controller.updateCategory(id),
-      textCancel: "CANCEL",
+    );
+  }
+
+  void _showGlossyDialog({
+    required BuildContext context,
+    required String title,
+    required Widget content,
+    required VoidCallback onConfirm,
+  }) {
+    Get.dialog(
+      BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Dialog(
+          backgroundColor: Theme.of(context).cardColor.withOpacity(0.8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 20),
+                content,
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(onPressed: () => Get.back(), child: const Text("CANCEL", style: TextStyle(color: Colors.grey))),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: onConfirm,
+                      style: ElevatedButton.styleFrom(backgroundColor: primaryColor, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                      child: const Text("SAVE", style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                )
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 

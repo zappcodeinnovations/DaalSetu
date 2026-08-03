@@ -37,6 +37,9 @@ class ApiUrls {
   static const String categoriesDashboard = "/api/categories/dashboard/";
   static const String categoriesTree = "/api/categories/tree/";
 
+  // Brands
+  static const String brandsDropdown = "/api/brands/dropdown/";
+
   // Buyer Panel
   static const String buyerDashboard = "/api/buyer/dashboard/";
   static const String buyerOffers = "/api/buyer-offers/";
