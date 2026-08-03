@@ -278,14 +278,14 @@ class LoginScreen extends StatelessWidget {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                      "Sign In to Dashboard",
+                                      "Sign In",
                                       style: GoogleFonts.poppins(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600,
                                         color: Colors.white,
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: 5),
                                     const Icon(
                                       IconlyLight.arrow_right_2,
                                       color: Colors.white,

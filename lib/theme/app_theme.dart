@@ -5,15 +5,15 @@ class AppTheme {
   AppTheme._();
 
   // ── Brand Colors (from DaalSetu logo) ──────────────────────────────────
-  static const Color primaryGold = Color(0xFFFFB300);
-  static const Color accentOrange = Color(0xFFFF6D00);
+  static const Color primaryOrange = Color(0xFFEB7C35); // Matches the orange in buttons and logo
+  static const Color accentOrange = Color(0xFFF29C63);
   static const Color accentRed = Color(0xFFE53935);
-  static const Color goldenAccent = Color(0xFFFFD54F);
+  static const Color lightOrangeAccent = Color(0xFFFFF3EA); // Light background for active elements
 
   // ── Light Mode Surfaces ────────────────────────────────────────────────
-  static const Color _lightBg = Color(0xFFFFFCF5);
+  static const Color _lightBg = Color(0xFFFFFDF8);
   static const Color _lightCard = Colors.white;
-  static const Color _lightSurface = Color(0xFFF9FAFB);
+  static const Color _lightSurface = Color(0xFFFFF6F0);
 
   // ── Dark Mode Surfaces ─────────────────────────────────────────────────
   static const Color _darkBg = Color(0xFF0D1117);
@@ -22,7 +22,7 @@ class AppTheme {
 
   // ── Typography ─────────────────────────────────────────────────────────
   static TextTheme _buildTextTheme(TextTheme base, bool isDark) {
-    final Color textPrimary = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final Color textPrimary = isDark ? Colors.white : const Color(0xFF2C1B10);
     final Color textSecondary =
         isDark ? const Color(0xFFB0BEC5) : const Color(0xFF5F6B7A);
 
@@ -93,19 +93,19 @@ class AppTheme {
   // ═══════════════════════════════════════════════════════════════════════
   static ThemeData lightTheme = ThemeData(
     brightness: Brightness.light,
-    primaryColor: primaryGold,
+    primaryColor: primaryOrange,
     scaffoldBackgroundColor: _lightBg,
     textTheme: _buildTextTheme(ThemeData.light().textTheme, false),
 
     colorScheme: const ColorScheme.light(
-      primary: primaryGold,
+      primary: primaryOrange,
       onPrimary: Colors.white,
       secondary: accentOrange,
       onSecondary: Colors.white,
       error: accentRed,
       onError: Colors.white,
       surface: _lightCard,
-      onSurface: Color(0xFF1A1A2E),
+      onSurface: Color(0xFF2C1B10),
     ),
 
     appBarTheme: AppBarTheme(
@@ -144,7 +144,7 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: primaryGold, width: 1.5),
+        borderSide: const BorderSide(color: primaryOrange, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -154,7 +154,7 @@ class AppTheme {
 
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: primaryGold,
+        backgroundColor: primaryOrange,
         foregroundColor: Colors.white,
         elevation: 0,
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
@@ -170,7 +170,7 @@ class AppTheme {
 
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
-        foregroundColor: primaryGold,
+        foregroundColor: primaryOrange,
         textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
       ),
     ),
@@ -186,7 +186,7 @@ class AppTheme {
 
     checkboxTheme: CheckboxThemeData(
       fillColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) return primaryGold;
+        if (states.contains(WidgetState.selected)) return primaryOrange;
         return Colors.transparent;
       }),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
@@ -194,12 +194,12 @@ class AppTheme {
 
     switchTheme: SwitchThemeData(
       thumbColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) return primaryGold;
+        if (states.contains(WidgetState.selected)) return primaryOrange;
         return const Color(0xFFBDBDBD);
       }),
       trackColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
-          return primaryGold.withValues(alpha: 0.3);
+          return primaryOrange.withValues(alpha: 0.3);
         }
         return const Color(0xFFE0E0E0);
       }),
@@ -216,12 +216,12 @@ class AppTheme {
   // ═══════════════════════════════════════════════════════════════════════
   static ThemeData darkTheme = ThemeData(
     brightness: Brightness.dark,
-    primaryColor: primaryGold,
+    primaryColor: primaryOrange,
     scaffoldBackgroundColor: _darkBg,
     textTheme: _buildTextTheme(ThemeData.dark().textTheme, true),
 
     colorScheme: const ColorScheme.dark(
-      primary: primaryGold,
+      primary: primaryOrange,
       onPrimary: Color(0xFF1A1A2E),
       secondary: accentOrange,
       onSecondary: Colors.white,
@@ -267,7 +267,7 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: primaryGold, width: 1.5),
+        borderSide: const BorderSide(color: primaryOrange, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -277,7 +277,7 @@ class AppTheme {
 
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: primaryGold,
+        backgroundColor: primaryOrange,
         foregroundColor: const Color(0xFF1A1A2E),
         elevation: 0,
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
@@ -293,7 +293,7 @@ class AppTheme {
 
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
-        foregroundColor: primaryGold,
+        foregroundColor: primaryOrange,
         textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
       ),
     ),
@@ -309,7 +309,7 @@ class AppTheme {
 
     checkboxTheme: CheckboxThemeData(
       fillColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) return primaryGold;
+        if (states.contains(WidgetState.selected)) return primaryOrange;
         return Colors.transparent;
       }),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
@@ -317,12 +317,12 @@ class AppTheme {
 
     switchTheme: SwitchThemeData(
       thumbColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) return primaryGold;
+        if (states.contains(WidgetState.selected)) return primaryOrange;
         return const Color(0xFF616161);
       }),
       trackColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
-          return primaryGold.withValues(alpha: 0.3);
+          return primaryOrange.withValues(alpha: 0.3);
         }
         return const Color(0xFF424242);
       }),
