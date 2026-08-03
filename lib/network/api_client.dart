@@ -20,6 +20,9 @@ class ApiClient {
   }) async {
     try {
       final uri = Uri.parse(ApiUrls.baseUrl + endpoint);
+      print("🔗 API CALL (MULTIPART): $endpoint");
+      print("📤 FIELDS: $fields");
+      print("📤 FILES: $files");
 
       final request = http.MultipartRequest('POST', uri);
 
@@ -46,16 +49,57 @@ class ApiClient {
 
       return _handleResponse(response);
     } on SocketException {
-      print("❌ API FAILED (GET): $endpoint");
+      print("❌ NO INTERNET: $endpoint");
       GlobalErrorHandler.showNoInternet();
       throw Exception("No Internet Connection");
     } on HttpException {
+      GlobalErrorHandler.showServerError();
       throw Exception("Server Error");
     } on FormatException {
       throw Exception("Invalid Response Format");
-    } 
-    catch (e) {
-      throw Exception("Unexpected Error: $e");
+    } catch (e) {
+      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized")) {
+        GlobalErrorHandler.showServerError();
+      }
+      rethrow;
+    }
+  }
+
+  /// ===============================
+  /// PUT REQUEST
+  /// ===============================
+  static Future<Map<String, dynamic>> put({
+    required String endpoint,
+    required Map<String, dynamic> data,
+    bool requireAuth = false,
+  }) async {
+    try {
+      final uri = Uri.parse(ApiUrls.baseUrl + endpoint);
+
+      print("🔗 API CALL (PUT): $endpoint");
+      print("📤 BODY: $data");
+
+      final response = await http
+          .put(
+            uri,
+            headers: await _buildHeaders(requireAuth),
+            body: jsonEncode(data),
+          )
+          .timeout(_timeout);
+
+      print("📥 STATUS CODE: ${response.statusCode}");
+      print("📥 RESPONSE: ${response.body}");
+
+      return _handleResponse(response);
+    } on SocketException {
+      print("❌ NO INTERNET: $endpoint");
+      GlobalErrorHandler.showNoInternet();
+      throw Exception("No Internet Connection");
+    } catch (e) {
+      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized")) {
+        GlobalErrorHandler.showServerError();
+      }
+      rethrow;
     }
   }
 
@@ -86,9 +130,14 @@ class ApiClient {
 
       return _handleResponse(response);
     } on SocketException {
-      print("❌ API FAILED (GET): $endpoint");
+      print("❌ NO INTERNET: $endpoint");
       GlobalErrorHandler.showNoInternet();
       throw Exception("No Internet Connection");
+    } catch (e) {
+      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized")) {
+        GlobalErrorHandler.showServerError();
+      }
+      rethrow;
     }
   }
 
@@ -113,9 +162,14 @@ class ApiClient {
 
       return _handleResponse(response);
     } on SocketException {
-      print("❌ API FAILED (GET): $endpoint");
+      print("❌ NO INTERNET: $endpoint");
       GlobalErrorHandler.showNoInternet();
       throw Exception("No Internet Connection");
+    } catch (e) {
+      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized")) {
+        GlobalErrorHandler.showServerError();
+      }
+      rethrow;
     }
   }
 
@@ -144,11 +198,14 @@ class ApiClient {
 
       return _handleResponse(response);
     } on SocketException {
-      print("❌ API FAILED (GET): $endpoint");
+      print("❌ NO INTERNET: $endpoint");
       GlobalErrorHandler.showNoInternet();
       throw Exception("No Internet Connection");
     } catch (e) {
-      throw Exception("Error: $e");
+      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized")) {
+        GlobalErrorHandler.showServerError();
+      }
+      rethrow;
     }
   }
 
@@ -172,23 +229,24 @@ class ApiClient {
 
       return _handleResponse(response);
     } on SocketException {
-      print("❌ API FAILED (GET): $endpoint");
-
+      print("❌ NO INTERNET: $endpoint");
       GlobalErrorHandler.showNoInternet();
-
       throw Exception("No Internet Connection");
     } on TimeoutException {
       print("⏳ API TIMEOUT: $endpoint");
-
       GlobalErrorHandler.showServerError();
-
       throw Exception("Server Timeout");
     } catch (e) {
       print("❌ API FAILED (GET): $endpoint");
       print("⚠️ ERROR: $e");
 
-      GlobalErrorHandler.showServerError();
+      // Don't show server error dialog for 401/403/400 etc.
+      // These are usually handled by the controller or specifically by _handleResponse
+      if (e.toString().contains("Forbidden") || e.toString().contains("Unauthorized")) {
+         rethrow;
+      }
 
+      GlobalErrorHandler.showServerError();
       throw Exception("Error: $e");
     }
   }
@@ -203,7 +261,10 @@ class ApiClient {
       final token = await AppPreferences.getAccessToken();
 
       if (token != null) {
+        print("🔑 ACCESS TOKEN TTTTTTTTTTTT: $token");
         headers["Authorization"] = "Bearer $token";
+      } else {
+        throw Exception("Unauthorized: No access token found");
       }
     }
 
@@ -215,16 +276,31 @@ class ApiClient {
   /// ===============================
   static dynamic _handleResponse(http.Response response) {
     final statusCode = response.statusCode;
+    final body = response.body;
 
     if (statusCode >= 200 && statusCode < 300) {
-      return jsonDecode(response.body);
+      return body.isNotEmpty ? jsonDecode(body) : {};
     } else {
       print("❌ API RESPONSE ERROR");
       print("📥 STATUS CODE: $statusCode");
-      print("📥 BODY: ${response.body}");
+      print("📥 BODY: $body");
+
+      String errorMessage = "Unexpected Error";
+      try {
+        final decoded = jsonDecode(body);
+        if (decoded is Map && decoded.containsKey('detail')) {
+          errorMessage = decoded['detail'];
+        } else if (decoded is Map && decoded.containsKey('message')) {
+          errorMessage = decoded['message'];
+        } else {
+          errorMessage = body;
+        }
+      } catch (_) {
+        errorMessage = body;
+      }
 
       if (statusCode == 400) {
-        throw Exception("Bad Request: ${response.body}");
+        throw Exception(errorMessage);
       } else if (statusCode == 401) {
         throw Exception("Unauthorized");
       } else if (statusCode == 403) {
@@ -232,9 +308,9 @@ class ApiClient {
       } else if (statusCode == 404) {
         throw Exception("Not Found");
       } else if (statusCode >= 500) {
-        throw Exception("Server Error: ${response.body}");
+        throw Exception("Server Error: $errorMessage");
       } else {
-        throw Exception("Unexpected Error: ${response.body}");
+        throw Exception(errorMessage);
       }
     }
   }

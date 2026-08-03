@@ -1,6 +1,6 @@
 import 'package:agro_broker/network/api_client.dart';
 import 'package:agro_broker/comman/api_url.dart';
-import 'package:http/http.dart';
+import 'package:agro_broker/modules/seller/company/model/seller_company_model.dart';
 
 class SellerServices {
   /// ============================================================
@@ -26,7 +26,7 @@ class SellerServices {
   /// ============================================================
   /// GET COMPANY LIST
   /// ============================================================
-  static Future<List<dynamic>> getCompanies() async {
+  static Future<List<SellerCompanyModel>> getCompanies() async {
     final response = await ApiClient.get(
       endpoint: ApiUrls.company,
       requireAuth: true,
@@ -36,20 +36,19 @@ class SellerServices {
       throw Exception("Failed to fetch companies");
     }
 
-    // Assuming the API returns a list directly or wrapped in data
     if (response is List) {
-      return response;
+      return response.map((e) => SellerCompanyModel.fromJson(e)).toList();
     } else if (response is Map<String, dynamic> && response.containsKey("data")) {
-      return response["data"];
+      return (response["data"] as List).map((e) => SellerCompanyModel.fromJson(e)).toList();
     } else {
-      return [response];
+       return [SellerCompanyModel.fromJson(response)];
     }
   }
 
   /// ============================================================
   /// CREATE COMPANY
   /// ============================================================
-  static Future<Map<String, dynamic>> createCompany(Map<String, dynamic> data) async {
+  static Future<SellerCompanyModel> createCompany(Map<String, dynamic> data) async {
     final response = await ApiClient.post(
       endpoint: ApiUrls.company,
       body: data,
@@ -60,93 +59,38 @@ class SellerServices {
       throw Exception("Invalid response format");
     }
     
-    return response;
+    return SellerCompanyModel.fromJson(response);
   }
 
   /// ============================================================
-  /// EDIT COMPANY
+  /// UPDATE COMPANY (PUT)
   /// ============================================================
-  static Future<Map<String, dynamic>> editCompany(Map<String, dynamic> data) async {
-    final response = await ApiClient.patch( // Or Patch depending on API definition
-      endpoint: ApiUrls.company,
+  static Future<SellerCompanyModel> updateCompany(int id, Map<String, dynamic> data) async {
+    final response = await ApiClient.put(
+      endpoint: ApiUrls.companyDetails(id),
       data: data,
       requireAuth: true,
     );
-
-    if (response == null || response is! Map<String, dynamic>) {
-      throw Exception("Invalid response format");
-    }
-    
-    return response;
+    return SellerCompanyModel.fromJson(response);
   }
 
   /// ============================================================
-  /// GET COMPANY DROPDOWN
+  /// SET PRIMARY COMPANY (POST)
   /// ============================================================
-  static Future<List<dynamic>> getCompanyDropdown() async {
-    final response = await ApiClient.get(
-      endpoint: ApiUrls.companyDropdown,
-      requireAuth: true,
-    );
-
-    if (response == null || response is! Map<String, dynamic>) {
-      throw Exception("Invalid response format");
-    }
-
-    if (response["success"] == true) {
-      return response["data"];
-    } else {
-      throw Exception(response["message"] ?? "Failed to fetch company dropdown");
-    }
-  }
-
-  /// ============================================================
-  /// GET PRIMARY COMPANY
-  /// ============================================================
-  static Future<Map<String, dynamic>> getPrimaryCompany() async {
-    final response = await ApiClient.get(
-      endpoint: ApiUrls.companyPrimary,
-      requireAuth: true,
-    );
-
-    if (response == null || response is! Map<String, dynamic>) {
-      throw Exception("Invalid response format");
-    }
-
-    if (response["success"] == true) {
-      return response["data"];
-    } else {
-      throw Exception(response["message"] ?? "Failed to fetch primary company");
-    }
-  }
-
-  /// ============================================================
-  /// SET PRIMARY COMPANY
-  /// ============================================================
-  static Future<String> setPrimaryCompany(String id) async {
-    final response = await ApiClient.post(
-      endpoint: "/api/company/$id/set-primary/",
+  static Future<void> setPrimaryCompany(int id) async {
+    await ApiClient.post(
+      endpoint: ApiUrls.setPrimaryCompany(id),
       body: {},
       requireAuth: true,
     );
-
-    if (response == null || response is! Map<String, dynamic>) {
-      throw Exception("Invalid response format");
-    }
-
-    if (response["success"] == true) {
-      return response["message"] ?? "Success";
-    } else {
-      throw Exception(response["message"] ?? "Failed to set primary company");
-    }
   }
 
   /// ============================================================
   /// GET COMPANY BY ID
   /// ============================================================
-  static Future<Map<String, dynamic>> getCompanyById(String id) async {
+  static Future<SellerCompanyModel> getCompanyById(int id) async {
     final response = await ApiClient.get(
-      endpoint: "/api/company/$id/",
+      endpoint: ApiUrls.companyDetails(id),
       requireAuth: true,
     );
 
@@ -154,8 +98,9 @@ class SellerServices {
       throw Exception("Invalid response format");
     }
 
-    return response;
+    return SellerCompanyModel.fromJson(response);
   }
+
 
   /// ============================================================
   /// CATEGORIES DASHBOARD
@@ -178,7 +123,7 @@ class SellerServices {
   }
 
   /// ============================================================
-  /// CATEGORIES TREE
+  /// CATEGORIES TREE (GET)
   /// ============================================================
   static Future<List<dynamic>> getCategoriesTree() async {
     final response = await ApiClient.get(
@@ -198,26 +143,25 @@ class SellerServices {
   }
 
   /// ============================================================
-  /// CREATE CATEGORY
+  /// GET CATEGORY BY ID
   /// ============================================================
-  static Future<Map<String, dynamic>> createCategory(Map<String, dynamic> data) async {
-    final response = await ApiClient.post(
-      endpoint: ApiUrls.categories,
-      body: data,
+  static Future<Map<String, dynamic>> getCategoryById(int id) async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.categoryDetails(id),
       requireAuth: true,
     );
 
     if (response == null || response is! Map<String, dynamic>) {
       throw Exception("Invalid response format");
     }
-    
+
     return response;
   }
 
   /// ============================================================
-  /// SEARCH CATEGORY
+  /// SEARCH CATEGORIES
   /// ============================================================
-  static Future<List<dynamic>> searchCategory(String query) async {
+  static Future<List<dynamic>> searchCategories(String query) async {
     final response = await ApiClient.get(
       endpoint: "${ApiUrls.categories}?search=$query",
       requireAuth: true,
@@ -226,11 +170,70 @@ class SellerServices {
     if (response == null) {
       throw Exception("Failed to search categories");
     }
-    
+
     if (response is List) {
       return response;
-    } else {
-      return [];
+    } else if (response is Map<String, dynamic> && response.containsKey("data")) {
+      return response["data"];
     }
+    return [];
+  }
+
+  /// ============================================================
+  /// CREATE SUB CATEGORY
+  /// ============================================================
+  static Future<Map<String, dynamic>> createSubCategory(int parentId, String name) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.createSubCategory(parentId),
+      body: {"category_name": name},
+      requireAuth: true,
+    );
+
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Invalid response format");
+    }
+
+    return response;
+  }
+
+  /// ============================================================
+  /// UPDATE CATEGORY (PUT)
+  /// ============================================================
+  static Future<Map<String, dynamic>> updateCategory(int id, String name) async {
+    final response = await ApiClient.put(
+      endpoint: ApiUrls.categoryDetails(id),
+      data: {"category_name": name},
+      requireAuth: true,
+    );
+
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Invalid response format");
+    }
+
+    return response;
+  }
+
+  /// ============================================================
+  /// DELETE CATEGORY
+  /// ============================================================
+  static Future<void> deleteCategory(int id, {bool deleteSubcategories = false}) async {
+    await ApiClient.delete(
+      endpoint: "${ApiUrls.categoryDetails(id)}${deleteSubcategories ? "?delete_subcategories=true" : ""}",
+      requireAuth: true,
+    );
+  }
+
+  /// ============================================================
+  /// UPLOAD CATEGORY IMAGE
+  /// ============================================================
+  static Future<Map<String, dynamic>> uploadCategoryImage(int id, String imagePath) async {
+    final response = await ApiClient.postMultipart(
+      endpoint: ApiUrls.categoryImage(id),
+      fields: {},
+      files: {"image": imagePath},
+      requireAuth: true,
+    );
+
+    return response;
   }
 }

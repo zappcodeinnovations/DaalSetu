@@ -91,7 +91,6 @@ class SellerDashboardView extends StatelessWidget {
                 _sectionTitle(context, "Recent Contracts"),
                 const SizedBox(height: 12),
                 _buildRecentContractsList(context, data.recentContracts),
-                const SizedBox(height: 40),
               ],
             ),
           ),
