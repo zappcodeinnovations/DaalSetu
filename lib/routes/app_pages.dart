@@ -43,6 +43,7 @@ import 'package:agro_broker/modules/buyer/offers/view/buyer_previous_offers_view
 import 'package:agro_broker/modules/buyer/delivery_challan/view/buyer_delivery_challan_view.dart';
 import 'package:agro_broker/modules/buyer/orders/view/buyer_orders_view.dart';
 import 'package:agro_broker/modules/buyer/transport/view/buyer_transport_tracking_view.dart';
+import 'package:agro_broker/modules/buyer/offers/view/add_buyer_offer_view.dart';
 import 'package:get/get.dart';
 import 'app_routes.dart';
 
@@ -119,6 +120,7 @@ class AppPages {
     // BUYER PANEL
     GetPage(name: AppRoutes.buyerDashboard, page: () => const BuyerDashboardView()),
     GetPage(name: AppRoutes.buyerOffers, page: () => const BuyerOffersView()),
+    GetPage(name: AppRoutes.buyerOffersCreate, page: () => const AddBuyerOfferScreen()),
     GetPage(name: AppRoutes.buyerMyInterests, page: () => const BuyerMyInterestsView()),
     GetPage(name: AppRoutes.buyerTodayOffers, page: () => const BuyerTodayOffersView()),
     GetPage(name: AppRoutes.buyerPendingOffers, page: () => const BuyerPendingOffersView()),

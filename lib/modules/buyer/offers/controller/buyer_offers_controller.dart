@@ -1,4 +1,5 @@
 import 'package:agro_broker/modules/buyer/offers/model/buyer_offer_model.dart';
+import 'package:agro_broker/network/api_client.dart';
 import 'package:agro_broker/services/buyer_services.dart';
 import 'package:get/get.dart';
 
@@ -51,6 +52,53 @@ class BuyerOffersController extends GetxController {
     } catch (e) {
       isError(true);
       errorMessage(e.toString());
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  Future<void> approveInterest(int productId, int interestId, String remark) async {
+    try {
+      isLoading(true);
+      await ApiClient.post(
+        endpoint: "/api/offers/$productId/approve/",
+        body: {"interest_id": interestId, "remark": remark},
+        requireAuth: true,
+      );
+      Get.snackbar("Success", "Interest approved");
+      fetchOffers();
+    } catch (e) {
+      Get.snackbar("Error", e.toString());
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  Future<void> confirmDeal(int productId, int interestId, String remark) async {
+    try {
+      isLoading(true);
+      await ApiClient.post(
+        endpoint: "/api/offers/$productId/buyer-confirm/",
+        body: {"interest_id": interestId, "remark": remark},
+        requireAuth: true,
+      );
+      Get.snackbar("Success", "Deal confirmed successfully");
+      fetchOffers();
+    } catch (e) {
+      Get.snackbar("Error", e.toString());
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  Future<void> rejectInterest(int productId, int interestId, String remark) async {
+    try {
+      isLoading(true);
+      await BuyerServices.rejectOffer(productId, interestId, remark);
+      Get.snackbar("Interest Rejected", "The seller has been notified.");
+      fetchOffers();
+    } catch (e) {
+      Get.snackbar("Error", e.toString());
     } finally {
       isLoading(false);
     }

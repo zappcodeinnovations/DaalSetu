@@ -69,6 +69,7 @@ abstract class AppRoutes {
   // BUYER PANEL
   static const buyerDashboard = '/buyer/dashboard';
   static const buyerOffers = '/buyer/offers';
+  static const buyerOffersCreate = '/buyer/offers/create';
   static const buyerMyInterests = '/buyer/offers/my-interests';
   static const buyerTodayOffers = '/buyer/offers/today';
   static const buyerPendingOffers = '/buyer/offers/pending';

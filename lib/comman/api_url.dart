@@ -63,5 +63,8 @@ class ApiUrls {
   static String cancelBranchRequest(int id) => "/api/seller/branches/$id/cancel-request/";
   static String leaveBranch(int id) => "/api/seller/branches/$id/leave/";
   static String challanDetails(int id) => "/api/seller/delivery-challans/$id/";
+  static String buyerChallanDetails(int id) => "/api/buyer/delivery-challans/$id/";
+  static String buyerOfferDetails(int id) => "/api/buyer-offers/$id/";
+  static String buyerOfferAction(int id) => "/api/buyer-offers/$id/action/";
   static String dispatchChallan(int id) => "/api/seller/delivery-challans/$id/dispatch/";
 }
