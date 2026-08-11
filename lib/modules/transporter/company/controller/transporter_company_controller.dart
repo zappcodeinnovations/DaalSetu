@@ -1,0 +1,123 @@
+import 'package:daalsetu/comman/api_url.dart';
+import 'package:daalsetu/modules/transporter/company/model/company_model.dart';
+import 'package:daalsetu/network/api_client.dart';
+import 'package:get/get.dart';
+
+class TransporterCompanyController extends GetxController {
+  var companies = <CompanyModel>[].obs;
+  var isLoading = false.obs;
+  
+  @override
+  void onInit() {
+    super.onInit();
+    fetchCompanies();
+  }
+
+  Future<void> fetchCompanies() async {
+    try {
+      isLoading(true);
+      // Fetching from dropdown since it's the only list endpoint provided
+      final response = await ApiClient.get(
+        endpoint: ApiUrls.companyDropdown,
+        requireAuth: true,
+      );
+
+      if (response != null && response['success'] == true) {
+        final List<dynamic> data = response['data'] ?? [];
+        companies.value = data.map((json) => CompanyModel.fromDropdownJson(json)).toList();
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to load companies: $e', snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  Future<CompanyModel?> fetchCompanyDetails(int id) async {
+    try {
+      final response = await ApiClient.get(
+        endpoint: ApiUrls.companyDetails(id),
+        requireAuth: true,
+      );
+
+      if (response != null && response['id'] != null) {
+        return CompanyModel.fromJson(response);
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to load company details: $e', snackPosition: SnackPosition.BOTTOM);
+    }
+    return null;
+  }
+
+  Future<bool> createCompany(Map<String, dynamic> data) async {
+    try {
+      final response = await ApiClient.post(
+        endpoint: ApiUrls.company,
+        body: data,
+        requireAuth: true,
+      );
+
+      if (response != null && response['id'] != null) {
+        Get.snackbar('Success', 'Company created successfully', snackPosition: SnackPosition.BOTTOM);
+        await fetchCompanies();
+        return true;
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to create company: $e', snackPosition: SnackPosition.BOTTOM);
+    }
+    return false;
+  }
+
+  Future<bool> updateCompany(int id, Map<String, dynamic> data) async {
+    try {
+      // Assuming patch method is available or using post with specific headers if not
+      final response = await ApiClient.patch(
+        endpoint: ApiUrls.companyDetails(id),
+        data: data,
+        requireAuth: true,
+      );
+
+      if (response != null && response['id'] != null) {
+        Get.snackbar('Success', 'Company updated successfully', snackPosition: SnackPosition.BOTTOM);
+        await fetchCompanies();
+        return true;
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to update company: $e', snackPosition: SnackPosition.BOTTOM);
+    }
+    return false;
+  }
+
+  Future<void> deleteCompany(int id) async {
+    try {
+      final response = await ApiClient.delete(
+        endpoint: ApiUrls.companyDetails(id),
+        requireAuth: true,
+      );
+
+      if (response != null) {
+        Get.snackbar('Success', 'Company deleted successfully', snackPosition: SnackPosition.BOTTOM);
+        await fetchCompanies();
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to delete company: $e', snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+
+  Future<void> setPrimaryCompany(int id) async {
+    try {
+      final response = await ApiClient.post(
+        endpoint: ApiUrls.setPrimaryCompany(id),
+        body: {},
+        requireAuth: true,
+      );
+
+      if (response != null) {
+        Get.snackbar('Success', 'Primary company updated', snackPosition: SnackPosition.BOTTOM);
+        await fetchCompanies();
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to set primary company: $e', snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+}

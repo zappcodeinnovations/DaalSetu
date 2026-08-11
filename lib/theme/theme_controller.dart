@@ -3,8 +3,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeController extends GetxController {
-
-  final themeMode = ThemeMode.system.obs;
+  final themeMode = ThemeMode.light.obs;
 
   @override
   void onInit() {
@@ -49,7 +48,7 @@ class ThemeController extends GetxController {
         themeMode.value = ThemeMode.dark;
         break;
       default:
-        themeMode.value = ThemeMode.system;
+        themeMode.value = ThemeMode.light;
     }
   }
 }

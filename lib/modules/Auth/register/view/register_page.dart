@@ -1,5 +1,5 @@
 import 'package:iconly/iconly.dart';
-import 'package:agro_broker/modules/Auth/register/controller/register_controller.dart';
+import 'package:daalsetu/modules/Auth/register/controller/register_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

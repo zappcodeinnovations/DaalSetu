@@ -1,6 +1,6 @@
-import 'package:agro_broker/modules/contracts/model/contract_details_model.dart';
+import 'package:daalsetu/modules/contracts/model/contract_details_model.dart';
 import 'package:get/get.dart';
-import 'package:agro_broker/services/contract_services.dart';
+import 'package:daalsetu/services/contract_services.dart';
 import '../model/contract_model.dart';
 
 class ContractController extends GetxController {
@@ -29,7 +29,7 @@ class ContractController extends GetxController {
 
       contracts.assignAll(result);
     } catch (e) {
-      Get.snackbar("Success", "Contract updated successfully");
+      Get.snackbar("Error", e.toString());
     } finally {
       isLoading.value = false;
     }

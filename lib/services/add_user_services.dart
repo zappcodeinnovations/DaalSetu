@@ -1,6 +1,6 @@
 import 'dart:io';
-import 'package:agro_broker/network/api_client.dart';
-import 'package:agro_broker/comman/api_url.dart';
+import 'package:daalsetu/network/api_client.dart';
+import 'package:daalsetu/comman/api_url.dart';
 
 class AddUserServices {
 

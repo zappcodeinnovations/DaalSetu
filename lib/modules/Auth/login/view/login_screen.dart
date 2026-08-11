@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:iconly/iconly.dart';
-import 'package:agro_broker/routes/app_routes.dart';
-import 'package:agro_broker/theme/glass_widgets.dart';
+import 'package:daalsetu/routes/app_routes.dart';
+import 'package:daalsetu/theme/glass_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';

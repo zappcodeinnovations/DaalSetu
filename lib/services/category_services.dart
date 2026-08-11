@@ -1,7 +1,7 @@
-import 'package:agro_broker/comman/api_url.dart';
-import 'package:agro_broker/modules/category/model/subcategory_model.dart';
-import 'package:agro_broker/network/api_client.dart';
-import 'package:agro_broker/modules/category/model/category_model.dart';
+import 'package:daalsetu/comman/api_url.dart';
+import 'package:daalsetu/modules/category/model/subcategory_model.dart';
+import 'package:daalsetu/network/api_client.dart';
+import 'package:daalsetu/modules/category/model/category_model.dart';
 
 class CategoryService {
   /// ===============================
@@ -62,6 +62,51 @@ class CategoryService {
 
       return subcategories;
     } catch (e, stack) {
+      rethrow;
+    }
+  }
+
+  /// ===============================
+  /// CREATE CATEGORY
+  /// ===============================
+  static Future<Map<String, dynamic>> createCategory(String name) async {
+    try {
+      final response = await ApiClient.post(
+        endpoint: ApiUrls.createCategory,
+        body: {"category_name": name},
+        requireAuth: true,
+      );
+
+      if (response == null || response is! Map<String, dynamic>) {
+        throw Exception("Invalid response format");
+      }
+
+      return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// ===============================
+  /// FETCH CATEGORY BRANDS
+  /// ===============================
+  static Future<List<dynamic>> fetchCategoryBrands(int categoryId) async {
+    try {
+      final response = await ApiClient.get(
+        endpoint: ApiUrls.categoryBrands(categoryId),
+        requireAuth: true,
+      );
+
+      if (response == null || response is! Map<String, dynamic>) {
+        throw Exception("Invalid response format");
+      }
+
+      if (response['success'] == true) {
+        return response['data'] ?? [];
+      } else {
+        throw Exception(response['message'] ?? "Failed to fetch brands");
+      }
+    } catch (e) {
       rethrow;
     }
   }

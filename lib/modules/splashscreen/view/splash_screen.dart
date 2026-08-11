@@ -1,5 +1,5 @@
 import 'dart:ui';
-import 'package:agro_broker/modules/splashscreen/controller/splash_controller.dart';
+import 'package:daalsetu/modules/splashscreen/controller/splash_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 

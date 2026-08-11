@@ -1,5 +1,7 @@
 class BuyerOfferModel {
   final int? id;
+  final int? productId;
+  final int? interestId;
   final String? transactionId;
   final String? title;
   final String? requestedQuantity;
@@ -17,6 +19,8 @@ class BuyerOfferModel {
 
   BuyerOfferModel({
     this.id,
+    this.productId,
+    this.interestId,
     this.transactionId,
     this.title,
     this.requestedQuantity,
@@ -36,6 +40,8 @@ class BuyerOfferModel {
     // The "Today's Offers" usually comes in a different minimal shape or similar to Dashboard recent_rfqs.
     return BuyerOfferModel(
       id: json['id'] ?? json['interest_id'] ?? json['product_id'],
+      productId: json['product_id'] ?? json['id'],
+      interestId: json['interest_id'] ?? json['id'],
       transactionId: json['transaction_id'] ?? '',
       title: json['title'] ?? json['product_title'] ?? '',
       requestedQuantity: json['requested_quantity'] ?? json['required_quantity'] ?? json['quantity']?.toString() ?? '',

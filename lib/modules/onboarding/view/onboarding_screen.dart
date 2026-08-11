@@ -2,7 +2,7 @@ import 'package:iconly/iconly.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:agro_broker/modules/onboarding/controller/onboarding_controller.dart';
+import 'package:daalsetu/modules/onboarding/controller/onboarding_controller.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});

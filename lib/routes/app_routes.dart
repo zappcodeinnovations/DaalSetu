@@ -70,6 +70,7 @@ abstract class AppRoutes {
   static const buyerPendingOffers = '/buyer/offers/pending';
   static const buyerPreviousOffers = '/buyer/offers/previous';
   static const buyerDeliveryChallan = '/buyer/delivery-challan';
+  static const buyerDeliveryChallanDetails = '/buyer/delivery-challan-details';
   static const buyerOrders = '/buyer/orders';
   static const buyerTransportTracking = '/buyer/transport-tracking';
 }

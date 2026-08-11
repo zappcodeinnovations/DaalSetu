@@ -1,5 +1,5 @@
-import 'package:agro_broker/network/api_client.dart';
-import 'package:agro_broker/comman/api_url.dart';
+import 'package:daalsetu/network/api_client.dart';
+import 'package:daalsetu/comman/api_url.dart';
 
 class BuyerServices {
   /// ============================================================
@@ -121,5 +121,108 @@ class BuyerServices {
     } else {
       throw Exception(response["message"] ?? "Failed to fetch my interests");
     }
+  }
+
+  /// ============================================================
+  /// GET DELIVERY CHALLANS
+  /// ============================================================
+  static Future<Map<String, dynamic>> getDeliveryChallans({int page = 1, String query = ""}) async {
+    String endpoint = "${ApiUrls.buyerDeliveryChallans}?page=$page";
+    if (query.isNotEmpty) {
+      endpoint += "&search=$query";
+    }
+    
+    final response = await ApiClient.get(
+      endpoint: endpoint,
+      requireAuth: true,
+    );
+
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Invalid response format");
+    }
+
+    return response;
+  }
+
+  /// ============================================================
+  /// GET DELIVERY CHALLAN DETAILS
+  /// ============================================================
+  static Future<Map<String, dynamic>> getDeliveryChallanDetails(int challanId) async {
+    final endpoint = ApiUrls.buyerDeliveryChallanDetails(challanId);
+    final response = await ApiClient.get(
+      endpoint: endpoint,
+      requireAuth: true,
+    );
+
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Invalid response format");
+    }
+
+    return response;
+  }
+
+  /// ============================================================
+  /// RECEIVE DELIVERY CHALLAN
+  /// ============================================================
+  static Future<Map<String, dynamic>> receiveDeliveryChallan(int challanId, String remarks) async {
+    final endpoint = ApiUrls.buyerDeliveryChallanReceive(challanId);
+    final body = {
+      "received": true,
+      "remarks": remarks,
+    };
+    final response = await ApiClient.post(
+      endpoint: endpoint,
+      body: body,
+      requireAuth: true,
+    );
+
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Invalid response format");
+    }
+
+    return response;
+  }
+
+  /// ============================================================
+  /// OFFER ACTIONS
+  /// ============================================================
+  static Future<Map<String, dynamic>> approveOffer(int productId, int interestId, String remark) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.buyerApproveOffer(productId),
+      body: {"interest_id": interestId, "remark": remark},
+      requireAuth: true,
+    );
+    if (response == null || response is! Map<String, dynamic>) throw Exception("Invalid response");
+    return response;
+  }
+
+  static Future<Map<String, dynamic>> confirmOffer(int productId, int interestId, String remark) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.buyerConfirmOffer(productId),
+      body: {"interest_id": interestId, "remark": remark},
+      requireAuth: true,
+    );
+    if (response == null || response is! Map<String, dynamic>) throw Exception("Invalid response");
+    return response;
+  }
+
+  static Future<Map<String, dynamic>> rejectInterest(int productId, int interestId, String remark) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.buyerRejectInterest(productId),
+      body: {"interest_id": interestId, "remark": remark},
+      requireAuth: true,
+    );
+    if (response == null || response is! Map<String, dynamic>) throw Exception("Invalid response");
+    return response;
+  }
+
+  static Future<Map<String, dynamic>> rejectOffer(int productId, int interestId, String remark) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.buyerRejectOffer(productId),
+      body: {"interest_id": interestId, "remark": remark},
+      requireAuth: true,
+    );
+    if (response == null || response is! Map<String, dynamic>) throw Exception("Invalid response");
+    return response;
   }
 }

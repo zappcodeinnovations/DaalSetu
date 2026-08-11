@@ -24,6 +24,28 @@ class AgroBrokerApp extends StatelessWidget {
 
         initialRoute: AppRoutes.splash,
         getPages: AppPages.routes,
+        builder: (context, child) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          return Stack(
+            children: [
+              if (child != null) child,
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: Center(
+                    child: Opacity(
+                      opacity: isDark ? 0.08 : 0.08,
+                      child: Image.asset(
+                        'assets/images/thumb_logo.png',
+                        width: 300,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

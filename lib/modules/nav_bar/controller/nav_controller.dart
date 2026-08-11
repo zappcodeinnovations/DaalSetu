@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:agro_broker/utils/app_preferences.dart';
+import 'package:daalsetu/utils/app_preferences.dart';
 
 class BottomNavController extends GetxController {
   var selectedIndex = 0.obs;

@@ -1,6 +1,6 @@
 import 'package:iconly/iconly.dart';
-import 'package:agro_broker/modules/users/model/tag_model.dart';
-import 'package:agro_broker/services/tag_services.dart';
+import 'package:daalsetu/modules/users/model/tag_model.dart';
+import 'package:daalsetu/services/tag_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../model/user_model.dart';

@@ -1,6 +1,6 @@
 import 'package:iconly/iconly.dart';
-import 'package:agro_broker/modules/users/model/user_model.dart';
-import 'package:agro_broker/modules/users/view/add_user_screen.dart';
+import 'package:daalsetu/modules/users/model/user_model.dart';
+import 'package:daalsetu/modules/users/view/add_user_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/user_controller.dart';

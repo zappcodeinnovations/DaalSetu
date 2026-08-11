@@ -1,5 +1,5 @@
-import 'package:agro_broker/modules/seller/company/model/seller_company_model.dart';
-import 'package:agro_broker/services/seller_services.dart';
+import 'package:daalsetu/modules/seller/company/model/seller_company_model.dart';
+import 'package:daalsetu/services/seller_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

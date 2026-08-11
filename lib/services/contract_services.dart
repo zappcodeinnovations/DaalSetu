@@ -1,6 +1,6 @@
-import 'package:agro_broker/comman/api_url.dart';
-import 'package:agro_broker/modules/contracts/model/contract_details_model.dart';
-import 'package:agro_broker/modules/contracts/model/contract_model.dart';
+import 'package:daalsetu/comman/api_url.dart';
+import 'package:daalsetu/modules/contracts/model/contract_details_model.dart';
+import 'package:daalsetu/modules/contracts/model/contract_model.dart';
 import '../network/api_client.dart';
 
 class ContractService {
@@ -14,6 +14,10 @@ class ContractService {
       endpoint: ApiUrls.contracts,
       requireAuth: true,
     );
+
+    print("=== CONTRACT API RESPONSE ===");
+    print(response);
+    print("=============================");
 
     if (response == null || response is! Map<String, dynamic>) {
       throw Exception("Invalid contract response");

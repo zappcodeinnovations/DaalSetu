@@ -1,6 +1,6 @@
-import 'package:agro_broker/modules/seller/categories/model/category_dashboard_model.dart';
-import 'package:agro_broker/modules/seller/categories/model/seller_category_model.dart';
-import 'package:agro_broker/services/seller_services.dart';
+import 'package:daalsetu/modules/seller/categories/model/category_dashboard_model.dart';
+import 'package:daalsetu/modules/seller/categories/model/seller_category_model.dart';
+import 'package:daalsetu/services/seller_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';

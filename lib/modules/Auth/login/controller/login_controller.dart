@@ -1,10 +1,10 @@
 import 'package:iconly/iconly.dart';
-import 'package:agro_broker/modules/Auth/login/model/login_model.dart';
-import 'package:agro_broker/services/auth_services.dart';
-import 'package:agro_broker/utils/app_preferences.dart';
+import 'package:daalsetu/modules/Auth/login/model/login_model.dart';
+import 'package:daalsetu/services/auth_services.dart';
+import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:agro_broker/routes/app_routes.dart';
+import 'package:daalsetu/routes/app_routes.dart';
 
 class LoginController extends GetxController {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
@@ -41,7 +41,8 @@ class LoginController extends GetxController {
         return;
       }
 
-      if (response.user.role != "admin" && response.user.role != "seller") {
+      final allowedRoles = ["admin", "seller", "transporter", "buyer"];
+      if (!allowedRoles.contains(response.user.role)) {
         await AppPreferences.logout();
 
         Get.dialog(
@@ -86,7 +87,7 @@ class LoginController extends GetxController {
 
                   /// MESSAGE
                   const Text(
-                    "Only Admin and Seller accounts are allowed to login to this portal.",
+                    "Your role does not have access to this portal.",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,

@@ -1,4 +1,4 @@
-import 'package:agro_broker/modules/users/model/tag_model.dart';
+import 'package:daalsetu/modules/users/model/tag_model.dart';
 
 class UserModel {
   final int id;

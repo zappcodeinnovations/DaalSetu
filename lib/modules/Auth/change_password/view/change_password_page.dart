@@ -2,7 +2,7 @@ import 'package:iconly/iconly.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:agro_broker/theme/glass_widgets.dart';
+import 'package:daalsetu/theme/glass_widgets.dart';
 import '../controller/change_password_controller.dart';
 
 class ChangePasswordScreen extends StatelessWidget {

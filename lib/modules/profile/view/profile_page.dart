@@ -1,8 +1,8 @@
 import 'package:iconly/iconly.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:daalsetu/theme/glass_widgets.dart';
 import '../controller/profile_controller.dart';
-
 class ProfileScreen extends StatelessWidget {
   ProfileScreen({super.key});
 
@@ -12,17 +12,16 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+    return GradientScaffold(
       appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: Icon(IconlyLight.arrow_left, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
         ),
         title: Text(
-          "Admin Profile",
+          "Profile",
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
           ),
@@ -153,14 +152,8 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildProfileHeader(BuildContext context, dynamic user) {
     final theme = Theme.of(context);
 
-    return Container(
-      width: double.infinity,
+    return GlassCard(
       padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.2)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -260,13 +253,8 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildInfoCard(BuildContext context, String title, String value) {
     final theme = Theme.of(context);
 
-    return Container(
+    return GlassCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.2)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -292,14 +280,8 @@ class ProfileScreen extends StatelessWidget {
   }) {
     final theme = Theme.of(context);
 
-    return Container(
-      width: double.infinity,
+    return GlassCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.2)),
-      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -331,13 +313,8 @@ class ProfileScreen extends StatelessWidget {
 
     Color statusColor = approved ? theme.colorScheme.secondary : Colors.orange;
 
-    return Container(
+    return GlassCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.2)),
-      ),
       child: Row(
         children: [
           Icon(
@@ -362,13 +339,8 @@ class ProfileScreen extends StatelessWidget {
   }) {
     final theme = Theme.of(context);
 
-    return Container(
+    return GlassCard(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.2)),
-      ),
       child: Row(
         children: [
           Icon(icon, color: theme.colorScheme.primary),

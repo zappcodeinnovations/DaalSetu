@@ -1,4 +1,4 @@
-import 'package:agro_broker/services/profile_services.dart';
+import 'package:daalsetu/services/profile_services.dart';
 import 'package:get/get.dart';
 import '../model/profile_model.dart';
 

@@ -1,4 +1,4 @@
-import 'package:agro_broker/modules/splashscreen/controller/splash_controller.dart';
+import 'package:daalsetu/modules/splashscreen/controller/splash_controller.dart';
 import 'package:get/get.dart';
 
 class SplashBinding extends Bindings {

@@ -1,9 +1,9 @@
-import 'package:agro_broker/modules/Auth/forgot_password/model/forgot_password_model.dart';
-import 'package:agro_broker/modules/Auth/login/model/login_model.dart';
-import 'package:agro_broker/network/api_client.dart';
-import 'package:agro_broker/comman/api_url.dart';
-import 'package:agro_broker/utils/app_preferences.dart';
-import 'package:agro_broker/modules/Auth/register/model/register_model.dart';
+import 'package:daalsetu/modules/Auth/forgot_password/model/forgot_password_model.dart';
+import 'package:daalsetu/modules/Auth/login/model/login_model.dart';
+import 'package:daalsetu/network/api_client.dart';
+import 'package:daalsetu/comman/api_url.dart';
+import 'package:daalsetu/utils/app_preferences.dart';
+import 'package:daalsetu/modules/Auth/register/model/register_model.dart';
 
 class AuthService {
   /// ============================================================

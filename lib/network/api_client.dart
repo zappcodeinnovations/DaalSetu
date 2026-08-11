@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:agro_broker/utils/global_error_handler.dart';
+import 'package:daalsetu/utils/global_error_handler.dart';
 import 'package:http/http.dart' as http;
-import 'package:agro_broker/comman/api_url.dart';
-import 'package:agro_broker/utils/app_preferences.dart';
+import 'package:daalsetu/comman/api_url.dart';
+import 'package:daalsetu/utils/app_preferences.dart';
 import 'dart:async';
 
 class ApiClient {

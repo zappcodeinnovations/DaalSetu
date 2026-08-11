@@ -1,57 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:iconly/iconly.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:iconly/iconly.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:agro_broker/modules/seller/dashboard/controller/seller_dashboard_controller.dart';
-import 'package:agro_broker/modules/seller/dashboard/model/seller_dashboard_model.dart';
+import 'package:daalsetu/modules/seller/dashboard/controller/seller_dashboard_controller.dart';
+import 'package:daalsetu/modules/seller/dashboard/model/seller_dashboard_model.dart';
+import 'package:daalsetu/theme/glass_widgets.dart';
 
 class SellerDashboardView extends StatelessWidget {
-  const SellerDashboardView({super.key});
+  SellerDashboardView({super.key});
 
-  static const Color primaryColor = Color(0xFFFFB300);
-  static const Color accentColor = Color(0xFF1661EF);
+  final SellerDashboardController controller = Get.put(SellerDashboardController());
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(SellerDashboardController());
-    final theme = Theme.of(context);
-
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Obx(() {
-          if (controller.isLoading.value || controller.dashboardData.value == null) {
-            return const Text("Loading...");
-          }
-          final header = controller.dashboardData.value!.header;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Welcome back,",
-                style: theme.textTheme.bodySmall?.copyWith(color: theme.textTheme.bodySmall?.color?.withOpacity(0.7)),
-              ),
-              Text(
-                header.name,
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            ],
-          );
-        }),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: Icon(IconlyLight.notification, color: theme.iconTheme.color),
-          ),
-          const SizedBox(width: 16),
-        ],
-      ),
+      backgroundColor: Colors.transparent,
+      appBar: _buildAppBar(context),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator(color: primaryColor));
+          return const Center(child: CircularProgressIndicator());
         }
 
         if (controller.isError.value) {
@@ -67,30 +35,36 @@ class SellerDashboardView extends StatelessWidget {
         if (data == null) return const Center(child: Text("No Data Found"));
 
         return RefreshIndicator(
-          color: primaryColor,
-          backgroundColor: theme.cardColor,
           onRefresh: controller.fetchDashboardData,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
             physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeaderCard(context, data.header),
+                _buildHeroSection(context, data.header),
                 const SizedBox(height: 24),
-                _sectionTitle(context, "Overview KPIs"),
-                const SizedBox(height: 12),
-                _buildResponsiveKpiGrid(context, data.kpis),
+                
+                _buildSectionHeader(context, "Overview KPIs", trailingText: "View All"),
+                const SizedBox(height: 16),
+                _buildTodaysOverview(context, data.kpis),
+                
                 const SizedBox(height: 24),
-                _buildResponsiveChartsSection(context, data.charts),
+                _buildSectionHeader(context, "Analytics Overview", trailingText: "View All"),
+                const SizedBox(height: 16),
+                _buildAnalyticsGrid(context, data.charts),
+
                 const SizedBox(height: 24),
-                _sectionTitle(context, "Recent Deals"),
-                const SizedBox(height: 12),
-                _buildRecentDealsList(context, data.recentDeals),
+                _buildSectionHeader(context, "Recent Deals", trailingText: "View All"),
+                const SizedBox(height: 16),
+                _buildRecentDeals(context, data.recentDeals),
+
                 const SizedBox(height: 24),
-                _sectionTitle(context, "Recent Contracts"),
-                const SizedBox(height: 12),
-                _buildRecentContractsList(context, data.recentContracts),
+                _buildSectionHeader(context, "Recent Contracts", trailingText: "View All"),
+                const SizedBox(height: 16),
+                _buildRecentContracts(context, data.recentContracts),
+
+                const SizedBox(height: 100), // Bottom nav padding
               ],
             ),
           ),
@@ -99,321 +73,218 @@ class SellerDashboardView extends StatelessWidget {
     );
   }
 
-  Widget _sectionTitle(BuildContext context, String title) {
-    final theme = Theme.of(context);
-    return Text(
-      title,
-      style: theme.textTheme.titleMedium?.copyWith(
-        fontWeight: FontWeight.bold,
-        letterSpacing: 0.5,
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(IconlyLight.filter),
+        onPressed: () {},
       ),
-    );
-  }
-
-  Widget _buildHeaderCard(BuildContext context, SellerHeader header) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primary.withOpacity(0.8),
-            theme.colorScheme.primary,
+      title: Image.asset(
+        'assets/images/app_name.png',
+        height: 32,
+        fit: BoxFit.contain,
+      ),
+      centerTitle: true,
+      actions: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            IconButton(
+              icon: const Icon(IconlyLight.notification),
+              onPressed: () {},
+            ),
+            Positioned(
+              right: 12,
+              top: 12,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.deepOrange,
+                  shape: BoxShape.circle,
+                ),
+                child: const Text('3', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
+              ),
+            ),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(IconlyBold.home, color: Colors.white, size: 28),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  header.branchName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  "Code: ${header.branchCode} • KYC: ${header.kycStatus.toUpperCase()}",
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                const Icon(IconlyLight.shield_done, color: Colors.white, size: 16),
-                const SizedBox(width: 6),
-                Text(
-                  "${header.profileCompletion}%",
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          )
-        ],
-      ),
+        const SizedBox(width: 8),
+        CircleAvatar(
+          radius: 16,
+          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          child: Icon(IconlyLight.user_1, size: 16, color: Theme.of(context).colorScheme.primary),
+        ),
+        const SizedBox(width: 16),
+      ],
     );
   }
 
-  Widget _buildResponsiveKpiGrid(BuildContext context, List<SellerKpi> kpis) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Adapt grid columns based on screen width
-        int crossAxisCount = 2;
-        double childAspectRatio = 1.3;
-
-        if (constraints.maxWidth >= 900) {
-          crossAxisCount = 4;
-          childAspectRatio = 1.5;
-        } else if (constraints.maxWidth >= 600) {
-          crossAxisCount = 3;
-          childAspectRatio = 1.4;
-        }
-
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: childAspectRatio,
-          ),
-          itemCount: kpis.length,
-          itemBuilder: (context, index) {
-            return _buildKpiCard(context, kpis[index]);
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildKpiCard(BuildContext context, SellerKpi kpi) {
+  Widget _buildHeroSection(BuildContext context, SellerHeader header) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    IconData getIconForType(String type) {
-      switch (type) {
-        case 'currency':
-          return IconlyLight.wallet;
-        case 'number':
-          return IconlyLight.graph;
-        default:
-          return IconlyLight.document;
-      }
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              "Hello, ",
+              style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+            ),
+            Text(
+              header.name,
+              style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
+            ),
+            const Text(" 👋", style: TextStyle(fontSize: 24)),
+          ],
         ),
-        boxShadow: isDark ? [] : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  getIconForType(kpi.type),
-                  color: theme.colorScheme.primary,
-                  size: 20,
-                ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Icon(IconlyBold.home, size: 16, color: theme.colorScheme.primary),
+            const SizedBox(width: 4),
+            Text(
+              header.branchName,
+              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: theme.textTheme.bodyLarge?.color),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(4),
               ),
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 14,
-                color: theme.iconTheme.color?.withOpacity(0.5),
-              ),
-            ],
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                kpi.type == 'currency' ? "₹${kpi.value}" : "${kpi.value}",
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 22,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                kpi.title,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ],
-      ),
+              child: Text("KYC: ${header.kycStatus.toUpperCase()}", style: GoogleFonts.inter(fontSize: 10, color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
-  Widget _buildResponsiveChartsSection(BuildContext context, SellerCharts charts) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth >= 768) {
-          // Row for tablet/desktop
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _buildDonutChart(context, charts.commodityMix)),
-              const SizedBox(width: 16),
-              Expanded(child: _buildPipelineChart(context, charts.dealPipeline)),
-            ],
-          );
-        } else {
-          // Column for mobile
-          return Column(
-            children: [
-              _buildDonutChart(context, charts.commodityMix),
-              const SizedBox(height: 24),
-              _buildPipelineChart(context, charts.dealPipeline),
-            ],
-          );
-        }
-      },
-    );
-  }
-
-  Widget _buildDonutChart(BuildContext context, List<CommodityMix> commodityMix) {
+  Widget _buildSectionHeader(BuildContext context, String title, {String? trailingText, Widget? trailing}) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    if (commodityMix.isEmpty) return const SizedBox();
-
-    return Container(
-      height: 300,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.poppins(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: theme.textTheme.bodyLarge?.color,
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        if (trailingText != null)
           Text(
-            "Commodity Mix",
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          Expanded(
-            child: PieChart(
-              PieChartData(
-                sectionsSpace: 2,
-                centerSpaceRadius: 40,
-                sections: List.generate(commodityMix.length, (index) {
-                  final mix = commodityMix[index];
-                  return PieChartSectionData(
-                    color: Colors.primaries[index % Colors.primaries.length],
-                    value: mix.volume,
-                    title: "${mix.volume}%",
-                    radius: 50,
-                    titleStyle: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  );
-                }),
-              ),
+            trailingText,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary,
             ),
-          ),
-        ],
+          )
+        else if (trailing != null)
+          trailing,
+      ],
+    );
+  }
+
+  Widget _buildTodaysOverview(BuildContext context, List<SellerKpi> kpis) {
+    if (kpis.isEmpty) return const SizedBox();
+    
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      clipBehavior: Clip.none,
+      child: Row(
+        children: kpis.map((kpi) {
+          IconData icon = IconlyLight.document;
+          if (kpi.type == 'currency') icon = IconlyLight.wallet;
+          if (kpi.type == 'number') icon = IconlyLight.graph;
+          
+          return Padding(
+            padding: const EdgeInsets.only(right: 12.0),
+            child: _buildDynamicMetricCard(context, kpi, icon),
+          );
+        }).toList(),
       ),
     );
   }
 
-  Widget _buildPipelineChart(BuildContext context, Map<String, dynamic> pipeline) {
+  Widget _buildDynamicMetricCard(BuildContext context, SellerKpi metric, IconData icon) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    return GlassCard(
+      padding: const EdgeInsets.all(12),
+      child: SizedBox(
+        width: 120,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 16, color: theme.colorScheme.primary),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              metric.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              metric.type == 'currency' ? "₹${metric.value}" : metric.value.toString(),
+              style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              metric.subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(fontSize: 8, color: theme.textTheme.bodyMedium?.color),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-    if (pipeline.isEmpty) return const SizedBox();
+  Widget _buildAnalyticsGrid(BuildContext context, SellerCharts charts) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: _buildPipelineCard(context, charts.dealPipeline)),
+            const SizedBox(width: 12),
+            Expanded(child: _buildDonutCard(context, "Commodity Mix", "Overall", charts.commodityMix)),
+          ],
+        ),
+      ],
+    );
+  }
 
+  Widget _buildPipelineCard(BuildContext context, Map<String, dynamic> pipeline) {
+    final theme = Theme.of(context);
+    
     final labels = pipeline.keys.toList();
     final values = pipeline.values.map((e) => (e as num).toDouble()).toList();
     double maxY = values.isNotEmpty ? values.reduce((a, b) => a > b ? a : b) : 10;
     if (maxY == 0) maxY = 10;
-
-    return Container(
-      height: 300,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
-        ),
-      ),
+    
+    return GlassCard(
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "Deal Pipeline",
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
-          Expanded(
+          Text("Deal Pipeline", style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+          Text("By Stage", style: GoogleFonts.inter(fontSize: 8, color: theme.textTheme.bodyMedium?.color)),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 80,
             child: BarChart(
               BarChartData(
                 maxY: maxY * 1.2,
@@ -423,33 +294,17 @@ class SellerDashboardView extends StatelessWidget {
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
+                      reservedSize: 14,
                       getTitlesWidget: (value, meta) {
                         final idx = value.toInt();
                         if (idx >= 0 && idx < labels.length) {
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              labels[idx].split(' ').first, // Shortened
-                              style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
-                            ),
-                          );
+                          return Text(labels[idx].split(' ').first, style: TextStyle(fontSize: 6, color: theme.textTheme.bodyMedium?.color));
                         }
                         return const SizedBox();
                       },
                     ),
                   ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 30,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          value.toInt().toString(),
-                          style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
-                        );
-                      },
-                    ),
-                  ),
+                  leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 ),
@@ -459,9 +314,9 @@ class SellerDashboardView extends StatelessWidget {
                     barRods: [
                       BarChartRodData(
                         toY: values[index],
-                        width: 16,
-                        color: theme.colorScheme.secondary,
-                        borderRadius: BorderRadius.circular(4),
+                        width: 8,
+                        color: theme.colorScheme.primary,
+                        borderRadius: BorderRadius.circular(2),
                       )
                     ],
                   );
@@ -474,64 +329,128 @@ class SellerDashboardView extends StatelessWidget {
     );
   }
 
-  Widget _buildRecentDealsList(BuildContext context, List<SellerDeal> deals) {
+  Widget _buildDonutCard(BuildContext context, String title, String subtitle, List<CommodityMix> items) {
+    final theme = Theme.of(context);
+    final colors = [theme.colorScheme.primary, Colors.orangeAccent, Colors.redAccent, Colors.purpleAccent, Colors.blueAccent];
+    
+    if (items.isEmpty) {
+       return GlassCard(
+         padding: const EdgeInsets.all(12),
+         child: const SizedBox(height: 110, child: Center(child: Text("No Data"))),
+       );
+    }
+    
+    return GlassCard(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+          Text(subtitle, style: GoogleFonts.inter(fontSize: 8, color: theme.textTheme.bodyMedium?.color)),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              SizedBox(
+                height: 70,
+                width: 70,
+                child: PieChart(
+                  PieChartData(
+                    sectionsSpace: 0,
+                    centerSpaceRadius: 20,
+                    sections: items.asMap().entries.map((e) {
+                      return PieChartSectionData(
+                        value: e.value.volume,
+                        color: colors[e.key % colors.length],
+                        radius: 12,
+                        showTitle: false,
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: items.take(4).toList().asMap().entries.map((e) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 4.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Container(width: 6, height: 6, decoration: BoxDecoration(color: colors[e.key % colors.length], shape: BoxShape.circle)),
+                                const SizedBox(width: 4),
+                                Expanded(child: Text(e.value.categoryName, style: GoogleFonts.inter(fontSize: 8, color: theme.textTheme.bodyLarge?.color), overflow: TextOverflow.ellipsis)),
+                              ],
+                            ),
+                          ),
+                          Text("${e.value.volume.toInt()}%", style: GoogleFonts.inter(fontSize: 8, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecentDeals(BuildContext context, List<SellerDeal> deals) {
     if (deals.isEmpty) return const Text("No recent deals.");
 
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: deals.length > 5 ? 5 : deals.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final deal = deals[index];
         final theme = Theme.of(context);
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: theme.cardColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: theme.dividerColor.withOpacity(0.5)),
-          ),
+        
+        return GlassCard(
+          padding: const EdgeInsets.all(12),
           child: Row(
             children: [
               Container(
-                width: 48,
-                height: 48,
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.secondary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  shape: BoxShape.circle,
                 ),
-                child: Icon(IconlyLight.swap, color: theme.colorScheme.secondary),
+                child: Icon(IconlyLight.swap, color: theme.colorScheme.secondary, size: 20),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "${deal.categoryName} - ${deal.brandName}",
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Status: ${deal.status.replaceAll('_', ' ').toUpperCase()}",
-                      style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary),
-                    ),
+                    Text("${deal.categoryName} - ${deal.brandName}", style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+                    const SizedBox(height: 2),
+                    Text("${deal.requestedQuantity} Tons", style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color)),
                   ],
                 ),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    "₹${deal.requestedAmount}",
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "${deal.requestedQuantity} Tons",
-                    style: theme.textTheme.bodySmall,
-                  ),
+                  Text("₹${deal.requestedAmount}", style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      border: Border.all(color: theme.colorScheme.primary.withOpacity(0.5)),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(deal.status.replaceAll('_', ' ').toUpperCase(), style: GoogleFonts.inter(fontSize: 8, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+                  )
                 ],
               ),
             ],
@@ -541,69 +460,57 @@ class SellerDashboardView extends StatelessWidget {
     );
   }
 
-  Widget _buildRecentContractsList(BuildContext context, List<SellerContract> contracts) {
+  Widget _buildRecentContracts(BuildContext context, List<SellerContract> contracts) {
     if (contracts.isEmpty) return const Text("No recent contracts.");
 
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: contracts.length > 5 ? 5 : contracts.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final contract = contracts[index];
         final theme = Theme.of(context);
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: theme.cardColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: theme.dividerColor.withOpacity(0.5)),
-          ),
+        
+        return GlassCard(
+          padding: const EdgeInsets.all(12),
           child: Row(
             children: [
               Container(
-                width: 48,
-                height: 48,
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  shape: BoxShape.circle,
                 ),
-                child: const Icon(IconlyLight.document, color: Colors.green),
+                child: const Icon(IconlyLight.document, color: Colors.green, size: 20),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      contract.buyerCompany,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "ID: ${contract.contractId}",
-                      style: theme.textTheme.bodySmall,
-                    ),
+                    Text(contract.buyerCompany, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+                    const SizedBox(height: 2),
+                    Text("ID: ${contract.contractId}", style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color)),
                   ],
                 ),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    "₹${contract.dealAmount}",
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    contract.status.toUpperCase(),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.green,
-                      fontWeight: FontWeight.bold,
+                  Text("₹${contract.dealAmount}", style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      border: Border.all(color: Colors.green.withOpacity(0.5)),
+                      borderRadius: BorderRadius.circular(4),
                     ),
-                  ),
+                    child: Text(contract.status.toUpperCase(), style: GoogleFonts.inter(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.green)),
+                  )
                 ],
-              ),
+              )
             ],
           ),
         );

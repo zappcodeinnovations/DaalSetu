@@ -1,5 +1,5 @@
-import 'package:agro_broker/comman/api_url.dart';
-import 'package:agro_broker/modules/users/model/user_model.dart';
+import 'package:daalsetu/comman/api_url.dart';
+import 'package:daalsetu/modules/users/model/user_model.dart';
 import '../network/api_client.dart';
 
 class UserService {

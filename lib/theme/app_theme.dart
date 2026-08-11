@@ -94,7 +94,7 @@ class AppTheme {
   static ThemeData lightTheme = ThemeData(
     brightness: Brightness.light,
     primaryColor: primaryOrange,
-    scaffoldBackgroundColor: _lightBg,
+    scaffoldBackgroundColor: Colors.transparent,
     textTheme: _buildTextTheme(ThemeData.light().textTheme, false),
 
     colorScheme: const ColorScheme.light(
@@ -217,7 +217,7 @@ class AppTheme {
   static ThemeData darkTheme = ThemeData(
     brightness: Brightness.dark,
     primaryColor: primaryOrange,
-    scaffoldBackgroundColor: _darkBg,
+    scaffoldBackgroundColor: Colors.transparent,
     textTheme: _buildTextTheme(ThemeData.dark().textTheme, true),
 
     colorScheme: const ColorScheme.dark(

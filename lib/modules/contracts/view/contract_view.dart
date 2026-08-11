@@ -1,5 +1,5 @@
 import 'package:iconly/iconly.dart';
-import 'package:agro_broker/modules/contracts/view/contract_details_view.dart';
+import 'package:daalsetu/modules/contracts/view/contract_details_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/contract_controller.dart';

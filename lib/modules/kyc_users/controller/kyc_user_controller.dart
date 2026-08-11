@@ -1,4 +1,4 @@
-import 'package:agro_broker/services/kyc_users_services.dart';
+import 'package:daalsetu/services/kyc_users_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../model/kyc_user_model.dart';

@@ -1,6 +1,6 @@
-import 'package:agro_broker/network/api_client.dart';
-import 'package:agro_broker/comman/api_url.dart';
-import 'package:agro_broker/modules/seller/company/model/seller_company_model.dart';
+import 'package:daalsetu/network/api_client.dart';
+import 'package:daalsetu/comman/api_url.dart';
+import 'package:daalsetu/modules/seller/company/model/seller_company_model.dart';
 
 class SellerServices {
   /// ============================================================
