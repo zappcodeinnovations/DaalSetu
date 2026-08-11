@@ -107,6 +107,20 @@ class BuyerTodayOffersView extends StatelessWidget {
                       ),
                     ],
                   ),
+                  const Divider(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.snackbar("Interest Sent", "The seller has been notified of your interest.");
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text("MARK INTEREST", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
                 ],
               ),
             );

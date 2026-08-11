@@ -12,6 +12,9 @@ class SellerCategoryController extends GetxController {
   var searchResults = <CategoryDetailModel>[].obs;
   var isSearching = false.obs;
 
+  var brandsList = <BrandModel>[].obs;
+  var selectedBrandIds = <int>[].obs;
+
   final searchController = TextEditingController();
   final categoryNameController = TextEditingController();
 
@@ -19,6 +22,7 @@ class SellerCategoryController extends GetxController {
   void onInit() {
     super.onInit();
     fetchAllData();
+    fetchBrands();
   }
 
   Future<void> fetchAllData() async {
@@ -32,6 +36,15 @@ class SellerCategoryController extends GetxController {
       Get.snackbar("Error", e.toString());
     } finally {
       isLoading(false);
+    }
+  }
+
+  Future<void> fetchBrands() async {
+    try {
+      final data = await SellerServices.getBrandsDropdown();
+      brandsList.assignAll(data.map((e) => BrandModel.fromJson(e)).toList());
+    } catch (e) {
+      print("Error fetching brands: $e");
     }
   }
 
@@ -58,6 +71,28 @@ class SellerCategoryController extends GetxController {
       searchResults.assignAll(data.map((e) => CategoryDetailModel.fromJson(e)).toList());
     } catch (e) {
       print("Search Error: $e");
+    }
+  }
+
+  Future<void> addRootCategory() async {
+    if (categoryNameController.text.isEmpty) return;
+    try {
+      isLoading(true);
+      final body = {
+        "category_name": categoryNameController.text.trim(),
+        "is_active": "true",
+        "brand_ids": selectedBrandIds.toList(),
+      };
+      await SellerServices.createCategory(body);
+      categoryNameController.clear();
+      selectedBrandIds.clear();
+      Get.back();
+      Get.snackbar("Success", "Category added successfully");
+      fetchAllData();
+    } catch (e) {
+      Get.snackbar("Error", e.toString());
+    } finally {
+      isLoading(false);
     }
   }
 
@@ -141,6 +176,14 @@ class SellerCategoryController extends GetxController {
       } finally {
         isLoading(false);
       }
+    }
+  }
+
+  void toggleBrandSelection(int brandId) {
+    if (selectedBrandIds.contains(brandId)) {
+      selectedBrandIds.remove(brandId);
+    } else {
+      selectedBrandIds.add(brandId);
     }
   }
 

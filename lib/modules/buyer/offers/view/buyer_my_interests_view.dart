@@ -1,3 +1,4 @@
+import 'package:agro_broker/modules/buyer/offers/model/buyer_offer_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -72,7 +73,7 @@ class BuyerMyInterestsView extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.1),
+                          color: _getStatusColor(offer.displayStatus ?? '').withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -80,7 +81,7 @@ class BuyerMyInterestsView extends StatelessWidget {
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.primary,
+                            color: _getStatusColor(offer.displayStatus ?? ''),
                           ),
                         ),
                       ),
@@ -107,12 +108,79 @@ class BuyerMyInterestsView extends StatelessWidget {
                       ),
                     ],
                   ),
+                  const Divider(height: 24),
+                  Row(
+                    children: [
+                      if (offer.status == 'requested') ...[
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => _showActionDialog(context, "APPROVE", offer),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                            child: const Text("APPROVE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => _showActionDialog(context, "REJECT", offer),
+                            style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                            child: const Text("REJECT", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                          ),
+                        ),
+                      ],
+                      if (offer.status == 'accepted')
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => _showActionDialog(context, "CONFIRM", offer),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                            child: const Text("CONFIRM DEAL", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                          ),
+                        ),
+                    ],
+                  ),
                 ],
               ),
             );
           },
         );
       }),
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    status = status.toLowerCase();
+    if (status.contains('confirm')) return Colors.green;
+    if (status.contains('accept')) return Colors.blue;
+    if (status.contains('reject') || status.contains('cancel')) return Colors.red;
+    return const Color(0xFFFFB300);
+  }
+
+  void _showActionDialog(BuildContext context, String action, BuyerOfferModel offer) {
+    final controller = Get.find<BuyerOffersController>(tag: 'interests');
+    final remarkController = TextEditingController();
+
+    Get.defaultDialog(
+      title: "$action Offer",
+      content: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: TextField(
+          controller: remarkController,
+          decoration: const InputDecoration(hintText: "Add a remark...", border: OutlineInputBorder()),
+        ),
+      ),
+      textConfirm: "SUBMIT",
+      buttonColor: action == "APPROVE" ? Colors.blue : (action == "REJECT" ? Colors.red : Colors.green),
+      onConfirm: () {
+        Get.back();
+        if (action == "APPROVE") {
+          controller.approveInterest(offer.id!, offer.id!, remarkController.text);
+        } else if (action == "REJECT") {
+          controller.rejectInterest(offer.id!, offer.id!, remarkController.text);
+        } else {
+          controller.confirmDeal(offer.id!, offer.id!, remarkController.text);
+        }
+      },
+      textCancel: "CANCEL",
     );
   }
 }
