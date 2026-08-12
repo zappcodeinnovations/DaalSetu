@@ -11,6 +11,7 @@ import '../../rfq/view/seller_rfq_list_view.dart';
 import '../../contracts/view/seller_contracts_view.dart';
 import '../../challans/view/seller_delivery_challan_view.dart';
 import '../../branches/view/seller_branches_view.dart';
+import '../../masters/view/seller_master_management_view.dart';
 import '../../../../routes/app_routes.dart';
 
 class SellerDashboardView extends StatelessWidget {
@@ -62,7 +63,13 @@ class SellerDashboardView extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                _buildBranchesQuickCard(context),
+                Row(
+                  children: [
+                    Expanded(child: _buildBranchesQuickCard(context)),
+                    const SizedBox(width: 12),
+                    Expanded(child: _buildMastersQuickCard(context)),
+                  ],
+                ),
                 const SizedBox(height: 24),
                 
                 _buildSectionHeader(context, "Overview KPIs", trailingText: "View All"),
@@ -397,6 +404,46 @@ class SellerDashboardView extends StatelessWidget {
             ),
             Text(
               "Warehouse network",
+              style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMastersQuickCard(BuildContext context) {
+    final theme = Theme.of(context);
+    const orangeColor = Colors.orange;
+
+    return GestureDetector(
+      onTap: () => Get.to(() => const SellerMasterManagementView()),
+      child: GlassCard(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: orangeColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(IconlyBold.discount, color: orangeColor, size: 20),
+                ),
+                const Icon(IconlyLight.arrow_right_2, color: orangeColor, size: 16),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "Brands, Tags",
+              style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+            ),
+            Text(
+              "Your brand & tag detaile",
               style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color),
             ),
           ],

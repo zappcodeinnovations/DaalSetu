@@ -54,6 +54,7 @@ abstract class AppRoutes {
   static const sellerNotifications = '/seller/notifications';
   static const sellerRFQs = '/seller/rfqs';
   static const sellerDeliveryChallans = '/seller/delivery-challans';
+  static const sellerMasters = '/seller/masters';
 
   // TRANSPORTER PANEL
   static const transporterDashboard = '/transporter/dashboard';

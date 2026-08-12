@@ -24,6 +24,7 @@ import '../modules/seller/rfq/view/seller_rfq_list_view.dart';
 import '../modules/seller/contracts/view/seller_contracts_view.dart';
 import '../modules/seller/challans/view/seller_delivery_challan_view.dart';
 import '../modules/seller/branches/view/seller_branches_view.dart';
+import '../modules/seller/masters/view/seller_master_management_view.dart';
 import '../modules/transporter/dashboard/view/transporter_dashboard_view.dart';
 import '../modules/transporter/branch/view/transporter_branch_view.dart';
 import '../modules/transporter/brands/view/transporter_brands_view.dart';
@@ -108,6 +109,7 @@ class AppPages {
     GetPage(name: AppRoutes.sellerContracts, page: () => const SellerContractsView()),
     GetPage(name: AppRoutes.sellerDeliveryChallans, page: () => const SellerDeliveryChallanView()),
     GetPage(name: AppRoutes.sellerBranches, page: () => const SellerBranchesView()),
+    GetPage(name: AppRoutes.sellerMasters, page: () => const SellerMasterManagementView()),
 
     // TRANSPORTER PANEL
     GetPage(name: AppRoutes.transporterDashboard, page: () => TransporterDashboardView()),

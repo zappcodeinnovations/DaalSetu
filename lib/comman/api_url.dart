@@ -111,7 +111,11 @@ class ApiUrls {
   static String notificationsRead(int id) => "/api/notifications/read/$id/";
   static const String notificationsUnreadCount = "/api/notifications/unread-count/";
 
-  // Tags
+  // Tags & Masters
+  static const String brands = "/api/brands/";
+  static const String brandsCreate = "/api/brands/create/";
+  static const String tags = "/api/tags/";
+  static const String tagsCreate = "/api/tags/create/";
   static const String tagsDropdown = "/api/tags/dropdown/";
 
   // Buyer Requirements / RFQs

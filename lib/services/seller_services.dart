@@ -671,4 +671,105 @@ class SellerServices {
     if (response is Map<String, dynamic>) return response;
     return {"success": true, "message": "Branch created successfully"};
   }
+
+  /// ============================================================
+  /// MASTER DATA (BRANDS, CATEGORIES, TAGS)
+  /// ============================================================
+  static Future<List<dynamic>> getBrandsList() async {
+    try {
+      final response = await ApiClient.get(endpoint: ApiUrls.brandsDropdown, requireAuth: true);
+      if (response is List && response.isNotEmpty) return response;
+      if (response is Map<String, dynamic>) {
+        if (response["data"] is List && (response["data"] as List).isNotEmpty) return response["data"];
+        if (response["results"] is List && (response["results"] as List).isNotEmpty) return response["results"];
+      }
+    } catch (_) {}
+
+    try {
+      final response = await ApiClient.get(endpoint: ApiUrls.brands, requireAuth: true);
+      if (response is List) return response;
+      if (response is Map<String, dynamic> && response["results"] is List) return response["results"];
+      if (response is Map<String, dynamic> && response["data"] is List) return response["data"];
+    } catch (_) {}
+    return [];
+  }
+
+  static Future<Map<String, dynamic>> createBrand(String name, {String? description}) async {
+    final body = {"name": name, if (description != null && description.isNotEmpty) "description": description};
+    try {
+      final response = await ApiClient.post(
+        endpoint: ApiUrls.brands,
+        body: body,
+        requireAuth: true,
+      );
+      if (response is Map<String, dynamic>) return response;
+    } catch (_) {
+      final response = await ApiClient.post(
+        endpoint: "/api/admin/brand/create/",
+        body: body,
+        requireAuth: true,
+      );
+      if (response is Map<String, dynamic>) return response;
+    }
+    return {"success": true, "message": "Brand created successfully"};
+  }
+
+  static Future<List<dynamic>> getCategoryTree() async {
+    try {
+      final response = await ApiClient.get(endpoint: ApiUrls.categoriesTree, requireAuth: true);
+      if (response is List && response.isNotEmpty) return response;
+      if (response is Map<String, dynamic>) {
+        if (response["data"] is List && (response["data"] as List).isNotEmpty) return response["data"];
+        if (response["categories"] is List && (response["categories"] as List).isNotEmpty) return response["categories"];
+        if (response["results"] is List && (response["results"] as List).isNotEmpty) return response["results"];
+      }
+    } catch (_) {}
+
+    try {
+      final fallbackRes = await ApiClient.get(endpoint: ApiUrls.categories, requireAuth: true);
+      if (fallbackRes is List) return fallbackRes;
+      if (fallbackRes is Map<String, dynamic> && fallbackRes["data"] is List) return fallbackRes["data"];
+      if (fallbackRes is Map<String, dynamic> && fallbackRes["results"] is List) return fallbackRes["results"];
+    } catch (_) {}
+    return [];
+  }
+
+  static Future<List<dynamic>> getTagsList() async {
+    try {
+      final response = await ApiClient.get(endpoint: ApiUrls.tagsDropdown, requireAuth: true);
+      if (response is List && response.isNotEmpty) return response;
+      if (response is Map<String, dynamic>) {
+        if (response["data"] is List && (response["data"] as List).isNotEmpty) return response["data"];
+        if (response["results"] is List && (response["results"] as List).isNotEmpty) return response["results"];
+      }
+    } catch (_) {}
+
+    try {
+      final response = await ApiClient.get(endpoint: ApiUrls.tagsList, requireAuth: true);
+      if (response is List) return response;
+      if (response is Map<String, dynamic> && response["results"] is List) return response["results"];
+      if (response is Map<String, dynamic> && response["data"] is List) return response["data"];
+    } catch (_) {}
+    return [];
+  }
+
+  static Future<Map<String, dynamic>> createTag(String name) async {
+    final body = {"name": name, "tag_name": name};
+    try {
+      final response = await ApiClient.post(
+        endpoint: ApiUrls.addTag,
+        body: body,
+        requireAuth: true,
+      );
+      if (response is Map<String, dynamic>) return response;
+    } catch (_) {
+      final response = await ApiClient.post(
+        endpoint: ApiUrls.tags,
+        body: body,
+        requireAuth: true,
+      );
+      if (response is Map<String, dynamic>) return response;
+    }
+    return {"success": true, "message": "Tag created successfully"};
+  }
 }
