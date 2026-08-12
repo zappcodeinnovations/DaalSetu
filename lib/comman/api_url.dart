@@ -81,6 +81,7 @@ class ApiUrls {
   static String createSubCategory(int parentId) => "/api/categories/$parentId/sub-category/";
   static String categoryImage(int id) => "/api/categories/$id/image/";
 
+  static const String createBranch = "/api/branch/create/";
   static String branchDetails(int id) => "/api/seller/branches/$id/";
   static String cancelBranchRequest(int id) => "/api/seller/branches/$id/cancel-request/";
   static String leaveBranch(int id) => "/api/seller/branches/$id/leave/";

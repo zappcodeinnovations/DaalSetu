@@ -10,6 +10,7 @@ import '../../products/view/seller_product_view.dart';
 import '../../rfq/view/seller_rfq_list_view.dart';
 import '../../contracts/view/seller_contracts_view.dart';
 import '../../challans/view/seller_delivery_challan_view.dart';
+import '../../branches/view/seller_branches_view.dart';
 import '../../../../routes/app_routes.dart';
 
 class SellerDashboardView extends StatelessWidget {
@@ -60,6 +61,8 @@ class SellerDashboardView extends StatelessWidget {
                     Expanded(child: _buildChallansQuickCard(context)),
                   ],
                 ),
+                const SizedBox(height: 12),
+                _buildBranchesQuickCard(context),
                 const SizedBox(height: 24),
                 
                 _buildSectionHeader(context, "Overview KPIs", trailingText: "View All"),
@@ -354,6 +357,46 @@ class SellerDashboardView extends StatelessWidget {
             ),
             Text(
               "Dispatch & shipment",
+              style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBranchesQuickCard(BuildContext context) {
+    final theme = Theme.of(context);
+    const blueColor = Colors.blue;
+
+    return GestureDetector(
+      onTap: () => Get.to(() => const SellerBranchesView()),
+      child: GlassCard(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: blueColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(IconlyBold.work, color: blueColor, size: 20),
+                ),
+                const Icon(IconlyLight.arrow_right_2, color: blueColor, size: 16),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "Branches",
+              style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+            ),
+            Text(
+              "Warehouse network",
               style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color),
             ),
           ],

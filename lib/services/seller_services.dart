@@ -298,27 +298,7 @@ class SellerServices {
     );
   }
 
-  /// ============================================================
-  /// LEAVE BRANCH
-  /// ============================================================
-  static Future<void> leaveBranch(int id) async {
-    await ApiClient.post(
-      endpoint: ApiUrls.leaveBranch(id),
-      body: {},
-      requireAuth: true,
-    );
-  }
 
-  /// ============================================================
-  /// CANCEL BRANCH REQUEST
-  /// ============================================================
-  static Future<void> cancelBranchRequest(int id) async {
-    await ApiClient.post(
-      endpoint: ApiUrls.cancelBranchRequest(id),
-      body: {},
-      requireAuth: true,
-    );
-  }
 
   /// ============================================================
   /// GET DELIVERY CHALLANS
@@ -635,5 +615,60 @@ class SellerServices {
     );
     if (response is Map<String, dynamic>) return response;
     return {"success": true, "message": "Delivery challan dispatched successfully"};
+  }
+
+  /// ============================================================
+  /// SELLER COMPANY BRANCHES
+  /// ============================================================
+  static Future<Map<String, dynamic>> getSellerBranches() async {
+    final response = await ApiClient.get(endpoint: ApiUrls.sellerBranches, requireAuth: true);
+    if (response is Map<String, dynamic>) return response;
+    return {};
+  }
+
+  static Future<Map<String, dynamic>> getBranchDetails(int branchId) async {
+    final response = await ApiClient.get(endpoint: ApiUrls.branchDetails(branchId), requireAuth: true);
+    if (response is Map<String, dynamic>) return response;
+    return {};
+  }
+
+  static Future<Map<String, dynamic>> requestBranchByCode(String branchCode) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.requestBranchByCode,
+      body: {"branch_code": branchCode},
+      requireAuth: true,
+    );
+    if (response is Map<String, dynamic>) return response;
+    return {"success": true, "message": "Branch join request submitted successfully"};
+  }
+
+  static Future<Map<String, dynamic>> cancelBranchRequest(int branchId) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.cancelBranchRequest(branchId),
+      body: {},
+      requireAuth: true,
+    );
+    if (response is Map<String, dynamic>) return response;
+    return {"success": true, "message": "Branch request cancelled successfully"};
+  }
+
+  static Future<Map<String, dynamic>> leaveBranch(int branchId) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.leaveBranch(branchId),
+      body: {},
+      requireAuth: true,
+    );
+    if (response is Map<String, dynamic>) return response;
+    return {"success": true, "message": "Left branch successfully"};
+  }
+
+  static Future<Map<String, dynamic>> createBranch(Map<String, dynamic> body) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.createBranch,
+      body: body,
+      requireAuth: true,
+    );
+    if (response is Map<String, dynamic>) return response;
+    return {"success": true, "message": "Branch created successfully"};
   }
 }
