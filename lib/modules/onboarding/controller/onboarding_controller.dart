@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
-import 'package:daalsetu/routes/app_routes.dart';
-import 'package:daalsetu/utils/app_preferences.dart';
+import '../../../routes/app_routes.dart';
+import '../../../utils/app_preferences.dart';
 import '../model/onboarding_model.dart';
 
 class OnboardingController extends GetxController {

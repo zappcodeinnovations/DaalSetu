@@ -1,10 +1,10 @@
 import 'package:iconly/iconly.dart';
-import 'package:daalsetu/modules/Auth/login/model/login_model.dart';
-import 'package:daalsetu/services/auth_services.dart';
-import 'package:daalsetu/utils/app_preferences.dart';
+import '../model/login_model.dart';
+import '../../../../services/auth_services.dart';
+import '../../../../utils/app_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:daalsetu/routes/app_routes.dart';
+import '../../../../routes/app_routes.dart';
 
 class LoginController extends GetxController {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();

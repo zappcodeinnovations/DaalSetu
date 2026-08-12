@@ -1,7 +1,7 @@
 import 'package:iconly/iconly.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:daalsetu/theme/glass_widgets.dart';
+import '../../../theme/glass_widgets.dart';
 import '../controller/category_controller.dart';
 import '../model/category_model.dart';
 

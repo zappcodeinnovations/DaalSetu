@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:daalsetu/utils/global_error_handler.dart';
+import '../utils/global_error_handler.dart';
 import 'package:http/http.dart' as http;
-import 'package:daalsetu/comman/api_url.dart';
-import 'package:daalsetu/utils/app_preferences.dart';
+import '../comman/api_url.dart';
+import '../utils/app_preferences.dart';
 import 'dart:async';
 
 class ApiClient {

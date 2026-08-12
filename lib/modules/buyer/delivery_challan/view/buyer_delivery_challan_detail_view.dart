@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
-import 'package:daalsetu/theme/glass_widgets.dart';
-import 'package:daalsetu/modules/buyer/delivery_challan/controller/buyer_delivery_challan_controller.dart';
-import 'package:daalsetu/modules/buyer/delivery_challan/model/buyer_delivery_challan_model.dart';
+import '../../../../theme/glass_widgets.dart';
+import '../controller/buyer_delivery_challan_controller.dart';
+import '../model/buyer_delivery_challan_model.dart';
 
 class BuyerDeliveryChallanDetailView extends StatelessWidget {
   BuyerDeliveryChallanDetailView({super.key});

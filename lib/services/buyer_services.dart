@@ -1,5 +1,5 @@
-import 'package:daalsetu/network/api_client.dart';
-import 'package:daalsetu/comman/api_url.dart';
+import '../network/api_client.dart';
+import '../comman/api_url.dart';
 
 class BuyerServices {
   /// ============================================================
@@ -225,4 +225,43 @@ class BuyerServices {
     if (response == null || response is! Map<String, dynamic>) throw Exception("Invalid response");
     return response;
   }
+
+  static Future<Map<String, dynamic>> createOffer(Map<String, dynamic> body) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.buyerOffersCreate,
+      body: body,
+      requireAuth: true,
+    );
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Invalid response format");
+    }
+    return response;
+  }
+
+  static Future<Map<String, dynamic>> getOfferDetails(int id) async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.buyerOfferDetails(id),
+      requireAuth: true,
+    );
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Invalid response format");
+    }
+    return response;
+  }
+
+  static Future<Map<String, dynamic>> cancelOffer(int id) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.buyerOfferAction(id),
+      body: {"action": "cancel"},
+      requireAuth: true,
+    );
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Invalid response format");
+    }
+    return response;
+  }
+
+  static Future<Map<String, dynamic>> getChallanDetails(int challanId) => getDeliveryChallanDetails(challanId);
+
+  static Future<Map<String, dynamic>> receiveChallan(int challanId, String remarks) => receiveDeliveryChallan(challanId, remarks);
 }

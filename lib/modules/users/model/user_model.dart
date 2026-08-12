@@ -1,4 +1,4 @@
-import 'package:daalsetu/modules/users/model/tag_model.dart';
+import './tag_model.dart';
 
 class UserModel {
   final int id;

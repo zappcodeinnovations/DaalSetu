@@ -1,5 +1,5 @@
-import 'package:daalsetu/comman/api_url.dart';
-import 'package:daalsetu/modules/users/model/user_model.dart';
+import '../comman/api_url.dart';
+import '../modules/users/model/user_model.dart';
 import '../network/api_client.dart';
 
 class UserService {

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
-import 'package:daalsetu/theme/glass_widgets.dart';
-import 'package:daalsetu/modules/transporter/vehicles/controller/transporter_vehicle_controller.dart';
-import 'package:daalsetu/modules/transporter/vehicles/view/transporter_vehicle_form.dart';
-import 'package:daalsetu/modules/transporter/vehicles/view/transporter_vehicle_detail.dart';
-import 'package:daalsetu/modules/transporter/vehicles/model/vehicle_model.dart';
+import '../../../../theme/glass_widgets.dart';
+import '../controller/transporter_vehicle_controller.dart';
+import './transporter_vehicle_form.dart';
+import './transporter_vehicle_detail.dart';
+import '../model/vehicle_model.dart';
 
 class TransporterVehiclesView extends StatelessWidget {
   const TransporterVehiclesView({super.key});

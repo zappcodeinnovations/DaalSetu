@@ -1,5 +1,5 @@
 import '../model/seller_branch_model.dart';
-import 'package:agro_broker/services/seller_services.dart';
+import '../../../../services/seller_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

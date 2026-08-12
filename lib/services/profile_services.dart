@@ -1,5 +1,5 @@
-import 'package:daalsetu/comman/api_url.dart';
-import 'package:daalsetu/modules/profile/model/profile_model.dart';
+import '../comman/api_url.dart';
+import '../modules/profile/model/profile_model.dart';
 
 import '../network/api_client.dart';
 

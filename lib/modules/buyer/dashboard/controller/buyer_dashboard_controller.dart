@@ -1,9 +1,9 @@
-import 'package:daalsetu/modules/buyer/dashboard/model/buyer_dashboard_model.dart';
-import 'package:daalsetu/services/buyer_services.dart';
+import '../model/buyer_dashboard_model.dart';
+import '../../../../services/buyer_services.dart';
 import 'package:get/get.dart';
 
-import 'package:daalsetu/services/category_services.dart';
-import 'package:daalsetu/modules/category/model/category_model.dart';
+import '../../../../services/category_services.dart';
+import '../../../category/model/category_model.dart';
 
 class BuyerDashboardController extends GetxController {
   var isLoading = true.obs;

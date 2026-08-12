@@ -1,6 +1,6 @@
-import 'package:daalsetu/modules/contracts/model/contract_details_model.dart';
+import '../model/contract_details_model.dart';
 import 'package:get/get.dart';
-import 'package:daalsetu/services/contract_services.dart';
+import '../../../services/contract_services.dart';
 import '../model/contract_model.dart';
 
 class ContractController extends GetxController {

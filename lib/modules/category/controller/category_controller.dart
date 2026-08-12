@@ -1,4 +1,4 @@
-import 'package:daalsetu/services/category_services.dart';
+import '../../../services/category_services.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../model/category_model.dart';

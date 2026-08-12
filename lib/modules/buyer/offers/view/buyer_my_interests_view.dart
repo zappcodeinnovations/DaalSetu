@@ -1,9 +1,9 @@
-import 'package:agro_broker/modules/buyer/offers/model/buyer_offer_model.dart';
+import '../model/buyer_offer_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:daalsetu/theme/glass_widgets.dart';
-import 'package:daalsetu/modules/buyer/offers/controller/buyer_offers_controller.dart';
+import '../../../../theme/glass_widgets.dart';
+import '../controller/buyer_offers_controller.dart';
 
 class BuyerMyInterestsView extends StatelessWidget {
   const BuyerMyInterestsView({super.key});
@@ -173,11 +173,11 @@ class BuyerMyInterestsView extends StatelessWidget {
       onConfirm: () {
         Get.back();
         if (action == "APPROVE") {
-          controller.approveInterest(offer.id!, offer.id!, remarkController.text);
+          controller.performAction('approve', offer.id!, offer.id!, remarkController.text);
         } else if (action == "REJECT") {
-          controller.rejectInterest(offer.id!, offer.id!, remarkController.text);
+          controller.performAction('reject_interest', offer.id!, offer.id!, remarkController.text);
         } else {
-          controller.confirmDeal(offer.id!, offer.id!, remarkController.text);
+          controller.performAction('confirm', offer.id!, offer.id!, remarkController.text);
         }
       },
       textCancel: "CANCEL",

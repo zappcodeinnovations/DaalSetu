@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
-import 'package:daalsetu/modules/transporter/branch/controller/transporter_branch_controller.dart';
-import 'package:daalsetu/theme/glass_widgets.dart';
+import '../controller/transporter_branch_controller.dart';
+import '../../../../theme/glass_widgets.dart';
 
 class TransporterBranchView extends StatelessWidget {
   TransporterBranchView({super.key});

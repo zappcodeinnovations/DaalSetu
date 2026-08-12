@@ -1,5 +1,5 @@
-import 'package:agro_broker/modules/buyer/delivery_challan/model/buyer_challan_model.dart';
-import 'package:agro_broker/services/buyer_services.dart';
+import '../model/buyer_challan_model.dart';
+import '../../../../services/buyer_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -19,7 +19,8 @@ class BuyerDeliveryController extends GetxController {
     try {
       isLoading(true);
       final data = await BuyerServices.getDeliveryChallans();
-      challans.assignAll(data.map((e) => BuyerChallanModel.fromJson(e)).toList());
+      final list = (data['results'] as List?) ?? (data['challans'] as List?) ?? (data['data'] as List?) ?? [];
+      challans.assignAll(list.map((e) => BuyerChallanModel.fromJson(e)).toList());
     } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {

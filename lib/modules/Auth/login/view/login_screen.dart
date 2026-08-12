@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:iconly/iconly.dart';
-import 'package:daalsetu/routes/app_routes.dart';
-import 'package:daalsetu/theme/glass_widgets.dart';
+import '../../../../routes/app_routes.dart';
+import '../../../../theme/glass_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';

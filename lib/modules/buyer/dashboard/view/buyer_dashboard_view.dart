@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
-import 'package:daalsetu/theme/glass_widgets.dart';
-import 'package:daalsetu/routes/app_routes.dart';
-import 'package:daalsetu/modules/buyer/dashboard/controller/buyer_dashboard_controller.dart';
-import 'package:daalsetu/modules/profile/controller/profile_controller.dart';
-import 'package:daalsetu/modules/category/model/category_model.dart';
-import 'package:daalsetu/modules/category/view/category_page.dart';
+import '../../../../theme/glass_widgets.dart';
+import '../../../../routes/app_routes.dart';
+import '../controller/buyer_dashboard_controller.dart';
+import '../../../profile/controller/profile_controller.dart';
+import '../../../category/model/category_model.dart';
+import '../../../category/view/category_page.dart';
 
 class BuyerDashboardView extends StatelessWidget {
   BuyerDashboardView({super.key});

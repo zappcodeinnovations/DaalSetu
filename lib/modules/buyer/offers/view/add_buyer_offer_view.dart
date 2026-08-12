@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
-import 'package:agro_broker/services/buyer_services.dart';
-import 'package:agro_broker/services/seller_services.dart'; // To reuse category/brand fetchers
-import 'package:agro_broker/modules/seller/categories/model/seller_category_model.dart';
+import '../../../../services/buyer_services.dart';
+import '../../../../services/seller_services.dart'; // To reuse category/brand fetchers
+import '../../../seller/categories/model/seller_category_model.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AddBuyerOfferScreen extends StatefulWidget {

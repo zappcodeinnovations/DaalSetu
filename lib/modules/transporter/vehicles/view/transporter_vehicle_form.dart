@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:daalsetu/theme/glass_widgets.dart';
-import 'package:daalsetu/modules/transporter/vehicles/controller/transporter_vehicle_controller.dart';
-import 'package:daalsetu/modules/transporter/vehicles/model/vehicle_model.dart';
+import '../../../../theme/glass_widgets.dart';
+import '../controller/transporter_vehicle_controller.dart';
+import '../model/vehicle_model.dart';
 
 class TransporterVehicleForm extends StatefulWidget {
   final VehicleModel? vehicle; // Null for create, provided for edit

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
-import 'package:daalsetu/theme/glass_widgets.dart';
-import 'package:daalsetu/modules/transporter/drivers/controller/transporter_driver_controller.dart';
-import 'package:daalsetu/modules/transporter/drivers/view/transporter_driver_form.dart';
-import 'package:daalsetu/modules/transporter/drivers/view/transporter_driver_detail.dart';
-import 'package:daalsetu/modules/transporter/drivers/model/driver_model.dart';
+import '../../../../theme/glass_widgets.dart';
+import '../controller/transporter_driver_controller.dart';
+import './transporter_driver_form.dart';
+import './transporter_driver_detail.dart';
+import '../model/driver_model.dart';
 
 class TransporterDriversView extends StatelessWidget {
   TransporterDriversView({super.key});

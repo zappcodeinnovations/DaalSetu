@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:daalsetu/theme/glass_widgets.dart';
-import 'package:daalsetu/modules/transporter/drivers/controller/transporter_driver_controller.dart';
-import 'package:daalsetu/modules/transporter/drivers/model/driver_model.dart';
-import 'package:daalsetu/utils/app_preferences.dart';
+import '../../../../theme/glass_widgets.dart';
+import '../controller/transporter_driver_controller.dart';
+import '../model/driver_model.dart';
+import '../../../../utils/app_preferences.dart';
 
 class TransporterDriverForm extends StatefulWidget {
   final DriverModel? driver; // Null for create, provided for edit

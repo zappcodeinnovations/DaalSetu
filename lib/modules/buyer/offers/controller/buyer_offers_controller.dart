@@ -1,5 +1,5 @@
-import 'package:daalsetu/modules/buyer/offers/model/buyer_offer_model.dart';
-import 'package:daalsetu/services/buyer_services.dart';
+import '../model/buyer_offer_model.dart';
+import '../../../../services/buyer_services.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 

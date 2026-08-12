@@ -1,4 +1,4 @@
-import 'package:daalsetu/modules/onboarding/controller/onboarding_controller.dart';
+import '../modules/onboarding/controller/onboarding_controller.dart';
 import 'package:get/get.dart';
 
 class OnboardingBinding extends Bindings {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:daalsetu/theme/glass_widgets.dart';
-import 'package:daalsetu/modules/buyer/offers/controller/buyer_offers_controller.dart';
+import '../../../../theme/glass_widgets.dart';
+import '../controller/buyer_offers_controller.dart';
 
 class BuyerPreviousOffersView extends StatelessWidget {
   const BuyerPreviousOffersView({super.key});

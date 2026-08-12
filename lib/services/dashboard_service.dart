@@ -1,6 +1,6 @@
-import 'package:daalsetu/modules/dashboard/model/dashboard_model.dart';
-import 'package:daalsetu/network/api_client.dart';
-import 'package:daalsetu/comman/api_url.dart';
+import '../modules/dashboard/model/dashboard_model.dart';
+import '../network/api_client.dart';
+import '../comman/api_url.dart';
 
 class DashboardService {
 

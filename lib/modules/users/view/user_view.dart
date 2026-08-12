@@ -1,6 +1,6 @@
 import 'package:iconly/iconly.dart';
-import 'package:daalsetu/modules/users/model/user_model.dart';
-import 'package:daalsetu/modules/users/view/add_user_screen.dart';
+import '../model/user_model.dart';
+import './add_user_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/user_controller.dart';

@@ -4,11 +4,11 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:daalsetu/modules/dashboard/controller/dashboard_controller.dart';
-import 'package:daalsetu/modules/dashboard/model/dashboard_model.dart';
-import 'package:daalsetu/modules/profile/controller/profile_controller.dart';
-import 'package:daalsetu/theme/glass_widgets.dart';
-import 'package:daalsetu/routes/app_routes.dart';
+import '../controller/dashboard_controller.dart';
+import '../model/dashboard_model.dart';
+import '../../profile/controller/profile_controller.dart';
+import '../../../theme/glass_widgets.dart';
+import '../../../routes/app_routes.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   AdminDashboardScreen({super.key});

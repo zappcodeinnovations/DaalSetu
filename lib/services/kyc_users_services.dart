@@ -1,6 +1,6 @@
-import 'package:daalsetu/modules/kyc_users/model/kyc_user_model.dart';
-import 'package:daalsetu/network/api_client.dart';
-import 'package:daalsetu/comman/api_url.dart';
+import '../modules/kyc_users/model/kyc_user_model.dart';
+import '../network/api_client.dart';
+import '../comman/api_url.dart';
 
 class KycService {
   /// Fetch KYC Users

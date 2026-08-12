@@ -1,5 +1,5 @@
-import 'package:agro_broker/modules/seller/delivery/model/delivery_challan_model.dart';
-import 'package:agro_broker/services/seller_services.dart';
+import '../model/delivery_challan_model.dart';
+import '../../../../services/seller_services.dart';
 import 'package:get/get.dart';
 
 class SellerDeliveryController extends GetxController {

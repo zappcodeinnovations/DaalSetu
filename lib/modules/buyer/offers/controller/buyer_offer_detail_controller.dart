@@ -1,4 +1,4 @@
-import 'package:agro_broker/services/buyer_services.dart';
+import '../../../../services/buyer_services.dart';
 import 'package:get/get.dart';
 
 class BuyerOfferDetailController extends GetxController {

@@ -1,5 +1,5 @@
-import 'package:daalsetu/modules/seller/dashboard/model/seller_dashboard_model.dart';
-import 'package:daalsetu/services/seller_services.dart';
+import '../model/seller_dashboard_model.dart';
+import '../../../../services/seller_services.dart';
 import 'package:get/get.dart';
 
 class SellerDashboardController extends GetxController {

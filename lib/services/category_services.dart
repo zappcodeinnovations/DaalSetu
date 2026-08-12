@@ -1,7 +1,7 @@
-import 'package:daalsetu/comman/api_url.dart';
-import 'package:daalsetu/modules/category/model/subcategory_model.dart';
-import 'package:daalsetu/network/api_client.dart';
-import 'package:daalsetu/modules/category/model/category_model.dart';
+import '../comman/api_url.dart';
+import '../modules/category/model/subcategory_model.dart';
+import '../network/api_client.dart';
+import '../modules/category/model/category_model.dart';
 
 class CategoryService {
   /// ===============================

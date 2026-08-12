@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:daalsetu/services/dashboard_service.dart';
+import '../../../services/dashboard_service.dart';
 import 'package:get/get.dart';
 import '../model/dashboard_model.dart';
 

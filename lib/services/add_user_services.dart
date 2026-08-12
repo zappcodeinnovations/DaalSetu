@@ -1,6 +1,6 @@
 import 'dart:io';
-import 'package:daalsetu/network/api_client.dart';
-import 'package:daalsetu/comman/api_url.dart';
+import '../network/api_client.dart';
+import '../comman/api_url.dart';
 
 class AddUserServices {
 

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
-import 'package:daalsetu/theme/glass_widgets.dart';
-import 'package:daalsetu/modules/transporter/vehicles/model/vehicle_model.dart';
+import '../../../../theme/glass_widgets.dart';
+import '../model/vehicle_model.dart';
 
 class TransporterVehicleDetail extends StatelessWidget {
   final VehicleModel vehicle;

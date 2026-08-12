@@ -1,6 +1,6 @@
-import 'package:daalsetu/comman/api_url.dart';
-import 'package:daalsetu/network/api_client.dart';
-import 'package:daalsetu/modules/transporter/branch/model/branch_model.dart';
+import '../../../../comman/api_url.dart';
+import '../../../../network/api_client.dart';
+import '../../../transporter/branch/model/branch_model.dart';
 import 'package:get/get.dart';
 
 class BuyerBranchController extends GetxController {

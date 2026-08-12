@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
-import 'package:daalsetu/theme/glass_widgets.dart';
-import 'package:daalsetu/modules/transporter/company/controller/transporter_company_controller.dart';
-import 'package:daalsetu/modules/transporter/company/view/transporter_company_form.dart';
-import 'package:daalsetu/modules/transporter/company/view/transporter_company_detail.dart';
+import '../../../../theme/glass_widgets.dart';
+import '../controller/transporter_company_controller.dart';
+import './transporter_company_form.dart';
+import './transporter_company_detail.dart';
 
 class TransporterCompanyView extends StatelessWidget {
   TransporterCompanyView({super.key});

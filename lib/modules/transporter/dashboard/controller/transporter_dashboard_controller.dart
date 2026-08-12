@@ -1,6 +1,6 @@
-import 'package:daalsetu/comman/api_url.dart';
-import 'package:daalsetu/network/api_client.dart';
-import 'package:daalsetu/utils/app_preferences.dart';
+import '../../../../comman/api_url.dart';
+import '../../../../network/api_client.dart';
+import '../../../../utils/app_preferences.dart';
 import 'package:get/get.dart';
 
 // --- Hardcoded Data Models ---

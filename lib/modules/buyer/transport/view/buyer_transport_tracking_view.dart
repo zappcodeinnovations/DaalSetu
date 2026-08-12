@@ -27,11 +27,12 @@ class _BuyerTransportTrackingViewState extends State<BuyerTransportTrackingView>
     try {
       setState(() => isLoading = true);
       final data = await BuyerServices.getDeliveryChallans();
+      final list = (data['results'] as List?) ?? (data['challans'] as List?) ?? (data['data'] as List?) ?? [];
       setState(() {
         // Filter only for shipments that are currently 'dispatched' (on the way)
-        activeShipments = data
+        activeShipments = list
             .map((e) => BuyerChallanModel.fromJson(e))
-            .where((c) => c.status.toLowerCase() == 'dispatched')
+            .where((c) => (c.status ?? '').toLowerCase() == 'dispatched')
             .toList();
         isLoading = false;
       });

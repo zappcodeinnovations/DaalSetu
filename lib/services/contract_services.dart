@@ -1,6 +1,6 @@
-import 'package:daalsetu/comman/api_url.dart';
-import 'package:daalsetu/modules/contracts/model/contract_details_model.dart';
-import 'package:daalsetu/modules/contracts/model/contract_model.dart';
+import '../comman/api_url.dart';
+import '../modules/contracts/model/contract_details_model.dart';
+import '../modules/contracts/model/contract_model.dart';
 import '../network/api_client.dart';
 
 class ContractService {

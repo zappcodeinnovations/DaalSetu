@@ -1,6 +1,6 @@
-import 'package:agro_broker/modules/seller/categories/model/seller_category_model.dart';
-import 'package:agro_broker/modules/seller/products/model/seller_product_model.dart';
-import 'package:agro_broker/services/seller_services.dart';
+import '../../categories/model/seller_category_model.dart';
+import '../model/seller_product_model.dart';
+import '../../../../services/seller_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

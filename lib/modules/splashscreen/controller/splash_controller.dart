@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:daalsetu/routes/app_routes.dart';
-import 'package:daalsetu/utils/app_preferences.dart';
+import '../../../routes/app_routes.dart';
+import '../../../utils/app_preferences.dart';
 import 'package:flutter/material.dart';
 
 class SplashController {

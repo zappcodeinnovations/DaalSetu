@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:daalsetu/theme/glass_widgets.dart';
-import 'package:daalsetu/modules/transporter/company/controller/transporter_company_controller.dart';
-import 'package:daalsetu/modules/transporter/company/model/company_model.dart';
+import '../../../../theme/glass_widgets.dart';
+import '../controller/transporter_company_controller.dart';
+import '../model/company_model.dart';
 
 class TransporterCompanyForm extends StatefulWidget {
   final CompanyModel? company; // Null for create, provided for edit

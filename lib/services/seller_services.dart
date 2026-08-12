@@ -1,6 +1,6 @@
-import 'package:daalsetu/network/api_client.dart';
-import 'package:daalsetu/comman/api_url.dart';
-import 'package:daalsetu/modules/seller/company/model/seller_company_model.dart';
+import '../network/api_client.dart';
+import '../comman/api_url.dart';
+import '../modules/seller/company/model/seller_company_model.dart';
 
 class SellerServices {
   /// ============================================================

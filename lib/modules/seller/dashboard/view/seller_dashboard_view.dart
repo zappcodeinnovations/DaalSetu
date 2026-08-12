@@ -3,9 +3,9 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:daalsetu/modules/seller/dashboard/controller/seller_dashboard_controller.dart';
-import 'package:daalsetu/modules/seller/dashboard/model/seller_dashboard_model.dart';
-import 'package:daalsetu/theme/glass_widgets.dart';
+import '../controller/seller_dashboard_controller.dart';
+import '../model/seller_dashboard_model.dart';
+import '../../../../theme/glass_widgets.dart';
 
 class SellerDashboardView extends StatelessWidget {
   SellerDashboardView({super.key});

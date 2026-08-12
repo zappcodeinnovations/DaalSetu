@@ -1,6 +1,6 @@
-import 'package:daalsetu/comman/api_url.dart';
-import 'package:daalsetu/modules/transporter/company/model/company_model.dart';
-import 'package:daalsetu/network/api_client.dart';
+import '../../../../comman/api_url.dart';
+import '../model/company_model.dart';
+import '../../../../network/api_client.dart';
 import 'package:get/get.dart';
 
 class TransporterCompanyController extends GetxController {

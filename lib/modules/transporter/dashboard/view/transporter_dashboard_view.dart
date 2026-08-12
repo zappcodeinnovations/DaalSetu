@@ -4,11 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import 'package:fl_chart/fl_chart.dart';
 
-import 'package:daalsetu/modules/transporter/dashboard/controller/transporter_dashboard_controller.dart';
-import 'package:daalsetu/modules/transporter/company/view/transporter_company_form.dart';
-import 'package:daalsetu/modules/transporter/company/controller/transporter_company_controller.dart';
-import 'package:daalsetu/theme/glass_widgets.dart';
-import 'package:daalsetu/routes/app_routes.dart';
+import '../controller/transporter_dashboard_controller.dart';
+import '../../company/view/transporter_company_form.dart';
+import '../../company/controller/transporter_company_controller.dart';
+import '../../../../theme/glass_widgets.dart';
+import '../../../../routes/app_routes.dart';
 
 class TransporterDashboardView extends StatelessWidget {
   TransporterDashboardView({super.key});

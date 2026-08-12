@@ -1,5 +1,5 @@
-import 'package:agro_broker/modules/seller/contracts/model/seller_contract_model.dart';
-import 'package:agro_broker/services/seller_services.dart';
+import '../model/seller_contract_model.dart';
+import '../../../../services/seller_services.dart';
 import 'package:get/get.dart';
 
 class SellerContractController extends GetxController {

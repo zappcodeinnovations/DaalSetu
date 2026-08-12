@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:daalsetu/services/buyer_services.dart';
-import 'package:daalsetu/modules/buyer/delivery_challan/model/buyer_delivery_challan_model.dart';
+import '../../../../services/buyer_services.dart';
+import '../model/buyer_delivery_challan_model.dart';
 
 class BuyerDeliveryChallanController extends GetxController {
   var isLoading = false.obs;

@@ -1,5 +1,5 @@
-import 'package:daalsetu/modules/users/model/user_model.dart';
-import 'package:daalsetu/services/users_services.dart';
+import '../model/user_model.dart';
+import '../../../services/users_services.dart';
 import 'package:get/get.dart';
 
 class UserController extends GetxController {

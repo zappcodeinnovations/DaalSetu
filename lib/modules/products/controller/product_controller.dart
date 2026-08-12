@@ -1,8 +1,8 @@
-import 'package:daalsetu/modules/category/model/category_model.dart';
-import 'package:daalsetu/services/category_services.dart';
+import '../../category/model/category_model.dart';
+import '../../../services/category_services.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
-import 'package:daalsetu/services/product_services.dart';
+import '../../../services/product_services.dart';
 import '../model/product_model.dart';
 
 class ProductController extends GetxController {

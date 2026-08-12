@@ -1,5 +1,5 @@
-import 'package:daalsetu/modules/seller/company/model/seller_company_model.dart';
-import 'package:daalsetu/services/seller_services.dart';
+import '../model/seller_company_model.dart';
+import '../../../../services/seller_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
