@@ -89,4 +89,32 @@ class ApiUrls {
   static String buyerOfferDetails(int id) => "/api/buyer-offers/$id/";
   static String buyerOfferAction(int id) => "/api/buyer-offers/$id/action/";
   static String dispatchChallan(int id) => "/api/seller/delivery-challans/$id/dispatch/";
+
+  // Media
+  static const String productVideos = "/api/product-videos/";
+  static String productImageDetail(int id) => "/api/product-images/$id/";
+  static String productVideoDetail(int id) => "/api/product-videos/$id/";
+  static const String offerImagesCreate = "/api/offer-images/create/";
+  static String offerImageDelete(int id) => "/api/offer-images/$id/delete/";
+
+  // Offer Interests, Negotiation, Stock & Status
+  static String offerInterests(int productId) => "/api/offers/$productId/interests/";
+  static String offerNegotiationMessage(int productId, int interestId) => "/api/offers/$productId/interests/$interestId/message/";
+  static String offerUpdateStock(int productId) => "/api/offers/$productId/update-stock/";
+  static String offerConfirmDeal(int productId) => "/api/offers/$productId/confirm-deal/";
+  static String offerToggle(int productId) => "/api/offers/$productId/toggle/";
+
+  // Notifications
+  static const String notifications = "/api/notifications/";
+  static const String notificationsReadAll = "/api/notifications/read-all/";
+  static String notificationsRead(int id) => "/api/notifications/read/$id/";
+  static const String notificationsUnreadCount = "/api/notifications/unread-count/";
+
+  // Tags
+  static const String tagsDropdown = "/api/tags/dropdown/";
+
+  // Buyer Requirements / RFQs
+  static const String sellerRFQs = "/api/rfqs/";
+  static String rfqDetails(dynamic id) => "/api/rfqs/$id/";
+  static String submitRFQQuote(dynamic rfqId) => "/api/rfqs/$rfqId/quote/";
 }

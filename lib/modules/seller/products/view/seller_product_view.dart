@@ -4,7 +4,10 @@ import 'package:iconly/iconly.dart';
 import '../controller/seller_product_controller.dart';
 import '../model/seller_product_model.dart';
 import 'add_product_view.dart';
-import 'add_product_view.dart';
+import 'seller_stock_update_dialog.dart';
+import 'seller_offer_interests_view.dart';
+import 'seller_media_gallery_view.dart';
+import '../../../../routes/app_routes.dart';
 
 class SellerProductView extends StatelessWidget {
   const SellerProductView({super.key});
@@ -26,6 +29,10 @@ class SellerProductView extends StatelessWidget {
           style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         actions: [
+          IconButton(
+            onPressed: () => Get.toNamed(AppRoutes.sellerNotifications),
+            icon: Icon(IconlyLight.notification, color: theme.iconTheme.color),
+          ),
           IconButton(
             onPressed: controller.fetchProducts,
             icon: Icon(IconlyLight.arrow_down_square, color: theme.iconTheme.color),
@@ -59,7 +66,7 @@ class SellerProductView extends StatelessWidget {
             separatorBuilder: (context, index) => const SizedBox(height: 16),
             itemBuilder: (context, index) {
               final product = controller.products[index];
-              return _buildProductCard(context, product);
+              return _buildProductCard(context, controller, product);
             },
           );
         }),
@@ -73,7 +80,7 @@ class SellerProductView extends StatelessWidget {
     );
   }
 
-  Widget _buildProductCard(BuildContext context, SellerProductModel product) {
+  Widget _buildProductCard(BuildContext context, SellerProductController controller, SellerProductModel product) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -164,7 +171,7 @@ class SellerProductView extends StatelessWidget {
               ),
             ],
           ),
-          const Divider(height: 32),
+          const Divider(height: 24),
           Wrap(
             spacing: 12,
             runSpacing: 8,
@@ -174,36 +181,46 @@ class SellerProductView extends StatelessWidget {
               _infoItem(IconlyLight.info_square, "${product.packingWeight}kg", theme),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(IconlyLight.edit, size: 14),
-                  label: const Text("Edit", style: TextStyle(fontSize: 12)),
+                  onPressed: () => Get.to(
+                    () => const SellerOfferInterestsView(),
+                    arguments: product.id,
+                  ),
+                  icon: const Icon(IconlyLight.chat, size: 14),
+                  label: const Text("Interests", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    foregroundColor: primaryColor,
+                    side: const BorderSide(color: primaryColor),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(IconlyLight.show, size: 14, color: Colors.white),
-                  label: const Text(
-                    "View Details",
-                    style: TextStyle(color: Colors.white, fontSize: 12),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: () => SellerStockUpdateDialog.show(context, product.id, onSuccess: controller.fetchProducts),
+                icon: const Icon(IconlyLight.work, size: 14),
+                label: const Text("Stock", style: TextStyle(fontSize: 12)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: () => Get.to(
+                  () => const SellerMediaGalleryView(),
+                  arguments: product.id,
+                ),
+                icon: const Icon(IconlyLight.image, size: 14),
+                label: const Text("Media", style: TextStyle(fontSize: 12)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
             ],

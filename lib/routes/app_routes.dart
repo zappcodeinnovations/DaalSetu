@@ -49,6 +49,10 @@ abstract class AppRoutes {
   static const sellerLogistics = '/seller/logistics';
   static const sellerProducts = '/seller/products';
   static const sellerContracts = '/seller/contracts';
+  static const sellerOfferInterests = '/seller/offer-interests';
+  static const sellerMediaGallery = '/seller/media-gallery';
+  static const sellerNotifications = '/seller/notifications';
+  static const sellerRFQs = '/seller/rfqs';
 
   // TRANSPORTER PANEL
   static const transporterDashboard = '/transporter/dashboard';

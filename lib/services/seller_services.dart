@@ -411,4 +411,202 @@ class SellerServices {
     }
     return response is List ? response : [];
   }
+
+  /// ============================================================
+  /// OFFER INTERESTS & NEGOTIATIONS
+  /// ============================================================
+  static Future<Map<String, dynamic>> getOfferInterests(int productId, {String mode = 'seller'}) async {
+    final response = await ApiClient.get(
+      endpoint: "${ApiUrls.offerInterests(productId)}?mode=$mode",
+      requireAuth: true,
+    );
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Failed to fetch offer interests");
+    }
+    return response;
+  }
+
+  static Future<Map<String, dynamic>> sendCounterOfferMessage(
+    int productId,
+    int interestId, {
+    required String counterPrice,
+    required String counterQuantity,
+    int? counterBagCount,
+    String? counterPackingWeightKg,
+  }) async {
+    final body = {
+      "counter_price": counterPrice,
+      "counter_quantity": counterQuantity,
+      if (counterBagCount != null) "counter_bag_count": counterBagCount,
+      if (counterPackingWeightKg != null) "counter_packing_weight_kg": counterPackingWeightKg,
+    };
+
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.offerNegotiationMessage(productId, interestId),
+      body: body,
+      requireAuth: true,
+    );
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Failed to send counter offer");
+    }
+    return response;
+  }
+
+  static Future<Map<String, dynamic>> confirmOfferDeal(int productId, int interestId, {String? adminRemark, int? subAdminId}) async {
+    final body = {
+      "interest_id": interestId,
+      if (adminRemark != null) "admin_remark": adminRemark,
+      if (subAdminId != null) "assigned_sub_admin_id": subAdminId,
+    };
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.offerConfirmDeal(productId),
+      body: body,
+      requireAuth: true,
+    );
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Failed to confirm deal");
+    }
+    return response;
+  }
+
+  /// ============================================================
+  /// STOCK & ACTIVE TOGGLE
+  /// ============================================================
+  static Future<Map<String, dynamic>> updateOfferStock(
+    int productId, {
+    required String mode,
+    required String operation,
+    required String quantity,
+  }) async {
+    final body = {
+      "mode": mode,
+      "operation": operation,
+      "quantity": quantity,
+    };
+    final response = await ApiClient.patch(
+      endpoint: ApiUrls.offerUpdateStock(productId),
+      data: body,
+      requireAuth: true,
+    );
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Failed to update stock");
+    }
+    return response;
+  }
+
+  static Future<Map<String, dynamic>> toggleOfferStatus(int productId, bool isActive) async {
+    final response = await ApiClient.patch(
+      endpoint: ApiUrls.offerToggle(productId),
+      data: {"is_active": isActive},
+      requireAuth: true,
+    );
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Failed to toggle offer status");
+    }
+    return response;
+  }
+
+  /// ============================================================
+  /// PRODUCT IMAGES & VIDEOS
+  /// ============================================================
+  static Future<List<dynamic>> getProductImages({int? productId}) async {
+    String endpoint = ApiUrls.productImages;
+    if (productId != null) {
+      endpoint += "?product=$productId";
+    }
+    final response = await ApiClient.get(endpoint: endpoint, requireAuth: true);
+    if (response is List) return response;
+    if (response is Map<String, dynamic> && response["results"] is List) return response["results"];
+    return [];
+  }
+
+  static Future<Map<String, dynamic>> uploadProductImage(int productId, String imagePath, {bool isPrimary = true}) async {
+    final response = await ApiClient.postMultipart(
+      endpoint: ApiUrls.productImages,
+      fields: {
+        "product": productId.toString(),
+        "is_primary": isPrimary.toString(),
+      },
+      files: {"image": imagePath},
+      requireAuth: true,
+    );
+    return response;
+  }
+
+  static Future<void> deleteProductImage(int imageId) async {
+    await ApiClient.delete(endpoint: ApiUrls.productImageDetail(imageId), requireAuth: true);
+  }
+
+  static Future<List<dynamic>> getProductVideos({int? productId}) async {
+    String endpoint = ApiUrls.productVideos;
+    if (productId != null) {
+      endpoint += "?product=$productId";
+    }
+    final response = await ApiClient.get(endpoint: endpoint, requireAuth: true);
+    if (response is List) return response;
+    if (response is Map<String, dynamic> && response["results"] is List) return response["results"];
+    return [];
+  }
+
+  static Future<Map<String, dynamic>> uploadProductVideo(int productId, String videoPath, String title, {bool isPrimary = true}) async {
+    final response = await ApiClient.postMultipart(
+      endpoint: ApiUrls.productVideos,
+      fields: {
+        "product": productId.toString(),
+        "title": title,
+        "is_primary": isPrimary.toString(),
+      },
+      files: {"video": videoPath},
+      requireAuth: true,
+    );
+    return response;
+  }
+
+  static Future<void> deleteProductVideo(int videoId) async {
+    await ApiClient.delete(endpoint: ApiUrls.productVideoDetail(videoId), requireAuth: true);
+  }
+
+  /// ============================================================
+  /// TAGS DROPDOWN
+  /// ============================================================
+  static Future<List<dynamic>> getTagsDropdown() async {
+    final response = await ApiClient.get(endpoint: ApiUrls.tagsDropdown, requireAuth: true);
+    if (response is List) return response;
+    if (response is Map<String, dynamic> && response["data"] is List) return response["data"];
+    return [];
+  }
+
+  /// ============================================================
+  /// BUYER REQUIREMENTS / RFQS & QUOTING
+  /// ============================================================
+  static Future<List<dynamic>> getBuyerRFQs({String? categoryId, String? search}) async {
+    String endpoint = ApiUrls.sellerRFQs;
+    final Map<String, String> queryParams = {};
+    if (categoryId != null && categoryId.isNotEmpty) {
+      queryParams['category'] = categoryId;
+    }
+    if (search != null && search.isNotEmpty) {
+      queryParams['search'] = search;
+    }
+    if (queryParams.isNotEmpty) {
+      endpoint += "?${Uri(queryParameters: queryParams).query}";
+    }
+
+    final response = await ApiClient.get(endpoint: endpoint, requireAuth: true);
+    if (response is List) return response;
+    if (response is Map<String, dynamic> && response["rfqs"] is List) return response["rfqs"];
+    if (response is Map<String, dynamic> && response["results"] is List) return response["results"];
+    if (response is Map<String, dynamic> && response["data"] is List) return response["data"];
+    return [];
+  }
+
+  static Future<Map<String, dynamic>> submitRFQQuote(int rfqId, Map<String, dynamic> body) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.submitRFQQuote(rfqId),
+      body: body,
+      requireAuth: true,
+    );
+    if (response is Map<String, dynamic>) return response;
+    return {"success": true, "message": "Quote submitted successfully"};
+  }
 }

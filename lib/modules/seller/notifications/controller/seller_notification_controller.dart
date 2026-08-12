@@ -1,0 +1,56 @@
+import 'package:get/get.dart';
+import 'package:flutter/material.dart';
+import '../model/notification_model.dart';
+import '../../../../services/notification_services.dart';
+
+class SellerNotificationController extends GetxController {
+  var isLoading = true.obs;
+  var notificationsList = <AppNotificationModel>[].obs;
+  var unreadCount = 0.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchNotifications();
+    fetchUnreadCount();
+  }
+
+  Future<void> fetchNotifications() async {
+    try {
+      isLoading(true);
+      final res = await NotificationServices.getNotifications();
+      final list = (res['results'] as List?) ?? [];
+      notificationsList.value = list.map((e) => AppNotificationModel.fromJson(e)).toList();
+    } catch (e) {
+      // Keep quiet or log error
+    } finally {
+      isLoading(false);
+    }
+  }
+
+  Future<void> fetchUnreadCount() async {
+    try {
+      final count = await NotificationServices.getUnreadCount();
+      unreadCount.value = count;
+    } catch (_) {}
+  }
+
+  Future<void> markAsRead(int notificationId) async {
+    try {
+      await NotificationServices.markAsRead(notificationId);
+      fetchNotifications();
+      fetchUnreadCount();
+    } catch (_) {}
+  }
+
+  Future<void> markAllAsRead() async {
+    try {
+      await NotificationServices.markAllAsRead();
+      Get.snackbar("Success", "All notifications marked as read", snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+      fetchNotifications();
+      fetchUnreadCount();
+    } catch (e) {
+      Get.snackbar("Error", e.toString(), snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+}

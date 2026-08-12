@@ -6,6 +6,9 @@ import 'package:fl_chart/fl_chart.dart';
 import '../controller/seller_dashboard_controller.dart';
 import '../model/seller_dashboard_model.dart';
 import '../../../../theme/glass_widgets.dart';
+import '../../products/view/seller_product_view.dart';
+import '../../rfq/view/seller_rfq_list_view.dart';
+import '../../../../routes/app_routes.dart';
 
 class SellerDashboardView extends StatelessWidget {
   SellerDashboardView({super.key});
@@ -43,6 +46,10 @@ class SellerDashboardView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeroSection(context, data.header),
+                const SizedBox(height: 16),
+                _buildMyProductsQuickCard(context),
+                const SizedBox(height: 12),
+                _buildBuyerRfqQuickCard(context),
                 const SizedBox(height: 24),
                 
                 _buildSectionHeader(context, "Overview KPIs", trailingText: "View All"),
@@ -162,7 +169,105 @@ class SellerDashboardView extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title, {String? trailingText, Widget? trailing}) {
+  Widget _buildMyProductsQuickCard(BuildContext context) {
+    final theme = Theme.of(context);
+    const primaryColor = Color(0xFFFFB300);
+
+    return GestureDetector(
+      onTap: () => Get.to(() => const SellerProductView()),
+      child: GlassCard(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: primaryColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(IconlyBold.bag, color: primaryColor, size: 28),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "My Products & Offers",
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Manage offer stock, buyer negotiations & media",
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: theme.textTheme.bodyMedium?.color,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(IconlyLight.arrow_right_2, color: primaryColor),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBuyerRfqQuickCard(BuildContext context) {
+    final theme = Theme.of(context);
+    const accentColor = Color(0xFF2196F3);
+
+    return GestureDetector(
+      onTap: () => Get.to(() => const SellerRfqListView()),
+      child: GlassCard(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(IconlyBold.document, color: accentColor, size: 28),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Buyer Requirements (RFQs)",
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "View buyer demands & submit seller quotes",
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: theme.textTheme.bodyMedium?.color,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(IconlyLight.arrow_right_2, color: accentColor),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(BuildContext context, String title, {String? trailingText, Widget? trailing, VoidCallback? onTrailingTap}) {
     final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -176,12 +281,15 @@ class SellerDashboardView extends StatelessWidget {
           ),
         ),
         if (trailingText != null)
-          Text(
-            trailingText,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
+          GestureDetector(
+            onTap: onTrailingTap,
+            child: Text(
+              trailingText,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.primary,
+              ),
             ),
           )
         else if (trailing != null)
@@ -213,41 +321,44 @@ class SellerDashboardView extends StatelessWidget {
 
   Widget _buildDynamicMetricCard(BuildContext context, SellerKpi metric, IconData icon) {
     final theme = Theme.of(context);
-    return GlassCard(
-      padding: const EdgeInsets.all(12),
-      child: SizedBox(
-        width: 120,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.1),
-                shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: () => Get.to(() => const SellerProductView()),
+      child: GlassCard(
+        padding: const EdgeInsets.all(12),
+        child: SizedBox(
+          width: 120,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 16, color: theme.colorScheme.primary),
               ),
-              child: Icon(icon, size: 16, color: theme.colorScheme.primary),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              metric.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              metric.type == 'currency' ? "₹${metric.value}" : metric.value.toString(),
-              style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              metric.subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(fontSize: 8, color: theme.textTheme.bodyMedium?.color),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Text(
+                metric.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                metric.type == 'currency' ? "₹${metric.value}" : metric.value.toString(),
+                style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                metric.subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(fontSize: 8, color: theme.textTheme.bodyMedium?.color),
+              ),
+            ],
+          ),
         ),
       ),
     );
