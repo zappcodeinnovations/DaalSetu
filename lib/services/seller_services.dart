@@ -609,4 +609,31 @@ class SellerServices {
     if (response is Map<String, dynamic>) return response;
     return {"success": true, "message": "Quote submitted successfully"};
   }
+
+  /// ============================================================
+  /// CONTRACTS & DELIVERY CHALLANS
+  /// ============================================================
+  static Future<List<dynamic>> getSellerContracts() async {
+    final response = await ApiClient.get(endpoint: ApiUrls.mobileContracts, requireAuth: true);
+    if (response is List) return response;
+    if (response is Map<String, dynamic> && response["results"] is List) return response["results"];
+    if (response is Map<String, dynamic> && response["data"] is List) return response["data"];
+    return [];
+  }
+
+  static Future<Map<String, dynamic>> getContractDetails(int contractId) async {
+    final response = await ApiClient.get(endpoint: ApiUrls.mobileContractDetails(contractId), requireAuth: true);
+    if (response is Map<String, dynamic>) return response;
+    return {};
+  }
+
+  static Future<Map<String, dynamic>> dispatchDeliveryChallan(int challanId) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.sellerDispatchChallan(challanId),
+      body: {},
+      requireAuth: true,
+    );
+    if (response is Map<String, dynamic>) return response;
+    return {"success": true, "message": "Delivery challan dispatched successfully"};
+  }
 }

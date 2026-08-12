@@ -82,7 +82,7 @@ class _BuyerOrdersViewState extends State<BuyerOrdersView> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                contract.status.toUpperCase(),
+                                (contract.status ?? 'ACTIVE').toUpperCase(),
                                 style: const TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold),
                               ),
                             ),
@@ -96,7 +96,7 @@ class _BuyerOrdersViewState extends State<BuyerOrdersView> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "Date: ${contract.createdAt.day}/${contract.createdAt.month}/${contract.createdAt.year}",
+                              "Date: ${contract.createdAt ?? 'N/A'}",
                               style: theme.textTheme.bodySmall,
                             ),
                             const Icon(IconlyLight.arrow_right_2, size: 18, color: primaryColor),

@@ -8,6 +8,8 @@ import '../model/seller_dashboard_model.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../products/view/seller_product_view.dart';
 import '../../rfq/view/seller_rfq_list_view.dart';
+import '../../contracts/view/seller_contracts_view.dart';
+import '../../challans/view/seller_delivery_challan_view.dart';
 import '../../../../routes/app_routes.dart';
 
 class SellerDashboardView extends StatelessWidget {
@@ -50,6 +52,14 @@ class SellerDashboardView extends StatelessWidget {
                 _buildMyProductsQuickCard(context),
                 const SizedBox(height: 12),
                 _buildBuyerRfqQuickCard(context),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(child: _buildContractsQuickCard(context)),
+                    const SizedBox(width: 12),
+                    Expanded(child: _buildChallansQuickCard(context)),
+                  ],
+                ),
                 const SizedBox(height: 24),
                 
                 _buildSectionHeader(context, "Overview KPIs", trailingText: "View All"),
@@ -67,7 +77,12 @@ class SellerDashboardView extends StatelessWidget {
                 _buildRecentDeals(context, data.recentDeals),
 
                 const SizedBox(height: 24),
-                _buildSectionHeader(context, "Recent Contracts", trailingText: "View All"),
+                _buildSectionHeader(
+                  context,
+                  "Recent Contracts",
+                  trailingText: "View All",
+                  onTrailingTap: () => Get.to(() => const SellerContractsView()),
+                ),
                 const SizedBox(height: 16),
                 _buildRecentContracts(context, data.recentContracts),
 
@@ -261,6 +276,86 @@ class SellerDashboardView extends StatelessWidget {
               ),
             ),
             const Icon(IconlyLight.arrow_right_2, color: accentColor),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContractsQuickCard(BuildContext context) {
+    final theme = Theme.of(context);
+    const greenColor = Colors.green;
+
+    return GestureDetector(
+      onTap: () => Get.to(() => const SellerContractsView()),
+      child: GlassCard(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: greenColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(IconlyBold.document, color: greenColor, size: 20),
+                ),
+                const Icon(IconlyLight.arrow_right_2, color: greenColor, size: 16),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "Contracts",
+              style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+            ),
+            Text(
+              "Signed deal agreements",
+              style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChallansQuickCard(BuildContext context) {
+    final theme = Theme.of(context);
+    const purpleColor = Colors.purple;
+
+    return GestureDetector(
+      onTap: () => Get.to(() => const SellerDeliveryChallanView()),
+      child: GlassCard(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: purpleColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(IconlyBold.work, color: purpleColor, size: 20),
+                ),
+                const Icon(IconlyLight.arrow_right_2, color: purpleColor, size: 16),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "Challans",
+              style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+            ),
+            Text(
+              "Dispatch & shipment",
+              style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color),
+            ),
           ],
         ),
       ),

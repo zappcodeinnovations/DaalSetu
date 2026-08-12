@@ -53,6 +53,7 @@ abstract class AppRoutes {
   static const sellerMediaGallery = '/seller/media-gallery';
   static const sellerNotifications = '/seller/notifications';
   static const sellerRFQs = '/seller/rfqs';
+  static const sellerDeliveryChallans = '/seller/delivery-challans';
 
   // TRANSPORTER PANEL
   static const transporterDashboard = '/transporter/dashboard';

@@ -117,4 +117,11 @@ class ApiUrls {
   static const String sellerRFQs = "/api/rfqs/";
   static String rfqDetails(dynamic id) => "/api/rfqs/$id/";
   static String submitRFQQuote(dynamic rfqId) => "/api/rfqs/$rfqId/quote/";
+
+  // Contracts & Delivery Challans
+  static const String mobileContracts = "/api/mobile/contracts/";
+  static String mobileContractDetails(dynamic id) => "/api/mobile/contracts/$id/";
+  static const String sellerDeliveryChallans = "/api/seller/delivery-challans/";
+  static String sellerDeliveryChallanDetails(dynamic id) => "/api/seller/delivery-challans/$id/";
+  static String sellerDispatchChallan(dynamic id) => "/api/seller/delivery-challans/$id/dispatch/";
 }

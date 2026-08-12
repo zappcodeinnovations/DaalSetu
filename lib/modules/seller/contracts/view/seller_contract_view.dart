@@ -96,7 +96,7 @@ class SellerContractView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  contract.status.toUpperCase(),
+                  (contract.status ?? 'ACTIVE').toUpperCase(),
                   style: const TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -111,7 +111,7 @@ class SellerContractView extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Dated: ${contract.createdAt.day}/${contract.createdAt.month}/${contract.createdAt.year}",
+                "Dated: ${contract.createdAt ?? 'N/A'}",
                 style: theme.textTheme.bodySmall,
               ),
               ElevatedButton.icon(
