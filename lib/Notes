@@ -19,3 +19,52 @@ responce
 }
 and the image is not display proper why in categories tree
 
+Here is the Seller Panel API Integration Status Report comparing your app codebase against the official Google API Sheet:
+
+NOTE
+
+A complete, formatted copy has been generated in
+seller_panel_api_status_report.md
+
+📊 Seller Panel API Integration Summary
+📈 Executive Metrics
+Total Specified Seller Panel APIs: 22 APIs
+Successfully Integrated & Functional: 17 APIs (77%)
+Pending Integration: 5 APIs (23%)
+App Status: 0 Errors (flutter analyze Clean)
+✅ 1. Integrated APIs (17 APIs)
+Dashboard Overview: GET /api/seller/dashboard/
+Offers & Products:
+GET /api/offers/ (Fetch product offers & buyer interests)
+POST /api/offers/create/ (Create pulse product listing)
+POST /api/offers/{id}/negotiate/ (Send counter offer & messages)
+POST /api/offers/{id}/confirm-deal/ (Confirm deal with buyer)
+POST /api/product-images/ (Upload offer image gallery)
+POST /api/product-videos/ (Upload offer video gallery)
+Buyer Requirements (RFQs):
+GET /api/rfqs/ (Fetch buyer requirement posts)
+POST /api/rfqs/{id}/quote/ (Submit quote for tender)
+Contracts & Challans:
+GET /api/mobile/contracts/ (Fetch trade contracts)
+GET /api/seller/delivery-challans/ (Fetch delivery challans)
+POST /api/seller/delivery-challans/{id}/dispatch/ (Dispatch goods)
+Branches & Warehouse Network:
+GET /api/seller/branches/ (Fetch primary & branch network)
+POST /api/seller/branches/request-by-code/ (Join branch via code)
+POST /api/branch/create/ (Register new warehouse branch)
+POST /api/seller/branches/{id}/cancel-request/ (Cancel request)
+POST /api/seller/branches/{id}/leave/ (Leave branch)
+Master Dropdowns:
+GET /api/brands/dropdown/ (Brands list)
+GET /api/tags/dropdown/ (Quality tags master)
+
+
+⏳ 2. Pending APIs to Integrate (5 APIs)
+These 5 APIs belong to the remaining Sub-Admin Staff Management and Consignment Logistics modules:
+Module	Method	Endpoint Path	Description
+Team Management	GET	/api/seller/sub-admins/	List company sub-admin staff members
+Team Management	POST	/api/seller/sub-admins/create/	Add/invite new staff sub-admin
+Role Permissions	GET	/api/seller/roles/	List staff roles and permissions
+Logistics & Dispatch	GET	/api/seller/consignments/	Detailed transport consignment tracking
+Logistics & Dispatch	POST	/api/seller/consignments/{id}/dispatch/	Update live dispatch status
+Seller Panel Api Status Report
