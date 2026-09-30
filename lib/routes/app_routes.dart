@@ -12,25 +12,25 @@ abstract class AppRoutes {
   static const change_password = '/change-password';
   static const forgot_password = '/forgot-password';
 
-  //profile
+  // PROFILE
   static const profile_page = '/profile-page';
+  static const profile = '/profile';
+  static const editProfile = '/edit-profile';
+  static const completeProfile = '/complete-profile';
 
-  //Dashboard
+  // DASHBOARD
   static const dashboard = '/dashboard';
 
-  //categories
+  // CATEGORIES
   static const subcategory = "/subcategory";
 
   // MAIN APP
   static const mainNav = '/main-nav';
   static const home = '/home';
-  //usersss
+
+  // USERS
   static const users = '/users';
   static const users_details = '/users-details';
-  // PROFILE
-  static const profile = '/profile';
-  static const editProfile = '/edit-profile';
-  static const completeProfile = '/complete-profile';
 
   // OTHER FEATURES
   static const notifications = '/notifications';
@@ -84,4 +84,8 @@ abstract class AppRoutes {
   static const buyerDeliveryChallanDetails = '/buyer/delivery-challan-details';
   static const buyerOrders = '/buyer/orders';
   static const buyerTransportTracking = '/buyer/transport-tracking';
+
+  // ADMIN SIDEBAR
+  static String adminModule(String key) => '/admin/$key';
+  static const adminCreateOffer = '/admin/create-offer';
 }

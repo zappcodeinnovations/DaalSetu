@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
+
+import '../../../../services/seller_services.dart';
+import '../../../../theme/app_theme.dart';
+import '../../../../theme/glass_widgets.dart';
 import '../controller/seller_company_controller.dart';
 import '../model/seller_company_model.dart';
 import 'add_company_view.dart';
@@ -8,7 +12,7 @@ import 'add_company_view.dart';
 class SellerCompanyView extends StatelessWidget {
   const SellerCompanyView({super.key});
 
-  static const Color primaryColor = Color(0xFFFFB300);
+  static const Color primaryColor = AppTheme.primaryGold;
 
   @override
   Widget build(BuildContext context) {
@@ -201,7 +205,7 @@ class SellerCompanyView extends StatelessWidget {
                   const SizedBox(width: 8),
                   IconButton(
                     onPressed: () {
-                      // Delete functionality (No API yet)
+                      // Delete functionality
                     },
                     icon: const Icon(Icons.delete_outline, color: Colors.red),
                     style: IconButton.styleFrom(
@@ -211,7 +215,7 @@ class SellerCompanyView extends StatelessWidget {
                   ),
                 ],
               ),
-              if (company.isVerified)...[
+              if (company.isVerified) ...[
                 Row(
                   children: [
                     const Icon(Icons.verified, color: Colors.blue, size: 16),
@@ -225,7 +229,7 @@ class SellerCompanyView extends StatelessWidget {
                     ),
                   ],
                 ),
-              ]else...[
+              ] else ...[
                 Row(
                   children: [
                     Text(
@@ -255,7 +259,9 @@ class SellerCompanyView extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8)),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
+              ),
             ),
           ),
         ],

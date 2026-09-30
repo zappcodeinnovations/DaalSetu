@@ -12,41 +12,39 @@ class AgroBrokerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeController themeController = Get.put(ThemeController());
 
-    return Obx(
-      () => GetMaterialApp(
-        title: 'Dal Broker Admin',
-        debugShowCheckedModeBanner: false,
+    return GetMaterialApp(
+      title: 'Dal Broker Admin',
+      debugShowCheckedModeBanner: false,
 
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
 
-        themeMode: themeController.themeMode.value,
+      themeMode: ThemeMode.light,
 
-        initialRoute: AppRoutes.splash,
-        getPages: AppPages.routes,
-        builder: (context, child) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
-          return Stack(
-            children: [
-              if (child != null) child,
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: Center(
-                    child: Opacity(
-                      opacity: isDark ? 0.08 : 0.08,
-                      child: Image.asset(
-                        'assets/images/thumb_logo.png',
-                        width: 300,
-                        fit: BoxFit.contain,
-                      ),
+      initialRoute: AppRoutes.splash,
+      getPages: AppPages.routes,
+      builder: (context, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Stack(
+          children: [
+            if (child != null) child,
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Center(
+                  child: Opacity(
+                    opacity: isDark ? 0.08 : 0.08,
+                    child: Image.asset(
+                      'assets/images/thumb_logo.png',
+                      width: 300,
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
               ),
-            ],
-          );
-        },
-      ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

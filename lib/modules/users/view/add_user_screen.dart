@@ -37,58 +37,56 @@ class AddUserScreen extends StatelessWidget {
         title: const Text("Add User"),
         centerTitle: true,
       ),
-      body: Obx(
-        () => SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              /// 🔥 HEADER CARD
-              _headerCard(context),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            /// 🔥 HEADER CARD
+            _headerCard(context),
 
-              const SizedBox(height: 24),
+            const SizedBox(height: 24),
 
-              /// 🔥 FORM CARD
-              _formCard(context),
+            /// 🔥 FORM CARD
+            _formCard(context),
 
-              const SizedBox(height: 30),
+            const SizedBox(height: 30),
 
-              /// 🔥 SUBMIT BUTTON
-              controller.isLoading.value
-                  ? const CircularProgressIndicator()
-                  : SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          controller.createUser(
-                            mobile: mobileController.text,
-                            email: emailController.text,
-                            firstName: firstNameController.text,
-                            lastName: lastNameController.text,
-                            role: selectedRole.value,
-                            panNumber: panController.text,
-                            gstNumber: gstController.text,
-                            gender: selectedGender.value,
-                            panImage: panImage.value,
-                            gstImage: gstImage.value,
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
+            /// 🔥 SUBMIT BUTTON
+            Obx(() => controller.isLoading.value
+                ? const CircularProgressIndicator()
+                : SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        controller.createUser(
+                          mobile: mobileController.text,
+                          email: emailController.text,
+                          firstName: firstNameController.text,
+                          lastName: lastNameController.text,
+                          role: selectedRole.value,
+                          panNumber: panController.text,
+                          gstNumber: gstController.text,
+                          gender: selectedGender.value,
+                          panImage: panImage.value,
+                          gstImage: gstImage.value,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
                         ),
-                        child: const Text(
-                          "Create User",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      ),
+                      child: const Text(
+                        "Create User",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-            ],
-          ),
+                  )),
+          ],
         ),
       ),
     );
@@ -186,43 +184,18 @@ class AddUserScreen extends StatelessWidget {
   }
 
   Widget _tagDropdown(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Obx(
       () => DropdownButtonFormField<int>(
         value: controller.selectedTagId.value,
-        items: [
-          /// EXISTING TAGS
-          ...controller.tags.map((tag) {
+        items: controller.tags.map((tag) {
             return DropdownMenuItem<int>(
               value: tag.id,
               child: Text(tag.tagName),
             );
           }).toList(),
-
-          /// CREATE NEW TAG OPTION
-          const DropdownMenuItem<int>(
-            value: -1,
-            child: Row(
-              children: [
-                Icon(IconlyLight.plus, size: 18),
-                SizedBox(width: 6),
-                Text("Create New Tag"),
-              ],
-            ),
-          ),
-        ],
-
         onChanged: (value) {
-          /// OPEN CREATE TAG POPUP
-          if (value == -1) {
-            _showCreateTagDialog(context);
-            return;
-          }
-
           controller.selectedTagId.value = value;
         },
-
         decoration: InputDecoration(
           labelText: "Select Tag",
           filled: true,
@@ -246,53 +219,6 @@ class AddUserScreen extends StatelessWidget {
     );
   }
 
-  void _showCreateTagDialog(BuildContext context) {
-    final TextEditingController tagController = TextEditingController();
-
-    Get.dialog(
-      AlertDialog(
-        title: const Text("Create New Tag"),
-
-        content: TextField(
-          controller: tagController,
-          decoration: const InputDecoration(labelText: "Tag Name"),
-        ),
-
-        actions: [
-          TextButton(
-            onPressed: () {
-              Get.back();
-            },
-            child: const Text("Cancel"),
-          ),
-
-          ElevatedButton(
-            onPressed: () async {
-              final tagName = tagController.text.trim();
-
-              if (tagName.isEmpty) {
-                Get.snackbar("Error", "Tag name required");
-                return;
-              }
-
-              try {
-                final result = await controller.createTag(tagName);
-
-                Get.back();
-
-                if (result != null) {
-                  controller.selectedTagId.value = result.id;
-                }
-              } catch (e) {
-                Get.snackbar("Error", e.toString());
-              }
-            },
-            child: const Text("Create"),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _dropdown(String label, List<String> items, RxString selected) {
     return Obx(
@@ -335,7 +261,7 @@ class AddUserScreen extends StatelessWidget {
               image.value = File(picked.path);
             }
           },
-          child: Container(
+          child: Obx(() => Container(
             height: 120,
             width: double.infinity,
             decoration: BoxDecoration(
@@ -354,7 +280,7 @@ class AddUserScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                     child: Image.file(image.value!, fit: BoxFit.cover),
                   ),
-          ),
+          )),
         ),
       ],
     );

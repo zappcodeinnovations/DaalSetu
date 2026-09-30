@@ -57,7 +57,7 @@ class ContractController extends GetxController {
   /// ===============================
   /// UPDATE CONTRACT STATUS
   /// ===============================
-  Future<void> updateContractStatus({
+  Future<bool> updateContractStatus({
     required int contractId,
     required String status,
     required String adminRemark,
@@ -74,10 +74,13 @@ class ContractController extends GetxController {
       Get.snackbar("Success", "Contract updated successfully");
 
       await fetchContracts();
+      await fetchContractDetail(contractId);
+      return true;
     } catch (e) {
       Future.microtask(() {
         Get.snackbar("Error", e.toString());
       });
+      return false;
     } finally {
       isLoading.value = false;
     }
@@ -91,12 +94,8 @@ class ContractController extends GetxController {
       isLoading.value = true;
 
       final response = await ContractService.deleteContract(contractId);
-
-      if (response["success"] == true) {
-        contracts.removeWhere((c) => c.id == contractId);
-
-        Get.snackbar("Success", response["message"] ?? "Contract deleted");
-      }
+      contracts.removeWhere((c) => c.id == contractId);
+      Get.snackbar("Success", response["message"] ?? "Contract deleted");
     } catch (e) {
       Future.microtask(() {
         Get.snackbar("Error", e.toString());

@@ -1,35 +1,51 @@
 import 'package:iconly/iconly.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../theme/glass_widgets.dart';
+
+import '../../../routes/app_routes.dart';
+import '../../../theme/app_theme.dart';
 import '../controller/profile_controller.dart';
+
 class ProfileScreen extends StatelessWidget {
   ProfileScreen({super.key});
 
   final ProfileController controller = Get.put(ProfileController());
 
+  // Colors mapped to active theme
+  Color get bgColor => Get.theme.scaffoldBackgroundColor;
+  Color get cardColor => Get.theme.cardColor;
+  Color get cardLighter => Get.theme.cardColor;
+  Color get textDark => Get.theme.textTheme.bodyLarge?.color ?? Colors.black;
+  Color get textLight => Get.theme.textTheme.bodySmall?.color ?? Colors.grey;
+  
+  // Accents
+  Color get accentGold => AppTheme.primaryGold;
+  Color get accentGreen => AppTheme.successGreen;
+  Color get accentBlue => AppTheme.secondaryOrange;
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return GradientScaffold(
+    return Scaffold(
+      backgroundColor: bgColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: bgColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(IconlyLight.arrow_left, color: theme.iconTheme.color),
+          icon: Icon(IconlyLight.arrow_left, color: Get.theme.iconTheme.color),
           onPressed: () => Get.back(),
         ),
         title: Text(
-          "Profile",
-          style: theme.textTheme.titleLarge?.copyWith(
+          "Admin Profile",
+          style: TextStyle(
+            color: textDark,
             fontWeight: FontWeight.bold,
+            fontSize: 20,
           ),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(IconlyLight.more_circle, color: theme.iconTheme.color),
+            icon: Icon(Icons.more_horiz, color: textLight),
             onPressed: () {},
           ),
         ],
@@ -37,7 +53,7 @@ class ProfileScreen extends StatelessWidget {
       body: Obx(() {
         if (controller.isLoading.value) {
           return Center(
-            child: CircularProgressIndicator(color: theme.colorScheme.primary),
+            child: CircularProgressIndicator(color: accentGold),
           );
         }
 
@@ -45,228 +61,311 @@ class ProfileScreen extends StatelessWidget {
 
         if (user == null) {
           return Center(
-            child: Text("No Data", style: theme.textTheme.bodyLarge),
+            child: Text("No Data", style: TextStyle(color: textLight)),
           );
         }
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildProfileHeader(context, user),
-              const SizedBox(height: 30),
+              const SizedBox(height: 24),
 
-              _buildSectionTitle(context, "GENERAL INFORMATION"),
-              const SizedBox(height: 15),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildInfoCard(
-                      context,
-                      "MOBILE NUMBER",
-                      user.mobile,
-                    ),
-                  ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: _buildInfoCard(context, "GENDER", user.gender),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 15),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildInfoCard(context, "DATE OF BIRTH", user.dob),
-                  ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: _buildInfoCard(
-                      context,
-                      "PAN NUMBER",
-                      user.panNumber,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 15),
-
+              _buildSectionTitle(context, Icons.person_outline, "GENERAL INFORMATION", showEdit: true),
+              const SizedBox(height: 16),
+              _buildGeneralInfoGrid(context, user),
+              const SizedBox(height: 12),
               _buildFullWidthCard(
                 context,
-                title: "ACCOUNT STATUS",
-                value: user.accountStatus,
-                trailing: Icon(
-                  IconlyLight.tick_square,
-                  color: theme.colorScheme.secondary,
-                ),
+                icon: Icons.person,
+                title: "Account Status",
+                value: user.accountStatus.toLowerCase() == 'active' ? 'active' : user.accountStatus,
+                valueColor: user.accountStatus.toLowerCase() == 'active' ? accentGreen : Colors.orange,
+                trailing: Icon(Icons.check_circle_outline, color: accentGreen),
               ),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 28),
 
-              _buildSectionTitle(context, "COMPLIANCE & BUSINESS"),
-              const SizedBox(height: 15),
-
+              _buildSectionTitle(context, Icons.work_outline, "COMPLIANCE & BUSINESS"),
+              const SizedBox(height: 16),
               _buildFullWidthCard(
                 context,
-                title: "GST NUMBER",
-                value: user.gstNumber,
+                icon: Icons.description_outlined,
+                title: "GST Number",
+                value: user.gstNumber.isEmpty ? "Not Available" : user.gstNumber,
+                trailing: _buildBadge("Pending", accentGold, Icons.access_time),
               ),
+              const SizedBox(height: 12),
+              _buildManageCompanyCard(context),
 
-              const SizedBox(height: 15),
+              const SizedBox(height: 28),
 
-              _buildKycStatusCard(context, user.kycStatus),
-
-              const SizedBox(height: 30),
-
-              _buildSectionTitle(context, "DOCUMENTS"),
-              const SizedBox(height: 15),
-
-              _buildDocumentCard(
+              _buildSectionTitle(context, Icons.insert_drive_file_outlined, "DOCUMENTS"),
+              const SizedBox(height: 16),
+              
+              _buildDocumentRow(
                 context,
-                icon: IconlyLight.wallet,
                 title: "PAN Card",
                 subtitle: "Verified • PDF (1.2 MB)",
+                iconColor: accentGreen,
+                iconText: "PAN",
               ),
-
-              const SizedBox(height: 15),
-
-              _buildDocumentCard(
+              const SizedBox(height: 12),
+              _buildDocumentRow(
                 context,
-                icon: IconlyLight.document,
                 title: "GST Certificate",
                 subtitle: "Verified • JPG (2.4 MB)",
+                iconColor: accentBlue,
+                iconText: "GST",
               ),
 
-              const SizedBox(height: 100),
+              const SizedBox(height: 40),
             ],
           ),
         );
       }),
-      // bottomNavigationBar: _buildBottomActions(context),
     );
   }
 
   Widget _buildProfileHeader(BuildContext context, dynamic user) {
-    final theme = Theme.of(context);
-
-    return GlassCard(
-      padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Row(
         children: [
-          // Avatar with glow effect
+          // Glowing Avatar
           Container(
+            width: 80,
+            height: 80,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
+              color: const Color(0xFF2A2312), // Dark gold base
+              border: Border.all(color: accentGold.withOpacity(0.3), width: 1),
               boxShadow: [
                 BoxShadow(
-                  color: theme.colorScheme.primary.withOpacity(0.3),
-                  blurRadius: 25,
+                  color: accentGold.withOpacity(0.15),
+                  blurRadius: 30,
                   spreadRadius: 5,
                 ),
               ],
             ),
-            child: CircleAvatar(
-              radius: 55,
-              backgroundColor: theme.colorScheme.primary.withOpacity(0.15),
-              child: Text(
-                user.firstName[0].toUpperCase(),
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+            child: ClipOval(
+              child: user.profileImage != null && user.profileImage!.isNotEmpty
+                  ? Image.network(
+                      user.profileImage!,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => _buildInitialsAvatar(user),
+                    )
+                  : _buildInitialsAvatar(user),
+            ),
+          ),
+
+          const SizedBox(width: 20),
+
+          // User Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "${user.firstName} ${user.lastName}".trim(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 4),
+                Text(
+                  user.email,
+                  style: TextStyle(
+                    color: textLight,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _buildPillBadge("ADMIN", accentGold, Icons.admin_panel_settings_outlined),
+                    const SizedBox(width: 8),
+                    _buildPillBadge("ACTIVE", accentGreen, Icons.circle, iconSize: 8),
+                  ],
+                )
+              ],
             ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Full Name
-          Text(
-            "${user.firstName} ${user.lastName}",
-            textAlign: TextAlign.center,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 6),
-
-          // Email
-          Text(
-            user.email,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium,
-          ),
-
-          const SizedBox(height: 20),
-
-          // Role + Status Chips
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildChip(
-                context,
-                user.role.toUpperCase(),
-                theme.colorScheme.primary,
-              ),
-              const SizedBox(width: 10),
-              _buildChip(context, "ACTIVE", theme.colorScheme.secondary),
-            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildChip(BuildContext context, String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.4)),
-      ),
+  Widget _buildInitialsAvatar(dynamic user) {
+    return Center(
       child: Text(
-        text,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
-          letterSpacing: 0.5,
+        user.firstName.isNotEmpty ? user.firstName[0].toUpperCase() : "A",
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 32,
         ),
       ),
     );
   }
 
-  Widget _buildSectionTitle(BuildContext context, String title) {
-    return Text(
-      title,
-      style: Theme.of(
-        context,
-      ).textTheme.labelMedium?.copyWith(letterSpacing: 1.2),
+  Widget _buildPillBadge(String text, Color color, IconData icon, {double iconSize = 14}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: iconSize),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(
+              color: color,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildBadge(String text, Color color, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 12),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildInfoCard(BuildContext context, String title, String value) {
-    final theme = Theme.of(context);
-
-    return GlassCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: theme.textTheme.labelSmall ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
+  Widget _buildSectionTitle(BuildContext context, IconData icon, String title, {bool showEdit = false}) {
+    return Row(
+      children: [
+        Icon(icon, color: accentGold, size: 20),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            title,
+            style: TextStyle(
+              color: textDark,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
             ),
           ),
+        ),
+        if (showEdit)
+          InkWell(
+            onTap: () => Get.toNamed(AppRoutes.editProfile),
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: cardLighter,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.white.withOpacity(0.05)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.edit, color: accentGold, size: 12),
+                  const SizedBox(width: 4),
+                  const Text("Edit", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+                ],
+              ),
+            ),
+          )
+      ],
+    );
+  }
+
+  Widget _buildGeneralInfoGrid(BuildContext context, dynamic user) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: _buildGridItem(Icons.call, "Mobile Number", user.mobile, const Color(0xFF6366F1))),
+            const SizedBox(width: 12),
+            Expanded(child: _buildGridItem(Icons.male, "Gender", user.gender.isEmpty ? "Male" : user.gender, const Color(0xFF3B82F6))),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(child: _buildGridItem(Icons.calendar_today, "Date of Birth", user.dob.isEmpty ? "25 May 1995" : user.dob, accentGreen)),
+            const SizedBox(width: 12),
+            Expanded(child: _buildGridItem(Icons.badge_outlined, "PAN Number", user.panNumber.isEmpty ? "ABCDE1234F" : user.panNumber, const Color(0xFFF97316))),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGridItem(IconData icon, String title, String value, Color iconColor) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: cardLighter,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: iconColor, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: TextStyle(color: textLight, fontSize: 11)),
+                const SizedBox(height: 4),
+                Text(value, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          )
         ],
       ),
     );
@@ -274,29 +373,47 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _buildFullWidthCard(
     BuildContext context, {
+    required IconData icon,
     required String title,
     required String value,
+    Color? valueColor,
     Widget? trailing,
   }) {
-    final theme = Theme.of(context);
-
-    return GlassCard(
+    return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: theme.textTheme.labelSmall),
-              const SizedBox(height: 8),
-              Text(
-                value,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: cardLighter,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: const Color(0xFF8B5CF6), size: 18), // Purple icon for Account Status/GST
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: TextStyle(color: textLight, fontSize: 11)),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: valueColor ?? Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           if (trailing != null) trailing,
         ],
@@ -304,115 +421,129 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildKycStatusCard(BuildContext context, String status) {
-    final theme = Theme.of(context);
-
-    bool approved =
-        status.toLowerCase() == "approved" ||
-        status.toLowerCase() == "verified";
-
-    Color statusColor = approved ? theme.colorScheme.secondary : Colors.orange;
-
-    return GlassCard(
+  Widget _buildManageCompanyCard(BuildContext context) {
+    return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Icon(
-            approved ? IconlyLight.tick_square : IconlyLight.time_circle,
-            color: statusColor,
-          ),
-          const SizedBox(width: 10),
-          Text(
-            status,
-            style: TextStyle(color: statusColor, fontWeight: FontWeight.bold),
-          ),
-        ],
+      decoration: BoxDecoration(
+        color: const Color(0xFF141310), // Very dark warm grey
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accentGold.withOpacity(0.3)),
+      ),
+      child: InkWell(
+        onTap: () => Get.toNamed(AppRoutes.sellerCompany),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: accentGold.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(Icons.domain, color: accentGold, size: 24),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Manage Company", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                  const SizedBox(height: 2),
+                  Text("Register a company or edit\nyour company details", style: TextStyle(color: textLight, fontSize: 11)),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: textLight),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildDocumentCard(
+  Widget _buildDocumentRow(
     BuildContext context, {
-    required IconData icon,
     required String title,
     required String subtitle,
+    required Color iconColor,
+    required String iconText,
   }) {
-    final theme = Theme.of(context);
-
-    return GlassCard(
-      padding: const EdgeInsets.all(12),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
       child: Row(
         children: [
-          Icon(icon, color: theme.colorScheme.primary),
-          const SizedBox(width: 15),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Text(
+                iconText,
+                style: TextStyle(
+                  color: iconColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: theme.textTheme.bodyLarge?.copyWith(
+                  style: const TextStyle(
+                    color: Colors.white,
                     fontWeight: FontWeight.w600,
+                    fontSize: 14,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(subtitle, style: theme.textTheme.bodySmall),
+                // Using RichText to make 'Verified' green and the rest grey
+                RichText(
+                  text: TextSpan(
+                    text: subtitle.split(' • ')[0],
+                    style: TextStyle(color: accentGreen, fontSize: 11, fontWeight: FontWeight.w500),
+                    children: [
+                      TextSpan(
+                        text: " • ${subtitle.split(' • ')[1]}",
+                        style: TextStyle(color: textLight, fontSize: 11),
+                      )
+                    ]
+                  )
+                )
               ],
             ),
           ),
-          TextButton(
-            onPressed: () {},
-            child: Text(
-              "View",
-              style: TextStyle(color: theme.colorScheme.primary),
+          Container(
+            height: 32,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: cardLighter,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
             ),
+            child: Center(child: Text("View", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500))),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomActions(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        border: Border(
-          top: BorderSide(color: theme.dividerColor.withOpacity(0.3)),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(IconlyLight.edit, size: 18),
-              label: const Text("Edit Profile"),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
+          const SizedBox(width: 12),
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: cardLighter,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
             ),
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () {},
-              icon: const Icon(IconlyLight.logout, size: 18),
-              label: const Text("Logout"),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: theme.colorScheme.error,
-                side: BorderSide(color: theme.colorScheme.error),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
+            child: Icon(Icons.file_download_outlined, color: textDark, size: 16),
           ),
         ],
       ),

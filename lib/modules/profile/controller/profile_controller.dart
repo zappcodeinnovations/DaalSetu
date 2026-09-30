@@ -13,6 +13,8 @@ class ProfileController extends GetxController {
     super.onInit();
   }
 
+  var isUpdating = false.obs;
+
   Future<void> fetchProfile() async {
     try {
       isLoading.value = true;
@@ -26,5 +28,19 @@ class ProfileController extends GetxController {
       isLoading.value = false;
     }
   }
-  
+
+  Future<bool> updateProfile(Map<String, dynamic> data) async {
+    try {
+      isUpdating.value = true;
+      final updatedData = await ProfileService.updateProfile(data);
+      profile.value = updatedData;
+      Get.snackbar("Success", "Profile updated successfully");
+      return true;
+    } catch (e) {
+      Get.snackbar("Error", e.toString());
+      return false;
+    } finally {
+      isUpdating.value = false;
+    }
+  }
 }

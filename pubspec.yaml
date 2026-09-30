@@ -38,11 +38,16 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   shared_preferences: 
   image_picker: ^1.2.1
+  video_player: ^2.9.0
   google_fonts: ^6.1.0
   get_storage: ^2.0.3
   fl_chart: ^0.66.0
   get: ^4.6.6
-  iconly: ^1.0.1
+  # Local compatibility patch for Flutter versions where IconData is final.
+  iconly:
+    path: third_party/iconly
+  url_launcher: ^6.3.2
+  intl: ^0.20.3
 
 
 dev_dependencies:

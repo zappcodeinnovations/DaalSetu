@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
-import '../utils/global_error_handler.dart';
+import 'dart:async';
 import 'package:http/http.dart' as http;
+
 import '../comman/api_url.dart';
 import '../utils/app_preferences.dart';
-import 'dart:async';
+import '../utils/global_error_handler.dart';
 
 class ApiClient {
   static const Duration _timeout = Duration(seconds: 30);
@@ -126,7 +127,6 @@ class ApiClient {
           .timeout(_timeout);
 
       print("📥 STATUS CODE: ${response.statusCode}");
-      print("📥 RESPONSE: ${response.body}");
 
       return _handleResponse(response);
     } on SocketException {
@@ -158,7 +158,6 @@ class ApiClient {
           .timeout(_timeout);
 
       print("📥 STATUS CODE: ${response.statusCode}");
-      print("📥 RESPONSE: ${response.body}");
 
       return _handleResponse(response);
     } on SocketException {
@@ -184,7 +183,6 @@ class ApiClient {
     try {
       final uri = Uri.parse(ApiUrls.baseUrl + endpoint);
       print("🔗 API CALL (POST): $endpoint");
-      print("📤 BODY: $body");
 
       final response = await http
           .post(
@@ -194,7 +192,6 @@ class ApiClient {
           )
           .timeout(_timeout);
       print("📥 STATUS CODE: ${response.statusCode}");
-      print("📥 RESPONSE: ${response.body}");
 
       return _handleResponse(response);
     } on SocketException {
@@ -225,7 +222,6 @@ class ApiClient {
           .timeout(_timeout);
 
       print("📥 STATUS CODE: ${response.statusCode}");
-      print("📥 RESPONSE: ${response.body}");
 
       return _handleResponse(response);
     } on SocketException {
@@ -240,8 +236,6 @@ class ApiClient {
       print("❌ API FAILED (GET): $endpoint");
       print("⚠️ ERROR: $e");
 
-      // Don't show server error dialog for 401/403/400 etc.
-      // These are usually handled by the controller or specifically by _handleResponse
       if (e.toString().contains("Forbidden") || e.toString().contains("Unauthorized")) {
          rethrow;
       }
@@ -261,7 +255,6 @@ class ApiClient {
       final token = await AppPreferences.getAccessToken();
 
       if (token != null) {
-        print("🔑 ACCESS TOKEN TTTTTTTTTTTT: $token");
         headers["Authorization"] = "Bearer $token";
       } else {
         throw Exception("Unauthorized: No access token found");
@@ -279,7 +272,8 @@ class ApiClient {
     final body = response.body;
 
     if (statusCode >= 200 && statusCode < 300) {
-      return body.isNotEmpty ? jsonDecode(body) : {};
+      if (body.trim().isEmpty) return <String, dynamic>{};
+      return jsonDecode(body);
     } else {
       print("❌ API RESPONSE ERROR");
       print("📥 STATUS CODE: $statusCode");

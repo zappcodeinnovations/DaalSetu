@@ -67,17 +67,19 @@ class SellerServices {
       endpoint: ApiUrls.company,
       requireAuth: true,
     );
-    
+
     if (response == null) {
       throw Exception("Failed to fetch companies");
     }
 
     if (response is List) {
-      return response.map((e) => SellerCompanyModel.fromJson(e)).toList();
+      return response.map((e) => SellerCompanyModel.fromJson(Map<String, dynamic>.from(e))).toList();
     } else if (response is Map<String, dynamic> && response.containsKey("data")) {
-      return (response["data"] as List).map((e) => SellerCompanyModel.fromJson(e)).toList();
+      return (response["data"] as List).map((e) => SellerCompanyModel.fromJson(Map<String, dynamic>.from(e))).toList();
+    } else if (response is Map<String, dynamic>) {
+      return [SellerCompanyModel.fromJson(response)];
     } else {
-       return [SellerCompanyModel.fromJson(response)];
+      return [];
     }
   }
 
@@ -94,7 +96,7 @@ class SellerServices {
     if (response == null || response is! Map<String, dynamic>) {
       throw Exception("Invalid response format");
     }
-    
+
     return SellerCompanyModel.fromJson(response);
   }
 
@@ -110,12 +112,71 @@ class SellerServices {
     return SellerCompanyModel.fromJson(response);
   }
 
+  static Future<Map<String, dynamic>> editCompany(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
+    final response = await ApiClient.patch(
+      endpoint: "/api/company/$id/",
+      data: data,
+      requireAuth: true,
+    );
+
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Invalid response format");
+    }
+
+    return response;
+  }
+
   /// ============================================================
-  /// SET PRIMARY COMPANY (POST)
+  /// GET COMPANY DROPDOWN
   /// ============================================================
-  static Future<void> setPrimaryCompany(int id) async {
+  static Future<List<dynamic>> getCompanyDropdown() async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.companyDropdown,
+      requireAuth: true,
+    );
+
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Invalid response format");
+    }
+
+    if (response["success"] == true) {
+      return response["data"];
+    } else {
+      throw Exception(
+        response["message"] ?? "Failed to fetch company dropdown",
+      );
+    }
+  }
+
+  /// ============================================================
+  /// GET PRIMARY COMPANY
+  /// ============================================================
+  static Future<Map<String, dynamic>> getPrimaryCompany() async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.companyPrimary,
+      requireAuth: true,
+    );
+
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Invalid response format");
+    }
+
+    if (response["success"] == true) {
+      return response["data"];
+    } else {
+      throw Exception(response["message"] ?? "Failed to fetch primary company");
+    }
+  }
+
+  /// ============================================================
+  /// SET PRIMARY COMPANY
+  /// ============================================================
+  static Future<void> setPrimaryCompany(dynamic id) async {
     await ApiClient.post(
-      endpoint: ApiUrls.setPrimaryCompany(id),
+      endpoint: ApiUrls.setPrimaryCompany(int.tryParse(id.toString()) ?? 0),
       body: {},
       requireAuth: true,
     );
@@ -137,7 +198,6 @@ class SellerServices {
     return SellerCompanyModel.fromJson(response);
   }
 
-
   /// ============================================================
   /// CATEGORIES DASHBOARD
   /// ============================================================
@@ -154,7 +214,9 @@ class SellerServices {
     if (response["success"] == true) {
       return response["data"];
     } else {
-      throw Exception(response["message"] ?? "Failed to fetch categories dashboard");
+      throw Exception(
+        response["message"] ?? "Failed to fetch categories dashboard",
+      );
     }
   }
 
@@ -297,8 +359,6 @@ class SellerServices {
       requireAuth: true,
     );
   }
-
-
 
   /// ============================================================
   /// GET DELIVERY CHALLANS

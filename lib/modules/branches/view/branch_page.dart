@@ -1,15 +1,7 @@
 import 'package:iconly/iconly.dart';
 import 'package:flutter/material.dart';
-
-enum BranchStatus { active, watchlist, critical }
-
-class Branch {
-  final String name;
-  final String admin;
-  final BranchStatus status;
-
-  Branch({required this.name, required this.admin, required this.status});
-}
+import 'package:get/get.dart';
+import '../controller/branch_controller.dart';
 
 class BranchesScreen extends StatefulWidget {
   const BranchesScreen({super.key});
@@ -19,16 +11,7 @@ class BranchesScreen extends StatefulWidget {
 }
 
 class _BranchesScreenState extends State<BranchesScreen> {
-  final List<Branch> _branches = [
-    Branch(name: "Mumbai Branch", admin: "Prem Verma", status: BranchStatus.active),
-    Branch(name: "Delhi North", admin: "Rajesh Kumar", status: BranchStatus.watchlist),
-    Branch(name: "Bangalore Hub", admin: "Anjali Rao", status: BranchStatus.critical),
-    Branch(name: "Pune Sector 5", admin: "Suresh Mehra", status: BranchStatus.active),
-    Branch(name: "Kolkata Central", admin: "Debasish Roy", status: BranchStatus.active),
-  ];
-
-  String _selectedFilter = "All";
-  final List<String> _filters = ["All", "Active", "Watchlist", "Critical"];
+  final BranchController controller = Get.put(BranchController());
 
   @override
   Widget build(BuildContext context) {
@@ -50,18 +33,29 @@ class _BranchesScreenState extends State<BranchesScreen> {
                 children: [
                   _buildSearchBar(context),
                   const SizedBox(height: 16),
-                  _buildFilterChips(context),
+                  // Removed fake filter chips
                 ],
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: _branches.length,
-                itemBuilder: (context, index) {
-                  return _buildBranchCard(context, _branches[index]);
-                },
-              ),
+              child: Obx(() {
+                if (controller.isLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                
+                final branches = controller.myBranches;
+                if (branches.isEmpty) {
+                  return const Center(child: Text("No branches found."));
+                }
+                
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: branches.length,
+                  itemBuilder: (context, index) {
+                    return _buildBranchCard(context, branches[index]);
+                  },
+                );
+              }),
             ),
           ],
         ),
@@ -75,7 +69,7 @@ class _BranchesScreenState extends State<BranchesScreen> {
     return TextField(
       style: theme.textTheme.bodyMedium,
       decoration: InputDecoration(
-        hintText: "Search by location or admin...",
+        hintText: "Search branch...",
         prefixIcon: Icon(IconlyLight.search, color: theme.iconTheme.color),
         filled: true,
         fillColor: theme.cardColor,
@@ -87,45 +81,7 @@ class _BranchesScreenState extends State<BranchesScreen> {
     );
   }
 
-  Widget _buildFilterChips(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return SizedBox(
-      height: 36,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: _filters.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final filter = _filters[index];
-          final isSelected = _selectedFilter == filter;
-
-          return ChoiceChip(
-            label: Text(filter),
-            labelStyle: TextStyle(
-              color: isSelected
-                  ? Colors.white
-                  : theme.textTheme.bodyMedium?.color,
-              fontWeight: FontWeight.w600,
-            ),
-            selected: isSelected,
-            onSelected: (selected) {
-              if (selected) {
-                setState(() => _selectedFilter = filter);
-              }
-            },
-            backgroundColor: theme.cardColor,
-            selectedColor: theme.colorScheme.primary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildBranchCard(BuildContext context, Branch branch) {
+  Widget _buildBranchCard(BuildContext context, BranchModel branch) {
     final theme = Theme.of(context);
 
     return Container(
@@ -155,17 +111,17 @@ class _BranchesScreenState extends State<BranchesScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  branch.name,
+                  branch.locationName,
                   style: theme.textTheme.titleMedium
                       ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  "Admin: ${branch.admin}",
+                  "Code: ${branch.branchCode} • ${branch.city}",
                   style: theme.textTheme.bodySmall,
                 ),
                 const SizedBox(height: 8),
-                _buildStatusIndicator(context, branch.status),
+                if (branch.isPrimary) _buildStatusIndicator(context, "PRIMARY", Colors.green)
               ],
             ),
           ),
@@ -176,28 +132,7 @@ class _BranchesScreenState extends State<BranchesScreen> {
     );
   }
 
-  Widget _buildStatusIndicator(
-      BuildContext context, BranchStatus status) {
-    final theme = Theme.of(context);
-
-    Color color;
-    String text;
-
-    switch (status) {
-      case BranchStatus.active:
-        color = Colors.green;
-        text = "ACTIVE";
-        break;
-      case BranchStatus.watchlist:
-        color = Colors.orange;
-        text = "WATCHLIST";
-        break;
-      case BranchStatus.critical:
-        color = theme.colorScheme.error;
-        text = "CRITICAL";
-        break;
-    }
-
+  Widget _buildStatusIndicator(BuildContext context, String text, Color color) {
     return Row(
       children: [
         CircleAvatar(radius: 4, backgroundColor: color),

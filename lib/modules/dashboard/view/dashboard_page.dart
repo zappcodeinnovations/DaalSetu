@@ -4,11 +4,13 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import 'package:fl_chart/fl_chart.dart';
+
 import '../controller/dashboard_controller.dart';
 import '../model/dashboard_model.dart';
 import '../../profile/controller/profile_controller.dart';
 import '../../../theme/glass_widgets.dart';
 import '../../../routes/app_routes.dart';
+import '../../admin_catalog/view/admin_drawer.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   AdminDashboardScreen({super.key});
@@ -20,6 +22,7 @@ class AdminDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
+      drawer: const AdminDrawer(),
       appBar: _buildAppBar(context),
       body: Obx(() {
         if (controller.isLoading.value) {
@@ -87,9 +90,11 @@ class AdminDashboardScreen extends StatelessWidget {
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      leading: IconButton(
-        icon: const Icon(IconlyLight.filter),
-        onPressed: () {},
+      leading: Builder(
+        builder: (ctx) => IconButton(
+          icon: const Icon(IconlyLight.filter),
+          onPressed: () => Scaffold.of(ctx).openDrawer(),
+        ),
       ),
       title: Image.asset(
         'assets/images/app_name.png',
@@ -197,7 +202,6 @@ class AdminDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildKpiGrid(BuildContext context, KpiModel kpis) {
-    final theme = Theme.of(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       clipBehavior: Clip.none,

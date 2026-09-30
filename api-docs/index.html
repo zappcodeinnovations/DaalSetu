@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DaalSetu API Documentation</title>
+  <meta name="description" content="Official REST API documentation for DaalSetu — covering Users, KYC, Products, Media, Branches, Contracts, and more." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-primary: #0b0f1a;
+      --bg-secondary: #111827;
+      --bg-card: #161d2e;
+      --bg-card-hover: #1c2540;
+      --bg-sidebar: #0d1120;
+      --border: #1e2d45;
+      --border-light: #253350;
+      --accent: #4f8ef7;
+      --accent-glow: rgba(79,142,247,0.18);
+      --accent-2: #7c3aed;
+      --green: #22c55e;
+      --green-bg: rgba(34,197,94,0.12);
+      --red: #ef4444;
+      --red-bg: rgba(239,68,68,0.12);
+      --yellow: #f59e0b;
+      --yellow-bg: rgba(245,158,11,0.12);
+      --blue: #3b82f6;
+      --blue-bg: rgba(59,130,246,0.12);
+      --purple: #a855f7;
+      --purple-bg: rgba(168,85,247,0.12);
+      --orange: #f97316;
+      --orange-bg: rgba(249,115,22,0.12);
+      --cyan: #06b6d4;
+      --cyan-bg: rgba(6,182,212,0.12);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #475569;
+      --sidebar-width: 280px;
+      --header-height: 64px;
+      --radius: 10px;
+      --radius-sm: 6px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--header-height);
+      background: rgba(11,15,26,0.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px;
+      gap: 16px;
+    }
+    .header-logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none;
+    }
+    .logo-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, #4f8ef7, #7c3aed);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 16px; color: #fff;
+      box-shadow: 0 0 16px rgba(79,142,247,0.35);
+    }
+    .logo-text { font-weight: 700; font-size: 18px; color: var(--text-primary); }
+    .logo-badge {
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      background: var(--accent-glow); color: var(--accent);
+      border: 1px solid var(--accent); border-radius: 20px;
+    }
+    .header-right {
+      margin-left: auto; display: flex; align-items: center; gap: 12px;
+    }
+    .header-meta { font-size: 12px; color: var(--text-muted); }
+    .header-meta span { color: var(--text-secondary); }
+
+    .search-bar {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 7px 12px;
+      width: 260px; transition: border-color .2s;
+    }
+    .search-bar:focus-within { border-color: var(--accent); }
+    .search-bar input {
+      background: none; border: none; outline: none;
+      color: var(--text-primary); font-size: 13px; width: 100%;
+      font-family: 'Inter', sans-serif;
+    }
+    .search-bar input::placeholder { color: var(--text-muted); }
+    .search-icon { color: var(--text-muted); font-size: 14px; }
+
+    /* ── LAYOUT ── */
+    .layout { display: flex; padding-top: var(--header-height); }
+
+    /* ── SIDEBAR ── */
+    aside {
+      width: var(--sidebar-width); flex-shrink: 0;
+      position: fixed; top: var(--header-height); bottom: 0; left: 0;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      overflow-y: auto; padding: 16px 0;
+      scroll-behavior: smooth;
+    }
+    aside::-webkit-scrollbar { width: 4px; }
+    aside::-webkit-scrollbar-track { background: transparent; }
+    aside::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+
+    .sidebar-section { margin-bottom: 4px; }
+    .sidebar-group-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--text-muted);
+      padding: 12px 20px 4px;
+    }
+    .sidebar-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 20px; font-size: 13px; color: var(--text-secondary);
+      text-decoration: none; border-left: 2px solid transparent;
+      transition: all .18s; cursor: pointer;
+    }
+    .sidebar-link:hover {
+      background: var(--bg-card); color: var(--text-primary);
+      border-left-color: var(--accent);
+    }
+    .sidebar-link.active {
+      background: var(--accent-glow); color: var(--accent);
+      border-left-color: var(--accent);
+    }
+    .sidebar-method {
+      font-size: 10px; font-weight: 700; padding: 1px 6px;
+      border-radius: 4px; font-family: 'JetBrains Mono', monospace;
+      flex-shrink: 0;
+    }
+    .m-GET    { background: var(--green-bg);  color: var(--green); }
+    .m-POST   { background: var(--blue-bg);   color: var(--blue); }
+    .m-PUT    { background: var(--yellow-bg); color: var(--yellow); }
+    .m-PATCH  { background: var(--orange-bg); color: var(--orange); }
+    .m-DELETE { background: var(--red-bg);    color: var(--red); }
+
+    /* ── MAIN ── */
+    main {
+      margin-left: var(--sidebar-width);
+      flex: 1; padding: 40px 48px;
+      max-width: calc(100vw - var(--sidebar-width));
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, rgba(79,142,247,0.08) 0%, rgba(124,58,237,0.08) 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 40px 48px;
+      margin-bottom: 48px; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; top: -60px; right: -60px;
+      width: 280px; height: 280px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(79,142,247,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-label {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em;
+      color: var(--accent); margin-bottom: 12px;
+    }
+    .hero-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+      box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .hero h1 { font-size: 32px; font-weight: 800; margin-bottom: 10px;
+      background: linear-gradient(90deg, #f1f5f9, #94a3b8); -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent; }
+    .hero p { font-size: 15px; color: var(--text-secondary); max-width: 600px; line-height: 1.7; }
+    .hero-meta {
+      display: flex; gap: 24px; margin-top: 24px; flex-wrap: wrap;
+    }
+    .hero-stat {
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .hero-stat-value { font-size: 22px; font-weight: 700; color: var(--accent); }
+    .hero-stat-label { font-size: 12px; color: var(--text-muted); }
+
+    /* ── SECTION ── */
+    .section { margin-bottom: 56px; }
+    .section-header {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 24px; padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .section-title { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+    .section-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+    .endpoint-count {
+      margin-left: auto; font-size: 12px; font-weight: 600;
+      color: var(--text-muted); background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 20px; padding: 2px 10px;
+    }
+
+    /* ── ENDPOINT CARD ── */
+    .endpoint-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); margin-bottom: 12px;
+      overflow: hidden; transition: border-color .2s;
+    }
+    .endpoint-card:hover { border-color: var(--border-light); }
+    .endpoint-card.open { border-color: var(--accent); }
+
+    .endpoint-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 20px; cursor: pointer;
+      user-select: none;
+    }
+    .endpoint-header:hover .endpoint-path { color: var(--text-primary); }
+
+    .method-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 700;
+      padding: 4px 10px; border-radius: var(--radius-sm);
+      flex-shrink: 0; min-width: 62px; text-align: center;
+    }
+    .bg-GET    { background: var(--green-bg);  color: var(--green);  border: 1px solid rgba(34,197,94,.3); }
+    .bg-POST   { background: var(--blue-bg);   color: var(--blue);   border: 1px solid rgba(59,130,246,.3); }
+    .bg-PUT    { background: var(--yellow-bg); color: var(--yellow); border: 1px solid rgba(245,158,11,.3); }
+    .bg-PATCH  { background: var(--orange-bg); color: var(--orange); border: 1px solid rgba(249,115,22,.3); }
+    .bg-DELETE { background: var(--red-bg);    color: var(--red);    border: 1px solid rgba(239,68,68,.3); }
+
+    .endpoint-path {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; color: var(--text-secondary);
+      flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      transition: color .2s;
+    }
+    .endpoint-name {
+      font-size: 13px; font-weight: 500; color: var(--text-secondary);
+      margin-right: 8px;
+    }
+    .status-pill {
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 20px; flex-shrink: 0;
+    }
+    .status-ok    { background: var(--green-bg); color: var(--green); }
+    .status-warn  { background: var(--yellow-bg); color: var(--yellow); }
+    .status-error { background: var(--red-bg); color: var(--red); }
+
+    .chevron {
+      color: var(--text-muted); transition: transform .25s;
+      flex-shrink: 0;
+    }
+    .endpoint-card.open .chevron { transform: rotate(180deg); }
+
+    /* ── ENDPOINT BODY ── */
+    .endpoint-body {
+      display: none; border-top: 1px solid var(--border);
+      padding: 20px;
+    }
+    .endpoint-card.open .endpoint-body { display: block; }
+
+    .body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 900px) { .body-grid { grid-template-columns: 1fr; } }
+
+    .code-block {
+      background: #0a0f1d; border: 1px solid var(--border);
+      border-radius: var(--radius-sm); overflow: hidden;
+    }
+    .code-block-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 14px; background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--border);
+    }
+    .code-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; }
+    .copy-btn {
+      font-size: 11px; color: var(--text-muted); cursor: pointer;
+      background: none; border: none; font-family: 'Inter', sans-serif;
+      transition: color .2s; padding: 0;
+    }
+    .copy-btn:hover { color: var(--accent); }
+    .code-block pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; line-height: 1.7;
+      color: var(--text-secondary);
+      padding: 14px; overflow-x: auto;
+      max-height: 360px; overflow-y: auto;
+      white-space: pre-wrap; word-break: break-all;
+    }
+    .code-block pre::-webkit-scrollbar { width: 4px; height: 4px; }
+    .code-block pre::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+
+    /* JSON Syntax Highlight */
+    .json-key   { color: #7dd3fc; }
+    .json-str   { color: #86efac; }
+    .json-num   { color: #fbbf24; }
+    .json-bool  { color: #c084fc; }
+    .json-null  { color: #f87171; }
+
+    /* ── FIELD TABLE ── */
+    .field-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    .field-table th {
+      text-align: left; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .08em;
+      color: var(--text-muted); padding: 8px 12px;
+      background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border);
+    }
+    .field-table td {
+      font-size: 13px; padding: 9px 12px;
+      border-bottom: 1px solid rgba(30,45,69,.5);
+      color: var(--text-secondary); vertical-align: top;
+    }
+    .field-table tr:last-child td { border-bottom: none; }
+    .field-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .field-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; color: #7dd3fc;
+    }
+    .field-type {
+      font-size: 11px; padding: 1px 6px;
+      border-radius: 4px; background: var(--purple-bg); color: var(--purple);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .req-badge {
+      font-size: 10px; padding: 1px 6px; border-radius: 4px;
+      background: var(--red-bg); color: var(--red); font-weight: 600;
+    }
+    .opt-badge {
+      font-size: 10px; padding: 1px 6px; border-radius: 4px;
+      background: var(--bg-secondary); color: var(--text-muted); font-weight: 600;
+    }
+
+    /* ── INFO ROW ── */
+    .info-row {
+      display: flex; gap: 24px; margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .info-item { display: flex; flex-direction: column; gap: 3px; }
+    .info-item-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); }
+    .info-item-value { font-size: 13px; color: var(--text-secondary); }
+    .token-value {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px;
+      max-width: 260px; overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap; color: var(--yellow);
+    }
+
+    /* ── TABS ── */
+    .tab-bar {
+      display: flex; gap: 2px; margin-bottom: 16px;
+      background: var(--bg-secondary); border-radius: var(--radius-sm);
+      padding: 3px; width: fit-content;
+    }
+    .tab-btn {
+      font-size: 12px; font-weight: 600; padding: 6px 14px;
+      border-radius: 5px; cursor: pointer; border: none;
+      background: none; color: var(--text-muted); font-family: 'Inter', sans-serif;
+      transition: all .18s;
+    }
+    .tab-btn.active { background: var(--bg-card); color: var(--text-primary); }
+
+    /* ── GLOBAL AUTH BOX ── */
+    .auth-box {
+      background: linear-gradient(135deg, rgba(79,142,247,0.06), rgba(124,58,237,0.06));
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 20px 24px; margin-bottom: 40px;
+      display: flex; align-items: flex-start; gap: 16px;
+    }
+    .auth-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg, rgba(79,142,247,0.2), rgba(124,58,237,0.2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .auth-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .auth-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+    .auth-token {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px;
+      color: var(--yellow); word-break: break-all; margin-top: 6px;
+      background: rgba(245,158,11,0.08); padding: 6px 10px; border-radius: 5px;
+    }
+
+    /* ── RESPONSE HIGHLIGHT ── */
+    .resp-section { margin-bottom: 12px; }
+    .resp-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; margin-bottom: 6px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .http-code {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 700; padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .http-2xx { background: var(--green-bg); color: var(--green); }
+    .http-4xx { background: var(--yellow-bg); color: var(--yellow); }
+    .http-5xx { background: var(--red-bg); color: var(--red); }
+
+    /* ── DIVIDER ── */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+    /* ── SCROLLTOP ── */
+    #scrollTop {
+      position: fixed; bottom: 32px; right: 32px;
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--accent); color: #fff; border: none;
+      cursor: pointer; font-size: 18px; display: none;
+      align-items: center; justify-content: center;
+      box-shadow: 0 4px 20px rgba(79,142,247,0.4);
+      transition: transform .2s, opacity .2s;
+      z-index: 200;
+    }
+    #scrollTop:hover { transform: translateY(-3px); }
+    #scrollTop.visible { display: flex; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      aside { display: none; }
+      main { margin-left: 0; padding: 24px 16px; max-width: 100%; }
+      .hero { padding: 28px 20px; }
+      .hero h1 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── HEADER ─── -->
+<header>
+  <a href="#" class="header-logo">
+    <div class="logo-icon">DS</div>
+    <span class="logo-text">DaalSetu</span>
+    <span class="logo-badge">API v1</span>
+  </a>
+  <div class="search-bar">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search endpoints…" />
+  </div>
+  <div class="header-right">
+    <div class="header-meta">Base URL: <span>https://daalsetu.zappcode.in</span></div>
+    <div class="header-meta">Developer: <span>Prem Verma</span></div>
+    <div class="header-meta">Updated: <span>28 Jul 2026</span></div>
+  </div>
+</header>
+
+<!-- ─── LAYOUT ─── -->
+<div class="layout">
+
+  <!-- ─── SIDEBAR ─── -->
+  <aside id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-group-label">Overview</div>
+      <a class="sidebar-link" onclick="scrollToSection('overview')">📋 Introduction</a>
+      <a class="sidebar-link" onclick="scrollToSection('auth')">🔐 Authentication</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-group-label">User Management</div>
+      <a class="sidebar-link" onclick="scrollToSection('sec-adduser')"><span class="sidebar-method m-POST">POST</span>Add User</a>
+      <a class="sidebar-link" onclick="scrollToSection('sec-adduser')"><span class="sidebar-method m-DELETE">DEL</span>Delete User</a>
+      <a class="sidebar-link" onclick="scrollToSection('sec-users')"><span class="sidebar-method m-GET">GET</span>Users List</a>
+      <a class="sidebar-link" onclick="scrollToSection('sec-users')"><span class="sidebar-method m-POST">POST</span>Create User</a>
+      <a class="sidebar-link" onclick="scrollToSection('sec-userdetail')"><span class="sidebar-method m-GET">GET</span>User Details</a>
+      <a class="sidebar-link" onclick="scrollToSection('sec-userdetail')"><span class="sidebar-method m-PATCH">PATCH</span>Update User</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-group-label">KYC</div>
+      <a class="sidebar-link" onclick="scrollToSection('sec-kyc')"><span class="sidebar-method m-POST">POST</span>KYC Approve</a>
+      <a class="sidebar-link" onclick="scrollToSection('sec-kyc')"><span class="sidebar-method m-POST">POST</span>KYC Reject</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-group-label">Dashboard</div>
+      <a class="sidebar-link" onclick="scrollToSection('sec-dashboard')"><span class="sidebar-method m-GET">GET</span>Admin Dashboard</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-group-label">Product Media</div>
+      <a class="sidebar-link" onclick="scrollToSection('sec-product-images')"><span class="sidebar-method m-GET">GET</span>Images List</a>
+      <a class="sidebar-link" onclick="scrollToSection('sec-product-images')"><span class="sidebar-method m-POST">POST</span>Upload Image</a>
+      <a class="sidebar-link" onclick="scrollToSection('sec-product-images')"><span class="sidebar-method m-DELETE">DEL</span>Delete Image</a>
+      <a class="sidebar-link" onclick="scrollToSection('sec-product-videos')"><span class="sidebar-method m-GET">GET</span>Videos List</a>
+      <a class="sidebar-link" onclick="scrollToSection('sec-product-videos')"><span class="sidebar-method m-POST">POST</span>Upload Video</a>
+      <a class="sidebar-link" onclick="scrollToSection('sec-product-videos')"><span class="sidebar-method m-DELETE">DEL</span>Delete Video</a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-group-label">Seller Branches</div>
+      <a class="sidebar-link" onclick="scrollToSection('sec-branches')"><span class="sidebar-method m-GET">GET</span>Branches List</a>
+      <a class="sidebar-link" onclick="scrollToSection('sec-branches')"><span class="sidebar-method m-GET">GET</span>Branch Detail</a>
+      <a class="sidebar-link" onclick="scrollToSection('sec-branches')"><span class="sidebar-method m-POST">POST</span>Cancel Request</a>
+    </div>
+  </aside>
+
+  <!-- ─── MAIN ─── -->
+  <main>
+
+    <!-- ─── HERO ─── -->
+    <div class="hero" id="overview">
+      <div class="hero-label">
+        <div class="hero-dot"></div>
+        Live · REST API
+      </div>
+      <h1>DaalSetu API Documentation</h1>
+      <p>Comprehensive REST API reference for the DaalSetu platform — enabling seamless integration for user management, KYC workflows, product media, admin dashboards, seller branch operations, contracts, logistics, and more.</p>
+      <div class="hero-meta">
+        <div class="hero-stat">
+          <div class="hero-stat-value">50+</div>
+          <div class="hero-stat-label">Endpoints</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-value">JWT</div>
+          <div class="hero-stat-label">Auth Method</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-value">JSON</div>
+          <div class="hero-stat-label">Response Format</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-value">v1.0</div>
+          <div class="hero-stat-label">API Version</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── AUTH ─── -->
+    <div class="auth-box" id="auth">
+      <div class="auth-icon">🔐</div>
+      <div>
+        <div class="auth-title">Bearer Token Authentication</div>
+        <div class="auth-desc">All API endpoints require a valid JWT Bearer token in the <code style="color:var(--accent);font-family:JetBrains Mono,monospace;font-size:12px">Authorization</code> request header. Tokens expire and must be refreshed periodically.</div>
+        <div class="auth-token">Authorization: Bearer &lt;your-access-token&gt;</div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════
+         SECTION: ADD USER
+    ════════════════════════════════ -->
+    <div class="section" id="sec-adduser">
+      <div class="section-header">
+        <div class="section-icon" style="background:linear-gradient(135deg,rgba(59,130,246,.2),rgba(124,58,237,.2))">👤</div>
+        <div>
+          <div class="section-title">Add User</div>
+          <div class="section-subtitle">/api/adduser/ — Create, update, and delete managed users</div>
+        </div>
+        <div class="endpoint-count">4 endpoints</div>
+      </div>
+
+      <!-- POST adduser -->
+      <div class="endpoint-card" id="ep-adduser-post">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-POST">POST</span>
+          <span class="endpoint-path">/api/adduser/</span>
+          <span class="endpoint-name">Add User</span>
+          <span class="status-pill status-ok">201 Created</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="info-row">
+            <div class="info-item"><div class="info-item-label">URL</div><div class="info-item-value" style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--accent)">https://daalsetu.zappcode.in/api/adduser/</div></div>
+            <div class="info-item"><div class="info-item-label">Method</div><div class="info-item-value"><span class="method-badge bg-POST">POST</span></div></div>
+            <div class="info-item"><div class="info-item-label">Developer</div><div class="info-item-value">Prem Verma</div></div>
+            <div class="info-item"><div class="info-item-label">Last Updated</div><div class="info-item-value">28 Jul 2026</div></div>
+          </div>
+
+          <table class="field-table" style="margin-bottom:16px">
+            <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td class="field-name">first_name</td><td><span class="field-type">string</span></td><td><span class="req-badge">Required</span></td><td>User's first name</td></tr>
+              <tr><td class="field-name">last_name</td><td><span class="field-type">string</span></td><td><span class="req-badge">Required</span></td><td>User's last name</td></tr>
+              <tr><td class="field-name">mobile</td><td><span class="field-type">string</span></td><td><span class="req-badge">Required</span></td><td>10-digit mobile number</td></tr>
+              <tr><td class="field-name">email</td><td><span class="field-type">string</span></td><td><span class="req-badge">Required</span></td><td>Valid email address</td></tr>
+              <tr><td class="field-name">role</td><td><span class="field-type">string</span></td><td><span class="req-badge">Required</span></td><td>buyer / seller / transporter / sub_admin</td></tr>
+              <tr><td class="field-name">password</td><td><span class="field-type">string</span></td><td><span class="req-badge">Required</span></td><td>Minimum 8 chars with uppercase, digit, special char</td></tr>
+              <tr><td class="field-name">company_name</td><td><span class="field-type">string</span></td><td><span class="opt-badge">Optional</span></td><td>Company or business name</td></tr>
+              <tr><td class="field-name">user_id</td><td><span class="field-type">integer</span></td><td><span class="opt-badge">Optional</span></td><td>Internal reference ID</td></tr>
+            </tbody>
+          </table>
+
+          <div class="body-grid">
+            <div>
+              <div class="resp-label"><span class="http-code http-2xx">201</span> Success Response</div>
+              <div class="code-block">
+                <div class="code-block-header"><span class="code-label">Response Body</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+                <pre id="pr-adduser-post-succ">{\n  "status": "success",\n  "message": "User created successfully. Login credentials sent to email.",\n  "user_id": 122\n}</pre>
+              </div>
+            </div>
+            <div>
+              <div class="resp-label"><span class="http-code http-4xx">4xx</span> Fail Response</div>
+              <div class="code-block">
+                <div class="code-block-header"><span class="code-label">Response Body</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+                <pre>{\n  "success": false,\n  "message": "Validation failed.",\n  "errors": {\n    "field_name": ["This field is required or invalid."],\n    "authentication": ["A valid JWT access token is required."]\n  }\n}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DELETE adduser -->
+      <div class="endpoint-card" id="ep-adduser-delete">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-DELETE">DELETE</span>
+          <span class="endpoint-path">/api/adduser/</span>
+          <span class="endpoint-name">Delete Managed User</span>
+          <span class="status-pill status-ok">200 OK</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="info-row">
+            <div class="info-item"><div class="info-item-label">URL</div><div class="info-item-value" style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--accent)">https://daalsetu.zappcode.in/api/adduser/</div></div>
+            <div class="info-item"><div class="info-item-label">Method</div><div class="info-item-value"><span class="method-badge bg-DELETE">DELETE</span></div></div>
+          </div>
+          <table class="field-table" style="margin-bottom:16px">
+            <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td class="field-name">user_id</td><td><span class="field-type">integer</span></td><td><span class="req-badge">Required</span></td><td>ID of the user to delete</td></tr>
+            </tbody>
+          </table>
+          <div class="body-grid">
+            <div>
+              <div class="resp-label"><span class="http-code http-2xx">200</span> Success Response</div>
+              <div class="code-block">
+                <div class="code-block-header"><span class="code-label">Response Body</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+                <pre>{\n  "success": true,\n  "message": "User 7800246740 deleted successfully."\n}</pre>
+              </div>
+            </div>
+            <div>
+              <div class="resp-label"><span class="http-code http-4xx">4xx</span> Fail Response</div>
+              <div class="code-block">
+                <div class="code-block-header"><span class="code-label">Response Body</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+                <pre>{\n  "success": false,\n  "message": "Validation failed.",\n  "errors": {\n    "authentication": ["A valid JWT access token is required."]\n  }\n}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PATCH adduser -->
+      <div class="endpoint-card" id="ep-adduser-patch">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-PATCH">PATCH</span>
+          <span class="endpoint-path">/api/adduser/</span>
+          <span class="endpoint-name">Update Managed User</span>
+          <span class="status-pill status-warn">404 Not Found</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="info-row">
+            <div class="info-item"><div class="info-item-label">URL</div><div class="info-item-value" style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--accent)">https://daalsetu.zappcode.in/api/adduser/</div></div>
+            <div class="info-item"><div class="info-item-label">Method</div><div class="info-item-value"><span class="method-badge bg-PATCH">PATCH</span></div></div>
+            <div class="info-item"><div class="info-item-label">Live Status</div><div class="info-item-value" style="color:var(--yellow)">⚠ No 2xx observed</div></div>
+          </div>
+          <div class="body-grid">
+            <div>
+              <div class="resp-label"><span class="http-code http-4xx">404</span> Observed Response</div>
+              <div class="code-block">
+                <div class="code-block-header"><span class="code-label">Response Body</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+                <pre>{\n  "detail": "No DaalUser matches the given query."\n}</pre>
+              </div>
+            </div>
+            <div>
+              <div class="resp-label"><span class="http-code http-5xx">500</span> Server Error</div>
+              <div class="code-block">
+                <div class="code-block-header"><span class="code-label">Response Body</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+                <pre>{\n  "success": false,\n  "message": "Internal server error.",\n  "status_code": 500\n}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PUT adduser -->
+      <div class="endpoint-card" id="ep-adduser-put">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-PUT">PUT</span>
+          <span class="endpoint-path">/api/adduser/</span>
+          <span class="endpoint-name">Replace Managed User</span>
+          <span class="status-pill status-warn">404 Not Found</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="info-row">
+            <div class="info-item"><div class="info-item-label">URL</div><div class="info-item-value" style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--accent)">https://daalsetu.zappcode.in/api/adduser/</div></div>
+            <div class="info-item"><div class="info-item-label">Method</div><div class="info-item-value"><span class="method-badge bg-PUT">PUT</span></div></div>
+            <div class="info-item"><div class="info-item-label">Live Status</div><div class="info-item-value" style="color:var(--yellow)">⚠ No 2xx observed</div></div>
+          </div>
+          <div class="body-grid">
+            <div>
+              <div class="resp-label"><span class="http-code http-4xx">404</span> Observed Response</div>
+              <div class="code-block">
+                <div class="code-block-header"><span class="code-label">Response Body</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+                <pre>{\n  "detail": "No DaalUser matches the given query."\n}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /sec-adduser -->
+
+    <!-- ═══════════════════════════════
+         SECTION: KYC
+    ════════════════════════════════ -->
+    <div class="section" id="sec-kyc">
+      <div class="section-header">
+        <div class="section-icon" style="background:linear-gradient(135deg,rgba(34,197,94,.2),rgba(6,182,212,.2))">✅</div>
+        <div>
+          <div class="section-title">KYC Management</div>
+          <div class="section-subtitle">/api/kyc/ — Approve and reject user KYC submissions</div>
+        </div>
+        <div class="endpoint-count">2 endpoints</div>
+      </div>
+
+      <!-- POST kyc approve -->
+      <div class="endpoint-card" id="ep-kyc-approve">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-POST">POST</span>
+          <span class="endpoint-path">/api/kyc/&lt;int:user_id&gt;/approve/</span>
+          <span class="endpoint-name">KYC Approve</span>
+          <span class="status-pill status-warn">403 Forbidden</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="info-row">
+            <div class="info-item"><div class="info-item-label">URL</div><div class="info-item-value" style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--accent)">https://daalsetu.zappcode.in/api/kyc/{user_id}/approve/</div></div>
+            <div class="info-item"><div class="info-item-label">Method</div><div class="info-item-value"><span class="method-badge bg-POST">POST</span></div></div>
+            <div class="info-item"><div class="info-item-label">Note</div><div class="info-item-value" style="color:var(--yellow)">Admin can only approve users from their own branch</div></div>
+          </div>
+          <table class="field-table" style="margin-bottom:16px">
+            <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td class="field-name">user_id</td><td><span class="field-type">integer</span></td><td><span class="req-badge">Path Param</span></td><td>ID of the user to approve</td></tr>
+              <tr><td class="field-name">approval_note</td><td><span class="field-type">string</span></td><td><span class="req-badge">Required</span></td><td>Approval note / comment</td></tr>
+            </tbody>
+          </table>
+          <div class="body-grid">
+            <div>
+              <div class="resp-label"><span class="http-code http-4xx">403</span> Observed Response</div>
+              <div class="code-block">
+                <div class="code-block-header"><span class="code-label">Response Body</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+                <pre>{\n  "message": "You can approve only users from your branch."\n}</pre>
+              </div>
+            </div>
+            <div>
+              <div class="resp-label"><span class="http-code http-5xx">500</span> Server Error</div>
+              <div class="code-block">
+                <div class="code-block-header"><span class="code-label">Response Body</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+                <pre>{\n  "success": false,\n  "message": "Internal server error.",\n  "status_code": 500\n}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST kyc reject -->
+      <div class="endpoint-card" id="ep-kyc-reject">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-POST">POST</span>
+          <span class="endpoint-path">/api/kyc/&lt;int:user_id&gt;/reject/</span>
+          <span class="endpoint-name">KYC Reject</span>
+          <span class="status-pill status-warn">403 Forbidden</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="info-row">
+            <div class="info-item"><div class="info-item-label">URL</div><div class="info-item-value" style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--accent)">https://daalsetu.zappcode.in/api/kyc/{user_id}/reject/</div></div>
+            <div class="info-item"><div class="info-item-label">Method</div><div class="info-item-value"><span class="method-badge bg-POST">POST</span></div></div>
+          </div>
+          <table class="field-table" style="margin-bottom:16px">
+            <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td class="field-name">user_id</td><td><span class="field-type">integer</span></td><td><span class="req-badge">Path Param</span></td><td>ID of the user to reject</td></tr>
+              <tr><td class="field-name">rejection_reason</td><td><span class="field-type">string</span></td><td><span class="req-badge">Required</span></td><td>Reason for KYC rejection</td></tr>
+            </tbody>
+          </table>
+          <div class="body-grid">
+            <div>
+              <div class="resp-label"><span class="http-code http-4xx">403</span> Observed Response</div>
+              <div class="code-block">
+                <div class="code-block-header"><span class="code-label">Response Body</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+                <pre>{\n  "message": "You can reject only users from your branch."\n}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /sec-kyc -->
+
+    <!-- ═══════════════════════════════
+         SECTION: ADMIN DASHBOARD
+    ════════════════════════════════ -->
+    <div class="section" id="sec-dashboard">
+      <div class="section-header">
+        <div class="section-icon" style="background:linear-gradient(135deg,rgba(168,85,247,.2),rgba(79,142,247,.2))">📊</div>
+        <div>
+          <div class="section-title">Admin Dashboard</div>
+          <div class="section-subtitle">/api/admin/dashboard/ — KPIs, charts, contracts, activity feed</div>
+        </div>
+        <div class="endpoint-count">1 endpoint</div>
+      </div>
+
+      <!-- GET dashboard -->
+      <div class="endpoint-card open" id="ep-dashboard-get">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-GET">GET</span>
+          <span class="endpoint-path">/api/admin/dashboard/</span>
+          <span class="endpoint-name">Admin Dashboard</span>
+          <span class="status-pill status-ok">200 OK</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="info-row">
+            <div class="info-item"><div class="info-item-label">URL</div><div class="info-item-value" style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--accent)">https://daalsetu.zappcode.in/api/admin/dashboard/</div></div>
+            <div class="info-item"><div class="info-item-label">Method</div><div class="info-item-value"><span class="method-badge bg-GET">GET</span></div></div>
+            <div class="info-item"><div class="info-item-label">Body</div><div class="info-item-value">None (empty JSON)</div></div>
+          </div>
+
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Returns platform-wide KPI metrics, chart data, branch performance, recent contracts, and activity feed in a single call.</p>
+
+          <div class="tab-bar">
+            <button class="tab-btn active" onclick="switchTab(this,'dash-succ','dash-fail')">Success (200)</button>
+            <button class="tab-btn" onclick="switchTab(this,'dash-fail','dash-succ')">Fail (4xx)</button>
+          </div>
+
+          <div id="dash-succ">
+            <div class="code-block">
+              <div class="code-block-header"><span class="code-label">Response Body</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre>{\n  "kpis": {\n    "active_contracts": 4,\n    "gtv_mtd": 16109.967,\n    "brokerage_earned_mtd": 644.39868,\n    "brokerage_rate": 4.0,\n    "pending_dispatches": 4,\n    "active_sellers": 1,\n    "listed_skus": 1,\n    "active_buyers": 5,\n    "final_deals_mtd": 4,\n    "open_complaints": 12,\n    "otd_percent": 94,\n    "avg_transit_days": 4.2,\n    "payments_overdue": 8,\n    "at_risk_amount": 1250000,\n    "active_transporters": 1,\n    "capacity_utilized": 78,\n    "branches": 1,\n    "admins_active": 1,\n    "deals_in_negotiation": 0,\n    "avg_ttc_days": 3.8\n  },\n  "charts": {\n    "gtv_deals": { "labels": ["Jan","Feb","Mar","Apr","May","Jun","Jul"], "gtv_values": [...], "deals_values": [...] },\n    "pipeline_by_stage": { "labels": ["Negotiation","Contract Signed","Buyer Confirmed","Deal Confirmed"], "values": [0,0,0,4] },\n    "commodity_mix": { "labels": ["Toor Dal"], "volumes": [1] },\n    "top_buyers": { "labels": ["Buyer4","Buyer1","Buyer2","Buyer3"], "gtv_values": [4949.967,4050.0,4050.0,3060.0] },\n    "transporter_sla": { ... },\n    "payments_receivables": { ... },\n    "user_distribution": { "labels": ["Sellers","Buyers","Transporters","Admins"], "counts": [1,5,1,1] }\n  },\n  "branch_performance": [ { "name": "Nagpur", "admin": "R. Kulkarni", ... } ],\n  "recent_activities": [ { "type": "trade", "title": "Deal Finalized", ... } ],\n  "recent_contracts": [ { "id": "#CNT-105", "seller": "MUKESH", "buyer": "Buyer1", ... } ]\n}</pre>
+            </div>
+          </div>
+          <div id="dash-fail" style="display:none">
+            <div class="code-block">
+              <div class="code-block-header"><span class="code-label">Response Body</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre>{\n  "success": false,\n  "message": "Validation failed.",\n  "errors": {\n    "authentication": ["A valid JWT access token is required."]\n  }\n}</pre>
+            </div>
+          </div>
+
+          <p style="margin-top:16px;font-size:12px;color:var(--text-muted)">📌 KPI Fields: active_contracts, gtv_mtd (Gross Transaction Value), brokerage_earned_mtd, pending_dispatches, active_sellers/buyers/transporters, open_complaints, otd_percent (On-Time Delivery), avg_transit_days, payments_overdue, at_risk_amount, capacity_utilized, avg_ttc_days (Time-to-Close)</p>
+        </div>
+      </div>
+    </div><!-- /sec-dashboard -->
+
+    <!-- ═══════════════════════════════
+         SECTION: USERS
+    ════════════════════════════════ -->
+    <div class="section" id="sec-users">
+      <div class="section-header">
+        <div class="section-icon" style="background:linear-gradient(135deg,rgba(34,197,94,.2),rgba(79,142,247,.2))">👥</div>
+        <div>
+          <div class="section-title">Users</div>
+          <div class="section-subtitle">/api/users/ — List and create users</div>
+        </div>
+        <div class="endpoint-count">2 endpoints</div>
+      </div>
+
+      <!-- GET users list -->
+      <div class="endpoint-card" id="ep-users-list">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-GET">GET</span>
+          <span class="endpoint-path">/api/users/</span>
+          <span class="endpoint-name">Users List</span>
+          <span class="status-pill status-ok">200 OK</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="info-row">
+            <div class="info-item"><div class="info-item-label">URL</div><div class="info-item-value" style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--accent)">https://daalsetu.zappcode.in/api/users/</div></div>
+            <div class="info-item"><div class="info-item-label">Method</div><div class="info-item-value"><span class="method-badge bg-GET">GET</span></div></div>
+            <div class="info-item"><div class="info-item-label">Body</div><div class="info-item-value">None</div></div>
+          </div>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Returns an array of all users. Each user object includes identity details, KYC status, account status, tags, documents, and profile completion.</p>
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-label">Response Body (200)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>[\n  {\n    "id": 122,\n    "username": "7785246761",\n    "mobile": "7785246761",\n    "email": "user@example.com",\n    "first_name": "John",\n    "last_name": "Doe",\n    "role": "buyer",\n    "pan_number": null,\n    "gst_number": null,\n    "profile_image": null,\n    "gender": null,\n    "dob": null,\n    "tags": [],\n    "kyc_status": "pending",\n    "kyc_submitted_at": "2026-07-28T19:22:41.444706+05:30",\n    "kyc_approved_at": null,\n    "kyc_rejected_at": null,\n    "kyc_rejection_reason": "",\n    "account_status": "active",\n    "is_active": true,\n    "profile_completion": 100,\n    "is_profile_complete": true,\n    "profile_percentage": 100,\n    "admin_approved": false\n  }\n]</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST create users -->
+      <div class="endpoint-card" id="ep-users-create">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-POST">POST</span>
+          <span class="endpoint-path">/api/users/</span>
+          <span class="endpoint-name">Create User</span>
+          <span class="status-pill status-warn">400 Bad Request</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="info-row">
+            <div class="info-item"><div class="info-item-label">URL</div><div class="info-item-value" style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--accent)">https://daalsetu.zappcode.in/api/users/</div></div>
+            <div class="info-item"><div class="info-item-label">Method</div><div class="info-item-value"><span class="method-badge bg-POST">POST</span></div></div>
+            <div class="info-item"><div class="info-item-label">Live Status</div><div class="info-item-value" style="color:var(--yellow)">⚠ username required</div></div>
+          </div>
+          <div class="body-grid">
+            <div>
+              <div class="resp-label"><span class="http-code http-4xx">400</span> Observed Response</div>
+              <div class="code-block">
+                <div class="code-block-header"><span class="code-label">Response Body</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+                <pre>{\n  "username": ["This field is required."]\n}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /sec-users -->
+
+    <!-- ═══════════════════════════════
+         SECTION: USER DETAIL
+    ════════════════════════════════ -->
+    <div class="section" id="sec-userdetail">
+      <div class="section-header">
+        <div class="section-icon" style="background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(249,115,22,.2))">🔍</div>
+        <div>
+          <div class="section-title">User Detail</div>
+          <div class="section-subtitle">/api/users/{id}/ — Get, update, delete specific users</div>
+        </div>
+        <div class="endpoint-count">4 endpoints</div>
+      </div>
+
+      <!-- GET user detail -->
+      <div class="endpoint-card" id="ep-user-detail">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-GET">GET</span>
+          <span class="endpoint-path">/api/users/{id}/</span>
+          <span class="endpoint-name">User Details</span>
+          <span class="status-pill status-warn">404 Not Found</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="info-row">
+            <div class="info-item"><div class="info-item-label">URL</div><div class="info-item-value" style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--accent)">https://daalsetu.zappcode.in/api/users/{id}/</div></div>
+            <div class="info-item"><div class="info-item-label">Method</div><div class="info-item-value"><span class="method-badge bg-GET">GET</span></div></div>
+          </div>
+          <table class="field-table" style="margin-bottom:16px">
+            <thead><tr><th>Parameter</th><th>Type</th><th>Location</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td class="field-name">id</td><td><span class="field-type">integer</span></td><td><span class="req-badge">Path Param</span></td><td>User ID to retrieve</td></tr>
+            </tbody>
+          </table>
+          <div class="body-grid">
+            <div>
+              <div class="resp-label"><span class="http-code http-4xx">404</span> Observed Response</div>
+              <div class="code-block">
+                <div class="code-block-header"><span class="code-label">Response Body</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+                <pre>{\n  "success": false,\n  "message": "User not found."\n}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PATCH / PUT / DELETE user -->
+      <div class="endpoint-card" id="ep-user-patch">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-PATCH">PATCH</span>
+          <span class="endpoint-path">/api/users/{id}/</span>
+          <span class="endpoint-name">Update User (Partial)</span>
+          <span class="status-pill status-error">405 Not Allowed</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="info-row">
+            <div class="info-item"><div class="info-item-label">URL</div><div class="info-item-value" style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--accent)">https://daalsetu.zappcode.in/api/users/{id}/</div></div>
+            <div class="info-item"><div class="info-item-label">Method</div><div class="info-item-value"><span class="method-badge bg-PATCH">PATCH</span></div></div>
+            <div class="info-item"><div class="info-item-label">Live Status</div><div class="info-item-value" style="color:var(--red)">Method Not Allowed</div></div>
+          </div>
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-label">Response Body</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>{\n  "detail": "Method \"PATCH\" not allowed."\n}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="endpoint-card" id="ep-user-put">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-PUT">PUT</span>
+          <span class="endpoint-path">/api/users/{id}/</span>
+          <span class="endpoint-name">Update User (Full)</span>
+          <span class="status-pill status-error">405 Not Allowed</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-label">Response Body</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>{\n  "detail": "Method \"PUT\" not allowed."\n}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="endpoint-card" id="ep-user-delete">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-DELETE">DELETE</span>
+          <span class="endpoint-path">/api/users/{id}/</span>
+          <span class="endpoint-name">Delete User</span>
+          <span class="status-pill status-error">405 Not Allowed</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-label">Response Body</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>{\n  "detail": "Method \"DELETE\" not allowed."\n}</pre>
+          </div>
+        </div>
+      </div>
+    </div><!-- /sec-userdetail -->
+
+    <!-- ═══════════════════════════════
+         SECTION: PRODUCT IMAGES
+    ════════════════════════════════ -->
+    <div class="section" id="sec-product-images">
+      <div class="section-header">
+        <div class="section-icon" style="background:linear-gradient(135deg,rgba(168,85,247,.2),rgba(249,115,22,.2))">🖼️</div>
+        <div>
+          <div class="section-title">Product Images</div>
+          <div class="section-subtitle">/api/product-images/ — Upload, view, and delete product images</div>
+        </div>
+        <div class="endpoint-count">6 endpoints</div>
+      </div>
+
+      <!-- GET product images list -->
+      <div class="endpoint-card" id="ep-pimg-list">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-GET">GET</span>
+          <span class="endpoint-path">/api/product-images/</span>
+          <span class="endpoint-name">Product Images List</span>
+          <span class="status-pill status-ok">200 OK</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-label">Response Body (200)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>[\n  {\n    "id": 22,\n    "product": 108,\n    "product_title": "Premium Toor Dal",\n    "image_url": "https://daalsetu.zappcode.in/api/product-media/images/22/view/",\n    "download_url": "https://daalsetu.zappcode.in/api/product-media/images/22/download/",\n    "can_download": true,\n    "uploaded_by": 111,\n    "is_primary": true,\n    "created_at": "2026-07-28T19:22:15.522437+05:30"\n  }\n]</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST create product image -->
+      <div class="endpoint-card" id="ep-pimg-create">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-POST">POST</span>
+          <span class="endpoint-path">/api/product-images/</span>
+          <span class="endpoint-name">Upload Product Image</span>
+          <span class="status-pill status-ok">201 Created</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <table class="field-table" style="margin-bottom:16px">
+            <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td class="field-name">product</td><td><span class="field-type">string (ID)</span></td><td><span class="req-badge">Required</span></td><td>Product ID to attach image to</td></tr>
+              <tr><td class="field-name">is_primary</td><td><span class="field-type">boolean</span></td><td><span class="opt-badge">Optional</span></td><td>Set as primary image</td></tr>
+              <tr><td class="field-name">image</td><td><span class="field-type">file</span></td><td><span class="req-badge">Required</span></td><td>Image file (multipart/form-data)</td></tr>
+            </tbody>
+          </table>
+          <div class="body-grid">
+            <div>
+              <div class="resp-label"><span class="http-code http-2xx">201</span> Success Response</div>
+              <div class="code-block">
+                <div class="code-block-header"><span class="code-label">Response Body</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+                <pre>{\n  "id": 23,\n  "product": 109,\n  "product_title": "Premium Toor Dal",\n  "image_url": "https://daalsetu.zappcode.in/api/product-media/images/23/view/",\n  "download_url": "https://daalsetu.zappcode.in/api/product-media/images/23/download/",\n  "can_download": true,\n  "uploaded_by": 111,\n  "is_primary": true,\n  "created_at": "2026-07-28T19:26:09.788646+05:30",\n  "message": "Image uploaded successfully."\n}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GET product image detail -->
+      <div class="endpoint-card" id="ep-pimg-detail">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-GET">GET</span>
+          <span class="endpoint-path">/api/product-images/{id}/</span>
+          <span class="endpoint-name">Product Image Details</span>
+          <span class="status-pill status-ok">200 OK</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <table class="field-table" style="margin-bottom:16px">
+            <thead><tr><th>Parameter</th><th>Type</th><th>Location</th><th>Description</th></tr></thead>
+            <tbody><tr><td class="field-name">id</td><td><span class="field-type">integer</span></td><td><span class="req-badge">Path Param</span></td><td>Product image ID</td></tr></tbody>
+          </table>
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-label">Response Body (200)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>{\n  "id": 23,\n  "product": 109,\n  "product_title": "Premium Toor Dal",\n  "image_url": "https://daalsetu.zappcode.in/api/product-media/images/23/view/",\n  "download_url": "https://daalsetu.zappcode.in/api/product-media/images/23/download/",\n  "can_download": true,\n  "uploaded_by": 111,\n  "is_primary": true,\n  "created_at": "2026-07-28T19:26:09.788646+05:30"\n}</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- DELETE product image -->
+      <div class="endpoint-card" id="ep-pimg-delete">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-DELETE">DELETE</span>
+          <span class="endpoint-path">/api/product-images/{id}/</span>
+          <span class="endpoint-name">Delete Product Image</span>
+          <span class="status-pill status-ok">200 OK</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="body-grid">
+            <div>
+              <div class="resp-label"><span class="http-code http-2xx">200</span> Success</div>
+              <div class="code-block">
+                <div class="code-block-header"><span class="code-label">Response Body</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+                <pre>{\n  "success": true,\n  "message": "Image deleted successfully."\n}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PATCH / PUT product image -->
+      <div class="endpoint-card" id="ep-pimg-patch">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-PATCH">PATCH</span>
+          <span class="endpoint-path">/api/product-images/{id}/</span>
+          <span class="endpoint-name">Update Product Image</span>
+          <span class="status-pill status-warn">404 Not Found</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-label">Response Body</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>{\n  "detail": "No ProductImage matches the given query."\n}</pre>
+          </div>
+        </div>
+      </div>
+    </div><!-- /sec-product-images -->
+
+    <!-- ═══════════════════════════════
+         SECTION: PRODUCT VIDEOS
+    ════════════════════════════════ -->
+    <div class="section" id="sec-product-videos">
+      <div class="section-header">
+        <div class="section-icon" style="background:linear-gradient(135deg,rgba(6,182,212,.2),rgba(59,130,246,.2))">🎥</div>
+        <div>
+          <div class="section-title">Product Videos</div>
+          <div class="section-subtitle">/api/product-videos/ — Upload, view, and delete product videos</div>
+        </div>
+        <div class="endpoint-count">6 endpoints</div>
+      </div>
+
+      <!-- GET product videos list -->
+      <div class="endpoint-card" id="ep-pvid-list">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-GET">GET</span>
+          <span class="endpoint-path">/api/product-videos/</span>
+          <span class="endpoint-name">Product Videos List</span>
+          <span class="status-pill status-ok">200 OK</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-label">Response Body (200)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>[\n  {\n    "id": 8,\n    "product": 108,\n    "product_title": "Premium Toor Dal",\n    "video_url": "https://daalsetu.zappcode.in/api/product-media/videos/8/view/",\n    "download_url": "https://daalsetu.zappcode.in/api/product-media/videos/8/download/",\n    "can_download": true,\n    "uploaded_by": 111,\n    "title": "Product Video",\n    "is_primary": true,\n    "created_at": "2026-07-28T19:22:16.069368+05:30"\n  }\n]</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST create product video -->
+      <div class="endpoint-card" id="ep-pvid-create">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-POST">POST</span>
+          <span class="endpoint-path">/api/product-videos/</span>
+          <span class="endpoint-name">Upload Product Video</span>
+          <span class="status-pill status-ok">201 Created</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <table class="field-table" style="margin-bottom:16px">
+            <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td class="field-name">product</td><td><span class="field-type">string (ID)</span></td><td><span class="req-badge">Required</span></td><td>Product ID to attach video to</td></tr>
+              <tr><td class="field-name">title</td><td><span class="field-type">string</span></td><td><span class="req-badge">Required</span></td><td>Video title</td></tr>
+              <tr><td class="field-name">is_primary</td><td><span class="field-type">boolean</span></td><td><span class="opt-badge">Optional</span></td><td>Set as primary video</td></tr>
+              <tr><td class="field-name">video</td><td><span class="field-type">file</span></td><td><span class="req-badge">Required</span></td><td>Video file (multipart/form-data, mp4)</td></tr>
+            </tbody>
+          </table>
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-label">Response Body (201)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>{\n  "id": 9,\n  "product": 109,\n  "product_title": "Premium Toor Dal",\n  "video_url": "https://daalsetu.zappcode.in/api/product-media/videos/9/view/",\n  "download_url": "https://daalsetu.zappcode.in/api/product-media/videos/9/download/",\n  "can_download": true,\n  "uploaded_by": 111,\n  "title": "Product Video",\n  "is_primary": true,\n  "created_at": "2026-07-28T19:26:10.347966+05:30",\n  "message": "Video uploaded successfully."\n}</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- GET / DELETE product video detail -->
+      <div class="endpoint-card" id="ep-pvid-detail">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-GET">GET</span>
+          <span class="endpoint-path">/api/product-videos/{id}/</span>
+          <span class="endpoint-name">Product Video Details</span>
+          <span class="status-pill status-ok">200 OK</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-label">Response Body (200)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>{\n  "id": 9,\n  "product": 109,\n  "product_title": "Premium Toor Dal",\n  "video_url": "https://daalsetu.zappcode.in/api/product-media/videos/9/view/",\n  "download_url": "https://daalsetu.zappcode.in/api/product-media/videos/9/download/",\n  "can_download": true,\n  "uploaded_by": 111,\n  "title": "Product Video",\n  "is_primary": true,\n  "created_at": "2026-07-28T19:26:10.347966+05:30"\n}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="endpoint-card" id="ep-pvid-delete">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-DELETE">DELETE</span>
+          <span class="endpoint-path">/api/product-videos/{id}/</span>
+          <span class="endpoint-name">Delete Product Video</span>
+          <span class="status-pill status-ok">200 OK</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-label">Response Body (200)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>{\n  "success": true,\n  "message": "Video deleted successfully."\n}</pre>
+          </div>
+        </div>
+      </div>
+    </div><!-- /sec-product-videos -->
+
+    <!-- ═══════════════════════════════
+         SECTION: SELLER BRANCHES
+    ════════════════════════════════ -->
+    <div class="section" id="sec-branches">
+      <div class="section-header">
+        <div class="section-icon" style="background:linear-gradient(135deg,rgba(34,197,94,.2),rgba(168,85,247,.2))">🏢</div>
+        <div>
+          <div class="section-title">Seller Branches</div>
+          <div class="section-subtitle">/api/seller/branches/ — Manage seller branch associations</div>
+        </div>
+        <div class="endpoint-count">3+ endpoints</div>
+      </div>
+
+      <!-- GET branches list -->
+      <div class="endpoint-card" id="ep-branch-list">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-GET">GET</span>
+          <span class="endpoint-path">/api/seller/branches/</span>
+          <span class="endpoint-name">Seller Branches List</span>
+          <span class="status-pill status-ok">200 OK</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-label">Response Body (200)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>{\n  "success": true,\n  "data": {\n    "primary_branch": {\n      "id": 22,\n      "branch_code": "PUN718M",\n      "location_name": "Pune Branch",\n      "city": "Pune",\n      "state": "Maharashtra"\n    },\n    "my_branches": [\n      {\n        "id": 22,\n        "branch_code": "PUN718M",\n        "location_name": "Pune Branch",\n        "city": "Pune",\n        "state": "Maharashtra",\n        "is_primary": true\n      }\n    ],\n    "pending_requests": []\n  }\n}</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- GET branch detail -->
+      <div class="endpoint-card" id="ep-branch-detail">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-GET">GET</span>
+          <span class="endpoint-path">/api/seller/branches/{branch_id}/</span>
+          <span class="endpoint-name">Seller Branch Detail</span>
+          <span class="status-pill status-ok">200 OK</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-label">Response Body (200)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>{\n  "success": true,\n  "data": {\n    "id": 22,\n    "branch_code": "PUN718M",\n    "location_name": "Pune Branch",\n    "city": "Pune",\n    "state": "Maharashtra",\n    "area": "IT Park Puna"\n  }\n}</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST cancel request -->
+      <div class="endpoint-card" id="ep-branch-cancel">
+        <div class="endpoint-header" onclick="toggleCard(this)">
+          <span class="method-badge bg-POST">POST</span>
+          <span class="endpoint-path">/api/seller/branches/{branch_id}/cancel-request/</span>
+          <span class="endpoint-name">Cancel Branch Request</span>
+          <span class="status-pill status-warn">404 Not Found</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="endpoint-body">
+          <div class="info-row">
+            <div class="info-item"><div class="info-item-label">Note</div><div class="info-item-value" style="color:var(--yellow)">⚠ No 2xx response observed in live test</div></div>
+          </div>
+          <div class="code-block">
+            <div class="code-block-header"><span class="code-label">Observed Response</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+            <pre>{\n  "detail": "No BranchMaster matches the given query."\n}</pre>
+          </div>
+        </div>
+      </div>
+    </div><!-- /sec-branches -->
+
+    <!-- ─── FOOTER ─── -->
+    <hr class="divider" />
+    <div style="text-align:center;padding:24px 0;color:var(--text-muted);font-size:13px">
+      <div style="font-size:16px;font-weight:700;color:var(--text-secondary);margin-bottom:4px">DaalSetu API Documentation</div>
+      Developed by <span style="color:var(--accent)">Prem Verma</span> · Created 1 Jun 2026 · Last Updated 28 Jul 2026
+      <br><span style="font-family:JetBrains Mono,monospace;font-size:11px;color:var(--text-muted)">Base URL: https://daalsetu.zappcode.in</span>
+    </div>
+
+  </main>
+</div>
+
+<!-- ─── SCROLL TOP ─── -->
+<button id="scrollTop" title="Scroll to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+  // ─ Toggle card
+  function toggleCard(header) {
+    const card = header.closest('.endpoint-card');
+    card.classList.toggle('open');
+  }
+
+  // ─ Scroll to section
+  function scrollToSection(id) {
+    const el = document.getElementById(id);
+    if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  }
+
+  // ─ Tab switch
+  function switchTab(btn, showId, hideId) {
+    document.getElementById(showId).style.display = 'block';
+    document.getElementById(hideId).style.display = 'none';
+    const bar = btn.closest('.tab-bar');
+    bar.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  // ─ Copy code
+  function copyCode(btn) {
+    const pre = btn.closest('.code-block').querySelector('pre');
+    navigator.clipboard.writeText(pre.innerText.replace(/\\n/g, '\n')).then(() => {
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+  }
+
+  // ─ Scroll top button
+  const scrollTopBtn = document.getElementById('scrollTop');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 300) scrollTopBtn.classList.add('visible');
+    else scrollTopBtn.classList.remove('visible');
+  });
+
+  // ─ Search filter
+  const searchInput = document.getElementById('searchInput');
+  searchInput.addEventListener('input', function() {
+    const q = this.value.toLowerCase().trim();
+    document.querySelectorAll('.endpoint-card').forEach(card => {
+      const text = card.innerText.toLowerCase();
+      card.style.display = (!q || text.includes(q)) ? '' : 'none';
+    });
+    document.querySelectorAll('.section').forEach(sec => {
+      const visible = [...sec.querySelectorAll('.endpoint-card')].some(c => c.style.display !== 'none');
+      sec.style.display = visible ? '' : 'none';
+    });
+  });
+
+  // ─ Sidebar active link on scroll
+  const sections = document.querySelectorAll('.section, #overview, #auth');
+  const sidebarLinks = document.querySelectorAll('.sidebar-link');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        sidebarLinks.forEach(l => l.classList.remove('active'));
+        const link = document.querySelector(`.sidebar-link[onclick*="${entry.target.id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { threshold: 0.2, rootMargin: '-80px 0px -60% 0px' });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

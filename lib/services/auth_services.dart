@@ -1,9 +1,9 @@
+import '../comman/api_url.dart';
 import '../modules/Auth/forgot_password/model/forgot_password_model.dart';
 import '../modules/Auth/login/model/login_model.dart';
-import '../network/api_client.dart';
-import '../comman/api_url.dart';
-import '../utils/app_preferences.dart';
 import '../modules/Auth/register/model/register_model.dart';
+import '../network/api_client.dart';
+import '../utils/app_preferences.dart';
 
 class AuthService {
   /// ============================================================
@@ -19,12 +19,6 @@ class AuthService {
       files: files,
       requireAuth: false,
     );
-
-    print("REGISTER RESPONSE: $response");
-
-    if (response == null || response is! Map<String, dynamic>) {
-      throw Exception("Invalid response format");
-    }
 
     if (response["status"] == "success") {
       return response["message"] ?? "Registration successful";
@@ -46,14 +40,14 @@ class AuthService {
       requireAuth: false,
     );
 
-    if (response == null || response is! Map<String, dynamic>) {
-      throw Exception("Invalid response format");
-    }
-
-    if (response.containsKey("access")) {
+    if (response.containsKey("access") &&
+        response.containsKey("refresh") &&
+        response["user"] is Map<String, dynamic>) {
       return LoginResponse.fromJson(response);
     } else {
-      throw Exception(response["detail"] ?? "Login Failed");
+      throw Exception(
+        response["message"] ?? response["detail"] ?? "Login failed",
+      );
     }
   }
 
@@ -72,7 +66,7 @@ class AuthService {
         "new_password": newPassword,
         "confirm_password": confirmPassword,
       },
-      requireAuth: true, // 🔥 Important (uses access token)
+      requireAuth: true,
     );
 
     if (response.containsKey("message")) {

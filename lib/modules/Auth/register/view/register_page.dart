@@ -3,14 +3,16 @@ import '../controller/register_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:daalsetu/theme/app_theme.dart';
+
 class AppColors {
   static Color get background => Get.theme.scaffoldBackgroundColor;
   static Color get cardSurface => Get.theme.cardColor;
-  static Color get primaryBlue => Get.theme.primaryColor;
+  static Color get primaryBrand => Get.theme.primaryColor;
   static Color get textWhite => Get.theme.textTheme.bodyLarge?.color ?? Colors.white;
   static Color get textGrey => Get.theme.textTheme.bodyMedium?.color ?? Colors.grey;
   static Color get border => Get.theme.dividerColor;
-  static Color get successGreen => Colors.green;
+  static Color get successGreen => AppTheme.successGreen;
 }
 
 class RegisterScreen extends StatefulWidget {
@@ -33,7 +35,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.dark(
-              primary: AppColors.primaryBlue,
+              primary: AppColors.primaryBrand,
               onPrimary: Colors.white,
               surface: AppColors.cardSurface,
               onSurface: Colors.white,
@@ -221,23 +223,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
       height: 50,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: AppColors.primaryBlue.withOpacity(0.1),
+        color: AppColors.primaryBrand.withOpacity(0.1),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.primaryBlue),
+        border: Border.all(color: AppColors.primaryBrand),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             IconlyLight.shield_done,
-            color: AppColors.primaryBlue,
+            color: AppColors.primaryBrand,
             size: 20,
           ),
           const SizedBox(width: 8),
           Text(
             "ADMIN",
             style: TextStyle(
-              color: AppColors.primaryBlue,
+              color: AppColors.primaryBrand,
               fontWeight: FontWeight.bold,
               fontSize: 14,
               letterSpacing: 1.2,
@@ -254,7 +256,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       children: [
         Row(
           children: [
-            Icon(icon, color: AppColors.primaryBlue, size: 20),
+            Icon(icon, color: AppColors.primaryBrand, size: 20),
             const SizedBox(width: 10),
             Text(
               title,
@@ -304,7 +306,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppColors.primaryBlue),
+              borderSide: BorderSide(color: AppColors.primaryBrand),
             ),
           ),
           validator: (value) => value!.isEmpty ? "Required" : null,
@@ -347,7 +349,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppColors.primaryBlue),
+              borderSide: BorderSide(color: AppColors.primaryBrand),
             ),
           ),
           validator: (value) => value!.isEmpty ? "Required" : null,
@@ -385,7 +387,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppColors.primaryBlue),
+              borderSide: BorderSide(color: AppColors.primaryBrand),
             ),
           ),
           items: items.map((item) => DropdownMenuItem(
@@ -423,7 +425,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 color: const Color(0xFF132238),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, color: AppColors.primaryBlue),
+              child: Icon(icon, color: AppColors.primaryBrand),
             ),
             const SizedBox(width: 15),
             Expanded(
@@ -471,12 +473,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       height: 55,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryBlue,
+          backgroundColor: AppColors.primaryBrand,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           elevation: 4,
-          shadowColor: AppColors.primaryBlue.withOpacity(0.4),
+          shadowColor: AppColors.primaryBrand.withOpacity(0.4),
         ),
         onPressed: _controller.isLoading
             ? null

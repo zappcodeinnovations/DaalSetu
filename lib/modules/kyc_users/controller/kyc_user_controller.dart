@@ -7,6 +7,32 @@ class KycController extends GetxController {
   final isLoading = false.obs;
   final kycUsers = <KycUserModel>[].obs;
   final selectedFilter = "all".obs;
+  final searchQuery = "".obs;
+
+  int get pendingCount => kycUsers.where((u) => u.kycStatus.toLowerCase() == 'pending').length;
+  int get approvedCount => kycUsers.where((u) => u.kycStatus.toLowerCase() == 'approved').length;
+  int get rejectedCount => kycUsers.where((u) => u.kycStatus.toLowerCase() == 'rejected').length;
+  int get totalCount => kycUsers.length;
+
+  List<KycUserModel> get filteredUsers {
+    return kycUsers.where((user) {
+      // Filter by tab
+      if (selectedFilter.value != 'all' && user.kycStatus.toLowerCase() != selectedFilter.value.toLowerCase()) {
+        return false;
+      }
+      // Filter by search query
+      if (searchQuery.value.isNotEmpty) {
+        final query = searchQuery.value.toLowerCase();
+        if (!user.name.toLowerCase().contains(query) && 
+            !user.email.toLowerCase().contains(query) &&
+            !user.mobile.toLowerCase().contains(query) &&
+            !(user.companyName?.toLowerCase().contains(query) ?? false)) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+  }
 
   @override
   void onInit() {

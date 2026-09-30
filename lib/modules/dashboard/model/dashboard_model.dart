@@ -168,16 +168,28 @@ class ContractModel {
   final String seller;
   final String buyer;
   final String commodity;
+  final String quantity;
+  final String rate;
+  final String value;
+  final String brokerage;
   final String paymentStatus;
   final String deliveryStatus;
+  final String transporter;
+  final String branch;
 
   ContractModel({
     required this.id,
     required this.seller,
     required this.buyer,
     required this.commodity,
+    required this.quantity,
+    required this.rate,
+    required this.value,
+    required this.brokerage,
     required this.paymentStatus,
     required this.deliveryStatus,
+    required this.transporter,
+    required this.branch,
   });
 
   factory ContractModel.fromJson(Map<String, dynamic> json) {
@@ -186,8 +198,14 @@ class ContractModel {
       seller: json['seller'] ?? '',
       buyer: json['buyer'] ?? '',
       commodity: json['commodity'] ?? '',
+      quantity: json['quantity'] ?? '',
+      rate: json['rate'] ?? '',
+      value: json['value'] ?? '',
+      brokerage: json['brokerage'] ?? '',
       paymentStatus: json['payment_status'] ?? '',
       deliveryStatus: json['delivery_status'] ?? '',
+      transporter: json['transporter'] ?? '',
+      branch: json['branch'] ?? '',
     );
   }
 }
@@ -199,6 +217,7 @@ class ChartsModel {
   final TopBuyersChart topBuyers;
   final TransporterSlaChart transporterSla;
   final PaymentsReceivablesChart paymentsReceivables;
+  final UserDistributionChart userDistribution;
 
   ChartsModel({
     required this.gtvDeals,
@@ -207,6 +226,7 @@ class ChartsModel {
     required this.topBuyers,
     required this.transporterSla,
     required this.paymentsReceivables,
+    required this.userDistribution,
   });
 
   factory ChartsModel.fromJson(Map<String, dynamic>? json) {
@@ -222,6 +242,9 @@ class ChartsModel {
       ),
       paymentsReceivables: PaymentsReceivablesChart.fromJson(
         json['payments_receivables'] ?? {},
+      ),
+      userDistribution: UserDistributionChart.fromJson(
+        json['user_distribution'] ?? {},
       ),
     );
   }
@@ -339,6 +362,21 @@ class PipelineChart {
     return PipelineChart(
       labels: List<String>.from(json['labels'] ?? []),
       values: List<int>.from(json['values'] ?? []),
+    );
+  }
+}
+
+class UserDistributionChart {
+  final List<String> labels;
+  final List<int> counts;
+
+  UserDistributionChart({required this.labels, required this.counts});
+
+  factory UserDistributionChart.fromJson(Map<String, dynamic>? json) {
+    json ??= {};
+    return UserDistributionChart(
+      labels: List<String>.from(json['labels'] ?? []),
+      counts: List<int>.from(json['counts'] ?? []),
     );
   }
 }

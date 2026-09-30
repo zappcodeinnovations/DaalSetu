@@ -1,7 +1,9 @@
 import 'dart:ui';
-import '../controller/splash_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import '../controller/splash_controller.dart';
+import '../../../theme/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -118,28 +120,13 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       body: Container(
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: isDark
-                ? [
-                    const Color(0xFF2A1B00),
-                    const Color(0xFF0D1117),
-                    const Color(0xFF0D1117),
-                  ]
-                : [
-                    const Color(0xFFFFE082),
-                    const Color(0xFFFFF8E1),
-                    Colors.white,
-                  ],
-          ),
+          color: theme.scaffoldBackgroundColor,
         ),
         child: Stack(
           children: [
@@ -274,7 +261,7 @@ class _SplashScreenState extends State<SplashScreen>
                               style: GoogleFonts.poppins(
                                 fontSize: 36,
                                 fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                                color: theme.textTheme.displayLarge?.color,
                               ),
                             ),
                             TextSpan(
@@ -301,9 +288,7 @@ class _SplashScreenState extends State<SplashScreen>
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         letterSpacing: 2.0,
-                        color: isDark
-                            ? Colors.white54
-                            : const Color(0xFF5F6B7A),
+                        color: theme.textTheme.bodySmall?.color,
                       ),
                     ),
                   ),

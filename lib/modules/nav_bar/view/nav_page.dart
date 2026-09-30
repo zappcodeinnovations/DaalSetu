@@ -1,5 +1,9 @@
 import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
+
+import '../../../theme/app_theme.dart';
 import '../../seller/dashboard/view/seller_dashboard_view.dart';
 import '../../seller/company/view/seller_company_view.dart';
 import '../../seller/categories/view/seller_category_view.dart';
@@ -16,8 +20,6 @@ import '../../buyer/offers/view/buyer_offers_view.dart';
 import '../../buyer/delivery_challan/view/buyer_delivery_challan_view.dart';
 import '../../buyer/branch/view/buyer_branch_view.dart';
 import '../../settings/view/settings_page.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 class MainNavigationScreen extends StatelessWidget {
   MainNavigationScreen({super.key});
@@ -70,23 +72,7 @@ class MainNavigationScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         extendBody: true,
         body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: Theme.of(context).brightness == Brightness.dark
-                  ? [
-                      const Color(0xFF1A1206),
-                      const Color(0xFF0D1117),
-                      const Color(0xFF0D1117),
-                    ]
-                  : [
-                      const Color(0xFFFFF8E1),
-                      const Color(0xFFFFFCF5),
-                      Colors.white,
-                    ],
-            ),
-          ),
+          color: Theme.of(context).scaffoldBackgroundColor,
           child: IndexedStack(
             index: navController.selectedIndex.value,
             children: _getPages(navController.userRole.value),
@@ -238,7 +224,7 @@ class _GlassNavBar extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: Theme.of(context).brightness == Brightness.dark
+                colors: isDark
                     ? [
                         const Color(0xFF1A1206),
                         const Color(0xFF0D1117),
@@ -252,14 +238,12 @@ class _GlassNavBar extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.white.withValues(alpha: 0.6),
+                color: theme.dividerColor,
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
+                  color: isDark ? Colors.black.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.05),
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
@@ -295,7 +279,7 @@ class _GlassNavBar extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: isSelected
-              ? theme.colorScheme.primary.withValues(alpha: 0.12)
+              ? AppTheme.primaryGold
               : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
         ),
@@ -306,7 +290,7 @@ class _GlassNavBar extends StatelessWidget {
               isSelected ? item.activeIcon : item.icon,
               size: 22,
               color: isSelected
-                  ? theme.colorScheme.primary
+                  ? Colors.white
                   : theme.iconTheme.color,
             ),
             const SizedBox(height: 4),
@@ -316,28 +300,11 @@ class _GlassNavBar extends StatelessWidget {
                 fontSize: isSelected ? 10.5 : 10,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 color: isSelected
-                    ? theme.colorScheme.primary
+                    ? Colors.white
                     : theme.textTheme.bodySmall?.color,
               ),
               child: Text(item.label),
             ),
-            if (isSelected) ...[
-              const SizedBox(height: 3),
-              Container(
-                width: 5,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.5),
-                      blurRadius: 6,
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ],
         ),
       ),
