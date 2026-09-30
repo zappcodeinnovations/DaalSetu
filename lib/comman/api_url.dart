@@ -43,7 +43,6 @@ class ApiUrls {
   static const String companyPrimary = "/api/company/primary/";
   static const String categoriesDashboard = "/api/categories/dashboard/";
   static const String categoriesTree = "/api/categories/tree/";
-  static const String sellerBranches = "/api/seller/branches/";
   static const String branchRequestByCode = "/api/seller/branches/request-by-code/";
   static const String sellerChallans = "/api/seller/delivery-challans/";
 
@@ -95,7 +94,6 @@ class ApiUrls {
   static String dispatchChallan(int id) => "/api/seller/delivery-challans/$id/dispatch/";
 
   // Media
-  static const String productVideos = "/api/product-videos/";
   static String productImageDetail(int id) => "/api/product-images/$id/";
   static String productVideoDetail(int id) => "/api/product-videos/$id/";
   static const String offerImagesCreate = "/api/offer-images/create/";
