@@ -1,3 +1,4 @@
+
 when i tap in Add Sub-Category and edit Category the popup is not proper i want to the popup is glosy efect and fix alignment
 and when i search a Categories so that is not work, it return a deffrent UI why this is only for main or root categories
 
@@ -68,3 +69,4 @@ Role Permissions	GET	/api/seller/roles/	List staff roles and permissions
 Logistics & Dispatch	GET	/api/seller/consignments/	Detailed transport consignment tracking
 Logistics & Dispatch	POST	/api/seller/consignments/{id}/dispatch/	Update live dispatch status
 Seller Panel Api Status Report
+
