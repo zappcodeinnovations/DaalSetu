@@ -1,0 +1,4939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Page not found at /api/invalid_url</title>
+  <meta name="robots" content="NONE,NOARCHIVE">
+  <style>
+    html * { padding:0; margin:0; }
+    body * { padding:10px 20px; }
+    body * * { padding:0; }
+    body { font-family: sans-serif; background:#eee; color:#000; }
+    body > :where(header, main, footer) { border-bottom:1px solid #ddd; }
+    h1 { font-weight:normal; margin-bottom:.4em; }
+    h1 small { font-size:60%; color:#666; font-weight:normal; }
+    table { border:none; border-collapse: collapse; width:100%; }
+    td, th { vertical-align:top; padding:2px 3px; }
+    th { width:12em; text-align:right; color:#666; padding-right:.5em; }
+    #info { background:#f6f6f6; }
+    #info ol { margin: 0.5em 4em; }
+    #info ol li { font-family: monospace; }
+    #summary { background: #ffc; }
+    #explanation { background:#eee; border-bottom: 0px none; }
+    pre.exception_value { font-family: sans-serif; color: #575757; font-size: 1.5em; margin: 10px 0 10px 0; }
+  </style>
+</head>
+<body>
+  <header id="summary">
+    <h1>Page not found <small>(404)</small></h1>
+    
+    <table class="meta">
+      <tr>
+        <th scope="row">Request Method:</th>
+        <td>GET</td>
+      </tr>
+      <tr>
+        <th scope="row">Request URL:</th>
+        <td>https://daalsetu.zappcode.in/api/invalid_url</td>
+      </tr>
+      
+    </table>
+  </header>
+
+  <main id="info">
+    
+      <p>
+      Using the URLconf defined in <code>daalbroker.urls</code>,
+      Django tried these URL patterns, in this order:
+      </p>
+      <ol>
+        
+          <li>
+            
+              <code>
+                media/product_images/&lt;path:filename&gt;
+                
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                media/product_videos/&lt;path:filename&gt;
+                
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/auth/session-token/
+                [name='session_token']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                admin/
+                
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                seller/delivery-challans/
+                [name='api_seller_delivery_challan_list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                seller/delivery-challans/&lt;int:challan_id&gt;/
+                [name='api_seller_delivery_challan_detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                seller/delivery-challans/&lt;int:challan_id&gt;/dispatch/
+                [name='api_seller_delivery_challan_dispatch']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                buyer/delivery-challans/
+                [name='api_buyer_delivery_challan_list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                buyer/delivery-challans/&lt;int:challan_id&gt;/
+                [name='api_buyer_delivery_challan_detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                buyer/delivery-challans/&lt;int:challan_id&gt;/receive/
+                [name='api_buyer_delivery_challan_receive']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                product-media/images/&lt;int:image_id&gt;/view/
+                [name='api_product_image_preview']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                product-media/images/&lt;int:image_id&gt;/download/
+                [name='api_product_image_download']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                product-media/videos/&lt;int:video_id&gt;/view/
+                [name='api_product_video_preview']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                product-media/videos/&lt;int:video_id&gt;/download/
+                [name='api_product_video_download']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                tags/dropdown/
+                [name='api-tags-dropdown']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                brands/dashboard/
+                [name='api-brands-dashboard']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                categories/parent-dropdown/
+                [name='api-parent-categories-dropdown']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                register/
+                [name='api_registration_page']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                forgotpassword/
+                [name='api_forgotpassword_page']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                kyc/
+                [name='api_kyc_dashboard_page']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                kyc/list/
+                [name='mobile_kyc_list_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                intrast/
+                [name='intrast_page_list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                product-video-list/
+                [name='api_product_video_list_page']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                auth/register/
+                [name='api_register']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                auth/login/
+                [name='api_login']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                auth/logout/
+                [name='api_logout']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                auth/forgot-password/
+                [name='api_forgot_password']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                auth/change-password/
+                [name='api_change_password']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                auth/session-token/
+                [name='api_session_token']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                adduser/
+                [name='api_add_user']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                user/
+                [name='api_current_user']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                user/profile-image/
+                [name='api_upload_profile_image']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                profile/update/
+                [name='api_profile_update']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                kyc/&lt;int:user_id&gt;/approve/
+                [name='api_kyc_approve']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                kyc/&lt;int:user_id&gt;/reject/
+                [name='api_kyc_reject']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                products/filter/
+                [name='api_products_filter']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                filter/
+                [name='api_universal_filter']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/today/
+                [name='buyer_offers_today_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/previous/
+                [name='buyer_offers_previous_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/pending/
+                [name='buyer_offers_pending_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                admin/dashboard/
+                [name='api_admin_dashboard']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                buyer/dashboard/
+                [name='buyer_dashboard_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                seller/dashboard/
+                [name='api_seller_dashboard']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                test-product/&lt;int:product_id&gt;/
+                [name='test_product_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                mobile/contracts/
+                [name='mobile_contract_list_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                mobile/contracts/&lt;int:contract_id&gt;/
+                [name='mobile_contract_detail_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/create/
+                [name='mobile_offer_create_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/&lt;int:product_id&gt;/
+                [name='mobile_offer_get_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/&lt;int:product_id&gt;/interests/
+                [name='mobile_offer_interests_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/&lt;int:product_id&gt;/update/
+                [name='mobile_offer_update_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/&lt;int:product_id&gt;/delete/
+                [name='mobile_offer_delete_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/&lt;int:product_id&gt;/toggle/
+                [name='mobile_offer_toggle_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/&lt;int:product_id&gt;/update-stock/
+                [name='mobile_offer_update_stock_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/list/
+                [name='mobile_offers_list_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/&lt;int:product_id&gt;/show-interest/
+                [name='mobile_offer_show_interest_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/&lt;int:product_id&gt;/toggle-interest/
+                [name='mobile_offer_toggle_interest_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/&lt;int:product_id&gt;/interests/&lt;int:interest_id&gt;/update/
+                [name='mobile_offer_update_interest_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/&lt;int:product_id&gt;/approve/
+                [name='mobile_offer_accept_buyer_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/&lt;int:product_id&gt;/reject/
+                [name='mobile_offer_reject_buyer_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/&lt;int:product_id&gt;/confirm-deal/
+                [name='mobile_offer_confirm_deal_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/&lt;int:product_id&gt;/buyer-confirm/
+                [name='mobile_offer_buyer_confirm_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/&lt;int:product_id&gt;/buyer-reject-interest/
+                [name='mobile_offer_buyer_reject_interest_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/&lt;int:product_id&gt;/interests/&lt;int:interest_id&gt;/message/
+                [name='mobile_offer_negotiation_message_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offer-images/create/
+                [name='mobile_offer_image_create_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offer-images/&lt;int:image_id&gt;/
+                [name='mobile_offer_image_get_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offer-images/&lt;int:image_id&gt;/delete/
+                [name='mobile_offer_image_delete_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/my-interests/list/
+                [name='mobile_buyer_my_interests_list_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                branch/create/
+                [name='mobile_branch_create_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                branch/update/&lt;int:branch_id&gt;/
+                [name='mobile_branch_update_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                branch/toggle/&lt;int:branch_id&gt;/
+                [name='mobile_branch_toggle_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                branch/delete/&lt;int:branch_id&gt;/
+                [name='mobile_branch_delete_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                seller/branches/
+                [name='mobile_seller_branches_list_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                seller/branches/&lt;int:branch_id&gt;/
+                [name='mobile_seller_branch_detail_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                seller/branches/request-by-code/
+                [name='mobile_seller_branch_request_by_code_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                seller/branches/&lt;int:branch_id&gt;/leave/
+                [name='mobile_seller_branch_leave_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                seller/branches/&lt;int:branch_id&gt;/cancel-request/
+                [name='mobile_seller_branch_cancel_request_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                users/create/
+                [name='mobile_user_create_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                users/&lt;int:user_id&gt;/
+                [name='mobile_user_get_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                users/&lt;int:user_id&gt;/update/
+                [name='mobile_user_update_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                users/&lt;int:user_id&gt;/status/
+                [name='mobile_user_update_status_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                users/&lt;int:user_id&gt;/delete/
+                [name='mobile_user_delete_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                notifications/
+                [name='api_notifications_list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                notifications/read/&lt;int:notification_id&gt;/
+                [name='api_notifications_mark_read']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                notifications/read-all/
+                [name='api_notifications_mark_all_read']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                notifications/unread-count/
+                [name='api_notifications_unread_count']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                rfqs/
+                [name='mobile_rfq_list_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                rfqs/create/
+                [name='mobile_rfq_create_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                rfqs/&lt;str:rfq_id&gt;/
+                [name='mobile_rfq_detail_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                rfqs/&lt;str:rfq_id&gt;/quote/
+                [name='mobile_rfq_submit_quotation_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                rfqs/quotation/&lt;int:quot_id&gt;/
+                [name='mobile_rfq_quotation_detail_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                rfqs/quotation/&lt;int:quot_id&gt;/message/
+                [name='mobile_rfq_send_message_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                rfqs/&lt;str:rfq_id&gt;/accept/&lt;int:quot_id&gt;/
+                [name='mobile_rfq_accept_quotation_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                rfqs/quotation/&lt;int:quot_id&gt;/reject/
+                [name='mobile_rfq_reject_quotation_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                rfqs/&lt;str:rfq_id&gt;/close/
+                [name='mobile_rfq_close_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^token/$
+                [name='token-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^token\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='token-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^token/all-with-details/$
+                [name='token-all-with-details']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^token/all-with-details\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='token-all-with-details']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^users/$
+                [name='api-users-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^users\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-users-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^users/(?P&lt;pk&gt;[^/.]+)/$
+                [name='api-users-detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^users/(?P&lt;pk&gt;[^/.]+)\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-users-detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^brands/$
+                [name='api-brands-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^brands\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-brands-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^brands/(?P&lt;pk&gt;[^/.]+)/$
+                [name='api-brands-detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^brands/(?P&lt;pk&gt;[^/.]+)\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-brands-detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^tags/$
+                [name='api-tags-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^tags\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-tags-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^tags/(?P&lt;pk&gt;[^/.]+)/$
+                [name='api-tags-detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^tags/(?P&lt;pk&gt;[^/.]+)\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-tags-detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^categories/$
+                [name='api-categories-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^categories\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-categories-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^categories/levels/$
+                [name='api-categories-categories-by-level']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^categories/levels\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-categories-categories-by-level']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^categories/hierarchy/$
+                [name='api-categories-category-hierarchy']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^categories/hierarchy\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-categories-category-hierarchy']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^categories/dashboard/$
+                [name='api-categories-dashboard']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^categories/dashboard\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-categories-dashboard']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^categories/parent-dropdown/$
+                [name='api-categories-parent-dropdown']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^categories/parent-dropdown\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-categories-parent-dropdown']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^categories/tree/$
+                [name='api-categories-tree']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^categories/tree\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-categories-tree']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^categories/(?P&lt;pk&gt;[^/.]+)/$
+                [name='api-categories-detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^categories/(?P&lt;pk&gt;[^/.]+)\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-categories-detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^categories/(?P&lt;pk&gt;[^/.]+)/sub-category/$
+                [name='api-categories-create-sub-category']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^categories/(?P&lt;pk&gt;[^/.]+)/sub-category\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-categories-create-sub-category']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^categories/(?P&lt;pk&gt;[^/.]+)/image/$
+                [name='api-categories-upload-image']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^categories/(?P&lt;pk&gt;[^/.]+)/image\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-categories-upload-image']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^products/$
+                [name='api-products-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^products\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-products-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^products/(?P&lt;pk&gt;[^/.]+)/$
+                [name='api-products-detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^products/(?P&lt;pk&gt;[^/.]+)\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-products-detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^products/(?P&lt;pk&gt;[^/.]+)/confirm-deal/$
+                [name='api-products-confirm-deal']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^products/(?P&lt;pk&gt;[^/.]+)/confirm-deal\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-products-confirm-deal']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^product-images/$
+                [name='api-product-images-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^product-images\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-product-images-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^product-images/(?P&lt;pk&gt;[^/.]+)/$
+                [name='api-product-images-detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^product-images/(?P&lt;pk&gt;[^/.]+)\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-product-images-detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^product-videos/$
+                [name='api-product-videos-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^product-videos\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-product-videos-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^product-videos/(?P&lt;pk&gt;[^/.]+)/$
+                [name='api-product-videos-detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^product-videos/(?P&lt;pk&gt;[^/.]+)\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-product-videos-detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^vehicles/$
+                [name='api-vehicles-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^vehicles\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-vehicles-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^vehicles/(?P&lt;pk&gt;[^/.]+)/$
+                [name='api-vehicles-detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^vehicles/(?P&lt;pk&gt;[^/.]+)\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-vehicles-detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^drivers/$
+                [name='api-drivers-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^drivers\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-drivers-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^drivers/(?P&lt;pk&gt;[^/.]+)/$
+                [name='api-drivers-detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^drivers/(?P&lt;pk&gt;[^/.]+)\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-drivers-detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^drivers/(?P&lt;pk&gt;[^/.]+)/assign-vehicle/$
+                [name='api-drivers-assign-vehicle']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^drivers/(?P&lt;pk&gt;[^/.]+)/assign-vehicle\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-drivers-assign-vehicle']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^company/$
+                [name='api-company-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^company\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-company-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^company/dropdown/$
+                [name='api-company-dropdown']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^company/dropdown\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-company-dropdown']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^company/primary/$
+                [name='api-company-primary']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^company/primary\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-company-primary']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^company/(?P&lt;pk&gt;[^/.]+)/$
+                [name='api-company-detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^company/(?P&lt;pk&gt;[^/.]+)\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-company-detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^company/(?P&lt;pk&gt;[^/.]+)/set-primary/$
+                [name='api-company-set-primary']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                ^company/(?P&lt;pk&gt;[^/.]+)/set-primary\.(?P&lt;format&gt;[a-z0-9]+)/?$
+                [name='api-company-set-primary']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                
+                [name='api-root']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                &lt;drf_format_suffix:format&gt;
+                [name='api-root']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                brands/dropdown/
+                [name='api-brands-dropdown']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/
+                [name='api-offers-create']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                offers/form-data/
+                [name='api-offers-form-data']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                categories/&lt;int:pk&gt;/brands/
+                [name='api-category-brands']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                rfqs/
+                [name='mobile_rfq_list_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                rfqs/create/
+                [name='mobile_rfq_create_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                rfqs/&lt;str:rfq_id&gt;/
+                [name='mobile_rfq_detail_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                rfqs/&lt;str:rfq_id&gt;/quote/
+                [name='mobile_rfq_submit_quotation_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                rfqs/quotation/&lt;int:quot_id&gt;/
+                [name='mobile_rfq_quotation_detail_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                rfqs/quotation/&lt;int:quot_id&gt;/message/
+                [name='mobile_rfq_send_message_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                rfqs/&lt;str:rfq_id&gt;/accept/&lt;int:quot_id&gt;/
+                [name='mobile_rfq_accept_quotation_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                rfqs/quotation/&lt;int:quot_id&gt;/reject/
+                [name='mobile_rfq_reject_quotation_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                rfqs/&lt;str:rfq_id&gt;/close/
+                [name='mobile_rfq_close_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                buyer-offers/
+                [name='mobile_buyer_offer_list_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                buyer-offers/&lt;int:offer_id&gt;/
+                [name='mobile_buyer_offer_detail_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                buyer-offers/create/
+                [name='mobile_buyer_offer_create_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/
+                
+              </code>
+            
+              <code>
+                buyer-offers/&lt;int:offer_id&gt;/action/
+                [name='mobile_buyer_offer_action_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                
+                [name='root']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                login/
+                [name='login']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                register/&lt;str:branch_code&gt;/
+                [name='branch_registration_page']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                register/
+                [name='registration_page']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                forgotpassword/
+                [name='forgotpassword_page']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                dashboard/
+                [name='dashboard']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                table-column-labels/
+                [name='table_column_labels_api']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                logout/
+                [name='logout']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                notifications/
+                [name='notifications_page']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                notifications/open/&lt;int:notification_id&gt;/
+                [name='notification_open_redirect']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                dashboard/buyer/
+                [name='buyer_dashboard']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                buyer/category-setup/
+                [name='buyer_category_setup']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                buyer/category-setup/save/
+                [name='buyer_category_setup_save']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                buyer/category-requests/
+                [name='buyer_category_requests']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                buyer/category-requests/&lt;int:request_id&gt;/action/
+                [name='buyer_category_request_action']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                buyer/category-requests/update-categories/&lt;int:buyer_id&gt;/
+                [name='update_buyer_categories_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                dashboard/seller/
+                [name='seller_dashboard']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                dashboard/transporter/
+                [name='transporter_dashboard']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                dashboard/transporter/vehicles/
+                [name='register_vehicle']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                dashboard/transporter/drivers/
+                [name='register_driver']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                dashboard/both_sellerandbuyer/
+                [name='both_sellerandbuyer_dashboard']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                dashboard/request-kyc-approval/
+                [name='request_kyc_approval']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                dashboard/buyer/offers/today/
+                [name='buyer_dashboard_offers_today']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                dashboard/buyer/offers/previous/
+                [name='buyer_dashboard_offers_previous']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                dashboard/buyer/offers/pending/
+                [name='buyer_dashboard_offers_pending']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                users/
+                [name='user_list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                users/export/
+                [name='users_export_csv']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                tags/
+                [name='tag_master']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                masters/registered-company/
+                [name='registered_company']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                users/create/
+                [name='user_create']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                users/&lt;int:user_id&gt;/edit/
+                [name='user_update']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                users/&lt;int:user_id&gt;/delete/
+                [name='user_delete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                categories/
+                [name='category_list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                categories/create/
+                [name='category_create_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                categories/&lt;int:category_id&gt;/
+                [name='category_get_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                categories/&lt;int:category_id&gt;/update/
+                [name='category_update_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                categories/&lt;int:category_id&gt;/delete/
+                [name='category_delete_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                categories/tree/
+                [name='category_tree_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                categories/&lt;int:parent_id&gt;/children/
+                [name='category_children_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                categories/&lt;int:category_id&gt;/path/
+                [name='category_path_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                categories/search/
+                [name='category_search_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                subcategories/
+                [name='subcategory_list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                subcategories/create/
+                [name='subcategory_create_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                subcategories/&lt;int:subcategory_id&gt;/
+                [name='subcategory_get_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                subcategories/&lt;int:subcategory_id&gt;/update/
+                [name='subcategory_update_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                subcategories/&lt;int:subcategory_id&gt;/delete/
+                [name='subcategory_delete_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                brands/
+                [name='brand_list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                brands/create/
+                [name='brand_create_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                ajax/brands-by-category/
+                [name='brands_by_category_query_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                brands/by-category/&lt;int:category_id&gt;/
+                [name='brands_by_category_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                brands/&lt;int:brand_id&gt;/
+                [name='brand_get_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                brands/&lt;int:brand_id&gt;/update/
+                [name='brand_update_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                brands/&lt;int:brand_id&gt;/delete/
+                [name='brand_delete_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                offers/
+                [name='product_list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                offers/stock-history/
+                [name='product_stock_history']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                offers/my-interests/
+                [name='buyer_my_interests']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                offers/my-interests/list/
+                [name='buyer_my_interests_list_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                buyer-offers/
+                [name='buyer_offer_requests']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                rfqs/
+                [name='rfq_list_view']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                rfq/create/
+                [name='rfq_create_view']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                rfq/&lt;str:rfq_id&gt;/
+                [name='rfq_detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                rfq/&lt;str:rfq_id&gt;/quote/
+                [name='rfq_submit_quotation']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                rfq/quotation/&lt;int:quot_id&gt;/
+                [name='rfq_quotation_detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                rfq/quotation/&lt;int:quot_id&gt;/message/
+                [name='rfq_send_message']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                rfq/&lt;str:rfq_id&gt;/accept/&lt;int:quot_id&gt;/
+                [name='rfq_accept_quotation']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                rfq/quotation/&lt;int:quot_id&gt;/reject/
+                [name='rfq_reject_quotation']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                rfq/&lt;str:rfq_id&gt;/close/
+                [name='rfq_close_view']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                offers/add/
+                [name='product_create']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                offers/create/
+                [name='product_create_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                offers/&lt;int:product_id&gt;/
+                [name='product_get_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                offers/&lt;int:product_id&gt;/update/
+                [name='product_update_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                offers/&lt;int:product_id&gt;/delete/
+                [name='product_delete_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                offers/&lt;int:product_id&gt;/toggle/
+                [name='product_toggle_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                offers/&lt;int:product_id&gt;/update-stock/
+                [name='product_update_stock_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                products/&lt;int:product_id&gt;/show-interest/
+                [name='product_show_interest_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                products/&lt;int:product_id&gt;/toggle-interest/
+                [name='product_toggle_interest_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                products/&lt;int:product_id&gt;/interests/&lt;int:interest_id&gt;/update/
+                [name='product_update_interest_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                products/&lt;int:product_id&gt;/interests/
+                [name='product_interests_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                products/&lt;int:product_id&gt;/approve/
+                [name='product_accept_buyer_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                products/&lt;int:product_id&gt;/reject/
+                [name='product_reject_buyer_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                products/&lt;int:product_id&gt;/confirm-deal/
+                [name='product_confirm_deal_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                products/&lt;int:product_id&gt;/buyer-confirm/
+                [name='product_buyer_confirm_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                products/&lt;int:product_id&gt;/interests/&lt;int:interest_id&gt;/negotiation/
+                [name='product_interest_negotiation']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                products/&lt;int:product_id&gt;/interests/&lt;int:interest_id&gt;/negotiation/message/
+                [name='product_interest_negotiation_message']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                products/&lt;int:product_id&gt;/buyer-reject-interest/
+                [name='product_buyer_reject_interest']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                offers/list/
+                [name='offers_list_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                contracts/list/
+                [name='contracts_list_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                contracts/&lt;int:contract_id&gt;/
+                [name='contract_detail_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                contracts/&lt;int:contract_id&gt;/update/
+                [name='contract_update_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                contracts/&lt;int:contract_id&gt;/ready-for-loading/
+                [name='contract_ready_for_loading']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                contracts/&lt;int:contract_id&gt;/received/
+                [name='contract_received']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                contracts/&lt;int:contract_id&gt;/transport-bids/
+                [name='contract_transport_bids_list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                contracts/export/
+                [name='contracts_export_csv']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                product-images/
+                [name='product_image_list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                product-video-list/
+                [name='product_video_list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                kyc/
+                [name='kyc_dashboard_page']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                kyc/&lt;int:user_id&gt;/review/
+                [name='kyc_review_page']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                product-images/create/
+                [name='product_image_create_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                product-images/&lt;int:image_id&gt;/
+                [name='product_image_get_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                product-images/&lt;int:image_id&gt;/delete/
+                [name='product_image_delete_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                users/&lt;int:user_id&gt;/
+                [name='get_user_data']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                users/create/
+                [name='user_create_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                users/&lt;int:user_id&gt;/update/
+                [name='user_update_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                users/&lt;int:user_id&gt;/status/
+                [name='user_update_status_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                users/&lt;int:user_id&gt;/delete/
+                [name='user_delete_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                permissions/
+                [name='role_permissions']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                permissions/matrix/
+                [name='permissions_matrix']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                permissions/update/
+                [name='update_permission']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                access-denied/
+                [name='access_denied']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                rbac/roles/
+                [name='rbac_roles']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                rbac/roles/&lt;int:role_id&gt;/delete/
+                [name='rbac_role_delete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                rbac/sub-admins/
+                [name='sub_admins']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                rbac/users/&lt;int:user_id&gt;/permissions/
+                [name='user_permission_overrides']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                dashboard/branch-master/
+                [name='branch_master']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                branches/
+                [name='branch_directory']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                branches/&lt;int:branch_id&gt;/request/
+                [name='branch_membership_request_create']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                branches/request-by-code/
+                [name='branch_membership_request_create_by_code']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                branches/&lt;int:branch_id&gt;/leave/
+                [name='branch_membership_leave']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                branches/&lt;int:branch_id&gt;/cancel-request/
+                [name='branch_membership_request_cancel']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                branches/requests/&lt;int:request_id&gt;/review/
+                [name='branch_membership_request_review']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                location/states/
+                [name='location_states_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                location/cities/
+                [name='location_cities_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                branch/create/
+                [name='branch_create_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                branch/update/&lt;int:branch_id&gt;/
+                [name='branch_update_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                branch/toggle/&lt;int:branch_id&gt;/
+                [name='branch_toggle_status_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                branch/delete/&lt;int:branch_id&gt;/
+                [name='branch_delete_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                branch/buyer-access/toggle/
+                [name='buyer_branch_access_toggle_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                branch/transporter-bidding/toggle/
+                [name='transporter_branch_bidding_toggle_ajax']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                contracts/
+                [name='intrast_page']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                contracts/history/
+                [name='contract_creation_history']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                consignments/
+                [name='consignment_management']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                intrast/
+                [name='intrast_page_legacy']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                delivery-challan/create/
+                [name='create_challan']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                delivery-challan/
+                [name='list_challans']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                delivery-challan/old/
+                [name='old_challan_list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                delivery-challan/old/verify-module-password/
+                [name='old_challan_verify_module_password']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                delivery-challan/old/access-logs/
+                [name='old_challan_access_logs']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                delivery-challan/old/&lt;int:pk&gt;/lock/
+                [name='old_challan_lock']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                delivery-challan/old/&lt;int:pk&gt;/verify-password/
+                [name='old_challan_verify_password']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                delivery-challan/old/&lt;int:pk&gt;/
+                [name='old_challan_detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                delivery-challan/export/excel/
+                [name='export_challans_excel']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                delivery-challan/&lt;int:pk&gt;/
+                [name='challan_detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                delivery-challan/&lt;int:pk&gt;/update/
+                [name='update_challan']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                delivery-challan/&lt;int:pk&gt;/delete/
+                [name='delete_challan']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                delivery-challan/&lt;int:pk&gt;/dispatch/
+                [name='dispatch_challan']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                delivery-challan/&lt;int:pk&gt;/deliver/
+                [name='deliver_challan']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                delivery-challan/&lt;int:pk&gt;/cancel/
+                [name='cancel_challan']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                accounting/billing-companies/
+                [name='billing_company_settings']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                accounting/brokerage-bills/
+                [name='brokerage_bill_list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                accounting/brokerage-bills/create/
+                [name='brokerage_bill_create']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                accounting/brokerage-bills/&lt;int:bill_id&gt;/
+                [name='brokerage_bill_detail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                accounting/brokerage-bills/&lt;int:bill_id&gt;/update/
+                [name='brokerage_bill_update']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                accounting/brokerage-bills/&lt;int:bill_id&gt;/lines/&lt;int:line_id&gt;/update/
+                [name='brokerage_bill_line_update']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                accounting/brokerage-bills/&lt;int:bill_id&gt;/lines/&lt;int:line_id&gt;/remove/
+                [name='brokerage_bill_line_remove']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                accounting/brokerage-bills/&lt;int:bill_id&gt;/issue/
+                [name='brokerage_bill_issue']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                accounting/brokerage-bills/&lt;int:bill_id&gt;/pdf/generate/
+                [name='brokerage_bill_pdf_generate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                accounting/brokerage-bills/&lt;int:bill_id&gt;/pdf/
+                [name='brokerage_bill_pdf_view']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                accounting/brokerage-bills/&lt;int:bill_id&gt;/pdf/download/
+                [name='brokerage_bill_pdf_download']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                accounting/brokerage-bills/&lt;int:bill_id&gt;/cancel/
+                [name='brokerage_bill_cancel']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                transporter/contracts/bidding/
+                [name='transporter_contract_bidding']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                transporter/contracts/my-bids/
+                [name='transporter_my_bids']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                transporter/contracts/list/
+                [name='transporter_contracts_list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                transporter/contracts/bid/submit/
+                [name='submit_transport_bid']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                transporter/contracts/bid/&lt;int:bid_id&gt;/assign-driver/
+                [name='assign_transport_bid_driver']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                transport-bids/&lt;int:bid_id&gt;/accept/
+                [name='transport_bid_accept']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                transport-bids/&lt;int:bid_id&gt;/reject/
+                [name='transport_bid_reject']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                transport/contracts/accepted/
+                [name='get_accepted_transport_contracts']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                ^media/(?P&lt;path&gt;.*)$
+                
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                ^static/(?P&lt;path&gt;.*)$
+                
+              </code>
+            
+          </li>
+        
+      </ol>
+      <p>
+        
+          The current path, <code>api/invalid_url</code>,
+        
+        didn’t match any of these.
+      </p>
+    
+  </main>
+
+  <footer id="explanation">
+    <p>
+      You’re seeing this error because you have <code>DEBUG = True</code> in
+      your Django settings file. Change that to <code>False</code>, and Django
+      will display a standard 404 page.
+    </p>
+  </footer>
+</body>
+</html>

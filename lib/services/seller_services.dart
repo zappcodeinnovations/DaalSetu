@@ -1,6 +1,5 @@
 import 'package:agro_broker/network/api_client.dart';
 import 'package:agro_broker/comman/api_url.dart';
-import 'package:http/http.dart';
 
 class SellerServices {
   /// ============================================================
@@ -31,7 +30,7 @@ class SellerServices {
       endpoint: ApiUrls.company,
       requireAuth: true,
     );
-    
+
     if (response == null) {
       throw Exception("Failed to fetch companies");
     }
@@ -39,7 +38,8 @@ class SellerServices {
     // Assuming the API returns a list directly or wrapped in data
     if (response is List) {
       return response;
-    } else if (response is Map<String, dynamic> && response.containsKey("data")) {
+    } else if (response is Map<String, dynamic> &&
+        response.containsKey("data")) {
       return response["data"];
     } else {
       return [response];
@@ -49,7 +49,9 @@ class SellerServices {
   /// ============================================================
   /// CREATE COMPANY
   /// ============================================================
-  static Future<Map<String, dynamic>> createCompany(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> createCompany(
+    Map<String, dynamic> data,
+  ) async {
     final response = await ApiClient.post(
       endpoint: ApiUrls.company,
       body: data,
@@ -59,16 +61,19 @@ class SellerServices {
     if (response == null || response is! Map<String, dynamic>) {
       throw Exception("Invalid response format");
     }
-    
+
     return response;
   }
 
   /// ============================================================
   /// EDIT COMPANY
   /// ============================================================
-  static Future<Map<String, dynamic>> editCompany(Map<String, dynamic> data) async {
-    final response = await ApiClient.patch( // Or Patch depending on API definition
-      endpoint: ApiUrls.company,
+  static Future<Map<String, dynamic>> editCompany(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
+    final response = await ApiClient.patch(
+      endpoint: "/api/company/$id/",
       data: data,
       requireAuth: true,
     );
@@ -76,7 +81,7 @@ class SellerServices {
     if (response == null || response is! Map<String, dynamic>) {
       throw Exception("Invalid response format");
     }
-    
+
     return response;
   }
 
@@ -96,7 +101,9 @@ class SellerServices {
     if (response["success"] == true) {
       return response["data"];
     } else {
-      throw Exception(response["message"] ?? "Failed to fetch company dropdown");
+      throw Exception(
+        response["message"] ?? "Failed to fetch company dropdown",
+      );
     }
   }
 
@@ -173,7 +180,9 @@ class SellerServices {
     if (response["success"] == true) {
       return response["data"];
     } else {
-      throw Exception(response["message"] ?? "Failed to fetch categories dashboard");
+      throw Exception(
+        response["message"] ?? "Failed to fetch categories dashboard",
+      );
     }
   }
 
@@ -200,7 +209,9 @@ class SellerServices {
   /// ============================================================
   /// CREATE CATEGORY
   /// ============================================================
-  static Future<Map<String, dynamic>> createCategory(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> createCategory(
+    Map<String, dynamic> data,
+  ) async {
     final response = await ApiClient.post(
       endpoint: ApiUrls.categories,
       body: data,
@@ -210,7 +221,7 @@ class SellerServices {
     if (response == null || response is! Map<String, dynamic>) {
       throw Exception("Invalid response format");
     }
-    
+
     return response;
   }
 
@@ -226,7 +237,7 @@ class SellerServices {
     if (response == null) {
       throw Exception("Failed to search categories");
     }
-    
+
     if (response is List) {
       return response;
     } else {

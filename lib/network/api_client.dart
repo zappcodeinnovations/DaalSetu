@@ -53,8 +53,7 @@ class ApiClient {
       throw Exception("Server Error");
     } on FormatException {
       throw Exception("Invalid Response Format");
-    } 
-    catch (e) {
+    } catch (e) {
       throw Exception("Unexpected Error: $e");
     }
   }
@@ -82,7 +81,6 @@ class ApiClient {
           .timeout(_timeout);
 
       print("📥 STATUS CODE: ${response.statusCode}");
-      print("📥 RESPONSE: ${response.body}");
 
       return _handleResponse(response);
     } on SocketException {
@@ -109,7 +107,6 @@ class ApiClient {
           .timeout(_timeout);
 
       print("📥 STATUS CODE: ${response.statusCode}");
-      print("📥 RESPONSE: ${response.body}");
 
       return _handleResponse(response);
     } on SocketException {
@@ -130,7 +127,6 @@ class ApiClient {
     try {
       final uri = Uri.parse(ApiUrls.baseUrl + endpoint);
       print("🔗 API CALL (POST): $endpoint");
-      print("📤 BODY: $body");
 
       final response = await http
           .post(
@@ -140,7 +136,6 @@ class ApiClient {
           )
           .timeout(_timeout);
       print("📥 STATUS CODE: ${response.statusCode}");
-      print("📥 RESPONSE: ${response.body}");
 
       return _handleResponse(response);
     } on SocketException {
@@ -168,7 +163,6 @@ class ApiClient {
           .timeout(_timeout);
 
       print("📥 STATUS CODE: ${response.statusCode}");
-      print("📥 RESPONSE: ${response.body}");
 
       return _handleResponse(response);
     } on SocketException {
@@ -217,6 +211,7 @@ class ApiClient {
     final statusCode = response.statusCode;
 
     if (statusCode >= 200 && statusCode < 300) {
+      if (response.body.trim().isEmpty) return <String, dynamic>{};
       return jsonDecode(response.body);
     } else {
       print("❌ API RESPONSE ERROR");

@@ -36,23 +36,7 @@ class AddUserController extends GetxController {
     }
   }
 
-  // create tag
-  Future<Tag?> createTag(String tagName) async {
-    try {
-      final TagResponse response = await TagService.createTag(tagName);
 
-      final Tag newTag = response.tag;
-
-      tags.add(newTag);
-
-      selectedTagId.value = newTag.id;
-
-      return newTag;
-    } catch (e) {
-      print("Create tag error: $e");
-      return null;
-    }
-  }
 
   /// ===============================
   /// CREATE USER

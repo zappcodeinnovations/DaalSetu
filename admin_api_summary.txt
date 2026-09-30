@@ -1,0 +1,164 @@
+﻿Add User | DELETE | https://daalsetu.zappcode.in/api/adduser/
+Add User | PATCH | https://daalsetu.zappcode.in/api/adduser/
+Add User | POST | https://daalsetu.zappcode.in/api/adduser/
+Add User | PUT | https://daalsetu.zappcode.in/api/adduser/
+Admin Dashboard | GET | https://daalsetu.zappcode.in/api/admin/dashboard/
+Kyc Approve | POST | https://daalsetu.zappcode.in/api/kyc/<int:user_id>/approve/
+Kyc Reject | POST | https://daalsetu.zappcode.in/api/kyc/<int:user_id>/reject/
+Users List | GET | https://daalsetu.zappcode.in/api/users/
+Create Users | POST | https://daalsetu.zappcode.in/api/users/
+Delete Users | DELETE | https://daalsetu.zappcode.in/api/users/{id}/
+Users Details | GET | https://daalsetu.zappcode.in/api/users/{id}/
+Update Users | PATCH | https://daalsetu.zappcode.in/api/users/{id}/
+Update Users | PUT | https://daalsetu.zappcode.in/api/users/{id}/
+Product Images List | GET | https://daalsetu.zappcode.in/api/product-images/
+Create Product Images | POST | https://daalsetu.zappcode.in/api/product-images/
+Delete Product Images | DELETE | https://daalsetu.zappcode.in/api/product-images/{id}/
+Product Images Details | GET | https://daalsetu.zappcode.in/api/product-images/{id}/
+Update Product Images | PATCH | https://daalsetu.zappcode.in/api/product-images/{id}/
+Update Product Images | PUT | https://daalsetu.zappcode.in/api/product-images/{id}/
+Product Videos List | GET | https://daalsetu.zappcode.in/api/product-videos/
+Create Product Videos | POST | https://daalsetu.zappcode.in/api/product-videos/
+Delete Product Videos | DELETE | https://daalsetu.zappcode.in/api/product-videos/{id}/
+Product Videos Details | GET | https://daalsetu.zappcode.in/api/product-videos/{id}/
+Update Product Videos | PATCH | https://daalsetu.zappcode.in/api/product-videos/{id}/
+Update Product Videos | PUT | https://daalsetu.zappcode.in/api/product-videos/{id}/
+Seller Branches List | GET | https://daalsetu.zappcode.in/api/seller/branches/
+Seller Branch Detail | GET | https://daalsetu.zappcode.in/api/seller/branches/<int:branch_id>/
+Seller Branch Cancel Request | POST | https://daalsetu.zappcode.in/api/seller/branches/<int:branch_id>/cancel-request/
+Seller Branch Leave | POST | https://daalsetu.zappcode.in/api/seller/branches/<int:branch_id>/leave/
+Seller Branch Request By Code | POST | https://daalsetu.zappcode.in/api/seller/branches/request-by-code/
+Seller Dashboard | GET | https://daalsetu.zappcode.in/api/seller/dashboard/
+Seller Delivery Challan List | GET | https://daalsetu.zappcode.in/api/seller/delivery-challans/
+Seller Delivery Challan Details | GET | https://daalsetu.zappcode.in/api/seller/delivery-challans/<int:challan_id>/
+Seller Dispatch Delivery Challan | POST | https://daalsetu.zappcode.in/api/seller/delivery-challans/<int:challan_id>/dispatch/
+Tags Dropdown | GET | https://daalsetu.zappcode.in/api/tags/dropdown/
+Change Password | POST | https://daalsetu.zappcode.in/api/auth/change-password/
+Forgot Password | POST | https://daalsetu.zappcode.in/api/auth/forgot-password/
+User Login | POST | https://daalsetu.zappcode.in/api/auth/login/
+User Logout | POST | https://daalsetu.zappcode.in/api/auth/logout/
+User Registration | POST | https://daalsetu.zappcode.in/api/auth/register/
+Session Token | GET | https://daalsetu.zappcode.in/api/auth/session-token/
+Branch Create | POST | https://daalsetu.zappcode.in/api/branch/create/
+Branch Delete | DELETE | https://daalsetu.zappcode.in/api/branch/delete/<int:branch_id>/
+Branch Delete | POST | https://daalsetu.zappcode.in/api/branch/delete/<int:branch_id>/
+Branch Toggle | PATCH | https://daalsetu.zappcode.in/api/branch/toggle/<int:branch_id>/
+Branch Toggle | POST | https://daalsetu.zappcode.in/api/branch/toggle/<int:branch_id>/
+Branch Toggle | PUT | https://daalsetu.zappcode.in/api/branch/toggle/<int:branch_id>/
+Branch Update | PATCH | https://daalsetu.zappcode.in/api/branch/update/<int:branch_id>/
+Branch Update | POST | https://daalsetu.zappcode.in/api/branch/update/<int:branch_id>/
+Branch Update | PUT | https://daalsetu.zappcode.in/api/branch/update/<int:branch_id>/
+Brands Dashboard | GET | https://daalsetu.zappcode.in/api/brands/dashboard/
+Brands Dropdown | GET | https://daalsetu.zappcode.in/api/brands/dropdown/
+Categories List | GET | https://daalsetu.zappcode.in/api/categories/
+Create Categories | POST | https://daalsetu.zappcode.in/api/categories/
+Category Brands | GET | https://daalsetu.zappcode.in/api/categories/<int:pk>/brands/
+Dashboard | GET | https://daalsetu.zappcode.in/api/categories/dashboard/
+Category Hierarchy | GET | https://daalsetu.zappcode.in/api/categories/hierarchy/
+Categories By Level | GET | https://daalsetu.zappcode.in/api/categories/levels/
+Parent Categories Dropdown | GET | https://daalsetu.zappcode.in/api/categories/parent-dropdown/
+Tree | GET | https://daalsetu.zappcode.in/api/categories/tree/
+Delete Categories | DELETE | https://daalsetu.zappcode.in/api/categories/{id}/
+Categories Details | GET | https://daalsetu.zappcode.in/api/categories/{id}/
+Update Categories | PATCH | https://daalsetu.zappcode.in/api/categories/{id}/
+Update Categories | PUT | https://daalsetu.zappcode.in/api/categories/{id}/
+Upload Image | POST | https://daalsetu.zappcode.in/api/categories/{id}/image/
+Create Sub Category | POST | https://daalsetu.zappcode.in/api/categories/{id}/sub-category/
+Company List | GET | https://daalsetu.zappcode.in/api/company/
+Create Company | POST | https://daalsetu.zappcode.in/api/company/
+Dropdown | GET | https://daalsetu.zappcode.in/api/company/dropdown/
+Primary | GET | https://daalsetu.zappcode.in/api/company/primary/
+Delete Company | DELETE | https://daalsetu.zappcode.in/api/company/{id}/
+Company Details | GET | https://daalsetu.zappcode.in/api/company/{id}/
+Update Company | PATCH | https://daalsetu.zappcode.in/api/company/{id}/
+Update Company | PUT | https://daalsetu.zappcode.in/api/company/{id}/
+Set Primary | POST | https://daalsetu.zappcode.in/api/company/{id}/set-primary/
+Universal Filter | GET | https://daalsetu.zappcode.in/api/filter/
+Kyc List | GET | https://daalsetu.zappcode.in/api/kyc/list/
+Contract List | GET | https://daalsetu.zappcode.in/api/mobile/contracts/
+Contract Detail | DELETE | https://daalsetu.zappcode.in/api/mobile/contracts/<int:contract_id>/
+Contract Detail | GET | https://daalsetu.zappcode.in/api/mobile/contracts/<int:contract_id>/
+Contract Detail | PATCH | https://daalsetu.zappcode.in/api/mobile/contracts/<int:contract_id>/
+Contract Detail | PUT | https://daalsetu.zappcode.in/api/mobile/contracts/<int:contract_id>/
+Notification List | GET | https://daalsetu.zappcode.in/api/notifications/
+Mark All Notifications Read | POST | https://daalsetu.zappcode.in/api/notifications/read-all/
+Mark Notification Read | POST | https://daalsetu.zappcode.in/api/notifications/read/<int:notification_id>/
+Notification Unread Count | GET | https://daalsetu.zappcode.in/api/notifications/unread-count/
+Offer Image Get | GET | https://daalsetu.zappcode.in/api/offer-images/<int:image_id>/
+Offer Image Delete | DELETE | https://daalsetu.zappcode.in/api/offer-images/<int:image_id>/delete/
+Offer Image Delete | POST | https://daalsetu.zappcode.in/api/offer-images/<int:image_id>/delete/
+Offer Image Create | POST | https://daalsetu.zappcode.in/api/offer-images/create/
+Offers Create | POST | https://daalsetu.zappcode.in/api/offers/
+Offer Get | GET | https://daalsetu.zappcode.in/api/offers/<int:product_id>/
+Offer Confirm Deal | POST | https://daalsetu.zappcode.in/api/offers/<int:product_id>/confirm-deal/
+Offer Delete | DELETE | https://daalsetu.zappcode.in/api/offers/<int:product_id>/delete/
+Offer Delete | POST | https://daalsetu.zappcode.in/api/offers/<int:product_id>/delete/
+Offer Interests | GET | https://daalsetu.zappcode.in/api/offers/<int:product_id>/interests/
+Offer Negotiation Message | POST | https://daalsetu.zappcode.in/api/offers/<int:product_id>/interests/<int:interest_id>/message/
+Offer Update Interest | POST | https://daalsetu.zappcode.in/api/offers/<int:product_id>/interests/<int:interest_id>/update/
+Offer Update Interest | PUT | https://daalsetu.zappcode.in/api/offers/<int:product_id>/interests/<int:interest_id>/update/
+Offer Show Interest | POST | https://daalsetu.zappcode.in/api/offers/<int:product_id>/show-interest/
+Offer Toggle Interest | POST | https://daalsetu.zappcode.in/api/offers/<int:product_id>/toggle-interest/
+Offer Toggle | PATCH | https://daalsetu.zappcode.in/api/offers/<int:product_id>/toggle/
+Offer Toggle | POST | https://daalsetu.zappcode.in/api/offers/<int:product_id>/toggle/
+Offer Toggle | PUT | https://daalsetu.zappcode.in/api/offers/<int:product_id>/toggle/
+Offer Update Stock | PATCH | https://daalsetu.zappcode.in/api/offers/<int:product_id>/update-stock/
+Offer Update Stock | POST | https://daalsetu.zappcode.in/api/offers/<int:product_id>/update-stock/
+Offer Update Stock | PUT | https://daalsetu.zappcode.in/api/offers/<int:product_id>/update-stock/
+Offer Update | PATCH | https://daalsetu.zappcode.in/api/offers/<int:product_id>/update/
+Offer Update | POST | https://daalsetu.zappcode.in/api/offers/<int:product_id>/update/
+Offer Update | PUT | https://daalsetu.zappcode.in/api/offers/<int:product_id>/update/
+Offer Create | POST | https://daalsetu.zappcode.in/api/offers/create/
+Offers Form Data | GET | https://daalsetu.zappcode.in/api/offers/form-data/
+Offers List | GET | https://daalsetu.zappcode.in/api/offers/list/
+Product Image Download | GET | https://daalsetu.zappcode.in/api/product-media/images/<int:image_id>/download/
+Product Image Preview | GET | https://daalsetu.zappcode.in/api/product-media/images/<int:image_id>/view/
+Product Video Download | GET | https://daalsetu.zappcode.in/api/product-media/videos/<int:video_id>/download/
+Product Video Preview | GET | https://daalsetu.zappcode.in/api/product-media/videos/<int:video_id>/view/
+Products List | GET | https://daalsetu.zappcode.in/api/products/
+Create Products | POST | https://daalsetu.zappcode.in/api/products/
+Products Filter | GET | https://daalsetu.zappcode.in/api/products/filter/
+Delete Products | DELETE | https://daalsetu.zappcode.in/api/products/{id}/
+Products Details | GET | https://daalsetu.zappcode.in/api/products/{id}/
+Update Products | PATCH | https://daalsetu.zappcode.in/api/products/{id}/
+Update Products | PUT | https://daalsetu.zappcode.in/api/products/{id}/
+Confirm Deal | POST | https://daalsetu.zappcode.in/api/products/{id}/confirm-deal/
+Profile Update | GET | https://daalsetu.zappcode.in/api/profile/update/
+Profile Update | PATCH | https://daalsetu.zappcode.in/api/profile/update/
+Rfq List | GET | https://daalsetu.zappcode.in/api/rfqs/
+Rfq Detail | GET | https://daalsetu.zappcode.in/api/rfqs/<str:rfq_id>/
+Rfq Accept Quotation | POST | https://daalsetu.zappcode.in/api/rfqs/<str:rfq_id>/accept/<int:quot_id>/
+Rfq Close | POST | https://daalsetu.zappcode.in/api/rfqs/<str:rfq_id>/close/
+Rfq Submit Quotation | POST | https://daalsetu.zappcode.in/api/rfqs/<str:rfq_id>/quote/
+Rfq Create | POST | https://daalsetu.zappcode.in/api/rfqs/create/
+Rfq Quotation Detail | GET | https://daalsetu.zappcode.in/api/rfqs/quotation/<int:quot_id>/
+Rfq Send Message | POST | https://daalsetu.zappcode.in/api/rfqs/quotation/<int:quot_id>/message/
+Rfq Reject Quotation | POST | https://daalsetu.zappcode.in/api/rfqs/quotation/<int:quot_id>/reject/
+Test Product | GET | https://daalsetu.zappcode.in/api/test-product/<int:product_id>/
+Create Token | POST | https://daalsetu.zappcode.in/api/token/
+All With Details | GET | https://daalsetu.zappcode.in/api/token/all-with-details/
+Current User Profile | GET | https://daalsetu.zappcode.in/api/user/
+Upload Profile Image | POST | https://daalsetu.zappcode.in/api/user/profile-image/
+User Get | GET | https://daalsetu.zappcode.in/api/users/<int:user_id>/
+User Delete | DELETE | https://daalsetu.zappcode.in/api/users/<int:user_id>/delete/
+User Delete | POST | https://daalsetu.zappcode.in/api/users/<int:user_id>/delete/
+User Update Status | PATCH | https://daalsetu.zappcode.in/api/users/<int:user_id>/status/
+User Update Status | POST | https://daalsetu.zappcode.in/api/users/<int:user_id>/status/
+User Update Status | PUT | https://daalsetu.zappcode.in/api/users/<int:user_id>/status/
+User Update | PATCH | https://daalsetu.zappcode.in/api/users/<int:user_id>/update/
+User Update | POST | https://daalsetu.zappcode.in/api/users/<int:user_id>/update/
+User Update | PUT | https://daalsetu.zappcode.in/api/users/<int:user_id>/update/
+User Create | POST | https://daalsetu.zappcode.in/api/users/create/
+Drivers List | GET | https://daalsetu.zappcode.in/api/drivers/
+Create Drivers | POST | https://daalsetu.zappcode.in/api/drivers/
+Delete Drivers | DELETE | https://daalsetu.zappcode.in/api/drivers/{id}/
+Drivers Details | GET | https://daalsetu.zappcode.in/api/drivers/{id}/
+Update Drivers | PATCH | https://daalsetu.zappcode.in/api/drivers/{id}/
+Update Drivers | PUT | https://daalsetu.zappcode.in/api/drivers/{id}/
+Assign Vehicle | POST | https://daalsetu.zappcode.in/api/drivers/{id}/assign-vehicle/
+Vehicles List | GET | https://daalsetu.zappcode.in/api/vehicles/
+Create Vehicles | POST | https://daalsetu.zappcode.in/api/vehicles/
+Delete Vehicles | DELETE | https://daalsetu.zappcode.in/api/vehicles/{id}/
+Vehicles Details | GET | https://daalsetu.zappcode.in/api/vehicles/{id}/
+Update Vehicles | PATCH | https://daalsetu.zappcode.in/api/vehicles/{id}/
+Update Vehicles | PUT | https://daalsetu.zappcode.in/api/vehicles/{id}/

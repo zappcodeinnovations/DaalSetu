@@ -266,24 +266,13 @@ class UserDetailScreen extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: user.tags.map((tag) {
-                final color =
-                    Colors.primaries[tag.id % Colors.primaries.length];
-
-                return GestureDetector(
-                  onLongPress: () {
-                    _updateTag(context, tag);
-                  },
-                  child: Chip(
-                    label: Text(tag.tagName),
-                    backgroundColor: color.withOpacity(0.15),
-                    labelStyle: TextStyle(
-                      color: color,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    deleteIcon: const Icon(IconlyLight.close_square),
-                    onDeleted: () {
-                      _removeTag(tag.id);
-                    },
+                final color = Colors.primaries[tag.id % Colors.primaries.length];
+                return Chip(
+                  label: Text(tag.tagName),
+                  backgroundColor: color.withOpacity(0.15),
+                  labelStyle: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w600,
                   ),
                 );
               }).toList(),
@@ -293,78 +282,7 @@ class UserDetailScreen extends StatelessWidget {
     );
   }
 
-  void _removeTag(int tagId) {
-    Get.dialog(
-      AlertDialog(
-        title: const Text("Remove Tag"),
-        content: const Text("Do you want to remove this tag?"),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
 
-          ElevatedButton(
-            onPressed: () async {
-              /// TODO: call delete tag API
-              Get.back();
-
-              Get.snackbar(
-                "Removed",
-                "Tag removed successfully",
-                snackPosition: SnackPosition.BOTTOM,
-              );
-            },
-            child: const Text("Remove"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _updateTag(BuildContext context, Tag tag) {
-    final TextEditingController controller = TextEditingController(
-      text: tag.tagName,
-    );
-
-    Get.dialog(
-      AlertDialog(
-        title: const Text("Update Tag"),
-
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(labelText: "Tag Name"),
-        ),
-
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
-
-          ElevatedButton(
-            onPressed: () async {
-              final newTag = controller.text.trim();
-
-              if (newTag.isEmpty) {
-                Get.snackbar("Error", "Tag name required");
-                return;
-              }
-
-              try {
-                final response = await TagService.updateTag(tag.id, newTag);
-
-                Get.back();
-
-                Get.snackbar(
-                  "Success",
-                  response.message,
-                  snackPosition: SnackPosition.BOTTOM,
-                );
-              } catch (e) {
-                Get.snackbar("Error", e.toString());
-              }
-            },
-            child: const Text("Update"),
-          ),
-        ],
-      ),
-    );
-  }
 
   /// ================================
   /// DOCUMENTS CARD

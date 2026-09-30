@@ -18,4 +18,18 @@ class ProfileService {
 
     return ProfileModel.fromJson(response);
   }
+
+  static Future<ProfileModel> updateProfile(Map<String, dynamic> data) async {
+    final response = await ApiClient.patch(
+      endpoint: ApiUrls.profile,
+      data: data,
+      requireAuth: true,
+    );
+
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Invalid profile update response");
+    }
+
+    return ProfileModel.fromJson(response);
+  }
 }

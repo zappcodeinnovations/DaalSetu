@@ -11,6 +11,7 @@ class ProductController extends GetxController {
   /// ===============================
   final isLoading = false.obs;
   final isRefreshing = false.obs;
+  final processingProductId = RxnInt();
 
   final products = <ProductModel>[].obs;
   final categories = <CategoryModel>[].obs;
@@ -143,6 +144,74 @@ class ProductController extends GetxController {
       Get.snackbar("Error", e.toString());
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<bool> updateProduct({
+    required ProductModel product,
+    required String title,
+    required String description,
+    required String amount,
+    required String location,
+  }) async {
+    try {
+      processingProductId.value = product.id;
+      final updated = await ProductService.updateProduct(
+        productId: product.id,
+        title: title,
+        description: description,
+        amount: amount,
+        loadingLocation: location,
+        categoryId: product.category?.id,
+      );
+      final index = products.indexWhere((item) => item.id == product.id);
+      if (index >= 0) products[index] = updated;
+      Get.snackbar(
+        "Product updated",
+        "$title was updated successfully.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green.shade700,
+        colorText: Colors.white,
+      );
+      return true;
+    } catch (e) {
+      Get.snackbar(
+        "Update failed",
+        "Could not update this product. Please try again.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade700,
+        colorText: Colors.white,
+      );
+      return false;
+    } finally {
+      processingProductId.value = null;
+    }
+  }
+
+  Future<bool> deleteProduct(ProductModel product) async {
+    try {
+      processingProductId.value = product.id;
+      await ProductService.deleteProduct(product.id);
+      products.removeWhere((item) => item.id == product.id);
+      Get.snackbar(
+        "Product deleted",
+        "${product.title} was removed.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green.shade700,
+        colorText: Colors.white,
+      );
+      return true;
+    } catch (e) {
+      Get.snackbar(
+        "Delete failed",
+        "Could not delete this product. Please try again.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade700,
+        colorText: Colors.white,
+      );
+      return false;
+    } finally {
+      processingProductId.value = null;
     }
   }
 

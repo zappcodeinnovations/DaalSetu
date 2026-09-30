@@ -45,4 +45,8 @@ abstract class AppRoutes {
   static const sellerDashboard = '/seller/dashboard';
   static const sellerCompany = '/seller/company';
   static const sellerCategory = '/seller/category';
+
+  // ADMIN SIDEBAR
+  static String adminModule(String key) => '/admin/$key';
+  static const adminCreateOffer = '/admin/create-offer';
 }

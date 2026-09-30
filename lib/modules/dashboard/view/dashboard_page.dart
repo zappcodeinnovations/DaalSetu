@@ -1,16 +1,13 @@
-import 'dart:ui';
-import 'package:iconly/iconly.dart';
 import 'package:agro_broker/modules/users/view/user_view.dart';
 import 'package:agro_broker/modules/dashboard/model/dashboard_model.dart';
 import 'package:agro_broker/modules/profile/controller/profile_controller.dart';
 import 'package:agro_broker/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:agro_broker/theme/glass_widgets.dart';
-import 'dart:math' as math;
 import '../controller/dashboard_controller.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../../admin_catalog/view/admin_drawer.dart';
+import 'package:agro_broker/theme/app_theme.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   AdminDashboardScreen({super.key});
@@ -18,18 +15,19 @@ class AdminDashboardScreen extends StatelessWidget {
   final DashboardController controller = Get.put(DashboardController());
   final ProfileController profileController = Get.put(ProfileController());
 
-  static const Color primaryBlue = Color(0xFFFFB300); // Changed to primaryYellow
-  static const Color accentYellow = Color(0xFFFFD54F);
-  static const Color accentGreen = Color(0xFF10B981);
-  static const Color accentRed = Color(0xFFE53935);
-  static const Color textWhite = Colors.white;
-  static const Color textGrey = Color(0xFF9CA3AF);
+  static const Color primaryBlue = AppTheme.primaryGold;
+  static const Color accentYellow = AppTheme.secondaryOrange;
+  static const Color accentGreen = AppTheme.successGreen;
+  static const Color accentRed = AppTheme.errorRed;
+  static const Color textWhite = AppTheme.textPrimary;
+  static const Color textGrey = AppTheme.textMuted;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      drawer: const AdminDrawer(),
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
@@ -223,6 +221,13 @@ class AdminDashboardScreen extends StatelessWidget {
                 _buildPaymentsSection(
                   context: context,
                   chartData: data.charts.paymentsReceivables,
+                ),
+
+                const SizedBox(height: 30),
+
+                _buildUserDistributionSection(
+                  context: context,
+                  chartData: data.charts.userDistribution,
                 ),
 
                 const SizedBox(height: 16),
@@ -1358,6 +1363,75 @@ class AdminDashboardScreen extends StatelessWidget {
     });
   }
 
+  Widget _buildUserDistributionSection({
+    required BuildContext context,
+    required UserDistributionChart chartData,
+  }) {
+    final theme = Theme.of(context);
+    final labels = chartData.labels;
+    final values = chartData.counts;
+
+    if (labels.isEmpty || values.isEmpty) {
+      return _emptyChartCard(context, "User Distribution");
+    }
+
+    final total = values.fold<int>(0, (sum, item) => sum + item);
+    final colors = [
+      theme.colorScheme.primary,
+      theme.colorScheme.secondary,
+      Colors.orange,
+      Colors.teal,
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("User Distribution", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 200,
+            child: PieChart(
+              PieChartData(
+                sections: List.generate(labels.length, (index) {
+                  final percent = total == 0 ? 0 : (values[index] / total) * 100;
+                  return PieChartSectionData(
+                    value: values[index].toDouble(),
+                    title: "${percent.toStringAsFixed(0)}%",
+                    color: colors[index % colors.length],
+                    radius: 50,
+                    titleStyle: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
+                  );
+                }),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Column(
+            children: List.generate(labels.length, (index) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _chartLegend(context, labels[index], colors[index % colors.length]),
+                    Text("${values[index]}", style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildRecentContractsTable(BuildContext context, List contracts) {
     final theme = Theme.of(context);
 
@@ -1465,12 +1539,12 @@ class AdminDashboardScreen extends StatelessWidget {
                         style: theme.textTheme.bodyMedium,
                       ),
                     ),
-                    Text(
-                      "\$145k",
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                     Text(
+                       "${contract.value.isNotEmpty ? contract.value : '—'}",
+                       style: theme.textTheme.bodyMedium?.copyWith(
+                         fontWeight: FontWeight.bold,
+                       ),
+                     ),
                   ],
                 ),
               );

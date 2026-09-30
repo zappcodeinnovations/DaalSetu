@@ -1,4 +1,3 @@
-import 'package:iconly/iconly.dart';
 import 'package:agro_broker/modules/Auth/login/model/login_model.dart';
 import 'package:agro_broker/services/auth_services.dart';
 import 'package:agro_broker/utils/app_preferences.dart';
@@ -27,7 +26,8 @@ class LoginController extends GetxController {
         password: passwordController.text.trim(),
       );
 
-      if (response.user.accountStatus != "active") {
+      if (response.user.accountStatus.toLowerCase() != "active" ||
+          response.user.status.toLowerCase() != "active") {
         await AppPreferences.logout();
 
         Get.defaultDialog(
@@ -41,87 +41,12 @@ class LoginController extends GetxController {
         return;
       }
 
-      if (response.user.role != "admin" && response.user.role != "seller") {
+      if (response.user.role.toLowerCase() != "admin") {
         await AppPreferences.logout();
 
-        Get.dialog(
-          Dialog(
-            backgroundColor: const Color(0xFF151A27),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  
-                  Container(
-                    height: 70,
-                    width: 70,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF1661EF).withOpacity(0.15),
-                    ),
-                    child: const Icon(
-                      IconlyLight.shield_done,
-                      size: 40,
-                      color: Color(0xFF1661EF),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  /// TITLE
-                  const Text(
-                    "Access Denied",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  /// MESSAGE
-                  const Text(
-                    "Only Admin and Seller accounts are allowed to login to this portal.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF8A94A6),
-                      height: 1.5,
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  /// BUTTON
-                  SizedBox(
-                    width: double.infinity,
-                    height: 45,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1661EF),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      onPressed: () => Get.back(),
-                      child: const Text(
-                        "OK",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        _showMessage(
+          title: "Admin access only",
+          message: "This portal is restricted to administrator accounts.",
         );
 
         return;
@@ -134,20 +59,46 @@ class LoginController extends GetxController {
         role: response.user.role,
         userId: response.user.id.toString(),
         username: response.user.username,
+        activeBranchId: response.user.activeBranchId?.toString(),
+        activeBranchCode: response.user.activeBranchCode,
       );
 
       Get.offAllNamed(AppRoutes.mainNav);
     } catch (e) {
-      Get.defaultDialog(
-        title: "Login Failed",
-        middleText: e.toString(),
-        textConfirm: "OK",
-        confirmTextColor: Colors.white,
-        onConfirm: () => Get.back(),
-      );
+      _showMessage(title: "Unable to sign in", message: _friendlyError(e));
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void _showMessage({required String title, required String message}) {
+    Get.snackbar(
+      title,
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      margin: const EdgeInsets.all(16),
+      backgroundColor: const Color(0xFF1F2937),
+      colorText: Colors.white,
+      icon: const Icon(Icons.info_outline_rounded, color: Colors.white),
+      duration: const Duration(seconds: 4),
+    );
+  }
+
+  String _friendlyError(Object error) {
+    final text = error.toString().toLowerCase();
+    if (text.contains("unauthorized") || text.contains("401")) {
+      return "The mobile number or password is incorrect.";
+    }
+    if (text.contains("socket") || text.contains("internet")) {
+      return "Check your internet connection and try again.";
+    }
+    if (text.contains("timeout")) {
+      return "The server took too long to respond. Please try again.";
+    }
+    if (text.contains("server error") || text.contains("500")) {
+      return "The server is temporarily unavailable. Please try again later.";
+    }
+    return "Sign-in failed. Please verify your details and try again.";
   }
 
   @override

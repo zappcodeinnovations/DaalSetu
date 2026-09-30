@@ -1,6 +1,8 @@
-import 'package:iconly/iconly.dart';
+import 'package:agro_broker/modules/contracts/model/contract_details_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:agro_broker/theme/app_theme.dart';
+
 import '../controller/contract_controller.dart';
 
 class ContractDetailScreen extends StatefulWidget {
@@ -12,330 +14,314 @@ class ContractDetailScreen extends StatefulWidget {
 
 class _ContractDetailScreenState extends State<ContractDetailScreen> {
   final controller = Get.find<ContractController>();
-
-  late int contractId;
+  late final int contractId;
 
   @override
   void initState() {
     super.initState();
-
-    contractId = Get.arguments;
-
-    Future.microtask(() {
-      controller.fetchContractDetail(contractId);
-    });
+    contractId = Get.arguments as int;
+    Future.microtask(() => controller.fetchContractDetail(contractId));
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(title: const Text("Contract Details")),
+      appBar: AppBar(title: const Text('Contract details')),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
-
         final contract = controller.contractDetail.value;
-
-        if (contract == null) {
-          return const Center(child: Text("No Data"));
+        if (contract == null || contract.id != contractId) {
+          return const Center(child: Text('Contract details unavailable'));
         }
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
+        return RefreshIndicator(
+          onRefresh: () => controller.fetchContractDetail(contractId),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
             children: [
-              /// PRODUCT CARD
-              _productCard(contract),
-
-              const SizedBox(height: 16),
-
-              /// BUYER SELLER
-              Row(
-                children: [
-                  Expanded(
-                    child: _partyCard("SELLER", contract.displaySellerId),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(child: _partyCard("BUYER", contract.displayBuyerId)),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              /// DEAL BOX
-              _dealBox(contract),
-
-              const SizedBox(height: 16),
-
-              /// ROUTE CARD
-              _routeCard(contract),
-
-              const SizedBox(height: 16),
-
-              /// REMARKS
-              _remarksCard(contract),
-
-              const SizedBox(height: 20),
-
-              /// DATES
-              _dateSection(contract),
+              _header(contract),
+              _section('Product & deal', [
+                _item('Product', contract.productTitle),
+                _item('Category', contract.productCategory),
+                _item('Product ID', contract.productId),
+                _item('Interest ID', contract.interestId),
+                _item(
+                  'Deal amount',
+                  '₹${contract.dealAmount} ${contract.amountUnit}',
+                ),
+                _item(
+                  'Deal quantity',
+                  '${contract.dealQuantity} ${contract.quantityUnit}',
+                ),
+                _item('Quantity (Qtl)', contract.quantityQtl),
+                _item('Bag count', contract.bagCount),
+                _item('Bags', contract.bags),
+                _item('Packing weight', '${contract.packingWeightKg} kg'),
+              ]),
+              _section('Buyer', [
+                _item('Buyer', contract.displayBuyerId),
+                _item('Login/mobile', contract.buyerName),
+                _item('Unique ID', contract.buyerUniqueId),
+                _item('Database ID', contract.buyerId),
+                _item('Remark', contract.buyerRemark),
+              ]),
+              _section('Seller', [
+                _item('Seller', contract.displaySellerId),
+                _item('Login/mobile', contract.sellerName),
+                _item('Mapped ID', contract.sellerMappedId),
+                _item('Database ID', contract.sellerId),
+                _item('Remark', contract.sellerRemark),
+              ]),
+              _section('Loading & transporter', [
+                _item('Loading from', contract.loadingFrom),
+                _item('Loading to', contract.loadingTo),
+                _item(
+                  'Ready for loading at',
+                  _date(contract.readyForLoadingAt),
+                ),
+                _item('Ready by user ID', contract.readyForLoadingById),
+                _item(
+                  'Transporter visible at',
+                  _date(contract.transporterVisibleAt),
+                ),
+                _item(
+                  'Visibility reason',
+                  _label(contract.transporterVisibilityReason),
+                ),
+              ]),
+              _section('Administration', [
+                _item('Admin remark', contract.adminRemark),
+                _item('Confirmed by admin ID', contract.confirmedByAdminId),
+                _item('Confirmed branch ID', contract.confirmedBranchId),
+                _item('Created by user ID', contract.createdByUserId),
+                _item('Assigned sub-admin ID', contract.assignedSubAdminId),
+              ]),
+              _section('Timeline', [
+                _item('Created', _date(contract.createdAt)),
+                _item('Confirmed', _date(contract.confirmedAt)),
+                _item('Updated', _date(contract.updatedAt)),
+              ]),
             ],
           ),
         );
       }),
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.all(16),
+        child: FilledButton.icon(
+          onPressed: _changeStatus,
+          icon: const Icon(Icons.sync_alt_rounded),
+          label: const Text('Change contract status'),
+        ),
+      ),
     );
   }
 
-  /// PRODUCT CARD
-  Widget _productCard(contract) {
-    final theme = Theme.of(context);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                contract.productCategory.toUpperCase(),
-                style: TextStyle(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.bold,
+  Widget _header(ContractDetailModel contract) {
+    final color = _statusColor(contract.status);
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    contract.contractId,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: .12),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Text(
+                    _label(contract.status),
+                    style: TextStyle(color: color, fontWeight: FontWeight.w700),
+                  ),
                 ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: theme.colorScheme.primary.withOpacity(.15),
-                ),
-                child: Text(
-                  contract.contractId,
-                  style: TextStyle(color: theme.colorScheme.primary),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            contract.productTitle,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text('Internal ID: ${contract.id}'),
+          ],
+        ),
       ),
     );
   }
 
-  /// PARTY CARD
-  Widget _partyCard(String title, String value) {
-    final theme = Theme.of(context);
-
-    return Container(
-      height: 200,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          CircleAvatar(
-            radius: 26,
-            backgroundColor: theme.colorScheme.primary,
-            child: const Icon(IconlyLight.profile, color: Colors.white),
-          ),
-          const SizedBox(height: 10),
-          Text(title, style: theme.textTheme.bodySmall),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(fontSize: 13),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// DEAL BOX
-  Widget _dealBox(contract) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "DEAL AMOUNT",
-                style: TextStyle(color: Colors.white70),
-              ),
-              Text(
-                "₹${contract.dealAmount}",
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          Container(width: 1, height: 40, color: Colors.white54),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const Text("QUANTITY", style: TextStyle(color: Colors.white70)),
-              Text(
-                "${contract.dealQuantity} ${contract.quantityUnit}",
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// ROUTE
-  Widget _routeCard(contract) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Transit Route",
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+  Widget _section(String title, List<Widget> children) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
             ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(contract.loadingFrom),
-              const Icon(IconlyLight.arrow_right_2),
-              Text(contract.loadingTo),
-            ],
-          ),
-        ],
+            const Divider(height: 24),
+            ...children,
+          ],
+        ),
       ),
     );
   }
 
-  /// REMARKS
-  Widget _remarksCard(contract) {
-    final theme = Theme.of(context);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Contract Remarks",
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          _remark("Buyer Remark", contract.buyerRemark),
-          _remark("Seller Remark", contract.sellerRemark),
-          _remark("Admin Remark", contract.adminRemark),
-        ],
-      ),
-    );
-  }
-
-  Widget _remark(String title, String value) {
-    final theme = Theme.of(context);
-
+  Widget _item(String label, Object? rawValue) {
+    final value = rawValue?.toString().trim() ?? '';
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Column(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: theme.textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.bold,
+          SizedBox(
+            width: 140,
+            child: Text(label, style: Theme.of(context).textTheme.bodySmall),
+          ),
+          Expanded(
+            child: Text(
+              value.isEmpty ? '—' : value,
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
-          const SizedBox(height: 4),
-          Text(value, style: theme.textTheme.bodyMedium),
         ],
       ),
     );
   }
 
-  /// CREATED & CONFIRMED
-  Widget _dateSection(contract) {
-    final theme = Theme.of(context);
+  Future<void> _changeStatus() async {
+    final contract = controller.contractDetail.value;
+    if (contract == null) return;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          _dateRow("Created At", contract.createdAt),
-          const SizedBox(height: 8),
-          _dateRow("Confirmed At", contract.confirmedAt),
-        ],
-      ),
+    var status = contract.status.toLowerCase();
+    const statuses = ['pending', 'active', 'completed', 'cancelled'];
+    if (!statuses.contains(status)) status = 'active';
+    final remarkController = TextEditingController(text: contract.adminRemark);
+
+    final result = await showModalBottomSheet<Map<String, String>>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                20,
+                20,
+                MediaQuery.viewInsetsOf(context).bottom + 20,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Update contract',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  DropdownButtonFormField<String>(
+                    initialValue: status,
+                    decoration: const InputDecoration(labelText: 'Status'),
+                    items: statuses
+                        .map(
+                          (value) => DropdownMenuItem(
+                            value: value,
+                            child: Text(_label(value)),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) setModalState(() => status = value);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: remarkController,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Admin remark',
+                      hintText: 'Reason or update note',
+                      alignLabelWithHint: true,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () => Navigator.pop(context, {
+                        'status': status,
+                        'remark': remarkController.text.trim(),
+                      }),
+                      child: const Text('Save status'),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
+    remarkController.dispose();
+
+    if (result != null) {
+      await controller.updateContractStatus(
+        contractId: contract.id,
+        status: result['status']!,
+        adminRemark: result['remark']!,
+      );
+    }
   }
 
-  Widget _dateRow(String title, String value) {
-    final theme = Theme.of(context);
+  String _label(String value) {
+    if (value.trim().isEmpty) return '—';
+    return value
+        .split('_')
+        .map(
+          (word) => word.isEmpty
+              ? word
+              : '${word[0].toUpperCase()}${word.substring(1)}',
+        )
+        .join(' ');
+  }
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(title, style: theme.textTheme.bodyMedium),
-        Text(value, style: theme.textTheme.bodySmall),
-      ],
-    );
+  String _date(String value) {
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) return value;
+    final local = parsed.toLocal();
+    String two(int number) => number.toString().padLeft(2, '0');
+    return '${two(local.day)}/${two(local.month)}/${local.year} '
+        '${two(local.hour)}:${two(local.minute)}';
+  }
+
+  Color _statusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return AppTheme.primaryGold;
+      case 'cancelled':
+        return AppTheme.errorRed;
+      case 'pending':
+        return AppTheme.secondaryOrange;
+      default:
+        return AppTheme.successGreen;
+    }
   }
 }

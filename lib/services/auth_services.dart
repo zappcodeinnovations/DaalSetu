@@ -3,7 +3,6 @@ import 'package:agro_broker/modules/Auth/login/model/login_model.dart';
 import 'package:agro_broker/network/api_client.dart';
 import 'package:agro_broker/comman/api_url.dart';
 import 'package:agro_broker/utils/app_preferences.dart';
-import 'package:agro_broker/modules/Auth/register/model/register_model.dart';
 
 class AuthService {
   /// ============================================================
@@ -19,12 +18,6 @@ class AuthService {
       files: files,
       requireAuth: false,
     );
-
-    print("REGISTER RESPONSE: $response");
-
-    if (response == null || response is! Map<String, dynamic>) {
-      throw Exception("Invalid response format");
-    }
 
     if (response["status"] == "success") {
       return response["message"] ?? "Registration successful";
@@ -46,14 +39,14 @@ class AuthService {
       requireAuth: false,
     );
 
-    if (response == null || response is! Map<String, dynamic>) {
-      throw Exception("Invalid response format");
-    }
-
-    if (response.containsKey("access")) {
+    if (response.containsKey("access") &&
+        response.containsKey("refresh") &&
+        response["user"] is Map<String, dynamic>) {
       return LoginResponse.fromJson(response);
     } else {
-      throw Exception(response["detail"] ?? "Login Failed");
+      throw Exception(
+        response["message"] ?? response["detail"] ?? "Login failed",
+      );
     }
   }
 

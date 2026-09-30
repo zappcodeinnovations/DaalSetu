@@ -12,19 +12,17 @@ class AgroBrokerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeController themeController = Get.put(ThemeController());
 
-    return Obx(
-      () => GetMaterialApp(
-        title: 'Dal Broker Admin',
-        debugShowCheckedModeBanner: false,
+    return GetMaterialApp(
+      title: 'Dal Broker Admin',
+      debugShowCheckedModeBanner: false,
 
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
 
-        themeMode: themeController.themeMode.value,
+      themeMode: ThemeMode.light,
 
-        initialRoute: AppRoutes.splash,
-        getPages: AppPages.routes,
-      ),
+      initialRoute: AppRoutes.splash,
+      getPages: AppPages.routes,
     );
   }
 }

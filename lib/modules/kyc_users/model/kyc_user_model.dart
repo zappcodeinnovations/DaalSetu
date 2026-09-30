@@ -12,6 +12,8 @@ class KycUserModel {
   final String? kycRejectedAt;
   final String? kycRejectionReason;
   final String accountStatus;
+  final String? branchName;
+  final String? companyName;
 
   KycUserModel({
     required this.id,
@@ -27,6 +29,8 @@ class KycUserModel {
     required this.kycRejectedAt,
     required this.kycRejectionReason,
     required this.accountStatus,
+    this.branchName,
+    this.companyName,
   });
 
   factory KycUserModel.fromJson(Map<String, dynamic> json) {
@@ -44,6 +48,21 @@ class KycUserModel {
       kycRejectedAt: json['kyc_rejected_at'],
       kycRejectionReason: json['kyc_rejection_reason'],
       accountStatus: json['account_status'] ?? '',
+      branchName: json['branch_name'],
+      companyName: json['company_name'],
     );
+  }
+
+  int get kycScore {
+    int score = 20; // Base score for registration
+    if (kycStatus.toLowerCase() == 'approved') score = 100;
+    else {
+      if (email.isNotEmpty) score += 10;
+      if (mobile.isNotEmpty) score += 20;
+      if (panNumber != null && panNumber!.isNotEmpty) score += 25;
+      if (gstNumber != null && gstNumber!.isNotEmpty) score += 25;
+      if (score > 95) score = 95; // Leave it slightly below 100 if pending
+    }
+    return score;
   }
 }
