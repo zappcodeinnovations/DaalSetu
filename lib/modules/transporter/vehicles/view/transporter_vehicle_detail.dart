@@ -15,10 +15,14 @@ class TransporterVehicleDetail extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
+          onPressed: () => Get.back(),
+        ),
         title: Text(
           "Vehicle Details",
           style: GoogleFonts.poppins(

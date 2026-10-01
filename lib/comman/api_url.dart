@@ -13,6 +13,7 @@ class ApiUrls {
   static const String adminDashboard = "/api/admin/dashboard/";
   //profile
   static const profile = "/api/user/";
+  static const profileUpdate = "/api/profile/update/";
   //categories
   static const String categories = "/api/categories/";
   static const String subcategories = "/api/categories/{id}/sub-category/";

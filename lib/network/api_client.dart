@@ -133,10 +133,11 @@ class ApiClient {
       print("❌ NO INTERNET: $endpoint");
       GlobalErrorHandler.showNoInternet();
       throw Exception("No Internet Connection");
+    } on TimeoutException {
+      print("⏳ API TIMEOUT: $endpoint");
+      GlobalErrorHandler.showServerError();
+      throw Exception("Server Timeout. Please try again.");
     } catch (e) {
-      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized")) {
-        GlobalErrorHandler.showServerError();
-      }
       rethrow;
     }
   }
@@ -283,12 +284,62 @@ class ApiClient {
       } else {
         try {
           final decoded = jsonDecode(body);
-          if (decoded is Map && decoded.containsKey('detail') && decoded['detail'] is String) {
-            errorMessage = decoded['detail'];
-          } else if (decoded is Map && decoded.containsKey('message') && decoded['message'] is String) {
-            errorMessage = decoded['message'];
-          } else if (decoded is Map && decoded.containsKey('error') && decoded['error'] is String) {
-            errorMessage = decoded['error'];
+          if (decoded is Map) {
+            final messages = <String>[];
+
+            Map? errSource;
+            if (decoded['errors'] is Map) {
+              errSource = decoded['errors'] as Map;
+            } else if (decoded['error'] is Map) {
+              errSource = decoded['error'] as Map;
+            }
+
+            if (errSource != null) {
+              errSource.forEach((key, val) {
+                if (val is List) {
+                  messages.add("$key: ${val.join(', ')}");
+                } else {
+                  messages.add("$key: $val");
+                }
+              });
+            } else if (decoded['detail'] is String && decoded['detail'].toString().trim().isNotEmpty) {
+              messages.add(decoded['detail']);
+            } else if (decoded['error'] is String && decoded['error'].toString().trim().isNotEmpty) {
+              messages.add(decoded['error']);
+            } else {
+              decoded.forEach((key, val) {
+                if (key == 'status' ||
+                    key == 'statusCode' ||
+                    key == 'status_code' ||
+                    key == 'environment' ||
+                    key == 'tested_at' ||
+                    key == 'http_status' ||
+                    key == 'success') {
+                  return;
+                }
+                if (key == 'message') return;
+
+                if (val is List) {
+                  messages.add("$key: ${val.join(', ')}");
+                } else if (val is String && val.trim().isNotEmpty) {
+                  messages.add("$key: $val");
+                } else if (val is Map) {
+                  val.forEach((k, v) => messages.add("$key.$k: $v"));
+                }
+              });
+
+              if (messages.isEmpty && decoded['message'] is String && decoded['message'].toString().trim().isNotEmpty) {
+                messages.add(decoded['message']);
+              }
+            }
+
+            if (messages.isNotEmpty) {
+              errorMessage = messages.join('\n');
+            }
+          } else if (decoded is List) {
+            errorMessage = decoded.join('\n');
+          } else if (decoded is String && decoded.trim().isNotEmpty) {
+            errorMessage = decoded;
           }
         } catch (_) {
           if (statusCode >= 500) {
@@ -297,7 +348,10 @@ class ApiClient {
         }
       }
 
-      if (statusCode == 400) {
+      if (statusCode >= 500) {
+        GlobalErrorHandler.showServerError();
+        throw Exception(errorMessage);
+      } else if (statusCode == 400) {
         throw Exception(errorMessage);
       } else if (statusCode == 401) {
         throw Exception("Unauthorized");
@@ -305,8 +359,6 @@ class ApiClient {
         throw Exception("Forbidden");
       } else if (statusCode == 404) {
         throw Exception("Resource not found");
-      } else if (statusCode >= 500) {
-        throw Exception("Server is temporarily unavailable. Please try again later.");
       } else {
         throw Exception(errorMessage);
       }

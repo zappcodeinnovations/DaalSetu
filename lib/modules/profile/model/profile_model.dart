@@ -38,24 +38,37 @@ class ProfileModel {
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
+    Map<String, dynamic> data = json;
+    if (data.containsKey('body') && data['body'] is Map<String, dynamic>) {
+      data = data['body'] as Map<String, dynamic>;
+    }
+    if (data.containsKey('data') && data['data'] is Map<String, dynamic>) {
+      data = data['data'] as Map<String, dynamic>;
+    }
+
+    final idVal = data["id"];
+    final int parsedId = idVal is int
+        ? idVal
+        : (idVal != null ? int.tryParse(idVal.toString()) ?? 0 : 0);
+
     return ProfileModel(
-      id: json["id"],
-      username: json["username"] ?? "",
-      mobile: json["mobile"] ?? "",
-      email: json["email"] ?? "",
-      firstName: json["first_name"] ?? "",
-      lastName: json["last_name"] ?? "",
-      role: json["role"] ?? "",
-      panNumber: json["pan_number"] ?? "",
-      gstNumber: json["gst_number"] ?? "",
-      profileImage: json["profile_image"],
-      gender: json["gender"] ?? "",
-      dob: json["dob"] ?? "",
-      panImage: json["pan_image"] ?? "",
-      gstImage: json["gst_image"] ?? "",
-      kycStatus: json["kyc_status"] ?? "",
-      accountStatus: json["account_status"] ?? "",
-      isActive: json["is_active"] ?? false,
+      id: parsedId,
+      username: data["username"] ?? "",
+      mobile: data["mobile"] ?? "",
+      email: data["email"] ?? "",
+      firstName: data["first_name"] ?? "",
+      lastName: data["last_name"] ?? "",
+      role: data["role"] ?? "",
+      panNumber: data["pan_number"] ?? "",
+      gstNumber: data["gst_number"] ?? "",
+      profileImage: data["profile_image"],
+      gender: data["gender"] ?? "",
+      dob: data["dob"] ?? "",
+      panImage: data["pan_image"] ?? "",
+      gstImage: data["gst_image"] ?? "",
+      kycStatus: data["kyc_status"] ?? "",
+      accountStatus: data["account_status"] ?? "",
+      isActive: data["is_active"] ?? false,
     );
   }
 }

@@ -22,7 +22,7 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
     });
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

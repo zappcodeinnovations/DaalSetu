@@ -97,10 +97,14 @@ class _TransporterDriverFormState extends State<TransporterDriverForm> {
     final isEdit = widget.driver != null;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
+          onPressed: () => Get.back(),
+        ),
         title: Text(
           isEdit ? "Edit Driver" : "Register Driver",
           style: GoogleFonts.poppins(

@@ -12,11 +12,12 @@ class ProfileScreen extends StatelessWidget {
   final ProfileController controller = Get.put(ProfileController());
 
   // Colors mapped to active theme
+  // Colors mapped to active theme
   Color get bgColor => Get.theme.scaffoldBackgroundColor;
   Color get cardColor => Get.theme.cardColor;
-  Color get cardLighter => Get.theme.cardColor;
-  Color get textDark => Get.theme.textTheme.bodyLarge?.color ?? Colors.black;
-  Color get textLight => Get.theme.textTheme.bodySmall?.color ?? Colors.grey;
+  Color get cardLighter => Get.isDarkMode ? const Color(0xFF1A2235) : const Color(0xFFF1F5F9);
+  Color get textDark => Get.isDarkMode ? Colors.white : const Color(0xFF0F172A);
+  Color get textLight => Get.isDarkMode ? const Color(0xFF8D96A7) : const Color(0xFF64748B);
   
   // Accents
   Color get accentGold => AppTheme.primaryGold;
@@ -65,11 +66,15 @@ class ProfileScreen extends StatelessWidget {
           );
         }
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        return RefreshIndicator(
+          onRefresh: controller.fetchProfile,
+          color: accentGold,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               _buildProfileHeader(context, user),
               const SizedBox(height: 24),
 
@@ -124,9 +129,10 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 40),
             ],
           ),
-        );
-      }),
-    );
+        ),
+      );
+    }),
+  );
   }
 
   Widget _buildProfileHeader(BuildContext context, dynamic user) {
@@ -136,7 +142,7 @@ class ProfileScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Get.isDarkMode ? Colors.white.withOpacity(0.05) : AppTheme.borderLight),
       ),
       child: Row(
         children: [
@@ -177,9 +183,11 @@ class ProfileScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "${user.firstName} ${user.lastName}".trim(),
-                  style: const TextStyle(
-                    color: Colors.white,
+                  "${user.firstName} ${user.lastName}".trim().isEmpty
+                      ? "Admin User"
+                      : "${user.firstName} ${user.lastName}".trim(),
+                  style: TextStyle(
+                    color: textDark,
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
@@ -292,20 +300,23 @@ class ProfileScreen extends StatelessWidget {
         ),
         if (showEdit)
           InkWell(
-            onTap: () => Get.toNamed(AppRoutes.editProfile),
+            onTap: () async {
+              await Get.toNamed(AppRoutes.editProfile);
+              controller.fetchProfile();
+            },
             borderRadius: BorderRadius.circular(20),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
                 color: cardLighter,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withOpacity(0.05)),
+                border: Border.all(color: Get.isDarkMode ? Colors.white.withOpacity(0.05) : AppTheme.borderLight),
               ),
               child: Row(
                 children: [
                   Icon(Icons.edit, color: accentGold, size: 12),
                   const SizedBox(width: 4),
-                  const Text("Edit", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+                  Text("Edit", style: TextStyle(color: textDark, fontSize: 12, fontWeight: FontWeight.w500)),
                 ],
               ),
             ),
@@ -315,21 +326,26 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _buildGeneralInfoGrid(BuildContext context, dynamic user) {
+    String displayGender = "Not Specified";
+    if (user.gender.isNotEmpty) {
+      displayGender = user.gender[0].toUpperCase() + user.gender.substring(1);
+    }
+
     return Column(
       children: [
         Row(
           children: [
-            Expanded(child: _buildGridItem(Icons.call, "Mobile Number", user.mobile, const Color(0xFF6366F1))),
+            Expanded(child: _buildGridItem(Icons.call, "Mobile Number", user.mobile.isEmpty ? "Not Provided" : user.mobile, const Color(0xFF6366F1))),
             const SizedBox(width: 12),
-            Expanded(child: _buildGridItem(Icons.male, "Gender", user.gender.isEmpty ? "Male" : user.gender, const Color(0xFF3B82F6))),
+            Expanded(child: _buildGridItem(Icons.male, "Gender", displayGender, const Color(0xFF3B82F6))),
           ],
         ),
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: _buildGridItem(Icons.calendar_today, "Date of Birth", user.dob.isEmpty ? "25 May 1995" : user.dob, accentGreen)),
+            Expanded(child: _buildGridItem(Icons.calendar_today, "Date of Birth", user.dob.isEmpty ? "Not Provided" : user.dob, accentGreen)),
             const SizedBox(width: 12),
-            Expanded(child: _buildGridItem(Icons.badge_outlined, "PAN Number", user.panNumber.isEmpty ? "ABCDE1234F" : user.panNumber, const Color(0xFFF97316))),
+            Expanded(child: _buildGridItem(Icons.badge_outlined, "PAN Number", user.panNumber.isEmpty ? "Not Provided" : user.panNumber, const Color(0xFFF97316))),
           ],
         ),
       ],
@@ -342,7 +358,7 @@ class ProfileScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Get.isDarkMode ? Colors.white.withOpacity(0.05) : AppTheme.borderLight),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -362,7 +378,14 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 Text(title, style: TextStyle(color: textLight, fontSize: 11)),
                 const SizedBox(height: 4),
-                Text(value, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: textDark,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
             ),
           )
@@ -385,7 +408,7 @@ class ProfileScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Get.isDarkMode ? Colors.white.withOpacity(0.05) : AppTheme.borderLight),
       ),
       child: Row(
         children: [
@@ -407,7 +430,7 @@ class ProfileScreen extends StatelessWidget {
                 Text(
                   value,
                   style: TextStyle(
-                    color: valueColor ?? Colors.white,
+                    color: valueColor ?? textDark,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
@@ -472,7 +495,7 @@ class ProfileScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Get.isDarkMode ? Colors.white.withOpacity(0.05) : AppTheme.borderLight),
       ),
       child: Row(
         children: [
@@ -501,8 +524,8 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: textDark,
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
                   ),
@@ -530,9 +553,9 @@ class ProfileScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: cardLighter,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
+              border: Border.all(color: Get.isDarkMode ? Colors.white.withOpacity(0.1) : AppTheme.borderLight),
             ),
-            child: Center(child: Text("View", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500))),
+            child: Center(child: Text("View", style: TextStyle(color: textDark, fontSize: 12, fontWeight: FontWeight.w500))),
           ),
           const SizedBox(width: 12),
           Container(
@@ -541,7 +564,7 @@ class ProfileScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: cardLighter,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
+              border: Border.all(color: Get.isDarkMode ? Colors.white.withOpacity(0.1) : AppTheme.borderLight),
             ),
             child: Icon(Icons.file_download_outlined, color: textDark, size: 16),
           ),

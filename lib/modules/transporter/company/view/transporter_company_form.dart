@@ -112,10 +112,14 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
     final isEdit = widget.company != null;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
+          onPressed: () => Get.back(),
+        ),
         title: Text(
           isEdit ? "Edit Company" : "Register Company",
           style: GoogleFonts.poppins(

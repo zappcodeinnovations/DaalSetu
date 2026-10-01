@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import 'package:intl/intl.dart';
+import '../../../theme/app_theme.dart';
 import '../../../theme/glass_widgets.dart';
 import '../controller/profile_controller.dart';
 
@@ -30,7 +32,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     
     _firstNameController = TextEditingController(text: user?.firstName ?? '');
     _lastNameController = TextEditingController(text: user?.lastName ?? '');
-    _genderController = TextEditingController(text: user?.gender.isEmpty == true ? 'Male' : user?.gender);
+    
+    String initialGender = 'Male';
+    if (user != null && user.gender.isNotEmpty) {
+      final g = user.gender.toLowerCase();
+      if (g == 'female') {
+        initialGender = 'Female';
+      } else if (g == 'other') {
+        initialGender = 'Other';
+      } else {
+        initialGender = 'Male';
+      }
+    }
+    _genderController = TextEditingController(text: initialGender);
     _dobController = TextEditingController(text: user?.dob ?? '');
     _panController = TextEditingController(text: user?.panNumber ?? '');
   }
@@ -75,13 +89,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final data = {
+    final data = <String, dynamic>{
       'first_name': _firstNameController.text.trim(),
       'last_name': _lastNameController.text.trim(),
-      'gender': _genderController.text.trim(),
-      'dob': _dobController.text.trim(),
-      'pan_number': _panController.text.trim(),
+      'gender': _genderController.text.trim().toLowerCase(),
     };
+
+    if (_dobController.text.trim().isNotEmpty) {
+      data['dob'] = _dobController.text.trim();
+    }
+    final pan = _panController.text.trim().toUpperCase();
+    if (pan.isNotEmpty) {
+      data['pan_number'] = pan;
+    }
 
     final success = await controller.updateProfile(data);
     if (success) {
@@ -187,25 +207,81 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   _buildLabel("Gender"),
                   DropdownButtonFormField<String>(
                     value: _genderController.text.isEmpty ? null : _genderController.text,
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: theme.brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                    icon: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: theme.brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B),
+                    ),
+                    selectedItemBuilder: (BuildContext context) {
+                      return ['Male', 'Female', 'Other'].map<Widget>((String item) {
+                        return Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            item,
+                            style: GoogleFonts.inter(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: theme.brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                          ),
+                        );
+                      }).toList();
+                    },
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: Colors.white.withValues(alpha: 0.06),
-                      prefixIcon: Icon(IconlyLight.user, color: theme.colorScheme.primary.withValues(alpha: 0.7)),
+                      fillColor: theme.brightness == Brightness.dark
+                          ? Colors.white.withValues(alpha: 0.06)
+                          : const Color(0xFFF1F5F9),
+                      prefixIcon: Icon(IconlyLight.user, color: theme.colorScheme.primary),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                        borderSide: BorderSide(
+                          color: theme.brightness == Brightness.dark
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : AppTheme.borderLight,
+                        ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                        borderSide: BorderSide(
+                          color: theme.brightness == Brightness.dark
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : AppTheme.borderLight,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.primary,
+                          width: 1.5,
+                        ),
                       ),
                     ),
-                    dropdownColor: const Color(0xFF161C2C),
+                    dropdownColor: theme.brightness == Brightness.dark ? const Color(0xFF161C2C) : Colors.white,
                     items: ['Male', 'Female', 'Other']
-                        .map((g) => DropdownMenuItem(value: g, child: Text(g, style: const TextStyle(color: Colors.white))))
+                        .map((g) => DropdownMenuItem(
+                              value: g,
+                              child: Text(
+                                g,
+                                style: GoogleFonts.inter(
+                                  color: theme.brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A),
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ))
                         .toList(),
                     onChanged: (v) {
-                      if (v != null) _genderController.text = v;
+                      if (v != null) {
+                        setState(() {
+                          _genderController.text = v;
+                        });
+                      }
                     },
                   ),
                   const SizedBox(height: 20),
@@ -226,8 +302,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   _buildLabel("PAN Number"),
                   GlassTextField(
                     controller: _panController,
-                    hintText: "Enter PAN number",
+                    hintText: "Enter PAN number (e.g. ABCDE1234F)",
                     prefixIcon: IconlyLight.document,
+                    inputFormatters: [
+                      LengthLimitingTextInputFormatter(10),
+                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                    ],
+                    validator: (val) {
+                      if (val == null || val.trim().isEmpty) return null;
+                      final clean = val.trim().toUpperCase();
+                      if (clean.length != 10 || !RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]{1}$').hasMatch(clean)) {
+                        return "Enter a valid 10-character PAN (e.g. ABCDE1234F)";
+                      }
+                      return null;
+                    },
                   ),
                   
                   const SizedBox(height: 40),
@@ -255,6 +343,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildLabel(String text) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8, left: 4),
       child: Text(
@@ -262,7 +351,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         style: GoogleFonts.inter(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: Colors.white70,
+          color: isDark ? Colors.white70 : const Color(0xFF334155),
         ),
       ),
     );
