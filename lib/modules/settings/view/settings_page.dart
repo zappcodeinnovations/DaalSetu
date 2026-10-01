@@ -154,7 +154,7 @@ class SettingsScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                   onTap: () async {
                     await AppPreferences.logout();
-                    Get.offAll(() => LoginScreen());
+                    Get.offAllNamed(AppRoutes.login);
                   },
                   child: Center(
                     child: Row(

@@ -137,9 +137,12 @@ class TransporterDashboardView extends StatelessWidget {
               "Hello, ",
               style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
             ),
-            Text(
-              controller.username.value,
-              style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
+            Flexible(
+              child: Text(
+                controller.username.value,
+                style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             const Text(" 👋", style: TextStyle(fontSize: 24)),
           ],

@@ -59,7 +59,7 @@ class ApiClient {
     } on FormatException {
       throw Exception("Invalid Response Format");
     } catch (e) {
-      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized")) {
+      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized") && !e.toString().contains("Not Found")) {
         GlobalErrorHandler.showServerError();
       }
       rethrow;
@@ -97,7 +97,7 @@ class ApiClient {
       GlobalErrorHandler.showNoInternet();
       throw Exception("No Internet Connection");
     } catch (e) {
-      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized")) {
+      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized") && !e.toString().contains("Not Found")) {
         GlobalErrorHandler.showServerError();
       }
       rethrow;
@@ -134,7 +134,7 @@ class ApiClient {
       GlobalErrorHandler.showNoInternet();
       throw Exception("No Internet Connection");
     } catch (e) {
-      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized")) {
+      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized") && !e.toString().contains("Not Found")) {
         GlobalErrorHandler.showServerError();
       }
       rethrow;
@@ -165,7 +165,7 @@ class ApiClient {
       GlobalErrorHandler.showNoInternet();
       throw Exception("No Internet Connection");
     } catch (e) {
-      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized")) {
+      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized") && !e.toString().contains("Not Found")) {
         GlobalErrorHandler.showServerError();
       }
       rethrow;
@@ -199,7 +199,7 @@ class ApiClient {
       GlobalErrorHandler.showNoInternet();
       throw Exception("No Internet Connection");
     } catch (e) {
-      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized")) {
+      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized") && !e.toString().contains("Not Found")) {
         GlobalErrorHandler.showServerError();
       }
       rethrow;
@@ -236,7 +236,7 @@ class ApiClient {
       print("❌ API FAILED (GET): $endpoint");
       print("⚠️ ERROR: $e");
 
-      if (e.toString().contains("Forbidden") || e.toString().contains("Unauthorized")) {
+      if (e.toString().contains("Forbidden") || e.toString().contains("Unauthorized") || e.toString().contains("Not Found")) {
          rethrow;
       }
 

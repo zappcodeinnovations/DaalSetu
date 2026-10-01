@@ -57,48 +57,53 @@ class AdminDashboardScreen extends StatelessWidget {
                 const SizedBox(width: 12),
 
                 /// 👋 Greeting + Name
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Hey 👋",
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.textTheme.bodySmall?.color?.withOpacity(
-                          0.7,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Hey 👋",
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.textTheme.bodySmall?.color?.withOpacity(
+                            0.7,
+                          ),
                         ),
                       ),
-                    ),
-
-                    Obx(() {
-                      final profile = profileController.profile.value;
-
-                      if (profile == null) {
-                        return Text(
-                          "Loading...",
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        );
-                      }
-
-                      return Row(
-                        children: [
-                          Text(
-                            "${profile.firstName} ${profile.lastName}",
+  
+                      Obx(() {
+                        final profile = profileController.profile.value;
+  
+                        if (profile == null) {
+                          return Text(
+                            "Loading...",
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.keyboard_arrow_down,
-                            color: theme.colorScheme.primary,
-                            size: 20,
-                          ),
-                        ],
-                      );
-                    }),
-                  ],
+                          );
+                        }
+  
+                        return Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                "${profile.firstName} ${profile.lastName}",
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.keyboard_arrow_down,
+                              color: theme.colorScheme.primary,
+                              size: 20,
+                            ),
+                          ],
+                        );
+                      }),
+                    ],
+                  ),
                 ),
               ],
             );
