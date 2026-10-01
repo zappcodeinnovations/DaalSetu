@@ -231,17 +231,11 @@ class ApiClient {
     } on TimeoutException {
       print("⏳ API TIMEOUT: $endpoint");
       GlobalErrorHandler.showServerError();
-      throw Exception("Server Timeout");
+      throw Exception("Server Timeout. Please try again.");
     } catch (e) {
       print("❌ API FAILED (GET): $endpoint");
       print("⚠️ ERROR: $e");
-
-      if (e.toString().contains("Forbidden") || e.toString().contains("Unauthorized")) {
-         rethrow;
-      }
-
-      GlobalErrorHandler.showServerError();
-      throw Exception("Error: $e");
+      rethrow;
     }
   }
 
@@ -273,24 +267,34 @@ class ApiClient {
 
     if (statusCode >= 200 && statusCode < 300) {
       if (body.trim().isEmpty) return <String, dynamic>{};
-      return jsonDecode(body);
+      try {
+        return jsonDecode(body);
+      } catch (_) {
+        return <String, dynamic>{};
+      }
     } else {
       print("❌ API RESPONSE ERROR");
       print("📥 STATUS CODE: $statusCode");
       print("📥 BODY: $body");
 
-      String errorMessage = "Unexpected Error";
-      try {
-        final decoded = jsonDecode(body);
-        if (decoded is Map && decoded.containsKey('detail')) {
-          errorMessage = decoded['detail'];
-        } else if (decoded is Map && decoded.containsKey('message')) {
-          errorMessage = decoded['message'];
-        } else {
-          errorMessage = body;
+      String errorMessage = "Something went wrong. Please try again.";
+      if (body.trim().startsWith("<") || body.contains("<!doctype") || body.contains("<html")) {
+        errorMessage = "Server is temporarily unavailable. Please try again later.";
+      } else {
+        try {
+          final decoded = jsonDecode(body);
+          if (decoded is Map && decoded.containsKey('detail') && decoded['detail'] is String) {
+            errorMessage = decoded['detail'];
+          } else if (decoded is Map && decoded.containsKey('message') && decoded['message'] is String) {
+            errorMessage = decoded['message'];
+          } else if (decoded is Map && decoded.containsKey('error') && decoded['error'] is String) {
+            errorMessage = decoded['error'];
+          }
+        } catch (_) {
+          if (statusCode >= 500) {
+            errorMessage = "Server is temporarily unavailable. Please try again later.";
+          }
         }
-      } catch (_) {
-        errorMessage = body;
       }
 
       if (statusCode == 400) {
@@ -300,9 +304,9 @@ class ApiClient {
       } else if (statusCode == 403) {
         throw Exception("Forbidden");
       } else if (statusCode == 404) {
-        throw Exception("Not Found");
+        throw Exception("Resource not found");
       } else if (statusCode >= 500) {
-        throw Exception("Server Error: $errorMessage");
+        throw Exception("Server is temporarily unavailable. Please try again later.");
       } else {
         throw Exception(errorMessage);
       }

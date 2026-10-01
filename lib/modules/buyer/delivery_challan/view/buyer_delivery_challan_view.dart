@@ -108,26 +108,85 @@ class BuyerDeliveryChallanView extends StatelessWidget {
 
         if (controller.errorMessage.value.isNotEmpty && controller.challans.isEmpty) {
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  controller.errorMessage.value,
-                  style: TextStyle(color: theme.colorScheme.error),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => controller.fetchChallans(isRefresh: true),
-                  child: const Text("Retry"),
-                ),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.cloud_off_rounded,
+                    size: 60,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Unable to Load Challans",
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    controller.errorMessage.value,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: theme.textTheme.bodyMedium?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: () => controller.fetchChallans(isRefresh: true),
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text("Retry"),
+                  ),
+                ],
+              ),
             ),
           );
         }
 
         if (controller.challans.isEmpty) {
-          return const Center(
-            child: Text("No delivery challans found."),
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.receipt_long_outlined,
+                    size: 60,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "No Delivery Challans",
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "There are no delivery challans available at this time.",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: theme.textTheme.bodyMedium?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: () => controller.fetchChallans(isRefresh: true),
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text("Refresh"),
+                  ),
+                ],
+              ),
+            ),
           );
         }
 

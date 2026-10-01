@@ -51,7 +51,8 @@ class BuyerOffersController extends GetxController {
       offersList.value = data.map((e) => BuyerOfferModel.fromJson(e)).toList();
     } catch (e) {
       isError(true);
-      errorMessage(e.toString());
+      final raw = e.toString().replaceAll("Exception: ", "").replaceAll("Error: ", "").trim();
+      errorMessage(raw.isNotEmpty ? raw : "Unable to load offers. Please try again.");
     } finally {
       isLoading(false);
     }

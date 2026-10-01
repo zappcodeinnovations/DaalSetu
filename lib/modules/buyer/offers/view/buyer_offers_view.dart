@@ -73,20 +73,44 @@ class _OfferList extends StatelessWidget {
 
       if (controller.isError.value) {
         return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "Error: ${controller.errorMessage.value}",
-                style: TextStyle(color: theme.colorScheme.error),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => controller.fetchOffers(),
-                child: const Text("Retry"),
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.cloud_off_rounded,
+                  size: 60,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "Unable to Load Offers",
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textTheme.bodyLarge?.color,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  controller.errorMessage.value.isNotEmpty
+                      ? controller.errorMessage.value
+                      : "Something went wrong while loading offers.",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: theme.textTheme.bodyMedium?.color,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: () => controller.fetchOffers(),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text("Retry"),
+                ),
+              ],
+            ),
           ),
         );
       }
@@ -94,7 +118,45 @@ class _OfferList extends StatelessWidget {
       final offers = controller.offersList;
 
       if (offers.isEmpty) {
-        return const Center(child: Text("No offers found."));
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.local_offer_outlined,
+                  size: 60,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "No Offers Found",
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textTheme.bodyLarge?.color,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "No $offerType offers are available at the moment.",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: theme.textTheme.bodyMedium?.color,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: () => controller.fetchOffers(),
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text("Refresh"),
+                ),
+              ],
+            ),
+          ),
+        );
       }
 
       return RefreshIndicator(

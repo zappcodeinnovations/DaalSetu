@@ -84,16 +84,56 @@ class KycUsersScreen extends StatelessWidget {
 
   Widget _buildSummaryCards() {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Obx(() => Row(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Obx(() => Column(
         children: [
-          Expanded(child: _buildSummaryCard("Pending", controller.pendingCount.toString(), "Needs Review", colorPending, Icons.access_time_filled)),
-          const SizedBox(width: 12),
-          Expanded(child: _buildSummaryCard("Approved", controller.approvedCount.toString(), "Verified Users", colorApproved, Icons.verified_user)),
-          const SizedBox(width: 12),
-          Expanded(child: _buildSummaryCard("Rejected", controller.rejectedCount.toString(), "Need Attention", colorRejected, Icons.cancel)),
-          const SizedBox(width: 12),
-          Expanded(child: _buildSummaryCard("Total Users", controller.totalCount.toString(), "All KYC Users", colorTotal, Icons.people)),
+          Row(
+            children: [
+              Expanded(
+                child: _buildSummaryCard(
+                  "Pending",
+                  controller.pendingCount.toString(),
+                  "Needs Review",
+                  colorPending,
+                  Icons.access_time_filled,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildSummaryCard(
+                  "Approved",
+                  controller.approvedCount.toString(),
+                  "Verified Users",
+                  colorApproved,
+                  Icons.verified_user,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildSummaryCard(
+                  "Rejected",
+                  controller.rejectedCount.toString(),
+                  "Need Attention",
+                  colorRejected,
+                  Icons.cancel,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildSummaryCard(
+                  "Total Users",
+                  controller.totalCount.toString(),
+                  "All KYC Users",
+                  colorTotal,
+                  Icons.people,
+                ),
+              ),
+            ],
+          ),
         ],
       )),
     );
@@ -101,25 +141,56 @@ class KycUsersScreen extends StatelessWidget {
 
   Widget _buildSummaryCard(String title, String count, String subtitle, Color color, IconData icon) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.35), width: 1),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
-            child: Icon(icon, color: color, size: 18),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 22),
           ),
-          const SizedBox(height: 12),
-          Text(count, style: TextStyle(color: textDark, fontSize: 22, fontWeight: FontWeight.bold)),
-          Text(title, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Text(subtitle, style: TextStyle(color: textLight, fontSize: 10)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  count,
+                  style: TextStyle(
+                    color: textDark,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(color: textLight, fontSize: 11),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

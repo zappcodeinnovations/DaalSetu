@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:iconly/iconly.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -89,51 +90,56 @@ class SettingsScreen extends StatelessWidget {
               padding: EdgeInsets.zero,
               child: Column(
                 children: [
-                  _buildTile(
-                    context,
-                    icon: IconlyLight.info_square,
-                    title: "About App",
-                    onTap: () => _showInfoDialog(
-                      context,
-                      "About App",
-                      "DaalSetu Admin v1.0",
-                    ),
-                  ),
-                  _glassDivider(context),
+                  // _buildTile(
+                  //   context,
+                  //   icon: IconlyLight.info_square,
+                  //   title: "About App",
+                  //   onTap: () => _showInfoDialog(
+                  //     context,
+                  //     "About App",
+                  //     "DaalSetu Admin v1.0",
+                  //   ),
+                  // ),
+                  // _glassDivider(context),
                   _buildTile(
                     context,
                     icon: IconlyLight.document,
                     title: "Terms & Conditions",
-                    onTap: () =>
-                        _showInfoDialog(context, "Terms", "Details here..."),
+                    onTap: () => _showUrlDialog(
+                      context,
+                      "Terms & Conditions",
+                      "https://www.daall-setu.com/terms-and-conditions/",
+                    ),
                   ),
                   _glassDivider(context),
                   _buildTile(
                     context,
                     icon: IconlyLight.shield_done,
                     title: "Privacy Policy",
-                    onTap: () =>
-                        _showInfoDialog(context, "Privacy", "Details here..."),
+                    onTap: () => _showUrlDialog(
+                      context,
+                      "Privacy Policy",
+                      "https://www.daall-setu.com/privacy-policy/",
+                    ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 26),
-
-            /// SUPPORT
-            _sectionLabel(context, "SUPPORT"),
-            const SizedBox(height: 10),
-            GlassCard(
-              padding: EdgeInsets.zero,
-              child: _buildTile(
-                context,
-                icon: IconlyLight.call,
-                title: "Help & Support",
-                subtitle: "Contact support team",
-                onTap: () {},
-              ),
-            ),
+            // const SizedBox(height: 26),
+            // /// SUPPORT
+            // _sectionLabel(context, "SUPPORT"),
+            // const SizedBox(height: 10),
+            // GlassCard(
+            //   padding: EdgeInsets.zero,
+            //   child: _buildTile(
+            //     context,
+            //     icon: IconlyLight.call,
+            //     title: "Help & Support",
+            //     subtitle: "Contact support team",
+            //     onTap: () {},
+            //   ),
+            // ),
 
             const SizedBox(height: 32),
 
@@ -344,10 +350,10 @@ class SettingsScreen extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppTheme.cardColor,
+                color: theme.cardColor,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: AppTheme.borderColor,
+                  color: isDark ? AppTheme.borderColor : AppTheme.borderLight,
                 ),
               ),
               child: Column(
@@ -390,5 +396,149 @@ class SettingsScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _showUrlDialog(BuildContext context, String title, String url) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.transparent,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isDark ? AppTheme.borderColor : AppTheme.borderLight,
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          IconlyLight.document,
+                          color: theme.colorScheme.primary,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: theme.textTheme.bodyLarge?.color,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Click Open to view the official $title in your browser:",
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: theme.textTheme.bodyMedium?.color,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppTheme.bgSecondary : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isDark ? AppTheme.borderColor : AppTheme.borderLight,
+                      ),
+                    ),
+                    child: Text(
+                      url,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Get.back(),
+                        child: Text(
+                          "Cancel",
+                          style: GoogleFonts.inter(
+                            color: theme.textTheme.bodyMedium?.color,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () {
+                          Get.back();
+                          _openUrl(url);
+                        },
+                        icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                        label: const Text(
+                          "Open",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openUrl(String urlString) async {
+    final uri = Uri.parse(urlString);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        await launchUrl(uri, mode: LaunchMode.platformDefault);
+      }
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Could not open link",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
   }
 }
