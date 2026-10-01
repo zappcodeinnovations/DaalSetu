@@ -12,25 +12,25 @@ abstract class AppRoutes {
   static const change_password = '/change-password';
   static const forgot_password = '/forgot-password';
 
-  //profile
+  // PROFILE
   static const profile_page = '/profile-page';
+  static const profile = '/profile';
+  static const editProfile = '/edit-profile';
+  static const completeProfile = '/complete-profile';
 
-  //Dashboard
+  // DASHBOARD
   static const dashboard = '/dashboard';
 
-  //categories
+  // CATEGORIES
   static const subcategory = "/subcategory";
 
   // MAIN APP
   static const mainNav = '/main-nav';
   static const home = '/home';
-  //usersss
+
+  // USERS
   static const users = '/users';
   static const users_details = '/users-details';
-  // PROFILE
-  static const profile = '/profile';
-  static const editProfile = '/edit-profile';
-  static const completeProfile = '/complete-profile';
 
   // OTHER FEATURES
   static const notifications = '/notifications';
@@ -45,6 +45,45 @@ abstract class AppRoutes {
   static const sellerDashboard = '/seller/dashboard';
   static const sellerCompany = '/seller/company';
   static const sellerCategory = '/seller/category';
+  static const sellerBranches = '/seller/branches';
+  static const sellerLogistics = '/seller/logistics';
+  static const sellerProducts = '/seller/products';
+  static const sellerContracts = '/seller/contracts';
+  static const sellerOfferInterests = '/seller/offer-interests';
+  static const sellerMediaGallery = '/seller/media-gallery';
+  static const sellerNotifications = '/seller/notifications';
+  static const sellerRFQs = '/seller/rfqs';
+  static const sellerDeliveryChallans = '/seller/delivery-challans';
+  static const sellerMasters = '/seller/masters';
+
+  // TRANSPORTER PANEL
+  static const transporterDashboard = '/transporter/dashboard';
+  static const transporterBranch = '/transporter/branch';
+  static const transporterBrands = '/transporter/brands';
+  static const transporterCategory = '/transporter/category';
+  static const transporterCompany = '/transporter/company';
+  static const transporterKyc = '/transporter/kyc';
+  static const transporterContracts = '/transporter/contracts';
+  static const transporterNotifications = '/transporter/notifications';
+  static const transporterOffers = '/transporter/offers';
+  static const transporterProducts = '/transporter/products';
+  static const transporterRfq = '/transporter/rfq';
+  static const transporterUsers = '/transporter/users';
+  static const transporterDrivers = '/transporter/drivers';
+  static const transporterVehicles = '/transporter/vehicles';
+
+  // BUYER PANEL
+  static const buyerDashboard = '/buyer/dashboard';
+  static const buyerOffers = '/buyer/offers';
+  static const buyerOffersCreate = '/buyer/offers/create';
+  static const buyerMyInterests = '/buyer/offers/my-interests';
+  static const buyerTodayOffers = '/buyer/offers/today';
+  static const buyerPendingOffers = '/buyer/offers/pending';
+  static const buyerPreviousOffers = '/buyer/offers/previous';
+  static const buyerDeliveryChallan = '/buyer/delivery-challan';
+  static const buyerDeliveryChallanDetails = '/buyer/delivery-challan-details';
+  static const buyerOrders = '/buyer/orders';
+  static const buyerTransportTracking = '/buyer/transport-tracking';
 
   // ADMIN SIDEBAR
   static String adminModule(String key) => '/admin/$key';

@@ -1,18 +1,25 @@
 import 'dart:ui';
-import 'package:iconly/iconly.dart';
-import 'package:agro_broker/modules/seller/dashboard/view/seller_dashboard_view.dart';
-import 'package:agro_broker/modules/seller/company/view/seller_company_view.dart';
-import 'package:agro_broker/modules/seller/categories/view/seller_category_view.dart';
-import 'package:agro_broker/modules/contracts/view/contract_view.dart';
-import 'package:agro_broker/modules/dashboard/view/dashboard_page.dart';
-import 'package:agro_broker/modules/kyc_users/view/kyc_user_view.dart';
-import 'package:agro_broker/modules/nav_bar/controller/nav_controller.dart';
-import 'package:agro_broker/modules/products/view/product_view.dart';
-import 'package:agro_broker/modules/profile/view/profile_page.dart';
-import 'package:agro_broker/modules/settings/view/settings_page.dart';
-import 'package:agro_broker/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:iconly/iconly.dart';
+
+import '../../../theme/app_theme.dart';
+import '../../seller/dashboard/view/seller_dashboard_view.dart';
+import '../../seller/company/view/seller_company_view.dart';
+import '../../seller/categories/view/seller_category_view.dart';
+import '../../contracts/view/contract_view.dart';
+import '../../dashboard/view/dashboard_page.dart';
+import '../../kyc_users/view/kyc_user_view.dart';
+import '../controller/nav_controller.dart';
+import '../../products/view/product_view.dart';
+import '../../transporter/dashboard/view/transporter_dashboard_view.dart';
+import '../../transporter/drivers/view/transporter_drivers_view.dart';
+import '../../transporter/vehicles/view/transporter_vehicles_view.dart';
+import '../../buyer/dashboard/view/buyer_dashboard_view.dart';
+import '../../buyer/offers/view/buyer_offers_view.dart';
+import '../../buyer/delivery_challan/view/buyer_delivery_challan_view.dart';
+import '../../buyer/branch/view/buyer_branch_view.dart';
+import '../../settings/view/settings_page.dart';
 
 class MainNavigationScreen extends StatelessWidget {
   MainNavigationScreen({super.key});
@@ -21,11 +28,29 @@ class MainNavigationScreen extends StatelessWidget {
 
   List<Widget> _getPages(String role) {
     if (role == 'seller') {
-      return const [
-        SellerDashboardView(),
-        SellerCompanyView(),
-        SellerCategoryView(),
-      ] + [SettingsScreen()];
+      return [
+            SellerDashboardView(),
+            const SellerCompanyView(),
+            const SellerCategoryView(),
+          ] +
+          [SettingsScreen()];
+    }
+    if (role == 'transporter') {
+      return [
+            TransporterDashboardView(),
+            TransporterDriversView(),
+            const TransporterVehiclesView(),
+          ] +
+          [SettingsScreen()];
+    }
+    if (role == 'buyer') {
+      return [
+            BuyerDashboardView(),
+            const BuyerOffersView(),
+            const BuyerDeliveryChallanView(),
+            BuyerBranchView(),
+          ] +
+          [SettingsScreen()];
     }
     return [
       AdminDashboardScreen(),
@@ -38,12 +63,16 @@ class MainNavigationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(
-      () => Scaffold(
+    return Obx(() {
+      if (navController.isLoading.value) {
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      }
+
+      return Scaffold(
         backgroundColor: Colors.transparent,
         extendBody: true,
         body: Container(
-            color: Theme.of(context).scaffoldBackgroundColor,
+          color: Theme.of(context).scaffoldBackgroundColor,
           child: IndexedStack(
             index: navController.selectedIndex.value,
             children: _getPages(navController.userRole.value),
@@ -54,8 +83,8 @@ class MainNavigationScreen extends StatelessWidget {
           role: navController.userRole.value,
           onTap: navController.changeIndex,
         ),
-      ),
-    );
+      );
+    });
   }
 }
 
@@ -74,18 +103,107 @@ class _GlassNavBar extends StatelessWidget {
   List<_NavItem> get _items {
     if (role == 'seller') {
       return const [
-        _NavItem(icon: IconlyLight.category, activeIcon: IconlyBold.category, label: 'Dashboard'),
-        _NavItem(icon: IconlyLight.home, activeIcon: IconlyBold.home, label: 'Company'),
-        _NavItem(icon: IconlyLight.document, activeIcon: IconlyBold.document, label: 'Category'),
-        _NavItem(icon: IconlyLight.setting, activeIcon: IconlyBold.setting, label: 'Settings'),
+        _NavItem(
+          icon: IconlyLight.category,
+          activeIcon: IconlyBold.category,
+          label: 'Dashboard',
+        ),
+        _NavItem(
+          icon: IconlyLight.home,
+          activeIcon: IconlyBold.home,
+          label: 'Company',
+        ),
+        _NavItem(
+          icon: IconlyLight.document,
+          activeIcon: IconlyBold.document,
+          label: 'Category',
+        ),
+        _NavItem(
+          icon: IconlyLight.setting,
+          activeIcon: IconlyBold.setting,
+          label: 'Settings',
+        ),
+      ];
+    }
+    if (role == 'transporter') {
+      return const [
+        _NavItem(
+          icon: IconlyLight.category,
+          activeIcon: IconlyBold.category,
+          label: 'Dashboard',
+        ),
+        _NavItem(
+          icon: IconlyLight.user_1,
+          activeIcon: IconlyBold.user_3,
+          label: 'Drivers',
+        ),
+        _NavItem(
+          icon: IconlyLight.discovery,
+          activeIcon: IconlyBold.discovery,
+          label: 'Vehicles',
+        ),
+        _NavItem(
+          icon: IconlyLight.setting,
+          activeIcon: IconlyBold.setting,
+          label: 'Settings',
+        ),
+      ];
+    }
+    if (role == 'buyer') {
+      return const [
+        _NavItem(
+          icon: IconlyLight.category,
+          activeIcon: IconlyBold.category,
+          label: 'Dashboard',
+        ),
+        _NavItem(
+          icon: IconlyLight.ticket_star,
+          activeIcon: IconlyBold.ticket_star,
+          label: 'Offers',
+        ),
+        _NavItem(
+          icon: IconlyLight.document,
+          activeIcon: IconlyBold.document,
+          label: 'Challan',
+        ),
+        _NavItem(
+          icon: IconlyLight.location,
+          activeIcon: IconlyBold.location,
+          label: 'Branch',
+        ),
+        _NavItem(
+          icon: IconlyLight.setting,
+          activeIcon: IconlyBold.setting,
+          label: 'Settings',
+        ),
       ];
     }
     return const [
-      _NavItem(icon: IconlyLight.category, activeIcon: IconlyBold.category, label: 'Dashboard'),
-      _NavItem(icon: IconlyLight.document, activeIcon: IconlyBold.document, label: 'Contracts'),
-      _NavItem(icon: IconlyLight.user_1, activeIcon: IconlyBold.user_3, label: 'KYC'),
-      _NavItem(icon: IconlyLight.bag, activeIcon: IconlyBold.bag, label: 'Products'),
-      _NavItem(icon: IconlyLight.setting, activeIcon: IconlyBold.setting, label: 'Settings'),
+      _NavItem(
+        icon: IconlyLight.category,
+        activeIcon: IconlyBold.category,
+        label: 'Dashboard',
+      ),
+      _NavItem(
+        icon: IconlyLight.document,
+        activeIcon: IconlyBold.document,
+        label: 'Contracts',
+      ),
+      _NavItem(
+        icon: IconlyLight.user_1,
+        activeIcon: IconlyBold.user_3,
+        label: 'KYC',
+      ),
+      _NavItem(
+        icon: IconlyLight.bag,
+        activeIcon: IconlyBold.bag,
+        label: 'Products',
+      ),
+      _NavItem(
+        icon: IconlyLight.setting,
+        activeIcon: IconlyBold.setting,
+        label: 'Settings',
+      ),
     ];
   }
 
@@ -103,7 +221,21 @@ class _GlassNavBar extends StatelessWidget {
           child: Container(
             height: 72,
             decoration: BoxDecoration(
-              color: theme.cardColor.withValues(alpha: 0.9),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [
+                        const Color(0xFF1A1206),
+                        const Color(0xFF0D1117),
+                        const Color(0xFF0D1117),
+                      ]
+                    : [
+                        const Color(0xFFFFF8E1),
+                        const Color(0xFFFFFCF5),
+                        Colors.white,
+                      ],
+              ),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: theme.dividerColor,

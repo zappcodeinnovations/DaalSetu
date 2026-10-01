@@ -1,608 +1,271 @@
-import 'package:agro_broker/services/seller_services.dart';
-import 'package:agro_broker/theme/glass_widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:agro_broker/theme/app_theme.dart';
+import 'package:get/get.dart';
+import 'package:iconly/iconly.dart';
 
-class SellerCompanyView extends StatefulWidget {
+import '../../../../services/seller_services.dart';
+import '../../../../theme/app_theme.dart';
+import '../../../../theme/glass_widgets.dart';
+import '../controller/seller_company_controller.dart';
+import '../model/seller_company_model.dart';
+import 'add_company_view.dart';
+
+class SellerCompanyView extends StatelessWidget {
   const SellerCompanyView({super.key});
 
-  @override
-  State<SellerCompanyView> createState() => _SellerCompanyViewState();
-}
-
-class _SellerCompanyViewState extends State<SellerCompanyView> {
-  bool _loading = true;
-  String? _error;
-  List<Map<String, dynamic>> _companies = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCompanies();
-  }
-
-  Future<void> _loadCompanies() async {
-    if (mounted) {
-      setState(() {
-        _loading = true;
-        _error = null;
-      });
-    }
-    try {
-      final result = await SellerServices.getCompanies();
-      if (!mounted) return;
-      setState(() {
-        _companies = result
-            .whereType<Map>()
-            .map((item) => Map<String, dynamic>.from(item))
-            .toList();
-      });
-    } catch (error) {
-      if (!mounted) return;
-      setState(() => _error = _cleanError(error));
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  String _cleanError(Object error) =>
-      error.toString().replaceFirst('Exception: ', '');
-
-  Future<void> _openForm([Map<String, dynamic>? company]) async {
-    final changed = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => _CompanyFormPage(company: company)),
-    );
-    if (changed == true) await _loadCompanies();
-  }
-
-  Future<void> _setPrimary(Map<String, dynamic> company) async {
-    final id = company['id']?.toString();
-    if (id == null) return;
-    try {
-      final message = await SellerServices.setPrimaryCompany(id);
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
-      await _loadCompanies();
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_cleanError(error)),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-    }
-  }
+  static const Color primaryColor = AppTheme.primaryGold;
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.put(SellerCompanyController());
     final theme = Theme.of(context);
-    return GradientScaffold(
+
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: const Text(
-          'My Companies',
-          style: TextStyle(fontWeight: FontWeight.w700),
+        elevation: 0,
+        title: Text(
+          "Company",
+          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         actions: [
-          IconButton(
-            tooltip: 'Refresh',
-            onPressed: _loading ? null : _loadCompanies,
-            icon: const Icon(Icons.refresh_rounded),
+          Padding(
+            padding: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                controller.clearForm();
+                Get.to(() => const AddCompanyView());
+              },
+              icon: const Icon(Icons.add, size: 18, color: Colors.white),
+              label: const Text("Add Company", style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+            ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openForm(),
-        icon: const Icon(Icons.add_business_rounded),
-        label: const Text('Register Company'),
-      ),
-      body: SafeArea(
-        top: false,
-        child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : _error != null
-            ? _ErrorState(message: _error!, onRetry: _loadCompanies)
-            : RefreshIndicator(
-                onRefresh: _loadCompanies,
-                child: _companies.isEmpty
-                    ? ListView(
-                        padding: const EdgeInsets.all(24),
-                        children: [
-                          const SizedBox(height: 90),
-                          Icon(
-                            Icons.business_outlined,
-                            size: 72,
-                            color: AppTheme.primaryGold.withValues(
-                              alpha: 0.55,
-                            ),
-                          ),
-                          const SizedBox(height: 18),
-                          Text(
-                            'No company registered',
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Register your company to manage business details from your profile.',
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                        ],
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(18, 12, 18, 100),
-                        itemCount: _companies.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 14),
-                        itemBuilder: (_, index) =>
-                            _companyCard(_companies[index]),
+      body: RefreshIndicator(
+        onRefresh: controller.fetchCompanies,
+        color: primaryColor,
+        backgroundColor: theme.cardColor,
+        child: Obx(() {
+          if (controller.isLoading.value && controller.companies.isEmpty) {
+            return const Center(child: CircularProgressIndicator(color: primaryColor));
+          }
+
+          if (controller.companies.isEmpty) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.7,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(IconlyLight.home, size: 64, color: theme.disabledColor),
+                      const SizedBox(height: 16),
+                      Text("No companies found", style: theme.textTheme.titleMedium),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          controller.clearForm();
+                          Get.to(() => const AddCompanyView());
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text("Add First Company", style: TextStyle(color: Colors.white)),
                       ),
+                    ],
+                  ),
+                ),
               ),
+            );
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+            physics: const AlwaysScrollableScrollPhysics(),
+            itemCount: controller.companies.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 16),
+            itemBuilder: (context, index) {
+              final company = controller.companies[index];
+              return _buildCompanyCard(context, company);
+            },
+          );
+        }),
       ),
     );
   }
 
-  Widget _companyCard(Map<String, dynamic> company) {
+  Widget _buildCompanyCard(BuildContext context, SellerCompanyModel company) {
     final theme = Theme.of(context);
-    final primary = company['is_primary'] == true;
-    final verified = company['is_verified'] == true;
-    final address =
-        [
-              company['address_line_1'],
-              company['address_line_2'],
-              company['city'],
-              company['state'],
-              company['pincode'],
-              company['country'],
-            ]
-            .where(
-              (value) => value != null && value.toString().trim().isNotEmpty,
-            )
-            .join(', ');
+    final isDark = theme.brightness == Brightness.dark;
 
-    return GlassCard(
-      padding: const EdgeInsets.all(18),
-      borderColor: primary
-          ? AppTheme.primaryGold.withValues(alpha: 0.55)
-          : null,
+    final controller = Get.find<SellerCompanyController>();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+        ),
+        boxShadow: isDark ? [] : [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 23,
-                backgroundColor: AppTheme.primaryGold.withValues(
-                  alpha: 0.13,
-                ),
-                child: Icon(
-                  Icons.apartment_rounded,
-                  color: AppTheme.primaryGold,
-                ),
-              ),
-              const SizedBox(width: 13),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      company['legal_name']?.toString() ?? 'Company',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                      company.legalName,
+                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                     ),
-                    if ((company['company_type'] ?? '').toString().isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 3),
-                        child: Text(company['company_type'].toString()),
-                      ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Establish: ${company.yearOfEstablishment}",
+                      style: theme.textTheme.bodySmall,
+                    ),
                   ],
                 ),
               ),
-              IconButton(
-                tooltip: 'Edit company',
-                onPressed: () => _openForm(company),
-                icon: const Icon(Icons.edit_outlined),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              if (primary) _badge('Primary', Icons.star_rounded, AppTheme.primaryGold),
-              _badge(
-                verified ? 'Verified' : 'Verification pending',
-                verified ? Icons.verified_rounded : Icons.schedule_rounded,
-                verified ? AppTheme.successGreen : AppTheme.secondaryOrange,
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          if ((company['gst_number'] ?? '').toString().isNotEmpty)
-            _detail(
-              Icons.receipt_long_outlined,
-              'GST',
-              company['gst_number'].toString(),
-            ),
-          if ((company['pan_number'] ?? '').toString().isNotEmpty)
-            _detail(
-              Icons.badge_outlined,
-              'PAN',
-              company['pan_number'].toString(),
-            ),
-          if (address.isNotEmpty)
-            _detail(Icons.location_on_outlined, 'Address', address),
-          if (!primary) ...[
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => _setPrimary(company),
-                icon: const Icon(Icons.star_outline_rounded),
-                label: const Text('Set as primary'),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _badge(String text, IconData icon, Color color) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-    decoration: BoxDecoration(
-      color: color.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(20),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: color, size: 15),
-        const SizedBox(width: 5),
-        Text(
-          text,
-          style: TextStyle(
-            color: color,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
-    ),
-  );
-
-  Widget _detail(IconData icon, String label, String value) => Padding(
-    padding: const EdgeInsets.only(bottom: 8),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 18, color: AppTheme.primaryGold),
-        const SizedBox(width: 9),
-        Expanded(
-          child: Text(
-            '$label: $value',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-class _CompanyFormPage extends StatefulWidget {
-  const _CompanyFormPage({this.company});
-
-  final Map<String, dynamic>? company;
-
-  @override
-  State<_CompanyFormPage> createState() => _CompanyFormPageState();
-}
-
-class _CompanyFormPageState extends State<_CompanyFormPage> {
-  final _formKey = GlobalKey<FormState>();
-  late final Map<String, TextEditingController> _fields;
-  bool _saving = false;
-
-  bool get _editing => widget.company != null;
-
-  @override
-  void initState() {
-    super.initState();
-    String value(String key) => widget.company?[key]?.toString() ?? '';
-    _fields = {
-      'legal_name': TextEditingController(text: value('legal_name')),
-      'company_type': TextEditingController(text: value('company_type')),
-      'year_of_establishment': TextEditingController(
-        text: value('year_of_establishment'),
-      ),
-      'number_of_employees': TextEditingController(
-        text: value('number_of_employees'),
-      ),
-      'gst_number': TextEditingController(text: value('gst_number')),
-      'pan_number': TextEditingController(text: value('pan_number')),
-      'address_line_1': TextEditingController(text: value('address_line_1')),
-      'address_line_2': TextEditingController(text: value('address_line_2')),
-      'state': TextEditingController(text: value('state')),
-      'city': TextEditingController(text: value('city')),
-      'pincode': TextEditingController(text: value('pincode')),
-      'country': TextEditingController(
-        text: value('country').isEmpty ? 'India' : value('country'),
-      ),
-      'landmark': TextEditingController(text: value('landmark')),
-    };
-  }
-
-  @override
-  void dispose() {
-    for (final controller in _fields.values) {
-      controller.dispose();
-    }
-    super.dispose();
-  }
-
-  String _cleanError(Object error) =>
-      error.toString().replaceFirst('Exception: ', '');
-
-  Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _saving = true);
-
-    final body = <String, dynamic>{
-      for (final entry in _fields.entries) entry.key: entry.value.text.trim(),
-    };
-    for (final key in ['year_of_establishment', 'number_of_employees']) {
-      final value = body[key] as String;
-      body[key] = value.isEmpty ? null : int.tryParse(value);
-    }
-
-    try {
-      if (_editing) {
-        await SellerServices.editCompany(
-          widget.company!['id'].toString(),
-          body,
-        );
-      } else {
-        await SellerServices.createCompany(body);
-      }
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _editing
-                ? 'Company updated successfully.'
-                : 'Company registered successfully.',
-          ),
-        ),
-      );
-      Navigator.of(context).pop(true);
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_cleanError(error)),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GradientScaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        title: Text(
-          _editing ? 'Edit Company' : 'Register Company',
-          style: const TextStyle(fontWeight: FontWeight.w700),
-        ),
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(18, 8, 18, 32),
-          children: [
-            _section('Business Information', Icons.business_center_outlined, [
-              _input('legal_name', 'Legal company name', required: true),
-              _input(
-                'company_type',
-                'Company type',
-                hint: 'e.g. Private Limited, Proprietorship',
-              ),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _input(
-                      'year_of_establishment',
-                      'Established year',
-                      numeric: true,
-                    ),
+              const SizedBox(width: 8),
+              if (company.isPrimary)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _input(
-                      'number_of_employees',
-                      'Employees',
-                      numeric: true,
-                    ),
+                  child: const Text(
+                    "PRIMARY",
+                    style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold),
                   ),
-                ],
-              ),
-              _input(
-                'gst_number',
-                'GST number',
-                capitalization: TextCapitalization.characters,
-              ),
-              _input(
-                'pan_number',
-                'PAN number',
-                capitalization: TextCapitalization.characters,
-              ),
-            ]),
-            const SizedBox(height: 16),
-            _section('Registered Address', Icons.location_on_outlined, [
-              _input('address_line_1', 'Address line 1', required: true),
-              _input('address_line_2', 'Address line 2'),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: _input('city', 'City', required: true)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _input('state', 'State', required: true)),
-                ],
-              ),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _input(
-                      'pincode',
-                      'Pincode',
-                      required: true,
-                      numeric: true,
-                      maxLength: 6,
-                    ),
+                )
+              else
+                TextButton.icon(
+                  onPressed: () => controller.setPrimaryCompany(company.id),
+                  icon: const Icon(Icons.star_border, size: 14, color: Colors.green),
+                  label: const Text(
+                    "Set Primary",
+                    style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(child: _input('country', 'Country', required: true)),
-                ],
-              ),
-              _input('landmark', 'Landmark'),
-            ]),
-            const SizedBox(height: 22),
-            SizedBox(
-              height: 54,
-              child: FilledButton.icon(
-                onPressed: _saving ? null : _save,
-                icon: _saving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Icon(
-                        _editing
-                            ? Icons.save_outlined
-                            : Icons.add_business_rounded,
-                      ),
-                label: Text(_editing ? 'Save Changes' : 'Register Company'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _section(String title, IconData icon, List<Widget> children) {
-    final theme = Theme.of(context);
-    return GlassCard(
-      padding: const EdgeInsets.all(17),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: AppTheme.primaryGold),
-              const SizedBox(width: 9),
-              Text(
-                title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.green.withOpacity(0.05),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: const Size(0, 32),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
                 ),
-              ),
             ],
           ),
-          const SizedBox(height: 18),
-          ...children,
-        ],
-      ),
-    );
-  }
-
-  Widget _input(
-    String key,
-    String label, {
-    String? hint,
-    bool required = false,
-    bool numeric = false,
-    int? maxLength,
-    TextCapitalization capitalization = TextCapitalization.words,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: TextFormField(
-        controller: _fields[key],
-        textCapitalization: capitalization,
-        keyboardType: numeric ? TextInputType.number : TextInputType.text,
-        inputFormatters: numeric
-            ? [
-                FilteringTextInputFormatter.digitsOnly,
-                if (maxLength != null)
-                  LengthLimitingTextInputFormatter(maxLength),
+          const Divider(height: 24),
+          _infoRow(IconlyLight.category, company.companyType, theme),
+          _infoRow(IconlyLight.location, "${company.city}, ${company.state}", theme),
+          _infoRow(IconlyLight.document, "GST: ${company.gstNumber}", theme),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      controller.populateFields(company);
+                      Get.to(() => const AddCompanyView());
+                    },
+                    icon: const Icon(Icons.edit_outlined, size: 16),
+                    label: const Text("Edit"),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.blue,
+                      side: const BorderSide(color: Colors.blue),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: () {
+                      // Delete functionality
+                    },
+                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.red.withOpacity(0.1),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ],
+              ),
+              if (company.isVerified) ...[
+                Row(
+                  children: [
+                    const Icon(Icons.verified, color: Colors.blue, size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      "Verified",
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.blue,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                Row(
+                  children: [
+                    Text(
+                      "Not Verified",
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.redAccent,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
               ]
-            : null,
-        decoration: InputDecoration(
-          labelText: required ? '$label *' : label,
-          hintText: hint,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(13)),
-        ),
-        validator: (value) {
-          if (required && (value == null || value.trim().isEmpty)) {
-            return '$label is required';
-          }
-          if (key == 'pincode' &&
-              value != null &&
-              value.isNotEmpty &&
-              value.length != 6) {
-            return 'Enter 6 digits';
-          }
-          return null;
-        },
-      ),
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(28),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.cloud_off_outlined,
-            size: 58,
-            color: Theme.of(context).colorScheme.error,
-          ),
-          const SizedBox(height: 14),
-          Text(message, textAlign: TextAlign.center),
-          const SizedBox(height: 18),
-          FilledButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Try Again'),
+            ],
           ),
         ],
       ),
-    ),
-  );
+    );
+  }
+
+  Widget _infoRow(IconData icon, String text, ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

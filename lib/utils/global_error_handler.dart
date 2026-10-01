@@ -52,7 +52,7 @@ class GlobalErrorHandler {
               height: 70,
               width: 70,
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(.1),
+                color: iconColor.withValues(alpha: .1),
                 shape: BoxShape.circle,
               ),
               child: Icon(

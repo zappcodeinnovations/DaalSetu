@@ -1,6 +1,6 @@
-import 'package:agro_broker/modules/kyc_users/model/kyc_user_model.dart';
-import 'package:agro_broker/network/api_client.dart';
-import 'package:agro_broker/comman/api_url.dart';
+import '../modules/kyc_users/model/kyc_user_model.dart';
+import '../network/api_client.dart';
+import '../comman/api_url.dart';
 
 class KycService {
   /// Fetch KYC Users
@@ -9,6 +9,10 @@ class KycService {
       endpoint: ApiUrls.kycUsers, // /api/kyc/users/
       requireAuth: true,
     );
+
+    print("=== KYC USERS API RESPONSE ===");
+    print(response);
+    print("==============================");
 
     final List results = response['results'] ?? [];
 
