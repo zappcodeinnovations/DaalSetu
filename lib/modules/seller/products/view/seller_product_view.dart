@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
 import '../controller/seller_product_controller.dart';
 import '../model/seller_product_model.dart';
-import 'add_product_view.dart';
+import '../../../products/view/add_product.dart';
 import 'seller_stock_update_dialog.dart';
 import 'seller_offer_interests_view.dart';
 import 'seller_media_gallery_view.dart';
@@ -72,7 +72,7 @@ class SellerProductView extends StatelessWidget {
         }),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Get.to(() => const AddProductView()),
+        onPressed: () => Get.to(() => const AddProductScreen()),
         backgroundColor: primaryColor,
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text("Add Product", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),

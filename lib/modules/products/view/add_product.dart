@@ -8,6 +8,7 @@ import 'package:agro_broker/theme/app_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:agro_broker/modules/seller/products/controller/seller_product_controller.dart';
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -64,6 +65,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
       ]);
       categories = result[0];
       sellers = result[1];
+      if (sellers.length == 1) {
+        _selectSeller(sellers.first);
+      }
     } catch (_) {
       _message('Unable to load offer options', error: true);
     } finally {
@@ -100,6 +104,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
       companies = result[0];
       branches = result[1] as List<OfferBranch>;
       selectedBranchIds.addAll(branches.map((item) => item.id));
+      if (companies.length == 1) {
+        company = companies.first;
+      }
     });
   }
 
@@ -192,6 +199,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
         );
       }
       await _productController.fetchProducts();
+      try {
+        if (Get.isRegistered<SellerProductController>()) {
+          Get.find<SellerProductController>().fetchProducts();
+        }
+      } catch (_) {}
       if (mounted) Navigator.pop(context);
       _message('Offer created successfully.');
     } catch (error) {

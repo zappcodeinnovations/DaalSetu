@@ -12,6 +12,7 @@ import '../../dashboard/view/dashboard_page.dart';
 import '../../kyc_users/view/kyc_user_view.dart';
 import '../controller/nav_controller.dart';
 import '../../products/view/product_view.dart';
+import '../../seller/products/view/seller_product_view.dart';
 import '../../transporter/dashboard/view/transporter_dashboard_view.dart';
 import '../../transporter/drivers/view/transporter_drivers_view.dart';
 import '../../transporter/vehicles/view/transporter_vehicles_view.dart';
@@ -31,9 +32,10 @@ class MainNavigationScreen extends StatelessWidget {
       return [
             SellerDashboardView(),
             const SellerCompanyView(),
+            const SellerProductView(),
             const SellerCategoryView(),
-          ] +
-          [SettingsScreen()];
+            SettingsScreen(),
+          ];
     }
     if (role == 'transporter') {
       return [
@@ -117,6 +119,11 @@ class _GlassNavBar extends StatelessWidget {
           icon: IconlyLight.document,
           activeIcon: IconlyBold.document,
           label: 'Category',
+        ),
+        _NavItem(
+          icon: IconlyLight.bag,
+          activeIcon: IconlyBold.bag,
+          label: 'Products',
         ),
         _NavItem(
           icon: IconlyLight.setting,
