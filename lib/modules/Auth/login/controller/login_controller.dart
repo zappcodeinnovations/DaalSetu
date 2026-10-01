@@ -27,8 +27,11 @@ class LoginController extends GetxController {
         password: passwordController.text.trim(),
       );
 
-      if (response.user.accountStatus.toLowerCase() != "active" ||
-          response.user.status.toLowerCase() != "active") {
+      final accountStatus = response.user.accountStatus.trim().toLowerCase();
+      final status = response.user.status.trim().toLowerCase();
+      final role = response.user.role.trim().toLowerCase();
+
+      if (accountStatus != "active" || status != "active") {
         await AppPreferences.logout();
 
         Get.defaultDialog(
@@ -43,7 +46,7 @@ class LoginController extends GetxController {
       }
 
       final allowedRoles = ["admin", "seller", "transporter", "buyer", "sub_admin"];
-      if (!allowedRoles.contains(response.user.role.toLowerCase())) {
+      if (!allowedRoles.contains(role)) {
         await AppPreferences.logout();
 
         Get.dialog(

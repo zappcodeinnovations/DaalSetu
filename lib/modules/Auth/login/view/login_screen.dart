@@ -22,30 +22,44 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    controller = Get.find<LoginController>();
+    controller = Get.isRegistered<LoginController>()
+        ? Get.find<LoginController>()
+        : Get.put(LoginController());
   }
 
   @override
   Widget build(BuildContext context) {
-    final textColor = AppTheme.textPrimary;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.textPrimary : AppTheme.textPrimaryLight;
+    final subtextColor = isDark ? AppTheme.textSecondary : AppTheme.textSecondaryLight;
+    final mutedColor = isDark ? AppTheme.textMuted : AppTheme.textMutedLight;
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: Container(
-        decoration: const BoxDecoration(
-          color: AppTheme.bgDarkNavy,
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
         ),
         child: Stack(
           children: [
-            const Positioned(
+            Positioned(
               top: -110,
               right: -90,
-              child: _Glow(size: 280, color: Color(0xFFFFB300)),
+              child: _Glow(
+                size: 280,
+                color: const Color(0xFFFFB300),
+                isDark: isDark,
+              ),
             ),
-            const Positioned(
+            Positioned(
               bottom: -100,
               left: -100,
-              child: _Glow(size: 250, color: Color(0xFFFF6D00)),
+              child: _Glow(
+                size: 250,
+                color: const Color(0xFFFF6D00),
+                isDark: isDark,
+              ),
             ),
             SafeArea(
               child: Center(
@@ -60,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       key: controller.formKey,
                       child: Column(
                         children: [
-                          _brandHeader(textColor),
+                          _brandHeader(textColor, subtextColor),
                           const SizedBox(height: 28),
                           GlassCard(
                             borderRadius: 28,
@@ -83,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Text(
                                   'Use your registered mobile number to continue.',
                                   style: TextStyle(
-                                    color: textColor.withValues(alpha: 0.62),
+                                    color: subtextColor,
                                     fontSize: 13,
                                     height: 1.45,
                                   ),
@@ -151,6 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       _showPassword
                                           ? Icons.visibility_off_outlined
                                           : Icons.visibility_outlined,
+                                      color: isDark ? null : AppTheme.textMutedLight,
                                     ),
                                   ),
                                   validator: (value) => (value?.isEmpty ?? true)
@@ -198,13 +213,13 @@ class _LoginScreenState extends State<LoginScreen> {
                               Icon(
                                 Icons.lock_outline_rounded,
                                 size: 15,
-                                color: textColor.withValues(alpha: 0.5),
+                                color: mutedColor,
                               ),
                               const SizedBox(width: 6),
                               Text(
                                 'Protected secure access',
                                 style: TextStyle(
-                                  color: textColor.withValues(alpha: 0.55),
+                                  color: mutedColor,
                                   fontSize: 12,
                                 ),
                               ),
@@ -223,7 +238,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _brandHeader(Color textColor) {
+  Widget _brandHeader(Color textColor, Color subtextColor) {
     return Column(
       children: [
         Container(
@@ -262,7 +277,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Text(
           'Operations control centre',
           style: TextStyle(
-            color: textColor.withValues(alpha: 0.6),
+            color: subtextColor,
             fontSize: 14,
           ),
         ),
@@ -277,10 +292,15 @@ class _LoginScreenState extends State<LoginScreen> {
 }
 
 class _Glow extends StatelessWidget {
-  const _Glow({required this.size, required this.color});
+  const _Glow({
+    required this.size,
+    required this.color,
+    this.isDark = true,
+  });
 
   final double size;
   final Color color;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
@@ -290,7 +310,10 @@ class _Glow extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: RadialGradient(
-          colors: [color.withValues(alpha: 0.18), color.withValues(alpha: 0)],
+          colors: [
+            color.withValues(alpha: isDark ? 0.18 : 0.08),
+            color.withValues(alpha: 0),
+          ],
         ),
       ),
     );

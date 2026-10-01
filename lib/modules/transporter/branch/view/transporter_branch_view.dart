@@ -27,6 +27,7 @@ class TransporterBranchView extends StatelessWidget {
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 80.0),
         child: FloatingActionButton.extended(
+          heroTag: null,
           onPressed: () => _showRequestBranchDialog(context),
           icon: const Icon(IconlyLight.message),
           label: const Text("Enter Ref Code"),

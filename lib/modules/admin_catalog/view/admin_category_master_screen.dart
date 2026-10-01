@@ -69,6 +69,7 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         backgroundColor: colorPrimary,
         onPressed: () => _showFormSheet(context),
         icon: const Icon(Icons.add, color: Colors.white),

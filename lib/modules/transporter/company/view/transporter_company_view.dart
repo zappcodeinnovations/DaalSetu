@@ -30,6 +30,7 @@ class TransporterCompanyView extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: () => Get.to(() => TransporterCompanyForm()),
         icon: const Icon(IconlyLight.plus),
         label: const Text("Register Company"),

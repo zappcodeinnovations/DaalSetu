@@ -102,6 +102,7 @@ class SellerMediaGalleryView extends StatelessWidget {
                     bottom: 16,
                     right: 16,
                     child: FloatingActionButton.extended(
+                      heroTag: null,
                       backgroundColor: primaryColor,
                       onPressed: () async {
                         final picked = await picker.pickImage(source: ImageSource.gallery);
@@ -143,6 +144,7 @@ class SellerMediaGalleryView extends StatelessWidget {
                     bottom: 16,
                     right: 16,
                     child: FloatingActionButton.extended(
+                      heroTag: null,
                       backgroundColor: primaryColor,
                       onPressed: () async {
                         final picked = await picker.pickVideo(source: ImageSource.gallery);

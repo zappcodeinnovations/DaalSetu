@@ -77,6 +77,7 @@ class TransporterVehiclesView extends StatelessWidget {
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 16.0),
         child: FloatingActionButton(
+          heroTag: null,
           onPressed: () => Get.to(() => const TransporterVehicleForm()),
           backgroundColor: theme.colorScheme.primary,
           foregroundColor: Colors.white,

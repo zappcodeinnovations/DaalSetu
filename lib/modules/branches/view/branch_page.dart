@@ -20,6 +20,7 @@ class _BranchesScreenState extends State<BranchesScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       floatingActionButton: FloatingActionButton(
+        heroTag: null,
         onPressed: () {},
         backgroundColor: theme.colorScheme.primary,
         child: const Icon(IconlyLight.plus),

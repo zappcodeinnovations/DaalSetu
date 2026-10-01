@@ -90,6 +90,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
     ),
     floatingActionButton: config.canCreate
         ? FloatingActionButton.extended(
+            heroTag: null,
             onPressed: _openForm,
             icon: const Icon(Icons.add_rounded),
             label: const Text('Create'),

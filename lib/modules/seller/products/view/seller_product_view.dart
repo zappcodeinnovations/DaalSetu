@@ -72,6 +72,7 @@ class SellerProductView extends StatelessWidget {
         }),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: () => Get.to(() => const AddProductView()),
         backgroundColor: primaryColor,
         icon: const Icon(Icons.add, color: Colors.white),

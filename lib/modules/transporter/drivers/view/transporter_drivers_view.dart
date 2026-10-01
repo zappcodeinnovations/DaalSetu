@@ -47,6 +47,7 @@ class TransporterDriversView extends StatelessWidget {
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 16.0), // Above the nav bar
         child: FloatingActionButton.extended(
+          heroTag: null,
           onPressed: () => Get.to(() => const TransporterDriverForm()),
           icon: const Icon(IconlyLight.plus),
           label: const Text("Register Driver", style: TextStyle(fontWeight: FontWeight.bold)),

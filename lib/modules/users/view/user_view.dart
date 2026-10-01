@@ -116,6 +116,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
       // ── FAB ─────────────────────────────────────────────────────────────
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: () => Get.to(() => AddUserScreen()),
         icon: const Icon(IconlyLight.add_user),
         label: const Text('Add User'),

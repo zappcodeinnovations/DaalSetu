@@ -29,6 +29,7 @@ class CategoryPageView extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: null,
         onPressed: () => _showCreateCategoryDialog(context, controller),
         backgroundColor: theme.colorScheme.primary,
         child: const Icon(IconlyLight.plus, color: Colors.white),

@@ -31,24 +31,26 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveBorder = borderColor ?? AppTheme.borderColor;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final effectiveBorder = borderColor ?? (isDark ? AppTheme.borderColor : AppTheme.borderLight);
     final effectiveGlow = glowColor ?? Colors.transparent;
 
     Widget card = Container(
       margin: margin,
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(color: effectiveBorder, width: 1),
         boxShadow: [
           if (effectiveGlow != Colors.transparent)
             BoxShadow(
-              color: effectiveGlow.withValues(alpha: 0.15),
+              color: effectiveGlow.withValues(alpha: isDark ? 0.15 : 0.08),
               blurRadius: 20,
               spreadRadius: 0,
             ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -281,6 +283,13 @@ class GlassTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.textPrimary : AppTheme.textPrimaryLight;
+    final hintColor = isDark ? AppTheme.textMuted : AppTheme.textMutedLight;
+    final fieldBg = isDark ? AppTheme.bgSecondary : const Color(0xFFF1F5F9);
+    final borderCol = isDark ? AppTheme.borderColor : AppTheme.borderLight;
+
     return TextFormField(
       controller: controller,
       obscureText: obscureText,
@@ -295,12 +304,12 @@ class GlassTextField extends StatelessWidget {
       readOnly: readOnly,
       onTap: onTap,
       cursorColor: AppTheme.secondaryOrange,
-      style: style ?? const TextStyle(color: AppTheme.textPrimary, fontSize: 15),
+      style: style ?? TextStyle(color: textColor, fontSize: 15),
       decoration: InputDecoration(
         filled: true,
-        fillColor: AppTheme.bgSecondary,
+        fillColor: fieldBg,
         hintText: hintText,
-        hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
+        hintStyle: TextStyle(color: hintColor, fontSize: 14),
         prefixIcon: prefixIcon != null
             ? Icon(prefixIcon, color: AppTheme.primaryGold, size: 20)
             : null,
@@ -308,11 +317,11 @@ class GlassTextField extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppTheme.borderColor),
+          borderSide: BorderSide(color: borderCol),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppTheme.borderColor),
+          borderSide: BorderSide(color: borderCol),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
