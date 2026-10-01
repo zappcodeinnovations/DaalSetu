@@ -73,7 +73,7 @@ class ApiUrls {
   static const String buyerPreviousOffers = "/api/offers/previous/";
 
   static String buyerApproveOffer(int productId) => "/api/offers/$productId/approve/";
-  static String buyerConfirmOffer(int productId) => "/api/offers/$productId/confirm/";
+  static String buyerConfirmOffer(int productId) => "/api/offers/$productId/buyer-confirm/";
   static String buyerRejectInterest(int productId) => "/api/offers/$productId/buyer-reject-interest/";
   static String buyerRejectOffer(int productId) => "/api/offers/$productId/reject/";
 
