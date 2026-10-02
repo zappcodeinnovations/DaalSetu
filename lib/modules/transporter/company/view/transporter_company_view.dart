@@ -17,10 +17,18 @@ class TransporterCompanyView extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            size: 20,
+            color: theme.textTheme.bodyLarge?.color,
+          ),
+          onPressed: () => Get.back(),
+        ),
         title: Text(
           "My Companies",
           style: GoogleFonts.poppins(

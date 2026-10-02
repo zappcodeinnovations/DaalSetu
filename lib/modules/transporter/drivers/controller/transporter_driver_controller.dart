@@ -8,19 +8,42 @@ class TransporterDriverController extends GetxController {
   var isLoading = false.obs;
   var selectedFilter = 'All'.obs;
 
+  bool _isAssigned(DriverModel d) =>
+      d.assignmentStatus.toLowerCase() == 'assigned' || d.assignedVehicle != null;
+
   List<DriverModel> get filteredDrivers {
     if (selectedFilter.value == 'All') return drivers;
-    if (selectedFilter.value == 'Active') return drivers.where((d) => d.status.toLowerCase() == 'active').toList();
-    if (selectedFilter.value == 'Inactive') return drivers.where((d) => d.status.toLowerCase() == 'inactive').toList();
-    if (selectedFilter.value == 'Unassigned') return drivers.where((d) => d.assignmentStatus.toLowerCase() != 'assigned').toList();
+    if (selectedFilter.value == 'Active') {
+      return drivers
+          .where((d) => d.status.toLowerCase() == 'active' && _isAssigned(d))
+          .toList();
+    }
+    if (selectedFilter.value == 'Inactive') {
+      return drivers.where((d) => d.status.toLowerCase() == 'inactive').toList();
+    }
+    if (selectedFilter.value == 'Unassigned') {
+      return drivers
+          .where((d) => d.status.toLowerCase() == 'active' && !_isAssigned(d))
+          .toList();
+    }
     return drivers;
   }
 
   int getCount(String filter) {
     if (filter == 'All') return drivers.length;
-    if (filter == 'Active') return drivers.where((d) => d.status.toLowerCase() == 'active').length;
-    if (filter == 'Inactive') return drivers.where((d) => d.status.toLowerCase() == 'inactive').length;
-    if (filter == 'Unassigned') return drivers.where((d) => d.assignmentStatus.toLowerCase() != 'assigned').length;
+    if (filter == 'Active') {
+      return drivers
+          .where((d) => d.status.toLowerCase() == 'active' && _isAssigned(d))
+          .length;
+    }
+    if (filter == 'Inactive') {
+      return drivers.where((d) => d.status.toLowerCase() == 'inactive').length;
+    }
+    if (filter == 'Unassigned') {
+      return drivers
+          .where((d) => d.status.toLowerCase() == 'active' && !_isAssigned(d))
+          .length;
+    }
     return 0;
   }
 

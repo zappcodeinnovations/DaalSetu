@@ -98,7 +98,7 @@ class TransporterDashboardView extends StatelessWidget {
           children: [
             IconButton(
               icon: const Icon(IconlyLight.notification),
-              onPressed: () {},
+              onPressed: () => Get.toNamed(AppRoutes.transporterNotifications),
             ),
             Positioned(
               right: 12,
@@ -114,11 +114,14 @@ class TransporterDashboardView extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(width: 8),
-        CircleAvatar(
-          radius: 16,
-          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-          child: Icon(IconlyLight.user_1, size: 16, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(width: 4),
+        GestureDetector(
+          onTap: () => Get.toNamed(AppRoutes.transporterKyc),
+          child: CircleAvatar(
+            radius: 16,
+            backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+            child: Icon(IconlyLight.user_1, size: 16, color: Theme.of(context).colorScheme.primary),
+          ),
         ),
         const SizedBox(width: 16),
       ],
@@ -554,6 +557,7 @@ class TransporterDashboardView extends StatelessWidget {
   // --- Quick Actions ---
   Widget _buildQuickActions(BuildContext context) {
     final allItems = [
+      {'title': 'Bidding', 'icon': IconlyLight.ticket_star, 'route': AppRoutes.transporterBidding},
       {'title': 'Branch', 'icon': IconlyLight.location, 'route': AppRoutes.transporterBranch},
       {'title': 'Brands', 'icon': IconlyLight.star, 'route': AppRoutes.transporterBrands},
       {'title': 'Category', 'icon': IconlyLight.category, 'route': AppRoutes.transporterCategory},
@@ -561,10 +565,9 @@ class TransporterDashboardView extends StatelessWidget {
       {'title': 'KYC', 'icon': IconlyLight.document, 'route': AppRoutes.transporterKyc},
       {'title': 'Contracts', 'icon': IconlyLight.paper, 'route': AppRoutes.transporterContracts},
       {'title': 'Notifications', 'icon': IconlyLight.notification, 'route': AppRoutes.transporterNotifications},
-      {'title': 'Offers', 'icon': IconlyLight.ticket_star, 'route': AppRoutes.transporterOffers},
+      {'title': 'Offers', 'icon': IconlyLight.discount, 'route': AppRoutes.transporterOffers},
       {'title': 'Products', 'icon': IconlyLight.bag, 'route': AppRoutes.transporterProducts},
       {'title': 'RFQ', 'icon': IconlyLight.chat, 'route': AppRoutes.transporterRfq},
-      {'title': 'Users', 'icon': IconlyLight.user_1, 'route': AppRoutes.transporterUsers},
     ];
 
     final theme = Theme.of(context);
@@ -580,15 +583,18 @@ class TransporterDashboardView extends StatelessWidget {
       itemCount: 12,
       itemBuilder: (context, index) {
         if (index == 11) {
-          return GlassCard(
-            padding: const EdgeInsets.all(4),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.more_horiz, size: 24, color: theme.colorScheme.primary),
-                const SizedBox(height: 6),
-                Text("More", style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600, color: theme.textTheme.bodyLarge?.color)),
-              ],
+          return GestureDetector(
+            onTap: () => _showAllActionsBottomSheet(context, allItems),
+            child: GlassCard(
+              padding: const EdgeInsets.all(4),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.more_horiz, size: 24, color: theme.colorScheme.primary),
+                  const SizedBox(height: 6),
+                  Text("More", style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600, color: theme.textTheme.bodyLarge?.color)),
+                ],
+              ),
             ),
           );
         }
@@ -604,7 +610,7 @@ class TransporterDashboardView extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3)),
+                    border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3)),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(item['icon'] as IconData, size: 20, color: theme.colorScheme.primary),
@@ -616,6 +622,95 @@ class TransporterDashboardView extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  void _showAllActionsBottomSheet(BuildContext context, List<Map<String, dynamic>> items) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final extendedItems = [
+      ...items,
+      {'title': 'Drivers', 'icon': IconlyLight.user_1, 'route': AppRoutes.transporterDrivers},
+      {'title': 'Vehicles', 'icon': IconlyLight.location, 'route': AppRoutes.transporterVehicles},
+      {'title': 'Settings', 'icon': IconlyLight.setting, 'route': AppRoutes.settings},
+    ];
+
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade400,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "All Quick Actions",
+              style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Flexible(
+              child: GridView.builder(
+                shrinkWrap: true,
+                physics: const BouncingScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.9,
+                ),
+                itemCount: extendedItems.length,
+                itemBuilder: (context, idx) {
+                  final item = extendedItems[idx];
+                  return GestureDetector(
+                    onTap: () {
+                      Get.back();
+                      Get.toNamed(item['route'] as String);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isDark ? theme.colorScheme.surface : Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: theme.dividerColor),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(item['icon'] as IconData, size: 22, color: theme.colorScheme.primary),
+                          const SizedBox(height: 6),
+                          Text(
+                            item['title'] as String,
+                            style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      isScrollControlled: true,
     );
   }
 

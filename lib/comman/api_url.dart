@@ -49,6 +49,7 @@ class ApiUrls {
 
   // Brands
   static const String brandsDropdown = "/api/brands/dropdown/";
+  static const String brandsDashboard = "/api/brands/dashboard/";
 
   // Transporter Panel
   static const String transporterDashboard = "/api/transporter/dashboard/";

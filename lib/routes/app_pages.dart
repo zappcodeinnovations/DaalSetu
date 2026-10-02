@@ -43,6 +43,7 @@ import '../modules/seller/rfq/view/seller_rfq_list_view.dart';
 import '../modules/splashscreen/view/splash_screen.dart';
 import '../modules/transporter/branch/view/transporter_branch_view.dart';
 import '../modules/transporter/brands/view/transporter_brands_view.dart';
+import '../modules/transporter/bidding/view/transporter_bidding_view.dart';
 import '../modules/transporter/categories/view/transporter_category_view.dart';
 import '../modules/transporter/company/view/transporter_company_view.dart';
 import '../modules/transporter/contracts/view/transporter_contracts_view.dart';
@@ -122,7 +123,7 @@ class AppPages {
     // TRANSPORTER PANEL
     GetPage(name: AppRoutes.transporterDashboard, page: () => TransporterDashboardView()),
     GetPage(name: AppRoutes.transporterBranch, page: () => TransporterBranchView()),
-    GetPage(name: AppRoutes.transporterBrands, page: () => const TransporterBrandsView()),
+    GetPage(name: AppRoutes.transporterBrands, page: () => TransporterBrandsView()),
     GetPage(name: AppRoutes.transporterCategory, page: () => const TransporterCategoryView()),
     GetPage(name: AppRoutes.transporterCompany, page: () => TransporterCompanyView()),
     GetPage(name: AppRoutes.transporterKyc, page: () => const TransporterKycView()),
@@ -134,6 +135,7 @@ class AppPages {
     GetPage(name: AppRoutes.transporterUsers, page: () => const TransporterUsersView()),
     GetPage(name: AppRoutes.transporterDrivers, page: () => TransporterDriversView()),
     GetPage(name: AppRoutes.transporterVehicles, page: () => TransporterVehiclesView()),
+    GetPage(name: AppRoutes.transporterBidding, page: () => const TransporterBiddingView()),
 
     // BUYER PANEL
     GetPage(name: AppRoutes.buyerDashboard, page: () => BuyerDashboardView()),
