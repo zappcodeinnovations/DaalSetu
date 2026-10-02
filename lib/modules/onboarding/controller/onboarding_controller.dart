@@ -12,7 +12,7 @@ class OnboardingController extends GetxController {
 
   final List<OnboardingModel> pages = [
     OnboardingModel(
-      title: "Welcome to AgroBroker",
+      title: "Welcome to DaalSetu",
       description: "Buy & sell commodities easily.",
       image: "assets/images/onboard1.png",
     ),

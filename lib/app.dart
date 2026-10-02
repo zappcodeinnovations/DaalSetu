@@ -13,7 +13,7 @@ class AgroBrokerApp extends StatelessWidget {
     final ThemeController themeController = Get.put(ThemeController());
 
     return GetMaterialApp(
-      title: 'Dal Broker Admin',
+      title: 'Daal Setu',
       debugShowCheckedModeBanner: false,
 
       theme: AppTheme.lightTheme,
