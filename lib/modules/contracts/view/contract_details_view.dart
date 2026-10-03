@@ -2,6 +2,7 @@ import 'package:daalsetu/modules/contracts/model/contract_details_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:daalsetu/theme/app_theme.dart';
+import 'package:daalsetu/routes/app_routes.dart';
 
 import '../controller/contract_controller.dart';
 
@@ -108,10 +109,36 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
       }),
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.all(16),
-        child: FilledButton.icon(
-          onPressed: _changeStatus,
-          icon: const Icon(Icons.sync_alt_rounded),
-          label: const Text('Change contract status'),
+        child: Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => Get.toNamed(AppRoutes.adminCreateDC, arguments: contractId),
+                icon: const Icon(Icons.local_shipping_outlined, color: AppTheme.primaryGold),
+                label: const Text(
+                  'Create DC',
+                  style: TextStyle(color: AppTheme.primaryGold, fontWeight: FontWeight.bold),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppTheme.primaryGold, width: 1.5),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: _changeStatus,
+                icon: const Icon(Icons.sync_alt_rounded),
+                label: const Text('Change status'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

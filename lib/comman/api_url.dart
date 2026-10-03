@@ -130,4 +130,9 @@ class ApiUrls {
   static const String sellerDeliveryChallans = "/api/seller/delivery-challans/";
   static String sellerDeliveryChallanDetails(dynamic id) => "/api/seller/delivery-challans/$id/";
   static String sellerDispatchChallan(dynamic id) => "/api/seller/delivery-challans/$id/dispatch/";
+
+  // Admin Delivery Challans
+  static const String adminDeliveryChallans = "/api/admin/delivery-challans/";
+  static String adminDeliveryChallanDetails(dynamic id) => "/api/admin/delivery-challans/$id/";
+  static String adminDispatchChallan(dynamic id) => "/api/admin/delivery-challans/$id/dispatch/";
 }
