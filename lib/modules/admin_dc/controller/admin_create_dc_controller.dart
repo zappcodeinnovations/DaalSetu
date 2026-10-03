@@ -217,7 +217,7 @@ class AdminCreateDCController extends GetxController {
       "driver_phone": driverPhoneController.text.trim(),
       "dispatch_date": dispatchDateController.text.trim(),
       "quantity": double.tryParse(quantityController.text.trim()) ?? 0.0,
-      "quantity_unit": contract.quantityUnit.isNotEmpty ? contract.quantityUnit : "Qtl",
+      "quantity_unit": contract.quantityUnit.isNotEmpty ? contract.quantityUnit.toLowerCase() : "qtl",
       "bag_count": int.tryParse(bagCountController.text.trim()) ?? 0,
       "loading_from": loadingFromController.text.trim(),
       "loading_to": loadingToController.text.trim(),
@@ -230,37 +230,48 @@ class AdminCreateDCController extends GetxController {
     try {
       isSubmitting.value = true;
       final result = await AdminDCService.createDeliveryChallan(payload);
-      debugPrint("✅ [AdminCreateDCController] API Response: $result");
+      debugPrint("📦 [AdminCreateDCController] API Response: $result");
 
-      Get.snackbar(
-        "Success",
-        "Delivery Challan generated successfully!",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFF059669),
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-        icon: const Icon(Icons.check_circle_outline, color: Colors.white),
-        duration: const Duration(seconds: 3),
-      );
+      if (result['success'] == true) {
+        Get.snackbar(
+          "Success",
+          result['message'] ?? "Delivery Challan generated successfully!",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFF059669),
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(16),
+          icon: const Icon(Icons.check_circle_outline, color: Colors.white),
+          duration: const Duration(seconds: 3),
+        );
 
-      // Return true to refresh list
-      await Future.delayed(const Duration(milliseconds: 500));
-      Get.back(result: true);
+        // Return true to refresh list
+        await Future.delayed(const Duration(milliseconds: 500));
+        Get.back(result: true);
+      } else {
+        final errorMsg = result['message'] ?? "Failed to create Delivery Challan.";
+        Get.snackbar(
+          "Cannot Create Challan",
+          errorMsg,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFFDC2626),
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(16),
+          icon: const Icon(Icons.warning_amber_rounded, color: Colors.white),
+          duration: const Duration(seconds: 5),
+        );
+      }
     } catch (e) {
       debugPrint("❌ [AdminCreateDCController] Submit Error: $e");
       Get.snackbar(
-        "Submission Notice",
-        "DC submitted or queued. Details: $e",
+        "Submission Error",
+        "An unexpected error occurred: $e",
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: const Color(0xFFDC2626),
         colorText: Colors.white,
         margin: const EdgeInsets.all(16),
-        icon: const Icon(Icons.info_outline, color: Color(0xFFF5B400)),
+        icon: const Icon(Icons.error_outline, color: Colors.white),
         duration: const Duration(seconds: 4),
       );
-      // Fallback: Also return true so user can view list
-      await Future.delayed(const Duration(milliseconds: 700));
-      Get.back(result: true);
     } finally {
       isSubmitting.value = false;
     }

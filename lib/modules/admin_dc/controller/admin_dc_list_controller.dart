@@ -33,7 +33,7 @@ class AdminDCListController extends GetxController {
 
   int get pendingCount => challans.where((c) {
         final s = (c.status ?? '').toLowerCase();
-        return s == 'pending' || s.isEmpty;
+        return s == 'pending' || s == 'draft' || s.isEmpty;
       }).length;
 
   int get dispatchedCount => challans.where((c) {
@@ -112,7 +112,7 @@ class AdminDCListController extends GetxController {
         final itemStatus = (item.status ?? 'pending').toLowerCase();
         if (status != 'all') {
           if (status == 'pending') {
-            matchesStatus = itemStatus == 'pending' || itemStatus.isEmpty;
+            matchesStatus = itemStatus == 'pending' || itemStatus == 'draft' || itemStatus.isEmpty;
           } else if (status == 'dispatched') {
             matchesStatus = itemStatus == 'dispatched' || itemStatus == 'in_transit';
           } else if (status == 'delivered') {

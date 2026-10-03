@@ -16,6 +16,8 @@ class AdminChallanModel {
   final String? createdAt;
   final String? updatedAt;
   final int? orderId;
+  final int? contractId;
+  final String? contractCode;
   final String? sellerNameDisplay;
   final String? buyerNameDisplay;
   final String? transporterNameDisplay;
@@ -43,6 +45,8 @@ class AdminChallanModel {
     this.createdAt,
     this.updatedAt,
     this.orderId,
+    this.contractId,
+    this.contractCode,
     this.sellerNameDisplay,
     this.buyerNameDisplay,
     this.transporterNameDisplay,
@@ -88,6 +92,8 @@ class AdminChallanModel {
       createdAt: json['created_at']?.toString(),
       updatedAt: json['updated_at']?.toString(),
       orderId: json['order'] is int ? json['order'] : int.tryParse(json['order']?.toString() ?? ''),
+      contractId: json['contract_id'] is int ? json['contract_id'] : int.tryParse(json['contract_id']?.toString() ?? ''),
+      contractCode: json['contract_code']?.toString(),
       sellerNameDisplay: json['seller_name_display']?.toString(),
       buyerNameDisplay: json['buyer_name_display']?.toString(),
       transporterNameDisplay: json['transporter_name_display']?.toString(),
@@ -108,6 +114,19 @@ class AdminChallanModel {
       return challanNumber!;
     }
     return "#DC-$id";
+  }
+
+  String get displayContract {
+    if (contractCode != null && contractCode!.isNotEmpty) {
+      return contractCode!;
+    }
+    if (contractId != null) {
+      return "Contract #$contractId";
+    }
+    if (orderId != null) {
+      return "Contract #$orderId";
+    }
+    return "Contract N/A";
   }
 
   String get displaySeller {
@@ -177,6 +196,8 @@ class AdminChallanModel {
       case 'cancelled':
       case 'rejected':
         return const Color(0xFFDC2626); // Red
+      case 'draft':
+        return const Color(0xFF7C3AED); // Purple
       case 'pending':
       default:
         return const Color(0xFFD97706); // Amber / Orange
@@ -195,6 +216,8 @@ class AdminChallanModel {
       case 'cancelled':
       case 'rejected':
         return const Color(0xFFFEF2F2);
+      case 'draft':
+        return const Color(0xFFF5F3FF);
       case 'pending':
       default:
         return const Color(0xFFFFFBEB);
@@ -213,6 +236,8 @@ class AdminChallanModel {
         return 'Delivered';
       case 'cancelled':
         return 'Cancelled';
+      case 'draft':
+        return 'Draft (Pending Dispatch)';
       case 'pending':
       default:
         return 'Pending Dispatch';

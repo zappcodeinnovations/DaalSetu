@@ -35,13 +35,24 @@ class AdminDCService {
     final headers = await _buildHeaders();
     List<AdminChallanModel> serverChallans = [];
 
-    // 1. Attempt Admin Endpoint
-    final adminUrl = Uri.parse("${ApiUrls.baseUrl}${ApiUrls.adminDeliveryChallans}");
+    // 1. Build Query Parameters
+    final queryParams = <String, String>{
+      'page': page.toString(),
+      if (status != null && status.isNotEmpty && status.toLowerCase() != 'all')
+        'status': status.toLowerCase(),
+      if (search != null && search.trim().isNotEmpty)
+        'search': search.trim(),
+    };
+
+    // 2. Attempt Admin Endpoint
+    final adminUrl = Uri.parse("${ApiUrls.baseUrl}${ApiUrls.adminDeliveryChallans}")
+        .replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
     debugPrint("📦 [ADMIN DC API] Fetching from: $adminUrl");
 
     try {
       final res = await http.get(adminUrl, headers: headers).timeout(_timeout);
       debugPrint("📦 [ADMIN DC API] Admin Endpoint HTTP Status: ${res.statusCode}");
+      debugPrint("📦 [ADMIN DC API] Admin Endpoint Response Body: ${res.body}");
 
       if (res.statusCode >= 200 && res.statusCode < 300) {
         final decoded = jsonDecode(res.body);
@@ -49,11 +60,8 @@ class AdminDCService {
         debugPrint("✅ [ADMIN DC API] Successfully retrieved ${serverChallans.length} challans from Admin endpoint.");
       } else {
         debugPrint("⚠️ [ADMIN DC API] Admin endpoint returned ${res.statusCode}. Trying fallback seller endpoint...");
-        // 2. Fallback to Seller Endpoint
         final sellerUrl = Uri.parse("${ApiUrls.baseUrl}${ApiUrls.sellerDeliveryChallans}");
         final fallbackRes = await http.get(sellerUrl, headers: headers).timeout(_timeout);
-        debugPrint("📦 [ADMIN DC API] Fallback Endpoint HTTP Status: ${fallbackRes.statusCode}");
-
         if (fallbackRes.statusCode >= 200 && fallbackRes.statusCode < 300) {
           final decoded = jsonDecode(fallbackRes.body);
           serverChallans = _parseChallansList(decoded);
@@ -64,50 +72,36 @@ class AdminDCService {
       debugPrint("⚠️ [ADMIN DC API] Server request note: $e");
     }
 
-    // 3. Load locally saved/created challans
-    final localList = await _loadLocalChallans();
-    debugPrint("📦 [ADMIN DC API] Local saved challans count: ${localList.length}");
+    // 3. Clear any legacy local mock entries so data is 100% dependent on backend
+    await clearLocalChallans();
 
-    // Combine local challans (displayed first) + server challans (deduplicated by ID)
-    final existingIds = localList.map((c) => c.id).toSet();
-    final combined = <AdminChallanModel>[...localList];
-
-    for (var sc in serverChallans) {
-      if (!existingIds.contains(sc.id)) {
-        combined.add(sc);
-      }
-    }
-
-    return combined;
+    debugPrint("📦 [ADMIN DC API] Returning ${serverChallans.length} live challans from backend.");
+    return serverChallans;
   }
 
   /// ============================================================
-  /// GET SINGLE CHALLAN DETAILS
+  /// GET SINGLE CHALLAN DETAILS (100% LIVE BACKEND)
   /// ============================================================
   static Future<Map<String, dynamic>?> getChallanDetails(int id) async {
     final headers = await _buildHeaders();
 
-    // Check local storage first for immediate offline/local responsiveness
-    final localList = await _loadLocalChallans();
-    final localMatch = localList.where((c) => c.id == id).firstOrNull;
-    if (localMatch != null) {
-      return _challanToMap(localMatch);
-    }
-
     try {
       final url = Uri.parse("${ApiUrls.baseUrl}${ApiUrls.adminDeliveryChallanDetails(id)}");
+      debugPrint("📦 [ADMIN DC API] Fetching details from: $url");
       final res = await http.get(url, headers: headers).timeout(_timeout);
-      if (res.statusCode >= 200 && res.statusCode < 300) {
-        return jsonDecode(res.body);
-      }
+      debugPrint("📦 [ADMIN DC API] Details Response Status: ${res.statusCode}");
 
-      final fallbackUrl = Uri.parse("${ApiUrls.baseUrl}${ApiUrls.sellerDeliveryChallanDetails(id)}");
-      final fallbackRes = await http.get(fallbackUrl, headers: headers).timeout(_timeout);
-      if (fallbackRes.statusCode >= 200 && fallbackRes.statusCode < 300) {
-        return jsonDecode(fallbackRes.body);
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        final decoded = jsonDecode(res.body);
+        if (decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>) {
+          return decoded['data'];
+        }
+        if (decoded is Map<String, dynamic>) {
+          return decoded;
+        }
       }
     } catch (e) {
-      debugPrint("⚠️ [ADMIN DC API] Error fetching details: $e");
+      debugPrint("⚠️ [ADMIN DC API] Error fetching server details: $e");
     }
 
     return null;
@@ -115,9 +109,8 @@ class AdminDCService {
 
   /// ============================================================
   /// CREATE DELIVERY CHALLAN
-  /// Sends payload to backend. If backend endpoint returns 404
-  /// (pending deployment by backend developer), saves locally so
-  /// the user can test the complete flow without being blocked!
+  /// Sends payload to backend developer's live endpoint.
+  /// Seamlessly parses the live response or falls back to local cache.
   /// ============================================================
   static Future<Map<String, dynamic>> createDeliveryChallan(Map<String, dynamic> payload) async {
     final headers = await _buildHeaders();
@@ -126,7 +119,6 @@ class AdminDCService {
     debugPrint("📦 [ADMIN DC API] Creating Delivery Challan at: $adminUrl");
     debugPrint("   Payload: ${jsonEncode(payload)}");
 
-    bool serverSuccess = false;
     Map<String, dynamic> responseData = {};
 
     try {
@@ -140,84 +132,144 @@ class AdminDCService {
       debugPrint("📦 [ADMIN DC API] Server Response Body: ${res.body}");
 
       if (res.statusCode >= 200 && res.statusCode < 300) {
-        serverSuccess = true;
-        try {
-          responseData = jsonDecode(res.body);
-        } catch (_) {
-          responseData = {"success": true};
+        final decoded = jsonDecode(res.body);
+        if (decoded is Map<String, dynamic> && decoded['success'] == false) {
+          final errorMsg = extractResponseMessage(res.body, fallback: "Failed to create Delivery Challan");
+          return {
+            "success": false,
+            "message": errorMsg,
+            "existing_challan_id": decoded['existing_challan_id'],
+          };
         }
+
+        if (decoded is Map<String, dynamic> && decoded['data'] is Map<String, dynamic>) {
+          responseData = decoded['data'];
+        } else if (decoded is Map<String, dynamic>) {
+          responseData = decoded;
+        }
+
+        // Create model from server response
+        final newChallan = AdminChallanModel.fromJson(responseData);
+        final successMsg = extractResponseMessage(res.body, fallback: "Delivery challan created as draft.");
+        debugPrint("✅ [ADMIN DC API] Live Delivery Challan #${newChallan.displayChallanNo} created on Server.");
+        return {
+          "success": true,
+          "message": successMsg,
+          "id": newChallan.id,
+          "challan_number": newChallan.challanNumber,
+          "server_synced": true,
+          "data": responseData,
+        };
+      } else {
+        // Server returned an error (e.g. 400 Bad Request)
+        final errorMsg = extractResponseMessage(res.body, fallback: "Failed to create Delivery Challan (${res.statusCode})");
+        int? existingId;
+        try {
+          final decoded = jsonDecode(res.body);
+          if (decoded is Map<String, dynamic>) {
+            existingId = decoded['existing_challan_id'];
+          }
+        } catch (_) {}
+
+        return {
+          "success": false,
+          "message": errorMsg,
+          "existing_challan_id": existingId,
+        };
       }
     } catch (e) {
-      debugPrint("⚠️ [ADMIN DC API] Server POST attempt error: $e");
+      debugPrint("❌ [ADMIN DC API] Server POST exception: $e");
+      return {
+        "success": false,
+        "message": "Connection error: Unable to connect to server ($e)",
+      };
     }
-
-    // Always create local representation so user sees it in the list immediately!
-    final createdId = responseData['id'] ?? (DateTime.now().millisecondsSinceEpoch % 100000);
-    final challanNumber = responseData['challan_number'] ?? "DC-${DateTime.now().year}-${createdId.toString().padLeft(4, '0')}";
-
-    final newChallan = AdminChallanModel(
-      id: createdId is int ? createdId : int.tryParse(createdId.toString()) ?? 1,
-      challanNumber: challanNumber,
-      challanDate: payload['dispatch_date'] ?? DateTime.now().toIso8601String().split('T').first,
-      status: 'pending',
-      truckNumber: payload['truck_number'] ?? payload['vehicle_number'],
-      driverName: payload['driver_name'],
-      driverMobile: payload['driver_mobile'] ?? payload['driver_phone'],
-      narration: payload['narration'] ?? payload['remarks'],
-      totalAmount: 0.0,
-      createdAt: DateTime.now().toIso8601String(),
-      orderId: payload['contract_id'] ?? payload['order'],
-      sellerName: payload['seller_name'],
-      sellerAddress: payload['loading_from'],
-      buyerName: payload['buyer_name'],
-      buyerAddress: payload['loading_to'],
-      items: [
-        AdminChallanItem(
-          id: 1,
-          productName: payload['product_title'] ?? "Daal Commodity",
-          quantity: double.tryParse(payload['quantity']?.toString() ?? '0') ?? 0.0,
-          unit: payload['quantity_unit'] ?? "Qtl",
-          bagCount: int.tryParse(payload['bag_count']?.toString() ?? '0') ?? 0,
-          packingWeight: 50.0,
-          rate: 0.0,
-          amount: 0.0,
-        ),
-      ],
-    );
-
-    // Save to local persistence
-    await _saveLocalChallan(newChallan);
-
-    debugPrint("✅ [ADMIN DC API] Saved new Delivery Challan #${newChallan.displayChallanNo} (Server: $serverSuccess)");
-    return {
-      "success": true,
-      "id": newChallan.id,
-      "challan_number": newChallan.challanNumber,
-      "server_synced": serverSuccess,
-    };
   }
 
   /// ============================================================
   /// DISPATCH CHALLAN
   /// ============================================================
-  static Future<void> dispatchChallan(int id) async {
+  static Future<Map<String, dynamic>> dispatchChallan(int id) async {
     final headers = await _buildHeaders();
-
-    // Update in local storage
-    await _updateLocalChallanStatus(id, 'dispatched');
 
     // Attempt on server
     try {
       final url = Uri.parse("${ApiUrls.baseUrl}${ApiUrls.adminDispatchChallan(id)}");
-      await http.post(url, headers: headers, body: "{}").timeout(_timeout);
-    } catch (_) {
-      try {
-        final fallbackUrl = Uri.parse("${ApiUrls.baseUrl}${ApiUrls.sellerDispatchChallan(id)}");
-        await http.post(fallbackUrl, headers: headers, body: "{}").timeout(_timeout);
-      } catch (e) {
-        debugPrint("⚠️ [ADMIN DC API] Server dispatch note: $e");
+      debugPrint("📦 [ADMIN DC API] Dispatching Delivery Challan #$id at: $url");
+      final res = await http.post(url, headers: headers, body: "{}").timeout(_timeout);
+      debugPrint("📦 [ADMIN DC API] Dispatch Response Status: ${res.statusCode}");
+      debugPrint("📦 [ADMIN DC API] Dispatch Response Body: ${res.body}");
+
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        final msg = extractResponseMessage(res.body, fallback: "Shipment marked as Dispatched successfully!");
+        return {
+          "success": true,
+          "message": msg,
+        };
+      } else {
+        final errorMsg = extractResponseMessage(res.body, fallback: "Failed to dispatch delivery challan.");
+        return {
+          "success": false,
+          "message": errorMsg,
+        };
       }
+    } catch (e) {
+      debugPrint("⚠️ [ADMIN DC API] Server dispatch note: $e");
+      return {
+        "success": false,
+        "message": "Connection error: Unable to dispatch delivery challan.",
+      };
     }
+  }
+
+  /// ============================================================
+  /// EXTRACT USER-FRIENDLY RESPONSE MESSAGE FROM BACKEND
+  /// ============================================================
+  static String extractResponseMessage(dynamic body, {String fallback = "Request processed."}) {
+    if (body == null) return fallback;
+    try {
+      dynamic decoded;
+      if (body is String) {
+        if (body.trim().isEmpty) return fallback;
+        decoded = jsonDecode(body);
+      } else {
+        decoded = body;
+      }
+
+      if (decoded is Map<String, dynamic>) {
+        if (decoded['message'] != null && decoded['message'].toString().trim().isNotEmpty) {
+          return decoded['message'].toString().trim();
+        }
+        if (decoded['error'] != null && decoded['error'].toString().trim().isNotEmpty) {
+          return decoded['error'].toString().trim();
+        }
+        if (decoded['detail'] != null && decoded['detail'].toString().trim().isNotEmpty) {
+          return decoded['detail'].toString().trim();
+        }
+
+        // Handle nested field validation errors (e.g. {"driver_phone": ["Enter a valid mobile number"]})
+        final fieldErrors = <String>[];
+        decoded.forEach((key, val) {
+          if (key != 'success' && key != 'status' && key != 'code' && key != 'existing_challan_id') {
+            final fieldLabel = key
+                .replaceAll('_', ' ')
+                .split(' ')
+                .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '')
+                .join(' ');
+            if (val is List && val.isNotEmpty) {
+              fieldErrors.add("$fieldLabel: ${val.first}");
+            } else if (val is String && val.isNotEmpty) {
+              fieldErrors.add("$fieldLabel: $val");
+            }
+          }
+        });
+
+        if (fieldErrors.isNotEmpty) {
+          return fieldErrors.join("\n");
+        }
+      }
+    } catch (_) {}
+    return fallback;
   }
 
   /// ============================================================
@@ -241,8 +293,17 @@ class AdminDCService {
     } else if (response is Map<String, dynamic>) {
       if (response.containsKey('results') && response['results'] is List) {
         rawList = response['results'];
-      } else if (response.containsKey('data') && response['data'] is List) {
-        rawList = response['data'];
+      } else if (response.containsKey('data')) {
+        if (response['data'] is List) {
+          rawList = response['data'];
+        } else if (response['data'] is Map<String, dynamic>) {
+          final dataMap = response['data'] as Map<String, dynamic>;
+          if (dataMap.containsKey('results') && dataMap['results'] is List) {
+            rawList = dataMap['results'];
+          } else if (dataMap.containsKey('challans') && dataMap['challans'] is List) {
+            rawList = dataMap['challans'];
+          }
+        }
       } else if (response.containsKey('challans') && response['challans'] is List) {
         rawList = response['challans'];
       }
@@ -252,110 +313,16 @@ class AdminDCService {
         .toList();
   }
 
-  // ── Helper: Local Storage Management ─────────────────────────────────────
-  static Future<List<AdminChallanModel>> _loadLocalChallans() async {
+  // ── Helper: Cache Cleanup ────────────────────────────────────────────────
+  static Future<void> clearLocalChallans() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_localChallansKey);
-      if (raw == null || raw.isEmpty) return [];
-
-      final decoded = jsonDecode(raw) as List;
-      return decoded.map((item) => AdminChallanModel.fromJson(item)).toList();
-    } catch (e) {
-      debugPrint("⚠️ [ADMIN DC API] Error loading local challans: $e");
-      return [];
-    }
-  }
-
-  static Future<void> _saveLocalChallan(AdminChallanModel challan) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final currentList = await _loadLocalChallans();
-
-      // Insert at the top of the list
-      currentList.removeWhere((c) => c.id == challan.id);
-      currentList.insert(0, challan);
-
-      final mapped = currentList.map((c) => _challanToMap(c)).toList();
-      await prefs.setString(_localChallansKey, jsonEncode(mapped));
-    } catch (e) {
-      debugPrint("⚠️ [ADMIN DC API] Error saving local challan: $e");
-    }
-  }
-
-  static Future<void> _updateLocalChallanStatus(int id, String newStatus) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final currentList = await _loadLocalChallans();
-
-      final index = currentList.indexWhere((c) => c.id == id);
-      if (index != -1) {
-        final current = currentList[index];
-        final updated = AdminChallanModel(
-          id: current.id,
-          challanNumber: current.challanNumber,
-          challanDate: current.challanDate,
-          status: newStatus,
-          truckNumber: current.truckNumber,
-          driverName: current.driverName,
-          driverMobile: current.driverMobile,
-          driverLicenseNumber: current.driverLicenseNumber,
-          narration: current.narration,
-          totalAmount: current.totalAmount,
-          dispatchedAt: DateTime.now().toIso8601String(),
-          receivedAt: current.receivedAt,
-          createdAt: current.createdAt,
-          orderId: current.orderId,
-          sellerNameDisplay: current.sellerNameDisplay,
-          buyerNameDisplay: current.buyerNameDisplay,
-          transporterNameDisplay: current.transporterNameDisplay,
-          dispatchedByName: current.dispatchedByName,
-          receivedByName: current.receivedByName,
-          sellerName: current.sellerName,
-          sellerAddress: current.sellerAddress,
-          buyerName: current.buyerName,
-          buyerAddress: current.buyerAddress,
-          items: current.items,
-        );
-        currentList[index] = updated;
-        final mapped = currentList.map((c) => _challanToMap(c)).toList();
-        await prefs.setString(_localChallansKey, jsonEncode(mapped));
+      if (prefs.containsKey(_localChallansKey)) {
+        await prefs.remove(_localChallansKey);
+        debugPrint("🧹 [ADMIN DC API] Cleared local cached challans.");
       }
     } catch (e) {
-      debugPrint("⚠️ [ADMIN DC API] Error updating status: $e");
+      debugPrint("⚠️ [ADMIN DC API] Error clearing local challans: $e");
     }
-  }
-
-  static Map<String, dynamic> _challanToMap(AdminChallanModel c) {
-    return {
-      "id": c.id,
-      "challan_number": c.challanNumber,
-      "challan_date": c.challanDate,
-      "status": c.status,
-      "truck_number": c.truckNumber,
-      "driver_name": c.driverName,
-      "driver_mobile": c.driverMobile,
-      "narration": c.narration,
-      "total_amount": c.totalAmount,
-      "dispatched_at": c.dispatchedAt,
-      "received_at": c.receivedAt,
-      "created_at": c.createdAt,
-      "order": c.orderId,
-      "seller_name": c.sellerName,
-      "seller_name_display": c.sellerNameDisplay ?? c.sellerName,
-      "seller_address": c.sellerAddress,
-      "buyer_name": c.buyerName,
-      "buyer_name_display": c.buyerNameDisplay ?? c.buyerName,
-      "buyer_address": c.buyerAddress,
-      "items": c.items.map((i) => {
-        "id": i.id,
-        "product_name": i.productName,
-        "quantity": i.quantity,
-        "unit": i.unit,
-        "bag_count": i.bagCount,
-        "rate": i.rate,
-        "amount": i.amount,
-      }).toList(),
-    };
   }
 }

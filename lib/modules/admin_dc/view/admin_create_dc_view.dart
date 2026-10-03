@@ -496,6 +496,9 @@ class AdminCreateChallanView extends StatelessWidget {
     AdminCreateDCController controller,
     bool isDark,
   ) {
+    // Automatically fetch latest contracts from backend when opening
+    controller.fetchContracts();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -520,12 +523,22 @@ class AdminCreateChallanView extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              const Text(
-                "Select Confirmed Contract",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              ),
               const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Select Confirmed Contract",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                  IconButton(
+                    tooltip: "Refresh Contracts",
+                    icon: const Icon(Icons.refresh_rounded, color: AppTheme.primaryGold),
+                    onPressed: () => controller.fetchContracts(isRefresh: true),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
               // Search in contracts
               TextField(
                 onChanged: controller.filterContracts,
@@ -563,13 +576,18 @@ class AdminCreateChallanView extends StatelessWidget {
                     );
                   }
 
-                  return ListView.separated(
-                    itemCount: controller.filteredContracts.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) {
-                      final c = controller.filteredContracts[index];
-                      return _contractListTile(context, controller, c, isDark);
-                    },
+                  return RefreshIndicator(
+                    color: AppTheme.primaryGold,
+                    onRefresh: () => controller.fetchContracts(isRefresh: true),
+                    child: ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      itemCount: controller.filteredContracts.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) {
+                        final c = controller.filteredContracts[index];
+                        return _contractListTile(context, controller, c, isDark);
+                      },
+                    ),
                   );
                 }),
               ),

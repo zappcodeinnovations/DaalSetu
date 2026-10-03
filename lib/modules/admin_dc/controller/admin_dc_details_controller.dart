@@ -68,60 +68,46 @@ class AdminDCDetailsController extends GetxController {
       isDispatching.value = true;
       debugPrint("📦 [AdminDCDetailsController] Dispatching shipment for Challan #$id...");
 
-      await AdminDCService.dispatchChallan(id);
+      final result = await AdminDCService.dispatchChallan(id);
 
-      Get.snackbar(
-        "Success",
-        "Shipment marked as Dispatched successfully!",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFF059669),
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-        icon: const Icon(Icons.check_circle_outline, color: Colors.white),
-      );
+      if (result['success'] == true) {
+        Get.snackbar(
+          "Shipment Dispatched",
+          result['message'] ?? "Shipment marked as Dispatched successfully!",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFF059669),
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(16),
+          icon: const Icon(Icons.check_circle_outline, color: Colors.white),
+          duration: const Duration(seconds: 4),
+        );
 
-      // Refresh details to show updated status
-      await fetchDetails(id, isRefresh: true);
+        // Refresh details to show updated status
+        await fetchDetails(id, isRefresh: true);
+      } else {
+        Get.snackbar(
+          "Cannot Dispatch",
+          result['message'] ?? "Could not dispatch delivery challan.",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFFDC2626),
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(16),
+          icon: const Icon(Icons.warning_amber_rounded, color: Colors.white),
+          duration: const Duration(seconds: 5),
+        );
+      }
     } catch (e) {
       debugPrint("❌ [AdminDCDetailsController] Dispatch Error: $e");
       Get.snackbar(
-        "Notice",
-        "Dispatch status submitted. Details: $e",
+        "Dispatch Error",
+        "An unexpected error occurred: $e",
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: const Color(0xFFDC2626),
         colorText: Colors.white,
         margin: const EdgeInsets.all(16),
+        icon: const Icon(Icons.error_outline, color: Colors.white),
+        duration: const Duration(seconds: 4),
       );
-      // Soft-update status locally so UI reflects dispatched
-      if (challan.value != null) {
-        final current = challan.value!;
-        challan.value = AdminChallanModel(
-          id: current.id,
-          challanNumber: current.challanNumber,
-          challanDate: current.challanDate,
-          status: 'dispatched',
-          truckNumber: current.truckNumber,
-          driverName: current.driverName,
-          driverMobile: current.driverMobile,
-          driverLicenseNumber: current.driverLicenseNumber,
-          narration: current.narration,
-          totalAmount: current.totalAmount,
-          dispatchedAt: DateTime.now().toIso8601String(),
-          receivedAt: current.receivedAt,
-          createdAt: current.createdAt,
-          orderId: current.orderId,
-          sellerNameDisplay: current.sellerNameDisplay,
-          buyerNameDisplay: current.buyerNameDisplay,
-          transporterNameDisplay: current.transporterNameDisplay,
-          dispatchedByName: current.dispatchedByName,
-          receivedByName: current.receivedByName,
-          sellerName: current.sellerName,
-          sellerAddress: current.sellerAddress,
-          buyerName: current.buyerName,
-          buyerAddress: current.buyerAddress,
-          items: current.items,
-        );
-      }
     } finally {
       isDispatching.value = false;
     }
