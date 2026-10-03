@@ -109,6 +109,28 @@ class DrawerMenuService {
           ),
         ],
       ),
+      DrawerMenuSection(
+        sectionTitle: 'LOGISTICS & DISPATCH',
+        items: [
+          DrawerMenuItem(
+            key: 'delivery_challans',
+            title: 'Delivery Challans (DC)',
+            icon: Icons.local_shipping_outlined,
+            route: AppRoutes.adminDeliveryChallans,
+          ),
+        ],
+      ),
+      DrawerMenuSection(
+        sectionTitle: 'REPORTS & ANALYTICS',
+        items: [
+          DrawerMenuItem(
+            key: 'branch_reports',
+            title: 'Branch Reports',
+            icon: Icons.assessment_outlined,
+            route: AppRoutes.adminBranchReports,
+          ),
+        ],
+      ),
     ];
   }
 }

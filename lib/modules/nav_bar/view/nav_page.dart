@@ -71,6 +71,7 @@ class MainNavigationScreen extends StatelessWidget {
       return Scaffold(
         backgroundColor: Colors.transparent,
         extendBody: true,
+        resizeToAvoidBottomInset: navController.userRole.value == 'admin' ? false : true,
         body: Container(
           color: Theme.of(context).scaffoldBackgroundColor,
           child: IndexedStack(

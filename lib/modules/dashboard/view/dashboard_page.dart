@@ -22,6 +22,7 @@ class AdminDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
+      resizeToAvoidBottomInset: false,
       drawer: const AdminDrawer(),
       appBar: _buildAppBar(context),
       body: Obx(() {
@@ -63,7 +64,12 @@ class AdminDashboardScreen extends StatelessWidget {
                 _buildAnalyticsGrid(context, data.charts),
 
                 const SizedBox(height: 24),
-                _buildSectionHeader(context, "Branch Performance", trailingText: "View All"),
+                _buildSectionHeader(
+                  context,
+                  "Branch Performance",
+                  trailingText: "View All",
+                  onTrailingTap: () => Get.toNamed(AppRoutes.adminBranchReports),
+                ),
                 const SizedBox(height: 16),
                 _buildBranchPerformance(context, data.branchPerformance),
 
@@ -175,7 +181,7 @@ class AdminDashboardScreen extends StatelessWidget {
     });
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title, {String? trailingText}) {
+  Widget _buildSectionHeader(BuildContext context, String title, {String? trailingText, VoidCallback? onTrailingTap}) {
     final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -189,12 +195,19 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
         ),
         if (trailingText != null)
-          Text(
-            trailingText,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
+          InkWell(
+            onTap: onTrailingTap,
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Text(
+                trailingText,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
             ),
           ),
       ],

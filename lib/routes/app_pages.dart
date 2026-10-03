@@ -57,6 +57,12 @@ import '../modules/transporter/users/view/transporter_users_view.dart';
 import '../modules/transporter/vehicles/view/transporter_vehicles_view.dart';
 import '../modules/users/view/user_detail_screen.dart';
 import '../modules/users/view/user_view.dart';
+import '../modules/admin_dc/view/admin_dc_list_view.dart';
+import '../modules/admin_dc/view/admin_create_dc_view.dart';
+import '../modules/admin_dc/view/admin_dc_details_view.dart';
+import '../modules/admin_dc/binding/admin_dc_binding.dart';
+import '../modules/admin_reports/view/admin_branch_reports_view.dart';
+import '../modules/admin_reports/binding/admin_reports_binding.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -161,6 +167,30 @@ class AppPages {
     GetPage(
       name: AppRoutes.adminCreateOffer,
       page: () => const AddProductScreen(),
+    ),
+
+    // ADMIN DELIVERY CHALLANS
+    GetPage(
+      name: AppRoutes.adminDeliveryChallans,
+      page: () => const AdminChallanListView(),
+      binding: AdminDCBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.adminCreateDC,
+      page: () => const AdminCreateChallanView(),
+      binding: AdminDCBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.adminDCDetails,
+      page: () => const AdminChallanDetailsView(),
+      binding: AdminDCBinding(),
+    ),
+
+    // ADMIN REPORTS
+    GetPage(
+      name: AppRoutes.adminBranchReports,
+      page: () => const AdminBranchReportsView(),
+      binding: AdminReportsBinding(),
     ),
   ];
 }
