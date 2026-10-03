@@ -96,4 +96,7 @@ abstract class AppRoutes {
 
   // ADMIN REPORTS
   static const adminBranchReports = '/admin/reports/branches';
+
+  // ADMIN NOTIFICATIONS
+  static const adminNotifications = '/admin/notifications';
 }

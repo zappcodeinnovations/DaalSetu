@@ -63,6 +63,7 @@ import '../modules/admin_dc/view/admin_dc_details_view.dart';
 import '../modules/admin_dc/binding/admin_dc_binding.dart';
 import '../modules/admin_reports/view/admin_branch_reports_view.dart';
 import '../modules/admin_reports/binding/admin_reports_binding.dart';
+import '../modules/admin_notifications/view/admin_notification_view.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -191,6 +192,16 @@ class AppPages {
       name: AppRoutes.adminBranchReports,
       page: () => const AdminBranchReportsView(),
       binding: AdminReportsBinding(),
+    ),
+
+    // ADMIN NOTIFICATIONS
+    GetPage(
+      name: AppRoutes.notifications,
+      page: () => const AdminNotificationView(),
+    ),
+    GetPage(
+      name: AppRoutes.adminNotifications,
+      page: () => const AdminNotificationView(),
     ),
   ];
 }

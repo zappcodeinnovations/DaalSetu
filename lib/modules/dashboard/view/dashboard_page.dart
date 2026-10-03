@@ -11,6 +11,7 @@ import '../../profile/controller/profile_controller.dart';
 import '../../../theme/glass_widgets.dart';
 import '../../../routes/app_routes.dart';
 import '../../admin_catalog/view/admin_drawer.dart';
+import '../../admin_notifications/controller/admin_notification_controller.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   AdminDashboardScreen({super.key});
@@ -109,26 +110,43 @@ class AdminDashboardScreen extends StatelessWidget {
       ),
       centerTitle: true,
       actions: [
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            IconButton(
-              icon: const Icon(IconlyLight.notification),
-              onPressed: () {},
-            ),
-            Positioned(
-              right: 12,
-              top: 12,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Colors.deepOrange,
-                  shape: BoxShape.circle,
+        GetBuilder<AdminNotificationController>(
+          init: AdminNotificationController(),
+          builder: (notifCtrl) {
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
+                  tooltip: 'Notifications',
+                  icon: const Icon(IconlyLight.notification),
+                  onPressed: () => Get.toNamed(AppRoutes.notifications),
                 ),
-                child: const Text('3', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ],
+                Obx(() {
+                  final count = notifCtrl.unreadCount.value;
+                  if (count <= 0) return const SizedBox.shrink();
+                  return Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.deepOrange,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        count > 99 ? '99+' : '$count',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            );
+          },
         ),
         const SizedBox(width: 8),
         GestureDetector(
