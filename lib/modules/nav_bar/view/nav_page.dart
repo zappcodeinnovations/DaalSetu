@@ -5,8 +5,9 @@ import 'package:iconly/iconly.dart';
 
 import '../../../theme/app_theme.dart';
 import '../../seller/dashboard/view/seller_dashboard_view.dart';
-import '../../seller/company/view/seller_company_view.dart';
-import '../../seller/categories/view/seller_category_view.dart';
+import '../../seller/products/view/seller_product_view.dart';
+import '../../seller/contracts/view/seller_contracts_view.dart';
+import '../../seller/workspace/view/seller_workspace_view.dart';
 import '../../contracts/view/contract_view.dart';
 import '../../dashboard/view/dashboard_page.dart';
 import '../../kyc_users/view/kyc_user_view.dart';
@@ -31,8 +32,9 @@ class MainNavigationScreen extends StatelessWidget {
     if (role == 'seller' || role == 'both_sellerandbuyer') {
       return [
             SellerDashboardView(),
-            const SellerCompanyView(),
-            const SellerCategoryView(),
+            const SellerProductView(),
+            const SellerWorkspaceView(),
+            const SellerContractsView(),
           ] +
           [SettingsScreen()];
     }
@@ -44,7 +46,10 @@ class MainNavigationScreen extends StatelessWidget {
           ] +
           [SettingsScreen()];
     }
-    if (role == 'buyer' || role == 'both_sellerandbuyer' || role == 'buyer_seller' || role == 'both') {
+    if (role == 'buyer' ||
+        role == 'both_sellerandbuyer' ||
+        role == 'buyer_seller' ||
+        role == 'both') {
       return [
             BuyerDashboardView(),
             const BuyerOffersView(),
@@ -110,14 +115,19 @@ class _GlassNavBar extends StatelessWidget {
           label: 'Dashboard',
         ),
         _NavItem(
-          icon: IconlyLight.home,
-          activeIcon: IconlyBold.home,
-          label: 'Company',
+          icon: IconlyLight.bag,
+          activeIcon: IconlyBold.bag,
+          label: 'Offers',
         ),
         _NavItem(
-          icon: IconlyLight.document,
-          activeIcon: IconlyBold.document,
-          label: 'Category',
+          icon: IconlyLight.category,
+          activeIcon: IconlyBold.category,
+          label: 'Menu',
+        ),
+        _NavItem(
+          icon: IconlyLight.paper,
+          activeIcon: IconlyBold.paper,
+          label: 'Deals',
         ),
         _NavItem(
           icon: IconlyLight.setting,
@@ -150,7 +160,10 @@ class _GlassNavBar extends StatelessWidget {
         ),
       ];
     }
-    if (role == 'buyer' || role == 'both_sellerandbuyer' || role == 'buyer_seller' || role == 'both') {
+    if (role == 'buyer' ||
+        role == 'both_sellerandbuyer' ||
+        role == 'buyer_seller' ||
+        role == 'both') {
       return const [
         _NavItem(
           icon: IconlyLight.category,
@@ -238,13 +251,12 @@ class _GlassNavBar extends StatelessWidget {
                       ],
               ),
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: theme.dividerColor,
-                width: 1,
-              ),
+              border: Border.all(color: theme.dividerColor, width: 1),
               boxShadow: [
                 BoxShadow(
-                  color: isDark ? Colors.black.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.05),
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.3)
+                      : Colors.black.withValues(alpha: 0.05),
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
@@ -279,9 +291,7 @@ class _GlassNavBar extends StatelessWidget {
           vertical: 8,
         ),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppTheme.primaryGold
-              : Colors.transparent,
+          color: isSelected ? AppTheme.primaryGold : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -290,9 +300,7 @@ class _GlassNavBar extends StatelessWidget {
             Icon(
               isSelected ? item.activeIcon : item.icon,
               size: 22,
-              color: isSelected
-                  ? Colors.white
-                  : theme.iconTheme.color,
+              color: isSelected ? Colors.white : theme.iconTheme.color,
             ),
             const SizedBox(height: 4),
             AnimatedDefaultTextStyle(

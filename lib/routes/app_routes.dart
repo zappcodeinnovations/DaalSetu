@@ -55,6 +55,7 @@ abstract class AppRoutes {
   static const sellerRFQs = '/seller/rfqs';
   static const sellerDeliveryChallans = '/seller/delivery-challans';
   static const sellerMasters = '/seller/masters';
+  static const sellerWorkspace = '/seller/workspace';
 
   // TRANSPORTER PANEL
   static const transporterDashboard = '/transporter/dashboard';

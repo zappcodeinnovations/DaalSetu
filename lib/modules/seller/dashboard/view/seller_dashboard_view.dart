@@ -7,6 +7,8 @@ import '../controller/seller_dashboard_controller.dart';
 import '../model/seller_dashboard_model.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../products/view/seller_product_view.dart';
+import '../../products/view/add_product_view.dart';
+import '../../products/controller/seller_product_controller.dart';
 import '../../rfq/view/seller_rfq_list_view.dart';
 import '../../contracts/view/seller_contracts_view.dart';
 import '../../challans/view/seller_delivery_challan_view.dart';
@@ -14,6 +16,7 @@ import '../../branches/view/seller_branches_view.dart';
 import '../../masters/view/seller_master_management_view.dart';
 import '../../consignments/view/seller_consignments_view.dart';
 import '../../buyer_offers/view/seller_buyer_offers_view.dart';
+import '../../workspace/view/seller_workspace_view.dart';
 import '../../../../services/notification_services.dart';
 import '../../../../routes/app_routes.dart';
 
@@ -54,6 +57,34 @@ class SellerDashboardView extends StatelessWidget {
               children: [
                 _buildHeroSection(context, data.header),
                 const SizedBox(height: 16),
+                _buildSectionHeader(context, "Seller Workspace", trailingText: "View All", onTrailingTap: () => Get.to(() => const SellerWorkspaceView())),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildSimpleQuickCard(
+                        context,
+                        title: "Create Offer",
+                        subtitle: "Publish a new listing",
+                        icon: IconlyBold.plus,
+                        color: Colors.orange,
+                        onTap: _openCreateOffer,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildSimpleQuickCard(
+                        context,
+                        title: "All Seller Tools",
+                        subtitle: "Masters, deals & dispatch",
+                        icon: IconlyBold.category,
+                        color: Colors.blueGrey,
+                        onTap: () => Get.to(() => const SellerWorkspaceView()),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 _buildMyProductsQuickCard(context),
                 const SizedBox(height: 12),
                 _buildBuyerRfqQuickCard(context),
@@ -111,7 +142,7 @@ class SellerDashboardView extends StatelessWidget {
                 _buildAnalyticsGrid(context, data.charts),
 
                 const SizedBox(height: 24),
-                _buildSectionHeader(context, "Recent Deals", trailingText: "View All"),
+                _buildSectionHeader(context, "Recent Deals", trailingText: "View All", onTrailingTap: () => Get.to(() => const SellerBuyerOffersView())),
                 const SizedBox(height: 16),
                 _buildRecentDeals(context, data.recentDeals),
 
@@ -132,6 +163,13 @@ class SellerDashboardView extends StatelessWidget {
         );
       }),
     );
+  }
+
+  void _openCreateOffer() {
+    if (!Get.isRegistered<SellerProductController>()) {
+      Get.put(SellerProductController());
+    }
+    Get.to(() => const AddProductView());
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
@@ -595,7 +633,7 @@ class SellerDashboardView extends StatelessWidget {
   Widget _buildDynamicMetricCard(BuildContext context, SellerKpi metric, IconData icon) {
     final theme = Theme.of(context);
     return GestureDetector(
-      onTap: () => Get.to(() => const SellerProductView()),
+      onTap: () => _openKpi(metric.screen),
       child: GlassCard(
         padding: const EdgeInsets.all(12),
         child: SizedBox(
@@ -635,6 +673,22 @@ class SellerDashboardView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _openKpi(String screen) {
+    switch (screen) {
+      case 'buyer_offers':
+        Get.to(() => const SellerBuyerOffersView());
+        return;
+      case 'contracts':
+        Get.to(() => const SellerContractsView());
+        return;
+      case 'offers':
+        Get.to(() => const SellerProductView());
+        return;
+      default:
+        return;
+    }
   }
 
   Widget _buildAnalyticsGrid(BuildContext context, SellerCharts charts) {

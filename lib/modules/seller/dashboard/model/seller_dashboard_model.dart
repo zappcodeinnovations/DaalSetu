@@ -1,3 +1,17 @@
+double _dashboardDouble(dynamic value) {
+  if (value is num) return value.toDouble();
+  return double.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+int _dashboardInt(dynamic value) {
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+Map<String, dynamic> _dashboardMap(dynamic value) {
+  return value is Map ? Map<String, dynamic>.from(value) : <String, dynamic>{};
+}
+
 class SellerDashboardModel {
   final SellerHeader header;
   final List<SellerKpi> kpis;
@@ -15,11 +29,23 @@ class SellerDashboardModel {
 
   factory SellerDashboardModel.fromJson(Map<String, dynamic> json) {
     return SellerDashboardModel(
-      header: SellerHeader.fromJson(json['header'] ?? {}),
-      kpis: (json['kpis'] as List?)?.map((x) => SellerKpi.fromJson(x)).toList() ?? [],
-      charts: SellerCharts.fromJson(json['charts'] ?? {}),
-      recentContracts: (json['recent_contracts'] as List?)?.map((x) => SellerContract.fromJson(x)).toList() ?? [],
-      recentDeals: (json['recent_deals'] as List?)?.map((x) => SellerDeal.fromJson(x)).toList() ?? [],
+      header: SellerHeader.fromJson(_dashboardMap(json['header'])),
+      kpis:
+          (json['kpis'] as List?)
+              ?.map((x) => SellerKpi.fromJson(_dashboardMap(x)))
+              .toList() ??
+          [],
+      charts: SellerCharts.fromJson(_dashboardMap(json['charts'])),
+      recentContracts:
+          (json['recent_contracts'] as List?)
+              ?.map((x) => SellerContract.fromJson(_dashboardMap(x)))
+              .toList() ??
+          [],
+      recentDeals:
+          (json['recent_deals'] as List?)
+              ?.map((x) => SellerDeal.fromJson(_dashboardMap(x)))
+              .toList() ??
+          [],
     );
   }
 }
@@ -41,11 +67,11 @@ class SellerHeader {
 
   factory SellerHeader.fromJson(Map<String, dynamic> json) {
     return SellerHeader(
-      name: json['name'] ?? '',
-      branchCode: json['branch_code'] ?? '',
-      branchName: json['branch_name'] ?? '',
-      profileCompletion: json['profile_completion'] ?? 0,
-      kycStatus: json['kyc_status'] ?? '',
+      name: json['name']?.toString() ?? '',
+      branchCode: json['branch_code']?.toString() ?? '',
+      branchName: json['branch_name']?.toString() ?? '',
+      profileCompletion: _dashboardInt(json['profile_completion']),
+      kycStatus: json['kyc_status']?.toString() ?? '',
     );
   }
 }
@@ -67,11 +93,11 @@ class SellerKpi {
 
   factory SellerKpi.fromJson(Map<String, dynamic> json) {
     return SellerKpi(
-      title: json['title'] ?? '',
+      title: json['title']?.toString() ?? '',
       value: json['value'] ?? 0.0,
-      subtitle: json['subtitle'] ?? '',
-      type: json['type'] ?? '',
-      screen: json['screen'] ?? '',
+      subtitle: json['subtitle']?.toString() ?? '',
+      type: json['type']?.toString() ?? '',
+      screen: json['screen']?.toString() ?? '',
     );
   }
 }
@@ -80,15 +106,16 @@ class SellerCharts {
   final List<CommodityMix> commodityMix;
   final Map<String, dynamic> dealPipeline;
 
-  SellerCharts({
-    required this.commodityMix,
-    required this.dealPipeline,
-  });
+  SellerCharts({required this.commodityMix, required this.dealPipeline});
 
   factory SellerCharts.fromJson(Map<String, dynamic> json) {
     return SellerCharts(
-      commodityMix: (json['commodity_mix'] as List?)?.map((x) => CommodityMix.fromJson(x)).toList() ?? [],
-      dealPipeline: json['deal_pipeline'] ?? {},
+      commodityMix:
+          (json['commodity_mix'] as List?)
+              ?.map((x) => CommodityMix.fromJson(_dashboardMap(x)))
+              .toList() ??
+          [],
+      dealPipeline: _dashboardMap(json['deal_pipeline']),
     );
   }
 }
@@ -97,15 +124,13 @@ class CommodityMix {
   final String categoryName;
   final double volume;
 
-  CommodityMix({
-    required this.categoryName,
-    required this.volume,
-  });
+  CommodityMix({required this.categoryName, required this.volume});
 
   factory CommodityMix.fromJson(Map<String, dynamic> json) {
     return CommodityMix(
-      categoryName: json['product__category__category_name'] ?? 'Unknown',
-      volume: (json['volume'] ?? 0).toDouble(),
+      categoryName:
+          json['product__category__category_name']?.toString() ?? 'Unknown',
+      volume: _dashboardDouble(json['volume']),
     );
   }
 }
@@ -135,15 +160,15 @@ class SellerContract {
 
   factory SellerContract.fromJson(Map<String, dynamic> json) {
     return SellerContract(
-      id: json['id'] ?? 0,
-      contractId: json['contract_id'] ?? '',
-      status: json['status'] ?? '',
-      buyerName: json['buyer__first_name'] ?? '',
-      buyerCompany: json['buyer__company_name'] ?? '',
-      brandName: json['product__brand__brand_name'] ?? '',
-      categoryName: json['product__category__category_name'] ?? '',
-      dealQuantity: (json['deal_quantity'] ?? 0).toDouble(),
-      dealAmount: (json['deal_amount'] ?? 0).toDouble(),
+      id: _dashboardInt(json['id']),
+      contractId: json['contract_id']?.toString() ?? '',
+      status: json['status']?.toString() ?? '',
+      buyerName: json['buyer__first_name']?.toString() ?? '',
+      buyerCompany: json['buyer__company_name']?.toString() ?? '',
+      brandName: json['product__brand__brand_name']?.toString() ?? '',
+      categoryName: json['product__category__category_name']?.toString() ?? '',
+      dealQuantity: _dashboardDouble(json['deal_quantity']),
+      dealAmount: _dashboardDouble(json['deal_amount']),
     );
   }
 }
@@ -167,12 +192,12 @@ class SellerDeal {
 
   factory SellerDeal.fromJson(Map<String, dynamic> json) {
     return SellerDeal(
-      id: json['id'] ?? 0,
-      status: json['status'] ?? '',
-      requestedAmount: (json['requested_amount'] ?? 0).toDouble(),
-      requestedQuantity: (json['requested_quantity'] ?? 0).toDouble(),
-      brandName: json['brand__brand_name'] ?? '',
-      categoryName: json['category__category_name'] ?? '',
+      id: _dashboardInt(json['id']),
+      status: json['status']?.toString() ?? '',
+      requestedAmount: _dashboardDouble(json['requested_amount']),
+      requestedQuantity: _dashboardDouble(json['requested_quantity']),
+      brandName: json['brand__brand_name']?.toString() ?? '',
+      categoryName: json['category__category_name']?.toString() ?? '',
     );
   }
 }
