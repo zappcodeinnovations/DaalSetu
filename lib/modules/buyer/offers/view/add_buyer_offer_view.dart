@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../../services/buyer_services.dart';
 import '../../../../services/seller_services.dart';
 import '../../../../services/product_services.dart';
 import '../../../seller/categories/model/seller_category_model.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../controller/buyer_offers_controller.dart';
+import '../../dashboard/controller/buyer_dashboard_controller.dart';
 
 class AddBuyerOfferScreen extends StatefulWidget {
   const AddBuyerOfferScreen({super.key});
