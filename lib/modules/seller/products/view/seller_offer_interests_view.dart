@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../controller/seller_negotiation_controller.dart';
 import 'seller_counter_offer_dialog.dart';
+import '../../common/seller_ui.dart';
 
 class SellerOfferInterestsView extends StatelessWidget {
   const SellerOfferInterestsView({super.key});
@@ -80,25 +81,7 @@ class SellerOfferInterestsView extends StatelessWidget {
                               style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: status == 'confirmed'
-                                  ? Colors.green.shade100
-                                  : (status == 'rejected' ? Colors.red.shade100 : Colors.amber.shade100),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              status.toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: status == 'confirmed'
-                                    ? Colors.green.shade800
-                                    : (status == 'rejected' ? Colors.red.shade800 : Colors.amber.shade900),
-                              ),
-                            ),
-                          ),
+                          SellerUi.statusChip(status),
                         ],
                       ),
                       const Divider(height: 20),
@@ -163,34 +146,57 @@ class SellerOfferInterestsView extends StatelessWidget {
                         ),
                       ],
                       const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () => SellerCounterOfferDialog.show(context, controller, item),
-                              icon: const Icon(IconlyLight.chat, size: 16),
-                              label: const Text("COUNTER"),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: primaryColor,
-                                side: const BorderSide(color: primaryColor),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              ),
+                      // Same flow as the web panel: seller counters / approves / rejects an
+                      // "interested" buyer; buyer then confirms and admin confirms the deal.
+                      if (status == 'interested') ...[
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () => SellerCounterOfferDialog.show(context, controller, item),
+                            icon: const Icon(IconlyLight.chat, size: 16),
+                            label: const Text("COUNTER"),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: primaryColor,
+                              side: const BorderSide(color: primaryColor),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () => controller.confirmDeal(item.id!),
-                              icon: const Icon(Icons.check, size: 16, color: Colors.white),
-                              label: const Text("CONFIRM DEAL", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () => controller.approveInterest(item.id!),
+                                icon: const Icon(Icons.check, size: 16, color: Colors.white),
+                                label: const Text("APPROVE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () => controller.rejectInterest(item.id!),
+                                icon: const Icon(Icons.close, size: 16, color: Colors.white),
+                                label: const Text("REJECT", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ] else if (status == 'seller_confirmed' || status == 'buyer_confirmed')
+                        Text(
+                          status == 'seller_confirmed'
+                              ? "You approved this interest. Waiting for the buyer to confirm."
+                              : "Buyer confirmed. Waiting for admin to confirm the deal.",
+                          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                        ),
                     ],
                   ),
                 ),

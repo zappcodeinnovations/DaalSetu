@@ -7,6 +7,7 @@ class SellerProductModel {
   final String amount;
   final String unit;
   final String status;
+  final bool isActive;
   final int bagCount;
   final double packingWeight;
   final String loadingLocation;
@@ -22,6 +23,7 @@ class SellerProductModel {
     required this.amount,
     required this.unit,
     required this.status,
+    required this.isActive,
     required this.bagCount,
     required this.packingWeight,
     required this.loadingLocation,
@@ -39,6 +41,7 @@ class SellerProductModel {
       amount: json['amount']?.toString() ?? "0",
       unit: json['unit'] ?? "qtl",
       status: json['status'] ?? "active",
+      isActive: json['is_active'] is bool ? json['is_active'] as bool : (json['status'] ?? "active") == "active",
       bagCount: json['bag_count'] ?? 0,
       packingWeight: double.tryParse(json['packing_weight_kg']?.toString() ?? "0") ?? 0.0,
       loadingLocation: json['loading_location'] ?? "",

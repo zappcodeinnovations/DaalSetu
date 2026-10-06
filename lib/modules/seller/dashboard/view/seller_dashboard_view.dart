@@ -12,6 +12,9 @@ import '../../contracts/view/seller_contracts_view.dart';
 import '../../challans/view/seller_delivery_challan_view.dart';
 import '../../branches/view/seller_branches_view.dart';
 import '../../masters/view/seller_master_management_view.dart';
+import '../../consignments/view/seller_consignments_view.dart';
+import '../../buyer_offers/view/seller_buyer_offers_view.dart';
+import '../../../../services/notification_services.dart';
 import '../../../../routes/app_routes.dart';
 
 class SellerDashboardView extends StatelessWidget {
@@ -70,6 +73,32 @@ class SellerDashboardView extends StatelessWidget {
                     Expanded(child: _buildMastersQuickCard(context)),
                   ],
                 ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildSimpleQuickCard(
+                        context,
+                        title: "Consignments",
+                        subtitle: "Ready for loading & dispatch",
+                        icon: IconlyBold.buy,
+                        color: Colors.teal,
+                        onTap: () => Get.to(() => const SellerConsignmentsView()),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildSimpleQuickCard(
+                        context,
+                        title: "Buyer Offers",
+                        subtitle: "Respond to buyer requests",
+                        icon: IconlyBold.ticket,
+                        color: Colors.indigo,
+                        onTap: () => Get.to(() => const SellerBuyerOffersView()),
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 24),
                 
                 _buildSectionHeader(context, "Overview KPIs", trailingText: "View All"),
@@ -120,26 +149,40 @@ class SellerDashboardView extends StatelessWidget {
       ),
       centerTitle: true,
       actions: [
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            IconButton(
-              icon: const Icon(IconlyLight.notification),
-              onPressed: () {},
-            ),
-            Positioned(
-              right: 12,
-              top: 12,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Colors.deepOrange,
-                  shape: BoxShape.circle,
-                ),
-                child: const Text('3', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ],
+        // Real unread count instead of a fixed badge; reloads when returning from the list.
+        StatefulBuilder(
+          builder: (context, setState) => FutureBuilder<int>(
+            future: NotificationServices.getUnreadCount().catchError((_) => 0),
+            builder: (context, snapshot) {
+              final unread = snapshot.data ?? 0;
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(IconlyLight.notification),
+                    onPressed: () async {
+                      await Get.toNamed(AppRoutes.sellerNotifications);
+                      setState(() {});
+                    },
+                  ),
+                  if (unread > 0)
+                    Positioned(
+                      right: 10,
+                      top: 10,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.deepOrange,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(unread > 99 ? '99+' : '$unread',
+                            style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
         ),
         const SizedBox(width: 8),
         CircleAvatar(
@@ -444,6 +487,51 @@ class SellerDashboardView extends StatelessWidget {
             ),
             Text(
               "Your brand & tag detaile",
+              style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSimpleQuickCard(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: GlassCard(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: color, size: 20),
+                ),
+                Icon(IconlyLight.arrow_right_2, color: color, size: 16),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+            ),
+            Text(
+              subtitle,
               style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color),
             ),
           ],

@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../model/offer_interest_model.dart';
 import '../../../../services/seller_services.dart';
+import '../../common/seller_ui.dart';
 
 class SellerNegotiationController extends GetxController {
   final int productId;
@@ -63,6 +64,21 @@ class SellerNegotiationController extends GetxController {
       if (Get.isDialogOpen ?? false) Get.back();
       Get.snackbar("Error", e.toString(), snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
     }
+  }
+
+  /// Seller accepts the buyer's interest (interested -> seller_confirmed); admin confirms the deal later.
+  Future<void> approveInterest(int interestId) async {
+    final remark = await SellerUi.askText("Approve Buyer Interest", confirmText: "Approve", color: Colors.green);
+    if (remark == null) return;
+    final result = await SellerUi.run(() => SellerServices.approveBuyerInterest(productId, interestId, remark: remark));
+    if (result != null) fetchInterests();
+  }
+
+  Future<void> rejectInterest(int interestId) async {
+    final remark = await SellerUi.askText("Reject Buyer Interest", confirmText: "Reject", color: Colors.red);
+    if (remark == null) return;
+    final result = await SellerUi.run(() => SellerServices.rejectBuyerInterest(productId, interestId, remark: remark));
+    if (result != null) fetchInterests();
   }
 
   Future<void> confirmDeal(int interestId, {String? adminRemark}) async {

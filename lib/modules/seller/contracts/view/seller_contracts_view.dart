@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../controller/seller_contract_controller.dart';
+import 'seller_contract_detail_view.dart';
 
 class SellerContractsView extends StatelessWidget {
   const SellerContractsView({super.key});
@@ -49,7 +50,9 @@ class SellerContractsView extends StatelessWidget {
             itemCount: controller.contractsList.length,
             itemBuilder: (context, index) {
               final item = controller.contractsList[index];
-              return Card(
+              return GestureDetector(
+                onTap: item.id == null ? null : () => Get.to(() => SellerContractDetailView(contractId: item.id!)),
+                child: Card(
                 elevation: 3,
                 margin: const EdgeInsets.only(bottom: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -124,6 +127,7 @@ class SellerContractsView extends StatelessWidget {
                     ],
                   ),
                 ),
+              ),
               );
             },
           ),

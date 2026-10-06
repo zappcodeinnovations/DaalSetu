@@ -27,7 +27,8 @@ class MainNavigationScreen extends StatelessWidget {
   final BottomNavController navController = Get.put(BottomNavController());
 
   List<Widget> _getPages(String role) {
-    if (role == 'seller') {
+    // "both_sellerandbuyer" users get the seller app instead of falling through to admin tabs.
+    if (role == 'seller' || role == 'both_sellerandbuyer') {
       return [
             SellerDashboardView(),
             const SellerCompanyView(),
@@ -101,7 +102,7 @@ class _GlassNavBar extends StatelessWidget {
   });
 
   List<_NavItem> get _items {
-    if (role == 'seller') {
+    if (role == 'seller' || role == 'both_sellerandbuyer') {
       return const [
         _NavItem(
           icon: IconlyLight.category,

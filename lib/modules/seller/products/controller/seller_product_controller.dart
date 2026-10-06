@@ -1,6 +1,7 @@
 import '../../categories/model/seller_category_model.dart';
 import '../model/seller_product_model.dart';
 import '../../../../services/seller_services.dart';
+import '../../common/seller_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -84,6 +85,30 @@ class SellerProductController extends GetxController {
     } finally {
       isLoading(false);
     }
+  }
+
+  Future<void> toggleOffer(SellerProductModel product) async {
+    final activate = !product.isActive;
+    final confirmed = await SellerUi.confirm(
+      activate ? "Activate Offer" : "Deactivate Offer",
+      activate ? "Buyers will be able to see this offer again." : "Buyers will no longer see this offer.",
+      confirmText: activate ? "Activate" : "Deactivate",
+    );
+    if (!confirmed) return;
+    final result = await SellerUi.run(() => SellerServices.toggleOfferStatus(product.id, activate));
+    if (result != null) fetchProducts();
+  }
+
+  Future<void> deleteOffer(SellerProductModel product) async {
+    final confirmed = await SellerUi.confirm(
+      "Delete Offer",
+      "Delete \"${product.title}\" permanently? This cannot be undone.",
+      confirmText: "Delete",
+      color: Colors.red,
+    );
+    if (!confirmed) return;
+    final result = await SellerUi.run(() => SellerServices.deleteOffer(product.id));
+    if (result != null) products.removeWhere((item) => item.id == product.id);
   }
 
   void clearForm() {

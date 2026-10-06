@@ -30,17 +30,25 @@ class SellerContractModel {
   String? get totalAmount => dealAmount;
 
   factory SellerContractModel.fromJson(Map<String, dynamic> json) {
+    // Contract API sends buyer/seller as ids (not objects), so only read nested keys from maps.
+    String? nested(String key, String field) {
+      final value = json[key];
+      return value is Map ? value[field]?.toString() : null;
+    }
+
+    String? text(String key) => json[key]?.toString();
+
     return SellerContractModel(
-      id: json['id'] as int?,
-      contractId: json['contract_id']?.toString() ?? json['id']?.toString(),
-      buyerCompany: json['buyer_company'] ?? json['buyer']?['company_name'] ?? json['buyer_name'],
-      sellerCompany: json['seller_company'] ?? json['seller']?['company_name'] ?? json['seller_name'],
-      categoryName: json['category_name'] ?? json['category']?['name'] ?? json['commodity'],
-      brandName: json['brand_name'] ?? json['brand']?['name'],
-      dealAmount: json['deal_amount']?.toString() ?? json['amount']?.toString() ?? json['total_price']?.toString(),
-      dealQuantity: json['deal_quantity']?.toString() ?? json['quantity']?.toString(),
-      status: json['status'] ?? 'active',
-      createdAt: json['created_at'] ?? json['date'],
+      id: json['id'] is int ? json['id'] as int : int.tryParse('${json['id']}'),
+      contractId: text('contract_id') ?? text('id'),
+      buyerCompany: text('buyer_company') ?? nested('buyer', 'company_name') ?? text('display_buyer_id') ?? text('buyer_name'),
+      sellerCompany: text('seller_company') ?? nested('seller', 'company_name') ?? text('display_seller_id') ?? text('seller_name'),
+      categoryName: text('category_name') ?? text('product_category_name') ?? nested('category', 'name') ?? text('product_title') ?? text('commodity'),
+      brandName: text('brand_name') ?? nested('brand', 'name'),
+      dealAmount: text('deal_amount') ?? text('amount') ?? text('total_price'),
+      dealQuantity: text('deal_quantity') ?? text('quantity'),
+      status: text('status') ?? 'active',
+      createdAt: text('confirmed_at') ?? text('created_at') ?? text('date'),
     );
   }
 

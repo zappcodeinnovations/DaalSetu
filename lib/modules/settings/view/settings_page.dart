@@ -10,6 +10,8 @@ import '../../../theme/theme_controller.dart';
 import '../../../utils/app_preferences.dart';
 import '../../Auth/login/view/login_screen.dart';
 import '../../admin_catalog/view/admin_drawer.dart';
+import '../../seller/common/seller_ui.dart';
+import '../../../services/seller_services.dart';
 import 'package:daalsetu/theme/app_theme.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -76,6 +78,33 @@ class SettingsScreen extends StatelessWidget {
                     title: "Change Password",
                     subtitle: "Update your account password",
                     onTap: () => Get.toNamed(AppRoutes.change_password),
+                  ),
+                  // Re-approval request is only for party users; the server accepts it only for rejected KYC.
+                  FutureBuilder<String?>(
+                    future: AppPreferences.getRole(),
+                    builder: (context, snapshot) {
+                      const partyRoles = {'seller', 'buyer', 'transporter', 'both_sellerandbuyer'};
+                      if (!partyRoles.contains(snapshot.data)) return const SizedBox.shrink();
+                      return Column(
+                        children: [
+                          _glassDivider(context),
+                          _buildTile(
+                            context,
+                            icon: IconlyLight.shield_done,
+                            title: "Request KYC Re-approval",
+                            subtitle: "Ask admin to review your rejected KYC again",
+                            onTap: () async {
+                              final ok = await SellerUi.confirm(
+                                "KYC Re-approval",
+                                "Send your KYC to the admin for review again?",
+                                confirmText: "Send Request",
+                              );
+                              if (ok) await SellerUi.run(SellerServices.requestKycApproval);
+                            },
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),

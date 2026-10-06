@@ -7,6 +7,8 @@ import 'add_product_view.dart';
 import 'seller_stock_update_dialog.dart';
 import 'seller_offer_interests_view.dart';
 import 'seller_media_gallery_view.dart';
+import 'edit_offer_view.dart';
+import 'offer_stock_history_view.dart';
 import '../../../../routes/app_routes.dart';
 
 class SellerProductView extends StatelessWidget {
@@ -169,6 +171,32 @@ class SellerProductView extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+              ),
+              PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert, color: theme.iconTheme.color),
+                onSelected: (value) async {
+                  switch (value) {
+                    case 'edit':
+                      final updated = await Get.to(() => EditOfferView(productId: product.id));
+                      if (updated == true) controller.fetchProducts();
+                      break;
+                    case 'toggle':
+                      controller.toggleOffer(product);
+                      break;
+                    case 'history':
+                      Get.to(() => OfferStockHistoryView(productId: product.id, title: product.title));
+                      break;
+                    case 'delete':
+                      controller.deleteOffer(product);
+                      break;
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(value: 'edit', child: Text("Edit Offer")),
+                  PopupMenuItem(value: 'toggle', child: Text(product.isActive ? "Deactivate" : "Activate")),
+                  const PopupMenuItem(value: 'history', child: Text("Stock History")),
+                  const PopupMenuItem(value: 'delete', child: Text("Delete", style: TextStyle(color: Colors.red))),
+                ],
               ),
             ],
           ),

@@ -18,7 +18,7 @@ class SellerBrandModel {
       id: json['id'] as int?,
       name: json['name'] ?? json['brand_name'],
       logoUrl: json['logo_url'] ?? json['logo'] ?? json['image'],
-      companyName: json['company_name'] ?? json['company']?['name'],
+      companyName: json['company_name'] ?? (json['company'] is Map ? json['company']['name'] : null),
       description: json['description'],
     );
   }

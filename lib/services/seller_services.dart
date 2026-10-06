@@ -832,4 +832,142 @@ class SellerServices {
     }
     return {"success": true, "message": "Tag created successfully"};
   }
+
+  static Map<String, dynamic> _asMap(dynamic response, String error) {
+    if (response is Map<String, dynamic>) return response;
+    throw Exception(error);
+  }
+
+  static String _withQuery(String endpoint, Map<String, String?> params) {
+    final query = {
+      for (final entry in params.entries)
+        if (entry.value != null && entry.value!.isNotEmpty) entry.key: entry.value!,
+    };
+    return query.isEmpty ? endpoint : "$endpoint?${Uri(queryParameters: query).query}";
+  }
+
+  /// ============================================================
+  /// OFFER MANAGEMENT (edit, delete, stock history, buyer interests)
+  /// ============================================================
+  static Future<Map<String, dynamic>> getOfferDetail(int productId) async {
+    final response = await ApiClient.get(endpoint: ApiUrls.offerDetail(productId), requireAuth: true);
+    return _asMap(response, "Failed to load offer");
+  }
+
+  static Future<Map<String, dynamic>> updateOffer(int productId, Map<String, dynamic> body) async {
+    final response = await ApiClient.patch(endpoint: ApiUrls.offerUpdate(productId), data: body, requireAuth: true);
+    return _asMap(response, "Failed to update offer");
+  }
+
+  static Future<Map<String, dynamic>> deleteOffer(int productId) async {
+    final response = await ApiClient.delete(endpoint: ApiUrls.offerDelete(productId), requireAuth: true);
+    return _asMap(response, "Failed to delete offer");
+  }
+
+  static Future<Map<String, dynamic>> getOfferStockHistory(int productId, {int page = 1}) async {
+    final response = await ApiClient.get(
+      endpoint: "${ApiUrls.offerStockHistory(productId)}?page=$page",
+      requireAuth: true,
+    );
+    return _asMap(response, "Failed to load stock history");
+  }
+
+  static Future<Map<String, dynamic>> approveBuyerInterest(int productId, int interestId, {String remark = ""}) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.offerApproveBuyer(productId),
+      body: {"interest_id": interestId, "seller_remark": remark},
+      requireAuth: true,
+    );
+    return _asMap(response, "Failed to approve buyer interest");
+  }
+
+  static Future<Map<String, dynamic>> rejectBuyerInterest(int productId, int interestId, {String remark = ""}) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.offerRejectBuyer(productId),
+      body: {"interest_id": interestId, "seller_remark": remark},
+      requireAuth: true,
+    );
+    return _asMap(response, "Failed to reject buyer interest");
+  }
+
+  /// ============================================================
+  /// BUYER REQUIREMENTS (RFQ) - single API
+  /// ============================================================
+  static Future<Map<String, dynamic>> getBuyerRequirements({String tab = "incoming", String? search, String? status, int page = 1}) async {
+    final response = await ApiClient.get(
+      endpoint: _withQuery(ApiUrls.buyerRequirements, {"tab": tab, "search": search, "status": status, "page": "$page"}),
+      requireAuth: true,
+    );
+    return _asMap(response, "Failed to load buyer requirements");
+  }
+
+  static Future<Map<String, dynamic>> getBuyerRequirement(String rfqId, {int? quotationId}) async {
+    final response = await ApiClient.get(
+      endpoint: _withQuery(ApiUrls.buyerRequirementDetail(rfqId), {"quotation_id": quotationId?.toString()}),
+      requireAuth: true,
+    );
+    return _asMap(response, "Failed to load buyer requirement");
+  }
+
+  static Future<Map<String, dynamic>> buyerRequirementAction(String rfqId, Map<String, dynamic> body) async {
+    final response = await ApiClient.post(endpoint: ApiUrls.buyerRequirementDetail(rfqId), body: body, requireAuth: true);
+    return _asMap(response, "Request failed");
+  }
+
+  /// ============================================================
+  /// CONSIGNMENTS - single API
+  /// ============================================================
+  static Future<Map<String, dynamic>> getConsignments({String? workflowStatus, String? search, int page = 1}) async {
+    final response = await ApiClient.get(
+      endpoint: _withQuery(ApiUrls.consignments, {"workflow_status": workflowStatus, "search": search, "page": "$page"}),
+      requireAuth: true,
+    );
+    return _asMap(response, "Failed to load consignments");
+  }
+
+  static Future<Map<String, dynamic>> getConsignmentDetail(int contractId) async {
+    final response = await ApiClient.get(endpoint: ApiUrls.consignmentDetail(contractId), requireAuth: true);
+    return _asMap(response, "Failed to load consignment");
+  }
+
+  static Future<Map<String, dynamic>> consignmentAction(int contractId, String action) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.consignmentDetail(contractId),
+      body: {"action": action},
+      requireAuth: true,
+    );
+    return _asMap(response, "Request failed");
+  }
+
+  /// ============================================================
+  /// BUYER OFFERS (seller side)
+  /// ============================================================
+  static Future<List<dynamic>> getBuyerOfferRequests({String tab = "incoming", String? search, String? status}) async {
+    final response = await ApiClient.get(
+      endpoint: _withQuery(ApiUrls.buyerOffers, {"tab": tab, "search": search, "status": status}),
+      requireAuth: true,
+    );
+    if (response is Map<String, dynamic> && response["buyer_offers"] is List) return response["buyer_offers"];
+    if (response is List) return response;
+    return [];
+  }
+
+  static Future<Map<String, dynamic>> getBuyerOfferRequest(int id) async {
+    final response = await ApiClient.get(endpoint: ApiUrls.buyerOfferDetails(id), requireAuth: true);
+    final map = _asMap(response, "Failed to load buyer offer");
+    return map["buyer_offer"] is Map<String, dynamic> ? map["buyer_offer"] : map;
+  }
+
+  static Future<Map<String, dynamic>> buyerOfferAction(int id, Map<String, dynamic> body) async {
+    final response = await ApiClient.post(endpoint: ApiUrls.buyerOfferAction(id), body: body, requireAuth: true);
+    return _asMap(response, "Request failed");
+  }
+
+  /// ============================================================
+  /// KYC RE-APPROVAL
+  /// ============================================================
+  static Future<Map<String, dynamic>> requestKycApproval() async {
+    final response = await ApiClient.post(endpoint: ApiUrls.kycRequestApproval, body: {}, requireAuth: true);
+    return _asMap(response, "Failed to send KYC request");
+  }
 }

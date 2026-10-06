@@ -53,7 +53,10 @@ class SellerChallanDetailsView extends StatelessWidget {
               _detailCard([
                 _infoRow("Challan ID", "#${data['challan_number'] ?? data['id']}"),
                 _infoRow("Truck Number", data['truck_number'] ?? "N/A"),
-                _infoRow("Driver", data['dispatched_by_name'] ?? "N/A"),
+                _infoRow("Driver", data['driver_name'] ?? "N/A"),
+                _infoRow("Driver Mobile", data['driver_mobile'] ?? "N/A"),
+                _infoRow("Challan Date", data['challan_date'] ?? "N/A"),
+                _infoRow("Total Amount", "₹${data['total_amount'] ?? '0'}"),
               ]),
 
               const SizedBox(height: 24),
@@ -69,7 +72,7 @@ class SellerChallanDetailsView extends StatelessWidget {
               ]),
 
               const SizedBox(height: 32),
-              if (status == 'pending')
+              if (status == 'draft' || status == 'pending')
                 SizedBox(
                   width: double.infinity,
                   height: 55,
@@ -97,7 +100,8 @@ class SellerChallanDetailsView extends StatelessWidget {
   Widget _buildStatusBanner(String status) {
     Color color = Colors.orange;
     if (status == 'dispatched') color = Colors.blue;
-    if (status == 'received') color = Colors.green;
+    if (status == 'received' || status == 'delivered') color = Colors.green;
+    if (status == 'cancelled') color = Colors.red;
 
     return Container(
       width: double.infinity,

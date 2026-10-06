@@ -3,6 +3,9 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../controller/seller_challan_controller.dart';
+import '../../common/seller_ui.dart';
+import '../../delivery/controller/seller_delivery_controller.dart';
+import '../../delivery/view/seller_challan_details_view.dart';
 
 class SellerDeliveryChallanView extends StatelessWidget {
   const SellerDeliveryChallanView({super.key});
@@ -49,9 +52,18 @@ class SellerDeliveryChallanView extends StatelessWidget {
             itemCount: controller.challansList.length,
             itemBuilder: (context, index) {
               final item = controller.challansList[index];
-              final isDispatched = (item.status ?? 'pending').toLowerCase() == 'dispatched';
+              final status = (item.status ?? 'draft').toLowerCase();
+              // Only draft challans can be dispatched (same rule as the backend).
+              final canDispatch = status == 'draft' || status == 'pending';
 
-              return Card(
+              return GestureDetector(
+                onTap: item.id == null
+                    ? null
+                    : () {
+                        if (!Get.isRegistered<SellerDeliveryController>()) Get.put(SellerDeliveryController());
+                        Get.to(() => SellerChallanDetailsView(challanId: item.id!))?.then((_) => controller.fetchChallans());
+                      },
+                child: Card(
                 elevation: 3,
                 margin: const EdgeInsets.only(bottom: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -69,21 +81,7 @@ class SellerDeliveryChallanView extends StatelessWidget {
                               style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: isDispatched ? Colors.green.shade100 : Colors.amber.shade100,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              (item.status ?? 'PENDING').toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: isDispatched ? Colors.green.shade800 : Colors.amber.shade900,
-                              ),
-                            ),
-                          ),
+                          SellerUi.statusChip(status),
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -119,7 +117,7 @@ class SellerDeliveryChallanView extends StatelessWidget {
                           ),
                         ],
                       ),
-                      if (!isDispatched) ...[
+                      if (canDispatch) ...[
                         const SizedBox(height: 16),
                         SizedBox(
                           width: double.infinity,
@@ -138,6 +136,7 @@ class SellerDeliveryChallanView extends StatelessWidget {
                     ],
                   ),
                 ),
+              ),
               );
             },
           ),
