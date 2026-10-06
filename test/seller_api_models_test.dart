@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:daalsetu/modules/seller/branches/model/seller_branch_model.dart';
 import 'package:daalsetu/modules/seller/contracts/model/seller_contract_model.dart';
+import 'package:daalsetu/modules/seller/products/model/offer_interest_model.dart';
 import 'package:daalsetu/modules/seller/products/model/seller_product_model.dart';
 import 'package:daalsetu/modules/seller/rfq/model/seller_rfq_model.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -56,6 +58,28 @@ void main() {
     expect(contract.id, 7);
     expect(contract.buyerCompany, 'BUY-3');
     expect(contract.categoryName, 'Toor Dal');
+  });
+
+  test('offer interest model reads the field names the interests API sends', () {
+    final interest = OfferInterestModel.fromJson({
+      'id': 5,
+      'buyer_unique_id': 'BUY-0003',
+      'offered_amount': '1150.00',
+      'required_quantity': '100.000',
+      'remark': 'Need fast loading',
+      'status': 'interested',
+    });
+    expect(interest.buyerName, 'BUY-0003');
+    expect(interest.buyerOfferedAmount, '1150.00');
+    expect(interest.buyerRequiredQuantity, '100.000');
+    expect(interest.buyerRemark, 'Need fast loading');
+  });
+
+  test('pending branch request cancels by branch id, not request id', () {
+    final pending = SellerBranchModel.fromJson({'id': 41, 'branch_id': 7, 'branch_code': 'PUN957M', 'status': 'pending'});
+    final member = SellerBranchModel.fromJson({'id': 7, 'branch_code': 'PUN957M'});
+    expect(pending.branchId, 7);
+    expect(member.branchId, 7);
   });
 
   test('product model reads is_active for the activate/deactivate menu', () {

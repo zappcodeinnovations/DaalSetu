@@ -1,5 +1,6 @@
 class SellerBranchModel {
   final int? id;
+  final int? branchId;
   final String? branchCode;
   final String? locationName;
   final String? city;
@@ -10,6 +11,7 @@ class SellerBranchModel {
 
   SellerBranchModel({
     this.id,
+    this.branchId,
     this.branchCode,
     this.locationName,
     this.city,
@@ -22,6 +24,8 @@ class SellerBranchModel {
   factory SellerBranchModel.fromJson(Map<String, dynamic> json) {
     return SellerBranchModel(
       id: json['id'] as int?,
+      // Pending requests carry their own id plus branch_id; branch rows only have id.
+      branchId: json['branch_id'] is int ? json['branch_id'] as int : json['id'] as int?,
       branchCode: json['branch_code'] ?? json['code'],
       locationName: json['location_name'] ?? json['name'] ?? json['city'],
       city: json['city'],

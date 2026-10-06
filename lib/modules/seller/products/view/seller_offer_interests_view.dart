@@ -5,6 +5,7 @@ import 'package:iconly/iconly.dart';
 import '../controller/seller_negotiation_controller.dart';
 import 'seller_counter_offer_dialog.dart';
 import '../../common/seller_ui.dart';
+import 'seller_interest_thread_view.dart';
 
 class SellerOfferInterestsView extends StatelessWidget {
   const SellerOfferInterestsView({super.key});
@@ -197,6 +198,17 @@ class SellerOfferInterestsView extends StatelessWidget {
                               : "Buyer confirmed. Waiting for admin to confirm the deal.",
                           style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                         ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          onPressed: item.id == null
+                              ? null
+                              : () => Get.to(() => SellerInterestThreadView(productId: productId, interestId: item.id!))
+                                  ?.then((_) => controller.fetchInterests()),
+                          icon: const Icon(IconlyLight.time_circle, size: 16, color: primaryColor),
+                          label: const Text("View negotiation history", style: TextStyle(color: primaryColor, fontSize: 12)),
+                        ),
+                      ),
                     ],
                   ),
                 ),

@@ -481,8 +481,9 @@ class SellerServices {
       if (counterPackingWeightKg != null) "counter_packing_weight_kg": counterPackingWeightKg,
     };
 
+    // The old /message/ endpoint answers with a redirect for mobile, so use the thread API.
     final response = await ApiClient.post(
-      endpoint: ApiUrls.offerNegotiationMessage(productId, interestId),
+      endpoint: ApiUrls.offerInterestThread(productId, interestId),
       body: body,
       requireAuth: true,
     );
@@ -490,6 +491,11 @@ class SellerServices {
       throw Exception("Failed to send counter offer");
     }
     return response;
+  }
+
+  static Future<Map<String, dynamic>> getOfferInterestThread(int productId, int interestId) async {
+    final response = await ApiClient.get(endpoint: ApiUrls.offerInterestThread(productId, interestId), requireAuth: true);
+    return _asMap(response, "Failed to load negotiation");
   }
 
   static Future<Map<String, dynamic>> confirmOfferDeal(int productId, int interestId, {String? adminRemark, int? subAdminId}) async {
@@ -849,6 +855,11 @@ class SellerServices {
   /// ============================================================
   /// OFFER MANAGEMENT (edit, delete, stock history, buyer interests)
   /// ============================================================
+  static Future<Map<String, dynamic>> createOffer(Map<String, dynamic> body) async {
+    final response = await ApiClient.post(endpoint: ApiUrls.offerCreate, body: body, requireAuth: true);
+    return _asMap(response, "Failed to create offer");
+  }
+
   static Future<Map<String, dynamic>> getOfferDetail(int productId) async {
     final response = await ApiClient.get(endpoint: ApiUrls.offerDetail(productId), requireAuth: true);
     return _asMap(response, "Failed to load offer");
@@ -961,6 +972,30 @@ class SellerServices {
   static Future<Map<String, dynamic>> buyerOfferAction(int id, Map<String, dynamic> body) async {
     final response = await ApiClient.post(endpoint: ApiUrls.buyerOfferAction(id), body: body, requireAuth: true);
     return _asMap(response, "Request failed");
+  }
+
+  static Future<Map<String, dynamic>> deleteCompany(int companyId) async {
+    // DELETE answers 204 with an empty body, which the client returns as an empty map.
+    return ApiClient.delete(endpoint: ApiUrls.companyDetails(companyId), requireAuth: true);
+  }
+
+  static Future<List<Map<String, dynamic>>> getPublicBranches() async {
+    final response = await ApiClient.get(endpoint: ApiUrls.publicBranches, requireAuth: true);
+    final list = response is Map<String, dynamic> ? response['data'] : response;
+    return (list is List ? list : const []).whereType<Map<String, dynamic>>().toList();
+  }
+
+  /// ============================================================
+  /// QUALITY TAGS (edit / delete; delete never forces removal from users)
+  /// ============================================================
+  static Future<Map<String, dynamic>> updateTag(int tagId, String name) async {
+    final response = await ApiClient.patch(endpoint: "${ApiUrls.tags}$tagId/", data: {"tag_name": name}, requireAuth: true);
+    return _asMap(response, "Failed to update tag");
+  }
+
+  static Future<Map<String, dynamic>> deleteTag(int tagId) async {
+    final response = await ApiClient.delete(endpoint: "${ApiUrls.tags}$tagId/", requireAuth: true);
+    return _asMap(response, "Failed to delete tag");
   }
 
   /// ============================================================

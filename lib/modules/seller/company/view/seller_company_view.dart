@@ -204,9 +204,7 @@ class SellerCompanyView extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   IconButton(
-                    onPressed: () {
-                      // Delete functionality
-                    },
+                    onPressed: () => controller.deleteCompany(company),
                     icon: const Icon(Icons.delete_outline, color: Colors.red),
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.red.withOpacity(0.1),

@@ -35,11 +35,12 @@ class OfferInterestModel {
     return OfferInterestModel(
       id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? ''),
       productId: json['product'] is int ? json['product'] : int.tryParse(json['product']?.toString() ?? ''),
-      buyerName: json['buyer_name']?.toString() ?? json['buyer']?.toString(),
+      // The interests API sends offered_amount / required_quantity / remark; older payloads used buyer_*.
+      buyerName: json['buyer_unique_id']?.toString() ?? json['buyer_name']?.toString() ?? json['buyer']?.toString(),
       buyerCompany: json['buyer_company']?.toString(),
-      buyerOfferedAmount: json['buyer_offered_amount']?.toString(),
-      buyerRequiredQuantity: json['buyer_required_quantity']?.toString(),
-      buyerRemark: json['buyer_remark']?.toString(),
+      buyerOfferedAmount: (json['buyer_offered_amount'] ?? json['offered_amount'])?.toString(),
+      buyerRequiredQuantity: (json['buyer_required_quantity'] ?? json['required_quantity'])?.toString(),
+      buyerRemark: (json['buyer_remark'] ?? json['remark'])?.toString(),
       sellerRemark: json['seller_remark']?.toString(),
       counterPrice: json['counter_price']?.toString(),
       counterQuantity: json['counter_quantity']?.toString(),

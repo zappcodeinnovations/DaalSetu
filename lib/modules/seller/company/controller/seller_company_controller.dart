@@ -1,5 +1,6 @@
 import '../model/seller_company_model.dart';
 import '../../../../services/seller_services.dart';
+import '../../common/seller_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -137,6 +138,19 @@ class SellerCompanyController extends GetxController {
     } finally {
       isLoading(false);
     }
+  }
+
+  /// Offers and challans keep working; they just lose their company link (server sets it to null).
+  Future<void> deleteCompany(SellerCompanyModel company) async {
+    final ok = await SellerUi.confirm(
+      "Delete Company",
+      "Delete \"${company.legalName}\"?${company.isPrimary ? ' Another company will become primary.' : ''}",
+      confirmText: "Delete",
+      color: Colors.red,
+    );
+    if (!ok) return;
+    final result = await SellerUi.run(() => SellerServices.deleteCompany(company.id), successMessage: "Company deleted");
+    if (result != null) fetchCompanies();
   }
 
   Future<void> setPrimaryCompany(int id) async {

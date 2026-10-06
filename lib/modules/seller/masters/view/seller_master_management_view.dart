@@ -122,10 +122,37 @@ class SellerMasterManagementView extends StatelessWidget {
                         spacing: 8,
                         runSpacing: 8,
                         children: controller.tagsList.map((tag) {
-                          return Chip(
+                          return ActionChip(
                             backgroundColor: primaryColor.withValues(alpha: 0.15),
                             avatar: const Icon(IconlyBold.discount, size: 14, color: primaryColor),
                             label: Text(tag.name ?? 'Tag', style: const TextStyle(fontWeight: FontWeight.bold, color: primaryColor, fontSize: 12)),
+                            onPressed: () => Get.bottomSheet(
+                              Container(
+                                color: theme.cardColor,
+                                child: SafeArea(
+                                  child: Wrap(
+                                    children: [
+                                      ListTile(
+                                        leading: const Icon(IconlyLight.edit),
+                                        title: const Text("Edit Tag"),
+                                        onTap: () {
+                                          Get.back();
+                                          controller.editTag(tag);
+                                        },
+                                      ),
+                                      ListTile(
+                                        leading: const Icon(IconlyLight.delete, color: Colors.red),
+                                        title: const Text("Delete Tag", style: TextStyle(color: Colors.red)),
+                                        onTap: () {
+                                          Get.back();
+                                          controller.deleteTag(tag);
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                           );
                         }).toList(),
                       ),
@@ -135,6 +162,19 @@ class SellerMasterManagementView extends StatelessWidget {
             ],
           );
         }),
+        // Adds to whichever tab is open; seller brands go to admin for approval.
+        floatingActionButton: Builder(
+          builder: (tabContext) => FloatingActionButton.extended(
+            heroTag: null,
+            backgroundColor: primaryColor,
+            icon: const Icon(Icons.add, color: Colors.white),
+            label: const Text("Add", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            onPressed: () {
+              final isBrandTab = DefaultTabController.of(tabContext).index == 0;
+              Get.dialog(isBrandTab ? const SellerAddBrandDialog() : const SellerAddTagDialog());
+            },
+          ),
+        ),
       ),
     );
   }

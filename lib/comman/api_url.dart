@@ -132,12 +132,14 @@ class ApiUrls {
   static String sellerDispatchChallan(dynamic id) => "/api/seller/delivery-challans/$id/dispatch/";
 
   // Seller offers: edit / delete / detail / stock history / buyer interest decisions
+  static const String offerCreate = "/api/offers/create/";
   static String offerDetail(int productId) => "/api/offers/$productId/";
   static String offerUpdate(int productId) => "/api/offers/$productId/update/";
   static String offerDelete(int productId) => "/api/offers/$productId/delete/";
   static String offerStockHistory(int productId) => "/api/offers/$productId/stock-history/";
   static String offerApproveBuyer(int productId) => "/api/offers/$productId/approve/";
   static String offerRejectBuyer(int productId) => "/api/offers/$productId/reject/";
+  static String offerInterestThread(int productId, int interestId) => "/api/offers/$productId/interests/$interestId/";
 
   // Single APIs: one collection URL + one item URL, item steps are POST {"action": ...}
   static const String buyerRequirements = "/api/buyer-requirements/";

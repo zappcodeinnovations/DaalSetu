@@ -4,10 +4,75 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../controller/seller_branch_controller.dart';
 import 'seller_join_branch_dialog.dart';
-import 'seller_create_branch_dialog.dart';
+import '../../../../services/seller_services.dart';
 
 class SellerBranchesView extends StatelessWidget {
   const SellerBranchesView({super.key});
+
+  /// Lists every active branch; joining reuses the request-by-code API.
+  void _showBranchDirectory(SellerBranchController controller) {
+    final joinedCodes = {
+      ...controller.myBranches.map((b) => b.branchCode),
+      ...controller.pendingRequests.map((b) => b.branchCode),
+      controller.primaryBranch.value?.branchCode,
+    }.whereType<String>().toSet();
+
+    Get.bottomSheet(
+      Container(
+        height: Get.height * 0.75,
+        decoration: BoxDecoration(
+          color: Get.theme.cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: FutureBuilder<List<Map<String, dynamic>>>(
+          future: SellerServices.getPublicBranches(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const Center(child: CircularProgressIndicator(color: Color(0xFFFFB300)));
+            }
+            final branches = snapshot.data ?? [];
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text("All Branches", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
+                ),
+                Expanded(
+                  child: branches.isEmpty
+                      ? const Center(child: Text("No branches found"))
+                      : ListView.builder(
+                          itemCount: branches.length,
+                          itemBuilder: (context, index) {
+                            final b = branches[index];
+                            final code = b['branch_code']?.toString() ?? '';
+                            final joined = joinedCodes.contains(code);
+                            return ListTile(
+                              leading: const Icon(IconlyLight.location),
+                              title: Text(b['location_name']?.toString() ?? code),
+                              subtitle: Text("$code • ${b['city'] ?? ''}, ${b['state'] ?? ''}"),
+                              trailing: joined
+                                  ? const Text("JOINED / REQUESTED", style: TextStyle(fontSize: 10, color: Colors.grey))
+                                  : TextButton(
+                                      onPressed: code.isEmpty
+                                          ? null
+                                          : () {
+                                              Get.back();
+                                              controller.joinBranchByCode(code);
+                                            },
+                                      child: const Text("REQUEST"),
+                                    ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,11 +89,12 @@ class SellerBranchesView extends StatelessWidget {
           "Company Branches Network",
           style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
         ),
+        // Creating branches is super-admin only on the server; sellers browse and request to join.
         actions: [
           IconButton(
-            icon: const Icon(IconlyLight.plus, color: primaryColor),
-            onPressed: () => Get.dialog(const SellerCreateBranchDialog()),
-            tooltip: "Create Branch",
+            icon: const Icon(IconlyLight.search, color: primaryColor),
+            onPressed: () => _showBranchDirectory(controller),
+            tooltip: "Browse Branches",
           ),
         ],
       ),
@@ -136,7 +202,7 @@ class SellerBranchesView extends StatelessWidget {
                           title: Text(req.locationName ?? "Branch Request", style: const TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: Text("Code: ${req.branchCode ?? 'N/A'} • Status: Pending Approval"),
                           trailing: TextButton(
-                            onPressed: () => controller.cancelRequest(req.id!),
+                            onPressed: () => controller.cancelRequest(req.branchId ?? req.id!),
                             child: const Text("CANCEL", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                           ),
                         ),
