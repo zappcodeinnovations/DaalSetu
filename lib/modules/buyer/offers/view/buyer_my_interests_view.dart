@@ -2,11 +2,23 @@ import '../model/buyer_offer_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:iconly/iconly.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../controller/buyer_offers_controller.dart';
+import '../../../products/view/product_detail.dart';
+import 'buyer_offer_details_view.dart';
 
 class BuyerMyInterestsView extends StatelessWidget {
   const BuyerMyInterestsView({super.key});
+
+  void _openDetails(BuyerOfferModel offer) {
+    final pId = offer.productId ?? offer.id;
+    if (pId != null) {
+      Get.to(() => ProductDetailScreen(productId: pId));
+    } else if (offer.id != null) {
+      Get.to(() => BuyerOfferDetailsView(offerId: offer.id!));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,96 +64,206 @@ class BuyerMyInterestsView extends StatelessWidget {
           separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final offer = offers[index];
-            return GlassCard(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          offer.displayTitle ?? 'Offer',
-                          style: GoogleFonts.poppins(
+            return InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () => _openDetails(offer),
+              child: GlassCard(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            offer.displayTitle ?? 'Offer',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: theme.textTheme.bodyLarge?.color,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _getStatusColor(offer.displayStatus ?? '').withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            offer.displayStatus ?? '',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: _getStatusColor(offer.displayStatus ?? ''),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Quantity: ${offer.displayQuantity}",
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            color: theme.textTheme.bodyMedium?.color,
+                          ),
+                        ),
+                        Text(
+                          offer.displayPrice ?? '',
+                          style: GoogleFonts.inter(
+                            fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            fontSize: 16,
                             color: theme.textTheme.bodyLarge?.color,
                           ),
                         ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: _getStatusColor(offer.displayStatus ?? '').withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          offer.displayStatus ?? '',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: _getStatusColor(offer.displayStatus ?? ''),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Quantity: ${offer.displayQuantity}",
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: theme.textTheme.bodyMedium?.color,
-                        ),
-                      ),
-                      Text(
-                        offer.displayPrice ?? '',
-                        style: GoogleFonts.inter(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: theme.textTheme.bodyLarge?.color,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Divider(height: 24),
-                  Builder(
-                    builder: (context) {
-                      final pId = offer.productId ?? offer.id ?? 0;
-                      final iId = offer.interestId ?? (offer.id != null && offer.id != pId ? offer.id! : pId);
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
+                      ],
+                    ),
+                    const Divider(height: 24),
+                    Builder(
+                      builder: (context) {
+                        final pId = offer.productId ?? offer.id ?? 0;
+                        final iId = offer.interestId ?? (offer.id != null && offer.id != pId ? offer.id! : pId);
+
+                        if (offer.isConfirmed) {
+                          return Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            alignment: WrapAlignment.spaceBetween,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: Colors.green.withOpacity(0.25)),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.check_circle_outline, size: 16, color: Colors.green),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      "Deal Confirmed",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.green,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              OutlinedButton.icon(
+                                onPressed: () => _openDetails(offer),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.blue,
+                                  side: const BorderSide(color: Colors.blue),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                ),
+                                icon: const Icon(IconlyLight.show, size: 14),
+                                label: const Text("VIEW", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                              ),
+                            ],
+                          );
+                        }
+
+                        if (offer.isRejected) {
+                          return Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            alignment: WrapAlignment.spaceBetween,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: Colors.red.withOpacity(0.25)),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.cancel_outlined, size: 16, color: Colors.red),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      "Interest Closed / Rejected",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              OutlinedButton.icon(
+                                onPressed: () => _openDetails(offer),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.blue,
+                                  side: const BorderSide(color: Colors.blue),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                ),
+                                icon: const Icon(IconlyLight.show, size: 14),
+                                label: const Text("VIEW", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                              ),
+                            ],
+                          );
+                        }
+
+                        return Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: () => _openDetails(offer),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.blue,
+                                side: const BorderSide(color: Colors.blue),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              ),
+                              icon: const Icon(IconlyLight.show, size: 14),
+                              label: const Text("VIEW", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                            ),
+                            OutlinedButton.icon(
                               onPressed: () => _showNegotiateDialog(context, controller, pId, iId, offer),
+                              style: OutlinedButton.styleFrom(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              ),
                               icon: const Icon(Icons.chat_bubble_outline, size: 14),
                               label: const Text("NEGOTIATE", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: ElevatedButton.icon(
+                            ElevatedButton.icon(
                               onPressed: () => _showRemarkDialog(context, controller, "confirm", pId, iId),
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.green, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              ),
                               icon: const Icon(Icons.check, size: 14, color: Colors.white),
                               label: const Text("CONFIRM", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          IconButton(
-                            onPressed: () => _showRemarkDialog(context, controller, "reject_interest", pId, iId),
-                            icon: const Icon(Icons.close, color: Colors.red, size: 20),
-                            tooltip: "Reject Interest",
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
+                            IconButton(
+                              onPressed: () => _showRemarkDialog(context, controller, "reject_interest", pId, iId),
+                              icon: const Icon(Icons.close, color: Colors.red, size: 20),
+                              tooltip: "Reject Interest",
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
             );
           },

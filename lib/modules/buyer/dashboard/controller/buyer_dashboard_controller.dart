@@ -35,7 +35,7 @@ class BuyerDashboardController extends GetxController {
 
       // Fetch Categories
       try {
-        final cats = await CategoryService.fetchCategories();
+        final cats = await CategoryService.fetchBuyerCategories();
         categories.assignAll(cats);
       } catch (e) {
         print("Failed to fetch categories: $e");

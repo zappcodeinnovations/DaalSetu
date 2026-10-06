@@ -128,4 +128,16 @@ class BuyerOfferModel {
       displayPrice: '₹$rawPrice',
     );
   }
+
+  bool get isConfirmed {
+    final s = (displayStatus ?? status ?? '').toLowerCase();
+    return s.contains('confirm') || s.contains('deal_confirmed') || s.contains('approved');
+  }
+
+  bool get isRejected {
+    final s = (displayStatus ?? status ?? '').toLowerCase();
+    return s.contains('reject') || s.contains('cancel') || s.contains('closed');
+  }
+
+  bool get isActionable => !isConfirmed && !isRejected;
 }

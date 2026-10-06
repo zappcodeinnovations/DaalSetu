@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../../theme/glass_widgets.dart';
+import '../../../products/view/product_detail.dart';
 import '../controller/buyer_offers_controller.dart';
 import '../model/buyer_offer_model.dart';
 import 'add_buyer_offer_view.dart';
@@ -87,6 +88,19 @@ class _OfferList extends StatelessWidget {
   final String offerType;
 
   const _OfferList({required this.offerType});
+
+  void _openDetails(BuyerOfferModel offer, String type) {
+    if (type == 'requirements' && offer.id != null) {
+      Get.to(() => BuyerOfferDetailsView(offerId: offer.id!));
+    } else {
+      final pId = offer.productId ?? offer.id;
+      if (pId != null) {
+        Get.to(() => ProductDetailScreen(productId: pId));
+      } else if (offer.id != null) {
+        Get.to(() => BuyerOfferDetailsView(offerId: offer.id!));
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -235,11 +249,7 @@ class _OfferList extends StatelessWidget {
                   final offer = offers[index];
                   return InkWell(
                     borderRadius: BorderRadius.circular(16),
-                    onTap: () {
-                      if (offerType == 'requirements' && offer.id != null) {
-                        Get.to(() => BuyerOfferDetailsView(offerId: offer.id!));
-                      }
-                    },
+                    onTap: () => _openDetails(offer, offerType),
                     child: GlassCard(
                       padding: const EdgeInsets.all(16),
                       child: Column(
@@ -324,24 +334,40 @@ class _OfferList extends StatelessWidget {
             label: "View Details",
             color: Colors.blue,
             icon: IconlyLight.show,
-            onTap: () {
-              if (offer.id != null) {
-                Get.to(() => BuyerOfferDetailsView(offerId: offer.id!));
-              }
-            },
+            onTap: () => _openDetails(offer, type),
           ),
         ],
       );
     }
 
     final productId = offer.productId ?? offer.id;
-    if (productId == null) return const SizedBox.shrink();
-
-    // For active/today/all offers without interest:
-    if (type == 'today' || type == 'all') {
+    if (productId == null) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
+          _ActionBtn(
+            label: "View",
+            color: Colors.blue,
+            icon: IconlyLight.show,
+            onTap: () => _openDetails(offer, type),
+          ),
+        ],
+      );
+    }
+
+    // For active/today/all offers without interest:
+    if (type == 'today' || type == 'all') {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        alignment: WrapAlignment.end,
+        children: [
+          _ActionBtn(
+            label: "View",
+            color: Colors.blue,
+            icon: IconlyLight.show,
+            onTap: () => _openDetails(offer, type),
+          ),
           _ActionBtn(
             label: "Show Interest",
             color: Theme.of(context).colorScheme.primary,
@@ -356,10 +382,90 @@ class _OfferList extends StatelessWidget {
     final resolvedInterestId = offer.interestId ??
         (offer.id != null && offer.id != productId ? offer.id : null);
 
-    if (resolvedInterestId == null) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+    if (offer.isConfirmed) {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        alignment: WrapAlignment.end,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.green.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.green.withOpacity(0.25)),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.check_circle_outline, size: 14, color: Colors.green),
+                SizedBox(width: 6),
+                Text(
+                  "Deal Confirmed",
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.green),
+                ),
+              ],
+            ),
+          ),
+          _ActionBtn(
+            label: "View",
+            color: Colors.blue,
+            icon: IconlyLight.show,
+            onTap: () => _openDetails(offer, type),
+          ),
+        ],
+      );
+    }
+
+    if (offer.isRejected) {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        alignment: WrapAlignment.end,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.red.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.red.withOpacity(0.25)),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.cancel_outlined, size: 14, color: Colors.red),
+                SizedBox(width: 6),
+                Text(
+                  "Closed / Rejected",
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.red),
+                ),
+              ],
+            ),
+          ),
+          _ActionBtn(
+            label: "View",
+            color: Colors.blue,
+            icon: IconlyLight.show,
+            onTap: () => _openDetails(offer, type),
+          ),
+        ],
+      );
+    }
+
+    if (resolvedInterestId == null) {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        alignment: WrapAlignment.end,
+        children: [
+          _ActionBtn(
+            label: "View",
+            color: Colors.blue,
+            icon: IconlyLight.show,
+            onTap: () => _openDetails(offer, type),
+          ),
           _ActionBtn(
             label: "Show Interest",
             color: Theme.of(context).colorScheme.primary,
@@ -375,6 +481,12 @@ class _OfferList extends StatelessWidget {
       runSpacing: 8,
       alignment: WrapAlignment.end,
       children: [
+        _ActionBtn(
+          label: "View",
+          color: Colors.blue,
+          icon: IconlyLight.show,
+          onTap: () => _openDetails(offer, type),
+        ),
         _ActionBtn(
           label: "Negotiate",
           color: Colors.amber.shade700,
