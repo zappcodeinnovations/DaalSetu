@@ -186,40 +186,112 @@ class BuyerServices {
   /// ============================================================
   /// OFFER ACTIONS
   /// ============================================================
-  static Future<Map<String, dynamic>> approveOffer(int productId, int interestId, String remark) async {
-    final response = await ApiClient.post(
-      endpoint: ApiUrls.buyerApproveOffer(productId),
-      body: {"interest_id": interestId, "remark": remark},
-      requireAuth: true,
-    );
-    if (response == null || response is! Map<String, dynamic>) throw Exception("Invalid response");
-    return response;
-  }
+  static Future<Map<String, dynamic>> approveOffer(int productId, int interestId, String remark) =>
+      confirmOffer(productId, interestId, remark);
 
   static Future<Map<String, dynamic>> confirmOffer(int productId, int interestId, String remark) async {
+    final body = {
+      "interest_id": interestId,
+      "decision": "approve",
+      if (remark.isNotEmpty) "admin_remark": remark,
+      if (remark.isNotEmpty) "remark": remark,
+    };
+
     final response = await ApiClient.post(
-      endpoint: ApiUrls.buyerConfirmOffer(productId),
-      body: {"interest_id": interestId, "remark": remark},
+      endpoint: ApiUrls.offerConfirmDeal(productId),
+      body: body,
       requireAuth: true,
     );
-    if (response == null || response is! Map<String, dynamic>) throw Exception("Invalid response");
+
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Failed to confirm deal");
+    }
+
     return response;
   }
 
   static Future<Map<String, dynamic>> rejectInterest(int productId, int interestId, String remark) async {
+    final body = {
+      "interest_id": interestId,
+      "decision": "reject",
+      if (remark.isNotEmpty) "admin_remark": remark,
+      if (remark.isNotEmpty) "remark": remark,
+    };
+
     final response = await ApiClient.post(
-      endpoint: ApiUrls.buyerRejectInterest(productId),
-      body: {"interest_id": interestId, "remark": remark},
+      endpoint: ApiUrls.offerConfirmDeal(productId),
+      body: body,
+      requireAuth: true,
+    );
+
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Failed to reject interest");
+    }
+
+    return response;
+  }
+
+  static Future<Map<String, dynamic>> rejectOffer(int productId, int interestId, String remark) =>
+      rejectInterest(productId, interestId, remark);
+
+  static Future<Map<String, dynamic>> showInterest(
+    int productId, {
+    required dynamic requestedAmount,
+    required dynamic requestedQuantity,
+    String remark = "",
+  }) async {
+    final body = {
+      "offer_price": requestedAmount.toString(),
+      "required_quantity": requestedQuantity.toString(),
+      "requested_amount": requestedAmount.toString(),
+      "requested_quantity": requestedQuantity.toString(),
+      if (remark.isNotEmpty) "condition": remark,
+      if (remark.isNotEmpty) "remark": remark,
+    };
+
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.buyerShowInterest(productId),
+      body: body,
       requireAuth: true,
     );
     if (response == null || response is! Map<String, dynamic>) throw Exception("Invalid response");
     return response;
   }
 
-  static Future<Map<String, dynamic>> rejectOffer(int productId, int interestId, String remark) async {
+  static Future<Map<String, dynamic>> sendNegotiationMessage(
+    int productId,
+    int interestId, {
+    required String message,
+    dynamic counterAmount,
+    dynamic counterQuantity,
+  }) async {
+    final body = <String, dynamic>{
+      "message": message,
+    };
+    if (counterAmount != null && counterAmount.toString().trim().isNotEmpty) {
+      body["counter_price"] = counterAmount.toString().trim();
+    }
+    if (counterQuantity != null && counterQuantity.toString().trim().isNotEmpty) {
+      body["counter_quantity"] = counterQuantity.toString().trim();
+    }
+
     final response = await ApiClient.post(
-      endpoint: ApiUrls.buyerRejectOffer(productId),
-      body: {"interest_id": interestId, "remark": remark},
+      endpoint: ApiUrls.offerNegotiationMessage(productId, interestId),
+      body: body,
+      requireAuth: true,
+    );
+
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Failed to send message");
+    }
+
+    return response;
+  }
+
+  static Future<Map<String, dynamic>> requestKycApproval() async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.kycRequestApproval,
+      body: {},
       requireAuth: true,
     );
     if (response == null || response is! Map<String, dynamic>) throw Exception("Invalid response");
@@ -227,15 +299,38 @@ class BuyerServices {
   }
 
   static Future<Map<String, dynamic>> createOffer(Map<String, dynamic> body) async {
-    final response = await ApiClient.post(
-      endpoint: ApiUrls.buyerOffersCreate,
-      body: body,
-      requireAuth: true,
-    );
-    if (response == null || response is! Map<String, dynamic>) {
-      throw Exception("Invalid response format");
+    dynamic lastError;
+    // 1. Primary canonical endpoint: /api/rfqs/create/
+    try {
+      final response = await ApiClient.post(
+        endpoint: "/api/rfqs/create/",
+        body: body,
+        requireAuth: true,
+      );
+      if (response != null && response is Map<String, dynamic>) {
+        return response;
+      }
+    } catch (e) {
+      lastError = e;
+      print("Trying /api/buyer-requirements/ fallback: $e");
     }
-    return response;
+
+    // 2. Fallback: /api/buyer-requirements/
+    try {
+      final response = await ApiClient.post(
+        endpoint: "/api/buyer-requirements/",
+        body: body,
+        requireAuth: true,
+      );
+      if (response != null && response is Map<String, dynamic>) {
+        return response;
+      }
+    } catch (e) {
+      lastError = e;
+      print("Buyer requirements endpoint failed: $e");
+    }
+
+    throw Exception(lastError?.toString().replaceAll("Exception: ", "") ?? "Failed to post requirement");
   }
 
   static Future<Map<String, dynamic>> getOfferDetails(int id) async {

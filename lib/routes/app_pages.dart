@@ -14,6 +14,7 @@ import '../modules/admin_catalog/view/admin_offers_list_screen.dart';
 import '../modules/buyer/dashboard/view/buyer_dashboard_view.dart';
 import '../modules/buyer/delivery_challan/view/buyer_delivery_challan_detail_view.dart';
 import '../modules/buyer/delivery_challan/view/buyer_delivery_challan_view.dart';
+import '../modules/buyer/offers/view/add_buyer_offer_view.dart';
 import '../modules/buyer/offers/view/buyer_my_interests_view.dart';
 import '../modules/buyer/offers/view/buyer_offers_view.dart';
 import '../modules/buyer/offers/view/buyer_pending_offers_view.dart';
@@ -140,6 +141,7 @@ class AppPages {
     // BUYER PANEL
     GetPage(name: AppRoutes.buyerDashboard, page: () => BuyerDashboardView()),
     GetPage(name: AppRoutes.buyerOffers, page: () => const BuyerOffersView()),
+    GetPage(name: AppRoutes.buyerOffersCreate, page: () => const AddBuyerOfferScreen()),
     GetPage(name: AppRoutes.buyerMyInterests, page: () => const BuyerMyInterestsView()),
     GetPage(name: AppRoutes.buyerTodayOffers, page: () => const BuyerTodayOffersView()),
     GetPage(name: AppRoutes.buyerPendingOffers, page: () => const BuyerPendingOffersView()),

@@ -6,7 +6,9 @@ import '../model/category_model.dart';
 class CategoryController extends GetxController {
 
   var isLoading = false.obs;
+  var allCategories = <CategoryModel>[].obs;
   var categories = <CategoryModel>[].obs;
+  var searchQuery = ''.obs;
 
   @override
   void onInit() {
@@ -19,12 +21,29 @@ class CategoryController extends GetxController {
       isLoading.value = true;
 
       final data = await CategoryService.fetchCategories();
-      categories.assignAll(data);
+      allCategories.assignAll(data);
+      _applyFilter();
 
     } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  void searchCategories(String query) {
+    searchQuery.value = query;
+    _applyFilter();
+  }
+
+  void _applyFilter() {
+    if (searchQuery.value.trim().isEmpty) {
+      categories.assignAll(allCategories);
+    } else {
+      final q = searchQuery.value.trim().toLowerCase();
+      categories.assignAll(
+        allCategories.where((c) => c.categoryName.toLowerCase().contains(q)).toList(),
+      );
     }
   }
 

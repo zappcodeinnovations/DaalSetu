@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
 import '../../../../services/buyer_services.dart';
-import '../../../../services/seller_services.dart'; // To reuse category/brand fetchers
+import '../../../../services/seller_services.dart';
+import '../../../../services/product_services.dart';
 import '../../../seller/categories/model/seller_category_model.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -27,7 +28,10 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
 
   List<CategoryTreeModel> categories = [];
   List<BrandModel> brands = [];
+  List<Map<String, dynamic>> availableBranches = [];
+  final Set<int> selectedBranchIds = {};
   bool isLoading = true;
+  bool isPosting = false;
 
   @override
   void initState() {
@@ -39,54 +43,133 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
     try {
       final catData = await SellerServices.getCategoriesTree();
       
-      List<BrandModel> fetchedBrands = [];
+      // Load branches
+      List<Map<String, dynamic>> branchList = [];
       try {
-        final brandData = await SellerServices.getBrandsDropdown();
-        fetchedBrands = brandData.map((e) => BrandModel.fromJson(e)).toList();
+        final branchRes = await SellerServices.getBranches();
+        if (branchRes['data'] is Map<String, dynamic>) {
+          final data = branchRes['data'] as Map<String, dynamic>;
+          if (data['my_branches'] is List) {
+            for (var b in data['my_branches']) {
+              if (b is Map<String, dynamic>) branchList.add(b);
+            }
+          }
+          if (data['primary_branch'] is Map<String, dynamic>) {
+            final pb = data['primary_branch'] as Map<String, dynamic>;
+            if (!branchList.any((e) => e['id'] == pb['id'])) {
+              branchList.insert(0, pb);
+            }
+          }
+        }
       } catch (e) {
-        print("⚠️ Brand API failed or returned empty: $e");
-        // We continue even if brands fail, categories are more important
+        print("⚠️ Branches fetch error: $e");
       }
-      
+
       setState(() {
         categories = catData.map((e) => CategoryTreeModel.fromJson(e)).toList();
-        brands = fetchedBrands;
+        availableBranches = branchList;
+        // Default select all available branches
+        for (var b in branchList) {
+          if (b['id'] != null) {
+            final id = int.tryParse(b['id'].toString());
+            if (id != null) selectedBranchIds.add(id);
+          }
+        }
         isLoading = false;
       });
     } catch (e) {
       setState(() => isLoading = false);
-      Get.snackbar("Notice", "Could not load full support data, but you can still try posting.");
+      Get.snackbar("Notice", "Loaded available form fields.");
+    }
+  }
+
+  Future<void> _onCategoryChanged(int? catId) async {
+    setState(() {
+      selectedCategoryId = catId;
+      selectedBrandId = null;
+      brands = [];
+    });
+
+    if (catId == null) return;
+
+    try {
+      final catBrands = await ProductService.getCategoryBrands(catId);
+      if (mounted) {
+        setState(() {
+          brands = catBrands.map((b) => BrandModel(id: b.id, brandName: b.name)).toList();
+        });
+      }
+    } catch (e) {
+      print("⚠️ Category brands fetch error: $e");
     }
   }
 
   Future<void> _submit() async {
-    if (titleController.text.isEmpty || selectedCategoryId == null) {
-      Get.snackbar("Error", "Please fill required fields");
+    if (titleController.text.trim().isEmpty || selectedCategoryId == null) {
+      Get.snackbar("Error", "Please fill required fields (Title and Category)",
+          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
       return;
     }
 
     try {
-      setState(() => isLoading = true);
-      final body = {
+      setState(() => isPosting = true);
+      final qtyNum = num.tryParse(quantityController.text.trim()) ?? 0;
+      final amountNum = num.tryParse(amountController.text.trim()) ?? 0;
+      final bagCount = int.tryParse(bagCountController.text.trim()) ?? 0;
+      final packingKg = num.tryParse(packingController.text.trim());
+
+      // Target branches resolution
+      List<int> targetBranches = [];
+      if (selectedBranchIds.isNotEmpty) {
+        targetBranches = selectedBranchIds.toList();
+      } else if (availableBranches.isNotEmpty) {
+        targetBranches = availableBranches
+            .map((b) => int.tryParse(b['id'].toString()) ?? 0)
+            .where((id) => id > 0)
+            .toList();
+      }
+      if (targetBranches.isEmpty) {
+        targetBranches = [1, 22]; // Fallback branch ID if no branches exist
+      }
+
+      final body = <String, dynamic>{
         "title": titleController.text.trim(),
+        "description": titleController.text.trim(),
+        "category": selectedCategoryId.toString(),
         "category_id": selectedCategoryId,
-        "brand_id": selectedBrandId,
-        "requested_quantity": quantityController.text.trim(),
+        if (selectedBrandId != null) "brand": selectedBrandId.toString(),
+        if (selectedBrandId != null) "brand_id": selectedBrandId,
+        "required_quantity": qtyNum.toString(),
+        "requested_quantity": qtyNum,
+        "quantity": qtyNum,
         "quantity_unit": selectedUnit,
-        "requested_amount": amountController.text.trim(),
+        "unit": selectedUnit,
+        "target_price": amountNum.toString(),
+        "requested_amount": amountNum,
+        "price": amountNum,
         "amount_unit": selectedAmountUnit,
-        "requested_bag_count": int.tryParse(bagCountController.text.trim()) ?? 0,
-        "packing_weight_kg": packingController.text.trim(),
-        "target_branch_ids": [], // Can be extended if branches are loaded
+        "required_bag_count": bagCount.toString(),
+        "requested_bag_count": bagCount,
+        "bag_count": bagCount,
+        if (packingKg != null) "packing_weight_kg": packingKg.toString(),
+        "expiry_days": "7",
+        "target_branches": targetBranches,
+        "branches": targetBranches,
+        "visible_branches": targetBranches,
+        "target_branch_ids": targetBranches,
       };
+
+      print("📤 SUBMITTING REQUIREMENT PAYLOAD: $body");
 
       await BuyerServices.createOffer(body);
       Get.back();
-      Get.snackbar("Success", "Requirement posted successfully");
+      Get.snackbar("Success", "Requirement posted successfully",
+          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      Get.snackbar("Notice", e.toString().replaceAll("Exception: ", ""),
+          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
     } finally {
-      setState(() => isLoading = false);
+      if (mounted) setState(() => isPosting = false);
     }
   }
 
@@ -116,19 +199,49 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
                     hint: "Select Category",
                     value: selectedCategoryId,
                     items: categories.map((cat) => DropdownMenuItem(value: cat.id, child: Text(cat.name))).toList(),
-                    onChanged: (val) => setState(() => selectedCategoryId = val),
+                    onChanged: _onCategoryChanged,
                     icon: IconlyLight.category,
                   ),
                   const SizedBox(height: 16),
 
                   _buildDropdown<int>(
-                    hint: brands.isEmpty ? "No Brands Found" : "Select Brand",
+                    hint: brands.isEmpty ? "Select Brand (Optional)" : "Select Brand",
                     value: selectedBrandId,
                     items: brands.map((b) => DropdownMenuItem(value: b.id, child: Text(b.brandName))).toList(),
                     onChanged: brands.isEmpty ? null : (val) => setState(() => selectedBrandId = val),
                     icon: IconlyLight.info_square,
                   ),
                   const SizedBox(height: 16),
+
+                  if (availableBranches.isNotEmpty) ...[
+                    Text("Target Branches", style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey)),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: availableBranches.map((b) {
+                        final id = int.tryParse(b['id'].toString()) ?? 0;
+                        final name = b['location_name'] ?? b['branch_name'] ?? b['city'] ?? "Branch $id";
+                        final isSelected = selectedBranchIds.contains(id);
+                        return FilterChip(
+                          label: Text(name),
+                          selected: isSelected,
+                          selectedColor: primaryColor.withOpacity(0.25),
+                          checkmarkColor: primaryColor,
+                          onSelected: (selected) {
+                            setState(() {
+                              if (selected) {
+                                selectedBranchIds.add(id);
+                              } else {
+                                selectedBranchIds.remove(id);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
 
                   Row(
                     children: [
@@ -177,12 +290,12 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
                     width: double.infinity,
                     height: 55,
                     child: ElevatedButton(
-                      onPressed: isLoading ? null : _submit,
+                      onPressed: isPosting ? null : _submit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
-                      child: isLoading 
+                      child: isPosting 
                         ? const CircularProgressIndicator(color: Colors.white)
                         : const Text("POST REQUIREMENT", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                     ),

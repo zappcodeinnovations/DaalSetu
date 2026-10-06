@@ -111,14 +111,12 @@ class BuyerTodayOffersView extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        Get.snackbar("Interest Sent", "The seller has been notified of your interest.");
-                      },
+                      onPressed: () => _showInterestDialog(context, controller, offer.productId ?? offer.id ?? 0, offer),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.colorScheme.primary,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text("MARK INTEREST", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: const Text("SHOW INTEREST", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
@@ -127,6 +125,89 @@ class BuyerTodayOffersView extends StatelessWidget {
           },
         );
       }),
+    );
+  }
+
+  void _showInterestDialog(BuildContext context, BuyerOffersController controller, int productId, dynamic offer) {
+    final qtyCtrl = TextEditingController(text: offer.requestedQuantity ?? '');
+    final priceCtrl = TextEditingController(text: offer.requestedAmount ?? '');
+    final remarkCtrl = TextEditingController();
+
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: GlassCard(
+          padding: const EdgeInsets.all(20),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Show Interest",
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  "Submit your target quantity and price for this offer.",
+                  style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
+                ),
+                const SizedBox(height: 16),
+                Text("Requested Quantity", style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 6),
+                GlassTextField(
+                  controller: qtyCtrl,
+                  hintText: "Enter quantity (e.g. 50)",
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 12),
+                Text("Target Price (₹)", style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 6),
+                GlassTextField(
+                  controller: priceCtrl,
+                  hintText: "Enter price per unit",
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 12),
+                Text("Remarks (Optional)", style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 6),
+                GlassTextField(
+                  controller: remarkCtrl,
+                  hintText: "Add any specific instructions...",
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Get.back(),
+                      child: const Text("Cancel"),
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        if (qtyCtrl.text.trim().isEmpty || priceCtrl.text.trim().isEmpty) {
+                          Get.snackbar("Required", "Please enter quantity and price", snackPosition: SnackPosition.BOTTOM);
+                          return;
+                        }
+                        Get.back();
+                        await controller.submitInterest(
+                          productId,
+                          priceCtrl.text.trim(),
+                          qtyCtrl.text.trim(),
+                          remarkCtrl.text.trim(),
+                        );
+                      },
+                      child: const Text("Submit Interest"),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

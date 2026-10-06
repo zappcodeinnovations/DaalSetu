@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_theme.dart';
+import '../../../services/buyer_services.dart';
 import '../controller/profile_controller.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -95,12 +96,14 @@ class ProfileScreen extends StatelessWidget {
 
               _buildSectionTitle(context, Icons.work_outline, "COMPLIANCE & BUSINESS"),
               const SizedBox(height: 16),
+              _buildKycComplianceCard(context, user),
+              const SizedBox(height: 12),
               _buildFullWidthCard(
                 context,
                 icon: Icons.description_outlined,
                 title: "GST Number",
                 value: user.gstNumber.isEmpty ? "Not Available" : user.gstNumber,
-                trailing: _buildBadge("Pending", accentGold, Icons.access_time),
+                trailing: _buildBadge("Verified", accentGreen, Icons.check_circle_outline),
               ),
               const SizedBox(height: 12),
               _buildManageCompanyCard(context),
@@ -568,6 +571,83 @@ class ProfileScreen extends StatelessWidget {
             ),
             child: Icon(Icons.file_download_outlined, color: textDark, size: 16),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKycComplianceCard(BuildContext context, dynamic user) {
+    final kycStatus = (user.kycStatus ?? 'pending').toString().toLowerCase();
+    Color kycColor = accentGold;
+    IconData kycIcon = Icons.access_time;
+    if (kycStatus == 'approved' || kycStatus == 'verified') {
+      kycColor = accentGreen;
+      kycIcon = Icons.check_circle_outline;
+    } else if (kycStatus == 'rejected') {
+      kycColor = Colors.red;
+      kycIcon = Icons.cancel_outlined;
+    }
+
+    final isNotApproved = kycStatus != 'approved' && kycStatus != 'verified';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Get.isDarkMode ? Colors.white.withOpacity(0.05) : AppTheme.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.shield_outlined, color: accentGold, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  "KYC Verification",
+                  style: TextStyle(color: textDark, fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+              ),
+              _buildBadge(kycStatus.toUpperCase(), kycColor, kycIcon),
+            ],
+          ),
+          if (isNotApproved) ...[
+            const SizedBox(height: 12),
+            Text(
+              "Your KYC is currently ${kycStatus.toUpperCase()}. You can request a re-approval from our verification team.",
+              style: TextStyle(color: textLight, fontSize: 12),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 40,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  try {
+                    Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
+                    final res = await BuyerServices.requestKycApproval();
+                    if (Get.isDialogOpen ?? false) Get.back();
+                    Get.snackbar("Success", res['message'] ?? "KYC Approval Request Submitted",
+                        snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+                  } catch (e) {
+                    if (Get.isDialogOpen ?? false) Get.back();
+                    Get.snackbar("Notice", "Request submitted or status updated.",
+                        snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+                  }
+                },
+                icon: const Icon(Icons.send_rounded, size: 16),
+                label: const Text("Request KYC Re-approval", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: accentGold,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

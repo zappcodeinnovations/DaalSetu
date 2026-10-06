@@ -1,11 +1,13 @@
-import '../../../../comman/api_url.dart';
-import '../../../../network/api_client.dart';
-import '../../../transporter/branch/model/branch_model.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../services/seller_services.dart';
+import '../../../seller/branches/model/seller_branch_model.dart';
 
 class BuyerBranchController extends GetxController {
-  var branches = <BranchModel>[].obs;
   var isLoading = false.obs;
+  var primaryBranch = Rxn<SellerBranchModel>();
+  var myBranches = <SellerBranchModel>[].obs;
+  var pendingRequests = <SellerBranchModel>[].obs;
 
   @override
   void onInit() {
@@ -15,63 +17,85 @@ class BuyerBranchController extends GetxController {
 
   Future<void> fetchBranches() async {
     try {
-      isLoading(true);
-      final response = await ApiClient.get(
-        endpoint: ApiUrls.publicBranches,
-        requireAuth: true,
-      );
-
-      if (response != null) {
-        List<dynamic> dataList = [];
-        if (response is List) {
-          dataList = response;
-        } else if (response is Map && response.containsKey('data')) {
-          dataList = response['data'];
-        } else if (response is Map && response.containsKey('body')) {
-          dataList = response['body'];
+      isLoading.value = true;
+      final res = await SellerServices.getSellerBranches();
+      if (res['data'] is Map<String, dynamic>) {
+        final data = res['data'] as Map<String, dynamic>;
+        if (data['primary_branch'] is Map<String, dynamic>) {
+          primaryBranch.value = SellerBranchModel.fromJson(data['primary_branch']);
+        } else {
+          primaryBranch.value = null;
         }
-
-        branches.value = dataList
-            .map((json) => BranchModel.fromJson(json))
-            .toList();
+        if (data['my_branches'] is List) {
+          myBranches.value = (data['my_branches'] as List)
+              .map((e) => SellerBranchModel.fromJson(e as Map<String, dynamic>))
+              .toList();
+        } else {
+          myBranches.clear();
+        }
+        if (data['pending_requests'] is List) {
+          pendingRequests.value = (data['pending_requests'] as List)
+              .map((e) => SellerBranchModel.fromJson(e as Map<String, dynamic>))
+              .toList();
+        } else {
+          pendingRequests.clear();
+        }
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to load branches: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Get.snackbar("Error", e.toString().replaceAll("Exception: ", ""), snackPosition: SnackPosition.BOTTOM);
     } finally {
-      isLoading(false);
+      isLoading.value = false;
     }
   }
 
-  Future<bool> requestBranchByCode(String code) async {
+  Future<bool> joinBranchByCode(String code) async {
     if (code.trim().isEmpty) return false;
-
     try {
-      final response = await ApiClient.post(
-        endpoint: ApiUrls.requestBranchByCode,
-        body: {'branch_code': code.trim()},
-        requireAuth: true,
-      );
+      Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
+      final res = await SellerServices.requestBranchByCode(code.trim());
+      if (Get.isDialogOpen ?? false) Get.back();
 
-      if (response != null) {
-        Get.snackbar(
-          'Success',
-          'Branch request sent to Super Admin!',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        await fetchBranches();
-        return true;
-      }
+      Get.snackbar("Success", res['message'] ?? "Branch request submitted successfully",
+          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+      await fetchBranches();
+      return true;
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to request branch: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      if (Get.isDialogOpen ?? false) Get.back();
+      Get.snackbar("Error", e.toString().replaceAll("Exception: ", ""),
+          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+      return false;
     }
-    return false;
+  }
+
+  Future<void> cancelRequest(int branchId) async {
+    try {
+      Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
+      final res = await SellerServices.cancelBranchRequest(branchId);
+      if (Get.isDialogOpen ?? false) Get.back();
+
+      Get.snackbar("Success", res['message'] ?? "Request cancelled successfully",
+          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+      fetchBranches();
+    } catch (e) {
+      if (Get.isDialogOpen ?? false) Get.back();
+      Get.snackbar("Error", e.toString().replaceAll("Exception: ", ""),
+          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+    }
+  }
+
+  Future<void> leaveBranch(int branchId) async {
+    try {
+      Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
+      final res = await SellerServices.leaveBranch(branchId);
+      if (Get.isDialogOpen ?? false) Get.back();
+
+      Get.snackbar("Success", res['message'] ?? "Left branch successfully",
+          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+      fetchBranches();
+    } catch (e) {
+      if (Get.isDialogOpen ?? false) Get.back();
+      Get.snackbar("Error", e.toString().replaceAll("Exception: ", ""),
+          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+    }
   }
 }

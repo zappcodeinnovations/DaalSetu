@@ -43,7 +43,7 @@ class MainNavigationScreen extends StatelessWidget {
           ] +
           [SettingsScreen()];
     }
-    if (role == 'buyer') {
+    if (role == 'buyer' || role == 'both_sellerandbuyer' || role == 'buyer_seller' || role == 'both') {
       return [
             BuyerDashboardView(),
             const BuyerOffersView(),
@@ -149,7 +149,7 @@ class _GlassNavBar extends StatelessWidget {
         ),
       ];
     }
-    if (role == 'buyer') {
+    if (role == 'buyer' || role == 'both_sellerandbuyer' || role == 'buyer_seller' || role == 'both') {
       return const [
         _NavItem(
           icon: IconlyLight.category,

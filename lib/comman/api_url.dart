@@ -74,10 +74,13 @@ class ApiUrls {
   static const String buyerPendingOffers = "/api/offers/pending/";
   static const String buyerPreviousOffers = "/api/offers/previous/";
 
-  static String buyerApproveOffer(int productId) => "/api/offers/$productId/approve/";
-  static String buyerConfirmOffer(int productId) => "/api/offers/$productId/confirm/";
-  static String buyerRejectInterest(int productId) => "/api/offers/$productId/buyer-reject-interest/";
-  static String buyerRejectOffer(int productId) => "/api/offers/$productId/reject/";
+  static String buyerApproveOffer(int productId) => "/api/offers/$productId/confirm-deal/";
+  static String buyerConfirmOffer(int productId) => "/api/offers/$productId/confirm-deal/";
+  static String buyerRejectInterest(int productId) => "/api/offers/$productId/confirm-deal/";
+  static String buyerRejectOffer(int productId) => "/api/offers/$productId/confirm-deal/";
+  static String buyerShowInterest(int productId) => "/api/offers/$productId/show-interest/";
+  static const String kycRequestApproval = "/api/kyc/request-approval/";
+  static const String buyerCategories = "/api/buyer-categories/";
 
   static String companyDetails(int id) => "/api/company/$id/";
   static String setPrimaryCompany(int id) => "/api/company/$id/set-primary/";

@@ -21,6 +21,12 @@ class CategoryPageView extends StatelessWidget {
         elevation: 0,
         centerTitle: false,
         backgroundColor: theme.scaffoldBackgroundColor,
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: Icon(IconlyLight.arrow_left_2, color: theme.textTheme.bodyLarge?.color),
+                onPressed: () => Get.back(),
+              )
+            : null,
         title: Text(
           "Categories",
           style: theme.textTheme.headlineSmall?.copyWith(
@@ -39,13 +45,13 @@ class CategoryPageView extends StatelessWidget {
         children: [
           /// 🔥 MODERN SEARCH BAR
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-            child: _buildSearchBar(context),
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
+            child: _buildSearchBar(context, controller),
           ),
 
           Expanded(
             child: Obx(() {
-              if (controller.isLoading.value) {
+              if (controller.isLoading.value && controller.allCategories.isEmpty) {
                 return Center(
                   child: CircularProgressIndicator(
                     color: theme.colorScheme.primary,
@@ -54,7 +60,7 @@ class CategoryPageView extends StatelessWidget {
               }
 
               if (controller.categories.isEmpty) {
-                return _buildEmptyState(context);
+                return _buildEmptyState(context, controller);
               }
 
               return RefreshIndicator(
@@ -62,9 +68,9 @@ class CategoryPageView extends StatelessWidget {
                 backgroundColor: theme.cardColor,
                 onRefresh: controller.fetchCategories,
                 child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 80),
                   itemCount: controller.categories.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 16),
+                  separatorBuilder: (_, __) => const SizedBox(height: 14),
                   itemBuilder: (context, index) {
                     final category = controller.categories[index];
                     return _buildCategoryCard(context, controller, category);
@@ -128,16 +134,17 @@ class CategoryPageView extends StatelessWidget {
   /// ===============================
   /// MODERN SEARCH BAR
   /// ===============================
-  Widget _buildSearchBar(BuildContext context) {
+  Widget _buildSearchBar(BuildContext context, CategoryController controller) {
     final theme = Theme.of(context);
 
     return Container(
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           )
@@ -145,6 +152,7 @@ class CategoryPageView extends StatelessWidget {
       ),
       child: TextField(
         style: theme.textTheme.bodyMedium,
+        onChanged: controller.searchCategories,
         decoration: InputDecoration(
           hintText: "Search categories...",
           hintStyle: theme.textTheme.bodySmall,
@@ -152,8 +160,17 @@ class CategoryPageView extends StatelessWidget {
             IconlyLight.search,
             color: theme.iconTheme.color,
           ),
+          suffixIcon: Obx(() {
+            if (controller.searchQuery.value.isEmpty) return const SizedBox.shrink();
+            return IconButton(
+              icon: const Icon(Icons.clear, size: 18),
+              onPressed: () {
+                controller.searchCategories('');
+              },
+            );
+          }),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         ),
       ),
     );
@@ -281,34 +298,38 @@ class CategoryPageView extends StatelessWidget {
   /// ===============================
   /// EMPTY STATE
   /// ===============================
-  Widget _buildEmptyState(
-      BuildContext context) {
+  Widget _buildEmptyState(BuildContext context, CategoryController controller) {
     final theme = Theme.of(context);
+    final isSearching = controller.searchQuery.value.isNotEmpty;
 
     return Center(
       child: Column(
-        mainAxisAlignment:
-            MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             IconlyLight.category,
-            size: 80,
-            color: theme
-                .colorScheme.primary
-                .withOpacity(0.3),
+            size: 70,
+            color: theme.colorScheme.primary.withValues(alpha: 0.3),
           ),
           const SizedBox(height: 16),
           Text(
-            "No Categories Found",
-            style: theme
-                .textTheme.titleMedium,
+            isSearching ? "No Matching Categories" : "No Categories Found",
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 6),
           Text(
-            "Pull down to refresh",
-            style:
-                theme.textTheme.bodySmall,
+            isSearching
+                ? "No categories match '${controller.searchQuery.value}'"
+                : "Pull down to refresh",
+            style: theme.textTheme.bodySmall,
           ),
+          if (isSearching) ...[
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => controller.searchCategories(''),
+              child: const Text("Clear Search"),
+            ),
+          ],
         ],
       ),
     );

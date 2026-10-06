@@ -17,20 +17,16 @@ class BuyerDeliveryChallanView extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: Obx(() {
           final theme = Theme.of(context);
           return AppBar(
-            backgroundColor: Colors.transparent,
+            backgroundColor: theme.scaffoldBackgroundColor,
             elevation: 0,
-            leading: controller.isSearching.value
-                ? const SizedBox.shrink()
-                : IconButton(
-                    icon: const Icon(IconlyLight.arrow_left_2),
-                    onPressed: () => Get.back(),
-                  ),
+            automaticallyImplyLeading: false,
+            leading: null,
             title: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: controller.isSearching.value

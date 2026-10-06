@@ -3,8 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class GlobalErrorHandler {
+  static bool _isShowingDialog = false;
+
   /// SERVER ERROR
   static void showServerError() {
+    if (_isShowingDialog) return;
+    _isShowingDialog = true;
     Get.dialog(
       _buildErrorDialog(
         icon: IconlyLight.danger,
@@ -13,12 +17,16 @@ class GlobalErrorHandler {
         message:
             "We sincerely apologize from the Daal Setu team.\n\nOur server is currently not responding. Please try again in a few moments.",
       ),
-      barrierDismissible: false,
-    );
+      barrierDismissible: true,
+    ).then((_) {
+      _isShowingDialog = false;
+    });
   }
 
   /// NO INTERNET
   static void showNoInternet() {
+    if (_isShowingDialog) return;
+    _isShowingDialog = true;
     Get.dialog(
       _buildErrorDialog(
         icon: IconlyLight.danger,
@@ -27,8 +35,10 @@ class GlobalErrorHandler {
         message:
             "Please check your internet connection and try again.\n\nIf the problem continues, try reconnecting to your network.",
       ),
-      barrierDismissible: false,
-    );
+      barrierDismissible: true,
+    ).then((_) {
+      _isShowingDialog = false;
+    });
   }
 
   /// COMMON MODERN DIALOG UI

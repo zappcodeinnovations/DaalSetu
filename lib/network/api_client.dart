@@ -53,15 +53,11 @@ class ApiClient {
       print("❌ NO INTERNET: $endpoint");
       GlobalErrorHandler.showNoInternet();
       throw Exception("No Internet Connection");
-    } on HttpException {
+    } on TimeoutException {
+      print("⏳ API TIMEOUT: $endpoint");
       GlobalErrorHandler.showServerError();
-      throw Exception("Server Error");
-    } on FormatException {
-      throw Exception("Invalid Response Format");
+      throw Exception("Server Timeout. Please try again.");
     } catch (e) {
-      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized")) {
-        GlobalErrorHandler.showServerError();
-      }
       rethrow;
     }
   }
@@ -96,10 +92,11 @@ class ApiClient {
       print("❌ NO INTERNET: $endpoint");
       GlobalErrorHandler.showNoInternet();
       throw Exception("No Internet Connection");
+    } on TimeoutException {
+      print("⏳ API TIMEOUT: $endpoint");
+      GlobalErrorHandler.showServerError();
+      throw Exception("Server Timeout. Please try again.");
     } catch (e) {
-      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized")) {
-        GlobalErrorHandler.showServerError();
-      }
       rethrow;
     }
   }
@@ -165,10 +162,11 @@ class ApiClient {
       print("❌ NO INTERNET: $endpoint");
       GlobalErrorHandler.showNoInternet();
       throw Exception("No Internet Connection");
+    } on TimeoutException {
+      print("⏳ API TIMEOUT: $endpoint");
+      GlobalErrorHandler.showServerError();
+      throw Exception("Server Timeout. Please try again.");
     } catch (e) {
-      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized")) {
-        GlobalErrorHandler.showServerError();
-      }
       rethrow;
     }
   }
@@ -199,10 +197,11 @@ class ApiClient {
       print("❌ NO INTERNET: $endpoint");
       GlobalErrorHandler.showNoInternet();
       throw Exception("No Internet Connection");
+    } on TimeoutException {
+      print("⏳ API TIMEOUT: $endpoint");
+      GlobalErrorHandler.showServerError();
+      throw Exception("Server Timeout. Please try again.");
     } catch (e) {
-      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized")) {
-        GlobalErrorHandler.showServerError();
-      }
       rethrow;
     }
   }
@@ -266,21 +265,21 @@ class ApiClient {
     final statusCode = response.statusCode;
     final body = response.body;
 
-    if (statusCode >= 200 && statusCode < 300) {
-      if (body.trim().isEmpty) return <String, dynamic>{};
+    if (statusCode >= 200 && statusCode < 400) {
+      if (body.trim().isEmpty) return <String, dynamic>{"success": true, "message": "Action successful"};
       try {
         return jsonDecode(body);
       } catch (_) {
-        return <String, dynamic>{};
+        return <String, dynamic>{"success": true, "message": "Action successful"};
       }
     } else {
       print("❌ API RESPONSE ERROR");
       print("📥 STATUS CODE: $statusCode");
-      print("📥 BODY: $body");
+      print("📥 RESPONSE BODY: $body");
 
       String errorMessage = "Something went wrong. Please try again.";
       if (body.trim().startsWith("<") || body.contains("<!doctype") || body.contains("<html")) {
-        errorMessage = "Server is temporarily unavailable. Please try again later.";
+        errorMessage = "Server is temporarily unavailable (HTML response). Please try again later.";
       } else {
         try {
           final decoded = jsonDecode(body);
@@ -306,6 +305,8 @@ class ApiClient {
               messages.add(decoded['detail']);
             } else if (decoded['error'] is String && decoded['error'].toString().trim().isNotEmpty) {
               messages.add(decoded['error']);
+            } else if (decoded['message'] is String && decoded['message'].toString().trim().isNotEmpty) {
+              messages.add(decoded['message']);
             } else {
               decoded.forEach((key, val) {
                 if (key == 'status' ||
@@ -317,7 +318,6 @@ class ApiClient {
                     key == 'success') {
                   return;
                 }
-                if (key == 'message') return;
 
                 if (val is List) {
                   messages.add("$key: ${val.join(', ')}");
@@ -327,10 +327,6 @@ class ApiClient {
                   val.forEach((k, v) => messages.add("$key.$k: $v"));
                 }
               });
-
-              if (messages.isEmpty && decoded['message'] is String && decoded['message'].toString().trim().isNotEmpty) {
-                messages.add(decoded['message']);
-              }
             }
 
             if (messages.isNotEmpty) {
@@ -343,7 +339,7 @@ class ApiClient {
           }
         } catch (_) {
           if (statusCode >= 500) {
-            errorMessage = "Server is temporarily unavailable. Please try again later.";
+            errorMessage = "Server error ($statusCode). Please try again later.";
           }
         }
       }
@@ -354,11 +350,11 @@ class ApiClient {
       } else if (statusCode == 400) {
         throw Exception(errorMessage);
       } else if (statusCode == 401) {
-        throw Exception("Unauthorized");
+        throw Exception(errorMessage.isNotEmpty && errorMessage != "Something went wrong. Please try again." ? errorMessage : "Unauthorized (401)");
       } else if (statusCode == 403) {
-        throw Exception("Forbidden");
+        throw Exception(errorMessage.isNotEmpty && errorMessage != "Something went wrong. Please try again." ? errorMessage : "Forbidden (403)");
       } else if (statusCode == 404) {
-        throw Exception("Resource not found");
+        throw Exception(errorMessage.isNotEmpty && errorMessage != "Something went wrong. Please try again." ? errorMessage : "Resource not found (404)");
       } else {
         throw Exception(errorMessage);
       }
