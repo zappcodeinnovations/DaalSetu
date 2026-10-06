@@ -15,7 +15,7 @@ class ApiUrls {
   static const profile = "/api/user/";
   //categories
   static const String categories = "/api/categories/";
-  static const String subcategories = "/api/categories/{id}/sub-category/";
+  static const String subcategories = "/api/categories/{id}/sub-categories/";
 
   // Categories & Brands
   static const String createCategory = "/api/categories/";

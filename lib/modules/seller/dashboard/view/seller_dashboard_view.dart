@@ -78,6 +78,8 @@ class SellerDashboardView extends StatelessWidget {
               children: [
                 _buildHeaderCard(context, data.header),
                 const SizedBox(height: 24),
+                _buildActionButtons(context),
+                const SizedBox(height: 24),
                 _sectionTitle(context, "Overview KPIs"),
                 const SizedBox(height: 12),
                 _buildResponsiveKpiGrid(context, data.kpis),
@@ -97,6 +99,80 @@ class SellerDashboardView extends StatelessWidget {
           ),
         );
       }),
+    );
+  }
+
+  Widget _buildActionButtons(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _buildActionCard(
+            context,
+            title: 'Create Buyer Offer',
+            icon: IconlyLight.ticket_star,
+            color: Colors.red,
+            onTap: () {
+              Get.toNamed('/buyer/offers/create');
+            },
+          ),
+          const SizedBox(width: 16),
+          _buildActionCard(
+            context,
+            title: 'Create Offer',
+            icon: IconlyLight.plus,
+            color: Colors.green,
+            onTap: () {
+              Get.toNamed('/admin/create-offer');
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionCard(BuildContext context, {
+    required String title,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: color.withOpacity(0.3),
+          ),
+          boxShadow: isDark ? [] : [
+            BoxShadow(
+              color: color.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color),
+            const SizedBox(width: 12),
+            Text(
+              title,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

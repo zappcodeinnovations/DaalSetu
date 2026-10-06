@@ -10,10 +10,12 @@ class BuyerOffersController extends GetxController {
 
   var offersList = <BuyerOfferModel>[].obs;
 
-  // The type of offers to fetch (e.g., 'all', 'today', 'pending', 'previous', 'interests')
-  final String offerType;
+  var _offerType = ''.obs;
+  String get offerType => _offerType.value;
 
-  BuyerOffersController({required this.offerType});
+  BuyerOffersController({String offerType = 'all'}) {
+    _offerType.value = offerType;
+  }
 
   @override
   void onInit() {
@@ -54,6 +56,13 @@ class BuyerOffersController extends GetxController {
       errorMessage(e.toString());
     } finally {
       isLoading(false);
+    }
+  }
+
+  void changeTab(String newType) {
+    if (_offerType.value != newType) {
+      _offerType.value = newType;
+      fetchOffers();
     }
   }
 

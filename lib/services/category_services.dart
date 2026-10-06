@@ -40,7 +40,7 @@ class CategoryService {
   static Future<List<SubCategoryModel>> fetchSubCategories() async {
     try {
       final dynamic response = await ApiClient.get(
-        endpoint: ApiUrls.subcategories,
+        endpoint: "/api/subcategories/",
         requireAuth: true,
       );
 

@@ -113,18 +113,10 @@ class BuyerMyInterestsView extends StatelessWidget {
                     children: [
                       if (offer.status == 'requested') ...[
                         Expanded(
-                          child: ElevatedButton(
-                            onPressed: () => _showActionDialog(context, "APPROVE", offer),
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                            child: const Text("APPROVE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
                           child: OutlinedButton(
-                            onPressed: () => _showActionDialog(context, "REJECT", offer),
+                            onPressed: () => _showActionDialog(context, "CANCEL", offer),
                             style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                            child: const Text("REJECT", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                            child: const Text("CANCEL", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                           ),
                         ),
                       ],
@@ -173,11 +165,11 @@ class BuyerMyInterestsView extends StatelessWidget {
       onConfirm: () {
         Get.back();
         if (action == "APPROVE") {
-          controller.performAction('approve', offer.id!, offer.id!, remarkController.text);
-        } else if (action == "REJECT") {
-          controller.performAction('reject_interest', offer.id!, offer.id!, remarkController.text);
+          controller.performAction('approve', offer.productId ?? offer.id!, offer.interestId ?? offer.id!, remarkController.text);
+        } else if (action == "CANCEL" || action == "REJECT") {
+          controller.performAction('reject_interest', offer.productId ?? offer.id!, offer.interestId ?? offer.id!, remarkController.text);
         } else {
-          controller.performAction('confirm', offer.id!, offer.id!, remarkController.text);
+          controller.performAction('confirm', offer.productId ?? offer.id!, offer.interestId ?? offer.id!, remarkController.text);
         }
       },
       textCancel: "CANCEL",
