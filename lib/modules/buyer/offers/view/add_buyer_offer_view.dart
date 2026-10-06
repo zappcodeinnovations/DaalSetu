@@ -162,6 +162,20 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
       print("📤 SUBMITTING REQUIREMENT PAYLOAD: $body");
 
       await BuyerServices.createOffer(body);
+      
+      // Refresh offers controllers and dashboard
+      try {
+        if (Get.isRegistered<BuyerOffersController>(tag: 'requirements')) {
+          Get.find<BuyerOffersController>(tag: 'requirements').fetchOffers();
+        }
+        if (Get.isRegistered<BuyerOffersController>(tag: 'all')) {
+          Get.find<BuyerOffersController>(tag: 'all').fetchOffers();
+        }
+        if (Get.isRegistered<BuyerDashboardController>()) {
+          Get.find<BuyerDashboardController>().fetchDashboardData();
+        }
+      } catch (_) {}
+
       Get.back();
       Get.snackbar("Success", "Requirement posted successfully",
           snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
