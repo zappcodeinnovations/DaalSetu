@@ -109,40 +109,84 @@ class ChangePasswordScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 16),
 
-                            // Tip
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.primary
-                                    .withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: theme.colorScheme.primary
-                                      .withValues(alpha: 0.15),
+                            // Dynamic Password Requirements Card
+                            Obx(() {
+                              final hasMinLength = controller.hasMinLength;
+                              final hasLetter = controller.hasLetter;
+                              final hasNumber = controller.hasNumber;
+                              final hasSymbol = controller.hasSymbol;
+                              final isAllValid = controller.isNewPasswordValid;
+
+                              return Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: isAllValid
+                                      ? Colors.green.withValues(alpha: 0.08)
+                                      : theme.colorScheme.primary
+                                          .withValues(alpha: 0.06),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isAllValid
+                                        ? Colors.green.withValues(alpha: 0.3)
+                                        : theme.colorScheme.primary
+                                            .withValues(alpha: 0.15),
+                                  ),
                                 ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    IconlyLight.info_square,
-                                    color: theme.colorScheme.primary,
-                                    size: 18,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      "Use at least 8 characters with letters, numbers, and symbols.",
-                                      style: GoogleFonts.inter(
-                                        color: theme
-                                            .textTheme.bodyMedium?.color,
-                                        fontSize: 12,
-                                        height: 1.4,
-                                      ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          isAllValid
+                                              ? IconlyBold.shield_done
+                                              : IconlyLight.info_square,
+                                          color: isAllValid
+                                              ? Colors.green
+                                              : theme.colorScheme.primary,
+                                          size: 18,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          "Password Requirements",
+                                          style: GoogleFonts.inter(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: isAllValid
+                                                ? Colors.green
+                                                : theme.textTheme.bodyLarge?.color,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                                    const SizedBox(height: 10),
+                                    _buildRequirementItem(
+                                      theme: theme,
+                                      isValid: hasMinLength,
+                                      text: "At least 8 characters",
+                                    ),
+                                    const SizedBox(height: 6),
+                                    _buildRequirementItem(
+                                      theme: theme,
+                                      isValid: hasLetter,
+                                      text: "Contains at least 1 letter (a-z, A-Z)",
+                                    ),
+                                    const SizedBox(height: 6),
+                                    _buildRequirementItem(
+                                      theme: theme,
+                                      isValid: hasNumber,
+                                      text: "Contains at least 1 number (0-9)",
+                                    ),
+                                    const SizedBox(height: 6),
+                                    _buildRequirementItem(
+                                      theme: theme,
+                                      isValid: hasSymbol,
+                                      text: "Contains at least 1 symbol (!@#\$%...)",
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
 
                             const SizedBox(height: 28),
 
@@ -219,4 +263,37 @@ class ChangePasswordScreen extends StatelessWidget {
       ],
     );
   }
+
+  Widget _buildRequirementItem({
+    required ThemeData theme,
+    required bool isValid,
+    required String text,
+  }) {
+    final activeColor = const Color(0xFF2E7D32);
+    final isDark = theme.brightness == Brightness.dark;
+    final inactiveColor = isDark
+        ? Colors.white38
+        : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6) ??
+            Colors.grey;
+
+    return Row(
+      children: [
+        Icon(
+          isValid ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+          size: 15,
+          color: isValid ? activeColor : inactiveColor,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: isValid ? FontWeight.w500 : FontWeight.w400,
+            color: isValid ? activeColor : inactiveColor,
+          ),
+        ),
+      ],
+    );
+  }
 }
+

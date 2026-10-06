@@ -13,6 +13,7 @@ class ApiUrls {
   static const String adminDashboard = "/api/admin/dashboard/";
   //profile
   static const profile = "/api/user/";
+  static const profileUpdate = "/api/profile/update/";
   //categories
   static const String categories = "/api/categories/";
   static const String subcategories = "/api/categories/{id}/sub-category/";
@@ -48,6 +49,7 @@ class ApiUrls {
 
   // Brands
   static const String brandsDropdown = "/api/brands/dropdown/";
+  static const String brandsDashboard = "/api/brands/dashboard/";
 
   // Transporter Panel
   static const String transporterDashboard = "/api/transporter/dashboard/";
@@ -72,10 +74,13 @@ class ApiUrls {
   static const String buyerPendingOffers = "/api/offers/pending/";
   static const String buyerPreviousOffers = "/api/offers/previous/";
 
-  static String buyerApproveOffer(int productId) => "/api/offers/$productId/approve/";
-  static String buyerConfirmOffer(int productId) => "/api/offers/$productId/confirm/";
-  static String buyerRejectInterest(int productId) => "/api/offers/$productId/buyer-reject-interest/";
-  static String buyerRejectOffer(int productId) => "/api/offers/$productId/reject/";
+  static String buyerApproveOffer(int productId) => "/api/offers/$productId/confirm-deal/";
+  static String buyerConfirmOffer(int productId) => "/api/offers/$productId/confirm-deal/";
+  static String buyerRejectInterest(int productId) => "/api/offers/$productId/confirm-deal/";
+  static String buyerRejectOffer(int productId) => "/api/offers/$productId/confirm-deal/";
+  static String buyerShowInterest(int productId) => "/api/offers/$productId/show-interest/";
+  static const String kycRequestApproval = "/api/kyc/request-approval/";
+  static const String buyerCategories = "/api/buyer-categories/";
 
   static String companyDetails(int id) => "/api/company/$id/";
   static String setPrimaryCompany(int id) => "/api/company/$id/set-primary/";
@@ -146,5 +151,4 @@ class ApiUrls {
   static String buyerRequirementDetail(String rfqId) => "/api/buyer-requirements/${Uri.encodeComponent(rfqId)}/";
   static const String consignments = "/api/consignments/";
   static String consignmentDetail(int contractId) => "/api/consignments/$contractId/";
-  static const String kycRequestApproval = "/api/kyc/request-approval/";
 }

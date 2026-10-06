@@ -8,6 +8,9 @@ import '../controller/buyer_dashboard_controller.dart';
 import '../../../profile/controller/profile_controller.dart';
 import '../../../category/model/category_model.dart';
 import '../../../category/view/category_page.dart';
+import '../../orders/view/buyer_orders_view.dart';
+import '../../offers/view/buyer_offers_view.dart';
+import '../../../seller/notifications/view/seller_notification_view.dart';
 
 class BuyerDashboardView extends StatelessWidget {
   BuyerDashboardView({super.key});
@@ -20,7 +23,7 @@ class BuyerDashboardView extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: _buildAppBar(context),
       body: Obx(() {
         if (controller.isLoading.value) {
@@ -63,7 +66,9 @@ class BuyerDashboardView extends StatelessWidget {
                 const SizedBox(height: 30),
                 _buildKPIGrid(context, data.kpis),
                 const SizedBox(height: 30),
-                _buildSectionHeader(context, "Recent Deals & Orders", "View All", onTap: () {}),
+                _buildSectionHeader(context, "Recent Deals & Orders", "View All", onTap: () {
+                  Get.to(() => const BuyerOrdersView());
+                }),
                 const SizedBox(height: 16),
                 _buildRecentOrdersList(context, data.recentOrders),
                 const SizedBox(height: 100),
@@ -138,7 +143,7 @@ class BuyerDashboardView extends StatelessWidget {
                 children: [
                   IconButton(
                     icon: const Icon(IconlyLight.notification, size: 28),
-                    onPressed: () {},
+                    onPressed: () => Get.to(() => const SellerNotificationView()),
                   ),
                   Positioned(
                     right: 10,
@@ -172,26 +177,28 @@ class BuyerDashboardView extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                "Hello, ",
-                style: GoogleFonts.poppins(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: theme.textTheme.bodyLarge?.color,
-                ),
+          Text.rich(
+            TextSpan(
+              text: "Hello, ",
+              style: GoogleFonts.poppins(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: theme.textTheme.bodyLarge?.color,
               ),
-              Text(
-                name,
-                style: GoogleFonts.poppins(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: theme.textTheme.bodyLarge?.color,
+              children: [
+                TextSpan(
+                  text: name,
+                  style: GoogleFonts.poppins(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textTheme.bodyLarge?.color,
+                  ),
                 ),
-              ),
-              const Text(" 👋", style: TextStyle(fontSize: 22)),
-            ],
+                const TextSpan(text: " 👋"),
+              ],
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
           Text(
@@ -208,26 +215,34 @@ class BuyerDashboardView extends StatelessWidget {
 
   Widget _buildSearchBar(BuildContext context) {
     final theme = Theme.of(context);
+    final searchController = TextEditingController();
+
     return Container(
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.5)),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       child: Row(
         children: [
           const Icon(IconlyLight.search, color: Colors.grey),
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
+              controller: searchController,
+              onSubmitted: (val) {
+                if (val.trim().isNotEmpty) {
+                  Get.to(() => const BuyerOffersView(initialIndex: 0));
+                }
+              },
               decoration: InputDecoration(
                 hintText: "Search for pulses, dals, commodities...",
                 hintStyle: GoogleFonts.inter(fontSize: 13, color: Colors.grey),
@@ -235,9 +250,12 @@ class BuyerDashboardView extends StatelessWidget {
               ),
             ),
           ),
-          Container(
-            padding: const EdgeInsets.all(8),
-            child: Icon(IconlyLight.filter, color: theme.colorScheme.primary),
+          GestureDetector(
+            onTap: () => Get.to(() => const CategoryPageView()),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              child: Icon(IconlyLight.filter, color: theme.colorScheme.primary),
+            ),
           ),
         ],
       ),
@@ -330,7 +348,7 @@ class BuyerDashboardView extends StatelessWidget {
             ),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () => Get.to(() => const BuyerOffersView(initialIndex: 5)),
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: Colors.white,
@@ -385,8 +403,7 @@ class BuyerDashboardView extends StatelessWidget {
       return const Center(child: CircularProgressIndicator());
     }
     
-    // Only show first 3 categories
-    final displayCategories = categories.take(3).toList();
+    final displayCategories = categories.take(6).toList();
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -395,26 +412,32 @@ class BuyerDashboardView extends StatelessWidget {
         children: displayCategories.map((cat) {
           return Padding(
             padding: const EdgeInsets.only(right: 16),
-            child: Column(
-              children: [
-                GlassCard(
-                  padding: const EdgeInsets.all(16),
-                  child: Icon(
-                    IconlyBold.category,
-                    size: 32,
-                    color: Colors.amber[700],
+            child: SizedBox(
+              width: 76,
+              child: Column(
+                children: [
+                  GlassCard(
+                    padding: const EdgeInsets.all(16),
+                    child: Icon(
+                      IconlyBold.category,
+                      size: 28,
+                      color: Colors.amber[700],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  cat.categoryName,
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                  const SizedBox(height: 6),
+                  Text(
+                    cat.categoryName,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         }).toList(),
@@ -454,14 +477,16 @@ class BuyerDashboardView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 20),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Text(
             title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w500,
@@ -471,8 +496,10 @@ class BuyerDashboardView extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.poppins(
-              fontSize: 18,
+              fontSize: 17,
               fontWeight: FontWeight.bold,
               color: color,
             ),
@@ -516,17 +543,19 @@ class BuyerDashboardView extends StatelessWidget {
           child: Row(
             children: [
               CircleAvatar(
-                radius: 24,
+                radius: 22,
                 backgroundColor: Colors.amber[100],
-                child: Icon(IconlyBold.bag, color: Colors.amber[800], size: 24),
+                child: Icon(IconlyBold.bag, color: Colors.amber[800], size: 22),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       order['commodity']?.toString() ?? "Commodity",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -536,21 +565,27 @@ class BuyerDashboardView extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       "Order ID: ${order['id']}",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         fontSize: 10,
                         color: theme.textTheme.bodySmall?.color,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
                         Icon(IconlyLight.bag, size: 12, color: theme.textTheme.bodySmall?.color),
                         const SizedBox(width: 4),
-                        Text(
-                          order['quantity']?.toString() ?? "-",
-                          style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodySmall?.color),
+                        Flexible(
+                          child: Text(
+                            order['quantity']?.toString() ?? "-",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodySmall?.color),
+                          ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         Icon(IconlyLight.calendar, size: 12, color: theme.textTheme.bodySmall?.color),
                         const SizedBox(width: 4),
                         Text(
@@ -562,11 +597,14 @@ class BuyerDashboardView extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
                     "₹${order['value'] ?? '0'}",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -581,12 +619,12 @@ class BuyerDashboardView extends StatelessWidget {
                       color: theme.textTheme.bodySmall?.color,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      color: statusColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       status,

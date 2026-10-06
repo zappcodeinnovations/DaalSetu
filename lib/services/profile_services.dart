@@ -21,15 +21,16 @@ class ProfileService {
 
   static Future<ProfileModel> updateProfile(Map<String, dynamic> data) async {
     final response = await ApiClient.patch(
-      endpoint: ApiUrls.profile,
+      endpoint: ApiUrls.profileUpdate,
       data: data,
       requireAuth: true,
     );
 
-    if (response == null || response is! Map<String, dynamic>) {
-      throw Exception("Invalid profile update response");
+    // Re-fetch the complete user profile to ensure fields like role and account_status remain intact
+    try {
+      return await getProfile();
+    } catch (_) {
+      return ProfileModel.fromJson(response);
     }
-
-    return ProfileModel.fromJson(response);
   }
 }

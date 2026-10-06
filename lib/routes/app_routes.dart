@@ -71,6 +71,7 @@ abstract class AppRoutes {
   static const transporterUsers = '/transporter/users';
   static const transporterDrivers = '/transporter/drivers';
   static const transporterVehicles = '/transporter/vehicles';
+  static const transporterBidding = '/transporter/bidding';
 
   // BUYER PANEL
   static const buyerDashboard = '/buyer/dashboard';

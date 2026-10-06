@@ -12,144 +12,173 @@ class TransporterBranchView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            size: 20,
+            color: theme.textTheme.bodyLarge?.color,
+          ),
+          onPressed: () => Get.back(),
+        ),
         title: Text(
           "Branches",
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.bold,
+            fontSize: 20,
+            color: theme.textTheme.bodyLarge?.color,
           ),
         ),
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80.0),
-        child: FloatingActionButton.extended(
-          heroTag: null,
-          onPressed: () => _showRequestBranchDialog(context),
-          icon: const Icon(IconlyLight.message),
-          label: const Text("Enter Ref Code"),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          foregroundColor: Colors.white,
-        ),
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: "transporter_branch_fab",
+        onPressed: () => _showRequestBranchDialog(context),
+        icon: const Icon(IconlyLight.message, size: 20),
+        label: Text("Enter Ref Code", style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        backgroundColor: primary,
+        foregroundColor: Colors.white,
       ),
-      body: Obx(() {
-        if (controller.isLoading.value && controller.branches.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (controller.branches.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Builder(
-                  builder: (context) => Icon(
-                    IconlyLight.location, 
-                    size: 80, 
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.5)
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Center(
+                child: Opacity(
+                  opacity: 0.05,
+                  child: Image.asset(
+                    'assets/images/thumb_logo.png',
+                    width: 280,
+                    fit: BoxFit.contain,
                   ),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  "No branches found",
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Tap 'Enter Ref Code' to request access to a branch.",
-                  style: GoogleFonts.inter(
-                    color: Colors.grey,
-                  ),
-                ),
-              ],
+              ),
             ),
-          );
-        }
+          ),
+          Obx(() {
+            if (controller.isLoading.value && controller.branches.isEmpty) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-        return RefreshIndicator(
-          onRefresh: () => controller.fetchBranches(),
-          child: ListView.separated(
-            padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 80),
-            itemCount: controller.branches.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final branch = controller.branches[index];
-              return GlassCard(
-                padding: const EdgeInsets.all(16),
-                child: Row(
+            if (controller.branches.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(IconlyLight.location, color: Theme.of(context).colorScheme.primary),
+                    Icon(
+                      IconlyLight.location, 
+                      size: 70, 
+                      color: primary.withValues(alpha: 0.5),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            branch.locationName,
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "${branch.area}, ${branch.city}, ${branch.state}",
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          if (branch.branchCode != null) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              "Code: ${branch.branchCode}",
-                              style: GoogleFonts.inter(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                          ],
-                        ],
+                    const SizedBox(height: 16),
+                    Text(
+                      "No branches found",
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: theme.textTheme.bodyLarge?.color,
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: branch.isActive 
-                            ? Colors.green.withOpacity(0.15)
-                            : Colors.orange.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        branch.isActive ? "ACTIVE" : "PENDING",
-                        style: GoogleFonts.inter(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: branch.isActive ? Colors.green : Colors.orange,
-                        ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Tap 'Enter Ref Code' to request access to a branch.",
+                      style: GoogleFonts.inter(
+                        color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
                 ),
               );
-            },
-          ),
-        );
-      }),
+            }
+
+            return RefreshIndicator(
+              onRefresh: () => controller.fetchBranches(),
+              color: primary,
+              child: ListView.separated(
+                padding: const EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 80),
+                itemCount: controller.branches.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final branch = controller.branches[index];
+                  return GlassCard(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: primary.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(IconlyLight.location, color: primary),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                branch.locationName,
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: theme.textTheme.bodyLarge?.color,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "${branch.area}, ${branch.city}, ${branch.state}",
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                                ),
+                              ),
+                              if (branch.branchCode != null) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  "Code: ${branch.branchCode}",
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: primary,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: branch.isActive 
+                                ? Colors.green.withValues(alpha: 0.15)
+                                : Colors.orange.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            branch.isActive ? "ACTIVE" : "PENDING",
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: branch.isActive ? Colors.green : Colors.orange,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 
@@ -160,6 +189,7 @@ class TransporterBranchView extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) {
+        final theme = Theme.of(dialogContext);
         return Dialog(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -174,7 +204,7 @@ class TransporterBranchView extends StatelessWidget {
                     icon: IconlyLight.document,
                     size: 56,
                     iconSize: 28,
-                    color: Theme.of(dialogContext).colorScheme.primary,
+                    color: theme.colorScheme.primary,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -183,6 +213,7 @@ class TransporterBranchView extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
+                    color: theme.textTheme.bodyLarge?.color,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -210,7 +241,7 @@ class TransporterBranchView extends StatelessWidget {
                     final success = await controller.requestBranchByCode(codeCtrl.text);
                     isSubmitting.value = false;
                     if (success) {
-                      Get.back(); // close dialog
+                      Get.back();
                     }
                   },
                   child: Text(

@@ -6,7 +6,10 @@ import '../model/category_model.dart';
 class CategoryController extends GetxController {
 
   var isLoading = false.obs;
+  var allCategories = <CategoryModel>[].obs;
+  var systemCategories = <CategoryModel>[].obs;
   var categories = <CategoryModel>[].obs;
+  var searchQuery = ''.obs;
 
   @override
   void onInit() {
@@ -18,31 +21,69 @@ class CategoryController extends GetxController {
     try {
       isLoading.value = true;
 
-      final data = await CategoryService.fetchCategories();
-      categories.assignAll(data);
+      // 1. Fetch system categories for approval picker
+      try {
+        final sysData = await CategoryService.fetchCategories();
+        systemCategories.assignAll(sysData);
+      } catch (_) {}
+
+      // 2. Fetch buyer's approved/requested categories
+      final data = await CategoryService.fetchBuyerCategories();
+      allCategories.assignAll(data);
+      _applyFilter();
 
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      Get.snackbar("Error", e.toString().replaceAll("Exception: ", ""));
     } finally {
       isLoading.value = false;
     }
   }
 
-  Future<void> createCategory(String name) async {
+  void searchCategories(String query) {
+    searchQuery.value = query;
+    _applyFilter();
+  }
+
+  void _applyFilter() {
+    if (searchQuery.value.trim().isEmpty) {
+      categories.assignAll(allCategories);
+    } else {
+      final q = searchQuery.value.trim().toLowerCase();
+      categories.assignAll(
+        allCategories.where((c) => c.categoryName.toLowerCase().contains(q)).toList(),
+      );
+    }
+  }
+
+  Future<bool> sendForApproval({List<int>? categoryIds, String? categoryName, String? note}) async {
     try {
       Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
-      final response = await CategoryService.createCategory(name);
-      Get.back(); // close dialog
-      
-      if (response['success'] == true || response['category_name'] == name) {
-        Get.snackbar("Success", "Category created successfully", snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
-        fetchCategories(); // Refresh list
-      } else {
-        Get.snackbar("Error", response['message'] ?? "Failed to create category", snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
-      }
+      final response = await CategoryService.requestCategoryApproval(
+        categoryIds: categoryIds ?? [],
+        categoryName: categoryName,
+        note: note,
+      );
+      if (Get.isDialogOpen ?? false) Get.back();
+
+      Get.snackbar(
+        "Success",
+        response['message'] ?? "Category request sent for approval successfully",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+      await fetchCategories(); // Refresh list
+      return true;
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
-      Get.snackbar("Error", e.toString(), snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        "Error",
+        e.toString().replaceAll("Exception: ", ""),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return false;
     }
   }
 

@@ -36,26 +36,108 @@ class BuyerOfferModel {
   });
 
   factory BuyerOfferModel.fromJson(Map<String, dynamic> json) {
-    // There are two formats. Main Buyer Offer, and "My Interests/Today's Offers" formats.
-    // The "Today's Offers" usually comes in a different minimal shape or similar to Dashboard recent_rfqs.
+    int? parsedProductId;
+    if (json['product_id'] != null) {
+      parsedProductId = int.tryParse(json['product_id'].toString());
+    } else if (json['offer_id'] != null) {
+      parsedProductId = int.tryParse(json['offer_id'].toString());
+    } else if (json['offer'] is Map && json['offer']['id'] != null) {
+      parsedProductId = int.tryParse(json['offer']['id'].toString());
+    } else if (json['product'] is Map && json['product']['id'] != null) {
+      parsedProductId = int.tryParse(json['product']['id'].toString());
+    } else if (json['offer'] is int) {
+      parsedProductId = json['offer'];
+    } else if (json['product'] is int) {
+      parsedProductId = json['product'];
+    }
+
+    int? parsedInterestId;
+    if (json['interest_id'] != null) {
+      parsedInterestId = int.tryParse(json['interest_id'].toString());
+    } else if (json['interest'] is Map && json['interest']['id'] != null) {
+      parsedInterestId = int.tryParse(json['interest']['id'].toString());
+    } else if (json['interest'] is int) {
+      parsedInterestId = json['interest'];
+    }
+
+    final rootId = json['id'] != null ? int.tryParse(json['id'].toString()) : null;
+
+    if (parsedProductId == null && parsedInterestId == null) {
+      parsedProductId = rootId;
+    } else if (parsedProductId != null && parsedInterestId == null) {
+      if (rootId != null && rootId != parsedProductId) {
+        parsedInterestId = rootId;
+      }
+    } else if (parsedProductId == null && parsedInterestId != null) {
+      if (rootId != null && rootId != parsedInterestId) {
+        parsedProductId = rootId;
+      }
+    }
+
+    final rawTitle = json['title'] ??
+        json['product_title'] ??
+        (json['offer'] is Map ? json['offer']['title'] : null) ??
+        (json['product'] is Map ? json['product']['title'] : null) ??
+        'Offer';
+
+    final rawStatus = json['status'] ??
+        json['deal_status'] ??
+        json['product_status'] ??
+        (json['offer'] is Map ? json['offer']['status'] : null) ??
+        'Pending';
+
+    final rawQuantity = json['requested_quantity'] ??
+        json['required_quantity'] ??
+        json['buyer_required_quantity'] ??
+        json['quantity'] ??
+        json['seller_snapshot_quantity'] ??
+        (json['offer'] is Map ? json['offer']['quantity'] : null) ??
+        '';
+
+    final rawUnit = json['quantity_unit'] ??
+        json['unit'] ??
+        json['amount_unit'] ??
+        (json['offer'] is Map ? json['offer']['unit'] : null) ??
+        '';
+
+    final rawPrice = json['requested_amount'] ??
+        json['offered_amount'] ??
+        json['buyer_offered_amount'] ??
+        json['amount'] ??
+        json['seller_snapshot_amount'] ??
+        json['price'] ??
+        (json['offer'] is Map ? json['offer']['price'] : null) ??
+        '0';
+
     return BuyerOfferModel(
-      id: json['id'] ?? json['interest_id'] ?? json['product_id'],
-      productId: json['product_id'] ?? json['id'],
-      interestId: json['interest_id'] ?? json['id'],
-      transactionId: json['transaction_id'] ?? '',
-      title: json['title'] ?? json['product_title'] ?? '',
-      requestedQuantity: json['requested_quantity'] ?? json['required_quantity'] ?? json['quantity']?.toString() ?? '',
-      quantityUnit: json['quantity_unit'] ?? json['unit'] ?? '',
-      requestedAmount: json['requested_amount'] ?? json['offered_amount'] ?? json['price']?.toString() ?? '',
-      amountUnit: json['amount_unit'] ?? '',
-      status: json['status'] ?? '',
-      createdAt: json['created_at'] ?? json['updated_at'] ?? '',
+      id: rootId ?? parsedProductId ?? parsedInterestId,
+      productId: parsedProductId,
+      interestId: parsedInterestId,
+      transactionId: json['transaction_id']?.toString() ?? '',
+      title: rawTitle.toString(),
+      requestedQuantity: rawQuantity.toString(),
+      quantityUnit: rawUnit.toString(),
+      requestedAmount: rawPrice.toString(),
+      amountUnit: json['amount_unit']?.toString() ?? '',
+      status: rawStatus.toString(),
+      createdAt: json['created_at']?.toString() ?? json['updated_at']?.toString() ?? '',
       
-      // Compute safe display strings
-      displayTitle: json['title'] ?? json['product_title'] ?? 'Unknown Offer',
-      displayStatus: (json['status'] ?? 'Unknown').toString().toUpperCase(),
-      displayQuantity: '${json['requested_quantity'] ?? json['required_quantity'] ?? json['quantity'] ?? ''} ${json['quantity_unit'] ?? json['unit'] ?? ''}'.trim(),
-      displayPrice: '₹${json['requested_amount'] ?? json['offered_amount'] ?? json['price'] ?? '0'}',
+      displayTitle: rawTitle.toString(),
+      displayStatus: rawStatus.toString().toUpperCase(),
+      displayQuantity: '$rawQuantity $rawUnit'.trim(),
+      displayPrice: '₹$rawPrice',
     );
   }
+
+  bool get isConfirmed {
+    final s = (displayStatus ?? status ?? '').toLowerCase();
+    return s.contains('confirm') || s.contains('deal_confirmed') || s.contains('approved');
+  }
+
+  bool get isRejected {
+    final s = (displayStatus ?? status ?? '').toLowerCase();
+    return s.contains('reject') || s.contains('cancel') || s.contains('closed');
+  }
+
+  bool get isActionable => !isConfirmed && !isRejected;
 }

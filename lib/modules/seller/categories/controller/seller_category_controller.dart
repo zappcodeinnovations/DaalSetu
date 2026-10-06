@@ -59,19 +59,52 @@ class SellerCategoryController extends GetxController {
   }
 
   Future<void> search(String query) async {
-    if (query.isEmpty) {
+    final cleanQuery = query.trim().toLowerCase();
+    if (cleanQuery.isEmpty) {
       isSearching(false);
       searchResults.clear();
       return;
     }
 
+    isSearching(true);
     try {
-      isSearching(true);
-      final data = await SellerServices.searchCategories(query);
-      searchResults.assignAll(data.map((e) => CategoryDetailModel.fromJson(e)).toList());
+      final data = await SellerServices.searchCategories(cleanQuery);
+      if (data.isNotEmpty) {
+        searchResults.assignAll(data.map((e) => CategoryDetailModel.fromJson(e)).toList());
+        return;
+      }
     } catch (e) {
-      print("Search Error: $e");
+      print("Search API Error, falling back to local search: $e");
     }
+
+    // Local fallback: search inside categoryTree
+    final List<CategoryDetailModel> localResults = [];
+    void traverse(List<CategoryTreeModel> nodes) {
+      for (final node in nodes) {
+        if (node.name.toLowerCase().contains(cleanQuery)) {
+          final isNodeActive = node.status.toLowerCase() == 'active';
+          localResults.add(CategoryDetailModel(
+            id: node.id,
+            name: node.name,
+            isActive: isNodeActive,
+            level: node.level,
+            brands: node.brands,
+            path: node.name,
+            status: node.status,
+            childrenCount: node.children.length,
+            fullPath: node.name,
+            isRoot: node.level == 0,
+            isLeaf: node.children.isEmpty,
+            hasChildren: node.children.isNotEmpty,
+          ));
+        }
+        if (node.children.isNotEmpty) {
+          traverse(node.children);
+        }
+      }
+    }
+    traverse(categoryTree);
+    searchResults.assignAll(localResults);
   }
 
   Future<void> addRootCategory() async {

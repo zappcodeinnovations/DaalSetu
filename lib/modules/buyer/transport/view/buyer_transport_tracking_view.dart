@@ -48,9 +48,9 @@ class _BuyerTransportTrackingViewState extends State<BuyerTransportTrackingView>
     const primaryColor = Color(0xFFFFB300);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         title: Text("Transport Tracking", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
       ),

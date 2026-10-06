@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
 import '../controller/buyer_offer_detail_controller.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../theme/glass_widgets.dart';
 
 class BuyerOfferDetailsView extends StatelessWidget {
   final int offerId;
@@ -12,6 +13,7 @@ class BuyerOfferDetailsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(BuyerOfferDetailController());
     final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
 
     // Initial fetch
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -23,7 +25,10 @@ class BuyerOfferDetailsView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text("Requirement Details", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        title: Text(
+          "Requirement Details",
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+        ),
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
@@ -31,13 +36,16 @@ class BuyerOfferDetailsView extends StatelessWidget {
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator(color: Color(0xFFFFB300)));
+          return Center(child: CircularProgressIndicator(color: primaryColor));
         }
 
         final data = controller.offerDetails.value;
         if (data == null) return const Center(child: Text("Data not found"));
 
         final status = data['status']?.toString().toLowerCase() ?? 'requested';
+        final List<dynamic> quotations = (data['quotations'] is List)
+            ? data['quotations']
+            : ((data['quotes'] is List) ? data['quotes'] : []);
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -49,31 +57,102 @@ class BuyerOfferDetailsView extends StatelessWidget {
 
               _sectionTitle("Product Specifications"),
               _detailCard([
-                _infoRow("Title", data['title'] ?? "N/A"),
-                _infoRow("Category", data['category_name'] ?? "N/A"),
-                _infoRow("Brand", data['brand_name'] ?? "N/A"),
+                _infoRow("Title", data['title'] ?? data['product_title'] ?? "N/A"),
+                _infoRow("Category", data['category_name'] ?? data['category'] ?? "N/A"),
+                _infoRow("Brand", data['brand_name'] ?? data['brand'] ?? "N/A"),
               ]),
 
               const SizedBox(height: 24),
               _sectionTitle("Order Quantity & Target"),
               _detailCard([
-                _infoRow("Requested Quantity", "${data['requested_quantity']} ${data['quantity_unit']}"),
-                _infoRow("Target Price", "₹${data['requested_amount']} per ${data['amount_unit']}"),
+                _infoRow("Requested Quantity", "${data['requested_quantity'] ?? data['quantity'] ?? '0'} ${data['quantity_unit'] ?? data['unit'] ?? ''}"),
+                _infoRow("Target Price", "₹${data['requested_amount'] ?? data['price'] ?? '0'} per ${data['amount_unit'] ?? data['unit'] ?? ''}"),
                 _infoRow("Total Value", "₹${data['total_value'] ?? 'Calculated on deal'}"),
               ]),
 
+              if (quotations.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                _sectionTitle("Received Quotations (${quotations.length})"),
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: quotations.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final q = quotations[index];
+                    return GlassCard(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                q['seller_name'] ?? "Seller Quote #${index + 1}",
+                                style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
+                              Text(
+                                "₹${q['price'] ?? q['offered_amount'] ?? '0'}",
+                                style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: primaryColor),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text("Offered Qty: ${q['quantity'] ?? '0'} ${q['unit'] ?? ''}", style: GoogleFonts.inter(fontSize: 12, color: Colors.grey)),
+                          if ((q['remark'] ?? '').isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text("Note: ${q['remark']}", style: GoogleFonts.inter(fontSize: 11, color: Colors.grey)),
+                          ],
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              OutlinedButton(
+                                onPressed: () {
+                                  Get.snackbar("Quote Rejected", "Quotation has been rejected.");
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                  side: const BorderSide(color: Colors.red),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                                child: const Text("Reject", style: TextStyle(fontSize: 12)),
+                              ),
+                              const SizedBox(width: 8),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Get.snackbar("Quote Accepted", "Deal confirmed with seller.", backgroundColor: Colors.green, colorText: Colors.white);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                                child: const Text("Accept", style: TextStyle(color: Colors.white, fontSize: 12)),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+
               const SizedBox(height: 32),
-              if (status == 'requested')
+              if (status == 'requested' || status == 'open' || status == 'active')
                 SizedBox(
                   width: double.infinity,
-                  height: 55,
-                  child: ElevatedButton(
+                  height: 52,
+                  child: ElevatedButton.icon(
                     onPressed: () => _showCancelConfirm(context, offerId),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
-                    child: const Text("CANCEL REQUIREMENT", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    icon: const Icon(IconlyLight.close_square),
+                    label: const Text("CANCEL / CLOSE REQUIREMENT", style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               const SizedBox(height: 40),
@@ -86,7 +165,7 @@ class BuyerOfferDetailsView extends StatelessWidget {
 
   Widget _buildStatusHeader(String status) {
     Color color = const Color(0xFFFFB300);
-    if (status.contains('confirm')) color = Colors.green;
+    if (status.contains('confirm') || status.contains('active') || status.contains('open')) color = Colors.green;
     if (status.contains('cancel') || status.contains('reject')) color = Colors.red;
 
     return Container(
@@ -115,14 +194,8 @@ class BuyerOfferDetailsView extends StatelessWidget {
   }
 
   Widget _detailCard(List<Widget> children) {
-    return Container(
-      width: double.infinity,
+    return GlassCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Get.theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Get.theme.dividerColor.withOpacity(0.05)),
-      ),
       child: Column(children: children),
     );
   }
@@ -143,7 +216,7 @@ class BuyerOfferDetailsView extends StatelessWidget {
   void _showCancelConfirm(BuildContext context, int id) {
     Get.defaultDialog(
       title: "Cancel Requirement",
-      middleText: "Are you sure you want to cancel this buying request?",
+      middleText: "Are you sure you want to cancel and close this buying requirement?",
       textConfirm: "YES, CANCEL",
       confirmTextColor: Colors.white,
       buttonColor: Colors.red,
