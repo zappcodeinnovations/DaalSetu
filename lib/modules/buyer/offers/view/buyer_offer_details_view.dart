@@ -40,8 +40,16 @@ class BuyerOfferDetailsView extends StatelessWidget {
           return Center(child: CircularProgressIndicator(color: primaryColor));
         }
 
-        final data = controller.offerDetails.value;
-        if (data == null) return const Center(child: Text("Data not found"));
+        final rawData = controller.offerDetails.value;
+        if (rawData == null) return const Center(child: Text("Data not found"));
+
+        final Map<String, dynamic> data = (rawData['rfq'] is Map)
+            ? Map<String, dynamic>.from(rawData['rfq'] as Map)
+            : ((rawData['data'] is Map)
+                ? Map<String, dynamic>.from(rawData['data'] as Map)
+                : ((rawData['offer'] is Map)
+                    ? Map<String, dynamic>.from(rawData['offer'] as Map)
+                    : Map<String, dynamic>.from(rawData)));
 
         final status = data['status']?.toString().toLowerCase() ?? 'requested';
         final List<dynamic> quotations = (data['quotations'] is List)
@@ -61,6 +69,10 @@ class BuyerOfferDetailsView extends StatelessWidget {
                 _infoRow("Title", data['title'] ?? data['product_title'] ?? data['commodity'] ?? "N/A"),
                 _infoRow("Category", data['category_name'] ?? data['category'] ?? "N/A"),
                 _infoRow("Brand", data['brand_name'] ?? data['brand'] ?? "N/A"),
+                if (data['description'] != null && data['description'].toString().trim().isNotEmpty)
+                  _infoRow("Description", data['description']),
+                if (data['buyer_name'] != null && data['buyer_name'].toString().trim().isNotEmpty)
+                  _infoRow("Buyer", data['buyer_name']),
                 if (data['seller'] != null || data['seller_name'] != null)
                   _infoRow("Seller", data['seller_name'] ?? data['seller'] ?? "N/A"),
                 if (data['seller_company_name'] != null || data['company_name'] != null)
@@ -70,10 +82,18 @@ class BuyerOfferDetailsView extends StatelessWidget {
               const SizedBox(height: 24),
               _sectionTitle("Pricing & Inventory"),
               _detailCard([
-                _infoRow("Quantity", "${data['available_quantity'] ?? data['remaining_quantity'] ?? data['requested_quantity'] ?? data['quantity'] ?? '0'} ${data['quantity_unit'] ?? data['unit'] ?? ''}".trim()),
-                _infoRow("Price", "₹${data['amount'] ?? data['requested_amount'] ?? data['price'] ?? '0'} per ${data['amount_unit'] ?? data['unit'] ?? ''}".trim()),
+                _infoRow("Quantity", "${data['required_quantity'] ?? data['available_quantity'] ?? data['remaining_quantity'] ?? data['requested_quantity'] ?? data['quantity'] ?? '0'} ${data['quantity_unit'] ?? data['price_unit'] ?? data['unit'] ?? ''}".trim()),
+                _infoRow("Target Price", "₹${data['target_price'] ?? data['amount'] ?? data['requested_amount'] ?? data['price'] ?? '0'} per ${data['price_unit'] ?? data['amount_unit'] ?? data['unit'] ?? 'qtl'}".trim()),
+                if (data['required_bag_count'] != null)
+                  _infoRow("Bag Count", "${data['required_bag_count']} Bags"),
+                if (data['packing_weight_kg'] != null)
+                  _infoRow("Packing Weight", "${data['packing_weight_kg']} kg"),
                 if (data['loading_location'] != null && data['loading_location'].toString().isNotEmpty)
                   _infoRow("Loading Location", data['loading_location']),
+                if (data['delivery_terms'] != null && data['delivery_terms'].toString().trim().isNotEmpty)
+                  _infoRow("Delivery Terms", data['delivery_terms']),
+                if (data['buyer_remark'] != null && data['buyer_remark'].toString().trim().isNotEmpty)
+                  _infoRow("Buyer Remark", data['buyer_remark']),
                 if (data['total_value'] != null)
                   _infoRow("Total Value", "₹${data['total_value']}"),
               ]),

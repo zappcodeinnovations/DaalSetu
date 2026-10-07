@@ -448,46 +448,74 @@ class BuyerServices {
   }
 
   static Future<Map<String, dynamic>> getOfferDetails(int id) async {
-    // 1. Try /api/offers/$id/
-    try {
-      final response = await ApiClient.get(
-        endpoint: "/api/offers/$id/",
-        requireAuth: true,
-      );
-      if (response != null && response is Map<String, dynamic>) {
-        return response;
-      }
-    } catch (_) {}
-
-    // 2. Try /api/products/$id/
-    try {
-      final response = await ApiClient.get(
-        endpoint: "${ApiUrls.products}$id/",
-        requireAuth: true,
-      );
-      if (response != null && response is Map<String, dynamic>) {
-        return response;
-      }
-    } catch (_) {}
-
-    // 3. Try /api/rfqs/$id/
+    // 1. Try canonical /api/rfqs/$id/ (Buyer Requirements)
     try {
       final response = await ApiClient.get(
         endpoint: "/api/rfqs/$id/",
         requireAuth: true,
+        suppressErrorDialog: true,
       );
       if (response != null && response is Map<String, dynamic>) {
+        if (response['rfq'] is Map<String, dynamic>) {
+          return Map<String, dynamic>.from(response['rfq']);
+        }
+        if (response['data'] is Map<String, dynamic>) {
+          return Map<String, dynamic>.from(response['data']);
+        }
         return response;
       }
     } catch (_) {}
 
-    // 4. Try /api/buyer-offers/$id/
+    // 2. Try /api/offers/$id/
+    try {
+      final response = await ApiClient.get(
+        endpoint: "/api/offers/$id/",
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
+      if (response != null && response is Map<String, dynamic>) {
+        if (response['offer'] is Map<String, dynamic>) {
+          return Map<String, dynamic>.from(response['offer']);
+        }
+        if (response['data'] is Map<String, dynamic>) {
+          return Map<String, dynamic>.from(response['data']);
+        }
+        return response;
+      }
+    } catch (_) {}
+
+    // 3. Try /api/buyer-offers/$id/
     try {
       final response = await ApiClient.get(
         endpoint: ApiUrls.buyerOfferDetails(id),
         requireAuth: true,
+        suppressErrorDialog: true,
       );
       if (response != null && response is Map<String, dynamic>) {
+        if (response['buyer_offer'] is Map<String, dynamic>) {
+          return Map<String, dynamic>.from(response['buyer_offer']);
+        }
+        if (response['data'] is Map<String, dynamic>) {
+          return Map<String, dynamic>.from(response['data']);
+        }
+        return response;
+      }
+    } catch (_) {}
+
+    // 4. Try /api/products/$id/
+    try {
+      final response = await ApiClient.get(
+        endpoint: "${ApiUrls.products}$id/",
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
+      if (response != null && response is Map<String, dynamic>) {
+        if (response['product'] is Map<String, dynamic>) {
+          return Map<String, dynamic>.from(response['product']);
+        }
+        if (response['data'] is Map<String, dynamic>) {
+          return Map<String, dynamic>.from(response['data']);
+        }
         return response;
       }
     } catch (_) {}
@@ -496,6 +524,18 @@ class BuyerServices {
   }
 
   static Future<Map<String, dynamic>> cancelOffer(int id) async {
+    try {
+      final response = await ApiClient.post(
+        endpoint: "/api/rfqs/$id/cancel/",
+        body: {},
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
+      if (response != null && response is Map<String, dynamic>) {
+        return response;
+      }
+    } catch (_) {}
+
     final response = await ApiClient.post(
       endpoint: ApiUrls.buyerOfferAction(id),
       body: {"action": "cancel"},
