@@ -239,11 +239,26 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
                         final id = int.tryParse(b['id'].toString()) ?? 0;
                         final name = b['location_name'] ?? b['branch_name'] ?? b['city'] ?? "Branch $id";
                         final isSelected = selectedBranchIds.contains(id);
+                        final isDark = theme.brightness == Brightness.dark;
                         return FilterChip(
-                          label: Text(name),
+                          label: Text(
+                            name,
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                              color: isSelected
+                                  ? (isDark ? Colors.amber.shade200 : Colors.amber.shade900)
+                                  : (theme.textTheme.bodyMedium?.color ?? Colors.black87),
+                            ),
+                          ),
                           selected: isSelected,
-                          selectedColor: primaryColor.withOpacity(0.25),
-                          checkmarkColor: primaryColor,
+                          selectedColor: primaryColor.withOpacity(0.2),
+                          backgroundColor: theme.cardColor,
+                          checkmarkColor: isDark ? Colors.amber.shade200 : Colors.amber.shade900,
+                          side: BorderSide(
+                            color: isSelected ? primaryColor : theme.dividerColor.withOpacity(0.5),
+                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           onSelected: (selected) {
                             setState(() {
                               if (selected) {
