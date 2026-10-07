@@ -17,7 +17,10 @@ class BuyerBranchController extends GetxController {
     fetchBranches();
   }
 
-  Future<void> fetchBranches() async {
+  Future<void> fetchBranches({bool clearLeftCache = false}) async {
+    if (clearLeftCache) {
+      _leftBranchIds.clear();
+    }
     try {
       isLoading.value = true;
       final res = await SellerServices.getSellerBranches();
@@ -88,6 +91,7 @@ class BuyerBranchController extends GetxController {
     if (cleanCode.isEmpty) return false;
     try {
       final res = await SellerServices.requestBranchByCode(cleanCode);
+      _leftBranchIds.clear(); // Reset left filter so newly joined or approved branch shows immediately
       await fetchBranches();
 
       final msg = res['message']?.toString() ?? "Branch request submitted successfully";

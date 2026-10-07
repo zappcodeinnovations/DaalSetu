@@ -87,7 +87,7 @@ class BuyerBranchView extends StatelessWidget {
         }
 
         return RefreshIndicator(
-          onRefresh: controller.fetchBranches,
+          onRefresh: () => controller.fetchBranches(clearLeftCache: true),
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
@@ -292,16 +292,28 @@ class BuyerBranchView extends StatelessWidget {
                               ),
                             ),
                             if (branch.id != null)
-                              OutlinedButton(
-                                onPressed: () => _showLeaveBranchDialog(context, branch.id!),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.red,
-                                  side: const BorderSide(color: Colors.red),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                ),
-                                child: const Text("LEAVE", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
-                              ),
+                              (branch.isPrimary == true)
+                                  ? Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue.withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        "PRIMARY",
+                                        style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue),
+                                      ),
+                                    )
+                                  : OutlinedButton(
+                                      onPressed: () => _showLeaveBranchDialog(context, branch.id!),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: Colors.red,
+                                        side: const BorderSide(color: Colors.red),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      ),
+                                      child: const Text("LEAVE", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                                    ),
                           ],
                         ),
                       );
