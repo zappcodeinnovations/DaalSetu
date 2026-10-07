@@ -24,6 +24,12 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
   final packingController = TextEditingController(text: '30');
   bool _syncingPacking = false;
 
+  double get _quantityUnitKg => selectedUnit == 'ton'
+      ? 1000
+      : selectedUnit == 'kg'
+      ? 1
+      : 100;
+
   int? selectedCategoryId;
   int? selectedBrandId;
   String selectedUnit = "qtl";
@@ -53,7 +59,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
       return;
     }
     _syncingPacking = true;
-    bagCountController.text = ((quantityQtl * 100) / packingKg)
+    bagCountController.text = ((quantityQtl * _quantityUnitKg) / packingKg)
         .round()
         .toString();
     _syncingPacking = false;
@@ -67,8 +73,8 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
       return;
     }
     _syncingPacking = true;
-    quantityController.text = ((bags * packingKg) / 100).toStringAsFixed(3);
-    selectedUnit = 'qtl';
+    quantityController.text = ((bags * packingKg) / _quantityUnitKg)
+        .toStringAsFixed(3);
     _syncingPacking = false;
   }
 
@@ -206,8 +212,8 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
         "required_quantity": qtyNum.toString(),
         "requested_quantity": qtyNum,
         "quantity": qtyNum,
-        "quantity_unit": "qtl",
-        "unit": "qtl",
+        "quantity_unit": selectedUnit,
+        "unit": selectedUnit,
         "target_price": amountNum.toString(),
         "requested_amount": amountNum,
         "price": amountNum,
@@ -372,7 +378,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
                       Expanded(
                         child: _buildTextField(
                           quantityController,
-                          "Quantity (QTL)",
+                          "Quantity",
                           IconlyLight.buy,
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
@@ -387,8 +393,17 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
                           value: selectedUnit,
                           items: const [
                             DropdownMenuItem(value: "qtl", child: Text("QTL")),
+                            DropdownMenuItem(value: "kg", child: Text("KG")),
+                            DropdownMenuItem(value: "ton", child: Text("TON")),
                           ],
-                          onChanged: null,
+                          onChanged: (val) {
+                            if (val == null) return;
+                            setState(() {
+                              selectedUnit = val;
+                              selectedAmountUnit = val;
+                            });
+                            _syncBagsFromQuantity('');
+                          },
                           icon: Icons.unfold_more,
                         ),
                       ),
