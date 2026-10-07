@@ -52,15 +52,15 @@ class AdminCreateChallanView extends StatelessWidget {
 
                       const SizedBox(height: 24),
 
-                      // ── Section 2: Commodity & Quantity ──────────────────
-                      _buildSectionTitle(context, "2. Goods & Quantity", Icons.inventory_2_outlined),
+                      // ── Section 2: Commodity & Items Table ───────────────
+                      _buildSectionTitle(context, "2. Items & Quantity (Auto-filled)", Icons.inventory_2_outlined),
                       const SizedBox(height: 10),
                       _buildGoodsSection(context, controller, isDark, isTablet),
 
                       const SizedBox(height: 24),
 
-                      // ── Section 3: Logistics & Vehicle ───────────────────
-                      _buildSectionTitle(context, "3. Logistics & Vehicle Details", Icons.local_shipping_outlined),
+                      // ── Section 3: Logistics & Transport Details ─────────
+                      _buildSectionTitle(context, "3. Transport & Driver Details (Auto-filled)", Icons.local_shipping_outlined),
                       const SizedBox(height: 10),
                       _buildLogisticsSection(context, controller, isDark, isTablet),
 
@@ -74,7 +74,7 @@ class AdminCreateChallanView extends StatelessWidget {
                       const SizedBox(height: 24),
 
                       // ── Section 5: Remarks / Instructions ────────────────
-                      _buildSectionTitle(context, "5. Remarks & Instructions", IconlyLight.chat),
+                      _buildSectionTitle(context, "5. Remarks & Narration", IconlyLight.chat),
                       const SizedBox(height: 10),
                       _buildRemarksSection(context, controller, isDark),
                     ],
@@ -144,14 +144,14 @@ class AdminCreateChallanView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        "Tap to Select Contract / Deal",
+                        "Tap to Select Contract / Accepted Bid",
                         style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
                       ),
                       const SizedBox(height: 3),
                       Text(
                         controller.isLoadingContracts.value
                             ? "Loading confirmed contracts..."
-                            : "Auto-fills seller, buyer, commodity & route",
+                            : "Auto-fills bags, packing, driver, vehicle & route",
                         style: TextStyle(
                           fontSize: 12,
                           color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
@@ -189,6 +189,14 @@ class AdminCreateChallanView extends StatelessWidget {
                       "Contract #${contract.contractId}",
                       style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
                     ),
+                    if (controller.isLoadingDetail.value) ...[
+                      const SizedBox(width: 8),
+                      const SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryGold),
+                      ),
+                    ],
                   ],
                 ),
                 TextButton(
@@ -203,14 +211,20 @@ class AdminCreateChallanView extends StatelessWidget {
             _infoRow("Seller", contract.displaySellerId.isNotEmpty ? contract.displaySellerId : contract.sellerName, isDark),
             _infoRow("Buyer", contract.displayBuyerId.isNotEmpty ? contract.displayBuyerId : contract.buyerName, isDark),
             _infoRow("Deal Quantity", "${contract.dealQuantity} ${contract.quantityUnit}", isDark),
-            _infoRow("Rate / Amount", "₹${contract.dealAmount} / ${contract.amountUnit}", isDark),
+            _infoRow("Deal Rate", "₹${contract.dealAmount} / ${contract.amountUnit}", isDark),
+            if (controller.bagCountController.text.isNotEmpty)
+              _infoRow("Total Bags", "${controller.bagCountController.text} Bags", isDark),
+            if (controller.transporterNameController.text.isNotEmpty)
+              _infoRow("Transporter", controller.transporterNameController.text, isDark),
+            if (controller.truckNumberController.text.isNotEmpty)
+              _infoRow("Truck No.", controller.truckNumberController.text, isDark),
           ],
         ),
       );
     });
   }
 
-  // ── Goods Section ────────────────────────────────────────────────────────
+  // ── Items & Goods Section (Matching Website Items Table) ─────────────────
   Widget _buildGoodsSection(
     BuildContext context,
     AdminCreateDCController controller,
@@ -220,6 +234,7 @@ class AdminCreateChallanView extends StatelessWidget {
     return _cardContainer(
       isDark,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (isTablet)
             Row(
@@ -227,8 +242,8 @@ class AdminCreateChallanView extends StatelessWidget {
                 Expanded(
                   child: _textField(
                     controller: controller.quantityController,
-                    label: "Quantity to Dispatch",
-                    hint: "e.g. 250",
+                    label: "Quantity to Dispatch *",
+                    hint: "e.g. 500.100",
                     icon: Icons.scale_outlined,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     isDark: isDark,
@@ -238,8 +253,8 @@ class AdminCreateChallanView extends StatelessWidget {
                 Expanded(
                   child: _textField(
                     controller: controller.bagCountController,
-                    label: "Total Bags (Bori)",
-                    hint: "e.g. 500",
+                    label: "Total Bags (Bori) *",
+                    hint: "e.g. 1667",
                     icon: Icons.inventory_2_outlined,
                     keyboardType: TextInputType.number,
                     isDark: isDark,
@@ -250,8 +265,8 @@ class AdminCreateChallanView extends StatelessWidget {
           else ...[
             _textField(
               controller: controller.quantityController,
-              label: "Quantity to Dispatch",
-              hint: "e.g. 250",
+              label: "Quantity to Dispatch *",
+              hint: "e.g. 500.100",
               icon: Icons.scale_outlined,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               isDark: isDark,
@@ -259,11 +274,85 @@ class AdminCreateChallanView extends StatelessWidget {
             const SizedBox(height: 14),
             _textField(
               controller: controller.bagCountController,
-              label: "Total Bags (Bori)",
-              hint: "e.g. 500",
+              label: "Total Bags (Bori) *",
+              hint: "e.g. 1667",
               icon: Icons.inventory_2_outlined,
               keyboardType: TextInputType.number,
               isDark: isDark,
+            ),
+          ],
+          const SizedBox(height: 14),
+          if (isTablet)
+            Row(
+              children: [
+                Expanded(
+                  child: _textField(
+                    controller: controller.packingWeightController,
+                    label: "Packing Weight (KG)",
+                    hint: "e.g. 30.000",
+                    icon: Icons.fitness_center_outlined,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    isDark: isDark,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: _textField(
+                    controller: controller.rateController,
+                    label: "Rate (₹)",
+                    hint: "e.g. 50.00",
+                    icon: Icons.currency_rupee_outlined,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    isDark: isDark,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: _textField(
+                    controller: controller.amountController,
+                    label: "Total Amount (₹)",
+                    hint: "e.g. 25005.00",
+                    icon: Icons.calculate_outlined,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    isDark: isDark,
+                  ),
+                ),
+              ],
+            )
+          else ...[
+            _textField(
+              controller: controller.packingWeightController,
+              label: "Packing Weight (KG)",
+              hint: "e.g. 30.000",
+              icon: Icons.fitness_center_outlined,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              isDark: isDark,
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: _textField(
+                    controller: controller.rateController,
+                    label: "Rate (₹)",
+                    hint: "e.g. 50.00",
+                    icon: Icons.currency_rupee_outlined,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    isDark: isDark,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _textField(
+                    controller: controller.amountController,
+                    label: "Total Amount (₹)",
+                    hint: "e.g. 25005.00",
+                    icon: Icons.calculate_outlined,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    isDark: isDark,
+                  ),
+                ),
+              ],
             ),
           ],
         ],
@@ -271,7 +360,7 @@ class AdminCreateChallanView extends StatelessWidget {
     );
   }
 
-  // ── Logistics & Vehicle Section ──────────────────────────────────────────
+  // ── Logistics & Vehicle Section (Matching Website Transport Details) ────
   Widget _buildLogisticsSection(
     BuildContext context,
     AdminCreateDCController controller,
@@ -282,13 +371,47 @@ class AdminCreateChallanView extends StatelessWidget {
       isDark,
       child: Column(
         children: [
-          _textField(
-            controller: controller.truckNumberController,
-            label: "Truck / Vehicle Number *",
-            hint: "e.g. MP 04 GA 1234",
-            icon: Icons.local_shipping_outlined,
-            isDark: isDark,
-          ),
+          if (isTablet)
+            Row(
+              children: [
+                Expanded(
+                  child: _textField(
+                    controller: controller.transporterNameController,
+                    label: "Transporter Name",
+                    hint: "e.g. Transporter First",
+                    icon: Icons.business_outlined,
+                    isDark: isDark,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: _textField(
+                    controller: controller.truckNumberController,
+                    label: "Truck / Vehicle Number *",
+                    hint: "e.g. MH31AB1236",
+                    icon: Icons.local_shipping_outlined,
+                    isDark: isDark,
+                  ),
+                ),
+              ],
+            )
+          else ...[
+            _textField(
+              controller: controller.transporterNameController,
+              label: "Transporter Name",
+              hint: "e.g. Transporter First",
+              icon: Icons.business_outlined,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 14),
+            _textField(
+              controller: controller.truckNumberController,
+              label: "Truck / Vehicle Number *",
+              hint: "e.g. MH31AB1236",
+              icon: Icons.local_shipping_outlined,
+              isDark: isDark,
+            ),
+          ],
           const SizedBox(height: 14),
           if (isTablet)
             Row(
@@ -297,7 +420,7 @@ class AdminCreateChallanView extends StatelessWidget {
                   child: _textField(
                     controller: controller.driverNameController,
                     label: "Driver Name *",
-                    hint: "e.g. Ramesh Kumar",
+                    hint: "e.g. Jay Deep",
                     icon: IconlyLight.user,
                     isDark: isDark,
                   ),
@@ -307,9 +430,19 @@ class AdminCreateChallanView extends StatelessWidget {
                   child: _textField(
                     controller: controller.driverPhoneController,
                     label: "Driver Mobile Number",
-                    hint: "e.g. 9876543210",
+                    hint: "e.g. 3234568909",
                     icon: IconlyLight.call,
                     keyboardType: TextInputType.phone,
+                    isDark: isDark,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: _textField(
+                    controller: controller.driverLicenseController,
+                    label: "Driver License Number",
+                    hint: "e.g. Q833874HD92",
+                    icon: Icons.badge_outlined,
                     isDark: isDark,
                   ),
                 ),
@@ -319,18 +452,34 @@ class AdminCreateChallanView extends StatelessWidget {
             _textField(
               controller: controller.driverNameController,
               label: "Driver Name *",
-              hint: "e.g. Ramesh Kumar",
+              hint: "e.g. Jay Deep",
               icon: IconlyLight.user,
               isDark: isDark,
             ),
             const SizedBox(height: 14),
-            _textField(
-              controller: controller.driverPhoneController,
-              label: "Driver Mobile Number",
-              hint: "e.g. 9876543210",
-              icon: IconlyLight.call,
-              keyboardType: TextInputType.phone,
-              isDark: isDark,
+            Row(
+              children: [
+                Expanded(
+                  child: _textField(
+                    controller: controller.driverPhoneController,
+                    label: "Driver Mobile Number",
+                    hint: "e.g. 3234568909",
+                    icon: IconlyLight.call,
+                    keyboardType: TextInputType.phone,
+                    isDark: isDark,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _textField(
+                    controller: controller.driverLicenseController,
+                    label: "Driver License",
+                    hint: "e.g. Q833874HD92",
+                    icon: Icons.badge_outlined,
+                    isDark: isDark,
+                  ),
+                ),
+              ],
             ),
           ],
         ],
@@ -419,10 +568,10 @@ class AdminCreateChallanView extends StatelessWidget {
       isDark,
       child: _textField(
         controller: controller.remarksController,
-        label: "Special Instructions / Remarks",
-        hint: "e.g. Handle with care, check moisture certificate before unloading...",
+        label: "Selected Contract Details & Narration",
+        hint: "Selected Contract Details:\nContract: JBC...\nSeller: ...\nBuyer: ...",
         icon: IconlyLight.chat,
-        maxLines: 3,
+        maxLines: 5,
         isDark: isDark,
       ),
     );
@@ -528,7 +677,7 @@ class AdminCreateChallanView extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    "Select Confirmed Contract",
+                    "Select Confirmed Contract / Bid",
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   IconButton(
@@ -652,6 +801,28 @@ class AdminCreateChallanView extends StatelessWidget {
                 color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
               ),
             ),
+            if (c.bagCount != null && c.bagCount! > 0) ...[
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(Icons.inventory_2_outlined, size: 12, color: isDark ? Colors.white60 : Colors.black54),
+                  const SizedBox(width: 4),
+                  Text(
+                    "${c.bagCount} Bags",
+                    style: TextStyle(fontSize: 11, color: isDark ? Colors.white60 : Colors.black54),
+                  ),
+                  if (c.truckNumber != null && c.truckNumber!.isNotEmpty) ...[
+                    const SizedBox(width: 12),
+                    Icon(Icons.local_shipping_outlined, size: 12, color: isDark ? Colors.white60 : Colors.black54),
+                    const SizedBox(width: 4),
+                    Text(
+                      c.truckNumber!,
+                      style: TextStyle(fontSize: 11, color: isDark ? Colors.white60 : Colors.black54),
+                    ),
+                  ],
+                ],
+              ),
+            ],
           ],
         ),
       ),
@@ -739,9 +910,13 @@ class AdminCreateChallanView extends StatelessWidget {
               color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
             ),
           ),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
