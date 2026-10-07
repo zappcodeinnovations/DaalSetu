@@ -28,16 +28,10 @@ class BuyerBranchView extends StatelessWidget {
           ),
         ),
         actions: [
-          TextButton.icon(
+          IconButton(
             onPressed: () => _showRequestBranchDialog(context),
-            icon: Icon(IconlyLight.password, color: primaryColor, size: 18),
-            label: Text(
-              "Enter Ref Code",
-              style: GoogleFonts.inter(
-                fontWeight: FontWeight.bold,
-                color: primaryColor,
-              ),
-            ),
+            icon: Icon(IconlyLight.password, color: primaryColor),
+            tooltip: "Enter Ref Code",
           ),
           const SizedBox(width: 8),
         ],
