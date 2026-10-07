@@ -10,44 +10,22 @@ class BuyerBranchController extends GetxController {
   var myBranches = <SellerBranchModel>[].obs;
   var pendingRequests = <SellerBranchModel>[].obs;
 
-  static const String _leftBranchIdsKey = "buyer_left_branch_ids";
-  static const String _leftBranchCodesKey = "buyer_left_branch_codes";
-
   final Set<int> _leftBranchIds = {};
   final Set<String> _leftBranchCodes = {};
 
   @override
   void onInit() {
     super.onInit();
-    _initController();
+    _clearLegacyDiskCache();
+    fetchBranches();
   }
 
-  Future<void> _initController() async {
-    await _loadLeftBranches();
-    await fetchBranches();
-  }
-
-  Future<void> _loadLeftBranches() async {
+  /// Wipes legacy disk cache from previous iterations so nothing is falsely blocked
+  Future<void> _clearLegacyDiskCache() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final ids = prefs.getStringList(_leftBranchIdsKey) ?? [];
-      _leftBranchIds.addAll(ids.map((e) => int.tryParse(e)).whereType<int>());
-      final codes = prefs.getStringList(_leftBranchCodesKey) ?? [];
-      _leftBranchCodes.addAll(codes.map((e) => e.toUpperCase()));
-    } catch (_) {}
-  }
-
-  Future<void> _saveLeftBranches() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(
-        _leftBranchIdsKey,
-        _leftBranchIds.map((e) => e.toString()).toList(),
-      );
-      await prefs.setStringList(
-        _leftBranchCodesKey,
-        _leftBranchCodes.toList(),
-      );
+      await prefs.remove("buyer_left_branch_ids");
+      await prefs.remove("buyer_left_branch_codes");
     } catch (_) {}
   }
 
@@ -70,10 +48,16 @@ class BuyerBranchController extends GetxController {
 
         for (final p in rawPending) {
           if (p is Map<String, dynamic>) {
-            if (p['branch_id'] is int) pendingBranchIds.add(p['branch_id'] as int);
-            if (p['id'] is int) pendingBranchIds.add(p['id'] as int);
+            final bId = p['branch_id'] ?? p['id'];
+            if (bId is int) {
+              pendingBranchIds.add(bId);
+              _leftBranchIds.remove(bId);
+            }
             final code = (p['branch_code'] ?? p['code'])?.toString().trim().toUpperCase();
-            if (code != null && code.isNotEmpty) pendingCodes.add(code);
+            if (code != null && code.isNotEmpty) {
+              pendingCodes.add(code);
+              _leftBranchCodes.remove(code);
+            }
           }
         }
 
@@ -94,17 +78,19 @@ class BuyerBranchController extends GetxController {
           primaryBranch.value = null;
         }
 
-        // 3. Parse My Branches (exclude any branch that is pending or has been left)
+        // 3. Parse My Branches (exclude pending requests or branches explicitly left in this session)
         if (data['my_branches'] is List) {
           myBranches.value = (data['my_branches'] as List)
               .map((e) => SellerBranchModel.fromJson(e as Map<String, dynamic>))
               .where((b) {
                 if (b.id == null) return false;
                 final code = b.branchCode?.trim().toUpperCase();
-                if (_leftBranchIds.contains(b.id)) return false;
-                if (code != null && _leftBranchCodes.contains(code)) return false;
+                // If it is in pending requests, it is awaiting approval, NOT in My Branches
                 if (pendingBranchIds.contains(b.id)) return false;
                 if (code != null && pendingCodes.contains(code)) return false;
+                // If explicitly left in this session, keep it hidden
+                if (_leftBranchIds.contains(b.id)) return false;
+                if (code != null && _leftBranchCodes.contains(code)) return false;
                 return true;
               })
               .toList();
@@ -123,20 +109,9 @@ class BuyerBranchController extends GetxController {
     final cleanCode = code.trim().toUpperCase();
     if (cleanCode.isEmpty) return false;
     try {
-      // User explicitly requests this branch, so remove from left sets
-      _leftBranchCodes.remove(cleanCode);
-      for (final b in myBranches) {
-        if (b.branchCode?.trim().toUpperCase() == cleanCode && b.id != null) {
-          _leftBranchIds.remove(b.id);
-        }
-      }
-      for (final p in pendingRequests) {
-        if (p.branchCode?.trim().toUpperCase() == cleanCode) {
-          if (p.id != null) _leftBranchIds.remove(p.id);
-          if (p.branchId != null) _leftBranchIds.remove(p.branchId);
-        }
-      }
-      await _saveLeftBranches();
+      // User is actively requesting to join, unblock any left-branch filters
+      _leftBranchIds.clear();
+      _leftBranchCodes.clear();
 
       final res = await SellerServices.requestBranchByCode(cleanCode);
       await fetchBranches();
@@ -175,7 +150,6 @@ class BuyerBranchController extends GetxController {
       if (branchCode != null && branchCode.isNotEmpty) {
         _leftBranchCodes.add(branchCode.trim().toUpperCase());
       }
-      await _saveLeftBranches();
 
       pendingRequests.removeWhere((r) =>
           r.id == branchOrReqId ||
@@ -204,7 +178,6 @@ class BuyerBranchController extends GetxController {
       if (branchCode != null && branchCode.isNotEmpty) {
         _leftBranchCodes.add(branchCode.trim().toUpperCase());
       }
-      await _saveLeftBranches();
 
       myBranches.removeWhere((b) => b.id == branchId);
       if (primaryBranch.value?.id == branchId) {
@@ -227,7 +200,6 @@ class BuyerBranchController extends GetxController {
         if (branchCode != null && branchCode.isNotEmpty) {
           _leftBranchCodes.add(branchCode.trim().toUpperCase());
         }
-        await _saveLeftBranches();
         myBranches.removeWhere((b) => b.id == branchId);
         if (primaryBranch.value?.id == branchId) {
           primaryBranch.value = null;
@@ -241,7 +213,6 @@ class BuyerBranchController extends GetxController {
         if (branchCode != null && branchCode.isNotEmpty) {
           _leftBranchCodes.remove(branchCode.trim().toUpperCase());
         }
-        await _saveLeftBranches();
         await fetchBranches();
         AppSnackbar.showError(
           title: "Error",
