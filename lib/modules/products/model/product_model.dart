@@ -182,13 +182,62 @@ class ProductModel {
       createdAt: text("created_at"),
       updatedAt: text("updated_at"),
       interestCount: number("interest_count") ?? 0,
-      images: (json["images"] as List? ?? [])
-          .map((item) => ProductImage.fromJson(Map<String, dynamic>.from(item)))
-          .toList(),
-      videos: (json["video"] as List? ?? [])
-          .map((item) => ProductVideo.fromJson(Map<String, dynamic>.from(item)))
-          .toList(),
+      images: _parseImages(json),
+      videos: _parseVideos(json),
     );
+  }
+
+  static List<ProductImage> _parseImages(Map<String, dynamic> json) {
+    final rawList = json["images"] ??
+        json["product_images"] ??
+        json["media_images"] ??
+        json["offer_images"] ??
+        json["photos"] ??
+        json["image_list"];
+
+    List<dynamic> list = [];
+    if (rawList is List) {
+      list = rawList;
+    } else if (rawList != null) {
+      list = [rawList];
+    } else if (json["image"] != null) {
+      list = [json["image"]];
+    } else if (json["primary_image"] != null) {
+      list = [json["primary_image"]];
+    } else if (json["thumbnail"] != null) {
+      list = [json["thumbnail"]];
+    } else if (json["image_url"] != null) {
+      list = [json["image_url"]];
+    }
+
+    return list
+        .where((item) => item != null)
+        .map((item) => ProductImage.fromJson(item))
+        .where((img) => img.imageUrl.trim().isNotEmpty)
+        .toList();
+  }
+
+  static List<ProductVideo> _parseVideos(Map<String, dynamic> json) {
+    final rawList = json["video"] ??
+        json["videos"] ??
+        json["product_videos"] ??
+        json["media_videos"] ??
+        json["video_list"];
+
+    List<dynamic> list = [];
+    if (rawList is List) {
+      list = rawList;
+    } else if (rawList != null) {
+      list = [rawList];
+    } else if (json["video_url"] != null) {
+      list = [json["video_url"]];
+    }
+
+    return list
+        .where((item) => item != null)
+        .map((item) => ProductVideo.fromJson(item))
+        .where((vid) => vid.videoUrl.trim().isNotEmpty)
+        .toList();
   }
 }
 
@@ -248,12 +297,32 @@ class ProductImage {
   final String downloadUrl;
   final bool isPrimary;
 
-  factory ProductImage.fromJson(Map<String, dynamic> json) => ProductImage(
-    id: json["id"] as int? ?? 0,
-    imageUrl: json["image_url"]?.toString() ?? "",
-    downloadUrl: json["download_url"]?.toString() ?? "",
-    isPrimary: json["is_primary"] == true,
-  );
+  factory ProductImage.fromJson(dynamic raw) {
+    if (raw is String) {
+      final formatted = raw.trim();
+      return ProductImage(
+        id: 0,
+        imageUrl: formatted,
+        downloadUrl: formatted,
+        isPrimary: true,
+      );
+    }
+    final json = (raw is Map) ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+    String url = json["image_url"]?.toString() ??
+        json["image"]?.toString() ??
+        json["file"]?.toString() ??
+        json["url"]?.toString() ??
+        json["download_url"]?.toString() ??
+        json["photo"]?.toString() ??
+        "";
+    String downloadUrl = json["download_url"]?.toString() ?? url;
+    return ProductImage(
+      id: json["id"] as int? ?? 0,
+      imageUrl: url,
+      downloadUrl: downloadUrl,
+      isPrimary: json["is_primary"] == true,
+    );
+  }
 }
 
 class ProductVideo {
@@ -270,11 +339,31 @@ class ProductVideo {
   final String downloadUrl;
   final bool isPrimary;
 
-  factory ProductVideo.fromJson(Map<String, dynamic> json) => ProductVideo(
-    id: json["id"] as int? ?? 0,
-    title: json["title"]?.toString() ?? "Product video",
-    videoUrl: json["url"]?.toString() ?? "",
-    downloadUrl: json["download_url"]?.toString() ?? "",
-    isPrimary: json["is_primary"] == true,
-  );
+  factory ProductVideo.fromJson(dynamic raw) {
+    if (raw is String) {
+      final formatted = raw.trim();
+      return ProductVideo(
+        id: 0,
+        title: "Product video",
+        videoUrl: formatted,
+        downloadUrl: formatted,
+        isPrimary: true,
+      );
+    }
+    final json = (raw is Map) ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+    String url = json["url"]?.toString() ??
+        json["video_url"]?.toString() ??
+        json["video"]?.toString() ??
+        json["file"]?.toString() ??
+        json["download_url"]?.toString() ??
+        "";
+    String downloadUrl = json["download_url"]?.toString() ?? url;
+    return ProductVideo(
+      id: json["id"] as int? ?? 0,
+      title: json["title"]?.toString() ?? "Product video",
+      videoUrl: url,
+      downloadUrl: downloadUrl,
+      isPrimary: json["is_primary"] == true,
+    );
+  }
 }

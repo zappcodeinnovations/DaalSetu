@@ -6,24 +6,61 @@ import '../network/api_client.dart';
 
 class ProductService {
   static Future<ProductModel> getProductDetail(int productId) async {
+    Map<String, dynamic>? data;
     try {
       final response = await ApiClient.get(
         endpoint: "/api/offers/$productId/",
         requireAuth: true,
+        suppressErrorDialog: true,
       );
       if (response is Map<String, dynamic>) {
-        return ProductModel.fromJson(response);
+        data = response.containsKey('offer') && response['offer'] is Map<String, dynamic>
+            ? Map<String, dynamic>.from(response['offer'])
+            : (response.containsKey('data') && response['data'] is Map<String, dynamic>
+                ? Map<String, dynamic>.from(response['data'])
+                : response);
       }
     } catch (_) {}
 
-    final response = await ApiClient.get(
-      endpoint: "${ApiUrls.products}$productId/",
-      requireAuth: true,
-    );
-    if (response is! Map<String, dynamic>) {
+    if (data == null) {
+      try {
+        final response = await ApiClient.get(
+          endpoint: "${ApiUrls.products}$productId/",
+          requireAuth: true,
+          suppressErrorDialog: true,
+        );
+        if (response is Map<String, dynamic>) {
+          data = response.containsKey('data') && response['data'] is Map<String, dynamic>
+              ? Map<String, dynamic>.from(response['data'])
+              : response;
+        }
+      } catch (_) {}
+    }
+
+    if (data == null) {
       throw Exception("Invalid product detail response");
     }
-    return ProductModel.fromJson(response);
+
+    // Fallback: If images are empty or not present, fetch from /api/product-images/?product=$productId
+    final rawImages = data['images'] ?? data['product_images'] ?? data['media_images'] ?? data['offer_images'];
+    if (rawImages == null || (rawImages is List && rawImages.isEmpty)) {
+      try {
+        final imgResponse = await ApiClient.get(
+          endpoint: "${ApiUrls.productImages}?product=$productId",
+          requireAuth: true,
+          suppressErrorDialog: true,
+        );
+        if (imgResponse is List && imgResponse.isNotEmpty) {
+          data['images'] = imgResponse;
+        } else if (imgResponse is Map && imgResponse['results'] is List && (imgResponse['results'] as List).isNotEmpty) {
+          data['images'] = imgResponse['results'];
+        } else if (imgResponse is Map && imgResponse['data'] is List && (imgResponse['data'] as List).isNotEmpty) {
+          data['images'] = imgResponse['data'];
+        }
+      } catch (_) {}
+    }
+
+    return ProductModel.fromJson(data);
   }
 
   static Future<List<OfferOption>> getParentCategories() async {
