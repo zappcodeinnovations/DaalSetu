@@ -16,6 +16,7 @@ class BuyerOfferModel {
   final String? displayStatus;
   final String? displayQuantity;
   final String? displayPrice;
+  final bool isRfq;
 
   BuyerOfferModel({
     this.id,
@@ -33,6 +34,7 @@ class BuyerOfferModel {
     this.displayStatus,
     this.displayQuantity,
     this.displayPrice,
+    this.isRfq = false,
   });
 
   factory BuyerOfferModel.fromJson(Map<String, dynamic> json) {
@@ -109,6 +111,12 @@ class BuyerOfferModel {
         (json['offer'] is Map ? json['offer']['price'] : null) ??
         '0';
 
+    final isRfqItem = json.containsKey('rfq_id') ||
+        json.containsKey('required_quantity') ||
+        json.containsKey('target_price') ||
+        json.containsKey('visible_branches') ||
+        (json['status']?.toString().toLowerCase() == 'open' && json.containsKey('commodity'));
+
     return BuyerOfferModel(
       id: rootId ?? parsedProductId ?? parsedInterestId,
       productId: parsedProductId,
@@ -126,6 +134,7 @@ class BuyerOfferModel {
       displayStatus: rawStatus.toString().toUpperCase(),
       displayQuantity: '$rawQuantity $rawUnit'.trim(),
       displayPrice: '₹$rawPrice',
+      isRfq: isRfqItem,
     );
   }
 

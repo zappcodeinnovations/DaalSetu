@@ -75,6 +75,84 @@ class BuyerServices {
   }
 
   /// ============================================================
+  /// GET ALL OFFERS & REQUIREMENTS
+  /// ============================================================
+  static Future<List<dynamic>> getAllOffers({String query = ""}) async {
+    final List<dynamic> allList = [];
+    final Set<String> seenKeys = {};
+
+    void addUnique(dynamic item, [String prefix = '']) {
+      if (item is Map) {
+        final id = item['id']?.toString() ?? item['product_id']?.toString() ?? item['rfq_id']?.toString() ?? '';
+        final title = item['title']?.toString() ?? item['product_title']?.toString() ?? item['commodity']?.toString() ?? '';
+        final key = "$prefix-$id-$title";
+        if (id.isNotEmpty && !seenKeys.contains(key)) {
+          seenKeys.add(key);
+          allList.add(item);
+        } else if (id.isEmpty && !seenKeys.contains(title)) {
+          seenKeys.add(title);
+          allList.add(item);
+        }
+      }
+    }
+
+    // 1. Fetch all Buyer Requirements (RFQs)
+    try {
+      final rfqs = await getOffers(query: query);
+      for (var item in rfqs) {
+        addUnique(item, 'rfq');
+      }
+    } catch (e) {
+      print("⚠️ RFQs error in getAllOffers: $e");
+    }
+
+    // 2. Try /api/offers/list/ or /api/offers/
+    try {
+      String endpoint = "/api/offers/list/";
+      if (query.isNotEmpty) endpoint += "?search=$query";
+      final response = await ApiClient.get(
+        endpoint: endpoint,
+        requireAuth: true,
+      );
+      if (response != null) {
+        if (response is List) {
+          for (var item in response) {
+            addUnique(item, 'offer');
+          }
+        } else if (response is Map<String, dynamic>) {
+          final results = response["results"] ?? response["offers"] ?? response["data"];
+          if (results is List) {
+            for (var item in results) {
+              addUnique(item, 'offer');
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print("⚠️ /api/offers/list/ error in getAllOffers: $e");
+    }
+
+    // 3. Today, Pending, Previous, and Interests feeds
+    try {
+      final results = await Future.wait([
+        getTodayOffers().catchError((_) => <dynamic>[]),
+        getPendingOffers().catchError((_) => <dynamic>[]),
+        getPreviousOffers().catchError((_) => <dynamic>[]),
+        getMyInterests().catchError((_) => <dynamic>[]),
+      ]);
+      for (var list in results) {
+        for (var item in list) {
+          addUnique(item, 'offer');
+        }
+      }
+    } catch (e) {
+      print("⚠️ Additional feeds fetch error in getAllOffers: $e");
+    }
+
+    return allList;
+  }
+
+  /// ============================================================
   /// GET TODAY'S OFFERS
   /// ============================================================
   static Future<List<dynamic>> getTodayOffers() async {

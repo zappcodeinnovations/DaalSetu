@@ -90,7 +90,7 @@ class _OfferList extends StatelessWidget {
   const _OfferList({required this.offerType});
 
   void _openDetails(BuyerOfferModel offer, String type) {
-    if (type == 'requirements' && offer.id != null) {
+    if ((type == 'requirements' || offer.isRfq) && offer.id != null) {
       Get.to(() => BuyerOfferDetailsView(offerId: offer.id!));
     } else {
       final pId = offer.productId ?? offer.id;
@@ -326,7 +326,7 @@ class _OfferList extends StatelessWidget {
   }
 
   Widget _buildActionButtons(BuildContext context, BuyerOffersController controller, BuyerOfferModel offer, String type) {
-    if (type == 'requirements') {
+    if (type == 'requirements' || offer.isRfq) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [

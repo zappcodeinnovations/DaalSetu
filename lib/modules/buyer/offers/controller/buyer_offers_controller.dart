@@ -69,7 +69,7 @@ class BuyerOffersController extends GetxController {
           break;
         case 'all':
         default:
-          data = await BuyerServices.getTodayOffers();
+          data = await BuyerServices.getAllOffers();
           break;
       }
 
