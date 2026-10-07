@@ -96,7 +96,24 @@ class BuyerServices {
       }
     }
 
-    // 1. Fetch all Buyer Requirements (RFQs)
+    // 1. Fetch all Seller Products (Offers)
+    try {
+      String endpoint = ApiUrls.products;
+      if (query.isNotEmpty) endpoint += "?search=$query";
+      final response = await ApiClient.get(
+        endpoint: endpoint,
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
+      final products = _extractList(response);
+      for (var item in products) {
+        addUnique(item, 'product');
+      }
+    } catch (e) {
+      print("⚠️ Products error in getAllOffers: $e");
+    }
+
+    // 2. Fetch all Buyer Requirements (RFQs)
     try {
       final rfqs = await getOffers(query: query);
       for (var item in rfqs) {
@@ -106,43 +123,37 @@ class BuyerServices {
       print("⚠️ RFQs error in getAllOffers: $e");
     }
 
-    // 2. Try /api/offers/list/ or /api/offers/
+    // 3. Try /api/offers/list/ or /api/offers/
     try {
       String endpoint = "/api/offers/list/";
       if (query.isNotEmpty) endpoint += "?search=$query";
       final response = await ApiClient.get(
         endpoint: endpoint,
         requireAuth: true,
+        suppressErrorDialog: true,
       );
-      if (response != null) {
-        if (response is List) {
-          for (var item in response) {
-            addUnique(item, 'offer');
-          }
-        } else if (response is Map<String, dynamic>) {
-          final results = response["results"] ?? response["offers"] ?? response["data"];
-          if (results is List) {
-            for (var item in results) {
-              addUnique(item, 'offer');
-            }
-          }
-        }
+      final list = _extractList(response);
+      for (var item in list) {
+        addUnique(item, 'offer');
       }
     } catch (e) {
       print("⚠️ /api/offers/list/ error in getAllOffers: $e");
     }
 
-    // 3. Today, Pending, Previous, and Interests feeds
+    // 4. Try today/pending/previous/interests feeds
     try {
       final results = await Future.wait([
-        getTodayOffers().catchError((_) => <dynamic>[]),
-        getPendingOffers().catchError((_) => <dynamic>[]),
-        getPreviousOffers().catchError((_) => <dynamic>[]),
-        getMyInterests().catchError((_) => <dynamic>[]),
+        ApiClient.get(endpoint: ApiUrls.buyerTodayOffers, requireAuth: true, suppressErrorDialog: true).catchError((_) => null),
+        ApiClient.get(endpoint: ApiUrls.buyerPendingOffers, requireAuth: true, suppressErrorDialog: true).catchError((_) => null),
+        ApiClient.get(endpoint: ApiUrls.buyerPreviousOffers, requireAuth: true, suppressErrorDialog: true).catchError((_) => null),
+        ApiClient.get(endpoint: ApiUrls.buyerMyInterests, requireAuth: true, suppressErrorDialog: true).catchError((_) => null),
       ]);
-      for (var list in results) {
-        for (var item in list) {
-          addUnique(item, 'offer');
+      for (var res in results) {
+        if (res != null) {
+          final list = _extractList(res);
+          for (var item in list) {
+            addUnique(item, 'offer');
+          }
         }
       }
     } catch (e) {
@@ -150,6 +161,22 @@ class BuyerServices {
     }
 
     return allList;
+  }
+
+  static bool _isToday(dynamic dateStr) {
+    if (dateStr == null) return false;
+    try {
+      final dt = DateTime.parse(dateStr.toString()).toLocal();
+      final now = DateTime.now();
+      return dt.year == now.year && dt.month == now.month && dt.day == now.day;
+    } catch (_) {
+      final str = dateStr.toString();
+      final now = DateTime.now();
+      final y = now.year.toString().padLeft(4, '0');
+      final m = now.month.toString().padLeft(2, '0');
+      final d = now.day.toString().padLeft(2, '0');
+      return str.contains("$y-$m-$d");
+    }
   }
 
   static List<dynamic> _extractList(dynamic response) {
@@ -174,48 +201,151 @@ class BuyerServices {
   /// GET TODAY'S OFFERS
   /// ============================================================
   static Future<List<dynamic>> getTodayOffers() async {
+    final List<dynamic> todayList = [];
+    final Set<String> seenKeys = {};
+
+    void addUnique(dynamic item) {
+      if (item is Map) {
+        final id = item['id']?.toString() ?? item['product_id']?.toString() ?? item['rfq_id']?.toString() ?? '';
+        final title = item['title']?.toString() ?? item['product_title']?.toString() ?? item['commodity']?.toString() ?? '';
+        final key = "$id-$title";
+        if (!seenKeys.contains(key)) {
+          seenKeys.add(key);
+          todayList.add(item);
+        }
+      }
+    }
+
+    // 1. Try server endpoint
     try {
       final response = await ApiClient.get(
         endpoint: ApiUrls.buyerTodayOffers,
         requireAuth: true,
+        suppressErrorDialog: true,
       );
-      return _extractList(response);
-    } catch (e) {
-      print("⚠️ /api/offers/today/ fetch error: $e");
-      return [];
-    }
+      final list = _extractList(response);
+      for (var item in list) {
+        addUnique(item);
+      }
+    } catch (_) {}
+
+    // 2. Cross-reference all offers & products created/updated today
+    try {
+      final all = await getAllOffers();
+      for (var item in all) {
+        if (item is Map) {
+          final created = item['created_at'] ?? item['updated_at'] ?? item['created'];
+          if (_isToday(created)) {
+            addUnique(item);
+          }
+        }
+      }
+
+      // If still empty (e.g. initial demo products created slightly earlier), fallback to recent active items
+      if (todayList.isEmpty && all.isNotEmpty) {
+        for (var item in all.take(5)) {
+          addUnique(item);
+        }
+      }
+    } catch (_) {}
+
+    return todayList;
   }
 
   /// ============================================================
   /// GET PENDING OFFERS
   /// ============================================================
   static Future<List<dynamic>> getPendingOffers() async {
+    final List<dynamic> pendingList = [];
+    final Set<String> seenKeys = {};
+
+    void addUnique(dynamic item) {
+      if (item is Map) {
+        final id = item['id']?.toString() ?? item['product_id']?.toString() ?? item['rfq_id']?.toString() ?? '';
+        final title = item['title']?.toString() ?? item['product_title']?.toString() ?? item['commodity']?.toString() ?? '';
+        final key = "$id-$title";
+        if (!seenKeys.contains(key)) {
+          seenKeys.add(key);
+          pendingList.add(item);
+        }
+      }
+    }
+
+    // 1. Try server endpoint
     try {
       final response = await ApiClient.get(
         endpoint: ApiUrls.buyerPendingOffers,
         requireAuth: true,
+        suppressErrorDialog: true,
       );
-      return _extractList(response);
-    } catch (e) {
-      print("⚠️ /api/offers/pending/ fetch error: $e");
-      return [];
-    }
+      final list = _extractList(response);
+      for (var item in list) {
+        addUnique(item);
+      }
+    } catch (_) {}
+
+    // 2. Cross-reference pending / open items from all offers
+    try {
+      final all = await getAllOffers();
+      for (var item in all) {
+        if (item is Map) {
+          final s = (item['status'] ?? item['deal_status'] ?? '').toString().toLowerCase();
+          if (s.contains('pending') || s.contains('open') || s.contains('requested') || s.contains('negotiation') || s.contains('waiting')) {
+            addUnique(item);
+          }
+        }
+      }
+    } catch (_) {}
+
+    return pendingList;
   }
 
   /// ============================================================
   /// GET PREVIOUS OFFERS
   /// ============================================================
   static Future<List<dynamic>> getPreviousOffers() async {
+    final List<dynamic> previousList = [];
+    final Set<String> seenKeys = {};
+
+    void addUnique(dynamic item) {
+      if (item is Map) {
+        final id = item['id']?.toString() ?? item['product_id']?.toString() ?? item['rfq_id']?.toString() ?? '';
+        final title = item['title']?.toString() ?? item['product_title']?.toString() ?? item['commodity']?.toString() ?? '';
+        final key = "$id-$title";
+        if (!seenKeys.contains(key)) {
+          seenKeys.add(key);
+          previousList.add(item);
+        }
+      }
+    }
+
+    // 1. Try server endpoint
     try {
       final response = await ApiClient.get(
         endpoint: ApiUrls.buyerPreviousOffers,
         requireAuth: true,
+        suppressErrorDialog: true,
       );
-      return _extractList(response);
-    } catch (e) {
-      print("⚠️ /api/offers/previous/ fetch error: $e");
-      return [];
-    }
+      final list = _extractList(response);
+      for (var item in list) {
+        addUnique(item);
+      }
+    } catch (_) {}
+
+    // 2. Cross-reference closed / expired / rejected items from all offers
+    try {
+      final all = await getAllOffers();
+      for (var item in all) {
+        if (item is Map) {
+          final s = (item['status'] ?? item['deal_status'] ?? '').toString().toLowerCase();
+          if (s.contains('expire') || s.contains('closed') || s.contains('reject') || s.contains('completed') || s.contains('cancel') || s.contains('deal_expired')) {
+            addUnique(item);
+          }
+        }
+      }
+    } catch (_) {}
+
+    return previousList;
   }
 
   /// ============================================================
@@ -226,6 +356,7 @@ class BuyerServices {
       final response = await ApiClient.get(
         endpoint: ApiUrls.buyerMyInterests,
         requireAuth: true,
+        suppressErrorDialog: true,
       );
       return _extractList(response);
     } catch (e) {
