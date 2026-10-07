@@ -73,6 +73,7 @@ class BuyerOffersController extends GetxController {
           break;
       }
 
+      print("📦 [BUYER OFFERS CONTROLLER] offerType: '$offerType' | fetched raw items count: ${data.length}");
       final mapped = data.map((e) => BuyerOfferModel.fromJson(e)).toList();
       allOffersList.assignAll(mapped);
       _applyFilter();

@@ -266,6 +266,7 @@ class ApiClient {
     final body = response.body;
 
     if (statusCode >= 200 && statusCode < 400) {
+      print("📥 RESPONSE BODY: $body");
       if (body.trim().isEmpty) return <String, dynamic>{"success": true, "message": "Action successful"};
       try {
         return jsonDecode(body);
