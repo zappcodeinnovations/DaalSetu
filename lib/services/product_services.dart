@@ -6,6 +6,16 @@ import '../network/api_client.dart';
 
 class ProductService {
   static Future<ProductModel> getProductDetail(int productId) async {
+    try {
+      final response = await ApiClient.get(
+        endpoint: "/api/offers/$productId/",
+        requireAuth: true,
+      );
+      if (response is Map<String, dynamic>) {
+        return ProductModel.fromJson(response);
+      }
+    } catch (_) {}
+
     final response = await ApiClient.get(
       endpoint: "${ApiUrls.products}$productId/",
       requireAuth: true,

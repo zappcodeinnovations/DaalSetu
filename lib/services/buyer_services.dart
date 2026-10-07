@@ -445,6 +445,29 @@ class BuyerServices {
   }
 
   static Future<Map<String, dynamic>> getOfferDetails(int id) async {
+    // 1. Try /api/offers/$id/
+    try {
+      final response = await ApiClient.get(
+        endpoint: "/api/offers/$id/",
+        requireAuth: true,
+      );
+      if (response != null && response is Map<String, dynamic>) {
+        return response;
+      }
+    } catch (_) {}
+
+    // 2. Try /api/products/$id/
+    try {
+      final response = await ApiClient.get(
+        endpoint: "${ApiUrls.products}$id/",
+        requireAuth: true,
+      );
+      if (response != null && response is Map<String, dynamic>) {
+        return response;
+      }
+    } catch (_) {}
+
+    // 3. Try /api/rfqs/$id/
     try {
       final response = await ApiClient.get(
         endpoint: "/api/rfqs/$id/",
@@ -453,18 +476,20 @@ class BuyerServices {
       if (response != null && response is Map<String, dynamic>) {
         return response;
       }
-    } catch (e) {
-      print("⚠️ /api/rfqs/$id/ fetch error: $e");
-    }
+    } catch (_) {}
 
-    final response = await ApiClient.get(
-      endpoint: ApiUrls.buyerOfferDetails(id),
-      requireAuth: true,
-    );
-    if (response != null && response is Map<String, dynamic>) {
-      return response;
-    }
-    throw Exception("Invalid response format");
+    // 4. Try /api/buyer-offers/$id/
+    try {
+      final response = await ApiClient.get(
+        endpoint: ApiUrls.buyerOfferDetails(id),
+        requireAuth: true,
+      );
+      if (response != null && response is Map<String, dynamic>) {
+        return response;
+      }
+    } catch (_) {}
+
+    throw Exception("Offer / Requirement details not found");
   }
 
   static Future<Map<String, dynamic>> cancelOffer(int id) async {
