@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../services/buyer_services.dart';
+import '../../../../utils/app_snackbar.dart';
 import '../model/buyer_delivery_challan_model.dart';
 
 class BuyerDeliveryChallanController extends GetxController {
@@ -128,31 +129,22 @@ class BuyerDeliveryChallanController extends GetxController {
       final response = await BuyerServices.receiveDeliveryChallan(challanId, remarks);
       if (response['success'] == true) {
         Get.back(); // Go back from details page
-        Get.snackbar(
-          "Success",
-          "Challan received successfully.",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
+        AppSnackbar.showSuccess(
+          title: "Success",
+          message: "Challan received successfully.",
         );
         fetchChallans(isRefresh: true); // Refresh list
       } else {
-        Get.snackbar(
-          "Error",
-          response['message'] ?? "Failed to receive challan.",
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
+        AppSnackbar.showError(
+          title: "Error",
+          message: response['message'] ?? "Failed to receive challan.",
         );
       }
     } catch (e) {
-       Get.snackbar(
-          "Error",
-          e.toString(),
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-        );
+      AppSnackbar.showError(
+        title: "Error",
+        message: e.toString(),
+      );
     } finally {
       isReceiving.value = false;
     }

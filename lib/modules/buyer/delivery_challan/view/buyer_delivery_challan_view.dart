@@ -252,7 +252,7 @@ class BuyerDeliveryChallanView extends StatelessWidget {
                     return false;
                   },
                   child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
                     itemCount: controller.challans.length + (controller.isFetchingMore.value ? 1 : 0),
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {

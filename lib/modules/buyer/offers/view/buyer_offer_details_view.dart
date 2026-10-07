@@ -4,6 +4,7 @@ import 'package:iconly/iconly.dart';
 import '../controller/buyer_offer_detail_controller.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../theme/glass_widgets.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class BuyerOfferDetailsView extends StatelessWidget {
   final int offerId;
@@ -117,7 +118,7 @@ class BuyerOfferDetailsView extends StatelessWidget {
                             children: [
                               OutlinedButton(
                                 onPressed: () {
-                                  Get.snackbar("Quote Rejected", "Quotation has been rejected.");
+                                  AppSnackbar.showInfo(title: "Quote Rejected", message: "Quotation has been rejected.");
                                 },
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: Colors.red,
@@ -129,7 +130,7 @@ class BuyerOfferDetailsView extends StatelessWidget {
                               const SizedBox(width: 8),
                               ElevatedButton(
                                 onPressed: () {
-                                  Get.snackbar("Quote Accepted", "Deal confirmed with seller.", backgroundColor: Colors.green, colorText: Colors.white);
+                                  AppSnackbar.showSuccess(title: "Quote Accepted", message: "Deal confirmed with seller.");
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.green,

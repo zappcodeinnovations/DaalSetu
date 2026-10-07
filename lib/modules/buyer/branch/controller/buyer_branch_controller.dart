@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../services/seller_services.dart';
+import '../../../../utils/app_snackbar.dart';
 import '../../../seller/branches/model/seller_branch_model.dart';
 
 class BuyerBranchController extends GetxController {
@@ -42,7 +43,7 @@ class BuyerBranchController extends GetxController {
         }
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString().replaceAll("Exception: ", ""), snackPosition: SnackPosition.BOTTOM);
+      AppSnackbar.showError(title: "Error", message: e.toString());
     } finally {
       isLoading.value = false;
     }
@@ -55,14 +56,18 @@ class BuyerBranchController extends GetxController {
       final res = await SellerServices.requestBranchByCode(code.trim());
       if (Get.isDialogOpen ?? false) Get.back();
 
-      Get.snackbar("Success", res['message'] ?? "Branch request submitted successfully",
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+      AppSnackbar.showSuccess(
+        title: "Success",
+        message: res['message'] ?? "Branch request submitted successfully",
+      );
       await fetchBranches();
       return true;
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
-      Get.snackbar("Error", e.toString().replaceAll("Exception: ", ""),
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+      AppSnackbar.showError(
+        title: "Error",
+        message: e.toString(),
+      );
       return false;
     }
   }
@@ -73,13 +78,17 @@ class BuyerBranchController extends GetxController {
       final res = await SellerServices.cancelBranchRequest(branchId);
       if (Get.isDialogOpen ?? false) Get.back();
 
-      Get.snackbar("Success", res['message'] ?? "Request cancelled successfully",
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+      AppSnackbar.showSuccess(
+        title: "Success",
+        message: res['message'] ?? "Request cancelled successfully",
+      );
       fetchBranches();
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
-      Get.snackbar("Error", e.toString().replaceAll("Exception: ", ""),
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+      AppSnackbar.showError(
+        title: "Error",
+        message: e.toString(),
+      );
     }
   }
 
@@ -89,13 +98,17 @@ class BuyerBranchController extends GetxController {
       final res = await SellerServices.leaveBranch(branchId);
       if (Get.isDialogOpen ?? false) Get.back();
 
-      Get.snackbar("Success", res['message'] ?? "Left branch successfully",
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+      AppSnackbar.showSuccess(
+        title: "Success",
+        message: res['message'] ?? "Left branch successfully",
+      );
       fetchBranches();
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
-      Get.snackbar("Error", e.toString().replaceAll("Exception: ", ""),
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+      AppSnackbar.showError(
+        title: "Error",
+        message: e.toString(),
+      );
     }
   }
 }

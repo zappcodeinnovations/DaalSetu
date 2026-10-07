@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../../theme/glass_widgets.dart';
+import '../../../../utils/app_snackbar.dart';
 import '../../../products/view/product_detail.dart';
 import '../controller/buyer_offers_controller.dart';
 import '../model/buyer_offer_model.dart';
@@ -571,7 +572,7 @@ class _OfferList extends StatelessWidget {
                     ElevatedButton(
                       onPressed: () async {
                         if (qtyCtrl.text.trim().isEmpty || priceCtrl.text.trim().isEmpty) {
-                          Get.snackbar("Required", "Please enter quantity and price", snackPosition: SnackPosition.BOTTOM);
+                          AppSnackbar.showWarning(title: "Required Fields", message: "Please enter both quantity and price");
                           return;
                         }
                         Get.back();
@@ -672,7 +673,7 @@ class _OfferList extends StatelessWidget {
                     ElevatedButton(
                       onPressed: () async {
                         if (msgCtrl.text.trim().isEmpty) {
-                          Get.snackbar("Required", "Please enter a message", snackPosition: SnackPosition.BOTTOM);
+                          AppSnackbar.showWarning(title: "Required", message: "Please enter a message");
                           return;
                         }
                         Get.back();

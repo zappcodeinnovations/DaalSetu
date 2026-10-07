@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../controller/buyer_branch_controller.dart';
 import '../../../../theme/glass_widgets.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class BuyerBranchView extends StatelessWidget {
   BuyerBranchView({super.key});
@@ -95,7 +96,7 @@ class BuyerBranchView extends StatelessWidget {
           onRefresh: controller.fetchBranches,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -369,7 +370,7 @@ class BuyerBranchView extends StatelessWidget {
                   isLoading: isSubmitting.value,
                   onPressed: () async {
                     if (codeCtrl.text.trim().isEmpty) {
-                      Get.snackbar('Required', 'Please enter a branch code', snackPosition: SnackPosition.BOTTOM);
+                      AppSnackbar.showWarning(title: 'Required', message: 'Please enter a branch code');
                       return;
                     }
                     isSubmitting.value = true;

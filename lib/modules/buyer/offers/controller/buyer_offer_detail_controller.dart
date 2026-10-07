@@ -1,4 +1,5 @@
 import '../../../../services/buyer_services.dart';
+import '../../../../utils/app_snackbar.dart';
 import 'package:get/get.dart';
 
 class BuyerOfferDetailController extends GetxController {
@@ -11,7 +12,7 @@ class BuyerOfferDetailController extends GetxController {
       final data = await BuyerServices.getOfferDetails(id);
       offerDetails.value = data;
     } catch (e) {
-      Get.snackbar("Error", "Could not fetch offer details");
+      AppSnackbar.showError(title: "Error", message: "Could not fetch offer details");
     } finally {
       isLoading(false);
     }
@@ -21,10 +22,10 @@ class BuyerOfferDetailController extends GetxController {
     try {
       isLoading(true);
       await BuyerServices.cancelOffer(id);
-      Get.snackbar("Success", "Requirement cancelled successfully");
+      AppSnackbar.showSuccess(title: "Success", message: "Requirement cancelled successfully");
       fetchDetails(id);
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.showError(title: "Error", message: e.toString());
     } finally {
       isLoading(false);
     }

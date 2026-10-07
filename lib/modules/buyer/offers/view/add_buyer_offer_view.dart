@@ -5,6 +5,7 @@ import 'package:iconly/iconly.dart';
 import '../../../../services/buyer_services.dart';
 import '../../../../services/seller_services.dart';
 import '../../../../services/product_services.dart';
+import '../../../../utils/app_snackbar.dart';
 import '../../../seller/categories/model/seller_category_model.dart';
 import '../controller/buyer_offers_controller.dart';
 import '../../dashboard/controller/buyer_dashboard_controller.dart';
@@ -81,7 +82,6 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
       });
     } catch (e) {
       setState(() => isLoading = false);
-      Get.snackbar("Notice", "Loaded available form fields.");
     }
   }
 
@@ -108,36 +108,9 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
 
   Future<void> _submit() async {
     if (titleController.text.trim().isEmpty || selectedCategoryId == null) {
-      Get.snackbar(
-        "",
-        "",
-        titleText: Text(
-          "Required Fields Missing",
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-          ),
-        ),
-        messageText: Padding(
-          padding: const EdgeInsets.only(top: 2),
-          child: Text(
-            "Please enter Requirement Title and select a Category.",
-            style: GoogleFonts.inter(
-              color: Colors.white.withValues(alpha: 0.95),
-              fontWeight: FontWeight.w400,
-              fontSize: 13,
-            ),
-          ),
-        ),
-        icon: const Icon(Icons.error_outline_rounded, color: Colors.white, size: 26),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFFE53935),
-        colorText: Colors.white,
-        borderRadius: 14,
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        duration: const Duration(seconds: 4),
+      AppSnackbar.showWarning(
+        title: "Required Fields Missing",
+        message: "Please enter Requirement Title and select a Category.",
       );
       return;
     }
@@ -208,68 +181,14 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
       } catch (_) {}
 
       Get.back();
-      Get.snackbar(
-        "",
-        "",
-        titleText: Text(
-          "Success",
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-          ),
-        ),
-        messageText: Padding(
-          padding: const EdgeInsets.only(top: 2),
-          child: Text(
-            "Requirement posted successfully",
-            style: GoogleFonts.inter(
-              color: Colors.white.withValues(alpha: 0.95),
-              fontWeight: FontWeight.w400,
-              fontSize: 13,
-            ),
-          ),
-        ),
-        icon: const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 26),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFF2E7D32),
-        colorText: Colors.white,
-        borderRadius: 14,
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        duration: const Duration(seconds: 3),
+      AppSnackbar.showSuccess(
+        title: "Success",
+        message: "Requirement posted successfully",
       );
     } catch (e) {
-      Get.snackbar(
-        "",
-        "",
-        titleText: Text(
-          "Notice",
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-          ),
-        ),
-        messageText: Padding(
-          padding: const EdgeInsets.only(top: 2),
-          child: Text(
-            e.toString().replaceAll("Exception: ", ""),
-            style: GoogleFonts.inter(
-              color: Colors.white.withValues(alpha: 0.95),
-              fontWeight: FontWeight.w400,
-              fontSize: 13,
-            ),
-          ),
-        ),
-        icon: const Icon(Icons.info_outline_rounded, color: Colors.white, size: 26),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFFE53935),
-        colorText: Colors.white,
-        borderRadius: 14,
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        duration: const Duration(seconds: 4),
+      AppSnackbar.showError(
+        title: "Notice",
+        message: e.toString(),
       );
     } finally {
       if (mounted) setState(() => isPosting = false);

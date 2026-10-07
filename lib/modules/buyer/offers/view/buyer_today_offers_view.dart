@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../theme/glass_widgets.dart';
+import '../../../../utils/app_snackbar.dart';
 import '../controller/buyer_offers_controller.dart';
 
 class BuyerTodayOffersView extends StatelessWidget {
@@ -33,7 +34,7 @@ class BuyerTodayOffersView extends StatelessWidget {
         if (controller.isError.value) {
           return Center(
             child: Text(
-              "Error: ${controller.errorMessage.value}",
+              controller.errorMessage.value.replaceAll("Exception: ", ""),
               style: TextStyle(color: theme.colorScheme.error),
             ),
           );
@@ -46,7 +47,7 @@ class BuyerTodayOffersView extends StatelessWidget {
         }
 
         return ListView.separated(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
           itemCount: offers.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
@@ -188,7 +189,7 @@ class BuyerTodayOffersView extends StatelessWidget {
                     ElevatedButton(
                       onPressed: () async {
                         if (qtyCtrl.text.trim().isEmpty || priceCtrl.text.trim().isEmpty) {
-                          Get.snackbar("Required", "Please enter quantity and price", snackPosition: SnackPosition.BOTTOM);
+                          AppSnackbar.showWarning(title: "Required Fields", message: "Please enter both quantity and price");
                           return;
                         }
                         Get.back();
