@@ -87,7 +87,7 @@ class BuyerBranchView extends StatelessWidget {
         }
 
         return RefreshIndicator(
-          onRefresh: () => controller.fetchBranches(clearLeftCache: true),
+          onRefresh: controller.fetchBranches,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
@@ -229,7 +229,11 @@ class BuyerBranchView extends StatelessWidget {
                             ),
                             if (req.id != null)
                               TextButton(
-                                onPressed: () => controller.cancelRequest(req.id!, branchId: req.branchId),
+                                onPressed: () => controller.cancelRequest(
+                                  req.id!,
+                                  branchId: req.branchId,
+                                  branchCode: req.branchCode,
+                                ),
                                 child: const Text("CANCEL", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
                               ),
                           ],
@@ -305,7 +309,11 @@ class BuyerBranchView extends StatelessWidget {
                                       ),
                                     )
                                   : OutlinedButton(
-                                      onPressed: () => _showLeaveBranchDialog(context, branch.id!),
+                                      onPressed: () => _showLeaveBranchDialog(
+                                        context,
+                                        branch.id!,
+                                        branchCode: branch.branchCode,
+                                      ),
                                       style: OutlinedButton.styleFrom(
                                         foregroundColor: Colors.red,
                                         side: const BorderSide(color: Colors.red),
@@ -405,7 +413,7 @@ class BuyerBranchView extends StatelessWidget {
     );
   }
 
-  void _showLeaveBranchDialog(BuildContext context, int branchId) {
+  void _showLeaveBranchDialog(BuildContext context, int branchId, {String? branchCode}) {
     Get.defaultDialog(
       title: "Leave Branch",
       middleText: "Are you sure you want to leave this branch?",
@@ -414,7 +422,7 @@ class BuyerBranchView extends StatelessWidget {
       buttonColor: Colors.red,
       onConfirm: () {
         Get.back();
-        controller.leaveBranch(branchId);
+        controller.leaveBranch(branchId, branchCode: branchCode);
       },
       textCancel: "CANCEL",
     );
