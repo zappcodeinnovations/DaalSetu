@@ -10,6 +10,7 @@ import '../../../category/view/category_page.dart';
 import '../../orders/view/buyer_orders_view.dart';
 import '../../offers/view/buyer_offers_view.dart';
 import '../../../seller/notifications/view/seller_notification_view.dart';
+import '../../../../services/realtime_notification_service.dart';
 
 class BuyerDashboardView extends StatelessWidget {
   BuyerDashboardView({super.key});
@@ -94,30 +95,38 @@ class BuyerDashboardView extends StatelessWidget {
           ),
         ),
         actions: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(IconlyLight.notification, size: 28),
-                onPressed: () => Get.to(() => const SellerNotificationView()),
-              ),
-              Positioned(
-                right: 10,
-                top: 10,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: Colors.deepOrange,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Text(
-                    '3',
-                    style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
-                  ),
+          Obx(() {
+            final count = Get.isRegistered<RealtimeNotificationService>()
+                ? RealtimeNotificationService.to.unreadCount.value
+                : 0;
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(IconlyLight.notification, size: 28),
+                  onPressed: () => Get.to(() => const SellerNotificationView()),
                 ),
-              ),
-            ],
-          ),
+                if (count > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: const BoxDecoration(
+                        color: Colors.deepOrange,
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                      ),
+                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                      child: Text(
+                        count > 99 ? '99+' : '$count',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          }),
           const SizedBox(width: 8),
         ],
       ),

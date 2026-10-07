@@ -4,13 +4,15 @@ import 'routes/app_pages.dart';
 import 'routes/app_routes.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
+import 'services/realtime_notification_service.dart';
 
 class AgroBrokerApp extends StatelessWidget {
   const AgroBrokerApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final ThemeController themeController = Get.put(ThemeController());
+    Get.put(ThemeController());
+    Get.put(RealtimeNotificationService(), permanent: true);
 
     return GetMaterialApp(
       title: 'Dal Broker Admin',

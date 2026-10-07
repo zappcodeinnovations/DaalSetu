@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../model/notification_model.dart';
 import '../../../../services/notification_services.dart';
+import '../../../../services/realtime_notification_service.dart';
 
 class SellerNotificationController extends GetxController {
   var isLoading = true.obs;
@@ -32,6 +33,9 @@ class SellerNotificationController extends GetxController {
     try {
       final count = await NotificationServices.getUnreadCount();
       unreadCount.value = count;
+      if (Get.isRegistered<RealtimeNotificationService>()) {
+        RealtimeNotificationService.to.unreadCount.value = count;
+      }
     } catch (_) {}
   }
 
@@ -40,6 +44,9 @@ class SellerNotificationController extends GetxController {
       await NotificationServices.markAsRead(notificationId);
       fetchNotifications();
       fetchUnreadCount();
+      if (Get.isRegistered<RealtimeNotificationService>()) {
+        RealtimeNotificationService.to.refreshNow();
+      }
     } catch (_) {}
   }
 
@@ -49,6 +56,9 @@ class SellerNotificationController extends GetxController {
       Get.snackbar("Success", "All notifications marked as read", snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
       fetchNotifications();
       fetchUnreadCount();
+      if (Get.isRegistered<RealtimeNotificationService>()) {
+        RealtimeNotificationService.to.refreshNow();
+      }
     } catch (e) {
       Get.snackbar("Error", e.toString(), snackPosition: SnackPosition.BOTTOM);
     }
