@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../../theme/glass_widgets.dart';
-import '../../../../routes/app_routes.dart';
 import '../controller/buyer_dashboard_controller.dart';
 import '../../../profile/controller/profile_controller.dart';
 import '../../../category/model/category_model.dart';
@@ -83,89 +82,45 @@ class BuyerDashboardView extends StatelessWidget {
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return PreferredSize(
       preferredSize: const Size.fromHeight(kToolbarHeight),
-      child: Obx(() {
-        final theme = Theme.of(context);
-        return AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          title: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: controller.isSearching.value
-                ? Container(
-                    key: const ValueKey('searchField'),
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: theme.cardColor,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: theme.dividerColor.withOpacity(0.5)),
-                    ),
-                    child: TextField(
-                      autofocus: true,
-                      onChanged: (val) => controller.searchQuery.value = val,
-                      decoration: InputDecoration(
-                        hintText: "Search here...",
-                        hintStyle: GoogleFonts.inter(fontSize: 13, color: Colors.grey),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      ),
-                      style: GoogleFonts.inter(fontSize: 14),
-                    ),
-                  )
-                : Align(
-                    key: const ValueKey('logoImage'),
-                    alignment: Alignment.centerLeft,
-                    child: Image.asset(
-                      'assets/images/app_name.png',
-                      height: 32,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
+      child: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Align(
+          alignment: Alignment.centerLeft,
+          child: Image.asset(
+            'assets/images/app_name.png',
+            height: 32,
+            fit: BoxFit.contain,
           ),
-          actions: [
-            if (!controller.isSearching.value)
+        ),
+        actions: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
               IconButton(
-                icon: const Icon(IconlyLight.search, size: 26),
-                onPressed: () {
-                  controller.isSearching.value = true;
-                },
+                icon: const Icon(IconlyLight.notification, size: 28),
+                onPressed: () => Get.to(() => const SellerNotificationView()),
               ),
-            if (controller.isSearching.value)
-              IconButton(
-                icon: const Icon(IconlyLight.close_square, size: 26),
-                onPressed: () {
-                  controller.isSearching.value = false;
-                  controller.searchQuery.value = '';
-                },
-              )
-            else
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  IconButton(
-                    icon: const Icon(IconlyLight.notification, size: 28),
-                    onPressed: () => Get.to(() => const SellerNotificationView()),
+              Positioned(
+                right: 10,
+                top: 10,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.deepOrange,
+                    shape: BoxShape.circle,
                   ),
-                  Positioned(
-                    right: 10,
-                    top: 10,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Colors.deepOrange,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Text(
-                        '3',
-                        style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
-                      ),
-                    ),
+                  child: const Text(
+                    '3',
+                    style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
                   ),
-                ],
+                ),
               ),
-            const SizedBox(width: 8),
-          ],
-        );
-      }),
+            ],
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
     );
   }
 
@@ -211,55 +166,6 @@ class BuyerDashboardView extends StatelessWidget {
         ],
       );
     });
-  }
-
-  Widget _buildSearchBar(BuildContext context) {
-    final theme = Theme.of(context);
-    final searchController = TextEditingController();
-
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-      child: Row(
-        children: [
-          const Icon(IconlyLight.search, color: Colors.grey),
-          const SizedBox(width: 12),
-          Expanded(
-            child: TextField(
-              controller: searchController,
-              onSubmitted: (val) {
-                if (val.trim().isNotEmpty) {
-                  Get.to(() => const BuyerOffersView(initialIndex: 0));
-                }
-              },
-              decoration: InputDecoration(
-                hintText: "Search for pulses, dals, commodities...",
-                hintStyle: GoogleFonts.inter(fontSize: 13, color: Colors.grey),
-                border: InputBorder.none,
-              ),
-            ),
-          ),
-          GestureDetector(
-            onTap: () => Get.to(() => const CategoryPageView()),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              child: Icon(IconlyLight.filter, color: theme.colorScheme.primary),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildBannerSlider(BuildContext context, List<dynamic> rfqs) {
