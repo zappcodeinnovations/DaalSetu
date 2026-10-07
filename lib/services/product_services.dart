@@ -345,19 +345,31 @@ class ProductService {
     required int interestId,
     required String decision,
     String superadminRemark = '',
+    int? subAdminId,
   }) async {
+    final body = {
+      "interest_id": interestId,
+      "decision": decision,
+      "admin_remark": superadminRemark,
+      if (subAdminId != null) "assigned_sub_admin_id": subAdminId,
+    };
     try {
-      final body = {
-        "interest_id": interestId,
-        "decision": decision,
-        "admin_remark": superadminRemark,
-      };
       await ApiClient.post(
         endpoint: "/api/products/$productId/confirm-deal/",
         requireAuth: true,
         body: body,
       );
     } catch (e) {
+      if (e.toString().contains("404") || e.toString().contains("Not Found")) {
+        try {
+          await ApiClient.post(
+            endpoint: ApiUrls.offerConfirmDeal(productId),
+            requireAuth: true,
+            body: body,
+          );
+          return;
+        } catch (_) {}
+      }
       print("❌ confirmOfferDeal Error: $e");
       rethrow;
     }
