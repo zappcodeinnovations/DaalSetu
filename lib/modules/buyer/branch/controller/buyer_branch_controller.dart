@@ -23,9 +23,34 @@ class BuyerBranchController extends GetxController {
       final res = await SellerServices.getSellerBranches();
       if (res['data'] is Map<String, dynamic>) {
         final data = res['data'] as Map<String, dynamic>;
+
+        // 1. Parse Pending Requests first
+        final rawPending = data['pending_requests'] is List ? (data['pending_requests'] as List) : [];
+        final parsedPending = rawPending
+            .map((e) => SellerBranchModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+        pendingRequests.value = parsedPending;
+
+        final pendingBranchIds = <int>{};
+        final pendingCodes = <String>{};
+
+        for (final p in rawPending) {
+          if (p is Map<String, dynamic>) {
+            if (p['branch_id'] is int) pendingBranchIds.add(p['branch_id'] as int);
+            if (p['id'] is int) pendingBranchIds.add(p['id'] as int);
+            final code = (p['branch_code'] ?? p['code'])?.toString().trim().toUpperCase();
+            if (code != null && code.isNotEmpty) pendingCodes.add(code);
+          }
+        }
+
+        // 2. Parse Primary Branch
         if (data['primary_branch'] is Map<String, dynamic>) {
           final pb = SellerBranchModel.fromJson(data['primary_branch']);
-          if (!_leftBranchIds.contains(pb.id)) {
+          final code = pb.branchCode?.trim().toUpperCase();
+          final isLeft = pb.id != null && _leftBranchIds.contains(pb.id);
+          final isPending = (pb.id != null && pendingBranchIds.contains(pb.id)) ||
+              (code != null && pendingCodes.contains(code));
+          if (!isLeft && !isPending) {
             primaryBranch.value = pb;
           } else {
             primaryBranch.value = null;
@@ -33,20 +58,22 @@ class BuyerBranchController extends GetxController {
         } else {
           primaryBranch.value = null;
         }
+
+        // 3. Parse My Branches (exclude any branch that is pending or has been left)
         if (data['my_branches'] is List) {
           myBranches.value = (data['my_branches'] as List)
               .map((e) => SellerBranchModel.fromJson(e as Map<String, dynamic>))
-              .where((b) => b.id != null && !_leftBranchIds.contains(b.id))
+              .where((b) {
+                if (b.id == null) return false;
+                if (_leftBranchIds.contains(b.id)) return false;
+                if (pendingBranchIds.contains(b.id)) return false;
+                final code = b.branchCode?.trim().toUpperCase();
+                if (code != null && pendingCodes.contains(code)) return false;
+                return true;
+              })
               .toList();
         } else {
           myBranches.clear();
-        }
-        if (data['pending_requests'] is List) {
-          pendingRequests.value = (data['pending_requests'] as List)
-              .map((e) => SellerBranchModel.fromJson(e as Map<String, dynamic>))
-              .toList();
-        } else {
-          pendingRequests.clear();
         }
       }
     } catch (e) {
@@ -57,10 +84,10 @@ class BuyerBranchController extends GetxController {
   }
 
   Future<bool> joinBranchByCode(String code) async {
-    if (code.trim().isEmpty) return false;
+    final cleanCode = code.trim();
+    if (cleanCode.isEmpty) return false;
     try {
-      final res = await SellerServices.requestBranchByCode(code.trim());
-      _leftBranchIds.clear(); // Reset cache filter when joining
+      final res = await SellerServices.requestBranchByCode(cleanCode);
       await fetchBranches();
 
       final msg = res['message']?.toString() ?? "Branch request submitted successfully";
@@ -88,12 +115,22 @@ class BuyerBranchController extends GetxController {
     }
   }
 
-  Future<void> cancelRequest(int branchId) async {
+  Future<void> cancelRequest(int branchOrReqId, {int? branchId}) async {
     try {
-      final res = await SellerServices.cancelBranchRequest(branchId);
-      pendingRequests.removeWhere((r) => r.id == branchId);
+      final targetId = branchId ?? branchOrReqId;
+      final res = await SellerServices.cancelBranchRequest(targetId);
+      _leftBranchIds.add(targetId);
+      if (branchId != null) _leftBranchIds.add(branchOrReqId);
+
+      pendingRequests.removeWhere((r) =>
+          r.id == branchOrReqId ||
+          r.id == targetId ||
+          (r.branchId != null && r.branchId == targetId));
       await fetchBranches();
-      pendingRequests.removeWhere((r) => r.id == branchId);
+      pendingRequests.removeWhere((r) =>
+          r.id == branchOrReqId ||
+          r.id == targetId ||
+          (r.branchId != null && r.branchId == targetId));
       AppSnackbar.showSuccess(
         title: "Success",
         message: res['message'] ?? "Request cancelled successfully",

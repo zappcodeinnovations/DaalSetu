@@ -194,6 +194,7 @@ class BuyerBranchView extends StatelessWidget {
                   ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
+                    padding: EdgeInsets.zero,
                     itemCount: controller.pendingRequests.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
@@ -228,7 +229,7 @@ class BuyerBranchView extends StatelessWidget {
                             ),
                             if (req.id != null)
                               TextButton(
-                                onPressed: () => controller.cancelRequest(req.id!),
+                                onPressed: () => controller.cancelRequest(req.id!, branchId: req.branchId),
                                 child: const Text("CANCEL", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
                               ),
                           ],
@@ -236,7 +237,7 @@ class BuyerBranchView extends StatelessWidget {
                       );
                     },
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                 ],
 
                 // My Branches List
@@ -249,6 +250,7 @@ class BuyerBranchView extends StatelessWidget {
                   ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
+                    padding: EdgeInsets.zero,
                     itemCount: controller.myBranches.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
