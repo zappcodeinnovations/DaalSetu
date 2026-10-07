@@ -88,18 +88,25 @@ class RealtimeNotificationService extends GetxService {
         return;
       }
 
-      // 1. Fetch unread count
-      try {
-        final count = await NotificationServices.getUnreadCount();
-        unreadCount.value = count;
-      } catch (_) {}
-
-      // 2. Fetch latest notifications
+      // 1. Fetch latest notifications
       final res = await NotificationServices.getNotifications(page: 1, pageSize: 10);
       final rawList = (res['results'] as List?) ?? [];
       final items = rawList.map((e) => AppNotificationModel.fromJson(e)).toList();
 
       latestNotifications.assignAll(items);
+
+      // 2. Fetch unread count from API and cross-check
+      try {
+        final count = await NotificationServices.getUnreadCount();
+        unreadCount.value = count;
+      } catch (_) {
+        unreadCount.value = items.where((n) => n.isRead == false).length;
+      }
+
+      // If all latest notifications are read, force count to 0 if API is out of sync
+      if (items.isNotEmpty && items.every((n) => n.isRead == true)) {
+        unreadCount.value = 0;
+      }
 
       if (!_isInitialized) {
         // First run: seed known IDs so cold start doesn't spam toasts for past history

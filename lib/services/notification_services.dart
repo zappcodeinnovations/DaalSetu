@@ -14,14 +14,21 @@ class NotificationServices {
   }
 
   static Future<int> getUnreadCount() async {
-    final response = await ApiClient.get(
-      endpoint: ApiUrls.notificationsUnreadCount,
-      requireAuth: true,
-    );
-    if (response is Map<String, dynamic> && response["success"] == true) {
-      final count = response["unread_count"];
-      return count is int ? count : (int.tryParse(count?.toString() ?? '0') ?? 0);
-    }
+    try {
+      final response = await ApiClient.get(
+        endpoint: ApiUrls.notificationsUnreadCount,
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
+      if (response is Map<String, dynamic>) {
+        final count = response["unread_count"] ??
+            response["count"] ??
+            (response["data"] is Map ? response["data"]["unread_count"] : null);
+        if (count != null) {
+          return count is int ? count : (int.tryParse(count.toString()) ?? 0);
+        }
+      }
+    } catch (_) {}
     return 0;
   }
 
