@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
+import '../../../../services/realtime_notification_service.dart';
 import '../controller/seller_notification_controller.dart';
 
 class SellerNotificationView extends StatelessWidget {
@@ -75,6 +76,7 @@ class SellerNotificationView extends StatelessWidget {
                     if (item.id != null && item.isRead != true) {
                       controller.markAsRead(item.id!);
                     }
+                    RealtimeNotificationService.navigateToTarget(item);
                   },
                 ),
               );

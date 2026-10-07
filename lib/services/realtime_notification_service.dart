@@ -8,6 +8,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../modules/seller/notifications/model/notification_model.dart';
 import '../modules/seller/notifications/view/seller_notification_view.dart';
 import '../modules/products/view/product_detail.dart';
+import '../modules/buyer/offers/view/buyer_offers_view.dart';
+import '../modules/buyer/branch/view/buyer_branch_view.dart';
+import '../modules/buyer/delivery_challan/view/buyer_delivery_challan_view.dart';
+import '../modules/contracts/view/contract_view.dart';
+import '../modules/contracts/view/contract_details_view.dart';
+import '../services/product_services.dart';
 import '../utils/app_preferences.dart';
 import 'notification_services.dart';
 
@@ -192,11 +198,7 @@ class RealtimeNotificationService extends GetxService {
                   if (notification.id != null) {
                     NotificationServices.markAsRead(notification.id!);
                   }
-                  if (notification.relatedProduct != null) {
-                    Get.to(() => ProductDetailScreen(productId: notification.relatedProduct!));
-                  } else {
-                    Get.to(() => const SellerNotificationView());
-                  }
+                  navigateToTarget(notification);
                 },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -288,5 +290,112 @@ class RealtimeNotificationService extends GetxService {
         },
       ),
     );
+  }
+
+  /// Deep link and redirect the user to the relevant screen based on notification content
+  static Future<void> navigateToTarget(AppNotificationModel notification) async {
+    final title = (notification.title ?? "").toLowerCase();
+    final message = (notification.message ?? "").toLowerCase();
+    final type = (notification.type ?? "").toLowerCase();
+    final url = notification.redirectUrl ?? "";
+
+    // 1. Try to extract product/offer ID
+    int? productId = notification.relatedProduct ?? notification.referenceId;
+
+    // Check url regex
+    if (productId == null && url.isNotEmpty) {
+      final match = RegExp(r'/(?:products|offers|buyer-offers|rfqs)/(\d+)').firstMatch(url);
+      if (match != null) {
+        productId = int.tryParse(match.group(1)!);
+      }
+    }
+
+    // Check message regex for ID (e.g. ID: 129 or #129)
+    if (productId == null && notification.message != null) {
+      final match = RegExp(r'(?:id[:\s#]+|#)(\d+)', caseSensitive: false).firstMatch(notification.message!);
+      if (match != null) {
+        productId = int.tryParse(match.group(1)!);
+      }
+    }
+
+    // Is Product / Offer related?
+    final isProductOrOffer = type.contains('product') ||
+        type.contains('offer') ||
+        title.contains('product') ||
+        title.contains('offer') ||
+        message.contains('product') ||
+        message.contains('offer');
+
+    if (isProductOrOffer) {
+      if (productId != null && productId > 0) {
+        Get.to(() => ProductDetailScreen(productId: productId!));
+        return;
+      }
+
+      // If ID not found directly in notification, try searching product by title from message
+      // e.g. "New product added: toor dal" -> "toor dal"
+      final rawMsg = notification.message ?? "";
+      String candidateTitle = "";
+      if (rawMsg.contains(":")) {
+        candidateTitle = rawMsg.split(":").last.trim().toLowerCase();
+      } else if (rawMsg.isNotEmpty) {
+        candidateTitle = rawMsg.trim().toLowerCase();
+      }
+
+      if (candidateTitle.isNotEmpty) {
+        try {
+          final products = await ProductService.getProducts();
+          final match = products.firstWhereOrNull((p) {
+            final pTitle = p.title.toLowerCase().trim();
+            return pTitle == candidateTitle ||
+                pTitle.contains(candidateTitle) ||
+                candidateTitle.contains(pTitle);
+          });
+          if (match != null) {
+            Get.to(() => ProductDetailScreen(productId: match.id));
+            return;
+          }
+        } catch (_) {}
+      }
+
+      // Fallback: Open Buyer Offers View
+      Get.to(() => const BuyerOffersView());
+      return;
+    }
+
+    // Branch related
+    if (type.contains('branch') || title.contains('branch') || message.contains('branch')) {
+      Get.to(() => const BuyerBranchView());
+      return;
+    }
+
+    // Challan / Transport related
+    if (type.contains('challan') ||
+        type.contains('transport') ||
+        title.contains('challan') ||
+        title.contains('dispatch') ||
+        message.contains('challan') ||
+        message.contains('dispatch')) {
+      Get.to(() => const BuyerDeliveryChallanView());
+      return;
+    }
+
+    // Contract / Deal related
+    if (type.contains('contract') ||
+        type.contains('deal') ||
+        title.contains('contract') ||
+        title.contains('deal') ||
+        message.contains('contract') ||
+        message.contains('deal')) {
+      if (productId != null && productId > 0) {
+        Get.to(() => const ContractDetailScreen(), arguments: productId);
+      } else {
+        Get.to(() => const ContractsScreen());
+      }
+      return;
+    }
+
+    // Default Fallback
+    Get.to(() => const BuyerOffersView());
   }
 }
