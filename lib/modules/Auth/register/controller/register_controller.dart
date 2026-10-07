@@ -15,9 +15,17 @@ class RegisterController {
   final TextEditingController panController = TextEditingController();
   final TextEditingController gstController = TextEditingController();
   final TextEditingController dobController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
 
-  /// STATIC ROLE
-  static const String role = "admin"; // 🔥 fixed role
+  /// Self sign-up roles (admins are created by admins, never from this screen).
+  static const Map<String, String> roles = {
+    'buyer': 'Buyer',
+    'seller': 'Seller',
+    'transporter': 'Transporter',
+    'both_sellerandbuyer': 'Seller + Buyer',
+  };
+  String? selectedRole;
 
   /// ============================
   /// OTHER FIELDS
@@ -48,12 +56,24 @@ class RegisterController {
   }
 
   /// ============================
-  /// REGISTER USER (ADMIN ONLY)
+  /// REGISTER USER
   /// ============================
   Future<String?> register() async {
 
     if (!formKey.currentState!.validate()) {
       return null;
+    }
+
+    if (selectedRole == null) {
+      throw Exception("Please select user type");
+    }
+
+    if (passwordController.text.length < 8) {
+      throw Exception("Password must be at least 8 characters");
+    }
+
+    if (passwordController.text != confirmPasswordController.text) {
+      throw Exception("Passwords do not match");
     }
 
     if (selectedGender == null) {
@@ -77,7 +97,9 @@ class RegisterController {
           "email": emailController.text.trim(),
           "first_name": firstNameController.text.trim(),
           "last_name": lastNameController.text.trim(),
-          "role": role, // 🔥 always admin
+          "role": selectedRole!,
+          "password": passwordController.text,
+          "confirm_password": confirmPasswordController.text,
           "pan_number": panController.text.trim(),
           "gst_number": gstController.text.trim(),
           "gender": selectedGender!,
@@ -109,5 +131,7 @@ class RegisterController {
     panController.dispose();
     gstController.dispose();
     dobController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
   }
 }

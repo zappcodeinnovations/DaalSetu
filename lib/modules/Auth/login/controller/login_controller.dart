@@ -45,7 +45,7 @@ class LoginController extends GetxController {
         return;
       }
 
-      final allowedRoles = ["admin", "seller", "transporter", "buyer", "sub_admin"];
+      final allowedRoles = ["admin", "seller", "transporter", "buyer", "both_sellerandbuyer", "sub_admin"];
       if (!allowedRoles.contains(role)) {
         await AppPreferences.logout();
 

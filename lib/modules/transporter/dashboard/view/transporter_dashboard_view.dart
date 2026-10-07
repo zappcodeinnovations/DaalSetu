@@ -7,13 +7,21 @@ import 'package:fl_chart/fl_chart.dart';
 import '../controller/transporter_dashboard_controller.dart';
 import '../../company/view/transporter_company_form.dart';
 import '../../company/controller/transporter_company_controller.dart';
+import '../../bidding/view/transporter_bidding_view.dart';
+import '../../../seller/branches/view/seller_branches_view.dart';
+import '../../../../services/notification_services.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../../routes/app_routes.dart';
 
+/// Mirrors the web transporter dashboard: KPIs, trend, delivery status, routes, and the
+/// web menu items (company, drivers, vehicles, branches, shipment offers, my deals).
 class TransporterDashboardView extends StatelessWidget {
   TransporterDashboardView({super.key});
 
   final TransporterDashboardController controller = Get.put(TransporterDashboardController());
+  final TransporterCompanyController companyController = Get.put(TransporterCompanyController());
+
+  static const Color _gold = Color(0xFFFFB300);
 
   @override
   Widget build(BuildContext context) {
@@ -21,878 +29,436 @@ class TransporterDashboardView extends StatelessWidget {
       backgroundColor: Colors.transparent,
       appBar: _buildAppBar(context),
       body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
+        if (controller.isLoading.value && controller.kpis.isEmpty) {
+          return const Center(child: CircularProgressIndicator(color: _gold));
         }
-        
         return RefreshIndicator(
-          onRefresh: controller.fetchDashboardOverview,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeroSection(context),
-                const SizedBox(height: 24),
-                
-                _buildSectionHeader(context, "Today's Overview", trailing: _buildDateBadge(context, controller.dateStr.value)),
-                const SizedBox(height: 16),
-                _buildTodaysOverview(context),
-                
-                const SizedBox(height: 24),
-                _buildSectionHeader(context, "Analytics Overview", trailingText: "View All"),
-                const SizedBox(height: 16),
-                _buildAnalyticsGrid(context),
-
-                const SizedBox(height: 24),
-                _buildRegisterBanner(context),
-
-                const SizedBox(height: 24),
-                _buildSectionHeader(context, "Quick Actions", trailingText: "View All"),
-                const SizedBox(height: 16),
-                _buildQuickActions(context),
-
-                const SizedBox(height: 24),
-                _buildSectionHeader(context, "Performance Insights", trailingText: "View All"),
-                const SizedBox(height: 16),
-                _buildPerformanceInsights(context),
-
-                const SizedBox(height: 24),
-                _buildSectionHeader(context, "Monthly Revenue Overview", trailing: _buildDropdownBadge(context, "This Year")),
-                const SizedBox(height: 16),
-                _buildMonthlyRevenueChart(context),
-
-                const SizedBox(height: 24),
-                _buildSectionHeader(context, "Recent Activity", trailingText: "View All"),
-                const SizedBox(height: 16),
-                _buildRecentActivity(context),
-
-                const SizedBox(height: 100), // Bottom nav padding
+          color: _gold,
+          onRefresh: () async {
+            await controller.fetchDashboardOverview();
+            await companyController.fetchCompanies();
+          },
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
+            children: [
+              _buildHero(context),
+              if (controller.errorMessage.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(controller.errorMessage.value, style: const TextStyle(color: Colors.red)),
               ],
-            ),
+              if (!companyController.isLoading.value && companyController.companies.isEmpty) ...[
+                const SizedBox(height: 16),
+                _buildRegisterBanner(context),
+              ],
+              const SizedBox(height: 20),
+              _sectionTitle(context, "Quick Actions"),
+              const SizedBox(height: 12),
+              _buildQuickActions(context),
+              const SizedBox(height: 24),
+              _sectionTitle(context, "Overview"),
+              const SizedBox(height: 12),
+              _buildKpiGrid(context),
+              const SizedBox(height: 24),
+              _buildTrendCard(context),
+              const SizedBox(height: 16),
+              _buildDeliveryStatusCard(context),
+              const SizedBox(height: 16),
+              _buildListCard(context, "Transport Types", controller.transportTypes.value, IconlyLight.discovery, "vehicles"),
+              const SizedBox(height: 16),
+              _buildListCard(context, "Top Routes", controller.topRoutes.value, IconlyLight.location, "trips"),
+            ],
           ),
         );
       }),
     );
   }
 
-  // --- App Bar ---
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      leading: IconButton(
-        icon: const Icon(IconlyLight.filter), // Hamburger substitute
-        onPressed: () {},
-      ),
-      title: Image.asset(
-        'assets/images/app_name.png',
-        height: 32,
-        fit: BoxFit.contain,
-      ),
+      automaticallyImplyLeading: false,
+      title: Image.asset('assets/images/app_name.png', height: 32, fit: BoxFit.contain),
       centerTitle: true,
       actions: [
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            IconButton(
-              icon: const Icon(IconlyLight.notification),
-              onPressed: () => Get.toNamed(AppRoutes.transporterNotifications),
-            ),
-            Positioned(
-              right: 12,
-              top: 12,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Colors.deepOrange,
-                  shape: BoxShape.circle,
-                ),
-                child: const Text('3', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(width: 4),
-        GestureDetector(
-          onTap: () => Get.toNamed(AppRoutes.transporterKyc),
-          child: CircleAvatar(
-            radius: 16,
-            backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-            child: Icon(IconlyLight.user_1, size: 16, color: Theme.of(context).colorScheme.primary),
-          ),
-        ),
-        const SizedBox(width: 16),
-      ],
-    );
-  }
-
-  // --- Hero Section ---
-  Widget _buildHeroSection(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              "Hello, ",
-              style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
-            ),
-            Text(
-              controller.username.value,
-              style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
-            ),
-            const Text(" 👋", style: TextStyle(fontSize: 24)),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Row(
-          children: [
-            Icon(IconlyBold.location, size: 16, color: theme.colorScheme.primary),
-            const SizedBox(width: 4),
-            Text(
-              controller.branchName.value,
-              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: theme.textTheme.bodyLarge?.color),
-            ),
-            const SizedBox(width: 4),
-            Icon(IconlyLight.arrow_down_2, size: 14, color: theme.textTheme.bodyMedium?.color),
-          ],
-        ),
-      ],
-    );
-  }
-
-  // --- Helper: Section Header ---
-  Widget _buildSectionHeader(BuildContext context, String title, {String? trailingText, Widget? trailing}) {
-    final theme = Theme.of(context);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
-        ),
-        if (trailingText != null)
-          Text(
-            trailingText,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
-            ),
-          )
-        else if (trailing != null)
-          trailing,
-      ],
-    );
-  }
-
-  Widget _buildDateBadge(BuildContext context, String text) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3)),
-      ),
-      child: Text(
-        text,
-        style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
-      ),
-    );
-  }
-
-  Widget _buildDropdownBadge(BuildContext context, String text) {
-    final theme = Theme.of(context);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(text, style: GoogleFonts.inter(fontSize: 12, color: theme.textTheme.bodyMedium?.color)),
-        const SizedBox(width: 4),
-        Icon(IconlyLight.arrow_down_2, size: 14, color: theme.textTheme.bodyMedium?.color),
-      ],
-    );
-  }
-
-  // --- Today's Overview ---
-  Widget _buildTodaysOverview(BuildContext context) {
-    return Obx(() {
-      if (controller.dynamicKpis.isEmpty) {
-        if (controller.isLoading.value) {
-          return const SizedBox(height: 110, child: Center(child: CircularProgressIndicator()));
-        } else {
-          return const SizedBox();
-        }
-      }
-      return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        clipBehavior: Clip.none,
-        child: Row(
-          children: controller.dynamicKpis.map((kpi) {
-            IconData icon = IconlyLight.document;
-            if (kpi.screen.toLowerCase().contains('deliver')) icon = IconlyLight.paper;
-            if (kpi.screen.toLowerCase().contains('vehicle')) icon = IconlyLight.location;
-            if (kpi.screen.toLowerCase().contains('driver')) icon = IconlyLight.user_1;
-            
-            return Padding(
-              padding: const EdgeInsets.only(right: 12.0),
-              child: _buildDynamicMetricCard(context, kpi, icon),
-            );
-          }).toList(),
-        ),
-      );
-    });
-  }
-
-  Widget _buildDynamicMetricCard(BuildContext context, KpiItem metric, IconData icon) {
-    final theme = Theme.of(context);
-    return GlassCard(
-      padding: const EdgeInsets.all(12),
-      child: SizedBox(
-        width: 120, // Slightly wider to fit dynamic titles
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, size: 16, color: theme.colorScheme.primary),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              metric.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              metric.value.toString(),
-              style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              metric.subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(fontSize: 8, color: theme.textTheme.bodyMedium?.color),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // --- Analytics Grid ---
-  Widget _buildAnalyticsGrid(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(child: _buildTrendChartCard(context)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildDonutCard(context, "Delivery Status", "This Month", controller.deliveryStatus)),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(child: _buildDonutCard(context, "Transport Types", "This Month", controller.transportTypes, colors: [Theme.of(context).colorScheme.primary, Colors.orangeAccent, Colors.redAccent])),
-            const SizedBox(width: 12),
-            Expanded(child: _buildTopRoutesCard(context)),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTrendChartCard(BuildContext context) {
-    final theme = Theme.of(context);
-    final data = controller.earningsTrend.value;
-    return GlassCard(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Earnings & Shipments Trend", style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
-          Text("This Week", style: GoogleFonts.inter(fontSize: 8, color: theme.textTheme.bodyMedium?.color)),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Text("₹ 18,60,000", style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
-              const SizedBox(width: 4),
-              const Icon(IconlyBold.arrow_up, size: 8, color: Colors.green),
-              Text(" 15.2%", style: GoogleFonts.inter(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.green)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 80,
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(show: false),
-                titlesData: FlTitlesData(
-                  leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 14,
-                      getTitlesWidget: (value, meta) {
-                        if (value.toInt() >= 0 && value.toInt() < data.labels.length) {
-                          return Text(data.labels[value.toInt()], style: TextStyle(fontSize: 6, color: theme.textTheme.bodyMedium?.color));
-                        }
-                        return const Text('');
-                      },
-                    ),
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: data.values.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
-                    isCurved: true,
-                    color: theme.colorScheme.primary,
-                    barWidth: 2,
-                    isStrokeCapRound: true,
-                    dotData: FlDotData(show: true, getDotPainter: (spot, percent, barData, index) {
-                      return FlDotCirclePainter(radius: 2, color: theme.colorScheme.primary, strokeWidth: 1, strokeColor: Colors.white);
-                    }),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        colors: [theme.colorScheme.primary.withOpacity(0.3), Colors.transparent],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDonutCard(BuildContext context, String title, String subtitle, List<DonutItem> items, {List<Color>? colors}) {
-    final theme = Theme.of(context);
-    final finalColors = colors ?? [Colors.green, Colors.orange, Colors.red];
-    return GlassCard(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
-          Text(subtitle, style: GoogleFonts.inter(fontSize: 8, color: theme.textTheme.bodyMedium?.color)),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              SizedBox(
-                height: 70,
-                width: 70,
-                child: PieChart(
-                  PieChartData(
-                    sectionsSpace: 0,
-                    centerSpaceRadius: 20,
-                    sections: items.asMap().entries.map((e) {
-                      return PieChartSectionData(
-                        value: e.value.percentage,
-                        color: finalColors[e.key % finalColors.length],
-                        radius: 12,
-                        showTitle: false,
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: items.asMap().entries.map((e) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 4.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Container(width: 6, height: 6, decoration: BoxDecoration(color: finalColors[e.key % finalColors.length], shape: BoxShape.circle)),
-                              const SizedBox(width: 4),
-                              Text(e.value.label, style: GoogleFonts.inter(fontSize: 8, color: theme.textTheme.bodyLarge?.color)),
-                            ],
-                          ),
-                          Text("${e.value.percentage.toInt()}%", style: GoogleFonts.inter(fontSize: 8, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTopRoutesCard(BuildContext context) {
-    final theme = Theme.of(context);
-    final data = controller.topRoutes;
-    return GlassCard(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Top Routes", style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
-          Text("This Month", style: GoogleFonts.inter(fontSize: 8, color: theme.textTheme.bodyMedium?.color)),
-          const SizedBox(height: 12),
-          ...data.map((item) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 6.0),
-              child: Row(
+        StatefulBuilder(
+          builder: (context, setState) => FutureBuilder<int>(
+            future: NotificationServices.getUnreadCount().catchError((_) => 0),
+            builder: (context, snapshot) {
+              final unread = snapshot.data ?? 0;
+              return Stack(
+                alignment: Alignment.center,
                 children: [
-                  Expanded(
-                    flex: 3,
-                    child: Text(item.label, style: GoogleFonts.inter(fontSize: 8, color: theme.textTheme.bodyLarge?.color), overflow: TextOverflow.ellipsis),
+                  IconButton(
+                    icon: const Icon(IconlyLight.notification),
+                    onPressed: () async {
+                      await Get.toNamed(AppRoutes.transporterNotifications);
+                      setState(() {});
+                    },
                   ),
-                  Expanded(
-                    flex: 4,
-                    child: Container(
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary,
-                        borderRadius: BorderRadius.circular(2),
+                  if (unread > 0)
+                    Positioned(
+                      right: 10,
+                      top: 10,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(color: Colors.deepOrange, shape: BoxShape.circle),
+                        child: Text(unread > 99 ? '99+' : '$unread',
+                            style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    flex: 1,
-                    child: Text(item.value.toInt().toString(), style: GoogleFonts.inter(fontSize: 8, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color), textAlign: TextAlign.right),
-                  ),
                 ],
-              ),
-            );
-          }),
+              );
+            },
+          ),
+        ),
+        const SizedBox(width: 8),
+      ],
+    );
+  }
+
+  Widget _buildHero(BuildContext context) {
+    final theme = Theme.of(context);
+    final now = DateTime.now();
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    final dateText = "${days[now.weekday - 1]}, ${now.day.toString().padLeft(2, '0')} ${months[now.month - 1]} ${now.year}";
+    return GlassCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Transporter Dashboard",
+              style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+          const SizedBox(height: 4),
+          Text(
+            "Welcome, ${controller.username.value.isEmpty ? 'Transporter' : controller.username.value}! "
+            "Track shipments, earnings & fleet utilization.",
+            style: GoogleFonts.inter(fontSize: 12, color: theme.textTheme.bodyMedium?.color),
+          ),
+          if (controller.branchCodes.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text("Branch Code: ${controller.branchCodes.join(' - ')}",
+                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
+          ],
+          const SizedBox(height: 6),
+          Text(dateText, style: GoogleFonts.inter(fontSize: 11, color: _gold, fontWeight: FontWeight.w600)),
         ],
       ),
     );
   }
 
-  // --- Banner ---
   Widget _buildRegisterBanner(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.only(left: 20, top: 20, bottom: 20, right: 0),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3)),
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.surface,
-            theme.colorScheme.surface,
-            theme.colorScheme.primary.withOpacity(0.1),
-          ],
-          stops: const [0.0, 0.5, 1.0],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-      ),
+    return GlassCard(
+      padding: const EdgeInsets.all(14),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
+          const Icon(IconlyBold.work, color: _gold, size: 30),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Register your Company", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
-                const SizedBox(height: 4),
-                Text("Unlock all features &\ngrow your transport business", style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color)),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 32,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Get.put(TransporterCompanyController());
-                      Get.to(() => const TransporterCompanyForm());
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text("Register Now", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                  ),
-                )
+                Text("Register your Company",
+                    style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+                Text("Needed before you can bid on shipments.",
+                    style: GoogleFonts.inter(fontSize: 11, color: theme.textTheme.bodyMedium?.color)),
               ],
             ),
           ),
-          Image.asset(
-            'assets/images/truck.png',
-            height: 90,
-            fit: BoxFit.contain,
+          ElevatedButton(
+            onPressed: () => Get.to(() => const TransporterCompanyForm())?.then((_) => companyController.fetchCompanies()),
+            style: ElevatedButton.styleFrom(backgroundColor: _gold),
+            child: const Text("Register", style: TextStyle(color: Colors.white, fontSize: 12)),
           ),
-          const SizedBox(width: 8),
         ],
       ),
     );
   }
 
-  // --- Quick Actions ---
-  Widget _buildQuickActions(BuildContext context) {
-    final allItems = [
-      {'title': 'Bidding', 'icon': IconlyLight.ticket_star, 'route': AppRoutes.transporterBidding},
-      {'title': 'Branch', 'icon': IconlyLight.location, 'route': AppRoutes.transporterBranch},
-      {'title': 'Brands', 'icon': IconlyLight.star, 'route': AppRoutes.transporterBrands},
-      {'title': 'Category', 'icon': IconlyLight.category, 'route': AppRoutes.transporterCategory},
-      {'title': 'Company', 'icon': IconlyLight.work, 'route': AppRoutes.transporterCompany},
-      {'title': 'KYC', 'icon': IconlyLight.document, 'route': AppRoutes.transporterKyc},
-      {'title': 'Contracts', 'icon': IconlyLight.paper, 'route': AppRoutes.transporterContracts},
-      {'title': 'Notifications', 'icon': IconlyLight.notification, 'route': AppRoutes.transporterNotifications},
-      {'title': 'Offers', 'icon': IconlyLight.discount, 'route': AppRoutes.transporterOffers},
-      {'title': 'Products', 'icon': IconlyLight.bag, 'route': AppRoutes.transporterProducts},
-      {'title': 'RFQ', 'icon': IconlyLight.chat, 'route': AppRoutes.transporterRfq},
-    ];
+  Widget _sectionTitle(BuildContext context, String text) {
+    return Text(text,
+        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyLarge?.color));
+  }
 
+  Widget _buildQuickActions(BuildContext context) {
     final theme = Theme.of(context);
-    return GridView.builder(
+    final actions = <(String, IconData, VoidCallback)>[
+      ("Shipment Offers", IconlyLight.ticket_star, () => Get.to(() => const TransporterBiddingView())),
+      ("My Deals", IconlyLight.document, () => Get.to(() => const TransporterBiddingView(initialTab: 1))),
+      ("Company", IconlyLight.work, () => Get.toNamed(AppRoutes.transporterCompany)),
+      ("Drivers", IconlyLight.user_1, () => Get.toNamed(AppRoutes.transporterDrivers)),
+      ("Vehicles", IconlyLight.discovery, () => Get.toNamed(AppRoutes.transporterVehicles)),
+      ("My Branches", IconlyLight.location, () => Get.to(() => const SellerBranchesView())),
+      ("Notifications", IconlyLight.notification, () => Get.toNamed(AppRoutes.transporterNotifications)),
+    ];
+    return GridView.count(
+      crossAxisCount: 4,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.9,
-      ),
-      itemCount: 12,
-      itemBuilder: (context, index) {
-        if (index == 11) {
-          return GestureDetector(
-            onTap: () => _showAllActionsBottomSheet(context, allItems),
-            child: GlassCard(
-              padding: const EdgeInsets.all(4),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.more_horiz, size: 24, color: theme.colorScheme.primary),
-                  const SizedBox(height: 6),
-                  Text("More", style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600, color: theme.textTheme.bodyLarge?.color)),
-                ],
-              ),
-            ),
-          );
-        }
-        
-        final item = allItems[index];
-        return GestureDetector(
-          onTap: () => Get.toNamed(item['route'] as String),
-          child: GlassCard(
-            padding: const EdgeInsets.all(4),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3)),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(item['icon'] as IconData, size: 20, color: theme.colorScheme.primary),
-                ),
-                const SizedBox(height: 6),
-                Text(item['title'] as String, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600, color: theme.textTheme.bodyLarge?.color), maxLines: 1, overflow: TextOverflow.ellipsis),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showAllActionsBottomSheet(BuildContext context, List<Map<String, dynamic>> items) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    final extendedItems = [
-      ...items,
-      {'title': 'Drivers', 'icon': IconlyLight.user_1, 'route': AppRoutes.transporterDrivers},
-      {'title': 'Vehicles', 'icon': IconlyLight.location, 'route': AppRoutes.transporterVehicles},
-      {'title': 'Settings', 'icon': IconlyLight.setting, 'route': AppRoutes.settings},
-    ];
-
-    Get.bottomSheet(
-      Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade400,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              "All Quick Actions",
-              style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Flexible(
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics: const BouncingScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 0.9,
-                ),
-                itemCount: extendedItems.length,
-                itemBuilder: (context, idx) {
-                  final item = extendedItems[idx];
-                  return GestureDetector(
-                    onTap: () {
-                      Get.back();
-                      Get.toNamed(item['route'] as String);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: isDark ? theme.colorScheme.surface : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: theme.dividerColor),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(item['icon'] as IconData, size: 22, color: theme.colorScheme.primary),
-                          const SizedBox(height: 6),
-                          Text(
-                            item['title'] as String,
-                            style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600),
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 8,
+      childAspectRatio: 0.85,
+      children: actions
+          .map((a) => InkWell(
+                onTap: a.$3,
+                borderRadius: BorderRadius.circular(14),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: _gold.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(14)),
+                      child: Icon(a.$2, color: _gold, size: 22),
                     ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-      isScrollControlled: true,
+                    const SizedBox(height: 6),
+                    Text(a.$1,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600, color: theme.textTheme.bodyLarge?.color)),
+                  ],
+                ),
+              ))
+          .toList(),
     );
   }
 
-  // --- Performance Insights ---
-  Widget _buildPerformanceInsights(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      clipBehavior: Clip.none,
-      child: Row(
-        children: [
-          _buildPerformanceCard(context, controller.avgDeliveryTime.value),
-          const SizedBox(width: 12),
-          _buildPerformanceCard(context, controller.onTimeDelivery.value),
-          const SizedBox(width: 12),
-          _buildPerformanceCard(context, controller.fuelEfficiency.value),
-          const SizedBox(width: 12),
-          _buildPerformanceCard(context, controller.customerRating.value),
-        ],
-      ),
+  Widget _buildKpiGrid(BuildContext context) {
+    final k = controller.kpis;
+    String v(String key, [String fallback = '—']) => k[key] == null ? fallback : '${k[key]}';
+    final cards = <(String, String, String, IconData)>[
+      ("Earnings (MTD)", v('earn', '₹0.00'), v('earnDelta', ''), Icons.currency_rupee),
+      ("Active Shipments", v('active', '0'), "Pickup due: ${v('pickupDue', '0')}", IconlyLight.bag),
+      ("Delivered (MTD)", v('delivered', '0'), "On-time: ${v('onTime')}", IconlyLight.tick_square),
+      ("In Transit", v('inTransit', '0'), "Avg ETA: ${v('avgETA')}", Icons.local_shipping_outlined),
+      ("Delayed / Exceptions", v('delayed', '0'), "Incidents: ${v('incidents', '0')}", IconlyLight.danger),
+      ("Cost per KM", v('costKm'), "Fuel variance: ${v('fuelVar')}", Icons.local_gas_station_outlined),
+      ("Fleet Utilization", v('util', '0%'), "Active vehicles: ${v('vehicles', '0')}", IconlyLight.chart),
+      ("Avg Delivery Time", v('avgTime'), "SLA breach rate: ${v('breach')}", IconlyLight.time_circle),
+    ];
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 1.35,
+      children: cards.map((c) => _kpiCard(context, c.$1, c.$2, c.$3, c.$4)).toList(),
     );
   }
 
-  Widget _buildPerformanceCard(BuildContext context, MetricCard metric) {
+  Widget _kpiCard(BuildContext context, String title, String value, String subtitle, IconData icon) {
     final theme = Theme.of(context);
     return GlassCard(
       padding: const EdgeInsets.all(12),
-      child: SizedBox(
-        width: 100,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(metric.title, style: GoogleFonts.inter(fontSize: 8, color: theme.textTheme.bodyMedium?.color)),
-            const SizedBox(height: 4),
-            Text(metric.value, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(metric.isPositive ? IconlyBold.arrow_up : IconlyBold.arrow_down, size: 8, color: Colors.green),
-                const SizedBox(width: 4),
-                Text(metric.change, style: GoogleFonts.inter(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.green)),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // --- Monthly Revenue Chart ---
-  Widget _buildMonthlyRevenueChart(BuildContext context) {
-    final theme = Theme.of(context);
-    final data = controller.monthlyRevenue.value;
-    
-    return GlassCard(
-      padding: const EdgeInsets.all(16),
-      child: SizedBox(
-        height: 180,
-        child: BarChart(
-          BarChartData(
-            alignment: BarChartAlignment.spaceAround,
-            maxY: 50,
-            barTouchData: BarTouchData(
-              touchTooltipData: BarTouchTooltipData(
-                getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                  return BarTooltipItem("₹ 18,60,000", const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold));
-                }
-              )
-            ),
-            titlesData: FlTitlesData(
-              show: true,
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  getTitlesWidget: (value, meta) {
-                    if (value.toInt() < data.labels.length) {
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(data.labels[value.toInt()], style: TextStyle(fontSize: 8, color: theme.textTheme.bodyMedium?.color)),
-                      );
-                    }
-                    return const Text('');
-                  },
-                ),
-              ),
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 24,
-                  interval: 10,
-                  getTitlesWidget: (value, meta) {
-                    return Text("${value.toInt()}L", style: TextStyle(fontSize: 8, color: theme.textTheme.bodyMedium?.color));
-                  }
-                ),
-              ),
-              topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            ),
-            gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (val) => FlLine(color: theme.dividerColor.withOpacity(0.5), strokeWidth: 1, dashArray: [4, 4])),
-            borderData: FlBorderData(show: false),
-            barGroups: data.values.asMap().entries.map((e) {
-              return BarChartGroupData(
-                x: e.key,
-                barRods: [
-                  BarChartRodData(
-                    toY: e.value,
-                    color: theme.colorScheme.primary,
-                    width: 8,
-                    borderRadius: BorderRadius.circular(4),
-                  )
-                ],
-              );
-            }).toList(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(color: Colors.deepOrange.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
+            child: Icon(icon, size: 18, color: Colors.deepOrange),
           ),
-        ),
+          const Spacer(),
+          Text(title.toUpperCase(), style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.w600, color: theme.textTheme.bodyMedium?.color)),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(value, style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+          ),
+          Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color)),
+        ],
       ),
     );
   }
 
-  // --- Recent Activity ---
-  Widget _buildRecentActivity(BuildContext context) {
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: controller.activities.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final activity = controller.activities[index];
-        final theme = Theme.of(context);
-        
-        IconData icon;
-        Color badgeColor;
-        
-        switch (activity.type) {
-          case 'trip': icon = IconlyLight.location; badgeColor = Colors.green; break;
-          case 'driver': icon = IconlyLight.user_1; badgeColor = Colors.blue; break;
-          case 'branch': icon = IconlyLight.document; badgeColor = Colors.green; break;
-          default: icon = IconlyLight.notification; badgeColor = Colors.orange;
-        }
-        
-        return GlassCard(
-          padding: const EdgeInsets.all(12),
-          child: Row(
+  Widget _buildTrendCard(BuildContext context) {
+    final theme = Theme.of(context);
+    final range = controller.currentRange;
+    final earnings = range['earnings'] ?? const ChartSeries([], []);
+    final shipments = range['shipments'] ?? const ChartSeries([], []);
+    return GlassCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: theme.colorScheme.primary, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(activity.title, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
-                    const SizedBox(height: 2),
-                    Text(activity.subtitle, style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color)),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(activity.time, style: GoogleFonts.inter(fontSize: 8, color: theme.textTheme.bodyMedium?.color)),
-                  const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: badgeColor.withOpacity(0.1),
-                      border: Border.all(color: badgeColor.withOpacity(0.5)),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(activity.status, style: GoogleFonts.inter(fontSize: 8, fontWeight: FontWeight.bold, color: badgeColor)),
-                  )
-                ],
-              )
+              Expanded(child: Text("Earnings & Shipments Trend", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14))),
             ],
           ),
-        );
-      },
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            children: ['7D', '1M', '3M', '1Y']
+                .map((key) => ChoiceChip(
+                      label: Text(key),
+                      selected: controller.selectedRange.value == key,
+                      selectedColor: _gold,
+                      onSelected: (_) => controller.selectedRange.value = key,
+                    ))
+                .toList(),
+          ),
+          const SizedBox(height: 12),
+          if (earnings.isEmpty && shipments.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 30),
+              child: Center(child: Text("No accepted shipments in this period", style: TextStyle(color: theme.disabledColor))),
+            )
+          else ...[
+            Text("Shipments", style: GoogleFonts.inter(fontSize: 11, color: theme.textTheme.bodyMedium?.color)),
+            SizedBox(height: 140, child: _barChart(context, shipments, _gold)),
+            const SizedBox(height: 12),
+            Text("Earnings (₹ Lakhs)", style: GoogleFonts.inter(fontSize: 11, color: theme.textTheme.bodyMedium?.color)),
+            SizedBox(height: 140, child: _lineChart(context, earnings, Colors.deepOrange)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  FlTitlesData _titles(BuildContext context, List<String> labels) {
+    final style = TextStyle(fontSize: 9, color: Theme.of(context).textTheme.bodyMedium?.color);
+    return FlTitlesData(
+      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      leftTitles: AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: true,
+          reservedSize: 32,
+          getTitlesWidget: (value, meta) => Text(value == value.roundToDouble() ? value.toInt().toString() : value.toStringAsFixed(1), style: style),
+        ),
+      ),
+      bottomTitles: AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: true,
+          reservedSize: 22,
+          getTitlesWidget: (value, meta) {
+            final i = value.toInt();
+            if (i < 0 || i >= labels.length || value != i.toDouble()) return const SizedBox.shrink();
+            return Padding(padding: const EdgeInsets.only(top: 4), child: Text(labels[i], style: style));
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _barChart(BuildContext context, ChartSeries series, Color color) {
+    return BarChart(BarChartData(
+      gridData: const FlGridData(show: false),
+      borderData: FlBorderData(show: false),
+      titlesData: _titles(context, series.labels),
+      barGroups: [
+        for (var i = 0; i < series.values.length; i++)
+          BarChartGroupData(x: i, barRods: [BarChartRodData(toY: series.values[i], color: color, width: 12, borderRadius: BorderRadius.circular(4))]),
+      ],
+    ));
+  }
+
+  Widget _lineChart(BuildContext context, ChartSeries series, Color color) {
+    return LineChart(LineChartData(
+      gridData: const FlGridData(show: false),
+      borderData: FlBorderData(show: false),
+      titlesData: _titles(context, series.labels),
+      minY: 0,
+      lineBarsData: [
+        LineChartBarData(
+          spots: [for (var i = 0; i < series.values.length; i++) FlSpot(i.toDouble(), series.values[i])],
+          isCurved: true,
+          color: color,
+          barWidth: 3,
+          dotData: const FlDotData(show: true),
+        ),
+      ],
+    ));
+  }
+
+  Widget _buildDeliveryStatusCard(BuildContext context) {
+    final theme = Theme.of(context);
+    final status = controller.deliveryStatus.value;
+    const colors = [Colors.green, Color(0xFFFFC107), Colors.blue, Colors.red];
+    final total = status.values.fold<double>(0, (a, b) => a + b);
+    return GlassCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Delivery Status", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14)),
+          const SizedBox(height: 12),
+          if (total == 0)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: Text("No deliveries yet", style: TextStyle(color: theme.disabledColor))),
+            )
+          else
+            Row(
+              children: [
+                SizedBox(
+                  height: 130,
+                  width: 130,
+                  child: PieChart(PieChartData(
+                    centerSpaceRadius: 34,
+                    sectionsSpace: 2,
+                    sections: [
+                      for (var i = 0; i < status.values.length; i++)
+                        if (status.values[i] > 0)
+                          PieChartSectionData(value: status.values[i], color: colors[i % colors.length], title: '', radius: 26),
+                    ],
+                  )),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (var i = 0; i < status.labels.length; i++)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 3),
+                          child: Row(
+                            children: [
+                              Container(width: 10, height: 10, decoration: BoxDecoration(color: colors[i % colors.length], shape: BoxShape.circle)),
+                              const SizedBox(width: 8),
+                              Expanded(child: Text(status.labels[i], style: const TextStyle(fontSize: 12))),
+                              Text(status.values.length > i ? status.values[i].toInt().toString() : '0',
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildListCard(BuildContext context, String title, ChartSeries series, IconData icon, String unit) {
+    final theme = Theme.of(context);
+    return GlassCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14)),
+          const SizedBox(height: 8),
+          if (series.labels.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Text("No data yet", style: TextStyle(color: theme.disabledColor)),
+            ),
+          for (var i = 0; i < series.labels.length; i++)
+            ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(icon, color: _gold, size: 18),
+              title: Text(series.labels[i], style: const TextStyle(fontSize: 13)),
+              trailing: Text("${series.values.length > i ? series.values[i].toInt() : 0} $unit",
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            ),
+        ],
+      ),
     );
   }
 }

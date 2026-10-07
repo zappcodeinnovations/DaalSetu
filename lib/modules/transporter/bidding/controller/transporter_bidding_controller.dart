@@ -4,132 +4,121 @@ import '../../../../comman/api_url.dart';
 import '../../../../network/api_client.dart';
 import '../model/transporter_bid_model.dart';
 
+/// Web "Active Shipment Offer's" + "My Deals" over the single API /api/transport-bids/.
 class TransporterBiddingController extends GetxController {
-  var isLoading = true.obs;
-  var isSubmitting = false.obs;
-  var availableLoads = <TransporterBidModel>[].obs;
-  var myBids = <TransporterBidModel>[].obs;
-  var selectedTab = 0.obs; // 0: Available Loadings, 1: My Active Bids, 2: Awarded Loads
-
-  final bidPriceController = TextEditingController();
-  final bidQuantityController = TextEditingController();
-  final remarksController = TextEditingController();
+  var isLoadingOffers = false.obs;
+  var isLoadingBids = false.obs;
+  var offers = <ShipmentOfferModel>[].obs;
+  var myBids = <MyBidModel>[].obs;
+  var vehicles = <FleetOption>[].obs;
+  var drivers = <FleetOption>[].obs;
+  var offerSearch = ''.obs;
+  var bidStatus = 'all'.obs;
+  var offersError = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
     fetchAllData();
+    debounce(offerSearch, (_) => fetchOffers(), time: const Duration(milliseconds: 400));
   }
 
-  @override
-  void onClose() {
-    bidPriceController.dispose();
-    bidQuantityController.dispose();
-    remarksController.dispose();
-    super.onClose();
+  Future<void> fetchAllData() => Future.wait([fetchOffers(), fetchMyBids()]);
+
+  /// The server refuses bidding (403) until the company profile / KYC is complete.
+  String _message(Object e) {
+    final text = e.toString().replaceFirst('Exception: ', '');
+    if (text == 'Forbidden') return 'Complete your company profile and KYC to view and bid on shipments.';
+    return text;
   }
 
-  Future<void> fetchAllData() async {
+  String _query(String view, Map<String, String> extra) {
+    final params = {'view': view, ...extra}..removeWhere((_, v) => v.isEmpty);
+    return "${ApiUrls.transportBids}?${Uri(queryParameters: params).query}";
+  }
+
+  Future<void> fetchOffers() async {
     try {
-      isLoading(true);
-      await Future.wait([
-        fetchAvailableLoads(),
-        fetchMyBids(),
-      ]);
+      isLoadingOffers(true);
+      offersError('');
+      final response = await ApiClient.get(endpoint: _query('open', {'search': offerSearch.value}), requireAuth: true);
+      final list = response is Map ? response['contracts'] : null;
+      offers.value = (list is List ? list : const []).whereType<Map<String, dynamic>>().map(ShipmentOfferModel.fromJson).toList();
     } catch (e) {
-      // Graceful error handle
+      offers.clear();
+      offersError(_message(e));
     } finally {
-      isLoading(false);
-    }
-  }
-
-  Future<void> fetchAvailableLoads() async {
-    try {
-      final response = await ApiClient.get(
-        endpoint: ApiUrls.products,
-        requireAuth: true,
-      );
-
-      if (response != null) {
-        List<dynamic> list = [];
-        if (response is List) {
-          list = response;
-        } else if (response is Map && response['results'] is List) {
-          list = response['results'];
-        } else if (response is Map && response['data'] is List) {
-          list = response['data'];
-        }
-        availableLoads.value = list.map((e) => TransporterBidModel.fromJson(e)).toList();
-      }
-    } catch (e) {
-      print("Error fetching available loads: $e");
+      isLoadingOffers(false);
     }
   }
 
   Future<void> fetchMyBids() async {
     try {
+      isLoadingBids(true);
       final response = await ApiClient.get(
-        endpoint: ApiUrls.buyerMyInterests,
+        endpoint: _query('mine', {'status': bidStatus.value == 'all' ? '' : bidStatus.value}),
         requireAuth: true,
       );
-
-      if (response != null) {
-        List<dynamic> list = [];
-        if (response is List) {
-          list = response;
-        } else if (response is Map && response['results'] is List) {
-          list = response['results'];
-        } else if (response is Map && response['data'] is List) {
-          list = response['data'];
-        }
-        myBids.value = list.map((e) => TransporterBidModel.fromJson(e)).toList();
-      }
+      final data = response is Map ? response : const {};
+      myBids.value = (data['results'] as List? ?? []).whereType<Map<String, dynamic>>().map(MyBidModel.fromJson).toList();
+      vehicles.value = (data['vehicles'] as List? ?? [])
+          .whereType<Map>()
+          .map((v) => FleetOption(v['id'] as int, "${v['vehicle_number']} (${v['vehicle_status'] ?? ''})"))
+          .toList();
+      drivers.value = (data['drivers'] as List? ?? [])
+          .whereType<Map>()
+          .map((d) => FleetOption(d['id'] as int, "${d['driver_name']} • ${d['phone_number'] ?? ''}",
+              linkedVehicleId: d['assigned_vehicle_id'] is int ? d['assigned_vehicle_id'] as int : null))
+          .toList();
     } catch (e) {
-      print("Error fetching my bids: $e");
+      myBids.clear();
+      _snack("Error", _message(e), Colors.red);
+    } finally {
+      isLoadingBids(false);
     }
   }
 
-  Future<bool> submitBid(int productId) async {
-    final price = bidPriceController.text.trim();
-    final qty = bidQuantityController.text.trim();
-    final remark = remarksController.text.trim();
+  void setBidStatus(String status) {
+    bidStatus.value = status;
+    fetchMyBids();
+  }
 
-    if (price.isEmpty || qty.isEmpty) {
-      Get.snackbar("Required", "Please enter offered bid price and capacity quantity",
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.orange, colorText: Colors.white);
+  Future<bool> placeBid(ShipmentOfferModel offer, String amount) async {
+    return _post(ApiUrls.transportBids, {"contract_id": offer.id, "bid_amount": amount});
+  }
+
+  Future<bool> assignDriver(MyBidModel bid, int vehicleId, int driverId) async {
+    return _post(ApiUrls.transportBidDetail(bid.bidId), {"action": "assign_driver", "vehicle_id": vehicleId, "driver_id": driverId});
+  }
+
+  /// Anonymised competing bids for one contract (transporter view of the web bid table).
+  Future<List<Map<String, dynamic>>> fetchContractBids(int contractPk) async {
+    try {
+      final response = await ApiClient.get(endpoint: "${ApiUrls.transportBids}?contract_id=$contractPk", requireAuth: true);
+      final list = response is Map ? response['bids'] : null;
+      return (list is List ? list : const []).whereType<Map<String, dynamic>>().toList();
+    } catch (e) {
+      _snack("Error", _message(e), Colors.red);
+      return [];
+    }
+  }
+
+  Future<bool> _post(String endpoint, Map<String, dynamic> body) async {
+    Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
+    try {
+      final response = await ApiClient.post(endpoint: endpoint, body: body, requireAuth: true);
+      if (Get.isDialogOpen ?? false) Get.back();
+      _snack("Success", '${response['message'] ?? 'Done'}', Colors.green);
+      await fetchAllData();
+      return true;
+    } catch (e) {
+      if (Get.isDialogOpen ?? false) Get.back();
+      _snack("Error", _message(e), Colors.red);
       return false;
     }
+  }
 
-    try {
-      isSubmitting(true);
-      final body = {
-        "requested_amount": price,
-        "requested_quantity": qty,
-        "remark": remark.isNotEmpty ? remark : "Transport Bid",
-      };
-
-      final response = await ApiClient.post(
-        endpoint: "/api/offers/$productId/show-interest/",
-        body: body,
-        requireAuth: true,
-      );
-
-      if (response != null) {
-        Get.back(); // Close modal
-        Get.snackbar("Success", "Bid submitted successfully!",
-            snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
-        bidPriceController.clear();
-        bidQuantityController.clear();
-        remarksController.clear();
-        await fetchAllData();
-        return true;
-      }
-    } catch (e) {
-      Get.snackbar("Error", "Could not submit bid: $e",
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
-    } finally {
-      isSubmitting(false);
-    }
-    return false;
+  void _snack(String title, String message, Color color) {
+    Get.snackbar(title, message, snackPosition: SnackPosition.BOTTOM, backgroundColor: color, colorText: Colors.white);
   }
 }

@@ -16,6 +16,7 @@ import '../../products/view/product_view.dart';
 import '../../transporter/dashboard/view/transporter_dashboard_view.dart';
 import '../../transporter/drivers/view/transporter_drivers_view.dart';
 import '../../transporter/vehicles/view/transporter_vehicles_view.dart';
+import '../../transporter/bidding/view/transporter_bidding_view.dart';
 import '../../buyer/dashboard/view/buyer_dashboard_view.dart';
 import '../../buyer/offers/view/buyer_offers_view.dart';
 import '../../buyer/delivery_challan/view/buyer_delivery_challan_view.dart';
@@ -41,6 +42,7 @@ class MainNavigationScreen extends StatelessWidget {
     if (role == 'transporter') {
       return [
             TransporterDashboardView(),
+            const TransporterBiddingView(),
             TransporterDriversView(),
             const TransporterVehiclesView(),
           ] +
@@ -142,6 +144,11 @@ class _GlassNavBar extends StatelessWidget {
           icon: IconlyLight.category,
           activeIcon: IconlyBold.category,
           label: 'Dashboard',
+        ),
+        _NavItem(
+          icon: IconlyLight.ticket_star,
+          activeIcon: IconlyBold.ticket_star,
+          label: 'Shipments',
         ),
         _NavItem(
           icon: IconlyLight.user_1,

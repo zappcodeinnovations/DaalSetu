@@ -151,4 +151,6 @@ class ApiUrls {
   static String buyerRequirementDetail(String rfqId) => "/api/buyer-requirements/${Uri.encodeComponent(rfqId)}/";
   static const String consignments = "/api/consignments/";
   static String consignmentDetail(int contractId) => "/api/consignments/$contractId/";
+  static const String transportBids = "/api/transport-bids/";
+  static String transportBidDetail(int bidId) => "/api/transport-bids/$bidId/";
 }

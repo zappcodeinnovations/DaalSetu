@@ -129,6 +129,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 15),
 
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildDarkTextField(
+                      controller: _controller.passwordController,
+                      label: "Password",
+                      hint: "Min 8 characters",
+                      obscure: true,
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: _buildDarkTextField(
+                      controller: _controller.confirmPasswordController,
+                      label: "Confirm Password",
+                      hint: "Re-enter password",
+                      obscure: true,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 15),
+
               // Gender & DOB Row
               Row(
                 children: [
@@ -219,34 +242,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildRoleSelector() {
-    return Container(
-      height: 50,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: AppColors.primaryBrand.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.primaryBrand),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            IconlyLight.shield_done,
-            color: AppColors.primaryBrand,
-            size: 20,
+    // Public sign-up: buyer / seller / transporter (admins are created by admins).
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: RegisterController.roles.entries.map((entry) {
+        final selected = _controller.selectedRole == entry.key;
+        return ChoiceChip(
+          label: Text(entry.value),
+          selected: selected,
+          selectedColor: AppColors.primaryBrand.withValues(alpha: 0.2),
+          labelStyle: TextStyle(
+            color: selected ? AppColors.primaryBrand : AppColors.textGrey,
+            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
           ),
-          const SizedBox(width: 8),
-          Text(
-            "ADMIN",
-            style: TextStyle(
-              color: AppColors.primaryBrand,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-              letterSpacing: 1.2,
-            ),
-          ),
-        ],
-      ),
+          side: BorderSide(color: selected ? AppColors.primaryBrand : AppColors.border),
+          onSelected: (_) => setState(() => _controller.selectedRole = entry.key),
+        );
+      }).toList(),
     );
   }
 
@@ -280,6 +293,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     required String label,
     required String hint,
     TextInputType keyboard = TextInputType.text,
+    bool obscure = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -289,6 +303,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         TextFormField(
           controller: controller,
           keyboardType: keyboard,
+          obscureText: obscure,
           style: TextStyle(color: AppColors.textWhite),
           decoration: InputDecoration(
             hintText: hint,
