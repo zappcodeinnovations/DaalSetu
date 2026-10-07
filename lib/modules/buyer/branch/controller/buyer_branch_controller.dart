@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../services/seller_services.dart';
 import '../../../../utils/app_snackbar.dart';

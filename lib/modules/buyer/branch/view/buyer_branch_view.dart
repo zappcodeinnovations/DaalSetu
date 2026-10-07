@@ -64,7 +64,7 @@ class BuyerBranchView extends StatelessWidget {
                   Icon(
                     IconlyLight.location,
                     size: 70,
-                    color: primaryColor.withOpacity(0.5),
+                    color: primaryColor.withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -108,7 +108,7 @@ class BuyerBranchView extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: primaryColor.withOpacity(0.12),
+                          color: primaryColor.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(IconlyBold.work, color: primaryColor, size: 22),
@@ -165,7 +165,7 @@ class BuyerBranchView extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: Colors.blue.withOpacity(0.15),
+                                color: Colors.blue.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
@@ -211,7 +211,7 @@ class BuyerBranchView extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: Colors.orange.withOpacity(0.12),
+                                color: Colors.orange.withValues(alpha: 0.12),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(IconlyLight.time_circle, color: Colors.orange, size: 20),
@@ -266,7 +266,7 @@ class BuyerBranchView extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: primaryColor.withOpacity(0.12),
+                                color: primaryColor.withValues(alpha: 0.12),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(IconlyLight.location, color: primaryColor, size: 20),
