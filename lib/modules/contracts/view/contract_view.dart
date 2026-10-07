@@ -63,7 +63,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         drawer: Navigator.canPop(context)
             ? null
             : const AdminDrawer(activeKey: 'buyer_offers'),
