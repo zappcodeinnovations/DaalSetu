@@ -57,17 +57,24 @@ class BuyerOfferDetailsView extends StatelessWidget {
 
               _sectionTitle("Product Specifications"),
               _detailCard([
-                _infoRow("Title", data['title'] ?? data['product_title'] ?? "N/A"),
+                _infoRow("Title", data['title'] ?? data['product_title'] ?? data['commodity'] ?? "N/A"),
                 _infoRow("Category", data['category_name'] ?? data['category'] ?? "N/A"),
                 _infoRow("Brand", data['brand_name'] ?? data['brand'] ?? "N/A"),
+                if (data['seller'] != null || data['seller_name'] != null)
+                  _infoRow("Seller", data['seller_name'] ?? data['seller'] ?? "N/A"),
+                if (data['seller_company_name'] != null || data['company_name'] != null)
+                  _infoRow("Company", data['seller_company_name'] ?? data['company_name'] ?? "N/A"),
               ]),
 
               const SizedBox(height: 24),
-              _sectionTitle("Order Quantity & Target"),
+              _sectionTitle("Pricing & Inventory"),
               _detailCard([
-                _infoRow("Requested Quantity", "${data['requested_quantity'] ?? data['quantity'] ?? '0'} ${data['quantity_unit'] ?? data['unit'] ?? ''}"),
-                _infoRow("Target Price", "₹${data['requested_amount'] ?? data['price'] ?? '0'} per ${data['amount_unit'] ?? data['unit'] ?? ''}"),
-                _infoRow("Total Value", "₹${data['total_value'] ?? 'Calculated on deal'}"),
+                _infoRow("Quantity", "${data['available_quantity'] ?? data['remaining_quantity'] ?? data['requested_quantity'] ?? data['quantity'] ?? '0'} ${data['quantity_unit'] ?? data['unit'] ?? ''}".trim()),
+                _infoRow("Price", "₹${data['amount'] ?? data['requested_amount'] ?? data['price'] ?? '0'} per ${data['amount_unit'] ?? data['unit'] ?? ''}".trim()),
+                if (data['loading_location'] != null && data['loading_location'].toString().isNotEmpty)
+                  _infoRow("Loading Location", data['loading_location']),
+                if (data['total_value'] != null)
+                  _infoRow("Total Value", "₹${data['total_value']}"),
               ]),
 
               if (quotations.isNotEmpty) ...[
@@ -200,14 +207,30 @@ class BuyerOfferDetailsView extends StatelessWidget {
     );
   }
 
-  Widget _infoRow(String label, String value) {
+  String _parseStringValue(dynamic val) {
+    if (val == null) return "N/A";
+    if (val is String) return val.trim().isNotEmpty ? val.trim() : "N/A";
+    if (val is Map) {
+      return val['name']?.toString() ??
+          val['full_name']?.toString() ??
+          val['title']?.toString() ??
+          val['company_name']?.toString() ??
+          val['category_name']?.toString() ??
+          val['brand_name']?.toString() ??
+          val.toString();
+    }
+    return val.toString();
+  }
+
+  Widget _infoRow(String label, dynamic value) {
+    final displayStr = _parseStringValue(value);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: TextStyle(color: Get.theme.disabledColor)),
-          Expanded(child: Text(value, textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(child: Text(displayStr, textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.bold))),
         ],
       ),
     );
