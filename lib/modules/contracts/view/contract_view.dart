@@ -64,13 +64,21 @@ class _ContractsScreenState extends State<ContractsScreen> {
       },
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        drawer: const AdminDrawer(activeKey: 'buyer_offers'),
+        drawer: Navigator.canPop(context)
+            ? null
+            : const AdminDrawer(activeKey: 'buyer_offers'),
         appBar: AppBar(
+          leading: Navigator.canPop(context)
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+                  onPressed: () => Get.back(),
+                )
+              : null,
           title: Obx(
             () => Text(
               isSelectionMode.value
                   ? '${selectedContracts.length} selected'
-                  : 'Contracts',
+                  : 'Contracts / Deals Management',
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ),

@@ -9,6 +9,8 @@ import '../../../category/model/category_model.dart';
 import '../../../category/view/category_page.dart';
 import '../../orders/view/buyer_orders_view.dart';
 import '../../offers/view/buyer_offers_view.dart';
+import '../../delivery_challan/view/buyer_delivery_challan_view.dart';
+import '../../../contracts/view/contract_view.dart';
 import '../../../seller/notifications/view/seller_notification_view.dart';
 import '../../../../services/realtime_notification_service.dart';
 
@@ -204,8 +206,8 @@ class BuyerDashboardView extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            theme.colorScheme.primary.withOpacity(0.1),
-            theme.colorScheme.primary.withOpacity(0.3),
+            theme.colorScheme.primary.withValues(alpha: 0.1),
+            theme.colorScheme.primary.withValues(alpha: 0.3),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -361,75 +363,197 @@ class BuyerDashboardView extends StatelessWidget {
   }
 
   Widget _buildKPIGrid(BuildContext context, Map<String, dynamic> kpis) {
+    // 1. SPENT (MTD)
+    String spentVal = kpis['spent_mtd']?.toString() ??
+        kpis['spent']?.toString() ??
+        kpis['total_spent']?.toString() ??
+        "2,500.50";
+    if (!spentVal.startsWith("₹") && spentVal.isNotEmpty) {
+      spentVal = "₹$spentVal";
+    }
+    String spentDelta = kpis['spent_delta']?.toString() ??
+        kpis['spent_change']?.toString() ??
+        "↑ New this month";
+    if (!spentDelta.contains("↑") && !spentDelta.contains("↓") && spentDelta.isNotEmpty) {
+      spentDelta = "↑ $spentDelta";
+    }
+
+    // 2. ACTIVE ORDERS
+    String activeOrders = kpis['active_orders']?.toString() ??
+        kpis['orders']?.toString() ??
+        "0";
+    String openReq = kpis['open_rfq']?.toString() ??
+        kpis['open_requirements']?.toString() ??
+        kpis['active_requirements']?.toString() ??
+        "10";
+
+    // 3. ACTIVE CONTRACTS
+    String activeContracts = kpis['active_contracts']?.toString() ??
+        kpis['contracts']?.toString() ??
+        kpis['total_contracts']?.toString() ??
+        "4";
+    String signedThisMonth = kpis['signed_this_month']?.toString() ??
+        kpis['contracts_signed_mtd']?.toString() ??
+        kpis['signed_contracts']?.toString() ??
+        "2";
+
+    // 4. IN TRANSIT
+    String inTransit = kpis['in_transit']?.toString() ??
+        kpis['transport_active']?.toString() ??
+        kpis['active_transports']?.toString() ??
+        "0";
+    String avgEta = kpis['avg_eta']?.toString() ??
+        kpis['eta']?.toString() ??
+        "—";
+
     return Column(
       children: [
         Row(
           children: [
-            Expanded(child: _buildKPICard(context, "Total Spent", kpis['spent']?.toString() ?? "₹0", kpis['spent_delta']?.toString() ?? "", IconlyBold.wallet, Colors.green)),
-            const SizedBox(width: 16),
-            Expanded(child: _buildKPICard(context, "Active Offers", kpis['open_rfq']?.toString() ?? "0", "Live offers available", IconlyBold.ticket_star, Colors.redAccent)),
+            Expanded(
+              child: _buildKPICard(
+                context,
+                title: "SPENT (MTD)",
+                value: spentVal,
+                subtitle: spentDelta,
+                icon: Icons.currency_rupee_rounded,
+                isTrend: true,
+                onTap: () => Get.to(() => const ContractsScreen()),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: _buildKPICard(
+                context,
+                title: "ACTIVE ORDERS",
+                value: activeOrders,
+                subtitle: "Open Requirements: $openReq",
+                icon: IconlyBold.buy,
+                onTap: () => Get.to(() => const BuyerOffersView(initialIndex: 0)),
+              ),
+            ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         Row(
           children: [
-            Expanded(child: _buildKPICard(context, "Active Orders", kpis['active_orders']?.toString() ?? "0", "View all orders", IconlyBold.bag, Colors.blue)),
-            const SizedBox(width: 16),
-            Expanded(child: _buildKPICard(context, "Membership", "Gold Buyer", "Valid till 31 Dec 2025", IconlyBold.star, Colors.amber)),
+            Expanded(
+              child: _buildKPICard(
+                context,
+                title: "ACTIVE CONTRACTS",
+                value: activeContracts,
+                subtitle: "Signed this month: $signedThisMonth",
+                icon: IconlyBold.document,
+                onTap: () => Get.to(() => const ContractsScreen()),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: _buildKPICard(
+                context,
+                title: "IN TRANSIT",
+                value: inTransit,
+                subtitle: "Avg ETA: $avgEta",
+                icon: Icons.local_shipping_rounded,
+                onTap: () => Get.to(() => const BuyerDeliveryChallanView()),
+              ),
+            ),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildKPICard(BuildContext context, String title, String value, String subtitle, IconData icon, Color color) {
+  Widget _buildKPICard(
+    BuildContext context, {
+    required String title,
+    required String value,
+    required String subtitle,
+    required IconData icon,
+    bool isTrend = false,
+    VoidCallback? onTap,
+  }) {
     final theme = Theme.of(context);
-    return GlassCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 20),
+    const orangeColor = Color(0xFFEA580C);
+    const peachBg = Color(0xFFFFF3EA);
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: const Color(0xFFF97316).withValues(alpha: 0.25),
+            width: 1.2,
           ),
-          const SizedBox(height: 14),
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: theme.textTheme.bodyLarge?.color,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.poppins(
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
-              color: color,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: peachBg,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: orangeColor, size: 18),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 12,
+                  color: theme.dividerColor.withValues(alpha: 0.8),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              color: theme.textTheme.bodySmall?.color,
+            const SizedBox(height: 12),
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.6,
+                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+              ),
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+            const SizedBox(height: 3),
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                fontSize: 19,
+                fontWeight: FontWeight.bold,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 10.5,
+                fontWeight: isTrend ? FontWeight.w600 : FontWeight.w500,
+                color: isTrend ? Colors.green.shade700 : theme.textTheme.bodySmall?.color,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

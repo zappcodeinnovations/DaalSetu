@@ -26,7 +26,12 @@ class BuyerDeliveryChallanView extends StatelessWidget {
             backgroundColor: theme.scaffoldBackgroundColor,
             elevation: 0,
             automaticallyImplyLeading: false,
-            leading: null,
+            leading: Navigator.canPop(context)
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+                    onPressed: () => Get.back(),
+                  )
+                : null,
             title: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: controller.isSearching.value

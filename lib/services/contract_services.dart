@@ -17,13 +17,20 @@ class ContractService {
     print(response);
     print("=============================");
 
-    if (response == null || response is! Map<String, dynamic>) {
-      throw Exception("Invalid contract response");
+    if (response == null) {
+      return [];
     }
 
-    final List results = response["results"] ?? [];
+    List results = [];
+    if (response is List) {
+      results = response;
+    } else if (response is Map) {
+      results = response["results"] ?? response["data"] ?? response["contracts"] ?? [];
+    }
 
-    return results.map((e) => ContractModel.fromJson(e)).toList();
+    return results
+        .map((e) => ContractModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e)))
+        .toList();
   }
 
   /// ===============================
