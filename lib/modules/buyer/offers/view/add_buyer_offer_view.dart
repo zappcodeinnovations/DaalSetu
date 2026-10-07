@@ -192,6 +192,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     const primaryColor = Color(0xFFFFB300);
 
     return Scaffold(
@@ -230,7 +231,14 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
                   const SizedBox(height: 16),
 
                   if (availableBranches.isNotEmpty) ...[
-                    Text("Target Branches", style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey)),
+                    Text(
+                      "Target Branches",
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white70 : const Color(0xFF475569),
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
@@ -239,7 +247,6 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
                         final id = int.tryParse(b['id'].toString()) ?? 0;
                         final name = b['location_name'] ?? b['branch_name'] ?? b['city'] ?? "Branch $id";
                         final isSelected = selectedBranchIds.contains(id);
-                        final isDark = theme.brightness == Brightness.dark;
                         return FilterChip(
                           label: Text(
                             name,
@@ -337,32 +344,114 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, IconData icon, {TextInputType keyboardType = TextInputType.text}) {
+  Widget _buildTextField(
+    TextEditingController controller,
+    String hint,
+    IconData icon, {
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final hintColor = theme.textTheme.bodyMedium?.color ?? (isDark ? Colors.white70 : const Color(0xFF475569));
+    final iconColor = isDark ? Colors.white70 : const Color(0xFF64748B);
+
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
+      style: GoogleFonts.inter(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: theme.textTheme.bodyLarge?.color,
+      ),
       decoration: InputDecoration(
         hintText: hint,
-        prefixIcon: Icon(icon, size: 20),
+        hintStyle: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: hintColor,
+        ),
+        prefixIcon: Icon(icon, size: 20, color: iconColor),
         filled: true,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        fillColor: theme.cardColor,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: theme.dividerColor.withValues(alpha: 0.6),
+            width: 1,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: theme.dividerColor.withValues(alpha: 0.6),
+            width: 1,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(
+            color: Color(0xFFFFB300),
+            width: 1.5,
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildDropdown<T>({required String hint, required T? value, required List<DropdownMenuItem<T>> items, required ValueChanged<T?>? onChanged, required IconData icon}) {
+  Widget _buildDropdown<T>({
+    required String hint,
+    required T? value,
+    required List<DropdownMenuItem<T>> items,
+    required ValueChanged<T?>? onChanged,
+    required IconData icon,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = theme.textTheme.bodyMedium?.color ?? (isDark ? Colors.white70 : const Color(0xFF475569));
+    final iconColor = isDark ? Colors.white70 : const Color(0xFF64748B);
+
     return Container(
+      height: 56,
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(color: Get.theme.cardColor, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.dividerColor.withValues(alpha: 0.6),
+          width: 1,
+        ),
+      ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
           value: value,
-          hint: Row(children: [Icon(icon, size: 20, color: Get.theme.disabledColor), const SizedBox(width: 12), Text(hint)]),
+          hint: Row(
+            children: [
+              Icon(icon, size: 20, color: iconColor),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  hint,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: textColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
           isExpanded: true,
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: theme.textTheme.bodyLarge?.color,
+          ),
           items: items,
           onChanged: onChanged,
           borderRadius: BorderRadius.circular(16),
-          dropdownColor: Get.theme.cardColor,
+          dropdownColor: theme.cardColor,
         ),
       ),
     );
