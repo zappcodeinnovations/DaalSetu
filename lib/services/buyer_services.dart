@@ -155,15 +155,17 @@ class BuyerServices {
   static List<dynamic> _extractList(dynamic response) {
     if (response == null) return [];
     if (response is List) return response;
-    if (response is Map<String, dynamic>) {
-      if (response['results'] is List) return response['results'];
-      if (response['data'] is List) return response['data'];
-      if (response['offers'] is List) return response['offers'];
-      if (response['buyer_offers'] is List) return response['buyer_offers'];
-      if (response['interests'] is List) return response['interests'];
-      if (response['my_interests'] is List) return response['my_interests'];
-      if (response['items'] is List) return response['items'];
-      if (response['success'] == true && response['body'] is List) return response['body'];
+    if (response is Map) {
+      if (response['results'] is List) return response['results'] as List;
+      if (response['data'] is List) return response['data'] as List;
+      if (response['offers'] is List) return response['offers'] as List;
+      if (response['buyer_offers'] is List) return response['buyer_offers'] as List;
+      if (response['interests'] is List) return response['interests'] as List;
+      if (response['my_interests'] is List) return response['my_interests'] as List;
+      if (response['items'] is List) return response['items'] as List;
+      if (response['products'] is List) return response['products'] as List;
+      if (response['rfqs'] is List) return response['rfqs'] as List;
+      if (response['body'] is List) return response['body'] as List;
     }
     return [];
   }
@@ -177,20 +179,9 @@ class BuyerServices {
         endpoint: ApiUrls.buyerTodayOffers,
         requireAuth: true,
       );
-      final list = _extractList(response);
-      if (list.isNotEmpty) return list;
+      return _extractList(response);
     } catch (e) {
       print("⚠️ /api/offers/today/ fetch error: $e");
-    }
-
-    // Fallback: /api/offers/?filter=today
-    try {
-      final response = await ApiClient.get(
-        endpoint: "/api/offers/?filter=today",
-        requireAuth: true,
-      );
-      return _extractList(response);
-    } catch (_) {
       return [];
     }
   }
@@ -204,23 +195,11 @@ class BuyerServices {
         endpoint: ApiUrls.buyerPendingOffers,
         requireAuth: true,
       );
-      final list = _extractList(response);
-      if (list.isNotEmpty) return list;
+      return _extractList(response);
     } catch (e) {
       print("⚠️ /api/offers/pending/ fetch error: $e");
+      return [];
     }
-
-    // Fallback: /api/offers/interests/
-    try {
-      final response = await ApiClient.get(
-        endpoint: "/api/offers/interests/",
-        requireAuth: true,
-      );
-      final list = _extractList(response);
-      if (list.isNotEmpty) return list;
-    } catch (_) {}
-
-    return [];
   }
 
   /// ============================================================
@@ -232,23 +211,11 @@ class BuyerServices {
         endpoint: ApiUrls.buyerPreviousOffers,
         requireAuth: true,
       );
-      final list = _extractList(response);
-      if (list.isNotEmpty) return list;
+      return _extractList(response);
     } catch (e) {
       print("⚠️ /api/offers/previous/ fetch error: $e");
+      return [];
     }
-
-    // Fallback: /api/offers/closed/ or /api/offers/?filter=previous
-    try {
-      final response = await ApiClient.get(
-        endpoint: "/api/offers/closed/",
-        requireAuth: true,
-      );
-      final list = _extractList(response);
-      if (list.isNotEmpty) return list;
-    } catch (_) {}
-
-    return [];
   }
 
   /// ============================================================
@@ -260,23 +227,11 @@ class BuyerServices {
         endpoint: ApiUrls.buyerMyInterests,
         requireAuth: true,
       );
-      final list = _extractList(response);
-      if (list.isNotEmpty) return list;
+      return _extractList(response);
     } catch (e) {
       print("⚠️ /api/offers/my-interests/list/ fetch error: $e");
+      return [];
     }
-
-    // Fallback: /api/offers/my-interests/
-    try {
-      final response = await ApiClient.get(
-        endpoint: "/api/offers/my-interests/",
-        requireAuth: true,
-      );
-      final list = _extractList(response);
-      if (list.isNotEmpty) return list;
-    } catch (_) {}
-
-    return [];
   }
 
   /// ============================================================

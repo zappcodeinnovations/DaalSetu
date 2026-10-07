@@ -272,11 +272,11 @@ class BuyerMyInterestsView extends StatelessWidget {
     );
   }
 
-  Color _getStatusColor(String status) {
-    status = status.toLowerCase();
-    if (status.contains('confirm')) return Colors.green;
-    if (status.contains('accept')) return Colors.blue;
-    if (status.contains('reject') || status.contains('cancel')) return Colors.red;
+  Color _getStatusColor(String? status) {
+    final s = (status ?? '').toLowerCase();
+    if (s.contains('confirm')) return Colors.green;
+    if (s.contains('accept')) return Colors.blue;
+    if (s.contains('reject') || s.contains('cancel')) return Colors.red;
     return const Color(0xFFFFB300);
   }
 
