@@ -73,13 +73,6 @@ class BuyerOffersView extends StatelessWidget {
             _OfferList(offerType: 'requirements'),
           ],
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          backgroundColor: theme.colorScheme.primary,
-          foregroundColor: Colors.white,
-          icon: const Icon(IconlyLight.plus),
-          label: Text("Post Requirement", style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-          onPressed: () => Get.to(() => const AddBuyerOfferScreen()),
-        ),
       ),
     );
   }
