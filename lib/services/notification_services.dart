@@ -6,6 +6,7 @@ class NotificationServices {
     final response = await ApiClient.get(
       endpoint: "${ApiUrls.notifications}?page=$page&page_size=$pageSize",
       requireAuth: true,
+      suppressErrorDialog: true,
     );
     if (response == null || response is! Map<String, dynamic>) {
       throw Exception("Failed to fetch notifications");
@@ -33,18 +34,24 @@ class NotificationServices {
   }
 
   static Future<void> markAsRead(int notificationId) async {
-    await ApiClient.post(
-      endpoint: ApiUrls.notificationsRead(notificationId),
-      body: {},
-      requireAuth: true,
-    );
+    try {
+      await ApiClient.post(
+        endpoint: ApiUrls.notificationsRead(notificationId),
+        body: {},
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
+    } catch (_) {}
   }
 
   static Future<void> markAllAsRead() async {
-    await ApiClient.post(
-      endpoint: ApiUrls.notificationsReadAll,
-      body: {},
-      requireAuth: true,
-    );
+    try {
+      await ApiClient.post(
+        endpoint: ApiUrls.notificationsReadAll,
+        body: {},
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
+    } catch (_) {}
   }
 }
