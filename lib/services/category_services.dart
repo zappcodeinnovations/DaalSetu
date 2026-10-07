@@ -16,41 +16,68 @@ class CategoryService {
 
       print("📥 BUYER CATEGORIES RESPONSE: $response");
 
-      if (response != null) {
-        List<CategoryModel> buyerCats = [];
-        
-        if (response is Map<String, dynamic> && response["data"] is Map<String, dynamic>) {
-          final data = response["data"] as Map<String, dynamic>;
-          final allCats = data["all_categories"] is List ? (data["all_categories"] as List) : [];
-          final assignedIds = (data["assigned_category_ids"] is List)
-              ? (data["assigned_category_ids"] as List).map((e) => int.tryParse(e.toString()) ?? 0).toSet()
-              : <int>{};
-          final pendingIds = (data["pending_category_ids"] is List)
-              ? (data["pending_category_ids"] as List).map((e) => int.tryParse(e.toString()) ?? 0).toSet()
-              : <int>{};
+      if (response != null && response is Map<String, dynamic> && response["data"] is Map<String, dynamic>) {
+        final data = response["data"] as Map<String, dynamic>;
+        final allCats = data["all_categories"] is List ? (data["all_categories"] as List) : [];
+        final assignedIds = (data["assigned_category_ids"] is List)
+            ? (data["assigned_category_ids"] as List).map((e) => int.tryParse(e.toString()) ?? 0).toSet()
+            : <int>{};
+        final pendingIds = (data["pending_category_ids"] is List)
+            ? (data["pending_category_ids"] as List).map((e) => int.tryParse(e.toString()) ?? 0).toSet()
+            : <int>{};
 
-          // 1. Filter all_categories by assigned/pending IDs
-          if (assignedIds.isNotEmpty || pendingIds.isNotEmpty) {
-            for (var c in allCats) {
-              if (c is Map<String, dynamic>) {
-                final id = int.tryParse((c["id"] ?? 0).toString()) ?? 0;
-                if (assignedIds.contains(id) || pendingIds.contains(id)) {
-                  final status = assignedIds.contains(id) ? "Approved" : "Pending";
-                  buyerCats.add(CategoryModel.fromJson({
-                    ...c,
-                    "status": status,
-                  }));
+        // Extract any pending category IDs from requests list
+        if (data["requests"] is List) {
+          for (var req in (data["requests"] as List)) {
+            if (req is Map<String, dynamic> && req["status"]?.toString().toLowerCase() == "pending") {
+              if (req["categories"] is List) {
+                for (var cat in (req["categories"] as List)) {
+                  if (cat is Map<String, dynamic>) {
+                    final id = int.tryParse((cat["id"] ?? 0).toString()) ?? 0;
+                    if (id > 0) pendingIds.add(id);
+                  }
                 }
               }
             }
           }
+        }
 
-          // 2. Also check requests list if buyerCats is still empty
-          if (buyerCats.isEmpty && data["requests"] is List) {
-            final Set<int> seenIds = {};
-            for (var req in (data["requests"] as List)) {
-              if (req is Map<String, dynamic> && req["categories"] is List) {
-                final reqStatus = req["status"]?.toString() ?? "Approved";
+        final List<CategoryModel> buyerCats = [];
+        final Set<int> seenIds = {};
+
+        // 1. Process all categories from all_categories
+        for (var c in allCats) {
+          if (c is Map<String, dynamic>) {
+            final id = int.tryParse((c["id"] ?? 0).toString()) ?? 0;
+            if (id > 0) {
+              seenIds.add(id);
+              String status;
+              if (assignedIds.contains(id)) {
+                status = "Approved";
+              } else if (pendingIds.contains(id)) {
+                status = "Pending";
+              } else {
+                status = "Request";
+              }
+
+              buyerCats.add(CategoryModel.fromJson({
+                ...c,
+                "status": status,
+              }));
+            }
+          }
+        }
+
+        // 2. Also check if there are pending categories in requests that weren't in all_categories
+        if (data["requests"] is List) {
+          for (var req in (data["requests"] as List)) {
+            if (req is Map<String, dynamic>) {
+              final reqStatusStr = req["status"]?.toString().toLowerCase();
+              final reqStatus = reqStatusStr == "approved"
+                  ? "Approved"
+                  : (reqStatusStr == "rejected" ? "Rejected" : "Pending");
+
+              if (req["categories"] is List) {
                 for (var cat in (req["categories"] as List)) {
                   if (cat is Map<String, dynamic>) {
                     final id = int.tryParse((cat["id"] ?? 0).toString()) ?? 0;
@@ -67,19 +94,19 @@ class CategoryService {
               }
             }
           }
-
-          if (buyerCats.isNotEmpty) {
-            return buyerCats;
-          }
-        } else if (response is List) {
-          return response.map((item) => CategoryModel.fromJson(Map<String, dynamic>.from(item))).toList();
         }
+
+        if (buyerCats.isNotEmpty) {
+          return buyerCats;
+        }
+      } else if (response is List) {
+        return response.map((item) => CategoryModel.fromJson(Map<String, dynamic>.from(item))).toList();
       }
     } catch (e) {
-      print("⚠️ Buyer categories API failed, falling back: $e");
+      print("⚠️ Buyer categories API failed: $e");
     }
 
-    return fetchCategories();
+    return [];
   }
 
   /// ===============================

@@ -47,7 +47,7 @@ class CategoryPageView extends StatelessWidget {
           color: theme.scaffoldBackgroundColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, -4),
             ),
@@ -117,17 +117,22 @@ class CategoryPageView extends StatelessWidget {
   /// ===============================
   /// SEND FOR APPROVAL BOTTOM SHEET
   /// ===============================
-  void _showSendForApprovalBottomSheet(BuildContext context, CategoryController controller) {
+  void _showSendForApprovalBottomSheet(
+    BuildContext context,
+    CategoryController controller, {
+    int? initialCategoryId,
+  }) {
     final theme = Theme.of(context);
     final customNameCtrl = TextEditingController();
     final noteCtrl = TextEditingController();
     final Set<int> selectedCategoryIds = {};
 
-    // Get assigned category IDs to filter out already approved categories
-    final assignedIds = controller.allCategories.map((c) => c.id).toSet();
-    final unassignedSystemCategories = controller.systemCategories
-        .where((c) => !assignedIds.contains(c.id))
-        .toList();
+    if (initialCategoryId != null) {
+      selectedCategoryIds.add(initialCategoryId);
+    }
+
+    // Only unapproved categories (pending or request categories in buyer's network)
+    final pendingOrNewCategories = controller.unapprovedCategories;
 
     Get.bottomSheet(
       StatefulBuilder(
@@ -151,7 +156,7 @@ class CategoryPageView extends StatelessWidget {
                       width: 44,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: Colors.grey.withOpacity(0.3),
+                        color: Colors.grey.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -162,7 +167,7 @@ class CategoryPageView extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.12),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(IconlyBold.send, color: theme.colorScheme.primary, size: 22),
@@ -190,9 +195,9 @@ class CategoryPageView extends StatelessWidget {
                   ),
                   const Divider(height: 32),
 
-                  if (unassignedSystemCategories.isNotEmpty) ...[
+                  if (pendingOrNewCategories.isNotEmpty) ...[
                     Text(
-                      "Select Existing System Categories",
+                      "Select Categories For Approval",
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -202,12 +207,12 @@ class CategoryPageView extends StatelessWidget {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: unassignedSystemCategories.map((cat) {
+                      children: pendingOrNewCategories.map((cat) {
                         final isSelected = selectedCategoryIds.contains(cat.id);
                         return FilterChip(
                           label: Text(cat.categoryName),
                           selected: isSelected,
-                          selectedColor: theme.colorScheme.primary.withOpacity(0.2),
+                          selectedColor: theme.colorScheme.primary.withValues(alpha: 0.2),
                           checkmarkColor: theme.colorScheme.primary,
                           labelStyle: TextStyle(
                             fontSize: 12,
@@ -367,6 +372,7 @@ class CategoryPageView extends StatelessWidget {
     CategoryModel category,
   ) {
     final theme = Theme.of(context);
+    final isApproved = category.isApproved;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -378,44 +384,39 @@ class CategoryPageView extends StatelessWidget {
         shadowColor: Colors.black12,
         child: InkWell(
           borderRadius: BorderRadius.circular(22),
-          onTap: () {
-            controller.fetchCategoryBrands(category.id);
-          },
+          // Approved cards are untappable (locked, like website)
+          // Pending or request cards open Send For Approval bottom sheet with this category preselected
+          onTap: isApproved
+              ? null
+              : () => _showSendForApprovalBottomSheet(
+                    context,
+                    controller,
+                    initialCategoryId: category.id,
+                  ),
           child: Padding(
-            padding:
-                const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(18),
             child: Row(
               children: [
-
                 /// ICON BOX
                 Container(
-                  padding:
-                      const EdgeInsets.all(
-                          16),
-                  decoration:
-                      BoxDecoration(
-                    gradient:
-                        LinearGradient(
-                      colors: [
-                        theme
-                            .colorScheme
-                            .primary
-                            .withOpacity(
-                                0.8),
-                        theme
-                            .colorScheme
-                            .primary,
-                      ],
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: isApproved
+                          ? [
+                              theme.colorScheme.primary.withValues(alpha: 0.8),
+                              theme.colorScheme.primary,
+                            ]
+                          : [
+                              Colors.orange.withValues(alpha: 0.8),
+                              Colors.orange,
+                            ],
                     ),
-                    borderRadius:
-                        BorderRadius
-                            .circular(18),
+                    borderRadius: BorderRadius.circular(18),
                   ),
-                  child: const Icon(
-                    Icons
-                        .grid_view_rounded,
-                    color:
-                        Colors.white,
+                  child: Icon(
+                    isApproved ? Icons.grid_view_rounded : IconlyLight.time_circle,
+                    color: Colors.white,
                     size: 24,
                   ),
                 ),
@@ -442,7 +443,7 @@ class CategoryPageView extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: (category.status?.toLowerCase() == 'approved' ? Colors.green : Colors.orange).withOpacity(0.12),
+                                color: (isApproved ? Colors.green : Colors.orange).withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -450,7 +451,7 @@ class CategoryPageView extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  color: category.status?.toLowerCase() == 'approved' ? Colors.green : Colors.orange,
+                                  color: isApproved ? Colors.green : Colors.orange,
                                 ),
                               ),
                             ),
@@ -459,24 +460,28 @@ class CategoryPageView extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        category.createdAt != null
-                            ? "Created on ${_formatDate(category.createdAt!)}"
-                            : "Approved Category",
+                        isApproved
+                            ? "Active category."
+                            : (category.isPending
+                                ? "Pending approval. Tap to request."
+                                : "Click to request approval."),
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+                          color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(width: 12),
-
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 16,
-                  color: theme.colorScheme.primary,
-                ),
+                // Only show chevron forward arrow on actionable (unapproved) cards
+                if (!isApproved) ...[
+                  const SizedBox(width: 12),
+                  const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 16,
+                    color: Colors.orange,
+                  ),
+                ],
               ],
             ),
           ),
@@ -523,26 +528,5 @@ class CategoryPageView extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  /// ===============================
-  /// DATE FORMAT
-  /// ===============================
-  String _formatDate(DateTime date) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return "${date.day} ${months[date.month - 1]} ${date.year}";
   }
 }

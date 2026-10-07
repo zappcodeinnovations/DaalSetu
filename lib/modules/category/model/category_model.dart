@@ -15,6 +15,10 @@ class CategoryModel {
     this.description,
   });
 
+  bool get isApproved => status?.toLowerCase() == 'approved';
+  bool get isPending => status?.toLowerCase() == 'pending';
+  bool get isRequest => status?.toLowerCase() == 'request' || (!isApproved && !isPending);
+
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
     final catName = json["category_name"] ??
         json["name"] ??

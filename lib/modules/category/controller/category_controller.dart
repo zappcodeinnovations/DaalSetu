@@ -17,21 +17,15 @@ class CategoryController extends GetxController {
     super.onInit();
   }
 
+  List<CategoryModel> get unapprovedCategories =>
+      allCategories.where((c) => !c.isApproved).toList();
+
   Future<void> fetchCategories() async {
     try {
       isLoading.value = true;
-
-      // 1. Fetch system categories for approval picker
-      try {
-        final sysData = await CategoryService.fetchCategories();
-        systemCategories.assignAll(sysData);
-      } catch (_) {}
-
-      // 2. Fetch buyer's approved/requested categories
       final data = await CategoryService.fetchBuyerCategories();
       allCategories.assignAll(data);
       _applyFilter();
-
     } catch (e) {
       Get.snackbar("Error", e.toString().replaceAll("Exception: ", ""));
     } finally {
