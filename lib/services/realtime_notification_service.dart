@@ -6,7 +6,6 @@ import 'package:iconly/iconly.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../modules/seller/notifications/model/notification_model.dart';
-import '../modules/seller/notifications/view/seller_notification_view.dart';
 import '../modules/products/view/product_detail.dart';
 import '../modules/buyer/offers/view/buyer_offers_view.dart';
 import '../modules/buyer/branch/view/buyer_branch_view.dart';
@@ -365,7 +364,7 @@ class RealtimeNotificationService extends GetxService {
 
     // Branch related
     if (type.contains('branch') || title.contains('branch') || message.contains('branch')) {
-      Get.to(() => const BuyerBranchView());
+      Get.to(() => BuyerBranchView());
       return;
     }
 
