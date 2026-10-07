@@ -252,11 +252,11 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
                             ),
                           ),
                           selected: isSelected,
-                          selectedColor: primaryColor.withOpacity(0.2),
+                          selectedColor: primaryColor.withValues(alpha: 0.2),
                           backgroundColor: theme.cardColor,
                           checkmarkColor: isDark ? Colors.amber.shade200 : Colors.amber.shade900,
                           side: BorderSide(
-                            color: isSelected ? primaryColor : theme.dividerColor.withOpacity(0.5),
+                            color: isSelected ? primaryColor : theme.dividerColor.withValues(alpha: 0.5),
                           ),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           onSelected: (selected) {
