@@ -21,7 +21,8 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
   final quantityController = TextEditingController();
   final amountController = TextEditingController();
   final bagCountController = TextEditingController();
-  final packingController = TextEditingController();
+  final packingController = TextEditingController(text: '30');
+  bool _syncingPacking = false;
 
   int? selectedCategoryId;
   int? selectedBrandId;
@@ -41,10 +42,50 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
     _loadSupportData();
   }
 
+  void _syncBagsFromQuantity(String _) {
+    if (_syncingPacking) return;
+    final quantityQtl = double.tryParse(quantityController.text.trim());
+    final packingKg = double.tryParse(packingController.text.trim());
+    if (quantityQtl == null ||
+        packingKg == null ||
+        quantityQtl <= 0 ||
+        packingKg <= 0) {
+      return;
+    }
+    _syncingPacking = true;
+    bagCountController.text = ((quantityQtl * 100) / packingKg)
+        .round()
+        .toString();
+    _syncingPacking = false;
+  }
+
+  void _syncQuantityFromBags(String _) {
+    if (_syncingPacking) return;
+    final bags = int.tryParse(bagCountController.text.trim());
+    final packingKg = double.tryParse(packingController.text.trim());
+    if (bags == null || packingKg == null || bags <= 0 || packingKg <= 0) {
+      return;
+    }
+    _syncingPacking = true;
+    quantityController.text = ((bags * packingKg) / 100).toStringAsFixed(3);
+    selectedUnit = 'qtl';
+    _syncingPacking = false;
+  }
+
+  @override
+  void dispose() {
+    titleController.dispose();
+    quantityController.dispose();
+    amountController.dispose();
+    bagCountController.dispose();
+    packingController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadSupportData() async {
     try {
       final catData = await SellerServices.getCategoriesTree();
-      
+
       // Load branches
       List<Map<String, dynamic>> branchList = [];
       try {
@@ -98,7 +139,9 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
       final catBrands = await ProductService.getCategoryBrands(catId);
       if (mounted) {
         setState(() {
-          brands = catBrands.map((b) => BrandModel(id: b.id, brandName: b.name)).toList();
+          brands = catBrands
+              .map((b) => BrandModel(id: b.id, brandName: b.name))
+              .toList();
         });
       }
     } catch (e) {
@@ -108,8 +151,13 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
 
   Future<void> _submit() async {
     if (titleController.text.trim().isEmpty || selectedCategoryId == null) {
-      Get.snackbar("Error", "Please fill required fields (Title and Category)",
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        "Error",
+        "Please fill required fields (Title and Category)",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return;
     }
 
@@ -119,6 +167,20 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
       final amountNum = num.tryParse(amountController.text.trim()) ?? 0;
       final bagCount = int.tryParse(bagCountController.text.trim()) ?? 0;
       final packingKg = num.tryParse(packingController.text.trim());
+      if (qtyNum <= 0 ||
+          amountNum <= 0 ||
+          bagCount <= 0 ||
+          packingKg == null ||
+          packingKg <= 0) {
+        Get.snackbar(
+          "Error",
+          "Quantity, bags, packing weight and target price must be greater than zero.",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
 
       // Target branches resolution
       List<int> targetBranches = [];
@@ -144,8 +206,8 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
         "required_quantity": qtyNum.toString(),
         "requested_quantity": qtyNum,
         "quantity": qtyNum,
-        "quantity_unit": selectedUnit,
-        "unit": selectedUnit,
+        "quantity_unit": "qtl",
+        "unit": "qtl",
         "target_price": amountNum.toString(),
         "requested_amount": amountNum,
         "price": amountNum,
@@ -153,7 +215,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
         "required_bag_count": bagCount.toString(),
         "requested_bag_count": bagCount,
         "bag_count": bagCount,
-        if (packingKg != null) "packing_weight_kg": packingKg.toString(),
+        "packing_weight_kg": packingKg.toString(),
         "expiry_days": "7",
         "target_branches": targetBranches,
         "branches": targetBranches,
@@ -164,7 +226,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
       print("📤 SUBMITTING REQUIREMENT PAYLOAD: $body");
 
       await BuyerServices.createOffer(body);
-      
+
       // Refresh offers controllers and dashboard
       try {
         if (Get.isRegistered<BuyerOffersController>(tag: 'requirements')) {
@@ -179,11 +241,21 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
       } catch (_) {}
 
       Get.back();
-      Get.snackbar("Success", "Requirement posted successfully",
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+      Get.snackbar(
+        "Success",
+        "Requirement posted successfully",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
     } catch (e) {
-      Get.snackbar("Notice", e.toString().replaceAll("Exception: ", ""),
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        "Notice",
+        e.toString().replaceAll("Exception: ", ""),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     } finally {
       if (mounted) setState(() => isPosting = false);
     }
@@ -199,7 +271,10 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text("Post Requirement", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        title: Text(
+          "Post Requirement",
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+        ),
       ),
       body: isLoading && categories.isEmpty
           ? const Center(child: CircularProgressIndicator(color: primaryColor))
@@ -208,41 +283,74 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTextField(titleController, "Requirement Title (e.g. Need Toor Dal)", IconlyLight.edit),
+                  _buildTextField(
+                    titleController,
+                    "Requirement Title (e.g. Need Toor Dal)",
+                    IconlyLight.edit,
+                  ),
                   const SizedBox(height: 16),
-                  
+
                   _buildDropdown<int>(
                     hint: "Select Category",
                     value: selectedCategoryId,
-                    items: categories.map((cat) => DropdownMenuItem(value: cat.id, child: Text(cat.name))).toList(),
+                    items: categories
+                        .map(
+                          (cat) => DropdownMenuItem(
+                            value: cat.id,
+                            child: Text(cat.name),
+                          ),
+                        )
+                        .toList(),
                     onChanged: _onCategoryChanged,
                     icon: IconlyLight.category,
                   ),
                   const SizedBox(height: 16),
 
                   _buildDropdown<int>(
-                    hint: brands.isEmpty ? "Select Brand (Optional)" : "Select Brand",
+                    hint: brands.isEmpty
+                        ? "Select Brand (Optional)"
+                        : "Select Brand",
                     value: selectedBrandId,
-                    items: brands.map((b) => DropdownMenuItem(value: b.id, child: Text(b.brandName))).toList(),
-                    onChanged: brands.isEmpty ? null : (val) => setState(() => selectedBrandId = val),
+                    items: brands
+                        .map(
+                          (b) => DropdownMenuItem(
+                            value: b.id,
+                            child: Text(b.brandName),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: brands.isEmpty
+                        ? null
+                        : (val) => setState(() => selectedBrandId = val),
                     icon: IconlyLight.info_square,
                   ),
                   const SizedBox(height: 16),
 
                   if (availableBranches.isNotEmpty) ...[
-                    Text("Target Branches", style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey)),
+                    Text(
+                      "Target Branches",
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: availableBranches.map((b) {
                         final id = int.tryParse(b['id'].toString()) ?? 0;
-                        final name = b['location_name'] ?? b['branch_name'] ?? b['city'] ?? "Branch $id";
+                        final name =
+                            b['location_name'] ??
+                            b['branch_name'] ??
+                            b['city'] ??
+                            "Branch $id";
                         final isSelected = selectedBranchIds.contains(id);
                         return FilterChip(
                           label: Text(name),
                           selected: isSelected,
-                          selectedColor: primaryColor.withOpacity(0.25),
+                          selectedColor: primaryColor.withValues(alpha: 0.25),
                           checkmarkColor: primaryColor,
                           onSelected: (selected) {
                             setState(() {
@@ -261,14 +369,26 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
 
                   Row(
                     children: [
-                      Expanded(child: _buildTextField(quantityController, "Quantity", IconlyLight.buy, keyboardType: TextInputType.number)),
+                      Expanded(
+                        child: _buildTextField(
+                          quantityController,
+                          "Quantity (QTL)",
+                          IconlyLight.buy,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          onChanged: _syncBagsFromQuantity,
+                        ),
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildDropdown<String>(
                           hint: "Unit",
                           value: selectedUnit,
-                          items: ["qtl", "ton", "kg"].map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
-                          onChanged: (val) => setState(() => selectedUnit = val!),
+                          items: const [
+                            DropdownMenuItem(value: "qtl", child: Text("QTL")),
+                          ],
+                          onChanged: null,
                           icon: Icons.unfold_more,
                         ),
                       ),
@@ -278,14 +398,27 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
 
                   Row(
                     children: [
-                      Expanded(child: _buildTextField(amountController, "Target Price", IconlyLight.wallet, keyboardType: TextInputType.number)),
+                      Expanded(
+                        child: _buildTextField(
+                          amountController,
+                          "Target Price",
+                          IconlyLight.wallet,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildDropdown<String>(
                           hint: "Per",
                           value: selectedAmountUnit,
-                          items: ["qtl", "ton", "kg"].map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
-                          onChanged: (val) => setState(() => selectedAmountUnit = val!),
+                          items: ["qtl", "ton", "kg"]
+                              .map(
+                                (u) =>
+                                    DropdownMenuItem(value: u, child: Text(u)),
+                              )
+                              .toList(),
+                          onChanged: (val) =>
+                              setState(() => selectedAmountUnit = val!),
                           icon: Icons.unfold_more,
                         ),
                       ),
@@ -295,10 +428,36 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
 
                   Row(
                     children: [
-                      Expanded(child: _buildTextField(bagCountController, "Bags", IconlyLight.work, keyboardType: TextInputType.number)),
+                      Expanded(
+                        child: _buildTextField(
+                          bagCountController,
+                          "Bags",
+                          IconlyLight.work,
+                          keyboardType: TextInputType.number,
+                          onChanged: _syncQuantityFromBags,
+                        ),
+                      ),
                       const SizedBox(width: 12),
-                      Expanded(child: _buildTextField(packingController, "Packing (kg)", Icons.monitor_weight_outlined, keyboardType: TextInputType.number)),
+                      Expanded(
+                        child: _buildTextField(
+                          packingController,
+                          "Packing (kg/bag)",
+                          Icons.monitor_weight_outlined,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          onChanged: _syncQuantityFromBags,
+                        ),
+                      ),
                     ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Quantity and bags are synchronized automatically using Packing (KG per bag).",
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: theme.textTheme.bodyMedium?.color,
+                    ),
                   ),
 
                   const SizedBox(height: 32),
@@ -309,11 +468,20 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
                       onPressed: isPosting ? null : _submit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
-                      child: isPosting 
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text("POST REQUIREMENT", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                      child: isPosting
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                              "POST REQUIREMENT",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
                     ),
                   ),
                 ],
@@ -322,27 +490,52 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, IconData icon, {TextInputType keyboardType = TextInputType.text}) {
+  Widget _buildTextField(
+    TextEditingController controller,
+    String hint,
+    IconData icon, {
+    TextInputType keyboardType = TextInputType.text,
+    ValueChanged<String>? onChanged,
+  }) {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
+      onChanged: onChanged,
       decoration: InputDecoration(
         hintText: hint,
         prefixIcon: Icon(icon, size: 20),
         filled: true,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
       ),
     );
   }
 
-  Widget _buildDropdown<T>({required String hint, required T? value, required List<DropdownMenuItem<T>> items, required ValueChanged<T?>? onChanged, required IconData icon}) {
+  Widget _buildDropdown<T>({
+    required String hint,
+    required T? value,
+    required List<DropdownMenuItem<T>> items,
+    required ValueChanged<T?>? onChanged,
+    required IconData icon,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(color: Get.theme.cardColor, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: Get.theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
           value: value,
-          hint: Row(children: [Icon(icon, size: 20, color: Get.theme.disabledColor), const SizedBox(width: 12), Text(hint)]),
+          hint: Row(
+            children: [
+              Icon(icon, size: 20, color: Get.theme.disabledColor),
+              const SizedBox(width: 12),
+              Text(hint),
+            ],
+          ),
           isExpanded: true,
           items: items,
           onChanged: onChanged,
