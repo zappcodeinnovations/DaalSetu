@@ -85,7 +85,6 @@ class CategoryPageView extends StatelessWidget {
     CategoryModel category,
   ) {
     final theme = Theme.of(context);
-    final noteCtrl = TextEditingController();
 
     showDialog(
       context: context,
@@ -140,23 +139,7 @@ class CategoryPageView extends StatelessWidget {
                     color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
                   ),
                 ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: noteCtrl,
-                  maxLines: 2,
-                  decoration: InputDecoration(
-                    hintText: "Add note for admin (optional)...",
-                    hintStyle: theme.textTheme.bodySmall,
-                    prefixIcon: const Icon(IconlyLight.document, size: 18),
-                    filled: true,
-                    fillColor: theme.scaffoldBackgroundColor,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 22),
                 Row(
                   children: [
                     Expanded(
@@ -176,7 +159,6 @@ class CategoryPageView extends StatelessWidget {
                           Navigator.of(dialogCtx).pop();
                           await controller.sendForApproval(
                             categoryIds: [category.id],
-                            note: noteCtrl.text.trim().isNotEmpty ? noteCtrl.text.trim() : null,
                           );
                         },
                         style: ElevatedButton.styleFrom(
