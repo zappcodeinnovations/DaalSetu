@@ -152,23 +152,46 @@ class BuyerServices {
     return allList;
   }
 
+  static List<dynamic> _extractList(dynamic response) {
+    if (response == null) return [];
+    if (response is List) return response;
+    if (response is Map<String, dynamic>) {
+      if (response['results'] is List) return response['results'];
+      if (response['data'] is List) return response['data'];
+      if (response['offers'] is List) return response['offers'];
+      if (response['buyer_offers'] is List) return response['buyer_offers'];
+      if (response['interests'] is List) return response['interests'];
+      if (response['my_interests'] is List) return response['my_interests'];
+      if (response['items'] is List) return response['items'];
+      if (response['success'] == true && response['body'] is List) return response['body'];
+    }
+    return [];
+  }
+
   /// ============================================================
   /// GET TODAY'S OFFERS
   /// ============================================================
   static Future<List<dynamic>> getTodayOffers() async {
-    final response = await ApiClient.get(
-      endpoint: ApiUrls.buyerTodayOffers,
-      requireAuth: true,
-    );
-
-    if (response == null || response is! Map<String, dynamic>) {
-      throw Exception("Invalid response format");
+    try {
+      final response = await ApiClient.get(
+        endpoint: ApiUrls.buyerTodayOffers,
+        requireAuth: true,
+      );
+      final list = _extractList(response);
+      if (list.isNotEmpty) return list;
+    } catch (e) {
+      print("⚠️ /api/offers/today/ fetch error: $e");
     }
 
-    if (response["success"] == true) {
-      return response["results"] ?? [];
-    } else {
-      throw Exception(response["message"] ?? "Failed to fetch today's offers");
+    // Fallback: /api/offers/?filter=today
+    try {
+      final response = await ApiClient.get(
+        endpoint: "/api/offers/?filter=today",
+        requireAuth: true,
+      );
+      return _extractList(response);
+    } catch (_) {
+      return [];
     }
   }
 
@@ -176,60 +199,84 @@ class BuyerServices {
   /// GET PENDING OFFERS
   /// ============================================================
   static Future<List<dynamic>> getPendingOffers() async {
-    final response = await ApiClient.get(
-      endpoint: ApiUrls.buyerPendingOffers,
-      requireAuth: true,
-    );
-
-    if (response == null || response is! Map<String, dynamic>) {
-      throw Exception("Invalid response format");
+    try {
+      final response = await ApiClient.get(
+        endpoint: ApiUrls.buyerPendingOffers,
+        requireAuth: true,
+      );
+      final list = _extractList(response);
+      if (list.isNotEmpty) return list;
+    } catch (e) {
+      print("⚠️ /api/offers/pending/ fetch error: $e");
     }
 
-    if (response["success"] == true) {
-      return response["results"] ?? [];
-    } else {
-      throw Exception(response["message"] ?? "Failed to fetch pending offers");
-    }
+    // Fallback: /api/offers/interests/
+    try {
+      final response = await ApiClient.get(
+        endpoint: "/api/offers/interests/",
+        requireAuth: true,
+      );
+      final list = _extractList(response);
+      if (list.isNotEmpty) return list;
+    } catch (_) {}
+
+    return [];
   }
 
   /// ============================================================
   /// GET PREVIOUS OFFERS
   /// ============================================================
   static Future<List<dynamic>> getPreviousOffers() async {
-    final response = await ApiClient.get(
-      endpoint: ApiUrls.buyerPreviousOffers,
-      requireAuth: true,
-    );
-
-    if (response == null || response is! Map<String, dynamic>) {
-      throw Exception("Invalid response format");
+    try {
+      final response = await ApiClient.get(
+        endpoint: ApiUrls.buyerPreviousOffers,
+        requireAuth: true,
+      );
+      final list = _extractList(response);
+      if (list.isNotEmpty) return list;
+    } catch (e) {
+      print("⚠️ /api/offers/previous/ fetch error: $e");
     }
 
-    if (response["success"] == true) {
-      return response["results"] ?? [];
-    } else {
-      throw Exception(response["message"] ?? "Failed to fetch previous offers");
-    }
+    // Fallback: /api/offers/closed/ or /api/offers/?filter=previous
+    try {
+      final response = await ApiClient.get(
+        endpoint: "/api/offers/closed/",
+        requireAuth: true,
+      );
+      final list = _extractList(response);
+      if (list.isNotEmpty) return list;
+    } catch (_) {}
+
+    return [];
   }
 
   /// ============================================================
   /// GET MY INTERESTS
   /// ============================================================
   static Future<List<dynamic>> getMyInterests() async {
-    final response = await ApiClient.get(
-      endpoint: ApiUrls.buyerMyInterests,
-      requireAuth: true,
-    );
-
-    if (response == null || response is! Map<String, dynamic>) {
-      throw Exception("Invalid response format");
+    try {
+      final response = await ApiClient.get(
+        endpoint: ApiUrls.buyerMyInterests,
+        requireAuth: true,
+      );
+      final list = _extractList(response);
+      if (list.isNotEmpty) return list;
+    } catch (e) {
+      print("⚠️ /api/offers/my-interests/list/ fetch error: $e");
     }
 
-    if (response["success"] == true) {
-      return response["results"] ?? [];
-    } else {
-      throw Exception(response["message"] ?? "Failed to fetch my interests");
-    }
+    // Fallback: /api/offers/my-interests/
+    try {
+      final response = await ApiClient.get(
+        endpoint: "/api/offers/my-interests/",
+        requireAuth: true,
+      );
+      final list = _extractList(response);
+      if (list.isNotEmpty) return list;
+    } catch (_) {}
+
+    return [];
   }
 
   /// ============================================================

@@ -37,7 +37,9 @@ class BuyerOfferModel {
     this.isRfq = false,
   });
 
-  factory BuyerOfferModel.fromJson(Map<String, dynamic> json) {
+  factory BuyerOfferModel.fromJson(dynamic raw) {
+    final Map<String, dynamic> json = (raw is Map) ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+
     int? parsedProductId;
     if (json['product_id'] != null) {
       parsedProductId = int.tryParse(json['product_id'].toString());
@@ -80,6 +82,8 @@ class BuyerOfferModel {
         json['product_title'] ??
         (json['offer'] is Map ? json['offer']['title'] : null) ??
         (json['product'] is Map ? json['product']['title'] : null) ??
+        json['commodity'] ??
+        json['category_name'] ??
         'Offer';
 
     final rawStatus = json['status'] ??
@@ -107,6 +111,7 @@ class BuyerOfferModel {
         json['buyer_offered_amount'] ??
         json['amount'] ??
         json['seller_snapshot_amount'] ??
+        json['target_price'] ??
         json['price'] ??
         (json['offer'] is Map ? json['offer']['price'] : null) ??
         '0';
@@ -139,12 +144,12 @@ class BuyerOfferModel {
   }
 
   bool get isConfirmed {
-    final s = (displayStatus ?? status ?? '').toLowerCase();
+    final s = (displayStatus ?? status ?? '').toString().toLowerCase();
     return s.contains('confirm') || s.contains('deal_confirmed') || s.contains('approved');
   }
 
   bool get isRejected {
-    final s = (displayStatus ?? status ?? '').toLowerCase();
+    final s = (displayStatus ?? status ?? '').toString().toLowerCase();
     return s.contains('reject') || s.contains('cancel') || s.contains('closed');
   }
 

@@ -392,9 +392,9 @@ class _OfferList extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.08),
+              color: Colors.green.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.green.withOpacity(0.25)),
+              border: Border.all(color: Colors.green.withValues(alpha: 0.25)),
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
@@ -428,9 +428,9 @@ class _OfferList extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.08),
+              color: Colors.red.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.red.withOpacity(0.25)),
+              border: Border.all(color: Colors.red.withValues(alpha: 0.25)),
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
@@ -476,6 +476,8 @@ class _OfferList extends StatelessWidget {
       );
     }
 
+    final int effectiveInterestId = resolvedInterestId;
+
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -491,19 +493,19 @@ class _OfferList extends StatelessWidget {
           label: "Negotiate",
           color: Colors.amber.shade700,
           icon: IconlyLight.chat,
-          onTap: () => _showNegotiateDialog(context, controller, productId, resolvedInterestId, offer),
+          onTap: () => _showNegotiateDialog(context, controller, productId, effectiveInterestId, offer),
         ),
         _ActionBtn(
           label: "Confirm Deal",
           color: Colors.green,
           icon: IconlyLight.tick_square,
-          onTap: () => _showRemarkDialog(context, controller, "confirm", productId, resolvedInterestId),
+          onTap: () => _showRemarkDialog(context, controller, "confirm", productId, effectiveInterestId),
         ),
         _ActionBtn(
           label: "Reject Interest",
           color: Colors.red,
           icon: IconlyLight.close_square,
-          onTap: () => _showRemarkDialog(context, controller, "reject_interest", productId, resolvedInterestId),
+          onTap: () => _showRemarkDialog(context, controller, "reject_interest", productId, effectiveInterestId),
         ),
       ],
     );
@@ -775,8 +777,8 @@ class _ActionBtn extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
-          border: Border.all(color: color.withOpacity(0.4)),
+          color: color.withValues(alpha: 0.12),
+          border: Border.all(color: color.withValues(alpha: 0.4)),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
