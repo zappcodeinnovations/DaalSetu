@@ -330,66 +330,66 @@ class BuyerBranchView extends StatelessWidget {
         return Dialog(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          child: GlassCard(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: GlassIconBox(
-                    icon: IconlyLight.document,
-                    size: 56,
-                    iconSize: 28,
-                    color: Theme.of(dialogContext).colorScheme.primary,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "Request Branch",
-                  style: GoogleFonts.poppins(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Enter the reference code to request branch access from the Super Admin.",
-                  style: GoogleFonts.inter(fontSize: 13, color: Colors.grey),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                GlassTextField(
-                  controller: codeCtrl,
-                  hintText: "Branch Code (e.g. NAG622M)",
-                  prefixIcon: IconlyLight.password,
-                ),
-                const SizedBox(height: 24),
-                Obx(() => GlassButton(
-                  isLoading: isSubmitting.value,
-                  onPressed: () async {
-                    if (codeCtrl.text.trim().isEmpty) {
-                      AppSnackbar.showWarning(title: 'Required', message: 'Please enter a branch code');
-                      return;
-                    }
-                    isSubmitting.value = true;
-                    final success = await controller.joinBranchByCode(codeCtrl.text.trim());
-                    isSubmitting.value = false;
-                    if (success) {
-                      Get.back(); // close dialog
-                    }
-                  },
-                  child: Text(
-                    "Submit Request",
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.white,
+          child: SingleChildScrollView(
+            child: GlassCard(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: GlassIconBox(
+                      icon: IconlyLight.document,
+                      size: 56,
+                      iconSize: 28,
+                      color: Theme.of(dialogContext).colorScheme.primary,
                     ),
                   ),
-                )),
-              ],
+                  const SizedBox(height: 16),
+                  Text(
+                    "Request Branch",
+                    style: GoogleFonts.poppins(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Enter the reference code to request branch access from the Super Admin.",
+                    style: GoogleFonts.inter(fontSize: 13, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  GlassTextField(
+                    controller: codeCtrl,
+                    hintText: "Branch Code (e.g. NAG622M)",
+                    prefixIcon: IconlyLight.password,
+                  ),
+                  const SizedBox(height: 20),
+                  Obx(() => GlassButton(
+                    isLoading: isSubmitting.value,
+                    onPressed: () async {
+                      if (codeCtrl.text.trim().isEmpty) {
+                        AppSnackbar.showWarning(title: 'Required', message: 'Please enter a branch code');
+                        return;
+                      }
+                      isSubmitting.value = true;
+                      Navigator.of(dialogContext).pop(); // close dialog cleanly
+                      await controller.joinBranchByCode(codeCtrl.text.trim());
+                      isSubmitting.value = false;
+                    },
+                    child: Text(
+                      "Submit Request",
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  )),
+                ],
+              ),
             ),
           ),
         );

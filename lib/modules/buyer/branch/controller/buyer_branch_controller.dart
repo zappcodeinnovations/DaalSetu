@@ -52,21 +52,29 @@ class BuyerBranchController extends GetxController {
   Future<bool> joinBranchByCode(String code) async {
     if (code.trim().isEmpty) return false;
     try {
-      Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
       final res = await SellerServices.requestBranchByCode(code.trim());
-      if (Get.isDialogOpen ?? false) Get.back();
-
-      AppSnackbar.showSuccess(
-        title: "Success",
-        message: res['message'] ?? "Branch request submitted successfully",
-      );
       await fetchBranches();
+
+      final msg = res['message']?.toString() ?? "Branch request submitted successfully";
+      if (msg.toLowerCase().contains("already")) {
+        AppSnackbar.showInfo(
+          title: "Branch Notice",
+          message: msg,
+          duration: const Duration(seconds: 4),
+        );
+      } else {
+        AppSnackbar.showSuccess(
+          title: "Success",
+          message: msg,
+          duration: const Duration(seconds: 4),
+        );
+      }
       return true;
     } catch (e) {
-      if (Get.isDialogOpen ?? false) Get.back();
       AppSnackbar.showError(
         title: "Error",
         message: e.toString(),
+        duration: const Duration(seconds: 4),
       );
       return false;
     }
@@ -74,17 +82,13 @@ class BuyerBranchController extends GetxController {
 
   Future<void> cancelRequest(int branchId) async {
     try {
-      Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
       final res = await SellerServices.cancelBranchRequest(branchId);
-      if (Get.isDialogOpen ?? false) Get.back();
-
+      await fetchBranches();
       AppSnackbar.showSuccess(
         title: "Success",
         message: res['message'] ?? "Request cancelled successfully",
       );
-      fetchBranches();
     } catch (e) {
-      if (Get.isDialogOpen ?? false) Get.back();
       AppSnackbar.showError(
         title: "Error",
         message: e.toString(),
@@ -94,17 +98,13 @@ class BuyerBranchController extends GetxController {
 
   Future<void> leaveBranch(int branchId) async {
     try {
-      Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
       final res = await SellerServices.leaveBranch(branchId);
-      if (Get.isDialogOpen ?? false) Get.back();
-
+      await fetchBranches();
       AppSnackbar.showSuccess(
         title: "Success",
         message: res['message'] ?? "Left branch successfully",
       );
-      fetchBranches();
     } catch (e) {
-      if (Get.isDialogOpen ?? false) Get.back();
       AppSnackbar.showError(
         title: "Error",
         message: e.toString(),
