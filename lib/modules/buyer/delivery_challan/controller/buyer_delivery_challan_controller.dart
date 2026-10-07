@@ -13,6 +13,15 @@ class BuyerDeliveryChallanController extends GetxController {
   
   var isSearching = false.obs;
   var searchQuery = "".obs;
+  var selectedStatus = "All Statuses".obs;
+
+  final List<String> statusOptions = const [
+    "All Statuses",
+    "Draft",
+    "Dispatched",
+    "Delivered",
+    "Cancelled",
+  ];
   
   int currentPage = 1;
   bool hasNextPage = false;
@@ -22,6 +31,18 @@ class BuyerDeliveryChallanController extends GetxController {
   void onInit() {
     super.onInit();
     fetchChallans();
+  }
+
+  void applyStatusFilter(String status) {
+    selectedStatus.value = status;
+    fetchChallans(isRefresh: true);
+  }
+
+  void clearFilter() {
+    selectedStatus.value = "All Statuses";
+    searchQuery.value = "";
+    isSearching.value = false;
+    fetchChallans(isRefresh: true);
   }
 
   Future<void> fetchChallans({bool isRefresh = false}) async {
@@ -40,9 +61,11 @@ class BuyerDeliveryChallanController extends GetxController {
     errorMessage.value = "";
 
     try {
+      final statusParam = selectedStatus.value == "All Statuses" ? "" : selectedStatus.value;
       final response = await BuyerServices.getDeliveryChallans(
         page: currentPage, 
-        query: searchQuery.value
+        query: searchQuery.value,
+        status: statusParam,
       );
       
       if (response['success'] == true && response['results'] != null) {

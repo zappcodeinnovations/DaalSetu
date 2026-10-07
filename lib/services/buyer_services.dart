@@ -237,10 +237,13 @@ class BuyerServices {
   /// ============================================================
   /// GET DELIVERY CHALLANS
   /// ============================================================
-  static Future<Map<String, dynamic>> getDeliveryChallans({int page = 1, String query = ""}) async {
+  static Future<Map<String, dynamic>> getDeliveryChallans({int page = 1, String query = "", String status = ""}) async {
     String endpoint = "${ApiUrls.buyerDeliveryChallans}?page=$page";
     if (query.isNotEmpty) {
-      endpoint += "&search=$query";
+      endpoint += "&search=${Uri.encodeComponent(query)}";
+    }
+    if (status.isNotEmpty && status.toLowerCase() != "all" && status.toLowerCase() != "all statuses") {
+      endpoint += "&status=${status.toLowerCase()}";
     }
     
     final response = await ApiClient.get(
