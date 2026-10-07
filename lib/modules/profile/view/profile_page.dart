@@ -1,11 +1,13 @@
 import 'package:iconly/iconly.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_theme.dart';
 import '../../../services/buyer_services.dart';
 import '../controller/profile_controller.dart';
+import '../model/profile_model.dart';
 
 class ProfileScreen extends StatelessWidget {
   ProfileScreen({super.key});
@@ -16,10 +18,12 @@ class ProfileScreen extends StatelessWidget {
   // Colors mapped to active theme
   Color get bgColor => Get.theme.scaffoldBackgroundColor;
   Color get cardColor => Get.theme.cardColor;
-  Color get cardLighter => Get.isDarkMode ? const Color(0xFF1A2235) : const Color(0xFFF1F5F9);
+  Color get cardLighter =>
+      Get.isDarkMode ? const Color(0xFF1A2235) : const Color(0xFFF1F5F9);
   Color get textDark => Get.isDarkMode ? Colors.white : const Color(0xFF0F172A);
-  Color get textLight => Get.isDarkMode ? const Color(0xFF8D96A7) : const Color(0xFF64748B);
-  
+  Color get textLight =>
+      Get.isDarkMode ? const Color(0xFF8D96A7) : const Color(0xFF64748B);
+
   // Accents
   Color get accentGold => AppTheme.primaryGold;
   Color get accentGreen => AppTheme.successGreen;
@@ -36,12 +40,14 @@ class ProfileScreen extends StatelessWidget {
           icon: Icon(IconlyLight.arrow_left, color: Get.theme.iconTheme.color),
           onPressed: () => Get.back(),
         ),
-        title: Text(
-          "Admin Profile",
-          style: TextStyle(
-            color: textDark,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
+        title: Obx(
+          () => Text(
+            "${_roleLabel(controller.profile.value?.role ?? '')} Profile",
+            style: TextStyle(
+              color: textDark,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
           ),
         ),
         centerTitle: true,
@@ -54,9 +60,7 @@ class ProfileScreen extends StatelessWidget {
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return Center(
-            child: CircularProgressIndicator(color: accentGold),
-          );
+          return Center(child: CircularProgressIndicator(color: accentGold));
         }
 
         final user = controller.profile.value;
@@ -76,76 +80,122 @@ class ProfileScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-              _buildProfileHeader(context, user),
-              const SizedBox(height: 24),
+                _buildProfileHeader(context, user),
+                const SizedBox(height: 24),
 
-              _buildSectionTitle(context, Icons.person_outline, "GENERAL INFORMATION", showEdit: true),
-              const SizedBox(height: 16),
-              _buildGeneralInfoGrid(context, user),
-              const SizedBox(height: 12),
-              _buildFullWidthCard(
-                context,
-                icon: Icons.person,
-                title: "Account Status",
-                value: user.accountStatus.toLowerCase() == 'active' ? 'active' : user.accountStatus,
-                valueColor: user.accountStatus.toLowerCase() == 'active' ? accentGreen : Colors.orange,
-                trailing: Icon(Icons.check_circle_outline, color: accentGreen),
-              ),
+                _buildSectionTitle(
+                  context,
+                  Icons.person_outline,
+                  "GENERAL INFORMATION",
+                  showEdit: true,
+                ),
+                const SizedBox(height: 16),
+                _buildGeneralInfoGrid(context, user),
+                const SizedBox(height: 12),
+                _buildFullWidthCard(
+                  context,
+                  icon: Icons.person,
+                  title: "Account Status",
+                  value: user.accountStatus.toLowerCase() == 'active'
+                      ? 'active'
+                      : user.accountStatus,
+                  valueColor: user.accountStatus.toLowerCase() == 'active'
+                      ? accentGreen
+                      : Colors.orange,
+                  trailing: Icon(
+                    Icons.check_circle_outline,
+                    color: accentGreen,
+                  ),
+                ),
 
-              const SizedBox(height: 28),
+                const SizedBox(height: 28),
 
-              _buildSectionTitle(context, Icons.work_outline, "COMPLIANCE & BUSINESS"),
-              const SizedBox(height: 16),
-              _buildKycComplianceCard(context, user),
-              const SizedBox(height: 12),
-              _buildFullWidthCard(
-                context,
-                icon: Icons.description_outlined,
-                title: "GST Number",
-                value: user.gstNumber.isEmpty ? "Not Available" : user.gstNumber,
-                trailing: _buildBadge("Verified", accentGreen, Icons.check_circle_outline),
-              ),
-              const SizedBox(height: 12),
-              _buildManageCompanyCard(context),
+                _buildSectionTitle(
+                  context,
+                  Icons.work_outline,
+                  "COMPLIANCE & BUSINESS",
+                ),
+                const SizedBox(height: 16),
+                _buildKycComplianceCard(context, user),
+                const SizedBox(height: 12),
+                _buildFullWidthCard(
+                  context,
+                  icon: Icons.description_outlined,
+                  title: "GST Number",
+                  value: user.gstNumber.isEmpty
+                      ? "Not Available"
+                      : user.gstNumber,
+                  trailing: _buildBadge(
+                    "Verified",
+                    accentGreen,
+                    Icons.check_circle_outline,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (_hasCompanyManagement(user.role))
+                  _buildManageCompanyCard(context, user.role),
 
-              const SizedBox(height: 28),
+                const SizedBox(height: 28),
 
-              _buildSectionTitle(context, Icons.insert_drive_file_outlined, "DOCUMENTS"),
-              const SizedBox(height: 16),
-              
-              _buildDocumentRow(
-                context,
-                title: "PAN Card",
-                subtitle: "Verified • PDF (1.2 MB)",
-                iconColor: accentGreen,
-                iconText: "PAN",
-              ),
-              const SizedBox(height: 12),
-              _buildDocumentRow(
-                context,
-                title: "GST Certificate",
-                subtitle: "Verified • JPG (2.4 MB)",
-                iconColor: accentBlue,
-                iconText: "GST",
-              ),
+                _buildSectionTitle(
+                  context,
+                  Icons.insert_drive_file_outlined,
+                  "DOCUMENTS",
+                ),
+                const SizedBox(height: 16),
 
-              const SizedBox(height: 40),
-            ],
+                _buildDocumentRow(
+                  context,
+                  title: "PAN Card",
+                  subtitle: "Verified • PDF (1.2 MB)",
+                  iconColor: accentGreen,
+                  iconText: "PAN",
+                  documentUrl: user.panImage,
+                ),
+                const SizedBox(height: 12),
+                _buildDocumentRow(
+                  context,
+                  title: "GST Certificate",
+                  subtitle: "Verified • JPG (2.4 MB)",
+                  iconColor: accentBlue,
+                  iconText: "GST",
+                  documentUrl: user.gstImage,
+                ),
+                const SizedBox(height: 12),
+                _buildDocumentRow(
+                  context,
+                  title: "Aadhaar Card",
+                  subtitle: "Uploaded â€¢ Document",
+                  iconColor: const Color(0xFF8B5CF6),
+                  iconText: "ID",
+                  documentUrl: user.aadhaarImage,
+                ),
+
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
-        ),
-      );
-    }),
-  );
+        );
+      }),
+    );
   }
 
-  Widget _buildProfileHeader(BuildContext context, dynamic user) {
+  Widget _buildProfileHeader(BuildContext context, ProfileModel user) {
+    final roleLabel = _roleLabel(user.role);
+    final status = user.accountStatus.trim().isEmpty
+        ? (user.isActive ? 'ACTIVE' : 'INACTIVE')
+        : user.accountStatus.toUpperCase();
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Get.isDarkMode ? Colors.white.withOpacity(0.05) : AppTheme.borderLight),
+        border: Border.all(
+          color: Get.isDarkMode
+              ? Colors.white.withOpacity(0.05)
+              : AppTheme.borderLight,
+        ),
       ),
       child: Row(
         children: [
@@ -168,11 +218,12 @@ class ProfileScreen extends StatelessWidget {
             child: ClipOval(
               child: user.profileImage != null && user.profileImage!.isNotEmpty
                   ? Image.network(
-                      user.profileImage!,
+                      controller.profileImageUrl(user.profileImage),
                       width: 80,
                       height: 80,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => _buildInitialsAvatar(user),
+                      errorBuilder: (context, error, stackTrace) =>
+                          _buildInitialsAvatar(user),
                     )
                   : _buildInitialsAvatar(user),
             ),
@@ -187,7 +238,7 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 Text(
                   "${user.firstName} ${user.lastName}".trim().isEmpty
-                      ? "Admin User"
+                      ? "$roleLabel User"
                       : "${user.firstName} ${user.lastName}".trim(),
                   style: TextStyle(
                     color: textDark,
@@ -198,19 +249,25 @@ class ProfileScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   user.email,
-                  style: TextStyle(
-                    color: textLight,
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: textLight, fontSize: 13),
                 ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    _buildPillBadge("ADMIN", accentGold, Icons.admin_panel_settings_outlined),
+                    _buildPillBadge(
+                      roleLabel.toUpperCase(),
+                      accentGold,
+                      _roleIcon(user.role),
+                    ),
                     const SizedBox(width: 8),
-                    _buildPillBadge("ACTIVE", accentGreen, Icons.circle, iconSize: 8),
+                    _buildPillBadge(
+                      status,
+                      status == 'ACTIVE' ? accentGreen : Colors.orange,
+                      Icons.circle,
+                      iconSize: 8,
+                    ),
                   ],
-                )
+                ),
               ],
             ),
           ),
@@ -219,10 +276,14 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInitialsAvatar(dynamic user) {
+  Widget _buildInitialsAvatar(ProfileModel user) {
     return Center(
       child: Text(
-        user.firstName.isNotEmpty ? user.firstName[0].toUpperCase() : "A",
+        user.firstName.isNotEmpty
+            ? user.firstName[0].toUpperCase()
+            : user.username.isNotEmpty
+            ? user.username[0].toUpperCase()
+            : "U",
         style: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,
@@ -232,7 +293,12 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPillBadge(String text, Color color, IconData icon, {double iconSize = 14}) {
+  Widget _buildPillBadge(
+    String text,
+    Color color,
+    IconData icon, {
+    double iconSize = 14,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -258,7 +324,7 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildBadge(String text, Color color, IconData icon) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -285,7 +351,12 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionTitle(BuildContext context, IconData icon, String title, {bool showEdit = false}) {
+  Widget _buildSectionTitle(
+    BuildContext context,
+    IconData icon,
+    String title, {
+    bool showEdit = false,
+  }) {
     return Row(
       children: [
         Icon(icon, color: accentGold, size: 20),
@@ -313,22 +384,33 @@ class ProfileScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: cardLighter,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Get.isDarkMode ? Colors.white.withOpacity(0.05) : AppTheme.borderLight),
+                border: Border.all(
+                  color: Get.isDarkMode
+                      ? Colors.white.withOpacity(0.05)
+                      : AppTheme.borderLight,
+                ),
               ),
               child: Row(
                 children: [
                   Icon(Icons.edit, color: accentGold, size: 12),
                   const SizedBox(width: 4),
-                  Text("Edit", style: TextStyle(color: textDark, fontSize: 12, fontWeight: FontWeight.w500)),
+                  Text(
+                    "Edit",
+                    style: TextStyle(
+                      color: textDark,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ],
               ),
             ),
-          )
+          ),
       ],
     );
   }
 
-  Widget _buildGeneralInfoGrid(BuildContext context, dynamic user) {
+  Widget _buildGeneralInfoGrid(BuildContext context, ProfileModel user) {
     String displayGender = "Not Specified";
     if (user.gender.isNotEmpty) {
       displayGender = user.gender[0].toUpperCase() + user.gender.substring(1);
@@ -338,30 +420,67 @@ class ProfileScreen extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(child: _buildGridItem(Icons.call, "Mobile Number", user.mobile.isEmpty ? "Not Provided" : user.mobile, const Color(0xFF6366F1))),
+            Expanded(
+              child: _buildGridItem(
+                Icons.call,
+                "Mobile Number",
+                user.mobile.isEmpty ? "Not Provided" : user.mobile,
+                const Color(0xFF6366F1),
+              ),
+            ),
             const SizedBox(width: 12),
-            Expanded(child: _buildGridItem(Icons.male, "Gender", displayGender, const Color(0xFF3B82F6))),
+            Expanded(
+              child: _buildGridItem(
+                Icons.male,
+                "Gender",
+                displayGender,
+                const Color(0xFF3B82F6),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: _buildGridItem(Icons.calendar_today, "Date of Birth", user.dob.isEmpty ? "Not Provided" : user.dob, accentGreen)),
+            Expanded(
+              child: _buildGridItem(
+                Icons.calendar_today,
+                "Date of Birth",
+                user.dob.isEmpty ? "Not Provided" : user.dob,
+                accentGreen,
+              ),
+            ),
             const SizedBox(width: 12),
-            Expanded(child: _buildGridItem(Icons.badge_outlined, "PAN Number", user.panNumber.isEmpty ? "Not Provided" : user.panNumber, const Color(0xFFF97316))),
+            Expanded(
+              child: _buildGridItem(
+                Icons.badge_outlined,
+                "PAN Number",
+                user.panNumber.isEmpty ? "Not Provided" : user.panNumber,
+                const Color(0xFFF97316),
+              ),
+            ),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildGridItem(IconData icon, String title, String value, Color iconColor) {
+  Widget _buildGridItem(
+    IconData icon,
+    String title,
+    String value,
+    Color iconColor,
+  ) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Get.isDarkMode ? Colors.white.withOpacity(0.05) : AppTheme.borderLight),
+        border: Border.all(
+          color: Get.isDarkMode
+              ? Colors.white.withOpacity(0.05)
+              : AppTheme.borderLight,
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -391,7 +510,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -411,7 +530,11 @@ class ProfileScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Get.isDarkMode ? Colors.white.withOpacity(0.05) : AppTheme.borderLight),
+        border: Border.all(
+          color: Get.isDarkMode
+              ? Colors.white.withOpacity(0.05)
+              : AppTheme.borderLight,
+        ),
       ),
       child: Row(
         children: [
@@ -421,7 +544,11 @@ class ProfileScreen extends StatelessWidget {
               color: cardLighter,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: const Color(0xFF8B5CF6), size: 18), // Purple icon for Account Status/GST
+            child: Icon(
+              icon,
+              color: const Color(0xFF8B5CF6),
+              size: 18,
+            ), // Purple icon for Account Status/GST
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -447,7 +574,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildManageCompanyCard(BuildContext context) {
+  Widget _buildManageCompanyCard(BuildContext context, String role) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -457,7 +584,11 @@ class ProfileScreen extends StatelessWidget {
         border: Border.all(color: accentGold.withOpacity(0.3)),
       ),
       child: InkWell(
-        onTap: () => Get.toNamed(AppRoutes.sellerCompany),
+        onTap: () => Get.toNamed(
+          _normalizedRole(role) == 'transporter'
+              ? AppRoutes.transporterCompany
+              : AppRoutes.sellerCompany,
+        ),
         child: Row(
           children: [
             Container(
@@ -473,9 +604,19 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Manage Company", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                  const Text(
+                    "Manage Company",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text("Register a company or edit\nyour company details", style: TextStyle(color: textLight, fontSize: 11)),
+                  Text(
+                    "Register a company or edit\nyour company details",
+                    style: TextStyle(color: textLight, fontSize: 11),
+                  ),
                 ],
               ),
             ),
@@ -492,13 +633,77 @@ class ProfileScreen extends StatelessWidget {
     required String subtitle,
     required Color iconColor,
     required String iconText,
+    required String documentUrl,
   }) {
+    final resolvedUrl = controller.profileImageUrl(documentUrl);
+    final hasDocument = documentUrl.trim().isNotEmpty;
+    if (title == "Aadhaar Card") {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppTheme.borderLight),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: iconColor.withValues(alpha: .1),
+              child: Text(
+                iconText,
+                style: TextStyle(color: iconColor, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: textDark,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    hasDocument ? "Uploaded" : "Not uploaded",
+                    style: TextStyle(
+                      color: hasDocument ? accentGreen : textLight,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: "View",
+              onPressed: hasDocument
+                  ? () => _openDocument(resolvedUrl, inApp: true)
+                  : null,
+              icon: const Icon(Icons.visibility_outlined),
+            ),
+            IconButton(
+              tooltip: "Download",
+              onPressed: hasDocument
+                  ? () => _openDocument(resolvedUrl, inApp: false)
+                  : null,
+              icon: const Icon(Icons.file_download_outlined),
+            ),
+          ],
+        ),
+      );
+    }
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Get.isDarkMode ? Colors.white.withOpacity(0.05) : AppTheme.borderLight),
+        border: Border.all(
+          color: Get.isDarkMode
+              ? Colors.white.withOpacity(0.05)
+              : AppTheme.borderLight,
+        ),
       ),
       child: Row(
         children: [
@@ -538,46 +743,101 @@ class ProfileScreen extends StatelessWidget {
                 RichText(
                   text: TextSpan(
                     text: subtitle.split(' • ')[0],
-                    style: TextStyle(color: accentGreen, fontSize: 11, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      color: accentGreen,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
                     children: [
                       TextSpan(
                         text: " • ${subtitle.split(' • ')[1]}",
                         style: TextStyle(color: textLight, fontSize: 11),
-                      )
-                    ]
-                  )
-                )
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
-          Container(
-            height: 32,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: cardLighter,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Get.isDarkMode ? Colors.white.withOpacity(0.1) : AppTheme.borderLight),
+          InkWell(
+            onTap: hasDocument
+                ? () => _openDocument(resolvedUrl, inApp: true)
+                : null,
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              height: 32,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: cardLighter,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Get.isDarkMode
+                      ? Colors.white.withOpacity(0.1)
+                      : AppTheme.borderLight,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  hasDocument ? "View" : "Missing",
+                  style: TextStyle(
+                    color: hasDocument ? textDark : textLight,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
             ),
-            child: Center(child: Text("View", style: TextStyle(color: textDark, fontSize: 12, fontWeight: FontWeight.w500))),
           ),
           const SizedBox(width: 12),
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: cardLighter,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Get.isDarkMode ? Colors.white.withOpacity(0.1) : AppTheme.borderLight),
+          InkWell(
+            onTap: hasDocument
+                ? () => _openDocument(resolvedUrl, inApp: false)
+                : null,
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: cardLighter,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Get.isDarkMode
+                      ? Colors.white.withOpacity(0.1)
+                      : AppTheme.borderLight,
+                ),
+              ),
+              child: Icon(
+                Icons.file_download_outlined,
+                color: hasDocument ? textDark : textLight,
+                size: 16,
+              ),
             ),
-            child: Icon(Icons.file_download_outlined, color: textDark, size: 16),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildKycComplianceCard(BuildContext context, dynamic user) {
-    final kycStatus = (user.kycStatus ?? 'pending').toString().toLowerCase();
+  Future<void> _openDocument(String url, {required bool inApp}) async {
+    final opened = await launchUrl(
+      Uri.parse(url),
+      mode: inApp
+          ? LaunchMode.inAppBrowserView
+          : LaunchMode.externalApplication,
+    );
+    if (!opened) {
+      Get.snackbar(
+        "Error",
+        "Unable to open document",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  Widget _buildKycComplianceCard(BuildContext context, ProfileModel user) {
+    final kycStatus = user.kycStatus.trim().isEmpty
+        ? 'pending'
+        : user.kycStatus.toLowerCase();
     Color kycColor = accentGold;
     IconData kycIcon = Icons.access_time;
     if (kycStatus == 'approved' || kycStatus == 'verified') {
@@ -596,7 +856,11 @@ class ProfileScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Get.isDarkMode ? Colors.white.withOpacity(0.05) : AppTheme.borderLight),
+        border: Border.all(
+          color: Get.isDarkMode
+              ? Colors.white.withOpacity(0.05)
+              : AppTheme.borderLight,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -608,7 +872,11 @@ class ProfileScreen extends StatelessWidget {
               Expanded(
                 child: Text(
                   "KYC Verification",
-                  style: TextStyle(color: textDark, fontWeight: FontWeight.bold, fontSize: 14),
+                  style: TextStyle(
+                    color: textDark,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
               ),
               _buildBadge(kycStatus.toUpperCase(), kycColor, kycIcon),
@@ -627,23 +895,41 @@ class ProfileScreen extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: () async {
                   try {
-                    Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
+                    Get.dialog(
+                      const Center(child: CircularProgressIndicator()),
+                      barrierDismissible: false,
+                    );
                     final res = await BuyerServices.requestKycApproval();
                     if (Get.isDialogOpen ?? false) Get.back();
-                    Get.snackbar("Success", res['message'] ?? "KYC Approval Request Submitted",
-                        snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+                    Get.snackbar(
+                      "Success",
+                      res['message'] ?? "KYC Approval Request Submitted",
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: Colors.green,
+                      colorText: Colors.white,
+                    );
                   } catch (e) {
                     if (Get.isDialogOpen ?? false) Get.back();
-                    Get.snackbar("Notice", "Request submitted or status updated.",
-                        snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+                    Get.snackbar(
+                      "Notice",
+                      "Request submitted or status updated.",
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: Colors.green,
+                      colorText: Colors.white,
+                    );
                   }
                 },
                 icon: const Icon(Icons.send_rounded, size: 16),
-                label: const Text("Request KYC Re-approval", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                label: const Text(
+                  "Request KYC Re-approval",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: accentGold,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ),
@@ -651,5 +937,49 @@ class ProfileScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _normalizedRole(String role) =>
+      role.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
+
+  String _roleLabel(String role) {
+    switch (_normalizedRole(role)) {
+      case 'transporter':
+        return 'Transporter';
+      case 'seller':
+        return 'Seller';
+      case 'buyer':
+        return 'Buyer';
+      case 'both_sellerandbuyer':
+      case 'buyer_seller':
+      case 'both':
+        return 'Seller & Buyer';
+      case 'sub_admin':
+        return 'Sub Admin';
+      case 'admin':
+        return 'Admin';
+      default:
+        return role.trim().isEmpty ? 'User' : role.trim();
+    }
+  }
+
+  IconData _roleIcon(String role) {
+    switch (_normalizedRole(role)) {
+      case 'transporter':
+        return Icons.local_shipping_outlined;
+      case 'seller':
+        return Icons.storefront_outlined;
+      case 'buyer':
+        return Icons.shopping_bag_outlined;
+      default:
+        return Icons.admin_panel_settings_outlined;
+    }
+  }
+
+  bool _hasCompanyManagement(String role) {
+    final normalized = _normalizedRole(role);
+    return normalized == 'seller' ||
+        normalized == 'transporter' ||
+        normalized == 'both_sellerandbuyer';
   }
 }

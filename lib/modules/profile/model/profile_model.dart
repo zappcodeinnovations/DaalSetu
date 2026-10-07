@@ -13,6 +13,7 @@ class ProfileModel {
   final String dob;
   final String panImage;
   final String gstImage;
+  final String aadhaarImage;
   final String kycStatus;
   final String accountStatus;
   final bool isActive;
@@ -32,6 +33,7 @@ class ProfileModel {
     required this.dob,
     required this.panImage,
     required this.gstImage,
+    required this.aadhaarImage,
     required this.kycStatus,
     required this.accountStatus,
     required this.isActive,
@@ -66,6 +68,7 @@ class ProfileModel {
       dob: data["dob"] ?? "",
       panImage: data["pan_image"] ?? "",
       gstImage: data["gst_image"] ?? "",
+      aadhaarImage: data["adharcard_image"] ?? "",
       kycStatus: data["kyc_status"] ?? "",
       accountStatus: data["account_status"] ?? "",
       isActive: data["is_active"] ?? false,

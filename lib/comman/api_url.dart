@@ -14,6 +14,7 @@ class ApiUrls {
   //profile
   static const profile = "/api/user/";
   static const profileUpdate = "/api/profile/update/";
+  static const profileImageUpload = "/api/user/profile-image/";
   //categories
   static const String categories = "/api/categories/";
   static const String subcategories = "/api/categories/{id}/sub-category/";

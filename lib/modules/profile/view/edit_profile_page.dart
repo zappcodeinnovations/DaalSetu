@@ -1,9 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/glass_widgets.dart';
 import '../controller/profile_controller.dart';
@@ -24,15 +26,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _genderController;
   late TextEditingController _dobController;
   late TextEditingController _panController;
+  late TextEditingController _gstController;
+  final ImagePicker _picker = ImagePicker();
+  XFile? _profileImage;
+  XFile? _panDocument;
+  XFile? _gstDocument;
+  XFile? _aadhaarDocument;
 
   @override
   void initState() {
     super.initState();
     final user = controller.profile.value;
-    
+
     _firstNameController = TextEditingController(text: user?.firstName ?? '');
     _lastNameController = TextEditingController(text: user?.lastName ?? '');
-    
+
     String initialGender = 'Male';
     if (user != null && user.gender.isNotEmpty) {
       final g = user.gender.toLowerCase();
@@ -47,6 +55,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _genderController = TextEditingController(text: initialGender);
     _dobController = TextEditingController(text: user?.dob ?? '');
     _panController = TextEditingController(text: user?.panNumber ?? '');
+    _gstController = TextEditingController(text: user?.gstNumber ?? '');
   }
 
   @override
@@ -56,6 +65,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _genderController.dispose();
     _dobController.dispose();
     _panController.dispose();
+    _gstController.dispose();
     super.dispose();
   }
 
@@ -86,6 +96,30 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  Future<void> _pickImage(String type) async {
+    final picked = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      switch (type) {
+        case 'profile':
+          _profileImage = picked;
+          break;
+        case 'pan':
+          _panDocument = picked;
+          break;
+        case 'gst':
+          _gstDocument = picked;
+          break;
+        case 'aadhaar':
+          _aadhaarDocument = picked;
+          break;
+      }
+    });
+  }
+
   void _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -103,16 +137,51 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       data['pan_number'] = pan;
     }
 
-    final success = await controller.updateProfile(data);
+    final gst = _gstController.text.trim().toUpperCase();
+    if (gst.isNotEmpty) data['gst_number'] = gst;
+
+    final files = <String, String>{
+      if (_profileImage != null) 'profile_image': _profileImage!.path,
+      if (_panDocument != null) 'pan_image': _panDocument!.path,
+      if (_gstDocument != null) 'gst_image': _gstDocument!.path,
+      if (_aadhaarDocument != null) 'adharcard_image': _aadhaarDocument!.path,
+    };
+    final success = files.isEmpty
+        ? await controller.updateProfile(data)
+        : await controller.updateProfileWithFiles(
+            fields: data.map((key, value) => MapEntry(key, '$value')),
+            files: files,
+          );
     if (success) {
-      Get.back();
+      await Get.dialog<void>(
+        AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green),
+              SizedBox(width: 10),
+              Expanded(child: Text("Profile Updated")),
+            ],
+          ),
+          content: const Text(
+            "Your profile changes have been saved successfully.",
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Get.back(),
+              child: const Text("Done"),
+            ),
+          ],
+        ),
+        barrierDismissible: false,
+      );
+      if (mounted) Get.back();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return GradientScaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -132,9 +201,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ),
       body: Stack(
         children: [
-          DecoCircle(size: 250, color: theme.colorScheme.primary, alignment: Alignment.topRight, offset: const Offset(50, -50)),
-          DecoCircle(size: 200, color: const Color(0xFF8B5CF6), alignment: Alignment.bottomLeft, offset: const Offset(-50, 50)),
-          
+          DecoCircle(
+            size: 250,
+            color: theme.colorScheme.primary,
+            alignment: Alignment.topRight,
+            offset: const Offset(50, -50),
+          ),
+          DecoCircle(
+            size: 200,
+            color: const Color(0xFF8B5CF6),
+            alignment: Alignment.bottomLeft,
+            offset: const Offset(-50, 50),
+          ),
+
           SafeArea(
             child: Form(
               key: _formKey,
@@ -142,51 +221,82 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 padding: const EdgeInsets.all(20),
                 children: [
                   Center(
-                    child: Stack(
-                      children: [
-                        Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: const Color(0xFF2A2312),
-                            border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.5), width: 2),
-                            boxShadow: [
-                              BoxShadow(
-                                color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                                blurRadius: 20,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          child: ClipOval(
-                            child: controller.profile.value?.profileImage != null
-                                ? Image.network(
-                                    controller.profile.value!.profileImage!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, _, __) => _buildInitials(),
-                                  )
-                                : _buildInitials(),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
+                    child: GestureDetector(
+                      onTap: () => _pickImage('profile'),
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: 100,
+                            height: 100,
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.primary,
                               shape: BoxShape.circle,
-                              border: Border.all(color: const Color(0xFF0F1522), width: 3),
+                              color: const Color(0xFF2A2312),
+                              border: Border.all(
+                                color: theme.colorScheme.primary.withValues(
+                                  alpha: 0.5,
+                                ),
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: theme.colorScheme.primary.withValues(
+                                    alpha: 0.2,
+                                  ),
+                                  blurRadius: 20,
+                                  spreadRadius: 2,
+                                ),
+                              ],
                             ),
-                            child: const Icon(IconlyBold.camera, size: 16, color: Colors.black),
+                            child: ClipOval(
+                              child: _profileImage != null
+                                  ? Image.file(
+                                      File(_profileImage!.path),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : controller.profile.value?.profileImage !=
+                                            null &&
+                                        controller
+                                            .profile
+                                            .value!
+                                            .profileImage!
+                                            .isNotEmpty
+                                  ? Image.network(
+                                      controller.profileImageUrl(
+                                        controller.profile.value!.profileImage,
+                                      ),
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, _, __) =>
+                                          _buildInitials(),
+                                    )
+                                  : _buildInitials(),
+                            ),
                           ),
-                        ),
-                      ],
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFF0F1522),
+                                  width: 3,
+                                ),
+                              ),
+                              child: const Icon(
+                                IconlyBold.camera,
+                                size: 16,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 32),
-                  
+
                   _buildLabel("First Name"),
                   GlassTextField(
                     controller: _firstNameController,
@@ -195,7 +305,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     validator: (v) => v!.isEmpty ? "Required" : null,
                   ),
                   const SizedBox(height: 20),
-                  
+
                   _buildLabel("Last Name"),
                   GlassTextField(
                     controller: _lastNameController,
@@ -203,21 +313,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     prefixIcon: IconlyLight.profile,
                   ),
                   const SizedBox(height: 20),
-                  
+
                   _buildLabel("Gender"),
                   DropdownButtonFormField<String>(
-                    value: _genderController.text.isEmpty ? null : _genderController.text,
+                    initialValue: _genderController.text.isEmpty
+                        ? null
+                        : _genderController.text,
                     style: GoogleFonts.inter(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: theme.brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A),
+                      color: theme.brightness == Brightness.dark
+                          ? Colors.white
+                          : const Color(0xFF0F172A),
                     ),
                     icon: Icon(
                       Icons.keyboard_arrow_down_rounded,
-                      color: theme.brightness == Brightness.dark ? Colors.white70 : const Color(0xFF64748B),
+                      color: theme.brightness == Brightness.dark
+                          ? Colors.white70
+                          : const Color(0xFF64748B),
                     ),
                     selectedItemBuilder: (BuildContext context) {
-                      return ['Male', 'Female', 'Other'].map<Widget>((String item) {
+                      return ['Male', 'Female', 'Other'].map<Widget>((
+                        String item,
+                      ) {
                         return Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
@@ -225,7 +343,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             style: GoogleFonts.inter(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
-                              color: theme.brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A),
+                              color: theme.brightness == Brightness.dark
+                                  ? Colors.white
+                                  : const Color(0xFF0F172A),
                             ),
                           ),
                         );
@@ -236,8 +356,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       fillColor: theme.brightness == Brightness.dark
                           ? Colors.white.withValues(alpha: 0.06)
                           : const Color(0xFFF1F5F9),
-                      prefixIcon: Icon(IconlyLight.user, color: theme.colorScheme.primary),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+                      prefixIcon: Icon(
+                        IconlyLight.user,
+                        color: theme.colorScheme.primary,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 18,
+                        horizontal: 20,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide(
@@ -262,19 +388,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ),
                       ),
                     ),
-                    dropdownColor: theme.brightness == Brightness.dark ? const Color(0xFF161C2C) : Colors.white,
+                    dropdownColor: theme.brightness == Brightness.dark
+                        ? const Color(0xFF161C2C)
+                        : Colors.white,
                     items: ['Male', 'Female', 'Other']
-                        .map((g) => DropdownMenuItem(
-                              value: g,
-                              child: Text(
-                                g,
-                                style: GoogleFonts.inter(
-                                  color: theme.brightness == Brightness.dark ? Colors.white : const Color(0xFF0F172A),
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                        .map(
+                          (g) => DropdownMenuItem(
+                            value: g,
+                            child: Text(
+                              g,
+                              style: GoogleFonts.inter(
+                                color: theme.brightness == Brightness.dark
+                                    ? Colors.white
+                                    : const Color(0xFF0F172A),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
                               ),
-                            ))
+                            ),
+                          ),
+                        )
                         .toList(),
                     onChanged: (v) {
                       if (v != null) {
@@ -311,27 +443,83 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     validator: (val) {
                       if (val == null || val.trim().isEmpty) return null;
                       final clean = val.trim().toUpperCase();
-                      if (clean.length != 10 || !RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]{1}$').hasMatch(clean)) {
+                      if (clean.length != 10 ||
+                          !RegExp(
+                            r'^[A-Z]{5}[0-9]{4}[A-Z]{1}$',
+                          ).hasMatch(clean)) {
                         return "Enter a valid 10-character PAN (e.g. ABCDE1234F)";
                       }
                       return null;
                     },
                   ),
-                  
+                  const SizedBox(height: 20),
+
+                  _buildLabel("GST Number"),
+                  GlassTextField(
+                    controller: _gstController,
+                    hintText: "Enter GST number (e.g. 29ABCDE1234F1Z5)",
+                    prefixIcon: IconlyLight.document,
+                    inputFormatters: [
+                      LengthLimitingTextInputFormatter(15),
+                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                    ],
+                    validator: (val) {
+                      if (val == null || val.trim().isEmpty) return null;
+                      if (!RegExp(
+                        r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$',
+                      ).hasMatch(val.trim().toUpperCase())) {
+                        return "Enter a valid 15-character GST number";
+                      }
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 28),
+                  Text(
+                    "Documents",
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _documentPicker(
+                    "PAN Document",
+                    'pan',
+                    _panDocument,
+                    controller.profile.value?.panImage ?? '',
+                  ),
+                  const SizedBox(height: 10),
+                  _documentPicker(
+                    "GST Document",
+                    'gst',
+                    _gstDocument,
+                    controller.profile.value?.gstImage ?? '',
+                  ),
+                  const SizedBox(height: 10),
+                  _documentPicker(
+                    "Aadhaar Document",
+                    'aadhaar',
+                    _aadhaarDocument,
+                    controller.profile.value?.aadhaarImage ?? '',
+                  ),
+
                   const SizedBox(height: 40),
-                  
-                  Obx(() => GlassButton(
-                        onPressed: _saveProfile,
-                        isLoading: controller.isUpdating.value,
-                        child: Text(
-                          "Save Changes",
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: Colors.black87,
-                          ),
+
+                  Obx(
+                    () => GlassButton(
+                      onPressed: _saveProfile,
+                      isLoading: controller.isUpdating.value,
+                      child: Text(
+                        "Save Changes",
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.black87,
                         ),
-                      )),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 20),
                 ],
               ),
@@ -357,11 +545,72 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
+  Widget _documentPicker(
+    String title,
+    String type,
+    XFile? selected,
+    String uploadedUrl,
+  ) {
+    final theme = Theme.of(context);
+    final hasExisting = uploadedUrl.trim().isNotEmpty;
+    return GlassCard(
+      onTap: hasExisting ? null : () => _pickImage(type),
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: .12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(IconlyLight.document, color: theme.colorScheme.primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+                ),
+                Text(
+                  selected != null
+                      ? selected.name
+                      : hasExisting
+                      ? 'Already uploaded'
+                      : 'Tap to select JPG or PNG',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    color: theme.textTheme.bodyMedium?.color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            selected != null || hasExisting
+                ? Icons.check_circle
+                : IconlyLight.upload,
+            color: selected != null || hasExisting
+                ? Colors.green
+                : theme.colorScheme.primary,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildInitials() {
     final user = controller.profile.value;
     return Center(
       child: Text(
-        user?.firstName.isNotEmpty == true ? user!.firstName[0].toUpperCase() : "A",
+        user?.firstName.isNotEmpty == true
+            ? user!.firstName[0].toUpperCase()
+            : "A",
         style: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,

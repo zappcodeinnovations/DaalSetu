@@ -10,7 +10,7 @@ class AgroBrokerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeController themeController = Get.put(ThemeController());
+    Get.put(ThemeController());
 
     return GetMaterialApp(
       title: 'Daal Setu',
@@ -32,7 +32,7 @@ class AgroBrokerApp extends StatelessWidget {
               child: IgnorePointer(
                 child: Center(
                   child: Opacity(
-                    opacity: isDark ? 0.08 : 0.08,
+                    opacity: isDark ? 0.03 : 0.025,
                     child: Image.asset(
                       'assets/images/thumb_logo.png',
                       width: 300,

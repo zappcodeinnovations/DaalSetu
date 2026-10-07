@@ -4,9 +4,7 @@ import '../modules/profile/model/profile_model.dart';
 import '../network/api_client.dart';
 
 class ProfileService {
-
   static Future<ProfileModel> getProfile() async {
-
     final response = await ApiClient.get(
       endpoint: ApiUrls.profile, // "/api/user/"
       requireAuth: true,
@@ -32,5 +30,40 @@ class ProfileService {
     } catch (_) {
       return ProfileModel.fromJson(response);
     }
+  }
+
+  static Future<ProfileModel> updateProfileMultipart({
+    required Map<String, String> fields,
+    required Map<String, String> files,
+  }) async {
+    final profileImagePath = files['profile_image'];
+    final documentFiles = Map<String, String>.from(files)
+      ..remove('profile_image');
+
+    if (documentFiles.isNotEmpty) {
+      await ApiClient.postMultipart(
+        endpoint: ApiUrls.profileUpdate,
+        fields: fields,
+        files: documentFiles,
+        requireAuth: true,
+        method: 'PATCH',
+      );
+    } else if (fields.isNotEmpty) {
+      await ApiClient.patch(
+        endpoint: ApiUrls.profileUpdate,
+        data: fields,
+        requireAuth: true,
+      );
+    }
+
+    if (profileImagePath != null && profileImagePath.isNotEmpty) {
+      await ApiClient.postMultipart(
+        endpoint: ApiUrls.profileImageUpload,
+        fields: const {},
+        files: {'profile_image': profileImagePath},
+        requireAuth: true,
+      );
+    }
+    return getProfile();
   }
 }
