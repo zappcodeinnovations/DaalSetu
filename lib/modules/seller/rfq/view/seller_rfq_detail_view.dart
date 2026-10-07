@@ -6,6 +6,7 @@ import '../../common/seller_ui.dart';
 import '../controller/seller_rfq_controller.dart';
 import '../model/seller_rfq_model.dart';
 import 'seller_submit_quote_dialog.dart';
+import 'seller_negotiation_chat_view.dart';
 
 class SellerRfqDetailView extends StatelessWidget {
   final String rfqId;
@@ -62,7 +63,23 @@ class SellerRfqDetailView extends StatelessWidget {
                     ),
                   ),
                 ),
-              if (thread != null) ..._threadSection(context, controller, thread),
+              if (thread != null) ...[
+                SellerUi.section(context, "My Quotation", [
+                  Align(alignment: Alignment.centerLeft, child: SellerUi.statusChip(thread.status)),
+                  const SizedBox(height: 8),
+                  SellerUi.infoRow("Offered Price", "â‚¹${thread.offeredPrice ?? '-'} / ${thread.priceUnit ?? ''}"),
+                  SellerUi.infoRow("Offered Quantity", "${thread.offeredQuantity ?? '-'} ${thread.quantityUnit ?? ''}"),
+                ]),
+                SizedBox(
+                  height: 52,
+                  child: ElevatedButton.icon(
+                    onPressed: () => Get.to(() => SellerNegotiationChatView(rfqId: rfqId)),
+                    icon: const Icon(IconlyLight.chat, color: Colors.white),
+                    label: const Text("OPEN NEGOTIATION CHAT", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(backgroundColor: SellerUi.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                  ),
+                ),
+              ],
               if (!rfq.canQuote && thread == null)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
@@ -76,6 +93,8 @@ class SellerRfqDetailView extends StatelessWidget {
     );
   }
 
+  // Kept temporarily for backwards-compatible rendering while negotiation now opens on its own screen.
+  // ignore: unused_element
   List<Widget> _threadSection(BuildContext context, SellerRfqDetailController controller, SellerQuotationModel thread) {
     return [
       SellerUi.section(context, "My Quotation", [
@@ -87,7 +106,7 @@ class SellerRfqDetailView extends StatelessWidget {
         SellerUi.infoRow("Latest Offer By", (thread.latestOfferBy ?? '-').toUpperCase()),
         SellerUi.infoRow("Delivery Terms", thread.deliveryTerms),
       ]),
-      SellerUi.section(context, "Negotiation", [
+      SellerUi.section(context, "Negotiation & Counter Proposals", [
         if (thread.messages.isEmpty)
           Text("No messages yet.", style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
         ...thread.messages.map((m) => _bubble(context, m, thread)),
@@ -101,7 +120,7 @@ class SellerRfqDetailView extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: () => SellerSubmitQuoteDialog.showCounter(controller),
                 icon: const Icon(IconlyLight.chat, size: 16),
-                label: const Text("COUNTER / MESSAGE"),
+                label: const Text("SUBMIT NEGOTIATION"),
                 style: OutlinedButton.styleFrom(foregroundColor: SellerUi.primary, side: const BorderSide(color: SellerUi.primary)),
               ),
             if (thread.canAccept)

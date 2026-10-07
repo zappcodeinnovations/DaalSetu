@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../services/seller_services.dart';
@@ -52,16 +53,21 @@ class SellerRfqDetailController extends GetxController {
   var isLoading = true.obs;
   final rfq = Rxn<SellerRfqModel>();
   final thread = Rxn<SellerQuotationModel>();
+  Timer? _refreshTimer;
+  bool _refreshInProgress = false;
 
   @override
   void onInit() {
     super.onInit();
     load();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) => load(silent: true));
   }
 
-  Future<void> load() async {
+  Future<void> load({bool silent = false}) async {
+    if (_refreshInProgress) return;
+    _refreshInProgress = true;
     try {
-      isLoading(true);
+      if (!silent) isLoading(true);
       final data = await SellerServices.getBuyerRequirement(rfqId);
       final loaded = SellerRfqModel.fromJson(data['data'] as Map<String, dynamic>);
       rfq.value = loaded;
@@ -72,10 +78,17 @@ class SellerRfqDetailController extends GetxController {
         thread.value = null;
       }
     } catch (e) {
-      SellerUi.error(e);
+      if (!silent) SellerUi.error(e);
     } finally {
-      isLoading(false);
+      if (!silent) isLoading(false);
+      _refreshInProgress = false;
     }
+  }
+
+  @override
+  void onClose() {
+    _refreshTimer?.cancel();
+    super.onClose();
   }
 
   Future<void> _act(Map<String, dynamic> body) async {
@@ -104,7 +117,7 @@ class SellerRfqDetailController extends GetxController {
         if (remark != null && remark.isNotEmpty) "seller_remark": remark,
       });
 
-  Future<void> sendMessage({String? counterPrice, String? counterQuantity, String? message}) {
+  Future<void> sendMessage({String? counterPrice, String? counterQuantity, String? bagCount, String? packingWeight}) {
     final quotationId = thread.value?.id;
     if (quotationId == null) return Future.value();
     return _act({
@@ -112,7 +125,8 @@ class SellerRfqDetailController extends GetxController {
       "quotation_id": quotationId,
       if (counterPrice != null && counterPrice.isNotEmpty) "counter_price": counterPrice,
       if (counterQuantity != null && counterQuantity.isNotEmpty) "counter_quantity": counterQuantity,
-      if (message != null && message.isNotEmpty) "message": message,
+      if (bagCount != null && bagCount.isNotEmpty) "counter_bag_count": bagCount,
+      if (packingWeight != null && packingWeight.isNotEmpty) "packing_weight_kg": packingWeight,
     });
   }
 

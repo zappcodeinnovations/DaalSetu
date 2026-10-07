@@ -3,9 +3,11 @@ import '../../company/model/seller_company_model.dart';
 import '../../branches/model/seller_branch_model.dart';
 import '../model/seller_product_model.dart';
 import '../../../../services/seller_services.dart';
+import '../../../../utils/app_preferences.dart';
 import '../../common/seller_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 
 class SellerProductController extends GetxController {
   var isLoading = true.obs;
@@ -14,7 +16,9 @@ class SellerProductController extends GetxController {
 
   // For Add Product (same fields as the web "Create Offer" form)
   var categories = <CategoryTreeModel>[].obs;
+  var categoryLabels = <int, String>{}.obs;
   var brands = <BrandModel>[].obs;
+  var isBrandsLoading = false.obs;
   var companies = <SellerCompanyModel>[].obs;
   var branches = <SellerBranchModel>[].obs;
   var selectedCategoryId = Rxn<int>();
@@ -22,6 +26,10 @@ class SellerProductController extends GetxController {
   var selectedCompanyId = Rxn<int>();
   var selectedBranchIds = <int>{}.obs;
   var amountUnit = 'qtl'.obs;
+  var quantityUnit = 'qtl'.obs;
+  var selectedImagePath = RxnString();
+  var selectedVideoPath = RxnString();
+  var sellerName = 'Seller'.obs;
   var loadingFrom = Rxn<DateTime>();
   var loadingTo = Rxn<DateTime>();
   var dealExpiry = Rxn<DateTime>();
@@ -31,7 +39,7 @@ class SellerProductController extends GetxController {
   final amountController = TextEditingController();
   final quantityController = TextEditingController();
   final bagCountController = TextEditingController();
-  final packingWeightController = TextEditingController();
+  final packingWeightController = TextEditingController(text: '30');
   final locationController = TextEditingController();
   final remarkController = TextEditingController();
 
@@ -55,12 +63,24 @@ class SellerProductController extends GetxController {
   }
 
   Future<void> fetchSupportData() async {
+    sellerName.value = await AppPreferences.getUsername() ?? 'Seller';
     try {
       final catData = await SellerServices.getCategoriesTree();
-      categories.assignAll(catData.map((e) => CategoryTreeModel.fromJson(e)).toList());
+      final roots = catData.map((e) => CategoryTreeModel.fromJson(e)).toList();
+      final flat = <CategoryTreeModel>[];
+      final labels = <int, String>{};
+      void addNodes(List<CategoryTreeModel> nodes, String parentPath) {
+        for (final node in nodes) {
+          final path = parentPath.isEmpty ? node.name : '$parentPath > ${node.name}';
+          flat.add(node);
+          labels[node.id] = path;
+          addNodes(node.children, path);
+        }
+      }
+      addNodes(roots, '');
+      categories.assignAll(flat);
+      categoryLabels.assignAll(labels);
 
-      final brandData = await SellerServices.getBrandsDropdown();
-      brands.assignAll(brandData.map((e) => BrandModel.fromJson(e)).toList());
     } catch (e) {
       debugPrint("Error fetching support data: $e");
     }
@@ -84,6 +104,44 @@ class SellerProductController extends GetxController {
     } catch (e) {
       debugPrint("Error fetching branches: $e");
     }
+  }
+
+  String categoryLabel(CategoryTreeModel category) => categoryLabels[category.id] ?? category.name;
+
+  Future<void> selectCategory(int? categoryId) async {
+    selectedCategoryId.value = categoryId;
+    selectedBrandId.value = null;
+    brands.clear();
+    if (categoryId == null) return;
+
+    try {
+      isBrandsLoading(true);
+      final brandData = await SellerServices.getCategoryBrands(categoryId);
+      brands.assignAll(brandData
+          .whereType<Map>()
+          .map((item) => BrandModel.fromJson(Map<String, dynamic>.from(item)))
+          .toList());
+    } catch (e) {
+      debugPrint("Error fetching category brands: $e");
+      SellerUi.error("Unable to load brands for the selected category.");
+    } finally {
+      isBrandsLoading(false);
+    }
+  }
+
+  Future<void> pickOfferImage() async {
+    final image = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 88);
+    if (image != null) selectedImagePath.value = image.path;
+  }
+
+  Future<void> pickOfferVideo() async {
+    final video = await ImagePicker().pickVideo(source: ImageSource.gallery);
+    if (video != null) selectedVideoPath.value = video.path;
+  }
+
+  String fileName(String? path) {
+    if (path == null || path.isEmpty) return '';
+    return path.split(RegExp(r'[\\/]')).last;
   }
 
   String _ymd(DateTime d) => "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
@@ -117,6 +175,7 @@ class SellerProductController extends GetxController {
       if (selectedBrandId.value != null) "brand_id": selectedBrandId.value,
       "amount": amountController.text.trim(),
       "amount_unit": amountUnit.value,
+      "quantity_unit": quantityUnit.value,
       if (bagCountController.text.trim().isNotEmpty) ...{
         "bag_count": bagCountController.text.trim(),
         "packing_weight_kg": packingWeightController.text.trim(),
@@ -134,8 +193,28 @@ class SellerProductController extends GetxController {
     try {
       isSaving(true);
       final result = await SellerServices.createOffer(body);
+      // /api/offers/create/ returns the new offer under "product".
+      final data = result['product'] ?? result['data'];
+      final productId = data is Map ? int.tryParse('${data['id']}') : null;
+      var mediaFailed = false;
+      if (productId != null && selectedImagePath.value != null) {
+        try {
+          await SellerServices.uploadProductImage(productId, selectedImagePath.value!);
+        } catch (_) {
+          mediaFailed = true;
+        }
+      }
+      if (productId != null && selectedVideoPath.value != null) {
+        try {
+          await SellerServices.uploadProductVideo(productId, selectedVideoPath.value!, 'Offer Video');
+        } catch (_) {
+          mediaFailed = true;
+        }
+      }
       Get.back();
-      SellerUi.success(result['message']?.toString() ?? "Offer created successfully");
+      SellerUi.success(mediaFailed
+          ? "Offer created, but one or more media files could not be uploaded."
+          : result['message']?.toString() ?? "Offer created successfully");
       fetchProducts();
       clearForm();
     } catch (e) {
@@ -179,6 +258,10 @@ class SellerProductController extends GetxController {
     selectedCategoryId.value = null;
     selectedBrandId.value = null;
     amountUnit.value = 'qtl';
+    quantityUnit.value = 'qtl';
+    packingWeightController.text = '30';
+    selectedImagePath.value = null;
+    selectedVideoPath.value = null;
     loadingFrom.value = null;
     loadingTo.value = null;
     dealExpiry.value = null;

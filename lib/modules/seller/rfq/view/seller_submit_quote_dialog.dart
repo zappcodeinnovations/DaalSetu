@@ -74,12 +74,13 @@ class SellerSubmitQuoteDialog {
   static void showCounter(SellerRfqDetailController controller) {
     final priceCtrl = TextEditingController();
     final qtyCtrl = TextEditingController();
-    final msgCtrl = TextEditingController();
+    final bagCtrl = TextEditingController();
+    final weightCtrl = TextEditingController(text: '30');
     InputDecoration deco(String label) => InputDecoration(labelText: label, border: const OutlineInputBorder());
 
     Get.dialog(
       AlertDialog(
-        title: Text("Counter Offer / Message", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Text("Submit Negotiation", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -88,7 +89,15 @@ class SellerSubmitQuoteDialog {
               const SizedBox(height: 10),
               TextField(controller: qtyCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: deco("Counter Quantity (optional)")),
               const SizedBox(height: 10),
-              TextField(controller: msgCtrl, maxLines: 3, decoration: deco("Message")),
+              Row(
+                children: [
+                  Expanded(child: TextField(controller: bagCtrl, keyboardType: TextInputType.number, decoration: deco("Bags (optional)"))),
+                  const SizedBox(width: 8),
+                  Expanded(child: TextField(controller: weightCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: deco("Packing KG"))),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text("Only counter price or quantity can be submitted. Free-text messages are disabled.", style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
             ],
           ),
         ),
@@ -97,18 +106,19 @@ class SellerSubmitQuoteDialog {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: SellerUi.primary),
             onPressed: () {
-              if (priceCtrl.text.trim().isEmpty && qtyCtrl.text.trim().isEmpty && msgCtrl.text.trim().isEmpty) {
-                SellerUi.error("Enter a counter price, quantity or message");
+              if (priceCtrl.text.trim().isEmpty && qtyCtrl.text.trim().isEmpty && bagCtrl.text.trim().isEmpty) {
+                SellerUi.error("Enter a counter price or quantity");
                 return;
               }
               Get.back();
               controller.sendMessage(
                 counterPrice: priceCtrl.text.trim(),
                 counterQuantity: qtyCtrl.text.trim(),
-                message: msgCtrl.text.trim(),
+                bagCount: bagCtrl.text.trim(),
+                packingWeight: bagCtrl.text.trim().isEmpty ? null : weightCtrl.text.trim(),
               );
             },
-            child: const Text("SEND", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: const Text("SUBMIT NEGOTIATION", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

@@ -22,6 +22,21 @@ class SellerServices {
     return [];
   }
 
+  static Future<List<dynamic>> getCategoryBrands(int categoryId) async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.categoryBrands(categoryId),
+      requireAuth: true,
+    );
+    if (response is Map<String, dynamic> && response['success'] == true) {
+      return response['data'] is List ? response['data'] as List : const [];
+    }
+    throw Exception(
+      response is Map<String, dynamic>
+          ? response['message'] ?? 'Failed to fetch category brands'
+          : 'Failed to fetch category brands',
+    );
+  }
+
   /// ============================================================
   /// CREATE CATEGORY (ROOT)
   /// ============================================================

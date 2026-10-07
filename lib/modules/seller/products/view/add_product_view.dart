@@ -47,21 +47,42 @@ class AddProductView extends StatelessWidget {
                 value: controller.selectedCategoryId.value,
                 items: controller.categories.map((cat) => DropdownMenuItem(
                   value: cat.id,
-                  child: Text(cat.name),
+                  child: Text(controller.categoryLabel(cat)),
                 )).toList(),
-                onChanged: (val) => controller.selectedCategoryId.value = val,
+                onChanged: controller.selectCategory,
                 icon: IconlyLight.category,
               ),
               const SizedBox(height: 16),
               _buildDropdown<int>(
-                hint: "Select Brand (optional)",
+                hint: controller.selectedCategoryId.value == null
+                    ? "Select category first"
+                    : controller.isBrandsLoading.value
+                        ? "Loading brands..."
+                        : controller.brands.isEmpty
+                            ? "No mapped brands available"
+                            : "Select Brand (optional)",
                 value: controller.selectedBrandId.value,
                 items: controller.brands.map((brand) => DropdownMenuItem(
                   value: brand.id,
                   child: Text(brand.brandName),
                 )).toList(),
-                onChanged: (val) => controller.selectedBrandId.value = val,
+                onChanged: controller.selectedCategoryId.value == null || controller.isBrandsLoading.value
+                    ? null
+                    : (val) => controller.selectedBrandId.value = val,
                 icon: IconlyLight.info_square,
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(color: theme.cardColor, borderRadius: BorderRadius.circular(16)),
+                child: Row(
+                  children: [
+                    const Icon(IconlyLight.user_1, color: primaryColor),
+                    const SizedBox(width: 12),
+                    Expanded(child: Text("Seller: ${controller.sellerName.value}", style: const TextStyle(fontWeight: FontWeight.w600))),
+                  ],
+                ),
               ),
 
               const SizedBox(height: 24),
@@ -91,12 +112,33 @@ class AddProductView extends StatelessWidget {
               ),
               Row(
                 children: [
+                  Expanded(child: _buildTextField(controller.quantityController, "Offer Quantity *", Icons.inventory_2_outlined, keyboardType: const TextInputType.numberWithOptions(decimal: true))),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _buildDropdown<String>(
+                        hint: "Quantity Unit",
+                        value: controller.quantityUnit.value,
+                        items: const [
+                          DropdownMenuItem(value: 'kg', child: Text('KG')),
+                          DropdownMenuItem(value: 'qtl', child: Text('QTL')),
+                          DropdownMenuItem(value: 'ton', child: Text('TON')),
+                        ],
+                        onChanged: (val) => controller.quantityUnit.value = val ?? 'qtl',
+                        icon: Icons.scale_outlined,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
                   Expanded(child: _buildTextField(controller.bagCountController, "Bags", IconlyLight.work, keyboardType: TextInputType.number)),
                   const SizedBox(width: 16),
                   Expanded(child: _buildTextField(controller.packingWeightController, "Packing (kg/bag)", Icons.monitor_weight_outlined, keyboardType: const TextInputType.numberWithOptions(decimal: true))),
                 ],
               ),
-              _buildTextField(controller.quantityController, "Or total quantity (when not using bags)", Icons.inventory_2_outlined, keyboardType: const TextInputType.numberWithOptions(decimal: true)),
               Text(
                 "With bags, quantity is calculated as bags × packing weight.",
                 style: TextStyle(fontSize: 12, color: theme.disabledColor),
@@ -115,6 +157,24 @@ class AddProductView extends StatelessWidget {
               _expiryField(context, controller),
               _buildTextField(controller.locationController, "Loading Location", IconlyLight.location),
               _buildTextField(controller.remarkController, "Remark", IconlyLight.edit, maxLines: 2),
+
+              const SizedBox(height: 8),
+              _sectionTitle("Offer Media (Optional)"),
+              const SizedBox(height: 16),
+              _mediaPicker(
+                label: "Offer Image",
+                fileName: controller.fileName(controller.selectedImagePath.value),
+                icon: IconlyLight.image,
+                onPick: controller.pickOfferImage,
+                onClear: () => controller.selectedImagePath.value = null,
+              ),
+              _mediaPicker(
+                label: "Offer Video",
+                fileName: controller.fileName(controller.selectedVideoPath.value),
+                icon: IconlyLight.video,
+                onPick: controller.pickOfferVideo,
+                onClear: () => controller.selectedVideoPath.value = null,
+              ),
 
               if (controller.companies.isNotEmpty) ...[
                 const SizedBox(height: 8),
@@ -229,6 +289,26 @@ class AddProductView extends StatelessWidget {
     );
   }
 
+  Widget _mediaPicker({required String label, required String fileName, required IconData icon, required VoidCallback onPick, required VoidCallback onClear}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(color: Get.theme.cardColor, borderRadius: BorderRadius.circular(16)),
+        child: Row(
+          children: [
+            Icon(icon, color: primaryColor),
+            const SizedBox(width: 12),
+            Expanded(child: Text(fileName.isEmpty ? label : fileName, maxLines: 1, overflow: TextOverflow.ellipsis)),
+            if (fileName.isNotEmpty)
+              IconButton(onPressed: onClear, icon: const Icon(Icons.close_rounded)),
+            TextButton(onPressed: onPick, child: Text(fileName.isEmpty ? "Choose" : "Change")),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _dateField(BuildContext context, String label, DateTime? value, ValueChanged<DateTime> onPicked) {
     return _pickerBox(label, value == null ? '' : SellerUi.date(value.toIso8601String().substring(0, 10)), () async {
       final now = DateTime.now();
@@ -263,7 +343,7 @@ class AddProductView extends StatelessWidget {
     required String hint,
     required T? value,
     required List<DropdownMenuItem<T>> items,
-    required ValueChanged<T?> onChanged,
+    required ValueChanged<T?>? onChanged,
     required IconData icon,
   }) {
     return Container(
