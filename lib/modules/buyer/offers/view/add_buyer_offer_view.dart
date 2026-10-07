@@ -39,7 +39,53 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
   @override
   void initState() {
     super.initState();
+    quantityController.addListener(_calculateBags);
+    packingController.addListener(_calculateBags);
     _loadSupportData();
+  }
+
+  @override
+  void dispose() {
+    quantityController.removeListener(_calculateBags);
+    packingController.removeListener(_calculateBags);
+    titleController.dispose();
+    quantityController.dispose();
+    amountController.dispose();
+    bagCountController.dispose();
+    packingController.dispose();
+    super.dispose();
+  }
+
+  void _calculateBags() {
+    final qty = double.tryParse(quantityController.text.trim());
+    final packingKg = double.tryParse(packingController.text.trim());
+
+    if (qty != null && qty > 0 && packingKg != null && packingKg > 0) {
+      double totalKg = 0;
+      switch (selectedUnit.toLowerCase()) {
+        case 'qtl':
+        case 'quintal':
+          totalKg = qty * 100;
+          break;
+        case 'ton':
+        case 'tonne':
+          totalKg = qty * 1000;
+          break;
+        case 'kg':
+        default:
+          totalKg = qty;
+          break;
+      }
+
+      final bags = (totalKg / packingKg).round();
+      final bagText = bags > 0 ? bags.toString() : '';
+      if (bagCountController.text != bagText) {
+        bagCountController.value = TextEditingValue(
+          text: bagText,
+          selection: TextSelection.collapsed(offset: bagText.length),
+        );
+      }
+    }
   }
 
   Future<void> _loadSupportData() async {
@@ -296,7 +342,14 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
                           hint: "Unit",
                           value: selectedUnit,
                           items: ["qtl", "ton", "kg"].map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
-                          onChanged: (val) => setState(() => selectedUnit = val!),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() {
+                                selectedUnit = val;
+                                _calculateBags();
+                              });
+                            }
+                          },
                           icon: Icons.unfold_more,
                         ),
                       ),
@@ -355,6 +408,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
     String hint,
     IconData icon, {
     TextInputType keyboardType = TextInputType.text,
+    ValueChanged<String>? onChanged,
   }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -364,6 +418,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
+      onChanged: onChanged,
       style: GoogleFonts.inter(
         fontSize: 14,
         fontWeight: FontWeight.w500,
