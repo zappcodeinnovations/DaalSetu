@@ -22,6 +22,14 @@ class VehicleModel {
   final String vehicleStatus;
   final String vehicleStatusDisplay;
   
+  final String? vehicleBrandOther;
+  final String? bodyTypeOther;
+  final String? permitTypeOther;
+  final String? lengthFt;
+  final String? widthFt;
+  final String? heightFt;
+  final String? rcUploadUrl;
+
   final int? assignedDriver;
   final String? assignedDriverName;
   final String? driverPhoneNumber;
@@ -47,6 +55,13 @@ class VehicleModel {
     this.permitExpiryDate,
     required this.vehicleStatus,
     required this.vehicleStatusDisplay,
+    this.vehicleBrandOther,
+    this.bodyTypeOther,
+    this.permitTypeOther,
+    this.lengthFt,
+    this.widthFt,
+    this.heightFt,
+    this.rcUploadUrl,
     this.assignedDriver,
     this.assignedDriverName,
     this.driverPhoneNumber,
@@ -74,11 +89,26 @@ class VehicleModel {
       permitExpiryDate: json['permit_expiry_date'],
       vehicleStatus: json['vehicle_status'] ?? '',
       vehicleStatusDisplay: json['vehicle_status_display'] ?? '',
+      vehicleBrandOther: json['vehicle_brand_other'],
+      bodyTypeOther: json['body_type_other'],
+      permitTypeOther: json['permit_type_other'],
+      lengthFt: json['length_ft']?.toString(),
+      widthFt: json['width_ft']?.toString(),
+      heightFt: json['height_ft']?.toString(),
+      rcUploadUrl: (json['rc_upload_url'] ?? '').toString().isEmpty ? null : json['rc_upload_url'].toString(),
       assignedDriver: json['assigned_driver'],
-      assignedDriverName: json['assigned_driver_name'],
-      driverPhoneNumber: json['driver_phone_number'],
+      // Driver profile assignments are mirrored into driver_name; assigned_driver_name is the legacy user link.
+      assignedDriverName: _nonEmpty(json['driver_name']) ?? _nonEmpty(json['assigned_driver_name']),
+      driverPhoneNumber: _nonEmpty(json['driver_phone_number']),
     );
   }
+
+  static String? _nonEmpty(dynamic value) {
+    final text = (value ?? '').toString().trim();
+    return text.isEmpty ? null : text;
+  }
+
+  bool get hasDriver => (assignedDriverName ?? '').isNotEmpty;
 
   Map<String, dynamic> toJson() {
     return {

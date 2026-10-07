@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../controller/transporter_vehicle_controller.dart';
 import '../model/vehicle_model.dart';
 
+/// Same fields as the web "Register Vehicle" form. Dropdown values are the backend choices,
+/// so editing a vehicle never hits a value the dropdown does not know.
 class TransporterVehicleForm extends StatefulWidget {
   final VehicleModel? vehicle; // Null for create, provided for edit
 
@@ -15,107 +18,146 @@ class TransporterVehicleForm extends StatefulWidget {
 }
 
 class _TransporterVehicleFormState extends State<TransporterVehicleForm> {
+  static const _brands = {
+    'tata': 'Tata', 'mahindra': 'Mahindra', 'ashok_leyland': 'Ashok Leyland', 'eicher': 'Eicher',
+    'bharatbenz': 'BharatBenz', 'isuzu': 'Isuzu', 'other': 'Other',
+  };
+  static const _fuels = {'diesel': 'Diesel', 'petrol': 'Petrol', 'cng': 'CNG', 'electric': 'Electric'};
+  static const _bodies = {
+    'open_body': 'Open Body', 'closed_body': 'Closed Body', 'container': 'Container', 'flatbed': 'Flatbed',
+    'refrigerated': 'Refrigerated', 'tanker': 'Tanker', 'other': 'Other',
+  };
+  static const _permits = {'national_permit': 'National Permit', 'state_permit': 'State Permit', 'other': 'Other'};
+
   final _formKey = GlobalKey<FormState>();
   final TransporterVehicleController controller = Get.find<TransporterVehicleController>();
-  
   bool _isSubmitting = false;
 
-  late TextEditingController _numberCtrl;
-  late TextEditingController _modelNameCtrl;
-  late TextEditingController _manufacturingYearCtrl;
-  late TextEditingController _loadCapacityCtrl;
-  late TextEditingController _axlesCtrl;
-  late TextEditingController _rcNumberCtrl;
-  late TextEditingController _insuranceNumberCtrl;
-  late TextEditingController _insuranceExpiryCtrl;
-  late TextEditingController _permitExpiryCtrl;
+  late final TextEditingController _numberCtrl;
+  late final TextEditingController _typeCtrl;
+  late final TextEditingController _modelNameCtrl;
+  late final TextEditingController _loadCapacityCtrl;
+  late final TextEditingController _lengthCtrl;
+  late final TextEditingController _widthCtrl;
+  late final TextEditingController _heightCtrl;
+  late final TextEditingController _rcNumberCtrl;
+  late final TextEditingController _insuranceNumberCtrl;
+  late final TextEditingController _brandOtherCtrl;
+  late final TextEditingController _bodyOtherCtrl;
+  late final TextEditingController _permitOtherCtrl;
 
-  String _vehicleType = 'Heavy Goods Vehicle';
-  String _vehicleBrand = 'tata';
-  String _fuelType = 'diesel';
-  String _bodyType = 'open_body';
-  String _permitType = 'national_permit';
+  String? _brand;
+  String? _fuel;
+  String? _body;
+  String? _permit;
+  int? _year;
+  int? _axles;
   String _status = 'available';
+  String? _insuranceExpiry;
+  String? _permitExpiry;
+  String? _rcFilePath;
 
   @override
   void initState() {
     super.initState();
     final v = widget.vehicle;
-    _numberCtrl = TextEditingController(text: v?.vehicleNumber ?? '');
-    _modelNameCtrl = TextEditingController(text: v?.modelName ?? '');
-    _manufacturingYearCtrl = TextEditingController(text: v?.manufacturingYear?.toString() ?? '');
-    _loadCapacityCtrl = TextEditingController(text: v?.loadCapacityTons ?? '');
-    _axlesCtrl = TextEditingController(text: v?.numberOfAxles?.toString() ?? '');
-    _rcNumberCtrl = TextEditingController(text: v?.rcNumber ?? '');
-    _insuranceNumberCtrl = TextEditingController(text: v?.insuranceNumber ?? '');
-    _insuranceExpiryCtrl = TextEditingController(text: v?.insuranceExpiryDate ?? '');
-    _permitExpiryCtrl = TextEditingController(text: v?.permitExpiryDate ?? '');
-
-    if (v != null) {
-      if (v.vehicleType.isNotEmpty) _vehicleType = v.vehicleType;
-      if (v.vehicleBrand.isNotEmpty) _vehicleBrand = v.vehicleBrand;
-      if (v.fuelType.isNotEmpty) _fuelType = v.fuelType;
-      if (v.bodyType.isNotEmpty) _bodyType = v.bodyType;
-      if (v.permitType?.isNotEmpty == true) _permitType = v.permitType!;
-      if (v.vehicleStatus.isNotEmpty) _status = v.vehicleStatus;
-    }
+    TextEditingController ctrl(String? text) => TextEditingController(text: text ?? '');
+    _numberCtrl = ctrl(v?.vehicleNumber);
+    _typeCtrl = ctrl(v?.vehicleType);
+    _modelNameCtrl = ctrl(v?.modelName);
+    _loadCapacityCtrl = ctrl(v?.loadCapacityTons);
+    _lengthCtrl = ctrl(v?.lengthFt);
+    _widthCtrl = ctrl(v?.widthFt);
+    _heightCtrl = ctrl(v?.heightFt);
+    _rcNumberCtrl = ctrl(v?.rcNumber);
+    _insuranceNumberCtrl = ctrl(v?.insuranceNumber);
+    _brandOtherCtrl = ctrl(v?.vehicleBrandOther);
+    _bodyOtherCtrl = ctrl(v?.bodyTypeOther);
+    _permitOtherCtrl = ctrl(v?.permitTypeOther);
+    // Only keep values the dropdowns know; anything else starts empty instead of crashing.
+    _brand = _brands.containsKey(v?.vehicleBrand) ? v!.vehicleBrand : null;
+    _fuel = _fuels.containsKey(v?.fuelType) ? v!.fuelType : null;
+    _body = _bodies.containsKey(v?.bodyType) ? v!.bodyType : null;
+    _permit = _permits.containsKey(v?.permitType) ? v!.permitType : null;
+    _year = v?.manufacturingYear;
+    _axles = v?.numberOfAxles;
+    if (TransporterVehicleController.statusLabels.containsKey(v?.vehicleStatus)) _status = v!.vehicleStatus;
+    _insuranceExpiry = v?.insuranceExpiryDate;
+    _permitExpiry = v?.permitExpiryDate;
   }
 
   @override
   void dispose() {
-    _numberCtrl.dispose();
-    _modelNameCtrl.dispose();
-    _manufacturingYearCtrl.dispose();
-    _loadCapacityCtrl.dispose();
-    _axlesCtrl.dispose();
-    _rcNumberCtrl.dispose();
-    _insuranceNumberCtrl.dispose();
-    _insuranceExpiryCtrl.dispose();
-    _permitExpiryCtrl.dispose();
+    for (final c in [
+      _numberCtrl, _typeCtrl, _modelNameCtrl, _loadCapacityCtrl, _lengthCtrl, _widthCtrl, _heightCtrl,
+      _rcNumberCtrl, _insuranceNumberCtrl, _brandOtherCtrl, _bodyOtherCtrl, _permitOtherCtrl,
+    ]) {
+      c.dispose();
+    }
     super.dispose();
+  }
+
+  Future<void> _pickDate(String? current, ValueChanged<String> onPicked) async {
+    // Backend rejects past expiry dates.
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final existing = DateTime.tryParse(current ?? '');
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: existing != null && !existing.isBefore(today) ? existing : today,
+      firstDate: today,
+      lastDate: DateTime(now.year + 15),
+    );
+    if (picked != null) {
+      setState(() => onPicked("${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}"));
+    }
+  }
+
+  Future<void> _pickRc() async {
+    final file = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (file != null) setState(() => _rcFilePath = file.path);
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isSubmitting = true);
 
-    final data = {
-      "vehicle_number": _numberCtrl.text.trim(),
-      "vehicle_type": _vehicleType,
-      "vehicle_brand": _vehicleBrand,
+    String? text(TextEditingController c) => c.text.trim().isEmpty ? null : c.text.trim();
+    final data = <String, dynamic>{
+      "vehicle_number": _numberCtrl.text.trim().toUpperCase().replaceAll(' ', ''),
+      "vehicle_type": _typeCtrl.text.trim(),
+      "vehicle_brand": _brand,
+      "vehicle_brand_other": _brand == 'other' ? text(_brandOtherCtrl) : '',
       "model_name": _modelNameCtrl.text.trim(),
-      "manufacturing_year": int.tryParse(_manufacturingYearCtrl.text.trim()),
-      "fuel_type": _fuelType,
+      "manufacturing_year": _year,
+      "fuel_type": _fuel,
       "load_capacity_tons": _loadCapacityCtrl.text.trim(),
-      "body_type": _bodyType,
-      "number_of_axles": int.tryParse(_axlesCtrl.text.trim()),
+      "body_type": _body,
+      "body_type_other": _body == 'other' ? text(_bodyOtherCtrl) : '',
+      "length_ft": text(_lengthCtrl),
+      "width_ft": text(_widthCtrl),
+      "height_ft": text(_heightCtrl),
+      "number_of_axles": _axles,
       "rc_number": _rcNumberCtrl.text.trim(),
       "insurance_number": _insuranceNumberCtrl.text.trim(),
-      "insurance_expiry_date": _insuranceExpiryCtrl.text.trim().isNotEmpty ? _insuranceExpiryCtrl.text.trim() : null,
-      "permit_type": _permitType,
-      "permit_expiry_date": _permitExpiryCtrl.text.trim().isNotEmpty ? _permitExpiryCtrl.text.trim() : null,
+      "insurance_expiry_date": _insuranceExpiry,
+      "permit_type": _permit,
+      "permit_type_other": _permit == 'other' ? text(_permitOtherCtrl) : '',
+      "permit_expiry_date": _permitExpiry,
       "vehicle_status": _status,
     };
 
-    bool success;
-    if (widget.vehicle == null) {
-      success = await controller.createVehicle(data);
-    } else {
-      success = await controller.updateVehicle(widget.vehicle!.id, data);
-    }
-
+    final success = await controller.saveVehicle(id: widget.vehicle?.id, data: data, rcFilePath: _rcFilePath);
+    if (!mounted) return;
     setState(() => _isSubmitting = false);
-
-    if (success) {
-      Get.back();
-    }
+    if (success) Get.back(result: true);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isEdit = widget.vehicle != null;
+    final years = [for (var y = DateTime.now().year; y >= 1990; y--) y];
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -128,14 +170,11 @@ class _TransporterVehicleFormState extends State<TransporterVehicleForm> {
         ),
         title: Text(
           isEdit ? "Edit Vehicle" : "Register Vehicle",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
         child: GlassCard(
           padding: const EdgeInsets.all(20),
           child: Form(
@@ -143,127 +182,74 @@ class _TransporterVehicleFormState extends State<TransporterVehicleForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildSectionTitle("Basic Information"),
-                _buildTextField(label: "Vehicle Number (e.g. MH31AB1234)", controller: _numberCtrl, isRequired: true),
-                
-                _buildDropdown(
-                  label: "Vehicle Type",
-                  value: _vehicleType,
-                  items: const [
-                    DropdownMenuItem(value: 'Heavy Goods Vehicle', child: Text("Heavy Goods Vehicle")),
-                    DropdownMenuItem(value: 'Truck', child: Text("Truck")),
-                    DropdownMenuItem(value: 'Light Commercial Vehicle', child: Text("Light Commercial Vehicle")),
-                  ],
-                  onChanged: (val) => setState(() => _vehicleType = val!),
-                ),
-
+                _sectionTitle("Basic Information"),
+                _textField("Vehicle Number * (e.g. MH31AB1234)", _numberCtrl, required: true),
+                _textField("Vehicle Type * (e.g. Truck, Trailer)", _typeCtrl, required: true),
+                _dropdown<String>("Brand *", _brand, _brands, (v) => setState(() => _brand = v), required: true),
+                if (_brand == 'other') _textField("Brand Name *", _brandOtherCtrl, required: true),
+                _textField("Model Name", _modelNameCtrl),
                 Row(
                   children: [
                     Expanded(
-                      child: _buildDropdown(
-                        label: "Brand",
-                        value: _vehicleBrand,
-                        items: const [
-                          DropdownMenuItem(value: 'tata', child: Text("Tata")),
-                          DropdownMenuItem(value: 'ashok_leyland', child: Text("Ashok Leyland")),
-                          DropdownMenuItem(value: 'eicher', child: Text("Eicher")),
-                          DropdownMenuItem(value: 'mahindra', child: Text("Mahindra")),
-                        ],
-                        onChanged: (val) => setState(() => _vehicleBrand = val!),
-                      ),
+                      child: _dropdown<int>("Mfg Year *", _year, {for (final y in years) y: '$y'},
+                          (v) => setState(() => _year = v), required: true),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 12),
+                    Expanded(child: _dropdown<String>("Fuel *", _fuel, _fuels, (v) => setState(() => _fuel = v), required: true)),
+                  ],
+                ),
+
+                _sectionTitle("Specifications"),
+                Row(
+                  children: [
+                    Expanded(child: _textField("Capacity (Tons) *", _loadCapacityCtrl, required: true, number: true)),
+                    const SizedBox(width: 12),
                     Expanded(
-                      child: _buildDropdown(
-                        label: "Fuel Type",
-                        value: _fuelType,
-                        items: const [
-                          DropdownMenuItem(value: 'diesel', child: Text("Diesel")),
-                          DropdownMenuItem(value: 'petrol', child: Text("Petrol")),
-                          DropdownMenuItem(value: 'cng', child: Text("CNG")),
-                        ],
-                        onChanged: (val) => setState(() => _fuelType = val!),
-                      ),
+                      child: _dropdown<int>("Axles *", _axles, {for (var a = 1; a <= 6; a++) a: '$a'},
+                          (v) => setState(() => _axles = v), required: true),
                     ),
                   ],
                 ),
-
+                _dropdown<String>("Body Type *", _body, _bodies, (v) => setState(() => _body = v), required: true),
+                if (_body == 'other') _textField("Body Type Name *", _bodyOtherCtrl, required: true),
                 Row(
                   children: [
-                    Expanded(child: _buildTextField(label: "Model Name", controller: _modelNameCtrl)),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildTextField(label: "Mfg Year", controller: _manufacturingYearCtrl, isNumber: true)),
-                  ],
-                ),
-                
-                const SizedBox(height: 16),
-                _buildSectionTitle("Specifications"),
-                Row(
-                  children: [
-                    Expanded(child: _buildTextField(label: "Load Cap. (Tons)", controller: _loadCapacityCtrl, isRequired: true, isNumber: true)),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildTextField(label: "Number of Axles", controller: _axlesCtrl, isNumber: true)),
-                  ],
-                ),
-                
-                _buildDropdown(
-                  label: "Body Type",
-                  value: _bodyType,
-                  items: const [
-                    DropdownMenuItem(value: 'open_body', child: Text("Open Body")),
-                    DropdownMenuItem(value: 'closed_body', child: Text("Closed Body")),
-                    DropdownMenuItem(value: 'container', child: Text("Container")),
-                  ],
-                  onChanged: (val) => setState(() => _bodyType = val!),
-                ),
-
-                const SizedBox(height: 16),
-                _buildSectionTitle("Documentation"),
-                _buildTextField(label: "RC Number", controller: _rcNumberCtrl),
-                _buildTextField(label: "Insurance Number", controller: _insuranceNumberCtrl),
-                _buildTextField(label: "Insurance Expiry (YYYY-MM-DD)", controller: _insuranceExpiryCtrl),
-                
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildDropdown(
-                        label: "Permit Type",
-                        value: _permitType,
-                        items: const [
-                          DropdownMenuItem(value: 'national_permit', child: Text("National Permit")),
-                          DropdownMenuItem(value: 'state_permit', child: Text("State Permit")),
-                        ],
-                        onChanged: (val) => setState(() => _permitType = val!),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildTextField(label: "Permit Expiry", controller: _permitExpiryCtrl)),
+                    Expanded(child: _textField("Length (ft)", _lengthCtrl, number: true)),
+                    const SizedBox(width: 8),
+                    Expanded(child: _textField("Width (ft)", _widthCtrl, number: true)),
+                    const SizedBox(width: 8),
+                    Expanded(child: _textField("Height (ft)", _heightCtrl, number: true)),
                   ],
                 ),
 
-                const SizedBox(height: 16),
-                _buildSectionTitle("Status"),
-                _buildDropdown(
-                  label: "Vehicle Status",
-                  value: _status,
-                  items: const [
-                    DropdownMenuItem(value: 'available', child: Text("Available")),
-                    DropdownMenuItem(value: 'in_transit', child: Text("In Transit")),
-                    DropdownMenuItem(value: 'maintenance', child: Text("Maintenance")),
-                  ],
-                  onChanged: (val) => setState(() => _status = val!),
+                _sectionTitle("Documents"),
+                _textField("RC Number", _rcNumberCtrl),
+                _fileTile(
+                  _rcFilePath != null
+                      ? "RC selected: ${_rcFilePath!.split(RegExp(r'[\\/]')).last}"
+                      : (widget.vehicle?.rcUploadUrl != null ? "RC already uploaded (tap to replace)" : "Upload RC document"),
+                  _pickRc,
                 ),
+                _textField("Insurance Number", _insuranceNumberCtrl),
+                _dateTile("Insurance Expiry", _insuranceExpiry, (v) => _insuranceExpiry = v),
+                _dropdown<String>("Permit Type", _permit, _permits, (v) => setState(() => _permit = v)),
+                if (_permit == 'other') _textField("Permit Name", _permitOtherCtrl),
+                _dateTile("Permit Expiry", _permitExpiry, (v) => _permitExpiry = v),
 
-                const SizedBox(height: 32),
+                _sectionTitle("Status"),
+                _dropdown<String>("Vehicle Status", _status, TransporterVehicleController.statusLabels,
+                    (v) => setState(() => _status = v ?? 'available')),
+
+                const SizedBox(height: 16),
                 SizedBox(
                   height: 50,
                   child: ElevatedButton(
                     onPressed: _isSubmitting ? null : _submit,
-                    child: _isSubmitting 
-                        ? const CircularProgressIndicator(color: Colors.white) 
+                    child: _isSubmitting
+                        ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                         : Text(isEdit ? "Save Changes" : "Register Vehicle"),
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -272,75 +258,72 @@ class _TransporterVehicleFormState extends State<TransporterVehicleForm> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16, top: 8),
-      child: Text(
-        title,
-        style: GoogleFonts.poppins(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-      ),
-    );
-  }
+  InputDecoration _decoration(String label) => InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: Theme.of(context).brightness == Brightness.dark
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.black.withValues(alpha: 0.05),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      );
 
-  Widget _buildTextField({
-    required String label,
-    required TextEditingController controller,
-    bool isRequired = false,
-    bool isNumber = false,
-  }) {
+  Widget _sectionTitle(String title) => Padding(
+        padding: const EdgeInsets.only(bottom: 16, top: 8),
+        child: Text(title,
+            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+      );
+
+  Widget _textField(String label, TextEditingController controller, {bool required = false, bool number = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: controller,
-        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-        decoration: InputDecoration(
-          labelText: label,
-          filled: true,
-          fillColor: Theme.of(context).brightness == Brightness.dark 
-              ? Colors.white.withOpacity(0.05) 
-              : Colors.black.withOpacity(0.05),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-        ),
-        validator: (value) {
-          if (isRequired && (value == null || value.trim().isEmpty)) {
-            return "This field is required";
-          }
-          return null;
-        },
+        keyboardType: number ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
+        decoration: _decoration(label),
+        validator: (value) => required && (value == null || value.trim().isEmpty) ? "Required" : null,
       ),
     );
   }
 
-  Widget _buildDropdown({
-    required String label,
-    required String value,
-    required List<DropdownMenuItem<String>> items,
-    required void Function(String?) onChanged,
-  }) {
+  Widget _dropdown<T>(String label, T? value, Map<T, String> options, ValueChanged<T?> onChanged, {bool required = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        decoration: InputDecoration(
-          labelText: label,
-          filled: true,
-          fillColor: Theme.of(context).brightness == Brightness.dark 
-              ? Colors.white.withOpacity(0.05) 
-              : Colors.black.withOpacity(0.05),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-        ),
-        items: items,
+      child: DropdownButtonFormField<T>(
+        initialValue: options.containsKey(value) ? value : null,
+        isExpanded: true,
+        decoration: _decoration(label),
+        items: options.entries.map((e) => DropdownMenuItem<T>(value: e.key, child: Text(e.value, overflow: TextOverflow.ellipsis))).toList(),
         onChanged: onChanged,
+        validator: (v) => required && v == null ? "Required" : null,
+      ),
+    );
+  }
+
+  Widget _dateTile(String label, String? value, ValueChanged<String> onPicked) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: InkWell(
+        onTap: () => _pickDate(value, onPicked),
+        borderRadius: BorderRadius.circular(12),
+        child: InputDecorator(
+          decoration: _decoration(label).copyWith(suffixIcon: const Icon(Icons.calendar_month)),
+          child: Text(value == null || value.isEmpty ? 'Select date' : value),
+        ),
+      ),
+    );
+  }
+
+  Widget _fileTile(String text, VoidCallback onTap) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: OutlinedButton.icon(
+        onPressed: onTap,
+        icon: const Icon(Icons.upload_file),
+        label: Text(text, overflow: TextOverflow.ellipsis),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
       ),
     );
   }

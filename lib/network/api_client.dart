@@ -18,14 +18,15 @@ class ApiClient {
     required Map<String, String> fields,
     Map<String, String>? files,
     bool requireAuth = false,
+    String method = 'POST', // 'PATCH' for edits that also upload a file
   }) async {
     try {
       final uri = Uri.parse(ApiUrls.baseUrl + endpoint);
-      print("🔗 API CALL (MULTIPART): $endpoint");
+      print("🔗 API CALL (MULTIPART $method): $endpoint");
       print("📤 FIELDS: $fields");
       print("📤 FILES: $files");
 
-      final request = http.MultipartRequest('POST', uri);
+      final request = http.MultipartRequest(method, uri);
 
       // Add headers
       request.headers.addAll(await _buildHeaders(requireAuth));

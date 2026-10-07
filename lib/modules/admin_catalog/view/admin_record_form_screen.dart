@@ -153,6 +153,7 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
         ),
       );
     }
+    if (field.isDate) return _dateField(field);
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: TextFormField(
@@ -165,6 +166,54 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
         decoration: InputDecoration(
           labelText: '${field.label}${field.required ? ' *' : ''}',
           alignLabelWithHint: field.multiline,
+        ),
+        validator: (value) {
+          if (field.required && (value == null || value.trim().isEmpty)) {
+            return '${field.label} is required';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  /// Date fields open a calendar instead of being typed; expiry dates cannot be in the past.
+  Widget _dateField(AdminFieldConfig field) {
+    final controller = controllers[field.key]!;
+    Future<void> pick() async {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final isExpiry = field.key.contains('expiry');
+      final first = isExpiry ? today : DateTime(1950);
+      final existing = DateTime.tryParse(controller.text);
+      final picked = await showDatePicker(
+        context: context,
+        initialDate: existing != null && !existing.isBefore(first) ? existing : today,
+        firstDate: first,
+        lastDate: DateTime(now.year + 25),
+      );
+      if (picked != null) {
+        setState(() => controller.text =
+            '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}');
+      }
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: TextFormField(
+        controller: controller,
+        readOnly: true,
+        onTap: pick,
+        decoration: InputDecoration(
+          labelText: '${field.label}${field.required ? ' *' : ''}',
+          hintText: 'Select date',
+          suffixIcon: controller.text.isEmpty || field.required
+              ? const Icon(Icons.calendar_month)
+              : IconButton(
+                  tooltip: 'Clear',
+                  icon: const Icon(Icons.clear),
+                  onPressed: () => setState(controller.clear),
+                ),
         ),
         validator: (value) {
           if (field.required && (value == null || value.trim().isEmpty)) {

@@ -1,51 +1,51 @@
+import 'package:flutter/material.dart';
 import '../../../../comman/api_url.dart';
 import '../model/driver_model.dart';
+import '../../vehicles/model/vehicle_model.dart';
+import '../../vehicles/controller/transporter_vehicle_controller.dart';
 import '../../../../network/api_client.dart';
 import 'package:get/get.dart';
 
+/// Drivers of the logged-in transporter (same actions as the web "Registered Drivers" page).
 class TransporterDriverController extends GetxController {
   var drivers = <DriverModel>[].obs;
   var isLoading = false.obs;
-  var selectedFilter = 'All'.obs;
+  var selectedFilter = 'all'.obs;
+  var searchQuery = ''.obs;
 
-  bool _isAssigned(DriverModel d) =>
-      d.assignmentStatus.toLowerCase() == 'assigned' || d.assignedVehicle != null;
+  /// Web filter: All / Active / Inactive; "unassigned" = active without a vehicle.
+  static const Map<String, String> filterLabels = {
+    'all': 'All',
+    'active': 'Active',
+    'unassigned': 'Unassigned',
+    'inactive': 'Inactive',
+  };
+
+  bool _matchesFilter(DriverModel d, String filter) {
+    final status = d.status.toLowerCase();
+    switch (filter) {
+      case 'active':
+        return status == 'active';
+      case 'inactive':
+        return status == 'inactive';
+      case 'unassigned':
+        return status == 'active' && d.assignedVehicle == null;
+      default:
+        return true;
+    }
+  }
 
   List<DriverModel> get filteredDrivers {
-    if (selectedFilter.value == 'All') return drivers;
-    if (selectedFilter.value == 'Active') {
-      return drivers
-          .where((d) => d.status.toLowerCase() == 'active' && _isAssigned(d))
-          .toList();
-    }
-    if (selectedFilter.value == 'Inactive') {
-      return drivers.where((d) => d.status.toLowerCase() == 'inactive').toList();
-    }
-    if (selectedFilter.value == 'Unassigned') {
-      return drivers
-          .where((d) => d.status.toLowerCase() == 'active' && !_isAssigned(d))
-          .toList();
-    }
-    return drivers;
+    final query = searchQuery.value.trim().toLowerCase();
+    return drivers.where((d) {
+      if (!_matchesFilter(d, selectedFilter.value)) return false;
+      if (query.isEmpty) return true;
+      return [d.driverName, d.phoneNumber, d.licenseNumber, d.assignedVehicle?.vehicleNumber ?? '']
+          .any((field) => field.toLowerCase().contains(query));
+    }).toList();
   }
 
-  int getCount(String filter) {
-    if (filter == 'All') return drivers.length;
-    if (filter == 'Active') {
-      return drivers
-          .where((d) => d.status.toLowerCase() == 'active' && _isAssigned(d))
-          .length;
-    }
-    if (filter == 'Inactive') {
-      return drivers.where((d) => d.status.toLowerCase() == 'inactive').length;
-    }
-    if (filter == 'Unassigned') {
-      return drivers
-          .where((d) => d.status.toLowerCase() == 'active' && !_isAssigned(d))
-          .length;
-    }
-    return 0;
-  }
+  int getCount(String filter) => drivers.where((d) => _matchesFilter(d, filter)).length;
 
   @override
   void onInit() {
@@ -53,29 +53,32 @@ class TransporterDriverController extends GetxController {
     fetchDrivers();
   }
 
+  String _message(Object e) => e.toString().replaceFirst('Exception: ', '');
+
+  void _snack(String title, String message, Color color) {
+    Get.snackbar(title, message, snackPosition: SnackPosition.BOTTOM, backgroundColor: color, colorText: Colors.white);
+  }
+
+  List<dynamic> _listFrom(dynamic response) {
+    if (response is List) return response;
+    if (response is Map && response['results'] is List) return response['results'];
+    if (response is Map && response['data'] is List) return response['data'];
+    if (response is Map && response['body'] is List) return response['body'];
+    return const [];
+  }
+
+  /// Vehicle status/driver change when a driver's assignment changes; keep the Vehicles tab in sync.
+  void _refreshVehicles() {
+    if (Get.isRegistered<TransporterVehicleController>()) Get.find<TransporterVehicleController>().fetchVehicles();
+  }
+
   Future<void> fetchDrivers() async {
     try {
       isLoading(true);
-      final response = await ApiClient.get(
-        endpoint: ApiUrls.drivers,
-        requireAuth: true,
-      );
-
-      // Assuming API returns a List directly or wrapped in a data/body key.
-      if (response != null) {
-        List<dynamic> dataList = [];
-        if (response is List) {
-          dataList = response;
-        } else if (response is Map && response.containsKey('data')) {
-          dataList = response['data'];
-        } else if (response is Map && response.containsKey('body')) {
-          dataList = response['body'];
-        }
-
-        drivers.value = dataList.map((json) => DriverModel.fromJson(json)).toList();
-      }
+      final response = await ApiClient.get(endpoint: ApiUrls.drivers, requireAuth: true);
+      drivers.value = _listFrom(response).whereType<Map<String, dynamic>>().map(DriverModel.fromJson).toList();
     } catch (e) {
-      Get.snackbar('Error', 'Failed to load drivers: $e', snackPosition: SnackPosition.BOTTOM);
+      _snack('Error', 'Failed to load drivers: ${_message(e)}', Colors.red);
     } finally {
       isLoading(false);
     }
@@ -83,96 +86,85 @@ class TransporterDriverController extends GetxController {
 
   Future<DriverModel?> fetchDriverDetails(int id) async {
     try {
-      final response = await ApiClient.get(
-        endpoint: ApiUrls.driverDetails(id),
-        requireAuth: true,
-      );
-
-      if (response != null) {
-        var data = response;
-        if (response is Map && response.containsKey('body')) {
-          data = response['body'];
-        }
-        if (data['id'] != null) {
-          return DriverModel.fromJson(data);
-        }
-      }
+      final response = await ApiClient.get(endpoint: ApiUrls.driverDetails(id), requireAuth: true);
+      final data = response is Map && response['body'] is Map ? response['body'] : response;
+      if (data is Map<String, dynamic> && data['id'] != null) return DriverModel.fromJson(data);
     } catch (e) {
-      Get.snackbar('Error', 'Failed to load driver details: $e', snackPosition: SnackPosition.BOTTOM);
+      _snack('Error', 'Failed to load driver details: ${_message(e)}', Colors.red);
     }
     return null;
   }
 
-  Future<bool> createDriver(Map<String, dynamic> data) async {
+  /// Sends JSON, or multipart when a license file is attached (PATCH multipart for edits).
+  Future<bool> saveDriver({int? id, required Map<String, dynamic> data, String? licenseFilePath}) async {
     try {
-      final response = await ApiClient.post(
-        endpoint: ApiUrls.drivers,
-        body: data,
-        requireAuth: true,
-      );
-
-      if (response != null) {
-        Get.snackbar('Success', 'Driver created successfully', snackPosition: SnackPosition.BOTTOM);
-        await fetchDrivers();
-        return true;
+      if (licenseFilePath != null && licenseFilePath.isNotEmpty) {
+        await ApiClient.postMultipart(
+          endpoint: id == null ? ApiUrls.drivers : ApiUrls.driverDetails(id),
+          method: id == null ? 'POST' : 'PATCH',
+          fields: {
+            for (final e in data.entries)
+              if (e.value != null) e.key: '${e.value}',
+          },
+          files: {'license_upload': licenseFilePath},
+          requireAuth: true,
+        );
+      } else if (id == null) {
+        await ApiClient.post(endpoint: ApiUrls.drivers, body: data, requireAuth: true);
+      } else {
+        await ApiClient.patch(endpoint: ApiUrls.driverDetails(id), data: data, requireAuth: true);
       }
+      _snack('Success', id == null ? 'Driver registered successfully' : 'Driver updated successfully', Colors.green);
+      await fetchDrivers();
+      _refreshVehicles();
+      return true;
     } catch (e) {
-      Get.snackbar('Error', 'Failed to create driver: $e', snackPosition: SnackPosition.BOTTOM);
-    }
-    return false;
-  }
-
-  Future<bool> updateDriver(int id, Map<String, dynamic> data) async {
-    try {
-      final response = await ApiClient.patch(
-        endpoint: ApiUrls.driverDetails(id),
-        data: data,
-        requireAuth: true,
-      );
-
-      if (response != null) {
-        Get.snackbar('Success', 'Driver updated successfully', snackPosition: SnackPosition.BOTTOM);
-        await fetchDrivers();
-        return true;
-      }
-    } catch (e) {
-      Get.snackbar('Error', 'Failed to update driver: $e', snackPosition: SnackPosition.BOTTOM);
-    }
-    return false;
-  }
-
-  Future<void> deleteDriver(int id) async {
-    try {
-      final response = await ApiClient.delete(
-        endpoint: ApiUrls.driverDetails(id),
-        requireAuth: true,
-      );
-
-      if (response != null) {
-        Get.snackbar('Success', 'Driver deleted successfully', snackPosition: SnackPosition.BOTTOM);
-        await fetchDrivers();
-      }
-    } catch (e) {
-      Get.snackbar('Error', 'Failed to delete driver: $e', snackPosition: SnackPosition.BOTTOM);
+      _snack('Error', _message(e), Colors.red);
+      return false;
     }
   }
 
-  Future<bool> assignVehicle(int driverId, int vehicleId) async {
+  Future<bool> deleteDriver(int id) async {
     try {
-      final response = await ApiClient.post(
-        endpoint: ApiUrls.assignVehicle(driverId),
-        body: {'vehicle_id': vehicleId},
-        requireAuth: true,
-      );
-
-      if (response != null) {
-        Get.snackbar('Success', 'Vehicle assigned successfully', snackPosition: SnackPosition.BOTTOM);
-        await fetchDrivers();
-        return true;
-      }
+      await ApiClient.delete(endpoint: ApiUrls.driverDetails(id), requireAuth: true);
+      _snack('Success', 'Driver deleted successfully', Colors.green);
+      await fetchDrivers();
+      _refreshVehicles();
+      return true;
     } catch (e) {
-      Get.snackbar('Error', 'Failed to assign vehicle: $e', snackPosition: SnackPosition.BOTTOM);
+      _snack('Error', _message(e), Colors.red);
+      return false;
     }
-    return false;
+  }
+
+  /// Backend only accepts available vehicles without another driver (plus the driver's current one).
+  Future<List<VehicleModel>> fetchAssignableVehicles(DriverModel driver) async {
+    try {
+      final response = await ApiClient.get(endpoint: ApiUrls.vehicles, requireAuth: true);
+      return _listFrom(response)
+          .whereType<Map<String, dynamic>>()
+          .map(VehicleModel.fromJson)
+          .where((v) =>
+              v.id == driver.assignedVehicle?.id ||
+              (v.vehicleStatus == 'available' && !v.hasDriver))
+          .toList();
+    } catch (e) {
+      _snack('Error', 'Unable to load vehicles: ${_message(e)}', Colors.red);
+      return [];
+    }
+  }
+
+  /// POST `/api/drivers/{id}/assign-vehicle/`; a null vehicleId unassigns.
+  Future<bool> assignVehicle(int driverId, int? vehicleId) async {
+    try {
+      await ApiClient.post(endpoint: ApiUrls.assignVehicle(driverId), body: {'vehicle_id': vehicleId}, requireAuth: true);
+      _snack('Success', vehicleId == null ? 'Vehicle unassigned' : 'Vehicle assigned successfully', Colors.green);
+      await fetchDrivers();
+      _refreshVehicles();
+      return true;
+    } catch (e) {
+      _snack('Error', _message(e), Colors.red);
+      return false;
+    }
   }
 }

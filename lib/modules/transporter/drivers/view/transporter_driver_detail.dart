@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../model/driver_model.dart';
+import './transporter_driver_form.dart';
 
 class TransporterDriverDetail extends StatelessWidget {
   final DriverModel driver;
@@ -30,6 +32,25 @@ class TransporterDriverDetail extends StatelessWidget {
             color: theme.textTheme.bodyLarge?.color,
           ),
         ),
+        actions: [
+          if (driver.licenseUploadUrl != null)
+            IconButton(
+              tooltip: "View License",
+              icon: const Icon(IconlyLight.document),
+              onPressed: () async {
+                final ok = await launchUrl(Uri.parse(driver.licenseUploadUrl!), mode: LaunchMode.externalApplication);
+                if (!ok) Get.snackbar("Error", "Unable to open license document", snackPosition: SnackPosition.BOTTOM);
+              },
+            ),
+          IconButton(
+            tooltip: "Edit",
+            icon: const Icon(IconlyLight.edit),
+            onPressed: () async {
+              final saved = await Get.to(() => TransporterDriverForm(driver: driver));
+              if (saved == true) Get.back();
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -44,7 +65,7 @@ class TransporterDriverDetail extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: 30,
-                        backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
+                        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.2),
                         child: Icon(IconlyLight.user_1, size: 30, color: theme.colorScheme.primary),
                       ),
                       const SizedBox(width: 16),
@@ -132,9 +153,9 @@ class TransporterDriverDetail extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(
         text.toUpperCase(),

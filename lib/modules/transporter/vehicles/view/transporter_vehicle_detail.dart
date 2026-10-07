@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../theme/glass_widgets.dart';
+import '../controller/transporter_vehicle_controller.dart';
 import '../model/vehicle_model.dart';
+import './transporter_vehicle_form.dart';
+import './transporter_vehicles_view.dart';
 
 class TransporterVehicleDetail extends StatelessWidget {
   final VehicleModel vehicle;
@@ -30,6 +34,24 @@ class TransporterVehicleDetail extends StatelessWidget {
             color: theme.textTheme.bodyLarge?.color,
           ),
         ),
+        actions: [
+          IconButton(
+            tooltip: "Edit",
+            icon: const Icon(IconlyLight.edit),
+            onPressed: () async {
+              final saved = await Get.to(() => TransporterVehicleForm(vehicle: vehicle));
+              if (saved == true) Get.back();
+            },
+          ),
+          IconButton(
+            tooltip: "Delete",
+            icon: const Icon(IconlyLight.delete, color: Colors.red),
+            onPressed: () async {
+              final deleted = await TransporterVehiclesView.confirmDelete(Get.find<TransporterVehicleController>(), vehicle);
+              if (deleted) Get.back();
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -45,7 +67,7 @@ class TransporterVehicleDetail extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.1),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(IconlyLight.document, size: 32, color: theme.colorScheme.primary),
@@ -72,8 +94,8 @@ class TransporterVehicleDetail extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             _buildBadge(
-                              vehicle.vehicleStatusDisplay, 
-                              vehicle.vehicleStatus == 'available' ? Colors.green : Colors.orange,
+                              vehicle.vehicleStatusDisplay,
+                              TransporterVehiclesView.statusColor(vehicle.vehicleStatus),
                             ),
                           ],
                         ),
@@ -82,7 +104,7 @@ class TransporterVehicleDetail extends StatelessWidget {
                   ),
                   const Divider(height: 32),
                   _buildSectionHeader("Basic Information"),
-                  _buildDetailRow("Brand", vehicle.vehicleBrandDisplay),
+                  _buildDetailRow("Brand", TransporterVehiclesView.brandText(vehicle)),
                   _buildDetailRow("Model", vehicle.modelName?.isNotEmpty == true ? vehicle.modelName! : "N/A"),
                   _buildDetailRow("Manufacturing Year", vehicle.manufacturingYear?.toString() ?? "N/A"),
                   _buildDetailRow("Fuel Type", vehicle.fuelType.toUpperCase()),
@@ -90,8 +112,13 @@ class TransporterVehicleDetail extends StatelessWidget {
                   const SizedBox(height: 16),
                   _buildSectionHeader("Specifications"),
                   _buildDetailRow("Load Capacity", "${vehicle.loadCapacityTons} Tons"),
-                  _buildDetailRow("Body Type", vehicle.bodyTypeDisplay),
+                  _buildDetailRow("Body Type",
+                      vehicle.bodyType == 'other' && (vehicle.bodyTypeOther ?? '').isNotEmpty ? vehicle.bodyTypeOther! : vehicle.bodyTypeDisplay),
                   _buildDetailRow("Number of Axles", vehicle.numberOfAxles?.toString() ?? "N/A"),
+                  _buildDetailRow("Dimensions (L×W×H)",
+                      [vehicle.lengthFt, vehicle.widthFt, vehicle.heightFt].any((d) => (d ?? '').isNotEmpty)
+                          ? "${vehicle.lengthFt ?? '-'} × ${vehicle.widthFt ?? '-'} × ${vehicle.heightFt ?? '-'} ft"
+                          : "N/A"),
                 ],
               ),
             ),
@@ -106,8 +133,20 @@ class TransporterVehicleDetail extends StatelessWidget {
                   _buildDetailRow("RC Number", vehicle.rcNumber?.isNotEmpty == true ? vehicle.rcNumber! : "N/A"),
                   _buildDetailRow("Insurance No.", vehicle.insuranceNumber?.isNotEmpty == true ? vehicle.insuranceNumber! : "N/A"),
                   _buildDetailRow("Insurance Expiry", vehicle.insuranceExpiryDate ?? "N/A"),
-                  _buildDetailRow("Permit Type", vehicle.permitTypeDisplay?.isNotEmpty == true ? vehicle.permitTypeDisplay! : "N/A"),
+                  _buildDetailRow("Permit Type", vehicle.permitType == 'other' && (vehicle.permitTypeOther ?? '').isNotEmpty ? vehicle.permitTypeOther! : (vehicle.permitTypeDisplay?.isNotEmpty == true ? vehicle.permitTypeDisplay! : "N/A")),
                   _buildDetailRow("Permit Expiry", vehicle.permitExpiryDate ?? "N/A"),
+                  if (vehicle.rcUploadUrl != null)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final ok = await launchUrl(Uri.parse(vehicle.rcUploadUrl!), mode: LaunchMode.externalApplication);
+                          if (!ok) Get.snackbar("Error", "Unable to open RC document", snackPosition: SnackPosition.BOTTOM);
+                        },
+                        icon: const Icon(IconlyLight.document, size: 18),
+                        label: const Text("View RC Document"),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -132,7 +171,7 @@ class TransporterVehicleDetail extends StatelessWidget {
                     ],
                   ),
                   const Divider(height: 24),
-                  if (vehicle.assignedDriver != null && vehicle.assignedDriverName?.isNotEmpty == true) ...[
+                  if (vehicle.hasDriver) ...[
                     _buildDetailRow("Driver Name", vehicle.assignedDriverName!),
                     if (vehicle.driverPhoneNumber != null && vehicle.driverPhoneNumber!.isNotEmpty)
                       _buildDetailRow("Phone", vehicle.driverPhoneNumber!),
@@ -178,9 +217,9 @@ class TransporterVehicleDetail extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(
         text.toUpperCase(),

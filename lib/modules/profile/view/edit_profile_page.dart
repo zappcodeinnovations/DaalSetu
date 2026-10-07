@@ -292,7 +292,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     child: AbsorbPointer(
                       child: GlassTextField(
                         controller: _dobController,
-                        hintText: "YYYY-MM-DD",
+                        hintText: "Select date",
                         prefixIcon: IconlyLight.calendar,
                       ),
                     ),
