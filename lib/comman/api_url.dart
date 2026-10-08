@@ -1,5 +1,6 @@
 class ApiUrls {
-  static const String baseUrl = "https://daalsetu.zappcode.in";
+  // Public production origin used by every ApiClient request and absolute media URL.
+  static const String baseUrl = 'https://www.daall-setu.com';
 
   static const String register = "/api/auth/register/";
   static const String login = "/api/auth/login/";

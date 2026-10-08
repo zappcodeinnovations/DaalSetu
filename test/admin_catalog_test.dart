@@ -6,6 +6,7 @@ import 'package:daalsetu/modules/admin_catalog/view/admin_contract_history_scree
 import 'package:daalsetu/modules/admin_catalog/view/admin_record_form_screen.dart';
 import 'package:daalsetu/modules/seller/challans/model/seller_challan_model.dart';
 import 'package:daalsetu/routes/app_routes.dart';
+import 'package:daalsetu/comman/api_url.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -47,6 +48,10 @@ void main() {
     expect(actions.map((a) => a.title), ['Approve', 'Reject']);
     expect(actions.first.isVisible!({'status': 'pending'}), isTrue);
     expect(actions.first.isVisible!({'status': 'approved'}), isFalse);
+  });
+
+  test('all API clients use the production public origin', () {
+    expect(ApiUrls.baseUrl, 'https://www.daall-setu.com');
   });
 
   test('branch request config uses review APIs and pending-only actions', () {
@@ -157,6 +162,26 @@ void main() {
     expect(items['permissions_matrix']!.isVisibleFor('super_admin'), isTrue);
     expect(items['permissions_matrix']!.isVisibleFor('admin'), isFalse);
     expect(items['policy_sections']!.isVisibleFor('admin'), isTrue);
+  });
+
+  test('drawer hides fixed high-privilege sections without hiding permission-managed work', () async {
+    final sections = await DrawerMenuService().fetchMenu();
+    final items = {
+      for (final section in sections)
+        for (final item in section.items) item.key: item,
+    };
+    expect(items['branches']!.isVisibleFor('super_admin'), isTrue);
+    expect(items['branches']!.isVisibleFor('admin'), isFalse);
+    expect(items['branch_settings']!.isVisibleFor('sub_admin'), isFalse);
+    expect(items['permissions_matrix']!.isVisibleFor('admin'), isFalse);
+    expect(items['permissions_matrix']!.isVisibleFor('sub_admin'), isFalse);
+    expect(items['brokerage_bills']!.isVisibleFor('sub_admin'), isFalse);
+    expect(items['sub_admins']!.isVisibleFor('sub_admin'), isFalse);
+
+    // These routes remain visible to Sub Admins because the server's role and
+    // per-user permission checks determine their actual access.
+    expect(items['consignments']!.isVisibleFor('sub_admin'), isTrue);
+    expect(items['contract_history']!.isVisibleFor('sub_admin'), isTrue);
   });
 
   for (final key in ['vehicles', 'brands', 'sub_categories', 'offer_images', 'drivers']) {

@@ -73,6 +73,11 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
   String _seller = '';
   String _buyer = '';
   String _billingCompany = '';
+  DateTime? _billDateFrom;
+  DateTime? _billDateTo;
+  int _page = 1;
+  bool _hasNext = false;
+  bool _loadingMore = false;
   List<Map<String, dynamic>> _records = const [];
   List<Map<String, dynamic>> _statuses = const [];
   List<Map<String, dynamic>> _sellers = const [];
@@ -92,7 +97,7 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
   }
 
   Future<void> _loadInitial() async {
-    await Future.wait([_loadOptions(), _loadBills()]);
+    await Future.wait([_loadOptions(), _loadBills(reset: true)]);
   }
 
   Future<void> _loadOptions() async {
@@ -114,19 +119,27 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
     }
   }
 
-  Future<void> _loadBills() async {
-    if (mounted) {
+  Future<void> _loadBills({bool reset = true}) async {
+    if (!reset && (_loadingMore || !_hasNext)) return;
+    if (mounted && reset) {
       setState(() {
         _loading = true;
         _error = null;
+        _page = 1;
       });
+    } else if (mounted) {
+      setState(() => _loadingMore = true);
     }
+    final requestedPage = reset ? 1 : _page + 1;
     final query = <String, String>{
+      'page': '$requestedPage',
       if (_search.text.trim().isNotEmpty) 'search': _search.text.trim(),
       if (_status.isNotEmpty) 'status': _status,
       if (_seller.isNotEmpty) 'seller': _seller,
       if (_buyer.isNotEmpty) 'buyer': _buyer,
       if (_billingCompany.isNotEmpty) 'billing_company': _billingCompany,
+      if (_billDateFrom != null) 'bill_date_from': _dateValue(_billDateFrom!),
+      if (_billDateTo != null) 'bill_date_to': _dateValue(_billDateTo!),
     };
     try {
       final endpoint = Uri(
@@ -138,11 +151,24 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
         requireAuth: true,
       );
       if (!mounted || response is! Map) return;
-      setState(() => _records = _billingMaps(response['results']));
+      final pagination = response['pagination'] is Map
+          ? response['pagination'] as Map
+          : const {};
+      final freshRecords = _billingMaps(response['results']);
+      setState(() {
+        _records = reset ? freshRecords : [..._records, ...freshRecords];
+        _page = requestedPage;
+        _hasNext = pagination['has_next'] == true;
+      });
     } catch (error) {
       if (mounted) setState(() => _error = _billingMessage(error));
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _loadingMore = false;
+        });
+      }
     }
   }
 
@@ -150,7 +176,7 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
     final changed = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => const AdminCreateBrokerageBillScreen()),
     );
-    if (changed == true) await _loadBills();
+    if (changed == true) await _loadBills(reset: true);
   }
 
   Future<void> _openDetail(Map<String, dynamic> record) async {
@@ -161,7 +187,7 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
         builder: (_) => AdminBrokerageBillDetailScreen(billId: id.toString()),
       ),
     );
-    await _loadBills();
+    await _loadBills(reset: true);
   }
 
   Future<void> _resetFilters() async {
@@ -171,8 +197,28 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
       _seller = '';
       _buyer = '';
       _billingCompany = '';
+      _billDateFrom = null;
+      _billDateTo = null;
     });
-    await _loadBills();
+    await _loadBills(reset: true);
+  }
+
+  Future<void> _pickBillDate(bool isFrom) async {
+    final current = isFrom ? _billDateFrom : _billDateTo;
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: current ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (selected == null || !mounted) return;
+    setState(() {
+      if (isFrom) {
+        _billDateFrom = selected;
+      } else {
+        _billDateTo = selected;
+      }
+    });
   }
 
   @override
@@ -204,13 +250,13 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
                 TextField(
                   controller: _search,
                   textInputAction: TextInputAction.search,
-                  onSubmitted: (_) => _loadBills(),
+                  onSubmitted: (_) => _loadBills(reset: true),
                   decoration: InputDecoration(
                     labelText: 'Search bill, seller or challan',
                     prefixIcon: const Icon(Icons.search_rounded),
                     suffixIcon: IconButton(
                       tooltip: 'Search',
-                      onPressed: _loadBills,
+                      onPressed: () => _loadBills(reset: true),
                       icon: const Icon(Icons.arrow_forward_rounded),
                     ),
                     border: const OutlineInputBorder(),
@@ -229,6 +275,7 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
                 if (_error != null) _errorCard(),
                 if (_error == null && _records.isEmpty) _emptyCard(),
                 ..._records.map(_billCard),
+                if (_hasNext) _loadMoreButton(),
               ],
             ),
           ),
@@ -282,12 +329,24 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
         ),
         const SizedBox(height: 8),
         Row(
+          children: [
+            Expanded(
+              child: _dateButton('Bill date from', _billDateFrom, () => _pickBillDate(true)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _dateButton('Bill date to', _billDateTo, () => _pickBillDate(false)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             TextButton(onPressed: _resetFilters, child: const Text('Clear')),
             const SizedBox(width: 8),
             FilledButton.icon(
-              onPressed: _loadBills,
+              onPressed: () => _loadBills(reset: true),
               icon: const Icon(Icons.filter_alt_rounded),
               label: const Text('Apply'),
             ),
@@ -339,7 +398,7 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
           Text(_error ?? 'Could not load brokerage bills.'),
           const SizedBox(height: 8),
           OutlinedButton.icon(
-            onPressed: _loadBills,
+            onPressed: () => _loadBills(reset: true),
             icon: const Icon(Icons.refresh_rounded),
             label: const Text('Retry'),
           ),
@@ -360,6 +419,28 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
       ),
     ),
   );
+
+  Widget _dateButton(String label, DateTime? value, VoidCallback onPressed) =>
+      OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: const Icon(Icons.calendar_today_outlined, size: 18),
+        label: Text(value == null ? label : _dateValue(value)),
+      );
+
+  Widget _loadMoreButton() => Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: OutlinedButton.icon(
+          onPressed: _loadingMore ? null : () => _loadBills(reset: false),
+          icon: _loadingMore
+              ? const SizedBox(
+                  height: 18,
+                  width: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.expand_more_rounded),
+          label: Text(_loadingMore ? 'Loading...' : 'Load more'),
+        ),
+      );
 
   Widget _billCard(Map<String, dynamic> bill) {
     final status = _billingText(bill['status']).toUpperCase();
