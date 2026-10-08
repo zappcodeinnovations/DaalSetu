@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../../routes/app_routes.dart';
+import '../../../../utils/app_snackbar.dart';
 import '../controller/rbac_sub_admins_controller.dart';
 
 class CreateSubAdminView extends StatefulWidget {
@@ -283,9 +284,15 @@ class _CreateSubAdminViewState extends State<CreateSubAdminView> {
                   onPressed: controller.isSaving.value
                       ? null
                       : () async {
+                          final fName = controller.firstNameController.text.trim();
+                          final lName = controller.lastNameController.text.trim();
                           final success = await controller.createSubAdmin();
                           if (success) {
                             Get.back();
+                            AppSnackbar.showSuccess(
+                              title: "Sub Admin Created",
+                              message: "New sub admin '$fName $lName' created successfully.",
+                            );
                           }
                         },
                   style: ElevatedButton.styleFrom(

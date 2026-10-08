@@ -34,8 +34,9 @@ class RbacRolesView extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Get.to(() => const CreateRoleView());
+        onPressed: () async {
+          await Get.to(() => const CreateRoleView());
+          controller.fetchRoles();
         },
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
@@ -183,8 +184,9 @@ class RbacRolesView extends StatelessWidget {
               IconButton(
                 icon: const Icon(IconlyLight.edit, size: 20),
                 tooltip: "Edit Role",
-                onPressed: () {
-                  Get.to(() => CreateRoleView(roleToEdit: role));
+                onPressed: () async {
+                  await Get.to(() => CreateRoleView(roleToEdit: role));
+                  controller.fetchRoles();
                 },
               ),
               IconButton(

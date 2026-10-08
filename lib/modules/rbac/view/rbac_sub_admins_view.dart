@@ -34,8 +34,9 @@ class RbacSubAdminsView extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Get.to(() => const CreateSubAdminView());
+        onPressed: () async {
+          await Get.to(() => const CreateSubAdminView());
+          controller.fetchSubAdmins();
         },
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
@@ -214,7 +215,7 @@ class RbacSubAdminsView extends StatelessWidget {
                       const SizedBox(width: 6),
                       Switch(
                         value: subAdmin.isActive,
-                        activeColor: Colors.green,
+                        activeThumbColor: Colors.green,
                         onChanged: (_) => controller.toggleSubAdminStatus(subAdmin.id, subAdmin.isActive),
                       ),
                     ],

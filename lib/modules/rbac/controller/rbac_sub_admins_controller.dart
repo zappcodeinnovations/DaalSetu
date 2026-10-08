@@ -176,8 +176,6 @@ class RbacSubAdminsController extends GetxController {
         roles: selectedRoleNames.toList(),
       );
 
-      AppSnackbar.showSuccess(title: "Sub Admin Created", message: "New sub admin '$fName $lName' created successfully.");
-      resetForm();
       await fetchSubAdmins();
       return true;
     } catch (e) {

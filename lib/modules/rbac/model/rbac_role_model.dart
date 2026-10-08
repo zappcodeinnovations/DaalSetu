@@ -5,6 +5,7 @@ class RbacRoleModel {
   final String description;
   final List<int> permissionIds;
   final List<String> permissions;
+  final int permissionsCount;
   final bool isSystem;
   final String updatedAt;
   final int? subAdminsCount;
@@ -16,17 +17,29 @@ class RbacRoleModel {
     required this.description,
     required this.permissionIds,
     required this.permissions,
+    required this.permissionsCount,
     required this.isSystem,
     required this.updatedAt,
     this.subAdminsCount,
   });
 
-  int get totalPermissions => permissionIds.isNotEmpty ? permissionIds.length : permissions.length;
+  int get totalPermissions {
+    if (permissionsCount > 0) return permissionsCount;
+    if (permissionIds.isNotEmpty) return permissionIds.length;
+    if (permissions.isNotEmpty) return permissions.length;
+    return 0;
+  }
 
   factory RbacRoleModel.fromJson(Map<String, dynamic> json) {
     int parseId(dynamic val) {
       if (val is int) return val;
       return int.tryParse(val?.toString() ?? '0') ?? 0;
+    }
+
+    int parseCount(dynamic raw) {
+      if (raw is int) return raw;
+      if (raw is String) return int.tryParse(raw) ?? 0;
+      return 0;
     }
 
     List<int> parseIds(dynamic raw) {
@@ -58,8 +71,10 @@ class RbacRoleModel {
       return [];
     }
 
-    final pIds = parseIds(json['permission_ids'] ?? json['permissions']);
-    final pNames = parseStrings(json['permissions'] ?? json['permission_list'] ?? json['rights']);
+    final pIds = parseIds(json['permission_ids'] ?? json['permissions'] ?? json['permission_id_list']);
+    final pNames = parseStrings(json['permissions'] ?? json['permission_list'] ?? json['rights'] ?? json['permission_names'] ?? json['role_permissions']);
+    final explicitCount = parseCount(json['permissions_count'] ?? json['permission_count'] ?? json['total_permissions'] ?? json['perms_count']);
+    final finalCount = explicitCount > 0 ? explicitCount : (pIds.isNotEmpty ? pIds.length : pNames.length);
 
     return RbacRoleModel(
       id: parseId(json['id'] ?? json['role_id']),
@@ -68,6 +83,7 @@ class RbacRoleModel {
       description: json['description']?.toString() ?? '',
       permissionIds: pIds,
       permissions: pNames,
+      permissionsCount: finalCount,
       isSystem: json['is_system'] == true,
       updatedAt: json['updated_at']?.toString() ?? json['created_at']?.toString() ?? '',
       subAdminsCount: json['sub_admins_count'] is int
@@ -83,6 +99,7 @@ class RbacRoleModel {
         'description': description,
         'permission_ids': permissionIds,
         'permissions': permissionIds,
+        'permissions_count': totalPermissions,
         'updated_at': updatedAt,
       };
 }

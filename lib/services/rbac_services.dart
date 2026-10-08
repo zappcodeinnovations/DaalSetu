@@ -99,6 +99,7 @@ class RbacServices {
     required String name,
     required String description,
     required List<int> permissionIds,
+    List<String> permissionCodes = const [],
   }) async {
     final body = <String, dynamic>{
       "name": name,
@@ -106,6 +107,9 @@ class RbacServices {
       "description": description,
       "permission_ids": permissionIds,
       "permissions": permissionIds,
+      if (permissionCodes.isNotEmpty) "permission_codes": permissionCodes,
+      if (permissionCodes.isNotEmpty) "permission_list": permissionCodes,
+      if (permissionCodes.isNotEmpty) "rights": permissionCodes,
     };
 
     // 1. Primary endpoint: /api/admin/roles/
@@ -143,6 +147,7 @@ class RbacServices {
     required String name,
     required String description,
     required List<int> permissionIds,
+    List<String> permissionCodes = const [],
   }) async {
     final body = <String, dynamic>{
       "name": name,
@@ -150,6 +155,9 @@ class RbacServices {
       "description": description,
       "permission_ids": permissionIds,
       "permissions": permissionIds,
+      if (permissionCodes.isNotEmpty) "permission_codes": permissionCodes,
+      if (permissionCodes.isNotEmpty) "permission_list": permissionCodes,
+      if (permissionCodes.isNotEmpty) "rights": permissionCodes,
     };
 
     try {

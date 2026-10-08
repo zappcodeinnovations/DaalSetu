@@ -98,12 +98,43 @@ class RbacRolesController extends GetxController {
     editingRole.value = role;
     nameController.text = role.name;
     descController.text = role.description;
-    selectedPermissionIds.assignAll(role.permissionIds);
+    selectedPermissionIds.clear();
+    selectedPermissionIds.addAll(role.permissionIds);
+
+    // If role has string permissions or code names, map them to item.id
+    if (role.permissions.isNotEmpty) {
+      for (var panel in panels) {
+        for (var grp in panel.groups) {
+          for (var item in grp.items) {
+            if (role.permissions.contains(item.code) ||
+                role.permissions.contains(item.label) ||
+                role.permissions.contains(item.id.toString())) {
+              selectedPermissionIds.add(item.id);
+            }
+          }
+        }
+      }
+    }
 
     try {
       final detail = await RbacServices.getRoleDetails(role.id);
-      if (detail != null && detail.permissionIds.isNotEmpty) {
-        selectedPermissionIds.assignAll(detail.permissionIds);
+      if (detail != null) {
+        if (detail.permissionIds.isNotEmpty) {
+          selectedPermissionIds.addAll(detail.permissionIds);
+        }
+        if (detail.permissions.isNotEmpty) {
+          for (var panel in panels) {
+            for (var grp in panel.groups) {
+              for (var item in grp.items) {
+                if (detail.permissions.contains(item.code) ||
+                    detail.permissions.contains(item.label) ||
+                    detail.permissions.contains(item.id.toString())) {
+                  selectedPermissionIds.add(item.id);
+                }
+              }
+            }
+          }
+        }
       }
     } catch (_) {}
   }
@@ -118,6 +149,18 @@ class RbacRolesController extends GetxController {
     try {
       isSaving.value = true;
       final ids = selectedPermissionIds.toList();
+      final codes = <String>[];
+      for (var id in ids) {
+        for (var panel in panels) {
+          for (var grp in panel.groups) {
+            for (var item in grp.items) {
+              if (item.id == id && item.code.isNotEmpty) {
+                codes.add(item.code);
+              }
+            }
+          }
+        }
+      }
 
       if (editingRole.value != null) {
         await RbacServices.updateRole(
@@ -125,18 +168,17 @@ class RbacRolesController extends GetxController {
           name: name,
           description: descController.text.trim(),
           permissionIds: ids,
+          permissionCodes: codes,
         );
-        AppSnackbar.showSuccess(title: "Role Updated", message: "Role '$name' was updated successfully.");
       } else {
         await RbacServices.createRole(
           name: name,
           description: descController.text.trim(),
           permissionIds: ids,
+          permissionCodes: codes,
         );
-        AppSnackbar.showSuccess(title: "Role Created", message: "New role '$name' created successfully.");
       }
 
-      resetForm();
       await fetchRoles();
       return true;
     } catch (e) {

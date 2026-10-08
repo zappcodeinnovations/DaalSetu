@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../theme/glass_widgets.dart';
+import '../../../../utils/app_snackbar.dart';
 import '../controller/rbac_roles_controller.dart';
 import '../model/rbac_role_model.dart';
 
@@ -226,7 +227,7 @@ class _CreateRoleViewState extends State<CreateRoleView> {
                                       const SizedBox(width: 6),
                                       Switch(
                                         value: isAllowed,
-                                        activeColor: primaryColor,
+                                        activeThumbColor: primaryColor,
                                         onChanged: (_) => controller.togglePermission(item.id),
                                       ),
                                     ],
@@ -252,9 +253,17 @@ class _CreateRoleViewState extends State<CreateRoleView> {
                   onPressed: controller.isSaving.value
                       ? null
                       : () async {
+                          final wasEditing = isEditing;
+                          final roleName = controller.nameController.text.trim();
                           final success = await controller.saveRole();
                           if (success) {
                             Get.back();
+                            AppSnackbar.showSuccess(
+                              title: wasEditing ? "Role Updated" : "Role Created",
+                              message: wasEditing
+                                  ? "Role '$roleName' was updated successfully."
+                                  : "Role '$roleName' created successfully.",
+                            );
                           }
                         },
                   style: ElevatedButton.styleFrom(
