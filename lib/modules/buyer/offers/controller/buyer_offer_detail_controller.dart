@@ -1,19 +1,76 @@
 import '../../../../services/buyer_services.dart';
+import '../../../../utils/app_snackbar.dart';
 import 'package:get/get.dart';
 
 class BuyerOfferDetailController extends GetxController {
   var isLoading = true.obs;
+  var isSending = false.obs;
   var offerDetails = Rxn<Map<String, dynamic>>();
 
-  Future<void> fetchDetails(int id) async {
+  Future<void> fetchDetails(
+    int id, {
+    bool silent = false,
+    bool preferBuyerOffer = false,
+    bool preferBuyerRequirement = false,
+  }) async {
     try {
-      isLoading(true);
-      final data = await BuyerServices.getOfferDetails(id);
+      if (!silent) isLoading(true);
+      final data = preferBuyerOffer
+          ? await BuyerServices.getBuyerOfferDetails(id)
+          : preferBuyerRequirement
+          ? await BuyerServices.getBuyerRequirementDetails(id)
+          : await BuyerServices.getOfferDetails(id);
       offerDetails.value = data;
     } catch (e) {
-      Get.snackbar("Error", "Could not fetch offer details");
+      if (!silent) {
+        AppSnackbar.showError(
+          title: "Error",
+          message: "Could not fetch offer details",
+        );
+      }
     } finally {
-      isLoading(false);
+      if (!silent) isLoading(false);
+    }
+  }
+
+  Future<void> sendQuoteMessage({
+    required dynamic rfqId,
+    required dynamic quotationId,
+    dynamic counterPrice,
+    dynamic counterQuantity,
+    dynamic bagCount,
+    dynamic packingWeightKg,
+    int? reloadDetailId,
+    bool preferBuyerRequirement = false,
+  }) async {
+    try {
+      isSending(true);
+      final res = await BuyerServices.sendBuyerRequirementMessage(
+        rfqId: rfqId,
+        quotationId: quotationId,
+        counterPrice: counterPrice,
+        counterQuantity: counterQuantity,
+        bagCount: bagCount,
+        packingWeightKg: packingWeightKg,
+      );
+      AppSnackbar.showSuccess(
+        title: "Sent",
+        message: res['message'] ?? "Counter proposal sent successfully",
+      );
+      if (reloadDetailId != null && reloadDetailId > 0) {
+        await fetchDetails(
+          reloadDetailId,
+          silent: true,
+          preferBuyerRequirement: preferBuyerRequirement,
+        );
+      }
+    } catch (e) {
+      AppSnackbar.showError(
+        title: "Failed",
+        message: e.toString().replaceAll("Exception: ", ""),
+      );
+    } finally {
+      isSending(false);
     }
   }
 
@@ -21,10 +78,13 @@ class BuyerOfferDetailController extends GetxController {
     try {
       isLoading(true);
       await BuyerServices.cancelOffer(id);
-      Get.snackbar("Success", "Requirement cancelled successfully");
+      AppSnackbar.showSuccess(
+        title: "Success",
+        message: "Requirement cancelled successfully",
+      );
       fetchDetails(id);
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.showError(title: "Error", message: e.toString());
     } finally {
       isLoading(false);
     }

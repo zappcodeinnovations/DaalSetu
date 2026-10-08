@@ -147,49 +147,21 @@ class SellerOfferInterestsView extends StatelessWidget {
                         ),
                       ],
                       const SizedBox(height: 16),
-                      // Same flow as the web panel: seller counters / approves / rejects an
-                      // "interested" buyer; buyer then confirms and admin confirms the deal.
+                      // One live thread owns counter, accept and reject actions. This
+                      // prevents list-card actions from racing the buyer's chat view.
                       if (status == 'interested') ...[
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton.icon(
                             onPressed: item.id == null ? null : () => Get.to(() => SellerInterestThreadView(productId: productId, interestId: item.id!))?.then((_) => controller.fetchInterests()),
                             icon: const Icon(IconlyLight.chat, size: 16),
-                            label: const Text("COUNTER"),
+                            label: const Text("OPEN NEGOTIATION"),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: primaryColor,
                               side: const BorderSide(color: primaryColor),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () => controller.approveInterest(item.id!),
-                                icon: const Icon(Icons.check, size: 16, color: Colors.white),
-                                label: const Text("APPROVE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () => controller.rejectInterest(item.id!),
-                                icon: const Icon(Icons.close, size: 16, color: Colors.white),
-                                label: const Text("REJECT", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                ),
-                              ),
-                            ),
-                          ],
                         ),
                       ] else if (status == 'seller_confirmed' || status == 'buyer_confirmed')
                         Text(

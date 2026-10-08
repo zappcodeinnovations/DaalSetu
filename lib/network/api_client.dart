@@ -179,6 +179,7 @@ class ApiClient {
     required String endpoint,
     required Map<String, dynamic> body,
     bool requireAuth = false,
+    bool suppressErrorDialog = false,
   }) async {
     try {
       final uri = Uri.parse(ApiUrls.baseUrl + endpoint);
@@ -193,14 +194,17 @@ class ApiClient {
           .timeout(_timeout);
       print("📥 STATUS CODE: ${response.statusCode}");
 
-      return _handleResponse(response);
+      return _handleResponse(
+        response,
+        suppressErrorDialog: suppressErrorDialog,
+      );
     } on SocketException {
       print("❌ NO INTERNET: $endpoint");
-      GlobalErrorHandler.showNoInternet();
+      if (!suppressErrorDialog) GlobalErrorHandler.showNoInternet();
       throw Exception("No Internet Connection");
     } on TimeoutException {
       print("⏳ API TIMEOUT: $endpoint");
-      GlobalErrorHandler.showServerError();
+      if (!suppressErrorDialog) GlobalErrorHandler.showServerError();
       throw Exception("Server Timeout. Please try again.");
     } catch (e) {
       rethrow;
@@ -213,6 +217,7 @@ class ApiClient {
   static Future<dynamic> get({
     required String endpoint,
     bool requireAuth = false,
+    bool suppressErrorDialog = false,
   }) async {
     try {
       final uri = Uri.parse(ApiUrls.baseUrl + endpoint);
@@ -224,14 +229,17 @@ class ApiClient {
 
       print("📥 STATUS CODE: ${response.statusCode}");
 
-      return _handleResponse(response);
+      return _handleResponse(
+        response,
+        suppressErrorDialog: suppressErrorDialog,
+      );
     } on SocketException {
       print("❌ NO INTERNET: $endpoint");
-      GlobalErrorHandler.showNoInternet();
+      if (!suppressErrorDialog) GlobalErrorHandler.showNoInternet();
       throw Exception("No Internet Connection");
     } on TimeoutException {
       print("⏳ API TIMEOUT: $endpoint");
-      GlobalErrorHandler.showServerError();
+      if (!suppressErrorDialog) GlobalErrorHandler.showServerError();
       throw Exception("Server Timeout. Please try again.");
     } catch (e) {
       print("❌ API FAILED (GET): $endpoint");
@@ -262,7 +270,10 @@ class ApiClient {
   /// ===============================
   /// HANDLE RESPONSE
   /// ===============================
-  static dynamic _handleResponse(http.Response response) {
+  static dynamic _handleResponse(
+    http.Response response, {
+    bool suppressErrorDialog = false,
+  }) {
     final statusCode = response.statusCode;
     final body = response.body;
 
@@ -346,7 +357,7 @@ class ApiClient {
       }
 
       if (statusCode >= 500) {
-        GlobalErrorHandler.showServerError();
+        if (!suppressErrorDialog) GlobalErrorHandler.showServerError();
         throw Exception(errorMessage);
       } else if (statusCode == 400) {
         throw Exception(errorMessage);

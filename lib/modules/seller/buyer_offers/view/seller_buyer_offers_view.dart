@@ -178,7 +178,6 @@ class _SellerBuyerOfferDetailViewState extends State<SellerBuyerOfferDetailView>
     final quantity = TextEditingController(text: '${_thread?['latest_offered_quantity'] ?? _offer?['requested_quantity'] ?? ''}');
     final bags = TextEditingController();
     final packing = TextEditingController(text: '${_offer?['packing_weight_kg'] ?? ''}'.replaceAll('null', ''));
-    final remark = TextEditingController();
     InputDecoration deco(String label) => InputDecoration(labelText: label, border: const OutlineInputBorder());
 
     final send = await Get.dialog<bool>(AlertDialog(
@@ -194,8 +193,6 @@ class _SellerBuyerOfferDetailViewState extends State<SellerBuyerOfferDetailView>
             const SizedBox(width: 8),
             Expanded(child: TextField(controller: packing, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: deco("Bag Wt kg"))),
           ]),
-          const SizedBox(height: 10),
-          TextField(controller: remark, maxLines: 2, decoration: deco("Remark")),
         ]),
       ),
       actions: [
@@ -220,7 +217,6 @@ class _SellerBuyerOfferDetailViewState extends State<SellerBuyerOfferDetailView>
       "offered_quantity": quantity.text.trim(),
       if (bags.text.trim().isNotEmpty) "offered_bag_count": bags.text.trim(),
       if (bags.text.trim().isNotEmpty) "packing_weight_kg": packing.text.trim(),
-      "remark": remark.text.trim(),
     });
   }
 

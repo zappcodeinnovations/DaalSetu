@@ -1,5 +1,6 @@
 import '../model/buyer_offer_model.dart';
 import '../../../../services/buyer_services.dart';
+import '../../../../utils/app_snackbar.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 
@@ -69,10 +70,11 @@ class BuyerOffersController extends GetxController {
           break;
         case 'all':
         default:
-          data = await BuyerServices.getTodayOffers();
+          data = await BuyerServices.getAllOffers();
           break;
       }
 
+      print("📦 [BUYER OFFERS CONTROLLER] offerType: '$offerType' | fetched raw items count: ${data.length}");
       final mapped = data.map((e) => BuyerOfferModel.fromJson(e)).toList();
       allOffersList.assignAll(mapped);
       _applyFilter();
@@ -85,10 +87,19 @@ class BuyerOffersController extends GetxController {
     }
   }
 
-  Future<bool> submitInterest(int productId, String amount, String qty, String remark) async {
-    print("⭐ [BUYER SUBMIT INTEREST TRIGGERED] Product ID: $productId | Amount: '$amount' | Qty: '$qty' | Remark: '$remark'");
+  Future<bool> submitInterest(
+    int productId,
+    String amount,
+    String qty,
+    String remark, {
+    String? deliveryDate,
+    String? loadingTo,
+    String? condition,
+    int? interestId,
+  }) async {
+    print("⭐ [BUYER SUBMIT INTEREST TRIGGERED] Product ID: $productId | Interest ID: $interestId | Amount: '$amount' | Qty: '$qty' | Date: '$deliveryDate' | To: '$loadingTo' | Condition: '$condition'");
     if (productId <= 0) {
-      Get.snackbar("Notice", "Invalid product reference", snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.orange, colorText: Colors.white);
+      AppSnackbar.showWarning(title: "Notice", message: "Invalid product reference");
       return false;
     }
 
@@ -107,6 +118,10 @@ class BuyerOffersController extends GetxController {
         productId,
         requestedAmount: amount,
         requestedQuantity: qty,
+        deliveryDate: deliveryDate,
+        loadingTo: loadingTo,
+        condition: condition,
+        interestId: interestId,
         remark: remark,
       );
 
@@ -115,12 +130,9 @@ class BuyerOffersController extends GetxController {
         dialogShown = false;
       }
 
-      Get.snackbar(
-        "Success",
-        res['message'] ?? "Interest submitted successfully",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
+      AppSnackbar.showSuccess(
+        title: "Success",
+        message: res['message'] ?? "Interest submitted successfully",
       );
       fetchOffers();
       return true;
@@ -129,12 +141,9 @@ class BuyerOffersController extends GetxController {
         Get.back();
         dialogShown = false;
       }
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll("Exception: ", "").replaceAll("Error: ", "").trim(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      AppSnackbar.showError(
+        title: "Error",
+        message: e.toString(),
       );
       return false;
     } finally {
@@ -144,10 +153,10 @@ class BuyerOffersController extends GetxController {
     }
   }
 
-  Future<bool> sendNegotiation(int productId, int interestId, String message, String amount, String qty) async {
-    print("💬 [BUYER NEGOTIATION TRIGGERED] Product ID: $productId | Interest ID: $interestId | Message: '$message' | Counter Amount: '$amount' | Counter Qty: '$qty'");
+  Future<bool> sendNegotiation(int productId, int interestId, String amount, String qty) async {
+    print("💬 [BUYER COUNTER TRIGGERED] Product ID: $productId | Interest ID: $interestId | Counter Amount: '$amount' | Counter Qty: '$qty'");
     if (productId <= 0 || interestId <= 0) {
-      Get.snackbar("Notice", "Invalid offer or interest reference", snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.orange, colorText: Colors.white);
+      AppSnackbar.showWarning(title: "Notice", message: "Invalid offer or interest reference");
       return false;
     }
 
@@ -165,7 +174,6 @@ class BuyerOffersController extends GetxController {
       final res = await BuyerServices.sendNegotiationMessage(
         productId,
         interestId,
-        message: message,
         counterAmount: amount.isNotEmpty ? amount : null,
         counterQuantity: qty.isNotEmpty ? qty : null,
       );
@@ -175,12 +183,9 @@ class BuyerOffersController extends GetxController {
         dialogShown = false;
       }
 
-      Get.snackbar(
-        "Success",
-        res['message'] ?? "Message / counter offer sent",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
+      AppSnackbar.showSuccess(
+        title: "Success",
+        message: res['message'] ?? "Counter proposal sent",
       );
       fetchOffers();
       return true;
@@ -189,12 +194,9 @@ class BuyerOffersController extends GetxController {
         Get.back();
         dialogShown = false;
       }
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll("Exception: ", "").replaceAll("Error: ", "").trim(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      AppSnackbar.showError(
+        title: "Error",
+        message: e.toString(),
       );
       return false;
     } finally {
@@ -207,7 +209,7 @@ class BuyerOffersController extends GetxController {
   Future<void> performAction(String action, int productId, int interestId, String remark) async {
     print("🚀 [BUYER ACTION TRIGGERED] Action: $action | Product ID: $productId | Interest ID: $interestId | Remark: '$remark'");
     if (productId <= 0 || interestId <= 0) {
-      Get.snackbar("Notice", "Invalid offer or interest reference. Please refresh and try again.", snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.orange, colorText: Colors.white);
+      AppSnackbar.showWarning(title: "Notice", message: "Invalid offer or interest reference. Please refresh and try again.");
       return;
     }
 
@@ -246,21 +248,15 @@ class BuyerOffersController extends GetxController {
       }
       
       if (response['success'] == true || response['message'] != null) {
-        Get.snackbar(
-          "Success",
-          response['message'] ?? "Action successful",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
+        AppSnackbar.showSuccess(
+          title: "Success",
+          message: response['message'] ?? "Action successful",
         );
         fetchOffers(); // Refresh the list
       } else {
-        Get.snackbar(
-          "Error",
-          response['message'] ?? "Action failed",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
+        AppSnackbar.showError(
+          title: "Error",
+          message: response['message'] ?? "Action failed",
         );
       }
     } catch (e) {
@@ -268,12 +264,9 @@ class BuyerOffersController extends GetxController {
         Get.back();
         dialogShown = false;
       }
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll("Exception: ", "").replaceAll("Error: ", "").trim(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      AppSnackbar.showError(
+        title: "Error",
+        message: e.toString(),
       );
     } finally {
       if (dialogShown && (Get.isDialogOpen ?? false)) {

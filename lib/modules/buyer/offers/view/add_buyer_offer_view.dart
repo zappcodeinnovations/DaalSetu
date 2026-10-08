@@ -5,6 +5,7 @@ import 'package:iconly/iconly.dart';
 import '../../../../services/buyer_services.dart';
 import '../../../../services/seller_services.dart';
 import '../../../../services/product_services.dart';
+import '../../../../utils/app_snackbar.dart';
 import '../../../seller/categories/model/seller_category_model.dart';
 import '../controller/buyer_offers_controller.dart';
 import '../../dashboard/controller/buyer_dashboard_controller.dart';
@@ -21,19 +22,12 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
   final quantityController = TextEditingController();
   final amountController = TextEditingController();
   final bagCountController = TextEditingController();
-  final packingController = TextEditingController(text: '30');
-  bool _syncingPacking = false;
-
-  double get _quantityUnitKg => selectedUnit == 'ton'
-      ? 1000
-      : selectedUnit == 'kg'
-      ? 1
-      : 100;
+  final packingController = TextEditingController();
 
   int? selectedCategoryId;
   int? selectedBrandId;
   String selectedUnit = "qtl";
-  String selectedAmountUnit = "ton";
+  String selectedAmountUnit = "qtl";
 
   List<CategoryTreeModel> categories = [];
   List<BrandModel> brands = [];
@@ -45,47 +39,53 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
   @override
   void initState() {
     super.initState();
+    quantityController.addListener(_calculateBags);
+    packingController.addListener(_calculateBags);
     _loadSupportData();
-  }
-
-  void _syncBagsFromQuantity(String _) {
-    if (_syncingPacking) return;
-    final quantityQtl = double.tryParse(quantityController.text.trim());
-    final packingKg = double.tryParse(packingController.text.trim());
-    if (quantityQtl == null ||
-        packingKg == null ||
-        quantityQtl <= 0 ||
-        packingKg <= 0) {
-      return;
-    }
-    _syncingPacking = true;
-    bagCountController.text = ((quantityQtl * _quantityUnitKg) / packingKg)
-        .round()
-        .toString();
-    _syncingPacking = false;
-  }
-
-  void _syncQuantityFromBags(String _) {
-    if (_syncingPacking) return;
-    final bags = int.tryParse(bagCountController.text.trim());
-    final packingKg = double.tryParse(packingController.text.trim());
-    if (bags == null || packingKg == null || bags <= 0 || packingKg <= 0) {
-      return;
-    }
-    _syncingPacking = true;
-    quantityController.text = ((bags * packingKg) / _quantityUnitKg)
-        .toStringAsFixed(3);
-    _syncingPacking = false;
   }
 
   @override
   void dispose() {
+    quantityController.removeListener(_calculateBags);
+    packingController.removeListener(_calculateBags);
     titleController.dispose();
     quantityController.dispose();
     amountController.dispose();
     bagCountController.dispose();
     packingController.dispose();
     super.dispose();
+  }
+
+  void _calculateBags() {
+    final qty = double.tryParse(quantityController.text.trim());
+    final packingKg = double.tryParse(packingController.text.trim());
+
+    if (qty != null && qty > 0 && packingKg != null && packingKg > 0) {
+      double totalKg = 0;
+      switch (selectedUnit.toLowerCase()) {
+        case 'qtl':
+        case 'quintal':
+          totalKg = qty * 100;
+          break;
+        case 'ton':
+        case 'tonne':
+          totalKg = qty * 1000;
+          break;
+        case 'kg':
+        default:
+          totalKg = qty;
+          break;
+      }
+
+      final bags = (totalKg / packingKg).round();
+      final bagText = bags > 0 ? bags.toString() : '';
+      if (bagCountController.text != bagText) {
+        bagCountController.value = TextEditingValue(
+          text: bagText,
+          selection: TextSelection.collapsed(offset: bagText.length),
+        );
+      }
+    }
   }
 
   Future<void> _loadSupportData() async {
@@ -128,7 +128,6 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
       });
     } catch (e) {
       setState(() => isLoading = false);
-      Get.snackbar("Notice", "Loaded available form fields.");
     }
   }
 
@@ -145,9 +144,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
       final catBrands = await ProductService.getCategoryBrands(catId);
       if (mounted) {
         setState(() {
-          brands = catBrands
-              .map((b) => BrandModel(id: b.id, brandName: b.name))
-              .toList();
+          brands = catBrands.map((b) => BrandModel(id: b.id, brandName: b.name)).toList();
         });
       }
     } catch (e) {
@@ -157,12 +154,9 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
 
   Future<void> _submit() async {
     if (titleController.text.trim().isEmpty || selectedCategoryId == null) {
-      Get.snackbar(
-        "Error",
-        "Please fill required fields (Title and Category)",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      AppSnackbar.showWarning(
+        title: "Required Fields Missing",
+        message: "Please enter Requirement Title and select a Category.",
       );
       return;
     }
@@ -173,20 +167,6 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
       final amountNum = num.tryParse(amountController.text.trim()) ?? 0;
       final bagCount = int.tryParse(bagCountController.text.trim()) ?? 0;
       final packingKg = num.tryParse(packingController.text.trim());
-      if (qtyNum <= 0 ||
-          amountNum <= 0 ||
-          bagCount <= 0 ||
-          packingKg == null ||
-          packingKg <= 0) {
-        Get.snackbar(
-          "Error",
-          "Quantity, bags, packing weight and target price must be greater than zero.",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-        return;
-      }
 
       // Target branches resolution
       List<int> targetBranches = [];
@@ -221,7 +201,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
         "required_bag_count": bagCount.toString(),
         "requested_bag_count": bagCount,
         "bag_count": bagCount,
-        "packing_weight_kg": packingKg.toString(),
+        if (packingKg != null) "packing_weight_kg": packingKg.toString(),
         "expiry_days": "7",
         "target_branches": targetBranches,
         "branches": targetBranches,
@@ -247,20 +227,14 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
       } catch (_) {}
 
       Get.back();
-      Get.snackbar(
-        "Success",
-        "Requirement posted successfully",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
+      AppSnackbar.showSuccess(
+        title: "Success",
+        message: "Requirement posted successfully",
       );
     } catch (e) {
-      Get.snackbar(
-        "Notice",
-        e.toString().replaceAll("Exception: ", ""),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      AppSnackbar.showError(
+        title: "Notice",
+        message: e.toString(),
       );
     } finally {
       if (mounted) setState(() => isPosting = false);
@@ -270,6 +244,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     const primaryColor = Color(0xFFFFB300);
 
     return Scaffold(
@@ -277,10 +252,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text(
-          "Post Requirement",
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-        ),
+        title: Text("Post Requirement", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
       ),
       body: isLoading && categories.isEmpty
           ? const Center(child: CircularProgressIndicator(color: primaryColor))
@@ -289,45 +261,23 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTextField(
-                    titleController,
-                    "Requirement Title (e.g. Need Toor Dal)",
-                    IconlyLight.edit,
-                  ),
+                  _buildTextField(titleController, "Requirement Title (e.g. Need Toor Dal)", IconlyLight.edit),
                   const SizedBox(height: 16),
 
                   _buildDropdown<int>(
                     hint: "Select Category",
                     value: selectedCategoryId,
-                    items: categories
-                        .map(
-                          (cat) => DropdownMenuItem(
-                            value: cat.id,
-                            child: Text(cat.name),
-                          ),
-                        )
-                        .toList(),
+                    items: categories.map((cat) => DropdownMenuItem(value: cat.id, child: Text(cat.name))).toList(),
                     onChanged: _onCategoryChanged,
                     icon: IconlyLight.category,
                   ),
                   const SizedBox(height: 16),
 
                   _buildDropdown<int>(
-                    hint: brands.isEmpty
-                        ? "Select Brand (Optional)"
-                        : "Select Brand",
+                    hint: brands.isEmpty ? "Select Brand (Optional)" : "Select Brand",
                     value: selectedBrandId,
-                    items: brands
-                        .map(
-                          (b) => DropdownMenuItem(
-                            value: b.id,
-                            child: Text(b.brandName),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: brands.isEmpty
-                        ? null
-                        : (val) => setState(() => selectedBrandId = val),
+                    items: brands.map((b) => DropdownMenuItem(value: b.id, child: Text(b.brandName))).toList(),
+                    onChanged: brands.isEmpty ? null : (val) => setState(() => selectedBrandId = val),
                     icon: IconlyLight.info_square,
                   ),
                   const SizedBox(height: 16),
@@ -338,7 +288,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey,
+                        color: isDark ? Colors.white70 : const Color(0xFF475569),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -347,17 +297,27 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
                       runSpacing: 8,
                       children: availableBranches.map((b) {
                         final id = int.tryParse(b['id'].toString()) ?? 0;
-                        final name =
-                            b['location_name'] ??
-                            b['branch_name'] ??
-                            b['city'] ??
-                            "Branch $id";
+                        final name = b['location_name'] ?? b['branch_name'] ?? b['city'] ?? "Branch $id";
                         final isSelected = selectedBranchIds.contains(id);
                         return FilterChip(
-                          label: Text(name),
+                          label: Text(
+                            name,
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                              color: isSelected
+                                  ? (isDark ? Colors.amber.shade200 : Colors.amber.shade900)
+                                  : (theme.textTheme.bodyMedium?.color ?? Colors.black87),
+                            ),
+                          ),
                           selected: isSelected,
-                          selectedColor: primaryColor.withValues(alpha: 0.25),
-                          checkmarkColor: primaryColor,
+                          selectedColor: primaryColor.withValues(alpha: 0.2),
+                          backgroundColor: theme.cardColor,
+                          checkmarkColor: isDark ? Colors.amber.shade200 : Colors.amber.shade900,
+                          side: BorderSide(
+                            color: isSelected ? primaryColor : theme.dividerColor.withValues(alpha: 0.5),
+                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           onSelected: (selected) {
                             setState(() {
                               if (selected) {
@@ -375,34 +335,21 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
 
                   Row(
                     children: [
-                      Expanded(
-                        child: _buildTextField(
-                          quantityController,
-                          "Quantity",
-                          IconlyLight.buy,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          onChanged: _syncBagsFromQuantity,
-                        ),
-                      ),
+                      Expanded(child: _buildTextField(quantityController, "Quantity", IconlyLight.buy, keyboardType: TextInputType.number)),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildDropdown<String>(
                           hint: "Unit",
                           value: selectedUnit,
-                          items: const [
-                            DropdownMenuItem(value: "qtl", child: Text("QTL")),
-                            DropdownMenuItem(value: "kg", child: Text("KG")),
-                            DropdownMenuItem(value: "ton", child: Text("TON")),
-                          ],
+                          items: ["qtl", "ton", "kg"].map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
                           onChanged: (val) {
-                            if (val == null) return;
-                            setState(() {
-                              selectedUnit = val;
-                              selectedAmountUnit = val;
-                            });
-                            _syncBagsFromQuantity('');
+                            if (val != null) {
+                              setState(() {
+                                selectedUnit = val;
+                                selectedAmountUnit = val;
+                                _calculateBags();
+                              });
+                            }
                           },
                           icon: Icons.unfold_more,
                         ),
@@ -413,27 +360,22 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
 
                   Row(
                     children: [
-                      Expanded(
-                        child: _buildTextField(
-                          amountController,
-                          "Target Price",
-                          IconlyLight.wallet,
-                          keyboardType: TextInputType.number,
-                        ),
-                      ),
+                      Expanded(child: _buildTextField(amountController, "Target Price", IconlyLight.wallet, keyboardType: TextInputType.number)),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildDropdown<String>(
                           hint: "Per",
                           value: selectedAmountUnit,
-                          items: ["qtl", "ton", "kg"]
-                              .map(
-                                (u) =>
-                                    DropdownMenuItem(value: u, child: Text(u)),
-                              )
-                              .toList(),
-                          onChanged: (val) =>
-                              setState(() => selectedAmountUnit = val!),
+                          items: ["qtl", "ton", "kg"].map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() {
+                                selectedUnit = val;
+                                selectedAmountUnit = val;
+                                _calculateBags();
+                              });
+                            }
+                          },
                           icon: Icons.unfold_more,
                         ),
                       ),
@@ -443,36 +385,10 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
 
                   Row(
                     children: [
-                      Expanded(
-                        child: _buildTextField(
-                          bagCountController,
-                          "Bags",
-                          IconlyLight.work,
-                          keyboardType: TextInputType.number,
-                          onChanged: _syncQuantityFromBags,
-                        ),
-                      ),
+                      Expanded(child: _buildTextField(bagCountController, "Bags", IconlyLight.work, keyboardType: TextInputType.number)),
                       const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildTextField(
-                          packingController,
-                          "Packing (kg/bag)",
-                          Icons.monitor_weight_outlined,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          onChanged: _syncQuantityFromBags,
-                        ),
-                      ),
+                      Expanded(child: _buildTextField(packingController, "Packing (kg)", Icons.monitor_weight_outlined, keyboardType: TextInputType.number)),
                     ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Quantity and bags are synchronized automatically using Packing (KG per bag).",
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: theme.textTheme.bodyMedium?.color,
-                    ),
                   ),
 
                   const SizedBox(height: 32),
@@ -483,20 +399,11 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
                       onPressed: isPosting ? null : _submit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       child: isPosting
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text(
-                              "POST REQUIREMENT",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text("POST REQUIREMENT", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                     ),
                   ),
                 ],
@@ -512,18 +419,51 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
     TextInputType keyboardType = TextInputType.text,
     ValueChanged<String>? onChanged,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final hintColor = theme.textTheme.bodyMedium?.color ?? (isDark ? Colors.white70 : const Color(0xFF475569));
+    final iconColor = isDark ? Colors.white70 : const Color(0xFF64748B);
+
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
-      maxLength: keyboardType == TextInputType.number ? 10 : null,
       onChanged: onChanged,
+      style: GoogleFonts.inter(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: theme.textTheme.bodyLarge?.color,
+      ),
       decoration: InputDecoration(
         hintText: hint,
-        prefixIcon: Icon(icon, size: 20),
+        hintStyle: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: hintColor,
+        ),
+        prefixIcon: Icon(icon, size: 20, color: iconColor),
         filled: true,
+        fillColor: theme.cardColor,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(
+            color: theme.dividerColor.withValues(alpha: 0.6),
+            width: 1,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: theme.dividerColor.withValues(alpha: 0.6),
+            width: 1,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(
+            color: Color(0xFFFFB300),
+            width: 1.5,
+          ),
         ),
       ),
     );
@@ -536,27 +476,52 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
     required ValueChanged<T?>? onChanged,
     required IconData icon,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = theme.textTheme.bodyMedium?.color ?? (isDark ? Colors.white70 : const Color(0xFF475569));
+    final iconColor = isDark ? Colors.white70 : const Color(0xFF64748B);
+
     return Container(
+      height: 56,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Get.theme.cardColor,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.dividerColor.withValues(alpha: 0.6),
+          width: 1,
+        ),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
           value: value,
           hint: Row(
             children: [
-              Icon(icon, size: 20, color: Get.theme.disabledColor),
+              Icon(icon, size: 20, color: iconColor),
               const SizedBox(width: 12),
-              Text(hint),
+              Expanded(
+                child: Text(
+                  hint,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: textColor,
+                  ),
+                ),
+              ),
             ],
           ),
           isExpanded: true,
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: theme.textTheme.bodyLarge?.color,
+          ),
           items: items,
           onChanged: onChanged,
           borderRadius: BorderRadius.circular(16),
-          dropdownColor: Get.theme.cardColor,
+          dropdownColor: theme.cardColor,
         ),
       ),
     );

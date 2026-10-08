@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'routes/app_pages.dart';
 import 'routes/app_routes.dart';
+import 'services/realtime_notification_service.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 
@@ -11,6 +12,7 @@ class AgroBrokerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Get.put(ThemeController());
+    Get.put(RealtimeNotificationService(), permanent: true);
 
     return GetMaterialApp(
       title: 'Daal Setu',

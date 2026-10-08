@@ -199,17 +199,13 @@ class _NegotiationPageState extends State<NegotiationPage> {
       final int? counterBags = int.tryParse(_negBagsCtrl.text);
       final double? packingWeight = double.tryParse(_negWeightCtrl.text);
 
-      String msgBody = 'Counter offer price: ₹$counterPrice/TON';
-      if (counterBags != null && packingWeight != null) {
-        msgBody += ' | Bags: $counterBags | Packing: $packingWeight KG';
-      }
-
       await ProductService.sendNegotiationMessage(
         productId: int.parse(widget.offerId),
         interestId: widget.interest.interestId,
         counterPrice: counterPrice.toString(),
-        counterQuantity: counterBags?.toString() ?? '',
-        message: msgBody,
+        counterQuantity: '',
+        counterBagCount: counterBags?.toString(),
+        counterPackingWeightKg: packingWeight?.toString(),
       );
 
       Get.snackbar('Success', 'Counter offer submitted', backgroundColor: Colors.green, colorText: Colors.white);

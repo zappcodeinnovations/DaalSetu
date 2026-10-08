@@ -3,13 +3,16 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../../theme/glass_widgets.dart';
+import '../../../../utils/app_snackbar.dart';
 import '../controller/buyer_delivery_challan_controller.dart';
 import '../model/buyer_delivery_challan_model.dart';
+import '../service/buyer_challan_pdf_service.dart';
 
 class BuyerDeliveryChallanDetailView extends StatelessWidget {
   BuyerDeliveryChallanDetailView({super.key});
 
-  final BuyerDeliveryChallanController controller = Get.find<BuyerDeliveryChallanController>();
+  final BuyerDeliveryChallanController controller =
+      Get.find<BuyerDeliveryChallanController>();
 
   @override
   Widget build(BuildContext context) {
@@ -32,18 +35,66 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
         ),
         title: Text(
           "Challan Details",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Save PDF to Downloads',
+            icon: const Icon(Icons.picture_as_pdf_outlined),
+            onPressed: () async {
+              final challan = controller.currentChallan.value;
+              if (challan == null) {
+                AppSnackbar.showWarning(
+                  title: 'Please wait',
+                  message: 'Challan details are still loading.',
+                );
+                return;
+              }
+              try {
+                await BuyerChallanPdfService.download(challan);
+                AppSnackbar.showSuccess(
+                  title: 'PDF downloaded',
+                  message: 'Delivery challan was saved to Downloads.',
+                );
+              } catch (error) {
+                AppSnackbar.showError(
+                  title: 'PDF failed',
+                  message: error.toString().replaceFirst('Exception: ', ''),
+                );
+              }
+            },
+          ),
+          IconButton(
+            tooltip: 'Share PDF',
+            icon: const Icon(Icons.share_outlined),
+            onPressed: () async {
+              final challan = controller.currentChallan.value;
+              if (challan == null) {
+                AppSnackbar.showWarning(
+                  title: 'Please wait',
+                  message: 'Challan details are still loading.',
+                );
+                return;
+              }
+              try {
+                await BuyerChallanPdfService.downloadAndShare(challan);
+              } catch (error) {
+                AppSnackbar.showError(
+                  title: 'PDF share failed',
+                  message: error.toString().replaceFirst('Exception: ', ''),
+                );
+              }
+            },
+          ),
+        ],
       ),
       body: Obx(() {
         if (controller.isDetailLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (controller.errorMessage.value.isNotEmpty && controller.currentChallan.value == null) {
+        if (controller.errorMessage.value.isNotEmpty &&
+            controller.currentChallan.value == null) {
           return Center(
             child: Text(
               controller.errorMessage.value,
@@ -73,7 +124,8 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
                   _buildItemsList(context, challan.items ?? []),
                   const SizedBox(height: 16),
                   _buildAmountDetails(context, challan),
-                  if (challan.narration != null && challan.narration!.isNotEmpty) ...[
+                  if (challan.narration != null &&
+                      challan.narration!.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     _buildNarration(context, challan.narration!),
                   ],
@@ -81,7 +133,15 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
                 ],
               ),
             ),
-            if (challan.status?.toLowerCase() == 'delivered' || challan.status?.toLowerCase() == 'dispatched')
+            if (() {
+              final status = challan.status?.toLowerCase() ?? '';
+              return (status == 'dispatched' ||
+                      status == 'in_transit' ||
+                      status == 'shipped') &&
+                  status != 'delivered' &&
+                  status != 'received' &&
+                  status != 'completed';
+            }())
               Positioned(
                 bottom: 16,
                 left: 16,
@@ -124,7 +184,9 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text("Are you sure you want to mark this challan as received?"),
+            const Text(
+              "Are you sure you want to mark this challan as received?",
+            ),
             const SizedBox(height: 16),
             TextField(
               controller: remarksController,
@@ -137,12 +199,12 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text("Cancel"),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () {
               Get.back(); // close dialog
               controller.receiveChallan(challanId, remarksController.text);
@@ -154,7 +216,10 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
     );
   }
 
-  Widget _buildHeaderInfo(BuildContext context, BuyerDeliveryChallanModel challan) {
+  Widget _buildHeaderInfo(
+    BuildContext context,
+    BuyerDeliveryChallanModel challan,
+  ) {
     final theme = Theme.of(context);
     String status = challan.status ?? "Unknown";
     Color statusColor = _getStatusColor(status);
@@ -176,7 +241,10 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: statusColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -220,29 +288,55 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
     );
   }
 
-  Widget _buildEntitiesInfo(BuildContext context, BuyerDeliveryChallanModel challan) {
+  Widget _buildEntitiesInfo(
+    BuildContext context,
+    BuyerDeliveryChallanModel challan,
+  ) {
     return GlassCard(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildInfoRow(context, "Seller", challan.sellerNameDisplay ?? "N/A", IconlyLight.profile),
+          _buildInfoRow(
+            context,
+            "Seller",
+            challan.sellerNameDisplay ?? "N/A",
+            IconlyLight.profile,
+          ),
           const Divider(height: 24),
-          _buildInfoRow(context, "Transporter", challan.transporterNameDisplay ?? "N/A", IconlyLight.send),
+          _buildInfoRow(
+            context,
+            "Transporter",
+            challan.transporterNameDisplay ?? "N/A",
+            IconlyLight.send,
+          ),
           if (challan.dispatchedByName != null) ...[
             const Divider(height: 24),
-            _buildInfoRow(context, "Dispatched By", challan.dispatchedByName!, IconlyLight.arrow_up_circle),
+            _buildInfoRow(
+              context,
+              "Dispatched By",
+              challan.dispatchedByName!,
+              IconlyLight.arrow_up_circle,
+            ),
           ],
           if (challan.receivedByName != null) ...[
             const Divider(height: 24),
-            _buildInfoRow(context, "Received By", challan.receivedByName!, IconlyLight.arrow_down_circle),
+            _buildInfoRow(
+              context,
+              "Received By",
+              challan.receivedByName!,
+              IconlyLight.arrow_down_circle,
+            ),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildTransportInfo(BuildContext context, BuyerDeliveryChallanModel challan) {
+  Widget _buildTransportInfo(
+    BuildContext context,
+    BuyerDeliveryChallanModel challan,
+  ) {
     return GlassCard(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -250,20 +344,41 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
         children: [
           Text(
             "Transport Details",
-            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 12),
-          _buildInfoRow(context, "Truck No", challan.truckNumber ?? "N/A", IconlyLight.discovery),
+          _buildInfoRow(
+            context,
+            "Truck No",
+            challan.truckNumber ?? "N/A",
+            IconlyLight.discovery,
+          ),
           const SizedBox(height: 12),
-          _buildInfoRow(context, "Driver Name", challan.driverName ?? "N/A", IconlyLight.profile),
+          _buildInfoRow(
+            context,
+            "Driver Name",
+            challan.driverName ?? "N/A",
+            IconlyLight.profile,
+          ),
           const SizedBox(height: 12),
-          _buildInfoRow(context, "Driver Mobile", challan.driverMobile ?? "N/A", IconlyLight.call),
+          _buildInfoRow(
+            context,
+            "Driver Mobile",
+            challan.driverMobile ?? "N/A",
+            IconlyLight.call,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildItemsList(BuildContext context, List<DeliveryChallanItem> items) {
+  Widget _buildItemsList(
+    BuildContext context,
+    List<DeliveryChallanItem> items,
+  ) {
     return GlassCard(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -271,7 +386,10 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
         children: [
           Text(
             "Items (${items.length})",
-            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 12),
           ListView.separated(
@@ -287,10 +405,15 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(IconlyBold.bag, color: Theme.of(context).colorScheme.primary),
+                    child: Icon(
+                      IconlyBold.bag,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -299,12 +422,18 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
                       children: [
                         Text(
                           item.productName ?? "Product",
-                          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           "${item.quantity} ${item.unit} (${item.bagCount} bags)",
-                          style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
                         ),
                       ],
                     ),
@@ -314,12 +443,18 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
                     children: [
                       Text(
                         "₹${item.amount}",
-                        style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         "₹${item.rate} / ${item.unit}",
-                        style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
                       ),
                     ],
                   ),
@@ -332,7 +467,10 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
     );
   }
 
-  Widget _buildAmountDetails(BuildContext context, BuyerDeliveryChallanModel challan) {
+  Widget _buildAmountDetails(
+    BuildContext context,
+    BuyerDeliveryChallanModel challan,
+  ) {
     return GlassCard(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -340,10 +478,17 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
         children: [
           Text(
             "Amount Details",
-            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 12),
-          _buildAmountRow(context, "Lorry Freight (per bag)", challan.lorryFreightPerBag),
+          _buildAmountRow(
+            context,
+            "Lorry Freight (per bag)",
+            challan.lorryFreightPerBag,
+          ),
           const SizedBox(height: 8),
           _buildAmountRow(context, "Loading Charges", challan.loadingCharges),
           const SizedBox(height: 8),
@@ -356,7 +501,10 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
             children: [
               Text(
                 "Total Amount",
-                style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               Text(
                 "₹${challan.totalAmount ?? '0.0'}",
@@ -372,7 +520,7 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildAmountRow(BuildContext context, String label, String? amount) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -391,7 +539,10 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
         children: [
           Text(
             "Narration / Details",
-            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 12),
           Text(
@@ -403,7 +554,12 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(BuildContext context, String label, String value, IconData icon) {
+  Widget _buildInfoRow(
+    BuildContext context,
+    String label,
+    String value,
+    IconData icon,
+  ) {
     return Row(
       children: [
         Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
@@ -418,7 +574,10 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               value,
-              style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500),
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -428,8 +587,10 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
 
   Color _getStatusColor(String status) {
     status = status.toLowerCase();
-    if (status.contains('delivered') || status.contains('received')) return Colors.green;
-    if (status.contains('dispatched') || status.contains('transit')) return Colors.blue;
+    if (status.contains('delivered') || status.contains('received'))
+      return Colors.green;
+    if (status.contains('dispatched') || status.contains('transit'))
+      return Colors.blue;
     if (status.contains('cancel')) return Colors.red;
     return Colors.orange;
   }

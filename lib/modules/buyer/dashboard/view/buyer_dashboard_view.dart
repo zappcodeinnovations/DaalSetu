@@ -3,19 +3,26 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../../theme/glass_widgets.dart';
-import '../../../../routes/app_routes.dart';
 import '../controller/buyer_dashboard_controller.dart';
 import '../../../profile/controller/profile_controller.dart';
 import '../../../category/model/category_model.dart';
 import '../../../category/view/category_page.dart';
 import '../../orders/view/buyer_orders_view.dart';
 import '../../offers/view/buyer_offers_view.dart';
+import '../../delivery_challan/view/buyer_delivery_challan_view.dart';
+import '../../consignment/view/buyer_consignment_view.dart';
+import '../../../contracts/view/contract_view.dart';
+import '../../../seller/company/view/seller_company_view.dart';
 import '../../../seller/notifications/view/seller_notification_view.dart';
+import '../../../../services/realtime_notification_service.dart';
+import 'buyer_dashboard_analytics.dart';
 
 class BuyerDashboardView extends StatelessWidget {
   BuyerDashboardView({super.key});
 
-  final BuyerDashboardController controller = Get.put(BuyerDashboardController());
+  final BuyerDashboardController controller = Get.put(
+    BuyerDashboardController(),
+  );
   final ProfileController profileController = Get.put(ProfileController());
 
   @override
@@ -58,17 +65,43 @@ class BuyerDashboardView extends StatelessWidget {
                 // const SizedBox(height: 24),
                 _buildBannerSlider(context, data.recentRfqs),
                 const SizedBox(height: 30),
-                _buildSectionHeader(context, "Shop by Category", "View All", onTap: () {
-                  Get.to(() => CategoryPageView());
-                }),
+                _buildSectionHeader(
+                  context,
+                  "Shop by Category",
+                  "View All",
+                  onTap: () {
+                    Get.to(() => CategoryPageView());
+                  },
+                ),
                 const SizedBox(height: 16),
                 _buildCategoriesList(context, controller.categories),
                 const SizedBox(height: 30),
                 _buildKPIGrid(context, data.kpis),
                 const SizedBox(height: 30),
-                _buildSectionHeader(context, "Recent Deals & Orders", "View All", onTap: () {
-                  Get.to(() => const BuyerOrdersView());
-                }),
+                BuyerDashboardAnalytics(
+                  charts: data.charts,
+                  transportTracking: data.transportTracking,
+                ),
+                const SizedBox(height: 30),
+                _buildSectionHeader(
+                  context,
+                  "Recent Requirements & Negotiations",
+                  "View All",
+                  onTap: () {
+                    Get.to(() => const BuyerOffersView(initialIndex: 5));
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildRecentRequirementsList(context, data.recentRfqs),
+                const SizedBox(height: 30),
+                _buildSectionHeader(
+                  context,
+                  "Recent Deals & Orders",
+                  "View All",
+                  onTap: () {
+                    Get.to(() => const BuyerOrdersView());
+                  },
+                ),
                 const SizedBox(height: 16),
                 _buildRecentOrdersList(context, data.recentOrders),
                 const SizedBox(height: 100),
@@ -83,89 +116,94 @@ class BuyerDashboardView extends StatelessWidget {
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return PreferredSize(
       preferredSize: const Size.fromHeight(kToolbarHeight),
-      child: Obx(() {
-        final theme = Theme.of(context);
-        return AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          title: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: controller.isSearching.value
-                ? Container(
-                    key: const ValueKey('searchField'),
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: theme.cardColor,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: theme.dividerColor.withOpacity(0.5)),
-                    ),
-                    child: TextField(
-                      autofocus: true,
-                      onChanged: (val) => controller.searchQuery.value = val,
-                      decoration: InputDecoration(
-                        hintText: "Search here...",
-                        hintStyle: GoogleFonts.inter(fontSize: 13, color: Colors.grey),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      ),
-                      style: GoogleFonts.inter(fontSize: 14),
-                    ),
-                  )
-                : Align(
-                    key: const ValueKey('logoImage'),
-                    alignment: Alignment.centerLeft,
-                    child: Image.asset(
-                      'assets/images/app_name.png',
-                      height: 32,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
+      child: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Align(
+          alignment: Alignment.centerLeft,
+          child: Image.asset(
+            'assets/images/app_name.png',
+            height: 32,
+            fit: BoxFit.contain,
           ),
-          actions: [
-            if (!controller.isSearching.value)
-              IconButton(
-                icon: const Icon(IconlyLight.search, size: 26),
-                onPressed: () {
-                  controller.isSearching.value = true;
-                },
-              ),
-            if (controller.isSearching.value)
-              IconButton(
-                icon: const Icon(IconlyLight.close_square, size: 26),
-                onPressed: () {
-                  controller.isSearching.value = false;
-                  controller.searchQuery.value = '';
-                },
-              )
-            else
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  IconButton(
-                    icon: const Icon(IconlyLight.notification, size: 28),
-                    onPressed: () => Get.to(() => const SellerNotificationView()),
-                  ),
+        ),
+        actions: [
+          Obx(() {
+            final count = Get.isRegistered<RealtimeNotificationService>()
+                ? RealtimeNotificationService.to.unreadCount.value
+                : 0;
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(IconlyLight.notification, size: 28),
+                  onPressed: () => Get.to(() => const SellerNotificationView()),
+                ),
+                if (count > 0)
                   Positioned(
-                    right: 10,
-                    top: 10,
+                    right: 8,
+                    top: 8,
                     child: Container(
-                      padding: const EdgeInsets.all(4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
                       decoration: const BoxDecoration(
                         color: Colors.deepOrange,
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
                       ),
-                      child: const Text(
-                        '3',
-                        style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        count > 99 ? '99+' : '$count',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
-                ],
+              ],
+            );
+          }),
+          PopupMenuButton<String>(
+            tooltip: 'Buyer menu',
+            onSelected: (value) {
+              switch (value) {
+                case 'categories':
+                  Get.to(() => const CategoryPageView());
+                  break;
+                case 'companies':
+                  Get.to(() => const SellerCompanyView());
+                  break;
+                case 'consignments':
+                  Get.to(() => const BuyerConsignmentView());
+                  break;
+                case 'challans':
+                  Get.to(() => const BuyerDeliveryChallanView());
+                  break;
+              }
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 'categories', child: Text('My Categories')),
+              PopupMenuItem(value: 'companies', child: Text('My Companies')),
+              PopupMenuItem(
+                value: 'consignments',
+                child: Text('Consignment Management'),
               ),
-            const SizedBox(width: 8),
-          ],
-        );
-      }),
+              PopupMenuItem(
+                value: 'challans',
+                child: Text('Delivery Challans'),
+              ),
+            ],
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
     );
   }
 
@@ -173,7 +211,9 @@ class BuyerDashboardView extends StatelessWidget {
     final theme = Theme.of(context);
     return Obx(() {
       final profile = profileController.profile.value;
-      final name = profile == null ? "Buyer" : "${profile.firstName} ${profile.lastName}";
+      final name = profile == null
+          ? "Buyer"
+          : "${profile.firstName} ${profile.lastName}";
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -213,62 +253,13 @@ class BuyerDashboardView extends StatelessWidget {
     });
   }
 
-  Widget _buildSearchBar(BuildContext context) {
-    final theme = Theme.of(context);
-    final searchController = TextEditingController();
-
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-      child: Row(
-        children: [
-          const Icon(IconlyLight.search, color: Colors.grey),
-          const SizedBox(width: 12),
-          Expanded(
-            child: TextField(
-              controller: searchController,
-              onSubmitted: (val) {
-                if (val.trim().isNotEmpty) {
-                  Get.to(() => const BuyerOffersView(initialIndex: 0));
-                }
-              },
-              decoration: InputDecoration(
-                hintText: "Search for pulses, dals, commodities...",
-                hintStyle: GoogleFonts.inter(fontSize: 13, color: Colors.grey),
-                border: InputBorder.none,
-              ),
-            ),
-          ),
-          GestureDetector(
-            onTap: () => Get.to(() => const CategoryPageView()),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              child: Icon(IconlyLight.filter, color: theme.colorScheme.primary),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildBannerSlider(BuildContext context, List<dynamic> rfqs) {
     final theme = Theme.of(context);
-    
+
     // Find the first open RFQ to feature
     var featuredRfq = rfqs.firstWhere(
-      (rfq) => rfq['status']?.toString().toLowerCase() == 'open', 
-      orElse: () => rfqs.isNotEmpty ? rfqs.first : null
+      (rfq) => rfq['status']?.toString().toLowerCase() == 'open',
+      orElse: () => rfqs.isNotEmpty ? rfqs.first : null,
     );
 
     if (featuredRfq == null) {
@@ -278,7 +269,7 @@ class BuyerDashboardView extends StatelessWidget {
     String title = featuredRfq['title']?.toString() ?? "Special Deal";
     // Clean up title if it contains API-DOC prefixes
     if (title.contains("API-DOC")) {
-       title = title.split(" ").skip(1).join(" ");
+      title = title.split(" ").skip(1).join(" ");
     }
     String price = featuredRfq['price']?.toString() ?? "";
     String qty = featuredRfq['quantity']?.toString() ?? "";
@@ -289,8 +280,8 @@ class BuyerDashboardView extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            theme.colorScheme.primary.withOpacity(0.1),
-            theme.colorScheme.primary.withOpacity(0.3),
+            theme.colorScheme.primary.withValues(alpha: 0.1),
+            theme.colorScheme.primary.withValues(alpha: 0.3),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -302,7 +293,11 @@ class BuyerDashboardView extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(IconlyBold.discount, size: 14, color: theme.colorScheme.primary),
+              Icon(
+                IconlyBold.discount,
+                size: 14,
+                color: theme.colorScheme.primary,
+              ),
               const SizedBox(width: 6),
               Text(
                 "ACTIVE REQUIREMENT",
@@ -348,18 +343,24 @@ class BuyerDashboardView extends StatelessWidget {
             ),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () => Get.to(() => const BuyerOffersView(initialIndex: 5)),
+            onPressed: () =>
+                Get.to(() => const BuyerOffersView(initialIndex: 5)),
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: Colors.white,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text("View Details", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                Text(
+                  "View Details",
+                  style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(width: 8),
                 const Icon(IconlyLight.arrow_right_2, size: 16),
               ],
@@ -370,7 +371,12 @@ class BuyerDashboardView extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title, String action, {VoidCallback? onTap}) {
+  Widget _buildSectionHeader(
+    BuildContext context,
+    String title,
+    String action, {
+    VoidCallback? onTap,
+  }) {
     final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -398,11 +404,14 @@ class BuyerDashboardView extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoriesList(BuildContext context, List<CategoryModel> categories) {
+  Widget _buildCategoriesList(
+    BuildContext context,
+    List<CategoryModel> categories,
+  ) {
     if (categories.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
-    
+
     final displayCategories = categories.take(6).toList();
 
     return SingleChildScrollView(
@@ -446,76 +455,352 @@ class BuyerDashboardView extends StatelessWidget {
   }
 
   Widget _buildKPIGrid(BuildContext context, Map<String, dynamic> kpis) {
+    // 1. SPENT (MTD)
+    String spentVal =
+        kpis['spent_mtd']?.toString() ??
+        kpis['spent']?.toString() ??
+        kpis['total_spent']?.toString() ??
+        "0.00";
+    if (!spentVal.startsWith("₹") && spentVal.isNotEmpty) {
+      spentVal = "₹$spentVal";
+    }
+    String spentDelta =
+        kpis['spent_delta']?.toString() ??
+        kpis['spent_change']?.toString() ??
+        "—";
+    if (!spentDelta.contains("↑") &&
+        !spentDelta.contains("↓") &&
+        spentDelta.isNotEmpty) {
+      spentDelta = "↑ $spentDelta";
+    }
+
+    // 2. ACTIVE ORDERS
+    String activeOrders =
+        kpis['active_orders']?.toString() ?? kpis['orders']?.toString() ?? "0";
+    String openReq =
+        kpis['open_rfq']?.toString() ??
+        kpis['open_requirements']?.toString() ??
+        kpis['active_requirements']?.toString() ??
+        "0";
+
+    // 3. ACTIVE CONTRACTS
+    String activeContracts =
+        kpis['active_contracts']?.toString() ??
+        kpis['contracts']?.toString() ??
+        kpis['total_contracts']?.toString() ??
+        "0";
+    String signedThisMonth =
+        kpis['signed_this_month']?.toString() ??
+        kpis['contracts_signed_mtd']?.toString() ??
+        kpis['signed_contracts']?.toString() ??
+        "0";
+
+    // 4. IN TRANSIT
+    String inTransit =
+        kpis['in_transit']?.toString() ??
+        kpis['transport_active']?.toString() ??
+        kpis['active_transports']?.toString() ??
+        "0";
+    String avgEta =
+        kpis['avg_eta']?.toString() ?? kpis['eta']?.toString() ?? "—";
+
+    final paymentPending = kpis['pay_pending']?.toString() ?? '0';
+    final pendingAmount = kpis['pending_amount']?.toString() ?? '₹0.00';
+    final issues = kpis['issues']?.toString() ?? '0';
+    final openTickets = kpis['open_tickets']?.toString() ?? '0';
+    final topSupplier = kpis['top_supplier']?.toString() ?? '—';
+    final supplierShare = kpis['top_supplier_share']?.toString() ?? '—';
+    final averagePrice = kpis['avg_price']?.toString() ?? '₹0.00';
+    final averagePriceDelta = kpis['avg_price_delta']?.toString() ?? '—';
+
     return Column(
       children: [
         Row(
           children: [
-            Expanded(child: _buildKPICard(context, "Total Spent", kpis['spent']?.toString() ?? "₹0", kpis['spent_delta']?.toString() ?? "", IconlyBold.wallet, Colors.green)),
-            const SizedBox(width: 16),
-            Expanded(child: _buildKPICard(context, "Active Offers", kpis['open_rfq']?.toString() ?? "0", "Live offers available", IconlyBold.ticket_star, Colors.redAccent)),
+            Expanded(
+              child: _buildKPICard(
+                context,
+                title: "SPENT (MTD)",
+                value: spentVal,
+                subtitle: spentDelta,
+                icon: Icons.currency_rupee_rounded,
+                isTrend: true,
+                onTap: () => Get.to(() => const ContractsScreen()),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: _buildKPICard(
+                context,
+                title: "ACTIVE ORDERS",
+                value: activeOrders,
+                subtitle: "Open Requirements: $openReq",
+                icon: IconlyBold.buy,
+                onTap: () =>
+                    Get.to(() => const BuyerOffersView(initialIndex: 0)),
+              ),
+            ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         Row(
           children: [
-            Expanded(child: _buildKPICard(context, "Active Orders", kpis['active_orders']?.toString() ?? "0", "View all orders", IconlyBold.bag, Colors.blue)),
-            const SizedBox(width: 16),
-            Expanded(child: _buildKPICard(context, "Membership", "Gold Buyer", "Valid till 31 Dec 2025", IconlyBold.star, Colors.amber)),
+            Expanded(
+              child: _buildKPICard(
+                context,
+                title: "ACTIVE CONTRACTS",
+                value: activeContracts,
+                subtitle: "Signed this month: $signedThisMonth",
+                icon: IconlyBold.document,
+                onTap: () => Get.to(() => const ContractsScreen()),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: _buildKPICard(
+                context,
+                title: "IN TRANSIT",
+                value: inTransit,
+                subtitle: "Avg ETA: $avgEta",
+                icon: Icons.local_shipping_rounded,
+                onTap: () => Get.to(() => const BuyerDeliveryChallanView()),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Expanded(
+              child: _buildKPICard(
+                context,
+                title: "PAYMENT PENDING",
+                value: paymentPending,
+                subtitle: pendingAmount,
+                icon: Icons.receipt_long_outlined,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: _buildKPICard(
+                context,
+                title: "ISSUES / COMPLAINTS",
+                value: issues,
+                subtitle: "Open tickets: $openTickets",
+                icon: Icons.report_problem_outlined,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Expanded(
+              child: _buildKPICard(
+                context,
+                title: "TOP SUPPLIER (MTD)",
+                value: topSupplier,
+                subtitle: supplierShare,
+                icon: Icons.storefront_outlined,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: _buildKPICard(
+                context,
+                title: "AVG PURCHASE PRICE",
+                value: averagePrice,
+                subtitle: averagePriceDelta,
+                icon: Icons.price_check_outlined,
+              ),
+            ),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildKPICard(BuildContext context, String title, String value, String subtitle, IconData icon, Color color) {
+  Widget _buildKPICard(
+    BuildContext context, {
+    required String title,
+    required String value,
+    required String subtitle,
+    required IconData icon,
+    bool isTrend = false,
+    VoidCallback? onTap,
+  }) {
     final theme = Theme.of(context);
-    return GlassCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 20),
+    const orangeColor = Color(0xFFEA580C);
+    const peachBg = Color(0xFFFFF3EA);
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: const Color(0xFFF97316).withValues(alpha: 0.25),
+            width: 1.2,
           ),
-          const SizedBox(height: 14),
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: theme.textTheme.bodyLarge?.color,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.poppins(
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
-              color: color,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: peachBg,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: orangeColor, size: 18),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 12,
+                  color: theme.dividerColor.withValues(alpha: 0.8),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              color: theme.textTheme.bodySmall?.color,
+            const SizedBox(height: 12),
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.6,
+                color: theme.textTheme.bodyMedium?.color?.withValues(
+                  alpha: 0.7,
+                ),
+              ),
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+            const SizedBox(height: 3),
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                fontSize: 19,
+                fontWeight: FontWeight.bold,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 10.5,
+                fontWeight: isTrend ? FontWeight.w600 : FontWeight.w500,
+                color: isTrend
+                    ? Colors.green.shade700
+                    : theme.textTheme.bodySmall?.color,
+              ),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildRecentRequirementsList(
+    BuildContext context,
+    List<dynamic> requirements,
+  ) {
+    if (requirements.isEmpty) {
+      return const Center(
+        child: Text("No recent requirements or negotiations."),
+      );
+    }
+    final theme = Theme.of(context);
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: requirements.length > 5 ? 5 : requirements.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemBuilder: (_, index) {
+        final item = requirements[index] is Map
+            ? Map<String, dynamic>.from(requirements[index] as Map)
+            : <String, dynamic>{};
+        final status = item['status']?.toString() ?? 'Pending';
+        final color = status.toLowerCase().contains('reject')
+            ? Colors.red
+            : status.toLowerCase().contains('confirm')
+            ? Colors.green
+            : theme.colorScheme.primary;
+        return GlassCard(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: .12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.forum_outlined, color: color),
+              ),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item['title']?.toString() ??
+                          item['product']?.toString() ??
+                          'Requirement',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '${item['quantity'] ?? '-'} • ₹${item['price'] ?? '-'} • ${item['seller'] ?? 'Multiple sellers'}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    status,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    item['updated']?.toString() ?? '',
+                    style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -532,11 +817,13 @@ class BuyerDashboardView extends StatelessWidget {
       itemBuilder: (context, index) {
         final order = orders[index];
         final theme = Theme.of(context);
-        
+
         String status = order['transport_status'] ?? 'Pending';
         Color statusColor = Colors.orange;
         if (status.toLowerCase().contains("transit")) statusColor = Colors.blue;
-        if (status.toLowerCase().contains("completed") || status.toLowerCase().contains("delivered")) statusColor = Colors.green;
+        if (status.toLowerCase().contains("completed") ||
+            status.toLowerCase().contains("delivered"))
+          statusColor = Colors.green;
 
         return GlassCard(
           padding: const EdgeInsets.all(16),
@@ -575,22 +862,36 @@ class BuyerDashboardView extends StatelessWidget {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        Icon(IconlyLight.bag, size: 12, color: theme.textTheme.bodySmall?.color),
+                        Icon(
+                          IconlyLight.bag,
+                          size: 12,
+                          color: theme.textTheme.bodySmall?.color,
+                        ),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
                             order['quantity']?.toString() ?? "-",
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodySmall?.color),
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              color: theme.textTheme.bodySmall?.color,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
-                        Icon(IconlyLight.calendar, size: 12, color: theme.textTheme.bodySmall?.color),
+                        Icon(
+                          IconlyLight.calendar,
+                          size: 12,
+                          color: theme.textTheme.bodySmall?.color,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           "Today",
-                          style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodySmall?.color),
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            color: theme.textTheme.bodySmall?.color,
+                          ),
                         ),
                       ],
                     ),
@@ -621,7 +922,10 @@ class BuyerDashboardView extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),

@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../services/seller_services.dart';
+import '../../../../utils/app_snackbar.dart';
 import '../../../seller/branches/model/seller_branch_model.dart';
 
 class BuyerBranchController extends GetxController {
@@ -9,10 +10,23 @@ class BuyerBranchController extends GetxController {
   var myBranches = <SellerBranchModel>[].obs;
   var pendingRequests = <SellerBranchModel>[].obs;
 
+  final Set<int> _leftBranchIds = {};
+  final Set<String> _leftBranchCodes = {};
+
   @override
   void onInit() {
     super.onInit();
+    _clearLegacyDiskCache();
     fetchBranches();
+  }
+
+  /// Wipes legacy disk cache from previous iterations so nothing is falsely blocked
+  Future<void> _clearLegacyDiskCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove("buyer_left_branch_ids");
+      await prefs.remove("buyer_left_branch_codes");
+    } catch (_) {}
   }
 
   Future<void> fetchBranches() async {
@@ -21,81 +35,190 @@ class BuyerBranchController extends GetxController {
       final res = await SellerServices.getSellerBranches();
       if (res['data'] is Map<String, dynamic>) {
         final data = res['data'] as Map<String, dynamic>;
+
+        // 1. Parse Pending Requests first
+        final rawPending = data['pending_requests'] is List ? (data['pending_requests'] as List) : [];
+        final parsedPending = rawPending
+            .map((e) => SellerBranchModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+        pendingRequests.value = parsedPending;
+
+        final pendingBranchIds = <int>{};
+        final pendingCodes = <String>{};
+
+        for (final p in rawPending) {
+          if (p is Map<String, dynamic>) {
+            final bId = p['branch_id'] ?? p['id'];
+            if (bId is int) {
+              pendingBranchIds.add(bId);
+              _leftBranchIds.remove(bId);
+            }
+            final code = (p['branch_code'] ?? p['code'])?.toString().trim().toUpperCase();
+            if (code != null && code.isNotEmpty) {
+              pendingCodes.add(code);
+              _leftBranchCodes.remove(code);
+            }
+          }
+        }
+
+        // 2. Parse Primary Branch
         if (data['primary_branch'] is Map<String, dynamic>) {
-          primaryBranch.value = SellerBranchModel.fromJson(data['primary_branch']);
+          final pb = SellerBranchModel.fromJson(data['primary_branch']);
+          final code = pb.branchCode?.trim().toUpperCase();
+          final isLeft = (pb.id != null && _leftBranchIds.contains(pb.id)) ||
+              (code != null && _leftBranchCodes.contains(code));
+          final isPending = (pb.id != null && pendingBranchIds.contains(pb.id)) ||
+              (code != null && pendingCodes.contains(code));
+          if (!isLeft && !isPending) {
+            primaryBranch.value = pb;
+          } else {
+            primaryBranch.value = null;
+          }
         } else {
           primaryBranch.value = null;
         }
+
+        // 3. Parse My Branches (exclude pending requests or branches explicitly left in this session)
         if (data['my_branches'] is List) {
           myBranches.value = (data['my_branches'] as List)
               .map((e) => SellerBranchModel.fromJson(e as Map<String, dynamic>))
+              .where((b) {
+                if (b.id == null) return false;
+                final code = b.branchCode?.trim().toUpperCase();
+                // If it is in pending requests, it is awaiting approval, NOT in My Branches
+                if (pendingBranchIds.contains(b.id)) return false;
+                if (code != null && pendingCodes.contains(code)) return false;
+                // If explicitly left in this session, keep it hidden
+                if (_leftBranchIds.contains(b.id)) return false;
+                if (code != null && _leftBranchCodes.contains(code)) return false;
+                return true;
+              })
               .toList();
         } else {
           myBranches.clear();
         }
-        if (data['pending_requests'] is List) {
-          pendingRequests.value = (data['pending_requests'] as List)
-              .map((e) => SellerBranchModel.fromJson(e as Map<String, dynamic>))
-              .toList();
-        } else {
-          pendingRequests.clear();
-        }
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString().replaceAll("Exception: ", ""), snackPosition: SnackPosition.BOTTOM);
+      AppSnackbar.showError(title: "Error", message: e.toString());
     } finally {
       isLoading.value = false;
     }
   }
 
   Future<bool> joinBranchByCode(String code) async {
-    if (code.trim().isEmpty) return false;
+    final cleanCode = code.trim().toUpperCase();
+    if (cleanCode.isEmpty) return false;
     try {
-      Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
-      final res = await SellerServices.requestBranchByCode(code.trim());
-      if (Get.isDialogOpen ?? false) Get.back();
+      // User is actively requesting to join, unblock any left-branch filters
+      _leftBranchIds.clear();
+      _leftBranchCodes.clear();
 
-      Get.snackbar("Success", res['message'] ?? "Branch request submitted successfully",
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+      final res = await SellerServices.requestBranchByCode(cleanCode);
       await fetchBranches();
+
+      final msg = res['message']?.toString() ?? "Branch request submitted successfully";
+      if (msg.toLowerCase().contains("already")) {
+        AppSnackbar.showInfo(
+          title: "Branch Notice",
+          message: msg,
+          duration: const Duration(seconds: 4),
+        );
+      } else {
+        AppSnackbar.showSuccess(
+          title: "Success",
+          message: msg,
+          duration: const Duration(seconds: 4),
+        );
+      }
       return true;
     } catch (e) {
-      if (Get.isDialogOpen ?? false) Get.back();
-      Get.snackbar("Error", e.toString().replaceAll("Exception: ", ""),
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+      AppSnackbar.showError(
+        title: "Error",
+        message: e.toString(),
+        duration: const Duration(seconds: 4),
+      );
       return false;
     }
   }
 
-  Future<void> cancelRequest(int branchId) async {
+  Future<void> cancelRequest(int branchOrReqId, {int? branchId, String? branchCode}) async {
     try {
-      Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
-      final res = await SellerServices.cancelBranchRequest(branchId);
-      if (Get.isDialogOpen ?? false) Get.back();
+      final targetId = branchId ?? branchOrReqId;
+      final res = await SellerServices.cancelBranchRequest(targetId);
+      _leftBranchIds.add(targetId);
+      if (branchId != null) _leftBranchIds.add(branchOrReqId);
+      if (branchCode != null && branchCode.isNotEmpty) {
+        _leftBranchCodes.add(branchCode.trim().toUpperCase());
+      }
 
-      Get.snackbar("Success", res['message'] ?? "Request cancelled successfully",
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
-      fetchBranches();
+      pendingRequests.removeWhere((r) =>
+          r.id == branchOrReqId ||
+          r.id == targetId ||
+          (r.branchId != null && r.branchId == targetId));
+      await fetchBranches();
+      pendingRequests.removeWhere((r) =>
+          r.id == branchOrReqId ||
+          r.id == targetId ||
+          (r.branchId != null && r.branchId == targetId));
+      AppSnackbar.showSuccess(
+        title: "Success",
+        message: res['message'] ?? "Request cancelled successfully",
+      );
     } catch (e) {
-      if (Get.isDialogOpen ?? false) Get.back();
-      Get.snackbar("Error", e.toString().replaceAll("Exception: ", ""),
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+      AppSnackbar.showError(
+        title: "Error",
+        message: e.toString(),
+      );
     }
   }
 
-  Future<void> leaveBranch(int branchId) async {
+  Future<void> leaveBranch(int branchId, {String? branchCode}) async {
     try {
-      Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
-      final res = await SellerServices.leaveBranch(branchId);
-      if (Get.isDialogOpen ?? false) Get.back();
+      _leftBranchIds.add(branchId);
+      if (branchCode != null && branchCode.isNotEmpty) {
+        _leftBranchCodes.add(branchCode.trim().toUpperCase());
+      }
 
-      Get.snackbar("Success", res['message'] ?? "Left branch successfully",
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
-      fetchBranches();
+      myBranches.removeWhere((b) => b.id == branchId);
+      if (primaryBranch.value?.id == branchId) {
+        primaryBranch.value = null;
+      }
+      final res = await SellerServices.leaveBranch(branchId);
+      await fetchBranches();
+      myBranches.removeWhere((b) => b.id == branchId);
+      if (primaryBranch.value?.id == branchId) {
+        primaryBranch.value = null;
+      }
+      AppSnackbar.showSuccess(
+        title: "Success",
+        message: res['message'] ?? "Left branch successfully",
+      );
     } catch (e) {
-      if (Get.isDialogOpen ?? false) Get.back();
-      Get.snackbar("Error", e.toString().replaceAll("Exception: ", ""),
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+      final err = e.toString();
+      if (err.toLowerCase().contains("not added")) {
+        _leftBranchIds.add(branchId);
+        if (branchCode != null && branchCode.isNotEmpty) {
+          _leftBranchCodes.add(branchCode.trim().toUpperCase());
+        }
+        myBranches.removeWhere((b) => b.id == branchId);
+        if (primaryBranch.value?.id == branchId) {
+          primaryBranch.value = null;
+        }
+        AppSnackbar.showInfo(
+          title: "Branch Notice",
+          message: "You are not added to this branch.",
+        );
+      } else {
+        _leftBranchIds.remove(branchId);
+        if (branchCode != null && branchCode.isNotEmpty) {
+          _leftBranchCodes.remove(branchCode.trim().toUpperCase());
+        }
+        await fetchBranches();
+        AppSnackbar.showError(
+          title: "Error",
+          message: err,
+        );
+      }
     }
   }
 }

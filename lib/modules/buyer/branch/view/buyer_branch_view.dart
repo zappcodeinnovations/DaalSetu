@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../controller/buyer_branch_controller.dart';
 import '../../../../theme/glass_widgets.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class BuyerBranchView extends StatelessWidget {
   BuyerBranchView({super.key});
@@ -27,16 +28,10 @@ class BuyerBranchView extends StatelessWidget {
           ),
         ),
         actions: [
-          TextButton.icon(
+          IconButton(
             onPressed: () => _showRequestBranchDialog(context),
-            icon: Icon(IconlyLight.password, color: primaryColor, size: 18),
-            label: Text(
-              "Enter Ref Code",
-              style: GoogleFonts.inter(
-                fontWeight: FontWeight.bold,
-                color: primaryColor,
-              ),
-            ),
+            icon: Icon(IconlyLight.password, color: primaryColor),
+            tooltip: "Enter Ref Code",
           ),
           const SizedBox(width: 8),
         ],
@@ -63,7 +58,7 @@ class BuyerBranchView extends StatelessWidget {
                   Icon(
                     IconlyLight.location,
                     size: 70,
-                    color: primaryColor.withOpacity(0.5),
+                    color: primaryColor.withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -95,7 +90,7 @@ class BuyerBranchView extends StatelessWidget {
           onRefresh: controller.fetchBranches,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -107,7 +102,7 @@ class BuyerBranchView extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: primaryColor.withOpacity(0.12),
+                          color: primaryColor.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(IconlyBold.work, color: primaryColor, size: 22),
@@ -164,7 +159,7 @@ class BuyerBranchView extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: Colors.blue.withOpacity(0.15),
+                                color: Colors.blue.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
@@ -199,6 +194,7 @@ class BuyerBranchView extends StatelessWidget {
                   ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
+                    padding: EdgeInsets.zero,
                     itemCount: controller.pendingRequests.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
@@ -210,7 +206,7 @@ class BuyerBranchView extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: Colors.orange.withOpacity(0.12),
+                                color: Colors.orange.withValues(alpha: 0.12),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(IconlyLight.time_circle, color: Colors.orange, size: 20),
@@ -233,7 +229,11 @@ class BuyerBranchView extends StatelessWidget {
                             ),
                             if (req.id != null)
                               TextButton(
-                                onPressed: () => controller.cancelRequest(req.id!),
+                                onPressed: () => controller.cancelRequest(
+                                  req.id!,
+                                  branchId: req.branchId,
+                                  branchCode: req.branchCode,
+                                ),
                                 child: const Text("CANCEL", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
                               ),
                           ],
@@ -241,7 +241,7 @@ class BuyerBranchView extends StatelessWidget {
                       );
                     },
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                 ],
 
                 // My Branches List
@@ -254,6 +254,7 @@ class BuyerBranchView extends StatelessWidget {
                   ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
+                    padding: EdgeInsets.zero,
                     itemCount: controller.myBranches.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
@@ -265,7 +266,7 @@ class BuyerBranchView extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: primaryColor.withOpacity(0.12),
+                                color: primaryColor.withValues(alpha: 0.12),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(IconlyLight.location, color: primaryColor, size: 20),
@@ -295,16 +296,32 @@ class BuyerBranchView extends StatelessWidget {
                               ),
                             ),
                             if (branch.id != null)
-                              OutlinedButton(
-                                onPressed: () => _showLeaveBranchDialog(context, branch.id!),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.red,
-                                  side: const BorderSide(color: Colors.red),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                ),
-                                child: const Text("LEAVE", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
-                              ),
+                              (branch.isPrimary == true)
+                                  ? Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue.withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        "PRIMARY",
+                                        style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue),
+                                      ),
+                                    )
+                                  : OutlinedButton(
+                                      onPressed: () => _showLeaveBranchDialog(
+                                        context,
+                                        branch.id!,
+                                        branchCode: branch.branchCode,
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: Colors.red,
+                                        side: const BorderSide(color: Colors.red),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      ),
+                                      child: const Text("LEAVE", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                                    ),
                           ],
                         ),
                       );
@@ -329,66 +346,66 @@ class BuyerBranchView extends StatelessWidget {
         return Dialog(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          child: GlassCard(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: GlassIconBox(
-                    icon: IconlyLight.document,
-                    size: 56,
-                    iconSize: 28,
-                    color: Theme.of(dialogContext).colorScheme.primary,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "Request Branch",
-                  style: GoogleFonts.poppins(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Enter the reference code to request branch access from the Super Admin.",
-                  style: GoogleFonts.inter(fontSize: 13, color: Colors.grey),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                GlassTextField(
-                  controller: codeCtrl,
-                  hintText: "Branch Code (e.g. NAG622M)",
-                  prefixIcon: IconlyLight.password,
-                ),
-                const SizedBox(height: 24),
-                Obx(() => GlassButton(
-                  isLoading: isSubmitting.value,
-                  onPressed: () async {
-                    if (codeCtrl.text.trim().isEmpty) {
-                      Get.snackbar('Required', 'Please enter a branch code', snackPosition: SnackPosition.BOTTOM);
-                      return;
-                    }
-                    isSubmitting.value = true;
-                    final success = await controller.joinBranchByCode(codeCtrl.text.trim());
-                    isSubmitting.value = false;
-                    if (success) {
-                      Get.back(); // close dialog
-                    }
-                  },
-                  child: Text(
-                    "Submit Request",
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.white,
+          child: SingleChildScrollView(
+            child: GlassCard(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: GlassIconBox(
+                      icon: IconlyLight.document,
+                      size: 56,
+                      iconSize: 28,
+                      color: Theme.of(dialogContext).colorScheme.primary,
                     ),
                   ),
-                )),
-              ],
+                  const SizedBox(height: 16),
+                  Text(
+                    "Request Branch",
+                    style: GoogleFonts.poppins(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Enter the reference code to request branch access from the Super Admin.",
+                    style: GoogleFonts.inter(fontSize: 13, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  GlassTextField(
+                    controller: codeCtrl,
+                    hintText: "Branch Code (e.g. NAG622M)",
+                    prefixIcon: IconlyLight.password,
+                  ),
+                  const SizedBox(height: 20),
+                  Obx(() => GlassButton(
+                    isLoading: isSubmitting.value,
+                    onPressed: () async {
+                      if (codeCtrl.text.trim().isEmpty) {
+                        AppSnackbar.showWarning(title: 'Required', message: 'Please enter a branch code');
+                        return;
+                      }
+                      isSubmitting.value = true;
+                      Navigator.of(dialogContext).pop(); // close dialog cleanly
+                      await controller.joinBranchByCode(codeCtrl.text.trim());
+                      isSubmitting.value = false;
+                    },
+                    child: Text(
+                      "Submit Request",
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  )),
+                ],
+              ),
             ),
           ),
         );
@@ -396,7 +413,7 @@ class BuyerBranchView extends StatelessWidget {
     );
   }
 
-  void _showLeaveBranchDialog(BuildContext context, int branchId) {
+  void _showLeaveBranchDialog(BuildContext context, int branchId, {String? branchCode}) {
     Get.defaultDialog(
       title: "Leave Branch",
       middleText: "Are you sure you want to leave this branch?",
@@ -405,7 +422,7 @@ class BuyerBranchView extends StatelessWidget {
       buttonColor: Colors.red,
       onConfirm: () {
         Get.back();
-        controller.leaveBranch(branchId);
+        controller.leaveBranch(branchId, branchCode: branchCode);
       },
       textCancel: "CANCEL",
     );

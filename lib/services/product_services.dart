@@ -379,22 +379,27 @@ class ProductService {
     }
   }
 
-  /// Send a negotiation counter-offer message
+  /// Send a negotiation counter proposal.
   static Future<void> sendNegotiationMessage({
     required int productId,
     required int interestId,
-    required String message,
     required String counterPrice,
     required String counterQuantity,
+    String? counterBagCount,
+    String? counterPackingWeightKg,
   }) async {
     try {
       await ApiClient.post(
-        endpoint: "/api/offers/$productId/interests/$interestId/message/",
+        endpoint: "/api/offers/$productId/interests/$interestId/",
         requireAuth: true,
         body: {
-          "message": message,
           "counter_price": counterPrice,
           "counter_quantity": counterQuantity,
+          if (counterBagCount != null && counterBagCount.isNotEmpty)
+            "counter_bag_count": counterBagCount,
+          if (counterPackingWeightKg != null &&
+              counterPackingWeightKg.isNotEmpty)
+            "counter_packing_weight_kg": counterPackingWeightKg,
         },
       );
     } catch (e) {
