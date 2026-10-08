@@ -56,7 +56,7 @@ class AdminReportsService {
   /// ============================================================
   /// FETCH BRANCH PERFORMANCE REPORTS
   /// Uses S.No 21 (GET /api/admin/dashboard/) where branch_performance is provided.
-  /// Falls back to local storage and then documented benchmarks.
+  /// Falls back to the last real report saved on this device.
   /// ============================================================
   static Future<List<BranchReportModel>> getBranchReports() async {
     final headers = await _buildHeaders();
@@ -64,6 +64,7 @@ class AdminReportsService {
 
     debugPrint("📊 [ADMIN REPORTS API] Requesting branch report data from: $url");
 
+    String? serverError;
     try {
       final res = await http.get(url, headers: headers).timeout(_timeout);
       debugPrint("📊 [ADMIN REPORTS API] Response Status Code: ${res.statusCode}");
@@ -81,6 +82,10 @@ class AdminReportsService {
           await _saveToStorage(reports);
           return reports;
         }
+      } else {
+        serverError = res.statusCode == 403
+            ? 'Only Admin or Super Admin can view branch reports.'
+            : 'Could not load branch reports (${res.statusCode}).';
       }
     } catch (e) {
       debugPrint("⚠️ [ADMIN REPORTS API] Server request note: $e. Checking local storage cache...");
@@ -93,53 +98,7 @@ class AdminReportsService {
       return cached;
     }
 
-    // Benchmark Default Fallback matching S.No 21 documentation
-    debugPrint("📊 [ADMIN REPORTS API] Providing verified branch data benchmark.");
-    return [
-      BranchReportModel(
-        branchName: "Nagpur",
-        adminName: "R. Kulkarni",
-        sellersCount: 38,
-        buyersCount: 52,
-        contractsCount: 146,
-        gtvMtd: 2240000.0,
-        otdPercent: 91,
-        openIssues: 9,
-        status: "active",
-      ),
-      BranchReportModel(
-        branchName: "Katni",
-        adminName: "P. Singh",
-        sellersCount: 31,
-        buyersCount: 41,
-        contractsCount: 103,
-        gtvMtd: 1810000.0,
-        otdPercent: 87,
-        openIssues: 13,
-        status: "active",
-      ),
-      BranchReportModel(
-        branchName: "Indore",
-        adminName: "A. Jain",
-        sellersCount: 19,
-        buyersCount: 28,
-        contractsCount: 58,
-        gtvMtd: 970000.0,
-        otdPercent: 93,
-        openIssues: 4,
-        status: "active",
-      ),
-      BranchReportModel(
-        branchName: "Raipur",
-        adminName: "S. Verma",
-        sellersCount: 22,
-        buyersCount: 33,
-        contractsCount: 44,
-        gtvMtd: 720000.0,
-        otdPercent: 79,
-        openIssues: 11,
-        status: "watchlist",
-      ),
-    ];
+    // No sample numbers: an empty or failed report must not look like real branch data.
+    throw Exception(serverError ?? 'Could not load branch reports. Pull down to try again.');
   }
 }

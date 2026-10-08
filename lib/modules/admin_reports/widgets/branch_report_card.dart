@@ -167,7 +167,7 @@ class BranchReportCard extends StatelessWidget {
                   _divider(borderColor),
                   _subMetric(
                     label: "OTD %",
-                    value: "${report.otdPercent}%",
+                    value: report.otdLabel,
                     color: report.otdColor,
                     textMuted: textMuted,
                   ),
@@ -190,7 +190,7 @@ class BranchReportCard extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
-                      value: (report.otdPercent / 100).clamp(0.0, 1.0),
+                      value: ((report.otdPercent ?? 0) / 100).clamp(0.0, 1.0),
                       backgroundColor: isDark ? const Color(0xFF2C394F) : const Color(0xFFE2E8F0),
                       color: report.otdColor,
                       minHeight: 6,
@@ -199,7 +199,7 @@ class BranchReportCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  "On-Time: ${report.otdPercent}%",
+                  report.otdPercent == null ? "On-Time: no deliveries yet" : "On-Time: ${report.otdPercent}%",
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,

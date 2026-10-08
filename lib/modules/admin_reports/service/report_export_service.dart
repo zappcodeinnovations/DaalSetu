@@ -30,24 +30,29 @@ class ReportExportService {
       int totalSellers = 0;
       int totalBuyers = 0;
       int totalOtdSum = 0;
+      int otdBranches = 0;
 
       for (var r in reports) {
         totalGtv += r.gtvMtd;
         totalContracts += r.contractsCount;
         totalSellers += r.sellersCount;
         totalBuyers += r.buyersCount;
-        totalOtdSum += r.otdPercent;
+        if (r.otdPercent != null) {
+          totalOtdSum += r.otdPercent!;
+          otdBranches++;
+        }
 
         buffer.writeln(
-          '"${r.branchName}","${r.adminName}","${r.status.toUpperCase()}",${r.contractsCount},${r.gtvMtd.toStringAsFixed(2)},${r.sellersCount},${r.buyersCount},"${r.otdPercent}%",${r.openIssues}',
+          '"${r.branchName}","${r.adminName}","${r.status.toUpperCase()}",${r.contractsCount},${r.gtvMtd.toStringAsFixed(2)},${r.sellersCount},${r.buyersCount},"${r.otdLabel}",${r.openIssues}',
         );
       }
 
       // Summary Row
-      final avgOtd = reports.isNotEmpty ? (totalOtdSum / reports.length).toStringAsFixed(1) : "0";
+      final avgOtd = otdBranches > 0 ? "${(totalOtdSum / otdBranches).toStringAsFixed(1)}%" : "—";
+      final totalIssues = reports.fold<int>(0, (sum, r) => sum + r.openIssues);
       buffer.writeln("");
       buffer.writeln(
-        '"TOTAL / PLATFORM AVERAGE","ALL","ACTIVE",$totalContracts,${totalGtv.toStringAsFixed(2)},$totalSellers,$totalBuyers,"$avgOtd%",0',
+        '"TOTAL / PLATFORM AVERAGE","ALL","ACTIVE",$totalContracts,${totalGtv.toStringAsFixed(2)},$totalSellers,$totalBuyers,"$avgOtd",$totalIssues',
       );
 
       // Save to Temporary Directory
@@ -100,7 +105,7 @@ class ReportExportService {
       for (var r in reports) {
         buffer.writeln("🏢 *${r.branchName}* (${r.adminName})");
         buffer.writeln("   • GTV: ${r.formattedGtv} | Deals: ${r.contractsCount}");
-        buffer.writeln("   • OTD: ${r.otdPercent}% | Sellers: ${r.sellersCount}, Buyers: ${r.buyersCount}");
+        buffer.writeln("   • OTD: ${r.otdLabel} | Sellers: ${r.sellersCount}, Buyers: ${r.buyersCount}");
         buffer.writeln("");
       }
 

@@ -719,7 +719,16 @@ class AdminCreateChallanView extends StatelessWidget {
                         children: [
                           Icon(IconlyLight.document, size: 48, color: isDark ? Colors.white30 : Colors.grey[400]),
                           const SizedBox(height: 12),
-                          const Text("No confirmed contracts found"),
+                          const Text("No contracts ready for a challan"),
+                          const SizedBox(height: 6),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 24),
+                            child: Text(
+                              "A challan can be created once a transporter's bid on the contract is accepted.",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                          ),
                         ],
                       ),
                     );

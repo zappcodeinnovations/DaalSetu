@@ -8,7 +8,8 @@ class BranchReportModel {
   final int buyersCount;
   final int contractsCount;
   final double gtvMtd;
-  final int otdPercent;
+  /// On-time delivery %; null when the branch has no delivered challans yet.
+  final int? otdPercent;
   final int openIssues;
   final String status;
 
@@ -19,7 +20,7 @@ class BranchReportModel {
     required this.buyersCount,
     required this.contractsCount,
     required this.gtvMtd,
-    required this.otdPercent,
+    this.otdPercent,
     required this.openIssues,
     required this.status,
   });
@@ -32,7 +33,7 @@ class BranchReportModel {
       buyersCount: int.tryParse(json['buyers']?.toString() ?? '0') ?? 0,
       contractsCount: int.tryParse(json['contracts']?.toString() ?? '0') ?? 0,
       gtvMtd: double.tryParse(json['gtv_mtd']?.toString() ?? json['gtv']?.toString() ?? '0') ?? 0.0,
-      otdPercent: int.tryParse(json['otd_percent']?.toString() ?? '0') ?? 0,
+      otdPercent: int.tryParse(json['otd_percent']?.toString() ?? ''),
       openIssues: int.tryParse(json['open_issues']?.toString() ?? '0') ?? 0,
       status: json['status']?.toString().toLowerCase() ?? 'active',
     );
@@ -76,10 +77,14 @@ class BranchReportModel {
     }
   }
 
+  String get otdLabel => otdPercent == null ? '—' : '$otdPercent%';
+
   Color get otdColor {
-    if (otdPercent >= 90) {
+    final otd = otdPercent;
+    if (otd == null) return Colors.grey;
+    if (otd >= 90) {
       return const Color(0xFF059669);
-    } else if (otdPercent >= 80) {
+    } else if (otd >= 80) {
       return const Color(0xFF2563EB);
     } else {
       return const Color(0xFFD97706);

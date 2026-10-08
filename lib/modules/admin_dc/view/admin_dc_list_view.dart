@@ -280,7 +280,7 @@ class AdminChallanListView extends StatelessWidget {
   ) {
     final filters = [
       {'key': 'all', 'label': 'All'},
-      {'key': 'pending', 'label': 'Pending'},
+      {'key': 'pending', 'label': 'Draft'},
       {'key': 'dispatched', 'label': 'Dispatched'},
       {'key': 'delivered', 'label': 'Delivered'},
     ];

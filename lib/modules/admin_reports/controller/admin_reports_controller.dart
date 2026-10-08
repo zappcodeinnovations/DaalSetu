@@ -53,10 +53,11 @@ class AdminReportsController extends GetxController {
     }
   }
 
-  int get avgOtdPercent {
-    if (filteredReports.isEmpty) return 0;
-    final total = filteredReports.fold(0, (sum, r) => sum + r.otdPercent);
-    return (total / filteredReports.length).round();
+  /// Average over branches that have delivered challans; null when none have.
+  int? get avgOtdPercent {
+    final values = filteredReports.map((r) => r.otdPercent).whereType<int>().toList();
+    if (values.isEmpty) return null;
+    return (values.reduce((a, b) => a + b) / values.length).round();
   }
 
   List<String> get availableBranches {

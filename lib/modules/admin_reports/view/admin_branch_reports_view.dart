@@ -197,7 +197,7 @@ class AdminBranchReportsView extends StatelessWidget {
           const SizedBox(width: 8),
           _kpiCard(
             "Avg OTD",
-            "${controller.avgOtdPercent}%",
+            controller.avgOtdPercent == null ? "—" : "${controller.avgOtdPercent}%",
             const Color(0xFF059669),
             isDark,
           ),

@@ -19,6 +19,10 @@ class AdminCreateDCController extends GetxController {
   final selectedContract = Rxn<ContractModel>();
   final contractSearchQuery = ''.obs;
 
+  /// Contracts with an accepted transport bid (GET /api/transport-bids/?view=accepted), by contract id.
+  /// A challan can only be created for these, and they carry the transporter's truck/driver assignment.
+  final _acceptedByContract = <int, Map<String, dynamic>>{};
+
   // Text Controllers - Goods & Items
   final quantityController = TextEditingController();
   final bagCountController = TextEditingController();
@@ -81,7 +85,20 @@ class AdminCreateDCController extends GetxController {
     try {
       isLoadingContracts.value = true;
       debugPrint("📦 [AdminCreateDCController] Loading active contracts from server...");
-      final list = await AdminDCService.getActiveContracts();
+      var list = await AdminDCService.getActiveContracts();
+      try {
+        final accepted = await ApiClient.get(endpoint: '/api/transport-bids/?view=accepted', requireAuth: true);
+        _acceptedByContract
+          ..clear()
+          ..addAll({
+            for (final item in (accepted is Map && accepted['contracts'] is List ? accepted['contracts'] as List : const []))
+              if (item is Map && item['id'] != null) int.parse('${item['id']}'): Map<String, dynamic>.from(item),
+          });
+        // Same rule as the backend: only contracts whose transport bid was accepted can get a challan.
+        list = list.where((c) => _acceptedByContract.containsKey(c.id)).toList();
+      } catch (e) {
+        debugPrint("⚠️ [AdminCreateDCController] Accepted-bid list unavailable, showing all contracts: $e");
+      }
       contracts.assignAll(list);
       filteredContracts.assignAll(list);
       debugPrint("✅ [AdminCreateDCController] Successfully loaded ${contracts.length} contracts.");
@@ -132,6 +149,9 @@ class AdminCreateDCController extends GetxController {
   // ── Select Contract & Auto-fill All Details (Matching Website 1-to-1) ─────
   Future<void> selectContract(ContractModel contract) async {
     selectedContract.value = contract;
+    for (final c in [transporterNameController, truckNumberController, driverNameController, driverPhoneController, driverLicenseController]) {
+      c.clear();
+    }
 
     debugPrint("📦 [AdminCreateDCController] ========================================");
     debugPrint("📦 [AdminCreateDCController] Selected Contract: #${contract.contractId} (ID: ${contract.id})");
@@ -179,6 +199,7 @@ class AdminCreateDCController extends GetxController {
 
     // Auto-populate website-style Narration
     _updateNarration(contract);
+    _fillFromAcceptedBid(contract.id);
 
     // 2. Fetch Full Contract Details (Deep API call for complete items & logistics)
     try {
@@ -230,10 +251,7 @@ class AdminCreateDCController extends GetxController {
         driverLicenseController.text = detail.driverLicenseNumber!;
       }
 
-      // If transport details are still empty, probe transport bid endpoints or vehicle records
-      if (truckNumberController.text.isEmpty || driverNameController.text.isEmpty) {
-        await _fetchTransportBidsForContract(contract.id);
-      }
+      _fillFromAcceptedBid(contract.id);
 
       _calculateAmount();
       _updateNarration(contract, detail: detail);
@@ -254,102 +272,28 @@ class AdminCreateDCController extends GetxController {
     }
   }
 
-  // ── Probe Transport Bids & Vehicle Details ──────────────────────────────
-  Future<void> _fetchTransportBidsForContract(int contractId) async {
-    final candidateEndpoints = [
-      "/api/contracts/$contractId/transport-bids/",
-      "/contracts/$contractId/transport-bids/",
-      "/api/transport/contracts/accepted/",
-      "/transport/contracts/accepted/",
-      "/api/transporter/contracts/bid/$contractId/",
-      "/api/transporter/contracts/list/",
-    ];
-
-    for (final ep in candidateEndpoints) {
-      try {
-        debugPrint("🔍 [AdminCreateDCController] Probing transport bid endpoint: $ep");
-        final res = await ApiClient.get(endpoint: ep, requireAuth: true);
-        debugPrint("📥 [AdminCreateDCController] Probe $ep Response: $res");
-
-        if (res != null) {
-          dynamic targetBid;
-          if (res is List && res.isNotEmpty) {
-            targetBid = res.firstWhere(
-              (item) => item is Map && (item['status'] == 'accepted' || item['is_accepted'] == true || item['contract_id'] == contractId || item['contract'] == contractId),
-              orElse: () => res.first,
-            );
-          } else if (res is Map) {
-            if (res['results'] is List && (res['results'] as List).isNotEmpty) {
-              final list = res['results'] as List;
-              targetBid = list.firstWhere(
-                (item) => item is Map && (item['status'] == 'accepted' || item['is_accepted'] == true || item['contract_id'] == contractId || item['contract'] == contractId),
-                orElse: () => list.first,
-              );
-            } else if (res['data'] != null) {
-              targetBid = res['data'];
-            } else {
-              targetBid = res;
-            }
-          }
-
-          if (targetBid is Map) {
-            final tName = targetBid['transporter_name_display']?.toString() ??
-                targetBid['transporter_name']?.toString() ??
-                (targetBid['transporter'] is Map ? targetBid['transporter']['username']?.toString() ?? targetBid['transporter']['name']?.toString() : targetBid['transporter']?.toString());
-            final tTruck = targetBid['truck_number']?.toString() ?? targetBid['vehicle_number']?.toString() ?? (targetBid['vehicle'] is Map ? targetBid['vehicle']['vehicle_number']?.toString() : null);
-            final tDriver = targetBid['driver_name']?.toString() ?? (targetBid['driver'] is Map ? targetBid['driver']['name']?.toString() : null);
-            final tPhone = targetBid['driver_mobile']?.toString() ?? targetBid['driver_phone']?.toString() ?? (targetBid['driver'] is Map ? targetBid['driver']['mobile']?.toString() : null);
-            final tLicense = targetBid['driver_license_number']?.toString() ?? targetBid['driver_license']?.toString() ?? (targetBid['driver'] is Map ? targetBid['driver']['license_number']?.toString() : null);
-
-            if ((tTruck != null && tTruck.isNotEmpty) || (tDriver != null && tDriver.isNotEmpty)) {
-              if (tName != null && tName.isNotEmpty) transporterNameController.text = tName;
-              if (tTruck != null && tTruck.isNotEmpty) truckNumberController.text = tTruck;
-              if (tDriver != null && tDriver.isNotEmpty) driverNameController.text = tDriver;
-              if (tPhone != null && tPhone.isNotEmpty) driverPhoneController.text = tPhone;
-              if (tLicense != null && tLicense.isNotEmpty) driverLicenseController.text = tLicense;
-
-              debugPrint("🎯 [AdminCreateDCController] Found transport bid on $ep! Auto-filled: Truck: $tTruck, Driver: $tDriver, Phone: $tPhone, License: $tLicense, Transporter: $tName");
-              return;
-            }
-          }
+  /// Fills empty transport fields from the accepted bid's truck/driver assignment.
+  /// Fields stay empty when the transporter has not assigned yet; the admin types them,
+  /// or the backend fills them from the assignment on save.
+  void _fillFromAcceptedBid(int contractId) {
+    final bid = _acceptedByContract[contractId];
+    if (bid == null) return;
+    void fill(TextEditingController controller, List<String> keys) {
+      if (controller.text.trim().isNotEmpty) return;
+      for (final key in keys) {
+        final value = (bid[key] ?? '').toString().trim();
+        if (value.isNotEmpty) {
+          controller.text = value;
+          return;
         }
-      } catch (e) {
-        debugPrint("ℹ️ [AdminCreateDCController] Probe $ep note: $e");
       }
     }
 
-    // Fallback: If still empty, check vehicles from /api/vehicles/
-    if (truckNumberController.text.isEmpty) {
-      try {
-        debugPrint("🔍 [AdminCreateDCController] Probing /api/vehicles/ for assigned vehicle...");
-        final vRes = await ApiClient.get(endpoint: "/api/vehicles/", requireAuth: true);
-        if (vRes != null && vRes is List && vRes.isNotEmpty) {
-          final v = vRes.firstWhere(
-            (item) => item is Map && item['driver_name']?.toString().isNotEmpty == true,
-            orElse: () => vRes.first,
-          );
-          if (v is Map) {
-            final tName = v['transporter'] is Map ? v['transporter']['username']?.toString() : v['transporter_name']?.toString();
-            final tTruck = v['vehicle_number']?.toString() ?? v['truck_number']?.toString();
-            final tDriver = v['driver_name']?.toString() ?? v['assigned_driver_name']?.toString();
-            final tPhone = v['driver_phone_number']?.toString() ?? v['driver_mobile']?.toString();
-            final tLicense = v['driver_license_number']?.toString() ?? v['driver_license']?.toString();
-
-            if (tName != null && tName.isNotEmpty && transporterNameController.text.isEmpty) {
-              transporterNameController.text = tName;
-            }
-            if (tTruck != null && tTruck.isNotEmpty) truckNumberController.text = tTruck;
-            if (tDriver != null && tDriver.isNotEmpty) driverNameController.text = tDriver;
-            if (tPhone != null && tPhone.isNotEmpty) driverPhoneController.text = tPhone;
-            if (tLicense != null && tLicense.isNotEmpty) driverLicenseController.text = tLicense;
-
-            debugPrint("🎯 [AdminCreateDCController] Auto-filled from /api/vehicles/: Truck: $tTruck, Driver: $tDriver, Phone: $tPhone, License: $tLicense, Transporter: $tName");
-          }
-        }
-      } catch (e) {
-        debugPrint("ℹ️ [AdminCreateDCController] /api/vehicles/ note: $e");
-      }
-    }
+    fill(transporterNameController, const ['transporter_full_name', 'transporter_name']);
+    fill(truckNumberController, const ['truck_number']);
+    fill(driverNameController, const ['driver_name']);
+    fill(driverPhoneController, const ['driver_mobile']);
+    fill(driverLicenseController, const ['driver_license']);
   }
 
   void _calculateAmount() {
@@ -488,6 +432,7 @@ class AdminCreateDCController extends GetxController {
     }
 
     final contract = selectedContract.value!;
+    final bags = int.tryParse(bagCountController.text.trim()) ?? 0;
 
     // 2. Build Payload matching complete website submission
     final payload = {
@@ -505,10 +450,14 @@ class AdminCreateDCController extends GetxController {
       "driver_license_number": driverLicenseController.text.trim(),
       "driver_license": driverLicenseController.text.trim(),
       "dispatch_date": dispatchDateController.text.trim(),
-      "quantity": double.tryParse(quantityController.text.trim()) ?? 0.0,
-      "quantity_unit": contract.quantityUnit.isNotEmpty ? contract.quantityUnit.toLowerCase() : "qtl",
-      "bag_count": int.tryParse(bagCountController.text.trim()) ?? 0,
-      "packing_weight_kg": packingWeightController.text.trim(),
+      // Backend rule: bags (x packing weight) set the quantity; without bags the quantity is required.
+      if (bags > 0) ...{
+        "bag_count": bags,
+        "packing_weight_kg": packingWeightController.text.trim(),
+      } else ...{
+        "quantity": double.tryParse(quantityController.text.trim()) ?? 0.0,
+        "quantity_unit": contract.quantityUnit.isNotEmpty ? contract.quantityUnit.toLowerCase() : "qtl",
+      },
       "rate": double.tryParse(rateController.text.trim()) ?? 0.0,
       "total_amount": double.tryParse(amountController.text.trim()) ?? 0.0,
       "loading_from": loadingFromController.text.trim(),

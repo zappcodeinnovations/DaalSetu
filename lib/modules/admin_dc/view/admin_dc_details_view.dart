@@ -491,80 +491,224 @@ class AdminChallanDetailsView extends StatelessWidget {
       final challan = controller.challan.value;
       if (challan == null) return const SizedBox.shrink();
 
-      final status = (challan.status ?? 'pending').toLowerCase();
-      final isPending = status == 'pending';
+      // Backend statuses: draft, dispatched, delivered, cancelled.
+      final status = (challan.status ?? 'draft').toLowerCase();
+      final isDraft = status == 'draft' || status == 'pending';
+      final isDispatched = status == 'dispatched' || status == 'in_transit';
+      final busy = controller.isDispatching.value || controller.isWorking.value;
 
       final barBg = isDark ? const Color(0xFF1E2638) : Colors.white;
       final borderColor = isDark ? const Color(0xFF2C394F) : const Color(0xFFE2E8F0);
 
+      Widget primary(String label, IconData icon, Color color, VoidCallback onPressed) => SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: busy ? null : onPressed,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: color,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                elevation: 0,
+              ),
+              child: busy
+                  ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(icon, color: Colors.white, size: 20),
+                        const SizedBox(width: 8),
+                        Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+                      ],
+                    ),
+            ),
+          );
+
+      Widget secondary(String label, IconData icon, Color color, VoidCallback onPressed) => Expanded(
+            child: OutlinedButton.icon(
+              onPressed: busy ? null : onPressed,
+              icon: Icon(icon, size: 18, color: color),
+              label: Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w700)),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: color.withValues(alpha: 0.5)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          );
+
+      final Widget content;
+      if (isDraft) {
+        content = Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(children: [
+              secondary('Edit', Icons.edit_outlined, const Color(0xFF2563EB), () => _showEditSheet(context, controller)),
+              const SizedBox(width: 8),
+              secondary('Cancel', Icons.block, const Color(0xFFD97706), () => _confirm(
+                    context,
+                    title: 'Cancel Challan',
+                    message: 'Cancel this draft challan? Its truck and driver become free again.',
+                    confirmText: 'Cancel Challan',
+                    onConfirm: () => controller.runAction('cancel'),
+                  )),
+              const SizedBox(width: 8),
+              secondary('Delete', Icons.delete_outline, const Color(0xFFDC2626), () => _confirm(
+                    context,
+                    title: 'Delete Challan',
+                    message: 'Delete this draft challan permanently?',
+                    confirmText: 'Delete',
+                    onConfirm: controller.deleteChallan,
+                  )),
+            ]),
+            const SizedBox(height: 10),
+            primary('MARK AS DISPATCHED', Icons.send_rounded, const Color(0xFF2563EB), () => _confirmDispatch(context, controller)),
+          ],
+        );
+      } else if (isDispatched) {
+        content = primary('MARK AS DELIVERED', Icons.task_alt_rounded, const Color(0xFF059669), () => _confirm(
+              context,
+              title: 'Mark Delivered',
+              message: 'Confirm the goods reached the buyer?',
+              confirmText: 'Mark Delivered',
+              onConfirm: () => controller.runAction('deliver'),
+            ));
+      } else {
+        final cancelled = status == 'cancelled';
+        content = Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(cancelled ? Icons.block : Icons.check_circle, color: challan.statusColor, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                cancelled ? 'This challan was cancelled' : 'Shipment Completed & Delivered',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: challan.statusColor),
+              ),
+            ],
+          ),
+        );
+      }
+
       return Container(
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
-        decoration: BoxDecoration(
-          color: barBg,
-          border: Border(top: BorderSide(color: borderColor)),
-        ),
-        child: isPending
-            ? SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: controller.isDispatching.value
-                      ? null
-                      : () => _confirmDispatch(context, controller),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB), // Blue dispatch button
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    elevation: 0,
-                  ),
-                  child: controller.isDispatching.value
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
-                        )
-                      : const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.send_rounded, color: Colors.white, size: 20),
-                            SizedBox(width: 8),
-                            Text(
-                              "MARK AS DISPATCHED",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ],
-                        ),
-                ),
-              )
-            : Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                alignment: Alignment.center,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      status == 'delivered' ? Icons.check_circle : Icons.local_shipping,
-                      color: challan.statusColor,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      status == 'delivered'
-                          ? "Shipment Completed & Delivered"
-                          : "Shipment in Transit",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                        color: challan.statusColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+        decoration: BoxDecoration(color: barBg, border: Border(top: BorderSide(color: borderColor))),
+        child: content,
       );
+    });
+  }
+
+  void _confirm(
+    BuildContext context, {
+    required String title,
+    required String message,
+    required String confirmText,
+    required VoidCallback onConfirm,
+  }) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Back')),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              onConfirm();
+            },
+            child: Text(confirmText),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Draft edit: the same fields the web edit form sends to PATCH .../manage/.
+  void _showEditSheet(BuildContext context, AdminDCDetailsController controller) {
+    final data = controller.rawData.value ?? const <String, dynamic>{};
+    final items = data['items'] is List ? data['items'] as List : const [];
+    final firstItem = items.isNotEmpty && items.first is Map ? items.first as Map : const {};
+    String text(Object? value) => value == null ? '' : value.toString();
+    final fields = <String, TextEditingController>{
+      'truck_number': TextEditingController(text: text(data['truck_number'])),
+      'driver_name': TextEditingController(text: text(data['driver_name'])),
+      'driver_phone': TextEditingController(text: text(data['driver_mobile'])),
+      'driver_license': TextEditingController(text: text(data['driver_license_number'])),
+      'bag_count': TextEditingController(text: text(firstItem['bag_count'])),
+      'lorry_freight_per_bag': TextEditingController(text: text(data['lorry_freight_per_bag'])),
+      'loading_charges': TextEditingController(text: text(data['loading_charges'])),
+      'other_exp': TextEditingController(text: text(data['other_exp'])),
+      'less_advance': TextEditingController(text: text(data['less_advance'])),
+      'remarks': TextEditingController(text: text(data['narration'])),
+    };
+    const labels = {
+      'truck_number': 'Truck number',
+      'driver_name': 'Driver name',
+      'driver_phone': 'Driver mobile',
+      'driver_license': 'Driver license',
+      'bag_count': 'Bags',
+      'lorry_freight_per_bag': 'Lorry freight per bag',
+      'loading_charges': 'Loading charges',
+      'other_exp': 'Other expenses',
+      'less_advance': 'Less advance',
+      'remarks': 'Remarks / narration',
+    };
+    const numeric = {'driver_phone', 'bag_count', 'lorry_freight_per_bag', 'loading_charges', 'other_exp', 'less_advance'};
+    final original = {for (final e in fields.entries) e.key: e.value.text};
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.viewInsetsOf(sheetContext).bottom + 20),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('Edit Draft Challan', style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+              const SizedBox(height: 14),
+              for (final entry in fields.entries)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: TextField(
+                    controller: entry.value,
+                    maxLines: entry.key == 'remarks' ? 2 : 1,
+                    keyboardType: numeric.contains(entry.key)
+                        ? const TextInputType.numberWithOptions(decimal: true)
+                        : TextInputType.text,
+                    decoration: InputDecoration(labelText: labels[entry.key], border: const OutlineInputBorder()),
+                  ),
+                ),
+              Obx(() => FilledButton(
+                    onPressed: controller.isWorking.value
+                        ? null
+                        : () async {
+                            // Only changed fields are sent.
+                            final body = <String, dynamic>{
+                              for (final e in fields.entries)
+                                if (e.value.text.trim() != original[e.key]!.trim()) e.key: e.value.text.trim(),
+                            };
+                            if (body.isEmpty) {
+                              Navigator.pop(sheetContext);
+                              return;
+                            }
+                            final saved = await controller.saveEdit(body);
+                            if (saved && sheetContext.mounted) Navigator.pop(sheetContext);
+                          },
+                    child: const Text('Save changes'),
+                  )),
+            ],
+          ),
+        ),
+      ),
+    ).whenComplete(() {
+      for (final c in fields.values) {
+        c.dispose();
+      }
     });
   }
 

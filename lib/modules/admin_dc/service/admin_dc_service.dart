@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../comman/api_url.dart';
 import '../../../services/contract_services.dart';
 import '../../../utils/app_preferences.dart';
+import '../../../network/api_client.dart';
 import '../../contracts/model/contract_model.dart';
 import '../model/admin_challan_model.dart';
 
@@ -30,53 +31,50 @@ class AdminDCService {
   static Future<List<AdminChallanModel>> getDeliveryChallans({
     String? status,
     String? search,
-    int page = 1,
   }) async {
     final headers = await _buildHeaders();
-    List<AdminChallanModel> serverChallans = [];
-
-    // 1. Build Query Parameters
-    final queryParams = <String, String>{
-      'page': page.toString(),
-      if (status != null && status.isNotEmpty && status.toLowerCase() != 'all')
-        'status': status.toLowerCase(),
-      if (search != null && search.trim().isNotEmpty)
-        'search': search.trim(),
-    };
-
-    // 2. Attempt Admin Endpoint
-    final adminUrl = Uri.parse("${ApiUrls.baseUrl}${ApiUrls.adminDeliveryChallans}")
-        .replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
-    debugPrint("📦 [ADMIN DC API] Fetching from: $adminUrl");
-
-    try {
-      final res = await http.get(adminUrl, headers: headers).timeout(_timeout);
-      debugPrint("📦 [ADMIN DC API] Admin Endpoint HTTP Status: ${res.statusCode}");
-      debugPrint("📦 [ADMIN DC API] Admin Endpoint Response Body: ${res.body}");
-
-      if (res.statusCode >= 200 && res.statusCode < 300) {
-        final decoded = jsonDecode(res.body);
-        serverChallans = _parseChallansList(decoded);
-        debugPrint("✅ [ADMIN DC API] Successfully retrieved ${serverChallans.length} challans from Admin endpoint.");
-      } else {
-        debugPrint("⚠️ [ADMIN DC API] Admin endpoint returned ${res.statusCode}. Trying fallback seller endpoint...");
-        final sellerUrl = Uri.parse("${ApiUrls.baseUrl}${ApiUrls.sellerDeliveryChallans}");
-        final fallbackRes = await http.get(sellerUrl, headers: headers).timeout(_timeout);
-        if (fallbackRes.statusCode >= 200 && fallbackRes.statusCode < 300) {
-          final decoded = jsonDecode(fallbackRes.body);
-          serverChallans = _parseChallansList(decoded);
-          debugPrint("✅ [ADMIN DC API] Retrieved ${serverChallans.length} challans from fallback endpoint.");
-        }
+    final challans = <AdminChallanModel>[];
+    // The admin list is paginated; read every page (capped) so older challans are not hidden.
+    for (var page = 1; page <= 50; page++) {
+      final queryParams = <String, String>{
+        'page': '$page',
+        if (status != null && status.isNotEmpty && status.toLowerCase() != 'all') 'status': status.toLowerCase(),
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+      };
+      final url = Uri.parse("${ApiUrls.baseUrl}${ApiUrls.adminDeliveryChallans}").replace(queryParameters: queryParams);
+      final res = await http.get(url, headers: headers).timeout(_timeout);
+      if (res.statusCode < 200 || res.statusCode >= 300) {
+        throw Exception(extractResponseMessage(res.body, fallback: "Could not load delivery challans (${res.statusCode})."));
       }
-    } catch (e) {
-      debugPrint("⚠️ [ADMIN DC API] Server request note: $e");
+      final decoded = jsonDecode(res.body);
+      challans.addAll(_parseChallansList(decoded));
+      final pagination = decoded is Map ? decoded['pagination'] : null;
+      if (pagination is! Map || pagination['has_next'] != true) break;
     }
-
-    // 3. Clear any legacy local mock entries so data is 100% dependent on backend
     await clearLocalChallans();
+    return challans;
+  }
 
-    debugPrint("📦 [ADMIN DC API] Returning ${serverChallans.length} live challans from backend.");
-    return serverChallans;
+  /// Edit a draft challan (PATCH .../manage/). Same fields as the web edit form.
+  static Future<Map<String, dynamic>> updateChallan(int id, Map<String, dynamic> body) async {
+    final response = await ApiClient.patch(endpoint: ApiUrls.adminDeliveryChallanManage(id), data: body, requireAuth: true);
+    return Map<String, dynamic>.from(response);
+  }
+
+  /// action: dispatch | deliver | cancel.
+  static Future<Map<String, dynamic>> challanAction(int id, String action) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.adminDeliveryChallanManage(id),
+      body: {'action': action},
+      requireAuth: true,
+    );
+    return Map<String, dynamic>.from(response);
+  }
+
+  /// Only draft challans can be deleted.
+  static Future<Map<String, dynamic>> deleteChallan(int id) async {
+    final response = await ApiClient.delete(endpoint: ApiUrls.adminDeliveryChallanManage(id), requireAuth: true);
+    return Map<String, dynamic>.from(response);
   }
 
   /// ============================================================
