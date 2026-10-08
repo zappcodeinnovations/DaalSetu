@@ -1,7 +1,9 @@
 import 'package:daalsetu/modules/admin_catalog/config/admin_actions.dart';
 import 'package:daalsetu/modules/admin_catalog/config/admin_module_config.dart';
 import 'package:daalsetu/modules/admin_catalog/model/admin_record.dart';
+import 'package:daalsetu/modules/admin_catalog/repository/drawer_menu_service.dart';
 import 'package:daalsetu/modules/admin_catalog/view/admin_record_form_screen.dart';
+import 'package:daalsetu/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -43,6 +45,39 @@ void main() {
     expect(actions.map((a) => a.title), ['Approve', 'Reject']);
     expect(actions.first.isVisible!({'status': 'pending'}), isTrue);
     expect(actions.first.isVisible!({'status': 'approved'}), isFalse);
+  });
+
+  test('branch request config uses review APIs and pending-only actions', () {
+    final config = AdminModules.byKey('branch_requests');
+    expect(config.listEndpoint, '/api/admin/branch-requests/');
+    expect(config.filterOptions, ['pending', 'approved', 'rejected']);
+    expect(config.customActions.map((action) => action.title), ['Approve', 'Reject']);
+    expect(config.customActions.first.isVisible!({'status': 'pending'}), isTrue);
+    expect(config.customActions.first.isVisible!({'status': 'approved'}), isFalse);
+  });
+
+  test('branch master sends exactly one admin using web-compatible endpoints', () {
+    final config = AdminModules.byKey('branches');
+    final fields = {for (final field in config.fields) field.key: field};
+    expect(config.createEndpoint, '/api/branch/create/');
+    expect(config.updateEndpoint!('12'), '/api/branch/update/12/');
+    expect(config.deleteEndpoint!('12'), '/api/branch/delete/12/');
+    expect(config.updateMethod, AdminRequestMethod.post);
+    expect(fields['assigned_admin_ids']!.required, isTrue);
+    expect(fields['assigned_admin_ids']!.singleSelectAsList, isTrue);
+    expect(fields['assigned_admin_ids']!.optionsLoader, isNotNull);
+    expect(fields['is_active']!.sendAsBoolean, isTrue);
+  });
+
+  test('branch drawer permissions match backend access rules', () async {
+    final sections = await DrawerMenuService().fetchMenu();
+    final branchSection = sections.singleWhere((section) => section.sectionTitle == 'BRANCHES');
+    final items = {for (final item in branchSection.items) item.key: item};
+    expect(items['branch_requests']!.isVisibleFor('admin'), isTrue);
+    expect(items['branch_requests']!.isVisibleFor('sub_admin'), isFalse);
+    expect(items['branches']!.isVisibleFor('admin'), isFalse);
+    expect(items['branches']!.isVisibleFor('super_admin'), isTrue);
+    expect(items['branch_settings']!.route, AppRoutes.adminBranchSettings);
   });
 
   for (final key in ['vehicles', 'brands', 'sub_categories', 'offer_images', 'drivers']) {

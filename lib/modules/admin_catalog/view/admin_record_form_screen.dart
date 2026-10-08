@@ -91,6 +91,16 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
         continue;
       }
       final raw = field.hiddenValue ?? controllers[field.key]?.text.trim() ?? '';
+      if (field.singleSelectAsList) {
+        body[field.key] = raw.toString().isEmpty
+            ? <dynamic>[]
+            : <dynamic>[int.tryParse(raw.toString()) ?? raw];
+        continue;
+      }
+      if (field.sendAsBoolean) {
+        body[field.key] = raw.toString().toLowerCase() == 'true';
+        continue;
+      }
       final isChoice = field.options.isNotEmpty || field.optionsLoader != null;
       if (raw.toString().isEmpty && (field.isDate || isChoice)) {
         // An unpicked choice is left out so the backend keeps its default instead of rejecting "".

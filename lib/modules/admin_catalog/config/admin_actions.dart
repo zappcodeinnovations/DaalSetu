@@ -85,6 +85,9 @@ Future<List<AdminOption>> loadOfferOptions() => _load(
 Future<List<AdminOption>> loadSubAdminOptions() =>
     _load('/api/admin/sub-admin-accounts/?status=active', (u) => AdminOption('${u['id'] ?? ''}', _userLabel(u)));
 
+Future<List<AdminOption>> loadAdminOptions() =>
+    _load('/api/users/?role=admin', (u) => AdminOption('${u['id'] ?? ''}', _userLabel(u)));
+
 /// Dropdown data for the sub admin (web "Salesman") form, fetched once per form.
 Future<Map<String, dynamic>> _subAdminFormOptions() async {
   final response = await ApiClient.get(endpoint: '/api/admin/sub-admin-accounts/?view=options', requireAuth: true);

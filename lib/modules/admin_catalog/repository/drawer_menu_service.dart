@@ -93,6 +93,32 @@ class DrawerMenuService {
         ],
       ),
       DrawerMenuSection(
+        sectionTitle: 'BRANCHES',
+        items: [
+          DrawerMenuItem(
+            key: 'branch_requests',
+            title: AdminModules.byKey('branch_requests').title,
+            icon: AdminModules.byKey('branch_requests').icon,
+            route: AppRoutes.adminModule('branch_requests'),
+            requiredRoles: const ['super_admin', 'admin'],
+          ),
+          DrawerMenuItem(
+            key: 'branches',
+            title: AdminModules.byKey('branches').title,
+            icon: AdminModules.byKey('branches').icon,
+            route: AppRoutes.adminModule('branches'),
+            requiredRoles: const ['super_admin'],
+          ),
+          DrawerMenuItem(
+            key: 'branch_settings',
+            title: 'Branch Settings',
+            icon: Icons.tune_rounded,
+            route: AppRoutes.adminBranchSettings,
+            requiredRoles: const ['super_admin'],
+          ),
+        ],
+      ),
+      DrawerMenuSection(
         sectionTitle: 'OFFER',
         items: [
           DrawerMenuItem(

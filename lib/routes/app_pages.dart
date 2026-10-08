@@ -9,6 +9,7 @@ import '../modules/Auth/login/view/login_screen.dart';
 import '../modules/Auth/register/view/register_page.dart';
 import '../modules/admin_catalog/config/admin_module_config.dart';
 import '../modules/admin_catalog/view/admin_category_master_screen.dart';
+import '../modules/admin_catalog/view/admin_branch_settings_screen.dart';
 import '../modules/admin_catalog/view/admin_module_list_screen.dart';
 import '../modules/admin_catalog/view/admin_offers_list_screen.dart';
 import '../modules/buyer/dashboard/view/buyer_dashboard_view.dart';
@@ -174,6 +175,10 @@ class AppPages {
     GetPage(
       name: AppRoutes.adminCreateOffer,
       page: () => const AddProductScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.adminBranchSettings,
+      page: () => const AdminBranchSettingsScreen(),
     ),
 
     // ADMIN DELIVERY CHALLANS

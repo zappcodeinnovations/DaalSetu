@@ -39,6 +39,8 @@ class AdminFieldConfig {
     this.isFile = false,
     this.initialValue,
     this.createOnly = false,
+    this.singleSelectAsList = false,
+    this.sendAsBoolean = false,
   });
 
   final String key;
@@ -68,6 +70,12 @@ class AdminFieldConfig {
 
   /// Shown and sent only when creating (e.g. password).
   final bool createOnly;
+
+  /// Renders one dropdown but sends the selected id inside a one-item list.
+  final bool singleSelectAsList;
+
+  /// Converts the dropdown values `true` / `false` to JSON booleans.
+  final bool sendAsBoolean;
 }
 
 class AdminModuleConfig {
@@ -133,6 +141,16 @@ Object? parentAdminIdOf(Map<String, dynamic> record) =>
 
 Object? roleIdsOf(Map<String, dynamic> record) =>
     (record['roles'] is List ? record['roles'] as List : const []).map((role) => role is Map ? role['id'] : role).toList();
+
+Object? assignedAdminIdOf(Map<String, dynamic> record) {
+  final admins = record['assigned_admins'];
+  if (admins is List && admins.isNotEmpty) {
+    final first = admins.first;
+    return first is Map ? first['id'] : first;
+  }
+  final ids = record['assigned_admin_ids'];
+  return ids is List && ids.isNotEmpty ? ids.first : null;
+}
 
 class AdminModules {
   AdminModules._();
@@ -359,6 +377,111 @@ class AdminModules {
           noteRequired: true,
           destructive: true,
           isVisible: (record) => const ['pending', 'rejected'].contains((record['kyc_status'] ?? '').toString().toLowerCase()),
+        ),
+      ],
+    ),
+    'branch_requests': AdminModuleConfig(
+      key: 'branch_requests',
+      title: 'Branch Requests',
+      icon: Icons.how_to_reg_outlined,
+      listEndpoint: '/api/admin/branch-requests/',
+      titleKeys: const ['user'],
+      subtitleKeys: const ['status', 'branch', 'request_note', 'created_at'],
+      filterParameter: 'status',
+      filterOptions: const ['pending', 'approved', 'rejected'],
+      detailSections: [
+        const AdminDetailSection(
+          title: 'User',
+          fields: [
+            AdminDetailField('user.name', 'Name'),
+            AdminDetailField('user.mobile', 'Mobile', type: AdminDetailFieldType.phone),
+            AdminDetailField('user.role', 'Role'),
+          ],
+        ),
+        const AdminDetailSection(
+          title: 'Branch Request',
+          fields: [
+            AdminDetailField('id', 'Request ID', copyable: true),
+            AdminDetailField('branch.name', 'Branch'),
+            AdminDetailField('branch.branch_code', 'Branch Code', copyable: true),
+            AdminDetailField('status', 'Status', type: AdminDetailFieldType.status),
+            AdminDetailField('request_note', 'Request Note'),
+            AdminDetailField('created_at', 'Requested At', type: AdminDetailFieldType.date),
+            AdminDetailField('review_note', 'Review Note'),
+            AdminDetailField('reviewed_at', 'Reviewed At', type: AdminDetailFieldType.date),
+          ],
+        ),
+      ],
+      customActions: [
+        adminPostAction(
+          title: 'Approve',
+          icon: Icons.check_circle_outline,
+          endpoint: (record) => '/api/admin/branch-requests/${record['id']}/',
+          action: 'approve',
+          confirmMessage: 'Approve this user for the requested branch?',
+          noteKey: 'review_note',
+          noteLabel: 'Review note',
+          isVisible: (record) => recordStatus(record) == 'pending',
+        ),
+        adminPostAction(
+          title: 'Reject',
+          icon: Icons.cancel_outlined,
+          endpoint: (record) => '/api/admin/branch-requests/${record['id']}/',
+          action: 'reject',
+          confirmMessage: 'Reject this branch request?',
+          noteKey: 'review_note',
+          noteLabel: 'Review note',
+          destructive: true,
+          isVisible: (record) => recordStatus(record) == 'pending',
+        ),
+      ],
+    ),
+    'branches': AdminModuleConfig(
+      key: 'branches',
+      title: 'Branch Master',
+      icon: Icons.account_tree_outlined,
+      listEndpoint: '/api/admin/branches/',
+      titleKeys: const ['location_name', 'branch_code'],
+      subtitleKeys: const ['branch_code', 'state', 'city', 'is_active'],
+      filterParameter: 'status',
+      filterOptions: const ['active', 'inactive'],
+      createEndpoint: '/api/branch/create/',
+      updateEndpoint: (id) => '/api/branch/update/$id/',
+      deleteEndpoint: (id) => '/api/branch/delete/$id/',
+      updateMethod: AdminRequestMethod.post,
+      fields: [
+        const AdminFieldConfig('location_name', 'Location name', required: true),
+        const AdminFieldConfig('state', 'State', required: true),
+        const AdminFieldConfig('city', 'City', required: true),
+        const AdminFieldConfig('area', 'Area', required: true),
+        const AdminFieldConfig('is_active', 'Status', options: ['true', 'false'], optionLabels: {'true': 'Active', 'false': 'Inactive'}, defaultValue: 'true', sendAsBoolean: true),
+        AdminFieldConfig('assigned_admin_ids', 'Assigned admin', required: true, optionsLoader: loadAdminOptions, initialValue: assignedAdminIdOf, singleSelectAsList: true),
+      ],
+      detailSections: [
+        const AdminDetailSection(
+          title: 'Branch',
+          fields: [
+            AdminDetailField('location_name', 'Location'),
+            AdminDetailField('branch_code', 'Branch Code', copyable: true),
+            AdminDetailField('state', 'State'),
+            AdminDetailField('city', 'City'),
+            AdminDetailField('area', 'Area'),
+            AdminDetailField('is_active', 'Active', type: AdminDetailFieldType.boolean),
+            AdminDetailField('created_at', 'Created At', type: AdminDetailFieldType.date),
+          ],
+        ),
+        const AdminDetailSection(
+          title: 'Assignment',
+          fields: [AdminDetailField('assigned_admins', 'Assigned Admin')],
+        ),
+      ],
+      customActions: [
+        adminPostAction(
+          title: 'Toggle Status',
+          icon: Icons.toggle_on_outlined,
+          endpoint: (record) => '/api/branch/toggle/${record['id']}/',
+          action: 'toggle',
+          confirmMessage: 'Change this branch active status?',
         ),
       ],
     ),
