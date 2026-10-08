@@ -253,26 +253,7 @@ class BuyerServices {
       }
     }
 
-    // 1. Primary: Fetch active pending buyer interests & negotiations (deals awaiting confirmation / in negotiation)
-    try {
-      final interests = await getMyInterests();
-      for (var item in interests) {
-        if (item is Map) {
-          final s = (item['status'] ?? item['deal_status'] ?? '').toString().toLowerCase();
-          if (s == 'interested' ||
-              s == 'negotiation' ||
-              s == 'pending' ||
-              s == 'buyer_confirmed' ||
-              s == 'seller_confirmed' ||
-              s.contains('pending') ||
-              s.contains('negotiat')) {
-            addUnique(item);
-          }
-        }
-      }
-    } catch (_) {}
-
-    // 2. Also check pending endpoint
+    // 1. Primary server endpoint for pending offers (/api/offers/pending/)
     try {
       final response = await ApiClient.get(
         endpoint: ApiUrls.buyerPendingOffers,
@@ -283,22 +264,25 @@ class BuyerServices {
       for (var item in list) {
         addUnique(item);
       }
+      print("📦 [PENDING OFFERS] fetched ${pendingList.length} offers from ${ApiUrls.buyerPendingOffers}");
     } catch (e) {
       print("⚠️ Pending offers fetch error: $e");
     }
 
-    // 3. Fallback check for buyer-offers with pending status
-    try {
-      final response = await ApiClient.get(
-        endpoint: "${ApiUrls.buyerOffers}?status=pending",
-        requireAuth: true,
-        suppressErrorDialog: true,
-      );
-      final list = _extractList(response);
-      for (var item in list) {
-        addUnique(item);
-      }
-    } catch (_) {}
+    // 2. If endpoint returned empty, fallback to pending buyer offers
+    if (pendingList.isEmpty) {
+      try {
+        final response = await ApiClient.get(
+          endpoint: "${ApiUrls.buyerOffers}?status=pending",
+          requireAuth: true,
+          suppressErrorDialog: true,
+        );
+        final list = _extractList(response);
+        for (var item in list) {
+          addUnique(item);
+        }
+      } catch (_) {}
+    }
 
     return pendingList;
   }
@@ -322,7 +306,7 @@ class BuyerServices {
       }
     }
 
-    // 1. Primary server endpoint for previous listings (loads previous days' offers from server)
+    // 1. Primary server endpoint for previous listings (/api/offers/previous/)
     try {
       final response = await ApiClient.get(
         endpoint: ApiUrls.buyerPreviousOffers,
@@ -333,45 +317,43 @@ class BuyerServices {
       for (var item in list) {
         addUnique(item);
       }
+      print("📦 [PREVIOUS OFFERS] fetched ${previousList.length} offers from ${ApiUrls.buyerPreviousOffers}");
     } catch (e) {
       print("⚠️ Previous offers fetch error: $e");
     }
 
-    // 2. Fallback check for buyer-offers with previous status
-    try {
-      final response = await ApiClient.get(
-        endpoint: "${ApiUrls.buyerOffers}?status=previous",
-        requireAuth: true,
-        suppressErrorDialog: true,
-      );
-      final list = _extractList(response);
-      for (var item in list) {
-        addUnique(item);
-      }
-    } catch (_) {}
-
-    // 3. Fallback check for completed, closed, rejected or expired buyer deals
-    try {
-      final interests = await getMyInterests();
-      for (var item in interests) {
-        if (item is Map) {
-          final s = (item['status'] ?? item['deal_status'] ?? '').toString().toLowerCase();
-          if (s == 'deal_confirmed' ||
-              s == 'closed' ||
-              s == 'rejected' ||
-              s == 'expired' ||
-              s == 'completed' ||
-              s == 'cancelled' ||
-              s.contains('confirm') ||
-              s.contains('reject') ||
-              s.contains('close') ||
-              s.contains('expire') ||
-              s.contains('cancel')) {
-            addUnique(item);
+    // 2. If endpoint returned empty, load past offers / products created prior to today (previous days' offers)
+    if (previousList.isEmpty) {
+      try {
+        final response = await ApiClient.get(
+          endpoint: ApiUrls.products,
+          requireAuth: true,
+          suppressErrorDialog: true,
+        );
+        final list = _extractList(response);
+        print("📦 [PREVIOUS OFFERS] /api/products/ raw items count: ${list.length}");
+        for (var item in list) {
+          if (item is Map) {
+            final created = item['created_at'] ?? item['updated_at'] ?? item['created'];
+            // Exclude offers posted today so this tab specifically holds previous days' offers
+            if (!_isToday(created)) {
+              addUnique(item);
+            }
           }
         }
+        print("📦 [PREVIOUS OFFERS] after filtering prior to today: ${previousList.length}");
+
+        // If filtering by date was too strict, include all products
+        if (previousList.isEmpty && list.isNotEmpty) {
+          for (var item in list) {
+            addUnique(item);
+          }
+          print("📦 [PREVIOUS OFFERS] fallback to all products: ${previousList.length}");
+        }
+      } catch (e) {
+        print("⚠️ Previous offers fallback error: $e");
       }
-    } catch (_) {}
+    }
 
     return previousList;
   }
