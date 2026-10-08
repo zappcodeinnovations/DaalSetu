@@ -128,6 +128,8 @@ class ApiUrls {
   static const String sellerRFQs = "/api/rfqs/";
   static String rfqDetails(dynamic id) => "/api/rfqs/$id/";
   static String submitRFQQuote(dynamic rfqId) => "/api/rfqs/$rfqId/quote/";
+  static String buyerRequirementMessage(dynamic rfqId) => "/api/buyer-requirements/$rfqId/";
+  static String rfqMessage(dynamic rfqId) => "/api/rfqs/$rfqId/";
 
   // Contracts & Delivery Challans
   static const String mobileContracts = "/api/mobile/contracts/";

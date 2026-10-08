@@ -27,7 +27,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
   int? selectedCategoryId;
   int? selectedBrandId;
   String selectedUnit = "qtl";
-  String selectedAmountUnit = "ton";
+  String selectedAmountUnit = "qtl";
 
   List<CategoryTreeModel> categories = [];
   List<BrandModel> brands = [];
@@ -346,6 +346,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
                             if (val != null) {
                               setState(() {
                                 selectedUnit = val;
+                                selectedAmountUnit = val;
                                 _calculateBags();
                               });
                             }
@@ -366,7 +367,15 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
                           hint: "Per",
                           value: selectedAmountUnit,
                           items: ["qtl", "ton", "kg"].map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
-                          onChanged: (val) => setState(() => selectedAmountUnit = val!),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() {
+                                selectedUnit = val;
+                                selectedAmountUnit = val;
+                                _calculateBags();
+                              });
+                            }
+                          },
                           icon: Icons.unfold_more,
                         ),
                       ),

@@ -81,7 +81,13 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
                 ],
               ),
             ),
-            if (challan.status?.toLowerCase() == 'delivered' || challan.status?.toLowerCase() == 'dispatched')
+            if (() {
+              final status = challan.status?.toLowerCase() ?? '';
+              return (status == 'dispatched' || status == 'in_transit' || status == 'shipped') &&
+                  status != 'delivered' &&
+                  status != 'received' &&
+                  status != 'completed';
+            }())
               Positioned(
                 bottom: 16,
                 left: 16,

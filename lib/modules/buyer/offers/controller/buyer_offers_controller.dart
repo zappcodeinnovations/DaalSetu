@@ -87,8 +87,17 @@ class BuyerOffersController extends GetxController {
     }
   }
 
-  Future<bool> submitInterest(int productId, String amount, String qty, String remark) async {
-    print("⭐ [BUYER SUBMIT INTEREST TRIGGERED] Product ID: $productId | Amount: '$amount' | Qty: '$qty' | Remark: '$remark'");
+  Future<bool> submitInterest(
+    int productId,
+    String amount,
+    String qty,
+    String remark, {
+    String? deliveryDate,
+    String? loadingTo,
+    String? condition,
+    int? interestId,
+  }) async {
+    print("⭐ [BUYER SUBMIT INTEREST TRIGGERED] Product ID: $productId | Interest ID: $interestId | Amount: '$amount' | Qty: '$qty' | Date: '$deliveryDate' | To: '$loadingTo' | Condition: '$condition'");
     if (productId <= 0) {
       AppSnackbar.showWarning(title: "Notice", message: "Invalid product reference");
       return false;
@@ -109,6 +118,10 @@ class BuyerOffersController extends GetxController {
         productId,
         requestedAmount: amount,
         requestedQuantity: qty,
+        deliveryDate: deliveryDate,
+        loadingTo: loadingTo,
+        condition: condition,
+        interestId: interestId,
         remark: remark,
       );
 

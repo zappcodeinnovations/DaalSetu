@@ -4,17 +4,55 @@ import 'package:get/get.dart';
 
 class BuyerOfferDetailController extends GetxController {
   var isLoading = true.obs;
+  var isSending = false.obs;
   var offerDetails = Rxn<Map<String, dynamic>>();
 
-  Future<void> fetchDetails(int id) async {
+  Future<void> fetchDetails(int id, {bool silent = false}) async {
     try {
-      isLoading(true);
+      if (!silent) isLoading(true);
       final data = await BuyerServices.getOfferDetails(id);
       offerDetails.value = data;
     } catch (e) {
-      AppSnackbar.showError(title: "Error", message: "Could not fetch offer details");
+      if (!silent) {
+        AppSnackbar.showError(title: "Error", message: "Could not fetch offer details");
+      }
     } finally {
-      isLoading(false);
+      if (!silent) isLoading(false);
+    }
+  }
+
+  Future<void> sendQuoteMessage({
+    required dynamic rfqId,
+    required dynamic quotationId,
+    required String message,
+    dynamic counterPrice,
+    dynamic counterQuantity,
+    dynamic bagCount,
+    dynamic packingWeightKg,
+  }) async {
+    try {
+      isSending(true);
+      final res = await BuyerServices.sendBuyerRequirementMessage(
+        rfqId: rfqId,
+        quotationId: quotationId,
+        message: message,
+        counterPrice: counterPrice,
+        counterQuantity: counterQuantity,
+        bagCount: bagCount,
+        packingWeightKg: packingWeightKg,
+      );
+      AppSnackbar.showSuccess(
+        title: "Sent",
+        message: res['message'] ?? "Counter proposal sent successfully",
+      );
+      final numId = int.tryParse(rfqId.toString()) ?? 0;
+      if (numId > 0) {
+        await fetchDetails(numId, silent: true);
+      }
+    } catch (e) {
+      AppSnackbar.showError(title: "Failed", message: e.toString().replaceAll("Exception: ", ""));
+    } finally {
+      isSending(false);
     }
   }
 

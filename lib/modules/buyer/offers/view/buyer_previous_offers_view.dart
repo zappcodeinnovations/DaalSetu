@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:iconly/iconly.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../products/view/product_detail.dart';
 import '../controller/buyer_offers_controller.dart';
@@ -85,11 +86,19 @@ class BuyerPreviousOffersView extends StatelessWidget {
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final offer = offers[index];
+              final displayQty = (offer.displayQuantity != null && offer.displayQuantity!.isNotEmpty && offer.displayQuantity != 'N/A')
+                  ? offer.displayQuantity!
+                  : (offer.availableQuantity?.isNotEmpty == true
+                      ? "${offer.availableQuantity} ${offer.quantityUnit ?? 'QTL'}"
+                      : (offer.requestedQuantity?.isNotEmpty == true
+                          ? "${offer.requestedQuantity} ${offer.quantityUnit ?? 'QTL'}"
+                          : (offer.bagCount?.isNotEmpty == true ? "${offer.bagCount} Bags" : "0.000 QTL")));
+
               return InkWell(
                 borderRadius: BorderRadius.circular(16),
                 onTap: () => _openDetails(offer),
                 child: GlassCard(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -101,7 +110,7 @@ class BuyerPreviousOffersView extends StatelessWidget {
                               offer.displayTitle ?? 'Offer',
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: 15,
                                 color: theme.textTheme.bodyLarge?.color,
                               ),
                             ),
@@ -113,9 +122,9 @@ class BuyerPreviousOffersView extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              offer.displayStatus ?? '',
+                              offer.displayStatus ?? 'PREVIOUS',
                               style: GoogleFonts.inter(
-                                fontSize: 12,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: theme.colorScheme.primary,
                               ),
@@ -123,27 +132,71 @@ class BuyerPreviousOffersView extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Quantity: ${offer.displayQuantity}",
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              color: theme.textTheme.bodyMedium?.color,
-                            ),
+                      if (offer.code != null && offer.code!.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          offer.code!,
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.primary,
                           ),
-                          Text(
-                            offer.displayPrice ?? '',
-                            style: GoogleFonts.inter(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: theme.textTheme.bodyLarge?.color,
+                        ),
+                      ],
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: theme.cardColor.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("Available Quantity", style: GoogleFonts.inter(fontSize: 10, color: Colors.grey)),
+                                  Text(
+                                    displayQty,
+                                    style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                            Container(width: 1, height: 30, color: theme.dividerColor.withValues(alpha: 0.4)),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("Offer Price", style: GoogleFonts.inter(fontSize: 10, color: Colors.grey)),
+                                  Text(
+                                    offer.displayPrice?.isNotEmpty == true ? offer.displayPrice! : 'Open',
+                                    style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
+                      if (offer.brand != null || offer.category != null || offer.bagCount != null) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            if (offer.brand != null && offer.brand!.isNotEmpty)
+                              _buildChip(theme, Icons.branding_watermark_outlined, offer.brand!),
+                            if (offer.category != null && offer.category!.isNotEmpty && offer.category != offer.title)
+                              _buildChip(theme, Icons.grain, offer.category!),
+                            if (offer.bagCount != null && offer.bagCount!.isNotEmpty)
+                              _buildChip(theme, IconlyLight.work, "${offer.bagCount} Bags"),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -152,6 +205,32 @@ class BuyerPreviousOffersView extends StatelessWidget {
           ),
         );
       }),
+    );
+  }
+
+  Widget _buildChip(ThemeData theme, IconData icon, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.cardColor.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: theme.colorScheme.primary),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: theme.textTheme.bodyMedium?.color,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

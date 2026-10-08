@@ -197,6 +197,18 @@ class ApiClient {
           .timeout(_timeout);
       print("📥 STATUS CODE: ${response.statusCode}");
 
+      // Handle 301/302 redirects (Django Post-Redirect-Get pattern or trailing slash)
+      if (response.statusCode == 301 || response.statusCode == 302) {
+        final location = response.headers['location'] ?? '';
+        print("ℹ️ POST returned redirect 302/301 -> $location");
+        // If it redirected to a page view like /products/.../negotiation/, the POST was processed and saved
+        return <String, dynamic>{
+          "success": true,
+          "message": "Message sent successfully.",
+          "redirect_url": location,
+        };
+      }
+
       return _handleResponse(response, suppressErrorDialog: suppressErrorDialog);
     } on SocketException {
       print("❌ NO INTERNET: $endpoint");
@@ -249,7 +261,11 @@ class ApiClient {
   /// BUILD HEADERS
   /// ===============================
   static Future<Map<String, String>> _buildHeaders(bool requireAuth) async {
-    Map<String, String> headers = {"Content-Type": "application/json"};
+    Map<String, String> headers = {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      "X-Requested-With": "XMLHttpRequest",
+    };
 
     if (requireAuth) {
       final token = await AppPreferences.getAccessToken();
@@ -271,11 +287,13 @@ class ApiClient {
     final statusCode = response.statusCode;
     final body = response.body;
 
-    if (statusCode >= 200 && statusCode < 400) {
+    if (statusCode >= 200 && statusCode < 300) {
       print("📥 RESPONSE BODY: $body");
       if (body.trim().isEmpty) return <String, dynamic>{"success": true, "message": "Action successful"};
       try {
-        return jsonDecode(body);
+        final decoded = jsonDecode(body);
+        if (decoded is Map<String, dynamic>) return decoded;
+        return <String, dynamic>{"success": true, "data": decoded};
       } catch (_) {
         return <String, dynamic>{"success": true, "message": "Action successful"};
       }
