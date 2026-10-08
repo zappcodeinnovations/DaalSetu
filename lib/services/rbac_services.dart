@@ -201,11 +201,14 @@ class RbacServices {
     final searchParam = search.isNotEmpty ? "?search=${Uri.encodeComponent(search)}" : "";
 
     final endpoints = [
-      "${ApiUrls.rbacSubAdmins}$searchParam",
+      "/rbac/sub-admins/$searchParam",
+      "/api/sub-admins/$searchParam",
       "/api/admin/sub-admins/$searchParam",
       "/api/seller/sub-admins/$searchParam",
       "/api/buyer/sub-admins/$searchParam",
       "/api/company/sub-admins/$searchParam",
+      "/api/company/users/$searchParam",
+      "/users/$searchParam",
       "/api/users/?role=sub_admin${search.isNotEmpty ? '&search=${Uri.encodeComponent(search)}' : ''}",
       "/api/users/$searchParam",
     ];
@@ -217,12 +220,19 @@ class RbacServices {
           requireAuth: true,
           suppressErrorDialog: true,
         );
+
+        if (response is Map && response['raw'] is String) {
+          final fromHtml = _parseHtmlTable(response['raw'] as String);
+          if (fromHtml.isNotEmpty) {
+            return fromHtml;
+          }
+        }
+
         final list = _extractList(response);
         if (list.isNotEmpty) {
           final items = list
               .map((e) => RbacSubAdminModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e)))
               .where((s) {
-                // If fetching from general /api/users/, only keep sub_admins or users with custom roles
                 if (endpoint.contains("/api/users/")) {
                   return s.roles.isNotEmpty || s.branchRefCode.isNotEmpty || s.fullName.isNotEmpty;
                 }
@@ -238,6 +248,55 @@ class RbacServices {
     }
 
     return [];
+  }
+
+  static List<RbacSubAdminModel> _parseHtmlTable(String html) {
+    final list = <RbacSubAdminModel>[];
+    try {
+      final rowRegex = RegExp(r'<tr[^>]*>([\s\S]*?)<\/tr>', caseSensitive: false);
+      final cellRegex = RegExp(r'<td[^>]*>([\s\S]*?)<\/td>', caseSensitive: false);
+      final tagStripRegex = RegExp(r'<[^>]*>');
+
+      final rows = rowRegex.allMatches(html);
+      for (var row in rows) {
+        final rowContent = row.group(1) ?? '';
+        final cells = cellRegex.allMatches(rowContent).map((m) {
+          return (m.group(1) ?? '').replaceAll(tagStripRegex, '').trim();
+        }).toList();
+
+        if (cells.length >= 4) {
+          final name = cells[0];
+          final mobile = cells[1];
+          final company = cells[2];
+          final role = cells[3];
+          final status = cells.length >= 5 ? cells[4] : 'Active';
+
+          if (name.toLowerCase() == 'name' || mobile.toLowerCase() == 'mobile') continue;
+          if (name.isEmpty && mobile.isEmpty) continue;
+
+          final nameParts = name.split(' ');
+          final fName = nameParts.first;
+          final lName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+
+          final idMatch = RegExp(r'(?:data-id|user-id|users/|sub-admins/)["/]?(\d+)').firstMatch(rowContent);
+          final id = idMatch != null ? int.tryParse(idMatch.group(1)!) ?? 0 : list.length + 1;
+
+          list.add(RbacSubAdminModel(
+            id: id,
+            firstName: fName,
+            lastName: lName,
+            email: '',
+            mobile: mobile,
+            branchRefCode: '',
+            company: company,
+            roles: role.isNotEmpty ? [role] : [],
+            isActive: status.toLowerCase().contains('active'),
+            createdAt: '',
+          ));
+        }
+      }
+    } catch (_) {}
+    return list;
   }
 
   /// ============================================================
@@ -258,6 +317,7 @@ class RbacServices {
     final body = <String, dynamic>{
       "first_name": firstName,
       "last_name": lastName,
+      "name": "$firstName $lastName".trim(),
       "email": email,
       "mobile": mobile,
       "username": mobile.isNotEmpty ? mobile : email,
@@ -265,54 +325,36 @@ class RbacServices {
       "role": "sub_admin",
       "branch_ref_code": branchRefCode,
       if (company != null && company.isNotEmpty) "company": company,
+      if (company != null && company.isNotEmpty) "company_name": company,
       if (companyId != null) "company_id": companyId,
       if (roleIds != null && roleIds.isNotEmpty) "role_ids": roleIds,
       if (roleIds != null && roleIds.isNotEmpty) "roles": roleIds,
       if (roles != null && roles.isNotEmpty) "role_names": roles,
     };
 
-    // 1. Primary endpoint: POST /api/admin/sub-admins/
-    try {
-      return await ApiClient.post(
-        endpoint: ApiUrls.rbacSubAdmins,
-        body: body,
-        requireAuth: true,
-        suppressErrorDialog: true,
-      );
-    } catch (_) {}
+    final createEndpoints = [
+      "/rbac/sub-admins/",
+      ApiUrls.addUser, // /api/adduser/
+      ApiUrls.rbacSubAdmins, // /api/admin/sub-admins/
+      ApiUrls.rbacSubAdminsCreate, // /api/admin/sub-admins/create/
+      "/api/company/sub-admins/",
+      "/api/users/create/",
+      "/users/create/",
+    ];
 
-    // 2. Try POST /api/admin/sub-admins/create/
-    try {
-      return await ApiClient.post(
-        endpoint: ApiUrls.rbacSubAdminsCreate,
-        body: body,
-        requireAuth: true,
-        suppressErrorDialog: true,
-      );
-    } catch (_) {}
-
-    // 3. Try POST /api/company/sub-admins/
-    try {
-      return await ApiClient.post(
-        endpoint: "/api/company/sub-admins/",
-        body: body,
-        requireAuth: true,
-        suppressErrorDialog: true,
-      );
-    } catch (_) {}
-
-    // 4. Fallback: /api/adduser/
-    try {
-      return await ApiClient.post(
-        endpoint: ApiUrls.addUser,
-        body: body,
-        requireAuth: true,
-        suppressErrorDialog: true,
-      );
-    } catch (_) {}
+    for (var endpoint in createEndpoints) {
+      try {
+        return await ApiClient.post(
+          endpoint: endpoint,
+          body: body,
+          requireAuth: true,
+          suppressErrorDialog: true,
+        );
+      } catch (_) {}
+    }
 
     return await ApiClient.post(
-      endpoint: ApiUrls.rbacSubAdmins,
+      endpoint: ApiUrls.addUser,
       body: body,
       requireAuth: true,
     );
