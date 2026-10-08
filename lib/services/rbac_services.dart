@@ -249,15 +249,16 @@ class RbacServices {
       print("Local load error: $e");
     }
 
-    if (!_cache.any((s) => s.mobile == _defaultWebSubAdmin.mobile)) {
+    if (_cache.isEmpty) {
       _cache.add(_defaultWebSubAdmin);
     }
     return List.from(_cache);
   }
 
   static Future<void> _saveToLocal(List<RbacSubAdminModel> list) async {
+    final toSave = List<RbacSubAdminModel>.from(list);
     _cache.clear();
-    _cache.addAll(list);
+    _cache.addAll(toSave);
     try {
       final prefs = await SharedPreferences.getInstance();
       final mapped = _cache.map((e) => e.toJson()).toList();
@@ -300,21 +301,17 @@ class RbacServices {
               .toList();
 
           if (fetched.isNotEmpty) {
-            for (var item in fetched) {
-              final exists = _cache.any((c) =>
-                  (c.id > 0 && c.id == item.id) ||
-                  (c.mobile.isNotEmpty && c.mobile == item.mobile));
-              if (!exists) {
-                _cache.add(item);
-              } else {
-                final idx = _cache.indexWhere((c) =>
-                    (c.id > 0 && c.id == item.id) ||
-                    (c.mobile.isNotEmpty && c.mobile == item.mobile));
-                if (idx != -1) _cache[idx] = item;
+            final merged = List<RbacSubAdminModel>.from(fetched);
+            for (var cachedItem in _cache) {
+              final exists = merged.any((m) =>
+                  (m.id > 0 && m.id == cachedItem.id) ||
+                  (m.mobile.isNotEmpty && m.mobile == cachedItem.mobile));
+              if (!exists && cachedItem.id != _defaultWebSubAdmin.id) {
+                merged.add(cachedItem);
               }
             }
-            await _saveToLocal(_cache);
-            currentList = List.from(_cache);
+            await _saveToLocal(merged);
+            currentList = merged;
             break;
           }
         }
