@@ -322,7 +322,7 @@ class BuyerServices {
       print("⚠️ Previous offers fetch error: $e");
     }
 
-    // 2. If endpoint returned empty, load past offers / products created prior to today (previous days' offers)
+    // 2. If endpoint returned empty, load past active offers / products
     if (previousList.isEmpty) {
       try {
         final response = await ApiClient.get(
@@ -331,24 +331,36 @@ class BuyerServices {
           suppressErrorDialog: true,
         );
         final list = _extractList(response);
-        print("📦 [PREVIOUS OFFERS] /api/products/ raw items count: ${list.length}");
+
         for (var item in list) {
           if (item is Map) {
+            final bool isActive = (item['is_active'] == true || item['status']?.toString().toLowerCase() == 'active' || item['status_code']?.toString().toLowerCase() == 'active') &&
+                (item['is_active'] != false);
+            final bool isOutOfStock = (item['stock_status']?.toString().toLowerCase() == 'out_of_stock') ||
+                (item['status']?.toString().toLowerCase() == 'out_of_stock') ||
+                (item['status_code']?.toString().toLowerCase() == 'out_of_stock');
+            final bool isExpired = item['is_expired'] == true;
             final created = item['created_at'] ?? item['updated_at'] ?? item['created'];
-            // Exclude offers posted today so this tab specifically holds previous days' offers
-            if (!_isToday(created)) {
+
+            // Match active, in-stock, unexpired previous offers
+            if (isActive && !isOutOfStock && !isExpired && !_isToday(created)) {
               addUnique(item);
             }
           }
         }
-        print("📦 [PREVIOUS OFFERS] after filtering prior to today: ${previousList.length}");
 
-        // If filtering by date was too strict, include all products
+        // If date filter excluded everything, include all active in-stock products
         if (previousList.isEmpty && list.isNotEmpty) {
           for (var item in list) {
-            addUnique(item);
+            if (item is Map) {
+              final bool isActive = (item['is_active'] == true || item['status']?.toString().toLowerCase() == 'active') && (item['is_active'] != false);
+              final bool isOutOfStock = (item['stock_status']?.toString().toLowerCase() == 'out_of_stock') || (item['status']?.toString().toLowerCase() == 'out_of_stock');
+              final bool isExpired = item['is_expired'] == true;
+              if (isActive && !isOutOfStock && !isExpired) {
+                addUnique(item);
+              }
+            }
           }
-          print("📦 [PREVIOUS OFFERS] fallback to all products: ${previousList.length}");
         }
       } catch (e) {
         print("⚠️ Previous offers fallback error: $e");
