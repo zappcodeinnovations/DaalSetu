@@ -8,8 +8,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../theme/glass_widgets.dart';
 import '../../../theme/theme_controller.dart';
 import '../../../utils/app_preferences.dart';
-import '../../Auth/login/view/login_screen.dart';
 import '../../admin_catalog/view/admin_drawer.dart';
+import '../../admin_catalog/view/admin_module_list_screen.dart';
 import '../../seller/common/seller_ui.dart';
 import '../../../services/seller_services.dart';
 import 'package:daalsetu/theme/app_theme.dart';
@@ -78,6 +78,42 @@ class SettingsScreen extends StatelessWidget {
                     title: "Change Password",
                     subtitle: "Update your account password",
                     onTap: () => Get.toNamed(AppRoutes.change_password),
+                  ),
+                  FutureBuilder<String?>(
+                    future: AppPreferences.getRole(),
+                    builder: (context, snapshot) {
+                      const managerRoles = {
+                        'super_admin',
+                        'admin',
+                        'seller',
+                        'transporter',
+                        'both_sellerandbuyer',
+                      };
+                      final role = (snapshot.data ?? '').toLowerCase();
+                      if (!managerRoles.contains(role)) {
+                        return const SizedBox.shrink();
+                      }
+                      return Column(
+                        children: [
+                          _glassDivider(context),
+                          _buildTile(
+                            context,
+                            icon: Icons.admin_panel_settings_outlined,
+                            title: "Sub Admins",
+                            subtitle: "Create and manage your team accounts",
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const AdminModuleListScreen(
+                                  moduleKey: 'salesman',
+                                  showAdminDrawer: false,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                   // Re-approval request is only for party users; the server accepts it only for rejected KYC.
                   FutureBuilder<String?>(

@@ -13,9 +13,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class AdminModuleListScreen extends StatefulWidget {
-  const AdminModuleListScreen({super.key, required this.moduleKey});
+  const AdminModuleListScreen({
+    super.key,
+    required this.moduleKey,
+    this.showAdminDrawer = true,
+  });
 
   final String moduleKey;
+  final bool showAdminDrawer;
 
   @override
   State<AdminModuleListScreen> createState() => _AdminModuleListScreenState();
@@ -75,7 +80,9 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    drawer: AdminDrawer(activeKey: widget.moduleKey),
+    drawer: widget.showAdminDrawer
+        ? AdminDrawer(activeKey: widget.moduleKey)
+        : null,
     appBar: AppBar(
       title: Text(
         config.title,

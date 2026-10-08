@@ -221,7 +221,7 @@ class AdminModules {
     // Web "Salesman" panel = sub admin users (role sub_admin), managed with the same rules as the web form.
     'salesman': AdminModuleConfig(
       key: 'salesman',
-      title: 'Salesman',
+      title: 'Sub Admins',
       icon: Icons.support_agent_outlined,
       listEndpoint: '/api/admin/sub-admin-accounts/',
       titleKeys: const ['name', 'mobile'],
@@ -280,7 +280,7 @@ class AdminModules {
           icon: Icons.block_outlined,
           endpoint: (record) => '/api/admin/sub-admin-accounts/${record['id']}/',
           action: 'suspend',
-          confirmMessage: 'The salesman will not be able to log in until activated.',
+          confirmMessage: 'The Sub Admin will not be able to log in until activated.',
           noteKey: 'reason',
           noteLabel: 'Reason',
           noteRequired: true,
@@ -292,7 +292,7 @@ class AdminModules {
           icon: Icons.check_circle_outline,
           endpoint: (record) => '/api/admin/sub-admin-accounts/${record['id']}/',
           action: 'activate',
-          confirmMessage: 'Allow this salesman to log in again?',
+          confirmMessage: 'Allow this Sub Admin to log in again?',
           isVisible: (record) => recordStatus(record) != 'active',
         ),
       ],
