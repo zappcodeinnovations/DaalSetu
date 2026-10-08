@@ -8,11 +8,13 @@ import '../../common/seller_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'dart:async';
 
 class SellerProductController extends GetxController {
   var isLoading = true.obs;
   var isSaving = false.obs;
   var products = <SellerProductModel>[].obs;
+  Timer? _refreshTimer;
 
   // For Add Product (same fields as the web "Create Offer" form)
   var categories = <CategoryTreeModel>[].obs;
@@ -55,19 +57,20 @@ class SellerProductController extends GetxController {
     super.onInit();
     fetchProducts();
     fetchSupportData();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (_) => fetchProducts(silent: true));
   }
 
-  Future<void> fetchProducts() async {
+  Future<void> fetchProducts({bool silent = false}) async {
     try {
-      isLoading(true);
+      if (!silent) isLoading(true);
       final data = await SellerServices.getProducts();
       products.assignAll(
         data.map((e) => SellerProductModel.fromJson(e)).toList(),
       );
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      if (!silent) Get.snackbar("Error", e.toString());
     } finally {
-      isLoading(false);
+      if (!silent) isLoading(false);
     }
   }
 
@@ -323,6 +326,7 @@ class SellerProductController extends GetxController {
 
   @override
   void onClose() {
+    _refreshTimer?.cancel();
     for (final c in [
       titleController,
       descController,

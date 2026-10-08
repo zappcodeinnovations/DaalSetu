@@ -153,7 +153,7 @@ class SellerOfferInterestsView extends StatelessWidget {
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton.icon(
-                            onPressed: () => SellerCounterOfferDialog.show(context, controller, item),
+                            onPressed: item.id == null ? null : () => Get.to(() => SellerInterestThreadView(productId: productId, interestId: item.id!))?.then((_) => controller.fetchInterests()),
                             icon: const Icon(IconlyLight.chat, size: 16),
                             label: const Text("COUNTER"),
                             style: OutlinedButton.styleFrom(

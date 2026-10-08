@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:async';
 import '../../../../services/seller_services.dart';
 import '../../common/seller_ui.dart';
 
@@ -16,98 +17,140 @@ class SellerInterestThreadView extends StatefulWidget {
 class _SellerInterestThreadViewState extends State<SellerInterestThreadView> {
   Map<String, dynamic>? _data;
   bool _loading = true;
+  Timer? _refreshTimer;
+  bool _refreshInProgress = false;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) => _load(silent: true));
   }
 
-  Future<void> _load() async {
-    setState(() => _loading = true);
+  Future<void> _load({bool silent = false}) async {
+    if (_refreshInProgress) return;
+    _refreshInProgress = true;
+    if (!silent) setState(() => _loading = true);
     try {
       final response = await SellerServices.getOfferInterestThread(widget.productId, widget.interestId);
-      _data = response['data'] is Map<String, dynamic> ? response['data'] : null;
+      if (!mounted) return;
+      
+      final newData = response['data'] is Map<String, dynamic> ? response['data'] as Map<String, dynamic> : null;
+      final oldMessagesCount = ((_data?['messages'] as List?)?.length ?? 0);
+      final newMessagesCount = ((newData?['messages'] as List?)?.length ?? 0);
+      
+      _data = newData;
+      if (!silent || newMessagesCount > oldMessagesCount) {
+        if (mounted) _scrollToLatest();
+      }
     } catch (e) {
-      SellerUi.error(e);
+      if (!silent) SellerUi.error(e);
     } finally {
-      if (mounted) setState(() => _loading = false);
+      _refreshInProgress = false;
+      if (mounted && !silent) setState(() => _loading = false);
     }
   }
 
-  Future<void> _counter() async {
-    final price = TextEditingController();
-    final quantity = TextEditingController(text: '${_data?['required_quantity'] ?? ''}');
-    InputDecoration deco(String label) => InputDecoration(labelText: label, border: const OutlineInputBorder());
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text("Counter Offer", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: price, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: deco("Counter Price")),
-          const SizedBox(height: 10),
-          TextField(controller: quantity, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: deco("Counter Quantity")),
-        ]),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text("CANCEL")),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: SellerUi.primary),
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text("SEND", style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return;
+  final priceController = TextEditingController();
+  final quantityController = TextEditingController();
+  final bagController = TextEditingController();
+  final packingController = TextEditingController(text: '30');
+  final scrollController = ScrollController();
+  bool showPacking = false;
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    priceController.dispose();
+    quantityController.dispose();
+    bagController.dispose();
+    packingController.dispose();
+    scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToLatest() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (scrollController.hasClients) {
+        scrollController.animateTo(
+          scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  Future<void> _send() async {
+    final price = priceController.text.trim();
+    final quantity = quantityController.text.trim();
+    final bags = bagController.text.trim();
+    if (price.isEmpty && quantity.isEmpty && bags.isEmpty) {
+      SellerUi.error('Enter a counter price or quantity.');
+      return;
+    }
+    
     final result = await SellerUi.run(() => SellerServices.sendCounterOfferMessage(
           widget.productId,
           widget.interestId,
-          counterPrice: price.text.trim(),
-          counterQuantity: quantity.text.trim(),
+          counterPrice: price,
+          counterQuantity: quantity,
+          counterBagCount: bags.isEmpty ? null : int.tryParse(bags),
+          counterPackingWeightKg: bags.isEmpty ? null : packingController.text.trim(),
         ));
-    if (result != null) _load();
+    if (result != null) {
+      priceController.clear();
+      quantityController.clear();
+      bagController.clear();
+      if (mounted) setState(() => showPacking = false);
+      _load();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final data = _data;
     final rows = (data?['messages'] as List? ?? []).whereType<Map>().toList();
+    final bool canAction = data != null && data['can_seller_action'] == true && data['is_read_only'] != true;
+
     return Scaffold(
       appBar: SellerUi.appBar(context, "Negotiation"),
-      floatingActionButton: data != null && data['can_seller_action'] == true && data['is_read_only'] != true
-          ? FloatingActionButton.extended(
-              heroTag: null,
-              backgroundColor: SellerUi.primary,
-              onPressed: _counter,
-              icon: const Icon(Icons.swap_horiz, color: Colors.white),
-              label: const Text("COUNTER", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            )
-          : null,
       body: _loading && data == null
           ? const Center(child: CircularProgressIndicator(color: SellerUi.primary))
           : data == null
               ? const Center(child: Text("Negotiation not found"))
-              : RefreshIndicator(
-                  color: SellerUi.primary,
-                  onRefresh: _load,
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
-                    children: [
-                      SellerUi.section(context, data['product_title']?.toString() ?? 'Offer', [
-                        Align(alignment: Alignment.centerLeft, child: SellerUi.statusChip('${data['status']}')),
-                        const SizedBox(height: 8),
-                        SellerUi.infoRow("Buyer", data['buyer_display_id']?.toString()),
-                        SellerUi.infoRow("Buyer Price", "₹${data['offered_amount'] ?? '-'}", valueColor: SellerUi.primary),
-                        SellerUi.infoRow("Quantity", data['required_quantity']?.toString()),
-                        if (data['required_bag_count'] != null)
-                          SellerUi.infoRow("Bags", "${data['required_bag_count']} × ${data['packing_weight_kg'] ?? '-'} kg"),
-                        SellerUi.infoRow("Buyer Remark", data['buyer_remark']?.toString()),
-                      ]),
-                      if (rows.isEmpty)
-                        Center(child: Text("No negotiation yet.", style: TextStyle(color: Colors.grey.shade600))),
-                      ...rows.map((row) => _bubble(context, row)),
-                    ],
-                  ),
+              : Column(
+                  children: [
+                    Expanded(
+                      child: RefreshIndicator(
+                        color: SellerUi.primary,
+                        onRefresh: _load,
+                        child: ListView(
+                          controller: scrollController,
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+                          children: [
+                            SellerUi.section(context, data['product_title']?.toString() ?? 'Offer', [
+                              Align(alignment: Alignment.centerLeft, child: SellerUi.statusChip('${data['status']}')),
+                              const SizedBox(height: 8),
+                              SellerUi.infoRow("Buyer", data['buyer_display_id']?.toString()),
+                              SellerUi.infoRow("Buyer Price", "₹${data['offered_amount'] ?? '-'}", valueColor: SellerUi.primary),
+                              SellerUi.infoRow("Quantity", data['required_quantity']?.toString()),
+                              if (data['required_bag_count'] != null)
+                                SellerUi.infoRow("Bags", "${data['required_bag_count']} × ${data['packing_weight_kg'] ?? '-'} kg"),
+                              SellerUi.infoRow("Buyer Remark", data['buyer_remark']?.toString()),
+                            ]),
+                            if (rows.isEmpty)
+                              Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Text("No negotiation yet.", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade600)),
+                              ),
+                            ...rows.map((row) => _bubble(context, row)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (canAction) _composer(context),
+                  ],
                 ),
     );
   }
@@ -147,6 +190,51 @@ class _SellerInterestThreadViewState extends State<SellerInterestThreadView> {
             ...lines.map((l) => Text(l, style: const TextStyle(fontSize: 13))),
             const SizedBox(height: 2),
             Text(SellerUi.date(row['timestamp']), style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _composer(BuildContext context) {
+    InputDecoration decoration(String hint) => InputDecoration(
+          hintText: hint,
+          isDense: true,
+          filled: true,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(22), borderSide: BorderSide.none),
+        );
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+        decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, border: Border(top: BorderSide(color: Theme.of(context).dividerColor))),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (showPacking)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Expanded(child: TextField(controller: bagController, keyboardType: TextInputType.number, maxLength: 10, decoration: decoration('Bags'))),
+                    const SizedBox(width: 8),
+                    Expanded(child: TextField(controller: packingController, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: decoration('Packing KG'))),
+                  ],
+                ),
+              ),
+            Row(
+              children: [
+                IconButton(onPressed: () => setState(() => showPacking = !showPacking), icon: const Icon(Icons.inventory_2_outlined), tooltip: 'Bags & packing'),
+                Expanded(child: TextField(controller: priceController, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: decoration('Counter price'))),
+                const SizedBox(width: 8),
+                Expanded(child: TextField(controller: quantityController, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: decoration('Counter qty'))),
+                const SizedBox(width: 6),
+                CircleAvatar(
+                  backgroundColor: SellerUi.primary,
+                  child: IconButton(onPressed: _send, icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20)),
+                ),
+              ],
+            ),
           ],
         ),
       ),
