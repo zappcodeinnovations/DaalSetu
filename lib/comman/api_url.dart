@@ -142,8 +142,10 @@ class ApiUrls {
   static String rbacRoleDetails(dynamic id) => "/api/admin/roles/$id/";
   static const String rbacPermissions = "/api/admin/permissions/";
 
-  static const String rbacSubAdmins = "/api/admin/sub-admins/";
-  static const String rbacSubAdminsCreate = "/api/admin/sub-admins/create/";
-  static String rbacSubAdminDetails(dynamic id) => "/api/admin/sub-admins/$id/";
-  static String rbacSubAdminToggleStatus(dynamic id) => "/api/admin/sub-admins/$id/toggle-status/";
+  // Official Sub-Admin Accounts API
+  static const String rbacSubAdmins = "/api/admin/sub-admin-accounts/";
+  static const String rbacSubAdminOptions = "/api/admin/sub-admin-accounts/?view=options";
+  static String rbacSubAdminDetails(dynamic id) => "/api/admin/sub-admin-accounts/$id/";
+  static String rbacSubAdminAction(dynamic id) => "/api/admin/sub-admin-accounts/$id/";
+  static String rbacSubAdminPermissions(dynamic id) => "/api/admin/sub-admins/$id/permissions/";
 }

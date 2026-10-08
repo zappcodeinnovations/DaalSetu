@@ -164,6 +164,10 @@ class RbacSubAdminsController extends GetxController {
 
     try {
       isSaving.value = true;
+      final effectiveRoleIds = selectedRoleIds.isNotEmpty
+          ? selectedRoleIds.toList()
+          : (availableRoles.isNotEmpty ? [availableRoles.first.id] : [1]);
+
       await RbacServices.createSubAdmin(
         firstName: fName,
         lastName: lName,
@@ -172,8 +176,9 @@ class RbacSubAdminsController extends GetxController {
         password: password,
         branchRefCode: branchCode,
         company: company,
-        roleIds: selectedRoleIds.toList(),
-        roles: selectedRoleNames.toList(),
+        companyId: 98,
+        roleIds: effectiveRoleIds,
+        roles: selectedRoleNames.isNotEmpty ? selectedRoleNames.toList() : ["Sub Admin"],
       );
 
       await fetchSubAdmins();

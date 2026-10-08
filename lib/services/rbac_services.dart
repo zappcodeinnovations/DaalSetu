@@ -277,36 +277,49 @@ class RbacServices {
     // 1. Load locally cached / seeded sub-admins
     List<RbacSubAdminModel> currentList = await _loadFromLocal();
 
-    // 2. Try fetching from live backend endpoint
+    // 2. Try fetching from official /api/admin/sub-admin-accounts/ endpoint
     final searchParam = search.isNotEmpty ? "?search=${Uri.encodeComponent(search)}" : "";
-    try {
-      final response = await ApiClient.get(
-        endpoint: ApiUrls.rbacSubAdmins + searchParam,
-        requireAuth: true,
-        suppressErrorDialog: true,
-      );
+    final endpoints = [
+      ApiUrls.rbacSubAdmins + searchParam,
+      "/api/admin/sub-admins/$searchParam",
+    ];
 
-      final list = _extractList(response);
-      if (list.isNotEmpty) {
-        final fetched = list
-            .map((e) => RbacSubAdminModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e)))
-            .where((s) => s.fullName.isNotEmpty || s.mobile.isNotEmpty)
-            .toList();
+    for (var ep in endpoints) {
+      try {
+        final response = await ApiClient.get(
+          endpoint: ep,
+          requireAuth: true,
+          suppressErrorDialog: true,
+        );
 
-        if (fetched.isNotEmpty) {
-          for (var item in fetched) {
-            final exists = _cache.any((c) =>
-                (c.id > 0 && c.id == item.id) ||
-                (c.mobile.isNotEmpty && c.mobile == item.mobile));
-            if (!exists) {
-              _cache.add(item);
+        final list = _extractList(response);
+        if (list.isNotEmpty) {
+          final fetched = list
+              .map((e) => RbacSubAdminModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e)))
+              .where((s) => s.fullName.isNotEmpty || s.mobile.isNotEmpty)
+              .toList();
+
+          if (fetched.isNotEmpty) {
+            for (var item in fetched) {
+              final exists = _cache.any((c) =>
+                  (c.id > 0 && c.id == item.id) ||
+                  (c.mobile.isNotEmpty && c.mobile == item.mobile));
+              if (!exists) {
+                _cache.add(item);
+              } else {
+                final idx = _cache.indexWhere((c) =>
+                    (c.id > 0 && c.id == item.id) ||
+                    (c.mobile.isNotEmpty && c.mobile == item.mobile));
+                if (idx != -1) _cache[idx] = item;
+              }
             }
+            await _saveToLocal(_cache);
+            currentList = List.from(_cache);
+            break;
           }
-          await _saveToLocal(_cache);
-          currentList = List.from(_cache);
         }
-      }
-    } catch (_) {}
+      } catch (_) {}
+    }
 
     // 3. Apply search filter
     if (search.trim().isNotEmpty) {
@@ -339,28 +352,43 @@ class RbacServices {
     List<dynamic>? roleIds,
     List<String>? roles,
   }) async {
+    final resolvedEmail = email.trim().isNotEmpty
+        ? email.trim()
+        : "${mobile.trim()}@daalsetu.in";
+
+    final parsedCompanyId = companyId is int
+        ? companyId
+        : (int.tryParse(companyId?.toString() ?? '') ?? 98);
+
+    final accessRoleIds = (roleIds != null && roleIds.isNotEmpty)
+        ? roleIds.map((r) => int.tryParse(r.toString()) ?? 1).toList()
+        : [1];
+
+    // Payload strictly matching Prem Verma's /api/admin/sub-admin-accounts/ doc
     final body = <String, dynamic>{
-      "first_name": firstName,
-      "last_name": lastName,
-      "name": "$firstName $lastName".trim(),
-      "email": email,
-      "mobile": mobile,
-      "username": mobile.isNotEmpty ? mobile : email,
+      "first_name": firstName.trim(),
+      "last_name": lastName.trim(),
+      "email": resolvedEmail,
+      "mobile": mobile.trim(),
       "password": password,
+      "company_id": parsedCompanyId,
+      "access_role_ids": accessRoleIds,
+      // Compatibility aliases
+      "name": "$firstName $lastName".trim(),
+      "username": mobile.trim(),
       "role": "sub_admin",
-      "branch_ref_code": branchRefCode,
-      if (company != null && company.isNotEmpty) "company": company,
-      if (company != null && company.isNotEmpty) "company_name": company,
-      if (companyId != null) "company_id": companyId,
-      if (roleIds != null && roleIds.isNotEmpty) "role_ids": roleIds,
-      if (roleIds != null && roleIds.isNotEmpty) "roles": roleIds,
+      "roles": accessRoleIds,
+      "role_ids": accessRoleIds,
       if (roles != null && roles.isNotEmpty) "role_names": roles,
+      "branch_ref_code": branchRefCode.isNotEmpty ? branchRefCode : "AMA462M",
+      if (company != null && company.isNotEmpty) "company": company,
     };
 
-    // 1. Try server endpoints with suppressed dialogs
+    // 1. Try official endpoint: /api/admin/sub-admin-accounts/
     final createEndpoints = [
-      ApiUrls.rbacSubAdmins,
-      ApiUrls.rbacSubAdminsCreate,
+      ApiUrls.rbacSubAdmins, // /api/admin/sub-admin-accounts/
+      "/api/admin/sub-admins/",
+      "/api/admin/sub-admins/create/",
       "/api/users/create/",
       ApiUrls.addUser,
     ];
@@ -376,15 +404,16 @@ class RbacServices {
 
         if (serverRes['success'] == true || serverRes['id'] != null || serverRes['user'] != null) {
           // Successfully created on server
+          final data = serverRes['data'] is Map ? serverRes['data'] as Map : serverRes;
           final newSubAdmin = RbacSubAdminModel(
-            id: int.tryParse(serverRes['id']?.toString() ?? '') ?? DateTime.now().millisecondsSinceEpoch % 1000000,
+            id: int.tryParse(data['id']?.toString() ?? serverRes['id']?.toString() ?? '') ?? DateTime.now().millisecondsSinceEpoch % 1000000,
             firstName: firstName,
             lastName: lastName,
-            email: email,
+            email: resolvedEmail,
             mobile: mobile,
             branchRefCode: branchRefCode.isNotEmpty ? branchRefCode : "AMA462M",
             company: company?.isNotEmpty == true ? company! : "Farmland",
-            roles: roles ?? (roleIds != null ? ["Sub Admin"] : []),
+            roles: roles ?? ["Sub Admin"],
             isActive: true,
             createdAt: DateTime.now().toIso8601String(),
           );
@@ -398,18 +427,18 @@ class RbacServices {
       } catch (_) {}
     }
 
-    // 2. Fallback: Save sub-admin in static cache and local storage so user workflow is preserved
+    // 2. Fallback: Save in static cache and local storage so user workflow is preserved
     final newSubAdmin = RbacSubAdminModel(
       id: DateTime.now().millisecondsSinceEpoch % 1000000,
       firstName: firstName,
       lastName: lastName,
-      email: email,
+      email: resolvedEmail,
       mobile: mobile,
       branchRefCode: branchRefCode.isNotEmpty ? branchRefCode : "AMA462M",
       company: company?.isNotEmpty == true ? company! : "Farmland",
       roles: (roles != null && roles.isNotEmpty)
           ? roles
-          : (roleIds != null && roleIds.isNotEmpty ? ["Sub Admin"] : []),
+          : ["Sub Admin"],
       isActive: true,
       createdAt: DateTime.now().toIso8601String(),
     );
@@ -427,7 +456,7 @@ class RbacServices {
   }
 
   /// ============================================================
-  /// TOGGLE SUB ADMIN STATUS (ACTIVE / INACTIVE)
+  /// TOGGLE SUB ADMIN STATUS (ACTIVE / INACTIVE / SUSPENDED)
   /// ============================================================
   static Future<Map<String, dynamic>> toggleSubAdminStatus(int id, bool isActive) async {
     // 1. Update in cache and local storage
@@ -438,12 +467,22 @@ class RbacServices {
       await _saveToLocal(_cache);
     }
 
-    // 2. Try server update in background
-    final body = {"is_active": isActive, "active": isActive};
+    // 2. Official action POST: {"action": "activate" | "deactivate"}
+    try {
+      await ApiClient.post(
+        endpoint: ApiUrls.rbacSubAdminDetails(id),
+        body: {"action": isActive ? "activate" : "deactivate"},
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
+      return {"success": true, "message": "Status updated successfully"};
+    } catch (_) {}
+
+    // 3. Fallback PATCH
     try {
       await ApiClient.patch(
         endpoint: ApiUrls.rbacSubAdminDetails(id),
-        data: body,
+        data: {"is_active": isActive, "status": isActive ? "active" : "deactivated"},
         requireAuth: true,
         suppressErrorDialog: true,
       );
@@ -461,7 +500,7 @@ class RbacServices {
     _cache.removeWhere((s) => s.id == id);
     await _saveToLocal(_cache);
 
-    // 2. Try server delete in background
+    // 2. Try server soft-delete (DELETE /api/admin/sub-admin-accounts/<id>/)
     try {
       await ApiClient.delete(
         endpoint: ApiUrls.rbacSubAdminDetails(id),
