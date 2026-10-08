@@ -50,11 +50,79 @@ class SellerProductController extends GetxController {
     final unit = value ?? 'qtl';
     amountUnit.value = unit;
     quantityUnit.value = unit;
+    
+    if (quantityController.text.isNotEmpty) {
+      _onQuantityChanged();
+    } else if (bagCountController.text.isNotEmpty) {
+      _onBagsChanged();
+    }
+  }
+
+  double get _unitMultiplier {
+    switch (quantityUnit.value) {
+      case 'ton': return 1000.0;
+      case 'qtl': return 100.0;
+      case 'kg': default: return 1.0;
+    }
+  }
+
+  bool _isCalculating = false;
+
+  void _onBagsChanged() {
+    if (_isCalculating) return;
+    final bagsStr = bagCountController.text.trim();
+    final packingStr = packingWeightController.text.trim();
+    if (bagsStr.isEmpty || packingStr.isEmpty) return;
+    
+    final bags = double.tryParse(bagsStr)?.ceil();
+    final packing = double.tryParse(packingStr);
+    if (bags != null && packing != null && packing > 0) {
+      final quantityInKg = bags * packing;
+      final quantity = quantityInKg / _unitMultiplier;
+      final newQty = quantity.toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '');
+      if (quantityController.text != newQty) {
+        _isCalculating = true;
+        quantityController.text = newQty;
+        _isCalculating = false;
+      }
+    }
+  }
+
+  void _onQuantityChanged() {
+    if (_isCalculating) return;
+    final qtyStr = quantityController.text.trim();
+    final packingStr = packingWeightController.text.trim();
+    if (qtyStr.isEmpty || packingStr.isEmpty) return;
+    
+    final qty = double.tryParse(qtyStr);
+    final packing = double.tryParse(packingStr);
+    if (qty != null && packing != null && packing > 0) {
+      final quantityInKg = qty * _unitMultiplier;
+      final newBags = (quantityInKg / packing).ceil().toString();
+      if (bagCountController.text != newBags) {
+        _isCalculating = true;
+        bagCountController.text = newBags;
+        _isCalculating = false;
+      }
+    }
+  }
+
+  void _onPackingChanged() {
+    if (_isCalculating) return;
+    if (bagCountController.text.isNotEmpty) {
+      _onBagsChanged();
+    } else if (quantityController.text.isNotEmpty) {
+      _onQuantityChanged();
+    }
   }
 
   @override
   void onInit() {
     super.onInit();
+    bagCountController.addListener(_onBagsChanged);
+    quantityController.addListener(_onQuantityChanged);
+    packingWeightController.addListener(_onPackingChanged);
+    
     fetchProducts();
     fetchSupportData();
     _refreshTimer = Timer.periodic(const Duration(seconds: 10), (_) => fetchProducts(silent: true));
@@ -101,9 +169,9 @@ class SellerProductController extends GetxController {
     try {
       companies.assignAll(await SellerServices.getCompanies());
       if (selectedCompanyId.value == null && companies.isNotEmpty) {
-        selectedCompanyId.value = companies
-            .firstWhere((c) => c.isPrimary, orElse: () => companies.first)
-            .id;
+        final primary = companies.firstWhere((c) => c.isPrimary, orElse: () => companies.first);
+        selectedCompanyId.value = primary.id;
+        sellerName.value = primary.legalName;
       }
     } catch (e) {
       debugPrint("Error fetching companies: $e");
