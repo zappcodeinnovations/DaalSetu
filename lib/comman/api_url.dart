@@ -137,13 +137,13 @@ class ApiUrls {
   static String sellerDispatchChallan(dynamic id) => "/api/seller/delivery-challans/$id/dispatch/";
 
   // RBAC & Sub-Admins
-  static const String rbacRoles = "/api/rbac/roles/";
-  static const String rbacRolesCreate = "/api/rbac/roles/create/";
-  static String rbacRoleDetails(dynamic id) => "/api/rbac/roles/$id/";
-  static const String rbacPermissions = "/api/rbac/permissions/";
+  static const String rbacRoles = "/api/admin/roles/";
+  static const String rbacRolesCreate = "/api/admin/roles/";
+  static String rbacRoleDetails(dynamic id) => "/api/admin/roles/$id/";
+  static const String rbacPermissions = "/api/admin/permissions/";
 
-  static const String rbacSubAdmins = "/api/rbac/sub-admins/";
-  static const String rbacSubAdminsCreate = "/api/rbac/sub-admins/create/";
-  static String rbacSubAdminDetails(dynamic id) => "/api/rbac/sub-admins/$id/";
-  static String rbacSubAdminToggleStatus(dynamic id) => "/api/rbac/sub-admins/$id/toggle-status/";
+  static const String rbacSubAdmins = "/api/admin/sub-admins/";
+  static const String rbacSubAdminsCreate = "/api/admin/sub-admins/create/";
+  static String rbacSubAdminDetails(dynamic id) => "/api/admin/sub-admins/$id/";
+  static String rbacSubAdminToggleStatus(dynamic id) => "/api/admin/sub-admins/$id/toggle-status/";
 }

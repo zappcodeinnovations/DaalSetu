@@ -8,7 +8,7 @@ class RbacServices {
   /// FETCH ALL ROLES
   /// ============================================================
   static Future<List<RbacRoleModel>> getRoles({String search = ""}) async {
-    // 1. Try canonical /api/rbac/roles/
+    // 1. Primary: /api/admin/roles/
     try {
       String endpoint = ApiUrls.rbacRoles;
       if (search.isNotEmpty) endpoint += "?search=${Uri.encodeComponent(search)}";
@@ -25,22 +25,25 @@ class RbacServices {
       }
     } catch (_) {}
 
-    // 2. Fallback: /api/seller/roles/ or /api/roles/
+    // 2. Fallback: /api/company/roles/
     try {
       final response = await ApiClient.get(
-        endpoint: "/api/seller/roles/",
+        endpoint: "/api/company/roles/",
         requireAuth: true,
         suppressErrorDialog: true,
       );
       final list = _extractList(response);
-      return list
-          .map((e) => RbacRoleModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e)))
-          .toList();
+      if (list.isNotEmpty) {
+        return list
+            .map((e) => RbacRoleModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e)))
+            .toList();
+      }
     } catch (_) {}
 
+    // 3. Fallback: /api/seller/roles/
     try {
       final response = await ApiClient.get(
-        endpoint: "/api/roles/",
+        endpoint: "/api/seller/roles/",
         requireAuth: true,
         suppressErrorDialog: true,
       );
@@ -68,7 +71,7 @@ class RbacServices {
       "permissions": permissions,
     };
 
-    // 1. Primary endpoint
+    // 1. Primary endpoint: /api/admin/roles/
     try {
       return await ApiClient.post(
         endpoint: ApiUrls.rbacRoles,
@@ -78,10 +81,10 @@ class RbacServices {
       );
     } catch (_) {}
 
-    // 2. Fallback endpoint
+    // 2. Fallback endpoint: /api/company/roles/
     try {
       return await ApiClient.post(
-        endpoint: ApiUrls.rbacRolesCreate,
+        endpoint: "/api/company/roles/",
         body: body,
         requireAuth: true,
         suppressErrorDialog: true,
@@ -140,7 +143,7 @@ class RbacServices {
     } catch (_) {}
 
     return await ApiClient.delete(
-      endpoint: "/api/roles/$id/",
+      endpoint: "/api/company/roles/$id/",
       requireAuth: true,
     );
   }
@@ -149,7 +152,7 @@ class RbacServices {
   /// FETCH ALL SUB ADMINS
   /// ============================================================
   static Future<List<RbacSubAdminModel>> getSubAdmins({String search = ""}) async {
-    // 1. Try canonical /api/rbac/sub-admins/
+    // 1. Primary: /api/admin/sub-admins/
     try {
       String endpoint = ApiUrls.rbacSubAdmins;
       if (search.isNotEmpty) endpoint += "?search=${Uri.encodeComponent(search)}";
@@ -166,23 +169,25 @@ class RbacServices {
       }
     } catch (_) {}
 
-    // 2. Fallback /api/seller/sub-admins/
+    // 2. Fallback: /api/company/sub-admins/
     try {
       final response = await ApiClient.get(
-        endpoint: "/api/seller/sub-admins/",
+        endpoint: "/api/company/sub-admins/",
         requireAuth: true,
         suppressErrorDialog: true,
       );
       final list = _extractList(response);
-      return list
-          .map((e) => RbacSubAdminModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e)))
-          .toList();
+      if (list.isNotEmpty) {
+        return list
+            .map((e) => RbacSubAdminModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e)))
+            .toList();
+      }
     } catch (_) {}
 
-    // 3. Fallback /api/sub-admins/
+    // 3. Fallback: /api/users/?role=sub_admin
     try {
       final response = await ApiClient.get(
-        endpoint: "/api/sub-admins/",
+        endpoint: "/api/users/?role=sub_admin",
         requireAuth: true,
         suppressErrorDialog: true,
       );
@@ -217,6 +222,7 @@ class RbacServices {
       "mobile": mobile,
       "username": mobile.isNotEmpty ? mobile : email,
       "password": password,
+      "role": "sub_admin",
       "branch_ref_code": branchRefCode,
       if (company != null && company.isNotEmpty) "company": company,
       if (companyId != null) "company_id": companyId,
@@ -225,7 +231,7 @@ class RbacServices {
       if (roles != null && roles.isNotEmpty) "role_names": roles,
     };
 
-    // 1. Try canonical /api/rbac/sub-admins/
+    // 1. Primary endpoint: POST /api/admin/sub-admins/
     try {
       return await ApiClient.post(
         endpoint: ApiUrls.rbacSubAdmins,
@@ -235,7 +241,7 @@ class RbacServices {
       );
     } catch (_) {}
 
-    // 2. Try /api/rbac/sub-admins/create/
+    // 2. Try POST /api/admin/sub-admins/create/
     try {
       return await ApiClient.post(
         endpoint: ApiUrls.rbacSubAdminsCreate,
@@ -245,9 +251,29 @@ class RbacServices {
       );
     } catch (_) {}
 
-    // 3. Fallback /api/seller/sub-admins/create/
+    // 3. Try POST /api/company/sub-admins/
+    try {
+      return await ApiClient.post(
+        endpoint: "/api/company/sub-admins/",
+        body: body,
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
+    } catch (_) {}
+
+    // 4. Fallback: /api/adduser/ (standard user creation with role)
+    try {
+      return await ApiClient.post(
+        endpoint: ApiUrls.addUser,
+        body: body,
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
+    } catch (_) {}
+
+    // Final fallback
     return await ApiClient.post(
-      endpoint: "/api/seller/sub-admins/create/",
+      endpoint: ApiUrls.rbacSubAdmins,
       body: body,
       requireAuth: true,
     );
@@ -277,7 +303,7 @@ class RbacServices {
     } catch (_) {}
 
     return await ApiClient.patch(
-      endpoint: "/api/sub-admins/$id/",
+      endpoint: "/api/users/$id/",
       data: body,
       requireAuth: true,
     );
@@ -296,7 +322,7 @@ class RbacServices {
     } catch (_) {}
 
     return await ApiClient.delete(
-      endpoint: "/api/sub-admins/$id/",
+      endpoint: "/api/users/$id/",
       requireAuth: true,
     );
   }
@@ -312,6 +338,7 @@ class RbacServices {
       if (response['data'] is List) return response['data'] as List;
       if (response['roles'] is List) return response['roles'] as List;
       if (response['sub_admins'] is List) return response['sub_admins'] as List;
+      if (response['users'] is List) return response['users'] as List;
       if (response['items'] is List) return response['items'] as List;
     }
     return [];
