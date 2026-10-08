@@ -130,7 +130,7 @@ class _TransporterDriverFormState extends State<TransporterDriverForm> {
                 _textField("Phone Number *", _phoneCtrl,
                     required: true,
                     keyboard: TextInputType.phone,
-                    formatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(15)],
+                    formatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
                     validator: (v) => (v ?? '').trim().length < 10 ? "Phone number must be 10-15 digits" : null),
                 _textField("Email", _emailCtrl,
                     keyboard: TextInputType.emailAddress,
@@ -167,7 +167,8 @@ class _TransporterDriverFormState extends State<TransporterDriverForm> {
                   ),
                 ),
                 _textField("Experience (Years)", _experienceCtrl,
-                    keyboard: TextInputType.number, formatters: [FilteringTextInputFormatter.digitsOnly]),
+                    keyboard: TextInputType.number,
+                    formatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)]),
 
                 _sectionTitle("Other Details"),
                 _textField("Address", _addressCtrl, maxLines: 2),

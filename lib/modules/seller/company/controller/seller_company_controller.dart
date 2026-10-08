@@ -3,6 +3,7 @@ import '../../../../services/seller_services.dart';
 import '../../common/seller_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:daalsetu/utils/tax_id_formatters.dart';
 
 class SellerCompanyController extends GetxController {
   var isLoading = true.obs;
@@ -69,33 +70,30 @@ class SellerCompanyController extends GetxController {
   }
 
   bool _validateFields() {
-    final pan = panController.text.trim();
-    final gst = gstController.text.trim();
-
-    // PAN Validation
-    if (pan.length != 10) {
-      Get.snackbar("Validation Error", "PAN number must be exactly 10 characters.");
+    panController.text = panController.text.trim().toUpperCase();
+    gstController.text = gstController.text.trim().toUpperCase();
+    final panError = TaxIdValidator.pan(panController.text, required: true);
+    if (panError != null) {
+      Get.snackbar("Validation Error", panError);
       return false;
     }
-    final panRegex = RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]{1}$');
-    if (!panRegex.hasMatch(pan)) {
-      Get.snackbar("Validation Error", "Invalid PAN format. Use 5 letters + 4 digits + 1 letter (e.g., ABCDE1234F).");
+    final gstError = TaxIdValidator.gst(gstController.text, required: true);
+    if (gstError != null) {
+      Get.snackbar("Validation Error", gstError);
       return false;
     }
-
-    // GST Validation
-    if (gst.length != 15) {
-      Get.snackbar("Validation Error", "GST number must be exactly 15 characters.");
-      return false;
-    }
-    // GST format: 2 digits + PAN(10) + 1 digit + Z + 1 alphanumeric
-    final gstRegex = RegExp(r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9A-Z]{1}Z[0-9A-Z]{1}$');
-    if (!gstRegex.hasMatch(gst)) {
-      Get.snackbar("Validation Error", "Invalid GST format. Use: 2 digits + PAN(10) + 1 digit + Z + 1 alphanumeric (e.g., 27ABCDE1234F1Z5).");
+    final gstPanError = TaxIdValidator.gstMatchesPan(
+      panController.text,
+      gstController.text,
+    );
+    if (gstPanError != null) {
+      Get.snackbar("Validation Error", gstPanError);
       return false;
     }
 
-    if (legalNameController.text.isEmpty || cityController.text.isEmpty || stateController.text.isEmpty) {
+    if (legalNameController.text.isEmpty ||
+        cityController.text.isEmpty ||
+        stateController.text.isEmpty) {
       Get.snackbar("Validation Error", "Please fill all required fields.");
       return false;
     }
@@ -109,12 +107,12 @@ class SellerCompanyController extends GetxController {
       final Map<String, dynamic> body = _buildRequestBody();
 
       final newCompany = await SellerServices.createCompany(body);
-      
+
       await fetchCompanyDetails(newCompany.id);
-      
-      Get.back(); 
+
+      Get.back();
       Get.snackbar("Success", "Company created successfully");
-      fetchCompanies(); 
+      fetchCompanies();
     } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {
@@ -129,10 +127,10 @@ class SellerCompanyController extends GetxController {
       final Map<String, dynamic> body = _buildRequestBody();
 
       await SellerServices.updateCompany(currentCompanyId!, body);
-      
-      Get.back(); 
+
+      Get.back();
       Get.snackbar("Success", "Company updated successfully");
-      fetchCompanies(); 
+      fetchCompanies();
     } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {
@@ -149,7 +147,10 @@ class SellerCompanyController extends GetxController {
       color: Colors.red,
     );
     if (!ok) return;
-    final result = await SellerUi.run(() => SellerServices.deleteCompany(company.id), successMessage: "Company deleted");
+    final result = await SellerUi.run(
+      () => SellerServices.deleteCompany(company.id),
+      successMessage: "Company deleted",
+    );
     if (result != null) fetchCompanies();
   }
 
@@ -171,8 +172,8 @@ class SellerCompanyController extends GetxController {
       "legal_name": legalNameController.text.trim(),
       "company_type": companyTypeController.text.trim(),
       "year_of_establishment": int.tryParse(yearController.text.trim()) ?? 0,
-      "pan_number": panController.text.trim(),
-      "gst_number": gstController.text.trim(),
+      "pan_number": panController.text.trim().toUpperCase(),
+      "gst_number": gstController.text.trim().toUpperCase(),
       "address_line_1": address1Controller.text.trim(),
       "address_line_2": address2Controller.text.trim(),
       "city": cityController.text.trim(),

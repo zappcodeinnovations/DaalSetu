@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
@@ -8,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/glass_widgets.dart';
+import '../../../utils/tax_id_formatters.dart';
 import '../controller/profile_controller.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -122,6 +122,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   void _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
+    final gstPanError = TaxIdValidator.gstMatchesPan(
+      _panController.text,
+      _gstController.text,
+    );
+    if (gstPanError != null) {
+      Get.snackbar('Invalid GST number', gstPanError);
+      return;
+    }
 
     final data = <String, dynamic>{
       'first_name': _firstNameController.text.trim(),
@@ -436,21 +444,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     controller: _panController,
                     hintText: "Enter PAN number (e.g. ABCDE1234F)",
                     prefixIcon: IconlyLight.document,
-                    inputFormatters: [
-                      LengthLimitingTextInputFormatter(10),
-                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
-                    ],
-                    validator: (val) {
-                      if (val == null || val.trim().isEmpty) return null;
-                      final clean = val.trim().toUpperCase();
-                      if (clean.length != 10 ||
-                          !RegExp(
-                            r'^[A-Z]{5}[0-9]{4}[A-Z]{1}$',
-                          ).hasMatch(clean)) {
-                        return "Enter a valid 10-character PAN (e.g. ABCDE1234F)";
-                      }
-                      return null;
-                    },
+                    inputFormatters: const [TaxIdInputFormatter.pan()],
+                    validator: TaxIdValidator.pan,
                   ),
                   const SizedBox(height: 20),
 
@@ -459,19 +454,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     controller: _gstController,
                     hintText: "Enter GST number (e.g. 29ABCDE1234F1Z5)",
                     prefixIcon: IconlyLight.document,
-                    inputFormatters: [
-                      LengthLimitingTextInputFormatter(15),
-                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
-                    ],
-                    validator: (val) {
-                      if (val == null || val.trim().isEmpty) return null;
-                      if (!RegExp(
-                        r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$',
-                      ).hasMatch(val.trim().toUpperCase())) {
-                        return "Enter a valid 15-character GST number";
-                      }
-                      return null;
-                    },
+                    inputFormatters: const [TaxIdInputFormatter.gst()],
+                    validator: TaxIdValidator.gst,
                   ),
 
                   const SizedBox(height: 28),

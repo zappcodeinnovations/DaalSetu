@@ -44,9 +44,9 @@ class _SellerInterestThreadViewState extends State<SellerInterestThreadView> {
       builder: (dialogContext) => AlertDialog(
         title: Text("Counter Offer", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: price, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: deco("Counter Price")),
+          TextField(controller: price, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: deco("Counter Price")),
           const SizedBox(height: 10),
-          TextField(controller: quantity, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: deco("Counter Quantity")),
+          TextField(controller: quantity, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: deco("Counter Quantity")),
         ]),
         actions: [
           TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text("CANCEL")),

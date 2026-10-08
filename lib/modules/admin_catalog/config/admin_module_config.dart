@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:daalsetu/modules/admin_catalog/view/assign_vehicle_dialog.dart';
+import 'package:daalsetu/modules/admin_catalog/view/assign_driver_dialog.dart';
 import 'package:daalsetu/modules/admin_catalog/view/offer_interests_dialog.dart';
 import 'package:daalsetu/modules/admin_catalog/view/transport_bids_sheet.dart';
 import 'package:daalsetu/modules/admin_catalog/view/admin_sub_admin_permissions_screen.dart';
@@ -20,7 +21,8 @@ class AdminCustomAction {
 
   final String title;
   final IconData icon;
-  final Future<bool> Function(BuildContext context, Map<String, dynamic> record) onPressed;
+  final Future<bool> Function(BuildContext context, Map<String, dynamic> record)
+  onPressed;
   final bool Function(Map<String, dynamic> record)? isVisible;
 }
 
@@ -136,13 +138,19 @@ class AdminModuleConfig {
 }
 
 Object? transporterIdOf(Map<String, dynamic> record) =>
-    record['transporter'] is Map ? (record['transporter'] as Map)['id'] : record['transporter_id'];
+    record['transporter'] is Map
+    ? (record['transporter'] as Map)['id']
+    : record['transporter_id'];
 
 Object? parentAdminIdOf(Map<String, dynamic> record) =>
-    record['parent_admin'] is Map ? (record['parent_admin'] as Map)['id'] : null;
+    record['parent_admin'] is Map
+    ? (record['parent_admin'] as Map)['id']
+    : null;
 
 Object? roleIdsOf(Map<String, dynamic> record) =>
-    (record['roles'] is List ? record['roles'] as List : const []).map((role) => role is Map ? role['id'] : role).toList();
+    (record['roles'] is List ? record['roles'] as List : const [])
+        .map((role) => role is Map ? role['id'] : role)
+        .toList();
 
 Object? assignedAdminIdOf(Map<String, dynamic> record) {
   final admins = record['assigned_admins'];
@@ -170,10 +178,20 @@ class AdminModules {
       required: true,
       // Super Admin can also create admins; the backend rejects roles the caller may not create.
       options: ['seller', 'buyer', 'transporter', 'admin'],
-      optionLabels: {'seller': 'Seller', 'buyer': 'Buyer', 'transporter': 'Transporter', 'admin': 'Admin'},
+      optionLabels: {
+        'seller': 'Seller',
+        'buyer': 'Buyer',
+        'transporter': 'Transporter',
+        'admin': 'Admin',
+      },
     ),
     AdminFieldConfig('branch_code', 'Branch code'),
-    AdminFieldConfig('assigned_category_ids', 'Buyer categories (buyers only)', multiSelect: true, optionsLoader: loadCategoryOptions),
+    AdminFieldConfig(
+      'assigned_category_ids',
+      'Buyer categories (buyers only)',
+      multiSelect: true,
+      optionsLoader: loadCategoryOptions,
+    ),
     AdminFieldConfig('pan_number', 'PAN number'),
     AdminFieldConfig('gst_number', 'GST number'),
   ];
@@ -184,8 +202,16 @@ class AdminModules {
       fields: [
         AdminDetailField('id', 'User ID', copyable: true),
         AdminDetailField('username', 'Name'),
-        AdminDetailField('mobile', 'Mobile Number', type: AdminDetailFieldType.phone),
-        AdminDetailField('email', 'Email Address', type: AdminDetailFieldType.email),
+        AdminDetailField(
+          'mobile',
+          'Mobile Number',
+          type: AdminDetailFieldType.phone,
+        ),
+        AdminDetailField(
+          'email',
+          'Email Address',
+          type: AdminDetailFieldType.email,
+        ),
       ],
     ),
     AdminDetailSection(
@@ -200,8 +226,16 @@ class AdminModules {
       title: 'Application Status',
       fields: [
         AdminDetailField('role', 'Role'),
-        AdminDetailField('kyc_status', 'KYC Status', type: AdminDetailFieldType.status),
-        AdminDetailField('is_active', 'Active Status', type: AdminDetailFieldType.boolean),
+        AdminDetailField(
+          'kyc_status',
+          'KYC Status',
+          type: AdminDetailFieldType.status,
+        ),
+        AdminDetailField(
+          'is_active',
+          'Active Status',
+          type: AdminDetailFieldType.boolean,
+        ),
       ],
     ),
     AdminDetailSection(
@@ -214,8 +248,16 @@ class AdminModules {
     AdminDetailSection(
       title: 'Metadata',
       fields: [
-        AdminDetailField('created_at', 'Created At', type: AdminDetailFieldType.date),
-        AdminDetailField('updated_at', 'Updated At', type: AdminDetailFieldType.date),
+        AdminDetailField(
+          'created_at',
+          'Created At',
+          type: AdminDetailFieldType.date,
+        ),
+        AdminDetailField(
+          'updated_at',
+          'Updated At',
+          type: AdminDetailFieldType.date,
+        ),
       ],
     ),
   ];
@@ -257,13 +299,38 @@ class AdminModules {
         AdminFieldConfig('first_name', 'First name', required: true),
         AdminFieldConfig('last_name', 'Last name'),
         AdminFieldConfig('email', 'Email', required: true),
-        AdminFieldConfig('mobile', 'Mobile number', required: true, numeric: true),
-        AdminFieldConfig('password', 'Password', required: true, createOnly: true),
-        AdminFieldConfig('company_id', 'Company', required: true, optionsLoader: loadSubAdminCompanyOptions),
-        AdminFieldConfig('parent_admin_id', 'Under Admin (Super Admin only)', optionsLoader: loadParentAdminOptions,
-            initialValue: parentAdminIdOf),
-        AdminFieldConfig('access_role_ids', 'Roles', required: true, multiSelect: true, optionsLoader: loadSubAdminRoleOptions,
-            initialValue: roleIdsOf),
+        AdminFieldConfig(
+          'mobile',
+          'Mobile number',
+          required: true,
+          numeric: true,
+        ),
+        AdminFieldConfig(
+          'password',
+          'Password',
+          required: true,
+          createOnly: true,
+        ),
+        AdminFieldConfig(
+          'company_id',
+          'Company',
+          required: true,
+          optionsLoader: loadSubAdminCompanyOptions,
+        ),
+        AdminFieldConfig(
+          'parent_admin_id',
+          'Under Admin (Super Admin only)',
+          optionsLoader: loadParentAdminOptions,
+          initialValue: parentAdminIdOf,
+        ),
+        AdminFieldConfig(
+          'access_role_ids',
+          'Roles',
+          required: true,
+          multiSelect: true,
+          optionsLoader: loadSubAdminRoleOptions,
+          initialValue: roleIdsOf,
+        ),
       ],
       detailSections: [
         const AdminDetailSection(
@@ -271,9 +338,21 @@ class AdminModules {
           fields: [
             AdminDetailField('id', 'User ID', copyable: true),
             AdminDetailField('name', 'Name'),
-            AdminDetailField('mobile', 'Mobile', type: AdminDetailFieldType.phone),
-            AdminDetailField('email', 'Email', type: AdminDetailFieldType.email),
-            AdminDetailField('status', 'Status', type: AdminDetailFieldType.status),
+            AdminDetailField(
+              'mobile',
+              'Mobile',
+              type: AdminDetailFieldType.phone,
+            ),
+            AdminDetailField(
+              'email',
+              'Email',
+              type: AdminDetailFieldType.email,
+            ),
+            AdminDetailField(
+              'status',
+              'Status',
+              type: AdminDetailFieldType.status,
+            ),
             AdminDetailField('suspension_reason', 'Suspension Reason'),
           ],
         ),
@@ -289,8 +368,16 @@ class AdminModules {
         const AdminDetailSection(
           title: 'Activity',
           fields: [
-            AdminDetailField('date_joined', 'Joined', type: AdminDetailFieldType.date),
-            AdminDetailField('last_login', 'Last Login', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'date_joined',
+              'Joined',
+              type: AdminDetailFieldType.date,
+            ),
+            AdminDetailField(
+              'last_login',
+              'Last Login',
+              type: AdminDetailFieldType.date,
+            ),
           ],
         ),
       ],
@@ -305,7 +392,8 @@ class AdminModules {
               MaterialPageRoute(
                 builder: (_) => AdminSubAdminPermissionsScreen(
                   subAdminId: id.toString(),
-                  subAdminName: (record['name'] ?? record['username'] ?? '').toString(),
+                  subAdminName: (record['name'] ?? record['username'] ?? '')
+                      .toString(),
                 ),
               ),
             );
@@ -315,9 +403,11 @@ class AdminModules {
         adminPostAction(
           title: 'Suspend',
           icon: Icons.block_outlined,
-          endpoint: (record) => '/api/admin/sub-admin-accounts/${record['id']}/',
+          endpoint: (record) =>
+              '/api/admin/sub-admin-accounts/${record['id']}/',
           action: 'suspend',
-          confirmMessage: 'The Sub Admin will not be able to log in until activated.',
+          confirmMessage:
+              'The Sub Admin will not be able to log in until activated.',
           noteKey: 'reason',
           noteLabel: 'Reason',
           noteRequired: true,
@@ -327,7 +417,8 @@ class AdminModules {
         adminPostAction(
           title: 'Activate',
           icon: Icons.check_circle_outline,
-          endpoint: (record) => '/api/admin/sub-admin-accounts/${record['id']}/',
+          endpoint: (record) =>
+              '/api/admin/sub-admin-accounts/${record['id']}/',
           action: 'activate',
           confirmMessage: 'Allow this Sub Admin to log in again?',
           isVisible: (record) => recordStatus(record) != 'active',
@@ -350,15 +441,27 @@ class AdminModules {
           fields: [
             AdminDetailField('id', 'User ID', copyable: true),
             AdminDetailField('username', 'Name'),
-            AdminDetailField('mobile', 'Mobile Number', type: AdminDetailFieldType.phone),
-            AdminDetailField('email', 'Email', type: AdminDetailFieldType.email),
+            AdminDetailField(
+              'mobile',
+              'Mobile Number',
+              type: AdminDetailFieldType.phone,
+            ),
+            AdminDetailField(
+              'email',
+              'Email',
+              type: AdminDetailFieldType.email,
+            ),
             AdminDetailField('role', 'Role'),
           ],
         ),
         const AdminDetailSection(
           title: 'KYC Details',
           fields: [
-            AdminDetailField('kyc_status', 'KYC Status', type: AdminDetailFieldType.status),
+            AdminDetailField(
+              'kyc_status',
+              'KYC Status',
+              type: AdminDetailFieldType.status,
+            ),
             AdminDetailField('rejection_reason', 'Rejection Reason'),
             AdminDetailField('remarks', 'Remarks'),
           ],
@@ -367,11 +470,27 @@ class AdminModules {
           title: 'Documents',
           fields: [
             AdminDetailField('pan_number', 'PAN Number', copyable: true),
-            AdminDetailField('pan_card_upload', 'PAN Card', type: AdminDetailFieldType.image),
+            AdminDetailField(
+              'pan_card_upload',
+              'PAN Card',
+              type: AdminDetailFieldType.image,
+            ),
             AdminDetailField('gst_number', 'GST Number', copyable: true),
-            AdminDetailField('gst_certificate_upload', 'GST Certificate', type: AdminDetailFieldType.image),
-            AdminDetailField('adhar_front_upload', 'Aadhar Front', type: AdminDetailFieldType.image),
-            AdminDetailField('adhar_back_upload', 'Aadhar Back', type: AdminDetailFieldType.image),
+            AdminDetailField(
+              'gst_certificate_upload',
+              'GST Certificate',
+              type: AdminDetailFieldType.image,
+            ),
+            AdminDetailField(
+              'adhar_front_upload',
+              'Aadhar Front',
+              type: AdminDetailFieldType.image,
+            ),
+            AdminDetailField(
+              'adhar_back_upload',
+              'Aadhar Back',
+              type: AdminDetailFieldType.image,
+            ),
           ],
         ),
       ],
@@ -383,7 +502,9 @@ class AdminModules {
           endpoint: (record) => '/api/kyc/${record['id']}/approve/',
           action: 'approve',
           confirmMessage: "Approve this user's KYC documents?",
-          isVisible: (record) => (record['kyc_status'] ?? '').toString().toLowerCase() != 'approved',
+          isVisible: (record) =>
+              (record['kyc_status'] ?? '').toString().toLowerCase() !=
+              'approved',
         ),
         adminPostAction(
           title: 'Reject',
@@ -395,7 +516,10 @@ class AdminModules {
           noteLabel: 'Rejection reason',
           noteRequired: true,
           destructive: true,
-          isVisible: (record) => const ['pending', 'rejected'].contains((record['kyc_status'] ?? '').toString().toLowerCase()),
+          isVisible: (record) => const [
+            'pending',
+            'rejected',
+          ].contains((record['kyc_status'] ?? '').toString().toLowerCase()),
         ),
       ],
     ),
@@ -413,7 +537,11 @@ class AdminModules {
           title: 'User',
           fields: [
             AdminDetailField('user.name', 'Name'),
-            AdminDetailField('user.mobile', 'Mobile', type: AdminDetailFieldType.phone),
+            AdminDetailField(
+              'user.mobile',
+              'Mobile',
+              type: AdminDetailFieldType.phone,
+            ),
             AdminDetailField('user.role', 'Role'),
           ],
         ),
@@ -422,12 +550,28 @@ class AdminModules {
           fields: [
             AdminDetailField('id', 'Request ID', copyable: true),
             AdminDetailField('branch.name', 'Branch'),
-            AdminDetailField('branch.branch_code', 'Branch Code', copyable: true),
-            AdminDetailField('status', 'Status', type: AdminDetailFieldType.status),
+            AdminDetailField(
+              'branch.branch_code',
+              'Branch Code',
+              copyable: true,
+            ),
+            AdminDetailField(
+              'status',
+              'Status',
+              type: AdminDetailFieldType.status,
+            ),
             AdminDetailField('request_note', 'Request Note'),
-            AdminDetailField('created_at', 'Requested At', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'created_at',
+              'Requested At',
+              type: AdminDetailFieldType.date,
+            ),
             AdminDetailField('review_note', 'Review Note'),
-            AdminDetailField('reviewed_at', 'Reviewed At', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'reviewed_at',
+              'Reviewed At',
+              type: AdminDetailFieldType.date,
+            ),
           ],
         ),
       ],
@@ -469,12 +613,30 @@ class AdminModules {
       deleteEndpoint: (id) => '/api/branch/delete/$id/',
       updateMethod: AdminRequestMethod.post,
       fields: [
-        const AdminFieldConfig('location_name', 'Location name', required: true),
+        const AdminFieldConfig(
+          'location_name',
+          'Location name',
+          required: true,
+        ),
         const AdminFieldConfig('state', 'State', required: true),
         const AdminFieldConfig('city', 'City', required: true),
         const AdminFieldConfig('area', 'Area', required: true),
-        const AdminFieldConfig('is_active', 'Status', options: ['true', 'false'], optionLabels: {'true': 'Active', 'false': 'Inactive'}, defaultValue: 'true', sendAsBoolean: true),
-        AdminFieldConfig('assigned_admin_ids', 'Assigned admin', required: true, optionsLoader: loadAdminOptions, initialValue: assignedAdminIdOf, singleSelectAsList: true),
+        const AdminFieldConfig(
+          'is_active',
+          'Status',
+          options: ['true', 'false'],
+          optionLabels: {'true': 'Active', 'false': 'Inactive'},
+          defaultValue: 'true',
+          sendAsBoolean: true,
+        ),
+        AdminFieldConfig(
+          'assigned_admin_ids',
+          'Assigned admin',
+          required: true,
+          optionsLoader: loadAdminOptions,
+          initialValue: assignedAdminIdOf,
+          singleSelectAsList: true,
+        ),
       ],
       detailSections: [
         const AdminDetailSection(
@@ -485,8 +647,16 @@ class AdminModules {
             AdminDetailField('state', 'State'),
             AdminDetailField('city', 'City'),
             AdminDetailField('area', 'Area'),
-            AdminDetailField('is_active', 'Active', type: AdminDetailFieldType.boolean),
-            AdminDetailField('created_at', 'Created At', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'is_active',
+              'Active',
+              type: AdminDetailFieldType.boolean,
+            ),
+            AdminDetailField(
+              'created_at',
+              'Created At',
+              type: AdminDetailFieldType.date,
+            ),
           ],
         ),
         const AdminDetailSection(
@@ -510,7 +680,13 @@ class AdminModules {
       icon: Icons.local_shipping_outlined,
       listEndpoint: '/api/consignments/',
       titleKeys: const ['contract_id', 'product_title'],
-      subtitleKeys: const ['status', 'product_title', 'deal_quantity', 'loading_from', 'loading_to'],
+      subtitleKeys: const [
+        'status',
+        'product_title',
+        'deal_quantity',
+        'loading_from',
+        'loading_to',
+      ],
       filterParameter: 'workflow_status',
       filterOptions: const ['pending', 'ready', 'dispatch', 'received'],
       detailEndpoint: (id) => '/api/consignments/$id/',
@@ -519,7 +695,11 @@ class AdminModules {
           title: 'Consignment',
           fields: [
             AdminDetailField('contract_id', 'Contract ID', copyable: true),
-            AdminDetailField('status', 'Status', type: AdminDetailFieldType.status),
+            AdminDetailField(
+              'status',
+              'Status',
+              type: AdminDetailFieldType.status,
+            ),
             AdminDetailField('product_title', 'Product'),
             AdminDetailField('deal_quantity', 'Quantity'),
             AdminDetailField('quantity_unit', 'Quantity Unit'),
@@ -537,7 +717,11 @@ class AdminModules {
             AdminDetailField('assigned_transporter', 'Transporter'),
             AdminDetailField('ready_label', 'Ready for Loading'),
             AdminDetailField('received_label', 'Received'),
-            AdminDetailField('confirmed_at', 'Confirmed At', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'confirmed_at',
+              'Confirmed At',
+              type: AdminDetailFieldType.date,
+            ),
           ],
         ),
         const AdminDetailSection(
@@ -559,7 +743,8 @@ class AdminModules {
           icon: Icons.inventory_2_outlined,
           endpoint: (record) => '/api/consignments/${record['id']}/',
           action: 'ready_for_loading',
-          confirmMessage: 'Make this consignment available for transporter bids?',
+          confirmMessage:
+              'Make this consignment available for transporter bids?',
           isVisible: (record) => record['can_mark_ready'] == true,
         ),
         adminPostAction(
@@ -578,7 +763,12 @@ class AdminModules {
       icon: Icons.account_balance_outlined,
       listEndpoint: '/api/admin/billing-companies/',
       titleKeys: const ['company_name', 'bill_prefix'],
-      subtitleKeys: const ['bill_prefix', 'billing_email', 'billing_phone', 'is_active'],
+      subtitleKeys: const [
+        'bill_prefix',
+        'billing_email',
+        'billing_phone',
+        'is_active',
+      ],
       detailEndpoint: (id) => '/api/admin/billing-companies/$id/',
       createEndpoint: '/api/admin/billing-companies/',
       updateEndpoint: (id) => '/api/admin/billing-companies/$id/',
@@ -597,7 +787,11 @@ class AdminModules {
         const AdminFieldConfig('bank_name', 'Bank name'),
         const AdminFieldConfig('bank_branch', 'Bank branch'),
         const AdminFieldConfig('bank_account_name', 'Account holder name'),
-        const AdminFieldConfig('bank_account_number', 'Account number', numeric: true),
+        const AdminFieldConfig(
+          'bank_account_number',
+          'Account number',
+          numeric: true,
+        ),
         const AdminFieldConfig('bank_ifsc_code', 'IFSC code'),
         const AdminFieldConfig(
           'is_active',
@@ -608,7 +802,11 @@ class AdminModules {
           sendAsBoolean: true,
         ),
         const AdminFieldConfig('logo', 'Company logo', isFile: true),
-        const AdminFieldConfig('authorized_signature', 'Authorized signature', isFile: true),
+        const AdminFieldConfig(
+          'authorized_signature',
+          'Authorized signature',
+          isFile: true,
+        ),
       ],
       detailSections: const [
         AdminDetailSection(
@@ -616,15 +814,27 @@ class AdminModules {
           fields: [
             AdminDetailField('company_name', 'Company Name'),
             AdminDetailField('bill_prefix', 'Bill Prefix'),
-            AdminDetailField('is_active', 'Active', type: AdminDetailFieldType.boolean),
+            AdminDetailField(
+              'is_active',
+              'Active',
+              type: AdminDetailFieldType.boolean,
+            ),
             AdminDetailField('bill_count', 'Brokerage Bills'),
           ],
         ),
         AdminDetailSection(
           title: 'Contact',
           fields: [
-            AdminDetailField('billing_email', 'Billing Email', type: AdminDetailFieldType.email),
-            AdminDetailField('billing_phone', 'Billing Phone', type: AdminDetailFieldType.phone),
+            AdminDetailField(
+              'billing_email',
+              'Billing Email',
+              type: AdminDetailFieldType.email,
+            ),
+            AdminDetailField(
+              'billing_phone',
+              'Billing Phone',
+              type: AdminDetailFieldType.phone,
+            ),
           ],
         ),
         AdminDetailSection(
@@ -633,7 +843,11 @@ class AdminModules {
             AdminDetailField('bank_name', 'Bank Name'),
             AdminDetailField('bank_branch', 'Bank Branch'),
             AdminDetailField('bank_account_name', 'Account Holder'),
-            AdminDetailField('bank_account_number', 'Account Number', copyable: true),
+            AdminDetailField(
+              'bank_account_number',
+              'Account Number',
+              copyable: true,
+            ),
             AdminDetailField('bank_ifsc_code', 'IFSC Code', copyable: true),
           ],
         ),
@@ -664,7 +878,12 @@ class AdminModules {
       // Buyer requests to deal in categories (web "Category Requests"), not the category master.
       listEndpoint: '/api/buyer-categories/',
       titleKeys: const ['buyer'],
-      subtitleKeys: const ['status', 'categories', 'request_note', 'requested_at'],
+      subtitleKeys: const [
+        'status',
+        'categories',
+        'request_note',
+        'requested_at',
+      ],
       filterParameter: 'status',
       filterOptions: const ['pending', 'approved', 'rejected'],
       detailSections: [
@@ -672,24 +891,40 @@ class AdminModules {
           title: 'Request',
           fields: [
             AdminDetailField('id', 'Request ID', copyable: true),
-            AdminDetailField('status', 'Status', type: AdminDetailFieldType.status),
+            AdminDetailField(
+              'status',
+              'Status',
+              type: AdminDetailFieldType.status,
+            ),
             AdminDetailField('categories', 'Requested Categories'),
             AdminDetailField('request_note', 'Buyer Note'),
-            AdminDetailField('requested_at', 'Requested At', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'requested_at',
+              'Requested At',
+              type: AdminDetailFieldType.date,
+            ),
           ],
         ),
         const AdminDetailSection(
           title: 'Buyer',
           fields: [
             AdminDetailField('buyer.name', 'Name'),
-            AdminDetailField('buyer.mobile', 'Mobile', type: AdminDetailFieldType.phone),
+            AdminDetailField(
+              'buyer.mobile',
+              'Mobile',
+              type: AdminDetailFieldType.phone,
+            ),
           ],
         ),
         const AdminDetailSection(
           title: 'Review',
           fields: [
             AdminDetailField('reviewed_by', 'Reviewed By'),
-            AdminDetailField('reviewed_at', 'Reviewed At', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'reviewed_at',
+              'Reviewed At',
+              type: AdminDetailFieldType.date,
+            ),
             AdminDetailField('admin_comment', 'Admin Comment'),
           ],
         ),
@@ -698,9 +933,11 @@ class AdminModules {
         adminPostAction(
           title: 'Approve',
           icon: Icons.check_circle_outline,
-          endpoint: (record) => '/api/buyer-categories/requests/${record['id']}/',
+          endpoint: (record) =>
+              '/api/buyer-categories/requests/${record['id']}/',
           action: 'approve',
-          confirmMessage: 'The buyer will be able to deal in the requested categories.',
+          confirmMessage:
+              'The buyer will be able to deal in the requested categories.',
           noteKey: 'comment',
           noteLabel: 'Comment',
           isVisible: (record) => recordStatus(record) == 'pending',
@@ -708,7 +945,8 @@ class AdminModules {
         adminPostAction(
           title: 'Reject',
           icon: Icons.cancel_outlined,
-          endpoint: (record) => '/api/buyer-categories/requests/${record['id']}/',
+          endpoint: (record) =>
+              '/api/buyer-categories/requests/${record['id']}/',
           action: 'reject',
           confirmMessage: 'The buyer will be told the request was rejected.',
           noteKey: 'comment',
@@ -731,8 +969,19 @@ class AdminModules {
       deleteEndpoint: (id) => '/api/categories/$id/',
       fields: const [
         AdminFieldConfig('category_name', 'Sub-category name', required: true),
-        AdminFieldConfig('parent', 'Parent category', required: true, optionsLoader: loadParentCategoryOptions),
-        AdminFieldConfig('is_active', 'Status', options: ['true', 'false'], optionLabels: {'true': 'Active', 'false': 'Inactive'}, defaultValue: 'true'),
+        AdminFieldConfig(
+          'parent',
+          'Parent category',
+          required: true,
+          optionsLoader: loadParentCategoryOptions,
+        ),
+        AdminFieldConfig(
+          'is_active',
+          'Status',
+          options: ['true', 'false'],
+          optionLabels: {'true': 'Active', 'false': 'Inactive'},
+          defaultValue: 'true',
+        ),
         AdminFieldConfig('image', 'Image', isFile: true),
       ],
       detailSections: [
@@ -743,10 +992,26 @@ class AdminModules {
             AdminDetailField('category_name', 'Name'),
             AdminDetailField('parent_name', 'Parent Category'),
             AdminDetailField('full_path', 'Full Path'),
-            AdminDetailField('status', 'Status', type: AdminDetailFieldType.status),
-            AdminDetailField('is_active', 'Active', type: AdminDetailFieldType.boolean),
-            AdminDetailField('image_url', 'Image', type: AdminDetailFieldType.image),
-            AdminDetailField('created_at', 'Created At', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'status',
+              'Status',
+              type: AdminDetailFieldType.status,
+            ),
+            AdminDetailField(
+              'is_active',
+              'Active',
+              type: AdminDetailFieldType.boolean,
+            ),
+            AdminDetailField(
+              'image_url',
+              'Image',
+              type: AdminDetailFieldType.image,
+            ),
+            AdminDetailField(
+              'created_at',
+              'Created At',
+              type: AdminDetailFieldType.date,
+            ),
           ],
         ),
       ],
@@ -776,21 +1041,41 @@ class AdminModules {
             AdminDetailField('description', 'Description'),
             AdminDetailField('level', 'Level'),
             AdminDetailField('parent_name', 'Parent Category'),
-            AdminDetailField('is_active', 'Active Status', type: AdminDetailFieldType.boolean),
-            AdminDetailField('status', 'Status', type: AdminDetailFieldType.status),
+            AdminDetailField(
+              'is_active',
+              'Active Status',
+              type: AdminDetailFieldType.boolean,
+            ),
+            AdminDetailField(
+              'status',
+              'Status',
+              type: AdminDetailFieldType.status,
+            ),
           ],
         ),
         const AdminDetailSection(
           title: 'Media',
           fields: [
-            AdminDetailField('image_url', 'Category Image', type: AdminDetailFieldType.image),
+            AdminDetailField(
+              'image_url',
+              'Category Image',
+              type: AdminDetailFieldType.image,
+            ),
           ],
         ),
         const AdminDetailSection(
           title: 'Metadata',
           fields: [
-            AdminDetailField('created_at', 'Created At', type: AdminDetailFieldType.date),
-            AdminDetailField('updated_at', 'Updated At', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'created_at',
+              'Created At',
+              type: AdminDetailFieldType.date,
+            ),
+            AdminDetailField(
+              'updated_at',
+              'Updated At',
+              type: AdminDetailFieldType.date,
+            ),
           ],
         ),
       ],
@@ -815,10 +1100,20 @@ class AdminModules {
           'Status',
           required: true,
           options: ['active', 'pending', 'inactive', 'rejected'],
-          optionLabels: {'active': 'Active', 'pending': 'Pending', 'inactive': 'Inactive', 'rejected': 'Rejected'},
+          optionLabels: {
+            'active': 'Active',
+            'pending': 'Pending',
+            'inactive': 'Inactive',
+            'rejected': 'Rejected',
+          },
           defaultValue: 'active',
         ),
-        AdminFieldConfig('category_ids', 'Categories', multiSelect: true, optionsLoader: loadCategoryOptions),
+        AdminFieldConfig(
+          'category_ids',
+          'Categories',
+          multiSelect: true,
+          optionsLoader: loadCategoryOptions,
+        ),
       ],
       detailSections: [
         const AdminDetailSection(
@@ -826,10 +1121,18 @@ class AdminModules {
           fields: [
             AdminDetailField('id', 'Brand ID', copyable: true),
             AdminDetailField('brand_name', 'Brand Name'),
-            AdminDetailField('status', 'Status', type: AdminDetailFieldType.status),
+            AdminDetailField(
+              'status',
+              'Status',
+              type: AdminDetailFieldType.status,
+            ),
             AdminDetailField('product_count', 'Offers Using It'),
             AdminDetailField('created_by_name', 'Created By'),
-            AdminDetailField('created_at', 'Created At', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'created_at',
+              'Created At',
+              type: AdminDetailFieldType.date,
+            ),
           ],
         ),
       ],
@@ -841,9 +1144,14 @@ class AdminModules {
           onPressed: (context, record) => adminConfirmAndRun(
             context,
             title: 'Approve Brand',
-            message: 'Make "${record['brand_name']}" active so sellers can use it.',
+            message:
+                'Make "${record['brand_name']}" active so sellers can use it.',
             confirmText: 'Approve',
-            request: (_) => ApiClient.patch(endpoint: '/api/brands/${record['id']}/', data: const {'status': 'active'}, requireAuth: true),
+            request: (_) => ApiClient.patch(
+              endpoint: '/api/brands/${record['id']}/',
+              data: const {'status': 'active'},
+              requireAuth: true,
+            ),
           ),
         ),
       ],
@@ -860,7 +1168,12 @@ class AdminModules {
       deleteEndpoint: (id) => '/api/tags/$id/',
       fields: const [
         AdminFieldConfig('tag_name', 'Tag name', required: true),
-        AdminFieldConfig('is_active', 'Active Status', options: ['true', 'false'], defaultValue: 'true'),
+        AdminFieldConfig(
+          'is_active',
+          'Active Status',
+          options: ['true', 'false'],
+          defaultValue: 'true',
+        ),
       ],
       detailSections: [
         const AdminDetailSection(
@@ -868,7 +1181,11 @@ class AdminModules {
           fields: [
             AdminDetailField('id', 'Tag ID', copyable: true),
             AdminDetailField('tag_name', 'Tag Name'),
-            AdminDetailField('is_active', 'Active Status', type: AdminDetailFieldType.boolean),
+            AdminDetailField(
+              'is_active',
+              'Active Status',
+              type: AdminDetailFieldType.boolean,
+            ),
           ],
         ),
         const AdminDetailSection(
@@ -880,7 +1197,11 @@ class AdminModules {
         const AdminDetailSection(
           title: 'Metadata',
           fields: [
-            AdminDetailField('created_at', 'Created At', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'created_at',
+              'Created At',
+              type: AdminDetailFieldType.date,
+            ),
           ],
         ),
       ],
@@ -904,15 +1225,32 @@ class AdminModules {
       updateEndpoint: (id) => '/api/drivers/$id/',
       deleteEndpoint: (id) => '/api/drivers/$id/',
       fields: const [
-        AdminFieldConfig('transporter_id', 'Transporter', required: true, optionsLoader: loadTransporterOptions, initialValue: transporterIdOf),
+        AdminFieldConfig(
+          'transporter_id',
+          'Transporter',
+          required: true,
+          optionsLoader: loadTransporterOptions,
+          initialValue: transporterIdOf,
+        ),
         AdminFieldConfig('driver_name', 'Driver name', required: true),
-        AdminFieldConfig('phone_number', 'Phone number', required: true, numeric: true,),
+        AdminFieldConfig(
+          'phone_number',
+          'Phone number',
+          required: true,
+          numeric: true,
+        ),
         AdminFieldConfig('email', 'Email'),
         AdminFieldConfig('license_number', 'License number', required: true),
         AdminFieldConfig('license_expiry', 'License expiry', isDate: true),
         AdminFieldConfig('experience', 'Experience', numeric: true),
         AdminFieldConfig('address', 'Address', multiline: true),
-        AdminFieldConfig('status', 'Status', options: ['active', 'inactive'], optionLabels: {'active': 'Active', 'inactive': 'Inactive'}, defaultValue: 'active'),
+        AdminFieldConfig(
+          'status',
+          'Status',
+          options: ['active', 'inactive'],
+          optionLabels: {'active': 'Active', 'inactive': 'Inactive'},
+          defaultValue: 'active',
+        ),
       ],
       detailSections: [
         const AdminDetailSection(
@@ -920,42 +1258,93 @@ class AdminModules {
           fields: [
             AdminDetailField('id', 'Driver ID', copyable: true),
             AdminDetailField('driver_name', 'Driver Name'),
-            AdminDetailField('phone_number', 'Phone Number', type: AdminDetailFieldType.phone),
-            AdminDetailField('email', 'Email Address', type: AdminDetailFieldType.email),
+            AdminDetailField(
+              'phone_number',
+              'Phone Number',
+              type: AdminDetailFieldType.phone,
+            ),
+            AdminDetailField(
+              'email',
+              'Email Address',
+              type: AdminDetailFieldType.email,
+            ),
             AdminDetailField('experience', 'Experience (Years)'),
             AdminDetailField('address', 'Address'),
-            AdminDetailField('status_display', 'Status', type: AdminDetailFieldType.status),
+            AdminDetailField(
+              'status_display',
+              'Status',
+              type: AdminDetailFieldType.status,
+            ),
           ],
         ),
         const AdminDetailSection(
           title: 'License Information',
           fields: [
-            AdminDetailField('license_number', 'License Number', copyable: true),
-            AdminDetailField('license_expiry', 'License Expiry', type: AdminDetailFieldType.date),
-            AdminDetailField('license_upload_url', 'License Document', type: AdminDetailFieldType.image),
+            AdminDetailField(
+              'license_number',
+              'License Number',
+              copyable: true,
+            ),
+            AdminDetailField(
+              'license_expiry',
+              'License Expiry',
+              type: AdminDetailFieldType.date,
+            ),
+            AdminDetailField(
+              'license_upload_url',
+              'License Document',
+              type: AdminDetailFieldType.image,
+            ),
           ],
         ),
         const AdminDetailSection(
           title: 'Transporter Information',
           fields: [
-            AdminDetailField('transporter.id', 'Transporter ID', copyable: true),
+            AdminDetailField(
+              'transporter.id',
+              'Transporter ID',
+              copyable: true,
+            ),
             AdminDetailField('transporter.username', 'Transporter Name'),
-            AdminDetailField('transporter.mobile', 'Transporter Mobile', type: AdminDetailFieldType.phone),
+            AdminDetailField(
+              'transporter.mobile',
+              'Transporter Mobile',
+              type: AdminDetailFieldType.phone,
+            ),
           ],
         ),
         const AdminDetailSection(
           title: 'Assignment Information',
           fields: [
-            AdminDetailField('assignment_status_display', 'Assignment Status', type: AdminDetailFieldType.status),
-            AdminDetailField('assigned_vehicle.vehicle_number', 'Assigned Vehicle Number'),
-            AdminDetailField('assigned_vehicle.vehicle_status_display', 'Vehicle Status', type: AdminDetailFieldType.status),
+            AdminDetailField(
+              'assignment_status_display',
+              'Assignment Status',
+              type: AdminDetailFieldType.status,
+            ),
+            AdminDetailField(
+              'assigned_vehicle.vehicle_number',
+              'Assigned Vehicle Number',
+            ),
+            AdminDetailField(
+              'assigned_vehicle.vehicle_status_display',
+              'Vehicle Status',
+              type: AdminDetailFieldType.status,
+            ),
           ],
         ),
         const AdminDetailSection(
           title: 'Metadata',
           fields: [
-            AdminDetailField('created_at', 'Created At', type: AdminDetailFieldType.date),
-            AdminDetailField('updated_at', 'Updated At', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'created_at',
+              'Created At',
+              type: AdminDetailFieldType.date,
+            ),
+            AdminDetailField(
+              'updated_at',
+              'Updated At',
+              type: AdminDetailFieldType.date,
+            ),
           ],
         ),
       ],
@@ -985,7 +1374,13 @@ class AdminModules {
       icon: Icons.local_shipping_outlined,
       listEndpoint: '/api/vehicles/',
       titleKeys: const ['vehicle_number', 'registration_number', 'name'],
-      subtitleKeys: const ['vehicle_status_display', 'vehicle_type', 'load_capacity_tons', 'driver_name', 'transporter'],
+      subtitleKeys: const [
+        'vehicle_status_display',
+        'vehicle_type',
+        'load_capacity_tons',
+        'driver_name',
+        'transporter',
+      ],
       detailEndpoint: (id) => '/api/vehicles/$id/',
       filterParameter: 'vehicle_status',
       filterOptions: const ['available', 'busy', 'maintenance', 'inactive'],
@@ -994,42 +1389,156 @@ class AdminModules {
       deleteEndpoint: (id) => '/api/vehicles/$id/',
       // Same fields and choices as the web "Register Vehicle" form; dropdown values are the backend choices.
       fields: const [
-        AdminFieldConfig('transporter_id', 'Transporter', required: true, optionsLoader: loadTransporterOptions, initialValue: transporterIdOf),
-        AdminFieldConfig('vehicle_number', 'Vehicle number (e.g. MH31AB1234)', required: true),
-        AdminFieldConfig('vehicle_type', 'Vehicle type (e.g. Truck)', required: true),
-        AdminFieldConfig('vehicle_brand', 'Brand', required: true, options: ['tata', 'mahindra', 'ashok_leyland', 'eicher', 'bharatbenz', 'isuzu', 'other'],
-            optionLabels: {'tata': 'Tata', 'mahindra': 'Mahindra', 'ashok_leyland': 'Ashok Leyland', 'eicher': 'Eicher', 'bharatbenz': 'BharatBenz', 'isuzu': 'Isuzu', 'other': 'Other'}),
-        AdminFieldConfig('vehicle_brand_other', 'Brand name (when Brand is Other)'),
+        AdminFieldConfig(
+          'transporter_id',
+          'Transporter',
+          required: true,
+          optionsLoader: loadTransporterOptions,
+          initialValue: transporterIdOf,
+        ),
+        AdminFieldConfig(
+          'vehicle_number',
+          'Vehicle number (e.g. MH31AB1234)',
+          required: true,
+        ),
+        AdminFieldConfig(
+          'vehicle_type',
+          'Vehicle type (e.g. Truck)',
+          required: true,
+        ),
+        AdminFieldConfig(
+          'vehicle_brand',
+          'Brand',
+          required: true,
+          options: [
+            'tata',
+            'mahindra',
+            'ashok_leyland',
+            'eicher',
+            'bharatbenz',
+            'isuzu',
+            'other',
+          ],
+          optionLabels: {
+            'tata': 'Tata',
+            'mahindra': 'Mahindra',
+            'ashok_leyland': 'Ashok Leyland',
+            'eicher': 'Eicher',
+            'bharatbenz': 'BharatBenz',
+            'isuzu': 'Isuzu',
+            'other': 'Other',
+          },
+        ),
+        AdminFieldConfig(
+          'vehicle_brand_other',
+          'Brand name (when Brand is Other)',
+        ),
         AdminFieldConfig('model_name', 'Model name'),
-        AdminFieldConfig('manufacturing_year', 'Manufacturing year', required: true, numeric: true),
-        AdminFieldConfig('fuel_type', 'Fuel type', required: true, options: ['diesel', 'petrol', 'cng', 'electric'],
-            optionLabels: {'diesel': 'Diesel', 'petrol': 'Petrol', 'cng': 'CNG', 'electric': 'Electric'}),
-        AdminFieldConfig('load_capacity_tons', 'Capacity (tons)', required: true),
-        AdminFieldConfig('body_type', 'Body type', required: true,
-            options: ['open_body', 'closed_body', 'container', 'flatbed', 'refrigerated', 'tanker', 'other'],
-            optionLabels: {'open_body': 'Open Body', 'closed_body': 'Closed Body', 'container': 'Container', 'flatbed': 'Flatbed', 'refrigerated': 'Refrigerated', 'tanker': 'Tanker', 'other': 'Other'}),
-        AdminFieldConfig('body_type_other', 'Body type name (when Body type is Other)'),
-        AdminFieldConfig('number_of_axles', 'Number of axles', required: true, options: ['1', '2', '3', '4', '5', '6']),
+        AdminFieldConfig(
+          'manufacturing_year',
+          'Manufacturing year',
+          required: true,
+          numeric: true,
+        ),
+        AdminFieldConfig(
+          'fuel_type',
+          'Fuel type',
+          required: true,
+          options: ['diesel', 'petrol', 'cng', 'electric'],
+          optionLabels: {
+            'diesel': 'Diesel',
+            'petrol': 'Petrol',
+            'cng': 'CNG',
+            'electric': 'Electric',
+          },
+        ),
+        AdminFieldConfig(
+          'load_capacity_tons',
+          'Capacity (tons)',
+          required: true,
+        ),
+        AdminFieldConfig(
+          'body_type',
+          'Body type',
+          required: true,
+          options: [
+            'open_body',
+            'closed_body',
+            'container',
+            'flatbed',
+            'refrigerated',
+            'tanker',
+            'other',
+          ],
+          optionLabels: {
+            'open_body': 'Open Body',
+            'closed_body': 'Closed Body',
+            'container': 'Container',
+            'flatbed': 'Flatbed',
+            'refrigerated': 'Refrigerated',
+            'tanker': 'Tanker',
+            'other': 'Other',
+          },
+        ),
+        AdminFieldConfig(
+          'body_type_other',
+          'Body type name (when Body type is Other)',
+        ),
+        AdminFieldConfig(
+          'number_of_axles',
+          'Number of axles',
+          required: true,
+          options: ['1', '2', '3', '4', '5', '6'],
+        ),
         AdminFieldConfig('length_ft', 'Length (ft)'),
         AdminFieldConfig('width_ft', 'Width (ft)'),
         AdminFieldConfig('height_ft', 'Height (ft)'),
         AdminFieldConfig('rc_number', 'RC number'),
         AdminFieldConfig('rc_upload', 'RC document', isFile: true),
         AdminFieldConfig('insurance_number', 'Insurance number'),
-        AdminFieldConfig('insurance_expiry_date', 'Insurance expiry', isDate: true),
-        AdminFieldConfig('permit_type', 'Permit type', options: ['national_permit', 'state_permit', 'other'],
-            optionLabels: {'national_permit': 'National Permit', 'state_permit': 'State Permit', 'other': 'Other'}),
-        AdminFieldConfig('permit_type_other', 'Permit name (when Permit type is Other)'),
+        AdminFieldConfig(
+          'insurance_expiry_date',
+          'Insurance expiry',
+          isDate: true,
+        ),
+        AdminFieldConfig(
+          'permit_type',
+          'Permit type',
+          options: ['national_permit', 'state_permit', 'other'],
+          optionLabels: {
+            'national_permit': 'National Permit',
+            'state_permit': 'State Permit',
+            'other': 'Other',
+          },
+        ),
+        AdminFieldConfig(
+          'permit_type_other',
+          'Permit name (when Permit type is Other)',
+        ),
         AdminFieldConfig('permit_expiry_date', 'Permit expiry', isDate: true),
-        AdminFieldConfig('vehicle_status', 'Status', options: ['available', 'busy', 'maintenance', 'inactive'],
-            optionLabels: {'available': 'Available', 'busy': 'Busy', 'maintenance': 'Maintenance', 'inactive': 'Inactive'}, defaultValue: 'available'),
+        AdminFieldConfig(
+          'vehicle_status',
+          'Status',
+          options: ['available', 'busy', 'maintenance', 'inactive'],
+          optionLabels: {
+            'available': 'Available',
+            'busy': 'Busy',
+            'maintenance': 'Maintenance',
+            'inactive': 'Inactive',
+          },
+          defaultValue: 'available',
+        ),
       ],
       detailSections: [
         const AdminDetailSection(
           title: 'Vehicle Information',
           fields: [
             AdminDetailField('id', 'Vehicle ID', copyable: true),
-            AdminDetailField('vehicle_number', 'Vehicle Number', copyable: true),
+            AdminDetailField(
+              'vehicle_number',
+              'Vehicle Number',
+              copyable: true,
+            ),
             AdminDetailField('vehicle_type', 'Vehicle Type'),
             AdminDetailField('vehicle_brand_display', 'Vehicle Brand'),
             AdminDetailField('model_name', 'Model Name'),
@@ -1044,36 +1553,97 @@ class AdminModules {
           title: 'Registration & Compliance',
           fields: [
             AdminDetailField('rc_number', 'RC Number', copyable: true),
-            AdminDetailField('rc_upload_url', 'RC Document', type: AdminDetailFieldType.image),
+            AdminDetailField(
+              'rc_upload_url',
+              'RC Document',
+              type: AdminDetailFieldType.image,
+            ),
             AdminDetailField('insurance_number', 'Insurance Number'),
-            AdminDetailField('insurance_expiry_date', 'Insurance Expiry', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'insurance_expiry_date',
+              'Insurance Expiry',
+              type: AdminDetailFieldType.date,
+            ),
             AdminDetailField('permit_type_display', 'Permit Type'),
-            AdminDetailField('permit_expiry_date', 'Permit Expiry', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'permit_expiry_date',
+              'Permit Expiry',
+              type: AdminDetailFieldType.date,
+            ),
           ],
         ),
         const AdminDetailSection(
           title: 'Transporter Information',
           fields: [
-            AdminDetailField('transporter.id', 'Transporter ID', copyable: true),
+            AdminDetailField(
+              'transporter.id',
+              'Transporter ID',
+              copyable: true,
+            ),
             AdminDetailField('transporter.username', 'Transporter Name'),
-            AdminDetailField('transporter.mobile', 'Transporter Mobile', type: AdminDetailFieldType.phone),
+            AdminDetailField(
+              'transporter.mobile',
+              'Transporter Mobile',
+              type: AdminDetailFieldType.phone,
+            ),
           ],
         ),
         const AdminDetailSection(
           title: 'Assignment Information',
           fields: [
-            AdminDetailField('vehicle_status_display', 'Vehicle Status', type: AdminDetailFieldType.status),
+            AdminDetailField(
+              'vehicle_status_display',
+              'Vehicle Status',
+              type: AdminDetailFieldType.status,
+            ),
             AdminDetailField('driver_name', 'Assigned Driver Name'),
-            AdminDetailField('driver_phone_number', 'Assigned Driver Phone', type: AdminDetailFieldType.phone),
+            AdminDetailField(
+              'driver_phone_number',
+              'Assigned Driver Phone',
+              type: AdminDetailFieldType.phone,
+            ),
             AdminDetailField('driver_license_number', 'Driver License'),
           ],
         ),
         const AdminDetailSection(
           title: 'Metadata',
           fields: [
-            AdminDetailField('created_at', 'Created At', type: AdminDetailFieldType.date),
-            AdminDetailField('updated_at', 'Updated At', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'created_at',
+              'Created At',
+              type: AdminDetailFieldType.date,
+            ),
+            AdminDetailField(
+              'updated_at',
+              'Updated At',
+              type: AdminDetailFieldType.date,
+            ),
           ],
+        ),
+      ],
+      customActions: [
+        AdminCustomAction(
+          title: 'Assign Driver',
+          icon: Icons.person_add_alt_1_outlined,
+          onPressed: (context, record) async {
+            final vehicleId = record['id'];
+            if (vehicleId == null) return false;
+            final changed = await showModalBottomSheet<bool>(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (_) => AssignDriverDialog(
+                vehicleId: vehicleId.toString(),
+                vehicleNumber: (record['vehicle_number'] ?? 'Vehicle')
+                    .toString(),
+                transporterId: transporterIdOf(record)?.toString(),
+                assignedDriverName:
+                    (record['driver_name'] ?? record['assigned_driver_name'])
+                        ?.toString(),
+              ),
+            );
+            return changed == true;
+          },
         ),
       ],
     ),
@@ -1104,7 +1674,11 @@ class AdminModules {
             AdminDetailField('amount', 'Amount'),
             AdminDetailField('quantity', 'Quantity'),
             AdminDetailField('unit', 'Unit'),
-            AdminDetailField('status', 'Status', type: AdminDetailFieldType.status),
+            AdminDetailField(
+              'status',
+              'Status',
+              type: AdminDetailFieldType.status,
+            ),
           ],
         ),
         const AdminDetailSection(
@@ -1120,7 +1694,11 @@ class AdminModules {
           title: 'Seller Information',
           fields: [
             AdminDetailField('seller.username', 'Seller Name'),
-            AdminDetailField('seller.mobile', 'Seller Mobile', type: AdminDetailFieldType.phone),
+            AdminDetailField(
+              'seller.mobile',
+              'Seller Mobile',
+              type: AdminDetailFieldType.phone,
+            ),
             AdminDetailField('seller_name', 'Seller Name (Fallback)'),
           ],
         ),
@@ -1128,14 +1706,26 @@ class AdminModules {
           title: 'Buyer Information',
           fields: [
             AdminDetailField('buyer.username', 'Buyer Name'),
-            AdminDetailField('buyer.mobile', 'Buyer Mobile', type: AdminDetailFieldType.phone),
+            AdminDetailField(
+              'buyer.mobile',
+              'Buyer Mobile',
+              type: AdminDetailFieldType.phone,
+            ),
           ],
         ),
         const AdminDetailSection(
           title: 'Metadata',
           fields: [
-            AdminDetailField('created_at', 'Created At', type: AdminDetailFieldType.date),
-            AdminDetailField('updated_at', 'Updated At', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'created_at',
+              'Created At',
+              type: AdminDetailFieldType.date,
+            ),
+            AdminDetailField(
+              'updated_at',
+              'Updated At',
+              type: AdminDetailFieldType.date,
+            ),
           ],
         ),
       ],
@@ -1150,7 +1740,9 @@ class AdminModules {
               backgroundColor: Colors.transparent,
               builder: (_) => OfferInterestsDialog(
                 offerId: record['id'].toString(),
-                offerTitle: (record['title'] ?? record['product_title'] ?? 'Offer').toString(),
+                offerTitle:
+                    (record['title'] ?? record['product_title'] ?? 'Offer')
+                        .toString(),
               ),
             );
             return result == true; // refresh list if true
@@ -1165,10 +1757,23 @@ class AdminModules {
       listEndpoint: '/api/buyer-requirements/',
       idKey: 'rfq_id',
       titleKeys: const ['title', 'rfq_id'],
-      subtitleKeys: const ['status', 'buyer_name', 'category', 'required_quantity', 'target_price', 'quotation_count'],
+      subtitleKeys: const [
+        'status',
+        'buyer_name',
+        'category',
+        'required_quantity',
+        'target_price',
+        'quotation_count',
+      ],
       detailEndpoint: (id) => '/api/buyer-requirements/$id/',
       filterParameter: 'status',
-      filterOptions: const ['open', 'negotiation_in_progress', 'fulfilled', 'closed', 'expired'],
+      filterOptions: const [
+        'open',
+        'negotiation_in_progress',
+        'fulfilled',
+        'closed',
+        'expired',
+      ],
       detailSections: [
         const AdminDetailSection(
           title: 'Requirement',
@@ -1184,8 +1789,16 @@ class AdminModules {
             AdminDetailField('price_unit', 'Price Unit'),
             AdminDetailField('delivery_terms', 'Delivery Terms'),
             AdminDetailField('description', 'Description'),
-            AdminDetailField('status', 'Status', type: AdminDetailFieldType.status),
-            AdminDetailField('expiry_datetime', 'Expires', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'status',
+              'Status',
+              type: AdminDetailFieldType.status,
+            ),
+            AdminDetailField(
+              'expiry_datetime',
+              'Expires',
+              type: AdminDetailFieldType.date,
+            ),
           ],
         ),
         const AdminDetailSection(
@@ -1200,7 +1813,11 @@ class AdminModules {
           title: 'Quotations',
           fields: [
             AdminDetailField('quotation_count', 'Quotations Received'),
-            AdminDetailField('created_at', 'Created At', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'created_at',
+              'Created At',
+              type: AdminDetailFieldType.date,
+            ),
           ],
         ),
       ],
@@ -1212,7 +1829,10 @@ class AdminModules {
           action: 'close',
           confirmMessage: 'Sellers will no longer be able to send quotations.',
           destructive: true,
-          isVisible: (record) => const ['open', 'negotiation_in_progress'].contains(recordStatus(record)),
+          isVisible: (record) => const [
+            'open',
+            'negotiation_in_progress',
+          ].contains(recordStatus(record)),
         ),
       ],
     ),
@@ -1224,7 +1844,13 @@ class AdminModules {
       listEndpoint: '/api/buyer-offers/',
       staticQuery: const {'tab': 'approvals'},
       titleKeys: const ['title', 'transaction_id'],
-      subtitleKeys: const ['status', 'buyer_name', 'seller_name', 'requested_amount', 'requested_quantity'],
+      subtitleKeys: const [
+        'status',
+        'buyer_name',
+        'seller_name',
+        'requested_amount',
+        'requested_quantity',
+      ],
       detailEndpoint: (id) => '/api/buyer-offers/$id/',
       filterParameter: 'status',
       filterOptions: const [
@@ -1240,7 +1866,11 @@ class AdminModules {
         const AdminDetailSection(
           title: 'Offer',
           fields: [
-            AdminDetailField('transaction_id', 'Transaction ID', copyable: true),
+            AdminDetailField(
+              'transaction_id',
+              'Transaction ID',
+              copyable: true,
+            ),
             AdminDetailField('title', 'Title'),
             AdminDetailField('category', 'Category'),
             AdminDetailField('brand', 'Brand'),
@@ -1250,7 +1880,11 @@ class AdminModules {
             AdminDetailField('amount_unit', 'Price Unit'),
             AdminDetailField('requested_bag_count', 'Bags'),
             AdminDetailField('latest_offered_amount', 'Latest Offered Price'),
-            AdminDetailField('status', 'Status', type: AdminDetailFieldType.status),
+            AdminDetailField(
+              'status',
+              'Status',
+              type: AdminDetailFieldType.status,
+            ),
           ],
         ),
         const AdminDetailSection(
@@ -1269,9 +1903,17 @@ class AdminModules {
           fields: [
             AdminDetailField('confirmed_by_admin_name', 'Confirmed By'),
             AdminDetailField('confirmed_branch_name', 'Confirmed Branch'),
-            AdminDetailField('deal_confirmed_at', 'Confirmed At', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'deal_confirmed_at',
+              'Confirmed At',
+              type: AdminDetailFieldType.date,
+            ),
             AdminDetailField('superadmin_remark', 'Admin Remark'),
-            AdminDetailField('created_at', 'Created At', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'created_at',
+              'Created At',
+              type: AdminDetailFieldType.date,
+            ),
           ],
         ),
       ],
@@ -1337,7 +1979,11 @@ class AdminModules {
           fields: [
             AdminDetailField('page_label', 'Page'),
             AdminDetailField('title', 'Title'),
-            AdminDetailField('is_active', 'Status', type: AdminDetailFieldType.boolean),
+            AdminDetailField(
+              'is_active',
+              'Status',
+              type: AdminDetailFieldType.boolean,
+            ),
           ],
         ),
         AdminDetailSection(
@@ -1347,8 +1993,16 @@ class AdminModules {
         AdminDetailSection(
           title: 'Activity',
           fields: [
-            AdminDetailField('created_at', 'Created', type: AdminDetailFieldType.date),
-            AdminDetailField('updated_at', 'Updated', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'created_at',
+              'Created',
+              type: AdminDetailFieldType.date,
+            ),
+            AdminDetailField(
+              'updated_at',
+              'Updated',
+              type: AdminDetailFieldType.date,
+            ),
           ],
         ),
       ],
@@ -1372,7 +2026,12 @@ class AdminModules {
       createEndpoint: '/api/product-images/',
       deleteEndpoint: (id) => '/api/product-images/$id/',
       fields: const [
-        AdminFieldConfig('product_id', 'Offer', required: true, optionsLoader: loadOfferOptions),
+        AdminFieldConfig(
+          'product_id',
+          'Offer',
+          required: true,
+          optionsLoader: loadOfferOptions,
+        ),
         AdminFieldConfig('image', 'Image', required: true, isFile: true),
       ],
       detailSections: [
@@ -1382,19 +2041,31 @@ class AdminModules {
             AdminDetailField('id', 'Image ID', copyable: true),
             AdminDetailField('product_title', 'Offer'),
             AdminDetailField('product', 'Offer ID'),
-            AdminDetailField('is_primary', 'Primary Image', type: AdminDetailFieldType.boolean),
+            AdminDetailField(
+              'is_primary',
+              'Primary Image',
+              type: AdminDetailFieldType.boolean,
+            ),
           ],
         ),
         const AdminDetailSection(
           title: 'Preview',
           fields: [
-            AdminDetailField('image_url', 'Image', type: AdminDetailFieldType.image),
+            AdminDetailField(
+              'image_url',
+              'Image',
+              type: AdminDetailFieldType.image,
+            ),
           ],
         ),
         const AdminDetailSection(
           title: 'Metadata',
           fields: [
-            AdminDetailField('created_at', 'Created At', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'created_at',
+              'Created At',
+              type: AdminDetailFieldType.date,
+            ),
           ],
         ),
       ],
@@ -1409,7 +2080,12 @@ class AdminModules {
       createEndpoint: '/api/product-videos/',
       deleteEndpoint: (id) => '/api/product-videos/$id/',
       fields: const [
-        AdminFieldConfig('product_id', 'Offer', required: true, optionsLoader: loadOfferOptions),
+        AdminFieldConfig(
+          'product_id',
+          'Offer',
+          required: true,
+          optionsLoader: loadOfferOptions,
+        ),
         AdminFieldConfig('video', 'Video', required: true, isFile: true),
       ],
       detailSections: [
@@ -1424,13 +2100,21 @@ class AdminModules {
         const AdminDetailSection(
           title: 'Preview',
           fields: [
-            AdminDetailField('video_url', 'Video', type: AdminDetailFieldType.video),
+            AdminDetailField(
+              'video_url',
+              'Video',
+              type: AdminDetailFieldType.video,
+            ),
           ],
         ),
         const AdminDetailSection(
           title: 'Metadata',
           fields: [
-            AdminDetailField('created_at', 'Created At', type: AdminDetailFieldType.date),
+            AdminDetailField(
+              'created_at',
+              'Created At',
+              type: AdminDetailFieldType.date,
+            ),
           ],
         ),
       ],

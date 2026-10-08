@@ -680,6 +680,7 @@ class AdminChallanDetailsView extends StatelessWidget {
                     keyboardType: numeric.contains(entry.key)
                         ? const TextInputType.numberWithOptions(decimal: true)
                         : TextInputType.text,
+                    maxLength: numeric.contains(entry.key) ? 10 : null,
                     decoration: InputDecoration(labelText: labels[entry.key], border: const OutlineInputBorder()),
                   ),
                 ),

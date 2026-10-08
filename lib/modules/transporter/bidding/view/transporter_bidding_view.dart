@@ -287,6 +287,7 @@ class _OffersTab extends StatelessWidget {
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
+              maxLength: 10,
               decoration: const InputDecoration(
                 labelText: "Total freight amount (₹)",
                 border: OutlineInputBorder(),

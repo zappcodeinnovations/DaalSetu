@@ -480,6 +480,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
     return TextFormField(
       controller: ctrl,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      maxLength: 10,
       style: TextStyle(color: textDark, fontSize: 14),
       decoration: InputDecoration(
         labelText: hint,

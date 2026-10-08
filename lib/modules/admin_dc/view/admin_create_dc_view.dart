@@ -885,6 +885,11 @@ class AdminCreateChallanView extends StatelessWidget {
           child: TextField(
             controller: controller,
             keyboardType: keyboardType,
+            maxLength: keyboardType == TextInputType.phone ||
+                    keyboardType == TextInputType.number ||
+                    keyboardType == const TextInputType.numberWithOptions(decimal: true)
+                ? 10
+                : null,
             maxLines: maxLines,
             style: TextStyle(
               fontSize: 14,

@@ -4,13 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:daalsetu/theme/app_theme.dart';
+import 'package:daalsetu/utils/tax_id_formatters.dart';
 
 class AppColors {
   static Color get background => Get.theme.scaffoldBackgroundColor;
   static Color get cardSurface => Get.theme.cardColor;
   static Color get primaryBrand => Get.theme.primaryColor;
-  static Color get textWhite => Get.theme.textTheme.bodyLarge?.color ?? Colors.white;
-  static Color get textGrey => Get.theme.textTheme.bodyMedium?.color ?? Colors.grey;
+  static Color get textWhite =>
+      Get.theme.textTheme.bodyLarge?.color ?? Colors.white;
+  static Color get textGrey =>
+      Get.theme.textTheme.bodyMedium?.color ?? Colors.grey;
   static Color get border => Get.theme.dividerColor;
   static Color get successGreen => AppTheme.successGreen;
 }
@@ -48,8 +51,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (pickedDate != null) {
       setState(() {
-        _controller.dobController.text =
-            pickedDate.toIso8601String().split("T").first;
+        _controller.dobController.text = pickedDate
+            .toIso8601String()
+            .split("T")
+            .first;
       });
     }
   }
@@ -73,7 +78,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         title: Text(
           "Register New User",
-          style: TextStyle(color: AppColors.textWhite, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: AppColors.textWhite,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: SingleChildScrollView(
@@ -160,7 +169,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       label: "Gender",
                       value: _controller.selectedGender,
                       items: ["male", "female", "other"],
-                      onChanged: (val) => setState(() => _controller.selectedGender = val),
+                      onChanged: (val) =>
+                          setState(() => _controller.selectedGender = val),
                     ),
                   ),
                   const SizedBox(width: 15),
@@ -194,7 +204,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
 
               const SizedBox(height: 30),
-              _buildSectionHeader(IconlyLight.document, "VERIFICATION DOCUMENTS"),
+              _buildSectionHeader(
+                IconlyLight.document,
+                "VERIFICATION DOCUMENTS",
+              ),
               const SizedBox(height: 20),
 
               _buildDocumentCard(
@@ -256,8 +269,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
             color: selected ? AppColors.primaryBrand : AppColors.textGrey,
             fontWeight: selected ? FontWeight.bold : FontWeight.normal,
           ),
-          side: BorderSide(color: selected ? AppColors.primaryBrand : AppColors.border),
-          onSelected: (_) => setState(() => _controller.selectedRole = entry.key),
+          side: BorderSide(
+            color: selected ? AppColors.primaryBrand : AppColors.border,
+          ),
+          onSelected: (_) =>
+              setState(() => _controller.selectedRole = entry.key),
         );
       }).toList(),
     );
@@ -295,6 +311,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     TextInputType keyboard = TextInputType.text,
     bool obscure = false,
   }) {
+    final isPan = label.toLowerCase().contains('pan');
+    final isGst = label.toLowerCase().contains('gst');
+    final taxFormatter = isPan
+        ? const TaxIdInputFormatter.pan()
+        : isGst
+        ? const TaxIdInputFormatter.gst()
+        : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -303,6 +326,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         TextFormField(
           controller: controller,
           keyboardType: keyboard,
+          maxLength:
+              keyboard == TextInputType.phone ||
+                  keyboard == TextInputType.number
+              ? 10
+              : null,
+          inputFormatters: taxFormatter == null ? null : [taxFormatter],
           obscureText: obscure,
           style: TextStyle(color: AppColors.textWhite),
           decoration: InputDecoration(
@@ -310,7 +339,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
             hintStyle: TextStyle(color: Colors.grey.shade700),
             filled: true,
             fillColor: AppColors.cardSurface,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(color: AppColors.border),
@@ -324,7 +356,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
               borderSide: BorderSide(color: AppColors.primaryBrand),
             ),
           ),
-          validator: (value) => value!.isEmpty ? "Required" : null,
+          validator: (value) {
+            final taxError = isPan
+                ? TaxIdValidator.pan(value, required: true)
+                : isGst
+                ? TaxIdValidator.gst(value, required: true)
+                : null;
+            return taxError ??
+                ((value == null || value.isEmpty) ? 'Required' : null);
+          },
         ),
       ],
     );
@@ -352,8 +392,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
             hintStyle: TextStyle(color: Colors.grey.shade700),
             filled: true,
             fillColor: AppColors.cardSurface,
-            suffixIcon: icon != null ? Icon(icon, color: Colors.grey.shade600, size: 20) : null,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            suffixIcon: icon != null
+                ? Icon(icon, color: Colors.grey.shade600, size: 20)
+                : null,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(color: AppColors.border),
@@ -391,7 +436,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
           decoration: InputDecoration(
             filled: true,
             fillColor: AppColors.cardSurface,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(color: AppColors.border),
@@ -405,10 +453,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               borderSide: BorderSide(color: AppColors.primaryBrand),
             ),
           ),
-          items: items.map((item) => DropdownMenuItem(
-            value: item,
-            child: Text(item[0].toUpperCase() + item.substring(1)),
-          )).toList(),
+          items: items
+              .map(
+                (item) => DropdownMenuItem(
+                  value: item,
+                  child: Text(item[0].toUpperCase() + item.substring(1)),
+                ),
+              )
+              .toList(),
           onChanged: onChanged,
           icon: Icon(IconlyLight.arrow_down_2, color: Colors.grey.shade600),
           validator: (val) => val == null ? "Required" : null,
@@ -449,19 +501,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   if (hasImage)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.successGreen.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         "UPLOADED",
-                        style: TextStyle(color: AppColors.successGreen, fontSize: 10, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: AppColors.successGreen,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     )
                   else
@@ -502,17 +565,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 try {
                   final user = await _controller.register();
                   if (user != null) {
-                    if(mounted) {
+                    if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Registration Successful")),
+                        const SnackBar(
+                          content: Text("Registration Successful"),
+                        ),
                       );
                       Navigator.pop(context);
                     }
                   }
                 } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(e.toString())),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(e.toString())));
                 }
                 setState(() => _controller.isLoading = false);
               },
@@ -523,7 +588,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                   Text(
                     "Confirm Registration",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                   SizedBox(width: 8),
                   Icon(IconlyLight.tick_square, color: Colors.white, size: 20),

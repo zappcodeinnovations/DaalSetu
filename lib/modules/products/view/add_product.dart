@@ -249,7 +249,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     child: _unit(
                       'Rate unit',
                       rateUnit,
-                      (v) => setState(() => rateUnit = v!),
+                      (v) => setState(() {
+                        rateUnit = v!;
+                        quantityUnit = v;
+                      }),
                     ),
                   ),
                 ],
@@ -268,7 +271,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _unit('Quantity unit', quantityUnit, (v) {
-                      setState(() => quantityUnit = v!);
+                      setState(() {
+                        quantityUnit = v!;
+                        rateUnit = v;
+                      });
                       _syncFromQuantity(_quantity.text);
                     }),
                   ),
@@ -390,6 +396,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     keyboardType: number
         ? const TextInputType.numberWithOptions(decimal: true)
         : null,
+    maxLength: number ? 10 : null,
     inputFormatters: number
         ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,3}'))]
         : null,

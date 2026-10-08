@@ -185,14 +185,14 @@ class _SellerBuyerOfferDetailViewState extends State<SellerBuyerOfferDetailView>
       title: Text("Counter Offer", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
       content: SingleChildScrollView(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: amount, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: deco("Your Price *")),
+          TextField(controller: amount, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: deco("Your Price *")),
           const SizedBox(height: 10),
-          TextField(controller: quantity, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: deco("Quantity *")),
+          TextField(controller: quantity, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: deco("Quantity *")),
           const SizedBox(height: 10),
           Row(children: [
-            Expanded(child: TextField(controller: bags, keyboardType: TextInputType.number, decoration: deco("Bags (optional)"))),
+            Expanded(child: TextField(controller: bags, keyboardType: TextInputType.number, maxLength: 10, decoration: deco("Bags (optional)"))),
             const SizedBox(width: 8),
-            Expanded(child: TextField(controller: packing, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: deco("Bag Wt kg"))),
+            Expanded(child: TextField(controller: packing, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: deco("Bag Wt kg"))),
           ]),
           const SizedBox(height: 10),
           TextField(controller: remark, maxLines: 2, decoration: deco("Remark")),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../theme/glass_widgets.dart';
+import '../../../../utils/tax_id_formatters.dart';
 import '../controller/transporter_company_controller.dart';
 import '../model/company_model.dart';
 
@@ -16,8 +17,9 @@ class TransporterCompanyForm extends StatefulWidget {
 
 class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
   final _formKey = GlobalKey<FormState>();
-  final TransporterCompanyController controller = Get.find<TransporterCompanyController>();
-  
+  final TransporterCompanyController controller =
+      Get.find<TransporterCompanyController>();
+
   bool _isSubmitting = false;
 
   late TextEditingController _legalNameCtrl;
@@ -40,8 +42,12 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
     final c = widget.company;
     _legalNameCtrl = TextEditingController(text: c?.legalName ?? '');
     _typeCtrl = TextEditingController(text: c?.companyType ?? '');
-    _yearCtrl = TextEditingController(text: c?.yearOfEstablishment?.toString() ?? '');
-    _employeesCtrl = TextEditingController(text: c?.numberOfEmployees?.toString() ?? '');
+    _yearCtrl = TextEditingController(
+      text: c?.yearOfEstablishment?.toString() ?? '',
+    );
+    _employeesCtrl = TextEditingController(
+      text: c?.numberOfEmployees?.toString() ?? '',
+    );
     _gstCtrl = TextEditingController(text: c?.gstNumber ?? '');
     _panCtrl = TextEditingController(text: c?.panNumber ?? '');
     _address1Ctrl = TextEditingController(text: c?.addressLine1 ?? '');
@@ -73,6 +79,14 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    final gstPanError = TaxIdValidator.gstMatchesPan(
+      _panCtrl.text,
+      _gstCtrl.text,
+    );
+    if (gstPanError != null) {
+      Get.snackbar('Validation error', gstPanError);
+      return;
+    }
 
     setState(() => _isSubmitting = true);
 
@@ -81,15 +95,15 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
       "company_type": _typeCtrl.text.trim(),
       "year_of_establishment": int.tryParse(_yearCtrl.text.trim()),
       "number_of_employees": int.tryParse(_employeesCtrl.text.trim()),
-      "gst_number": _gstCtrl.text.trim(),
-      "pan_number": _panCtrl.text.trim(),
+      "gst_number": _gstCtrl.text.trim().toUpperCase(),
+      "pan_number": _panCtrl.text.trim().toUpperCase(),
       "address_line_1": _address1Ctrl.text.trim(),
       "address_line_2": _address2Ctrl.text.trim(),
       "state": _stateCtrl.text.trim(),
       "city": _cityCtrl.text.trim(),
       "pincode": _pincodeCtrl.text.trim(),
       "country": _countryCtrl.text.trim(),
-      "landmark": _landmarkCtrl.text.trim()
+      "landmark": _landmarkCtrl.text.trim(),
     };
 
     bool success;
@@ -138,16 +152,35 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _buildSectionTitle("Basic Details"),
-                _buildTextField(label: "Legal Name", controller: _legalNameCtrl, isRequired: true),
-                _buildTextField(label: "Company Type (e.g. Private Limited)", controller: _typeCtrl),
+                _buildTextField(
+                  label: "Legal Name",
+                  controller: _legalNameCtrl,
+                  isRequired: true,
+                ),
+                _buildTextField(
+                  label: "Company Type (e.g. Private Limited)",
+                  controller: _typeCtrl,
+                ),
                 Row(
                   children: [
-                    Expanded(child: _buildTextField(label: "Est. Year", controller: _yearCtrl, isNumber: true)),
+                    Expanded(
+                      child: _buildTextField(
+                        label: "Est. Year",
+                        controller: _yearCtrl,
+                        isNumber: true,
+                      ),
+                    ),
                     const SizedBox(width: 16),
-                    Expanded(child: _buildTextField(label: "Employees", controller: _employeesCtrl, isNumber: true)),
+                    Expanded(
+                      child: _buildTextField(
+                        label: "Employees",
+                        controller: _employeesCtrl,
+                        isNumber: true,
+                      ),
+                    ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 16),
                 _buildSectionTitle("Tax Information"),
                 _buildTextField(label: "GST Number", controller: _gstCtrl),
@@ -155,21 +188,48 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
 
                 const SizedBox(height: 16),
                 _buildSectionTitle("Address"),
-                _buildTextField(label: "Address Line 1", controller: _address1Ctrl),
-                _buildTextField(label: "Address Line 2", controller: _address2Ctrl),
+                _buildTextField(
+                  label: "Address Line 1",
+                  controller: _address1Ctrl,
+                ),
+                _buildTextField(
+                  label: "Address Line 2",
+                  controller: _address2Ctrl,
+                ),
                 _buildTextField(label: "Landmark", controller: _landmarkCtrl),
                 Row(
                   children: [
-                    Expanded(child: _buildTextField(label: "City", controller: _cityCtrl)),
+                    Expanded(
+                      child: _buildTextField(
+                        label: "City",
+                        controller: _cityCtrl,
+                      ),
+                    ),
                     const SizedBox(width: 16),
-                    Expanded(child: _buildTextField(label: "State", controller: _stateCtrl)),
+                    Expanded(
+                      child: _buildTextField(
+                        label: "State",
+                        controller: _stateCtrl,
+                      ),
+                    ),
                   ],
                 ),
                 Row(
                   children: [
-                    Expanded(child: _buildTextField(label: "Pincode", controller: _pincodeCtrl, isNumber: true)),
+                    Expanded(
+                      child: _buildTextField(
+                        label: "Pincode",
+                        controller: _pincodeCtrl,
+                        isNumber: true,
+                      ),
+                    ),
                     const SizedBox(width: 16),
-                    Expanded(child: _buildTextField(label: "Country", controller: _countryCtrl)),
+                    Expanded(
+                      child: _buildTextField(
+                        label: "Country",
+                        controller: _countryCtrl,
+                      ),
+                    ),
                   ],
                 ),
 
@@ -178,11 +238,11 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
                   height: 50,
                   child: ElevatedButton(
                     onPressed: _isSubmitting ? null : _submit,
-                    child: _isSubmitting 
-                        ? const CircularProgressIndicator(color: Colors.white) 
+                    child: _isSubmitting
+                        ? const CircularProgressIndicator(color: Colors.white)
                         : Text(isEdit ? "Save Changes" : "Register Company"),
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -211,16 +271,24 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
     bool isRequired = false,
     bool isNumber = false,
   }) {
+    final isPan = label.toLowerCase().contains('pan');
+    final isGst = label.toLowerCase().contains('gst');
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: controller,
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+        maxLength: isNumber ? 10 : null,
+        inputFormatters: isPan
+            ? const [TaxIdInputFormatter.pan()]
+            : isGst
+            ? const [TaxIdInputFormatter.gst()]
+            : null,
         decoration: InputDecoration(
           labelText: label,
           filled: true,
-          fillColor: Theme.of(context).brightness == Brightness.dark 
-              ? Colors.white.withOpacity(0.05) 
+          fillColor: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white.withOpacity(0.05)
               : Colors.black.withOpacity(0.05),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -228,6 +296,12 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
           ),
         ),
         validator: (value) {
+          final taxError = isPan
+              ? TaxIdValidator.pan(value, required: true)
+              : isGst
+              ? TaxIdValidator.gst(value, required: true)
+              : null;
+          if (taxError != null) return taxError;
           if (isRequired && (value == null || value.trim().isEmpty)) {
             return "This field is required";
           }

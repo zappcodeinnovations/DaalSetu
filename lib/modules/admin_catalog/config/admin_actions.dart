@@ -62,8 +62,24 @@ String _userLabel(Map<String, dynamic> user) {
 }
 
 /// Dropdown sources. Top-level functions so field configs can stay `const`.
-Future<List<AdminOption>> loadTransporterOptions() =>
-    _load('/api/users/?role=transporter', (u) => AdminOption('${u['id'] ?? ''}', _userLabel(u)));
+///
+/// The API is role-filtered, and this local check protects the picker from old
+/// deployments that ignored the query parameter.  It matches the web panel:
+/// active, KYC-approved transporters only.
+List<AdminOption> transporterOptionsFromUsers(Iterable<Map<String, dynamic>> users) => users
+    .where((user) {
+      final role = (user['role'] ?? '').toString().trim().toLowerCase();
+      final kycStatus = (user['kyc_status'] ?? '').toString().trim().toLowerCase();
+      return role == 'transporter' && user['is_active'] != false && kycStatus == 'approved';
+    })
+    .map((user) => AdminOption('${user['id'] ?? ''}', _userLabel(user)))
+    .where((option) => option.value.isNotEmpty)
+    .toList();
+
+Future<List<AdminOption>> loadTransporterOptions() async {
+  final response = await ApiClient.get(endpoint: '/api/users/?role=transporter', requireAuth: true);
+  return transporterOptionsFromUsers(adminListFrom(response));
+}
 
 Future<List<AdminOption>> loadCategoryOptions() => _load(
       '/api/categories/',

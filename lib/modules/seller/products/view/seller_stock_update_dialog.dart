@@ -42,6 +42,7 @@ class SellerStockUpdateDialog {
                 TextField(
                   controller: qtyCtrl,
                   keyboardType: TextInputType.number,
+                  maxLength: 10,
                   decoration: const InputDecoration(labelText: "Value", border: OutlineInputBorder()),
                 ),
               ],

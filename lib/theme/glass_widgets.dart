@@ -289,6 +289,8 @@ class GlassTextField extends StatelessWidget {
     final hintColor = isDark ? AppTheme.textMuted : AppTheme.textMutedLight;
     final fieldBg = isDark ? AppTheme.bgSecondary : const Color(0xFFF1F5F9);
     final borderCol = isDark ? AppTheme.borderColor : AppTheme.borderLight;
+    final isTenDigitNumberField =
+        keyboardType == TextInputType.number || keyboardType == TextInputType.phone;
 
     return TextFormField(
       controller: controller,
@@ -299,6 +301,7 @@ class GlassTextField extends StatelessWidget {
       autofillHints: autofillHints,
       onFieldSubmitted: onFieldSubmitted,
       validator: validator,
+      maxLength: isTenDigitNumberField ? 10 : null,
       maxLines: maxLines,
       minLines: minLines,
       readOnly: readOnly,
@@ -314,6 +317,7 @@ class GlassTextField extends StatelessWidget {
             ? Icon(prefixIcon, color: AppTheme.primaryGold, size: 20)
             : null,
         suffixIcon: suffixIcon,
+        counterText: isTenDigitNumberField ? '' : null,
         contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),

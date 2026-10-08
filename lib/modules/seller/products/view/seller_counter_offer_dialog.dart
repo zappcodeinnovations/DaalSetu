@@ -22,24 +22,28 @@ class SellerCounterOfferDialog {
               TextField(
                 controller: priceCtrl,
                 keyboardType: TextInputType.number,
+                maxLength: 10,
                 decoration: const InputDecoration(labelText: "Counter Price (Rs)", border: OutlineInputBorder()),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: qtyCtrl,
                 keyboardType: TextInputType.number,
+                maxLength: 10,
                 decoration: const InputDecoration(labelText: "Counter Quantity (Qtl)", border: OutlineInputBorder()),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: bagCtrl,
                 keyboardType: TextInputType.number,
+                maxLength: 10,
                 decoration: const InputDecoration(labelText: "Counter Bag Count", border: OutlineInputBorder()),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: weightCtrl,
                 keyboardType: TextInputType.number,
+                maxLength: 10,
                 decoration: const InputDecoration(labelText: "Counter Packing Weight (KG)", border: OutlineInputBorder()),
               ),
             ],

@@ -26,15 +26,15 @@ class SellerSubmitQuoteDialog {
               Text("${rfq.title} • Target ₹${rfq.targetPrice ?? '-'} / ${rfq.priceUnit}",
                   style: TextStyle(color: Colors.grey.shade700, fontSize: 13, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
-              TextField(controller: priceCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: deco("Your Price (₹ / ${rfq.priceUnit}) *")),
+              TextField(controller: priceCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: deco("Your Price (₹ / ${rfq.priceUnit}) *")),
               const SizedBox(height: 10),
-              TextField(controller: qtyCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: deco("Quantity (${rfq.quantityUnit}) *")),
+              TextField(controller: qtyCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: deco("Quantity (${rfq.quantityUnit}) *")),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Expanded(child: TextField(controller: bagCtrl, keyboardType: TextInputType.number, decoration: deco("Bags (optional)"))),
+                  Expanded(child: TextField(controller: bagCtrl, keyboardType: TextInputType.number, maxLength: 10, decoration: deco("Bags (optional)"))),
                   const SizedBox(width: 8),
-                  Expanded(child: TextField(controller: weightCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: deco("Bag Wt kg"))),
+                  Expanded(child: TextField(controller: weightCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: deco("Bag Wt kg"))),
                 ],
               ),
               const SizedBox(height: 10),
@@ -85,15 +85,15 @@ class SellerSubmitQuoteDialog {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: priceCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: deco("Counter Price (optional)")),
+              TextField(controller: priceCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: deco("Counter Price (optional)")),
               const SizedBox(height: 10),
-              TextField(controller: qtyCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: deco("Counter Quantity (optional)")),
+              TextField(controller: qtyCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: deco("Counter Quantity (optional)")),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Expanded(child: TextField(controller: bagCtrl, keyboardType: TextInputType.number, decoration: deco("Bags (optional)"))),
+                  Expanded(child: TextField(controller: bagCtrl, keyboardType: TextInputType.number, maxLength: 10, decoration: deco("Bags (optional)"))),
                   const SizedBox(width: 8),
-                  Expanded(child: TextField(controller: weightCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: deco("Packing KG"))),
+                  Expanded(child: TextField(controller: weightCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: deco("Packing KG"))),
                 ],
               ),
               const SizedBox(height: 8),

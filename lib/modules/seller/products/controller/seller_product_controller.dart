@@ -43,6 +43,13 @@ class SellerProductController extends GetxController {
   final locationController = TextEditingController();
   final remarkController = TextEditingController();
 
+  /// An offer's rate and quantity must use the same unit (KG/QTL/TON).
+  void setOfferUnit(String? value) {
+    final unit = value ?? 'qtl';
+    amountUnit.value = unit;
+    quantityUnit.value = unit;
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -54,7 +61,9 @@ class SellerProductController extends GetxController {
     try {
       isLoading(true);
       final data = await SellerServices.getProducts();
-      products.assignAll(data.map((e) => SellerProductModel.fromJson(e)).toList());
+      products.assignAll(
+        data.map((e) => SellerProductModel.fromJson(e)).toList(),
+      );
     } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {
@@ -71,42 +80,52 @@ class SellerProductController extends GetxController {
       final labels = <int, String>{};
       void addNodes(List<CategoryTreeModel> nodes, String parentPath) {
         for (final node in nodes) {
-          final path = parentPath.isEmpty ? node.name : '$parentPath > ${node.name}';
+          final path = parentPath.isEmpty
+              ? node.name
+              : '$parentPath > ${node.name}';
           flat.add(node);
           labels[node.id] = path;
           addNodes(node.children, path);
         }
       }
+
       addNodes(roots, '');
       categories.assignAll(flat);
       categoryLabels.assignAll(labels);
-
     } catch (e) {
       debugPrint("Error fetching support data: $e");
     }
     try {
       companies.assignAll(await SellerServices.getCompanies());
       if (selectedCompanyId.value == null && companies.isNotEmpty) {
-        selectedCompanyId.value = companies.firstWhere((c) => c.isPrimary, orElse: () => companies.first).id;
+        selectedCompanyId.value = companies
+            .firstWhere((c) => c.isPrimary, orElse: () => companies.first)
+            .id;
       }
     } catch (e) {
       debugPrint("Error fetching companies: $e");
     }
     try {
       final res = await SellerServices.getSellerBranches();
-      final data = res['data'] is Map<String, dynamic> ? res['data'] as Map<String, dynamic> : const {};
-      branches.assignAll((data['my_branches'] as List? ?? [])
-          .whereType<Map<String, dynamic>>()
-          .map(SellerBranchModel.fromJson)
-          .where((b) => b.id != null));
+      final data = res['data'] is Map<String, dynamic>
+          ? res['data'] as Map<String, dynamic>
+          : const {};
+      branches.assignAll(
+        (data['my_branches'] as List? ?? [])
+            .whereType<Map<String, dynamic>>()
+            .map(SellerBranchModel.fromJson)
+            .where((b) => b.id != null),
+      );
       // Default: visible in every branch the seller belongs to (backend default too).
-      if (selectedBranchIds.isEmpty) selectedBranchIds.addAll(branches.map((b) => b.id!));
+      if (selectedBranchIds.isEmpty)
+        selectedBranchIds.addAll(branches.map((b) => b.id!));
     } catch (e) {
       debugPrint("Error fetching branches: $e");
     }
   }
 
-  String categoryLabel(CategoryTreeModel category) => categoryLabels[category.id] ?? category.name;
+  String categoryLabel(CategoryTreeModel category) =>
+      categoryLabels[category.id] ?? category.name;
 
   Future<void> selectCategory(int? categoryId) async {
     selectedCategoryId.value = categoryId;
@@ -117,10 +136,12 @@ class SellerProductController extends GetxController {
     try {
       isBrandsLoading(true);
       final brandData = await SellerServices.getCategoryBrands(categoryId);
-      brands.assignAll(brandData
-          .whereType<Map>()
-          .map((item) => BrandModel.fromJson(Map<String, dynamic>.from(item)))
-          .toList());
+      brands.assignAll(
+        brandData
+            .whereType<Map>()
+            .map((item) => BrandModel.fromJson(Map<String, dynamic>.from(item)))
+            .toList(),
+      );
     } catch (e) {
       debugPrint("Error fetching category brands: $e");
       SellerUi.error("Unable to load brands for the selected category.");
@@ -130,7 +151,10 @@ class SellerProductController extends GetxController {
   }
 
   Future<void> pickOfferImage() async {
-    final image = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 88);
+    final image = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 88,
+    );
     if (image != null) selectedImagePath.value = image.path;
   }
 
@@ -144,19 +168,25 @@ class SellerProductController extends GetxController {
     return path.split(RegExp(r'[\\/]')).last;
   }
 
-  String _ymd(DateTime d) => "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
+  String _ymd(DateTime d) =>
+      "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
 
   String? _validate() {
     if (titleController.text.trim().isEmpty) return "Offer title is required.";
     if (selectedCategoryId.value == null) return "Please select a category.";
     if (amountController.text.trim().isEmpty) return "Price is required.";
     final hasBags = bagCountController.text.trim().isNotEmpty;
-    if (hasBags && packingWeightController.text.trim().isEmpty) return "Packing weight is required with bags.";
-    if (!hasBags && quantityController.text.trim().isEmpty) return "Enter bags with packing weight, or the quantity.";
-    if (loadingFrom.value == null || loadingTo.value == null) return "Loading from and to dates are required.";
-    if (loadingTo.value!.isBefore(loadingFrom.value!)) return "Loading to cannot be before loading from.";
+    if (hasBags && packingWeightController.text.trim().isEmpty)
+      return "Packing weight is required with bags.";
+    if (!hasBags && quantityController.text.trim().isEmpty)
+      return "Enter bags with packing weight, or the quantity.";
+    if (loadingFrom.value == null || loadingTo.value == null)
+      return "Loading from and to dates are required.";
+    if (loadingTo.value!.isBefore(loadingFrom.value!))
+      return "Loading to cannot be before loading from.";
     if (dealExpiry.value == null) return "Deal expiry is required.";
-    if (branches.isNotEmpty && selectedBranchIds.isEmpty) return "Select at least one branch.";
+    if (branches.isNotEmpty && selectedBranchIds.isEmpty)
+      return "Select at least one branch.";
     return null;
   }
 
@@ -184,10 +214,13 @@ class SellerProductController extends GetxController {
       "loading_from": _ymd(loadingFrom.value!),
       "loading_to": _ymd(loadingTo.value!),
       "loading_location": locationController.text.trim(),
-      "deal_expiry_datetime": "${_ymd(expiry)}T${expiry.hour.toString().padLeft(2, '0')}:${expiry.minute.toString().padLeft(2, '0')}",
+      "deal_expiry_datetime":
+          "${_ymd(expiry)}T${expiry.hour.toString().padLeft(2, '0')}:${expiry.minute.toString().padLeft(2, '0')}",
       "remark": remarkController.text.trim(),
-      if (selectedCompanyId.value != null) "seller_company_id": selectedCompanyId.value,
-      if (selectedBranchIds.isNotEmpty) "visible_branch_ids": selectedBranchIds.toList(),
+      if (selectedCompanyId.value != null)
+        "seller_company_id": selectedCompanyId.value,
+      if (selectedBranchIds.isNotEmpty)
+        "visible_branch_ids": selectedBranchIds.toList(),
     };
 
     try {
@@ -199,22 +232,31 @@ class SellerProductController extends GetxController {
       var mediaFailed = false;
       if (productId != null && selectedImagePath.value != null) {
         try {
-          await SellerServices.uploadProductImage(productId, selectedImagePath.value!);
+          await SellerServices.uploadProductImage(
+            productId,
+            selectedImagePath.value!,
+          );
         } catch (_) {
           mediaFailed = true;
         }
       }
       if (productId != null && selectedVideoPath.value != null) {
         try {
-          await SellerServices.uploadProductVideo(productId, selectedVideoPath.value!, 'Offer Video');
+          await SellerServices.uploadProductVideo(
+            productId,
+            selectedVideoPath.value!,
+            'Offer Video',
+          );
         } catch (_) {
           mediaFailed = true;
         }
       }
       Get.back();
-      SellerUi.success(mediaFailed
-          ? "Offer created, but one or more media files could not be uploaded."
-          : result['message']?.toString() ?? "Offer created successfully");
+      SellerUi.success(
+        mediaFailed
+            ? "Offer created, but one or more media files could not be uploaded."
+            : result['message']?.toString() ?? "Offer created successfully",
+      );
       fetchProducts();
       clearForm();
     } catch (e) {
@@ -228,11 +270,15 @@ class SellerProductController extends GetxController {
     final activate = !product.isActive;
     final confirmed = await SellerUi.confirm(
       activate ? "Activate Offer" : "Deactivate Offer",
-      activate ? "Buyers will be able to see this offer again." : "Buyers will no longer see this offer.",
+      activate
+          ? "Buyers will be able to see this offer again."
+          : "Buyers will no longer see this offer.",
       confirmText: activate ? "Activate" : "Deactivate",
     );
     if (!confirmed) return;
-    final result = await SellerUi.run(() => SellerServices.toggleOfferStatus(product.id, activate));
+    final result = await SellerUi.run(
+      () => SellerServices.toggleOfferStatus(product.id, activate),
+    );
     if (result != null) fetchProducts();
   }
 
@@ -244,14 +290,22 @@ class SellerProductController extends GetxController {
       color: Colors.red,
     );
     if (!confirmed) return;
-    final result = await SellerUi.run(() => SellerServices.deleteOffer(product.id));
+    final result = await SellerUi.run(
+      () => SellerServices.deleteOffer(product.id),
+    );
     if (result != null) products.removeWhere((item) => item.id == product.id);
   }
 
   void clearForm() {
     for (final c in [
-      titleController, descController, amountController, quantityController,
-      bagCountController, packingWeightController, locationController, remarkController,
+      titleController,
+      descController,
+      amountController,
+      quantityController,
+      bagCountController,
+      packingWeightController,
+      locationController,
+      remarkController,
     ]) {
       c.clear();
     }
@@ -270,8 +324,14 @@ class SellerProductController extends GetxController {
   @override
   void onClose() {
     for (final c in [
-      titleController, descController, amountController, quantityController,
-      bagCountController, packingWeightController, locationController, remarkController,
+      titleController,
+      descController,
+      amountController,
+      quantityController,
+      bagCountController,
+      packingWeightController,
+      locationController,
+      remarkController,
     ]) {
       c.dispose();
     }

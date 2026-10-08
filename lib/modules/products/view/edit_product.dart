@@ -360,6 +360,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
         controller: controller,
         keyboardType: keyboardType,
         inputFormatters: inputFormatters,
+        maxLength: keyboardType == null ? null : 10,
         validator: validator,
         maxLines: maxLines,
         decoration: InputDecoration(labelText: label, prefixIcon: Icon(icon), alignLabelWithHint: maxLines > 1),

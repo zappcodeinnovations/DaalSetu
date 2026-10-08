@@ -515,6 +515,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
+      maxLength: keyboardType == TextInputType.number ? 10 : null,
       onChanged: onChanged,
       decoration: InputDecoration(
         hintText: hint,

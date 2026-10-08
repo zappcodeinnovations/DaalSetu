@@ -30,6 +30,17 @@ void main() {
     expect(AdminModules.byKey('vehicles').filterOptions, isNot(contains('assigned')));
   });
 
+  test('vehicle and driver owner picker only includes approved transporters', () {
+    final options = transporterOptionsFromUsers([
+      {'id': 1, 'role': 'transporter', 'kyc_status': 'approved', 'is_active': true, 'username': 'fleet-a'},
+      {'id': 2, 'role': 'seller', 'kyc_status': 'approved', 'is_active': true, 'username': 'seller-a'},
+      {'id': 3, 'role': 'transporter', 'kyc_status': 'pending', 'is_active': true, 'username': 'fleet-b'},
+      {'id': 4, 'role': 'transporter', 'kyc_status': 'approved', 'is_active': false, 'username': 'fleet-c'},
+    ]);
+
+    expect(options.map((option) => option.value), ['1']);
+  });
+
   test('buyer requirements use rfq_id in item URLs', () {
     final config = AdminModules.byKey('buyer_requirements');
     const record = AdminRecord({'id': 7, 'rfq_id': 'RFQ-20261008-9951'});

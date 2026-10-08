@@ -364,7 +364,12 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
     required String Function(Map<String, dynamic>) labelOf,
     required ValueChanged<String> onChanged,
   }) {
-    final validValue = options.any((option) => valueOf(option) == value)
+    final seenValues = <String>{};
+    final menuOptions = options.where((option) {
+      final optionValue = valueOf(option).trim();
+      return optionValue.isNotEmpty && seenValues.add(optionValue);
+    }).toList();
+    final validValue = menuOptions.any((option) => valueOf(option).trim() == value)
         ? value
         : '';
     return DropdownButtonFormField<String>(
@@ -377,9 +382,9 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
       ),
       items: [
         const DropdownMenuItem(value: '', child: Text('All')),
-        ...options.map(
+        ...menuOptions.map(
           (item) => DropdownMenuItem(
-            value: valueOf(item),
+            value: valueOf(item).trim(),
             child: Text(labelOf(item), overflow: TextOverflow.ellipsis),
           ),
         ),
@@ -1103,6 +1108,7 @@ class _AdminCreateBrokerageBillScreenState
     keyboardType: numeric
         ? const TextInputType.numberWithOptions(decimal: true)
         : TextInputType.text,
+    maxLength: numeric ? 10 : null,
     decoration: InputDecoration(
       labelText: label,
       border: const OutlineInputBorder(),
@@ -1522,6 +1528,7 @@ class _AdminBrokerageBillDetailScreenState
     keyboardType: numeric
         ? const TextInputType.numberWithOptions(decimal: true)
         : null,
+    maxLength: numeric ? 10 : null,
     decoration: InputDecoration(
       labelText: label,
       border: const OutlineInputBorder(),

@@ -235,18 +235,18 @@ class _SellerNegotiationChatViewState extends State<SellerNegotiationChatView> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
                   children: [
-                    Expanded(child: TextField(controller: bagController, keyboardType: TextInputType.number, decoration: decoration('Bags'))),
+                    Expanded(child: TextField(controller: bagController, keyboardType: TextInputType.number, maxLength: 10, decoration: decoration('Bags'))),
                     const SizedBox(width: 8),
-                    Expanded(child: TextField(controller: packingController, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: decoration('Packing KG'))),
+                    Expanded(child: TextField(controller: packingController, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: decoration('Packing KG'))),
                   ],
                 ),
               ),
             Row(
               children: [
                 IconButton(onPressed: () => setState(() => showPacking = !showPacking), icon: const Icon(Icons.inventory_2_outlined), tooltip: 'Bags & packing'),
-                Expanded(child: TextField(controller: priceController, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: decoration('Counter price'))),
+                Expanded(child: TextField(controller: priceController, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: decoration('Counter price'))),
                 const SizedBox(width: 8),
-                Expanded(child: TextField(controller: quantityController, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: decoration('Counter qty'))),
+                Expanded(child: TextField(controller: quantityController, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: decoration('Counter qty'))),
                 const SizedBox(width: 6),
                 CircleAvatar(
                   backgroundColor: SellerUi.primary,

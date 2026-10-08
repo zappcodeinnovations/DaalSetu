@@ -5,6 +5,7 @@ import 'package:daalsetu/modules/admin_catalog/repository/admin_catalog_reposito
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:daalsetu/utils/tax_id_formatters.dart';
 
 class AdminRecordFormScreen extends StatefulWidget {
   const AdminRecordFormScreen({super.key, required this.config, this.record});
@@ -26,14 +27,16 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
 
   bool get editing => widget.record != null;
 
-  Iterable<AdminFieldConfig> get visibleFields => widget.config.fields
-      .where((field) => field.hiddenValue == null && !(editing && field.createOnly));
+  Iterable<AdminFieldConfig> get visibleFields => widget.config.fields.where(
+    (field) => field.hiddenValue == null && !(editing && field.createOnly),
+  );
 
   @override
   void initState() {
     super.initState();
     for (final field in visibleFields) {
-      if (field.optionsLoader != null) optionFutures[field.key] = field.optionsLoader!();
+      if (field.optionsLoader != null)
+        optionFutures[field.key] = field.optionsLoader!();
       final current = _initialValue(field);
       if (field.multiSelect) {
         multiValues[field.key] = {
@@ -75,8 +78,15 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
   Future<void> save() async {
     if (!formKey.currentState!.validate()) return;
     for (final field in visibleFields) {
-      final missingList = field.multiSelect && field.required && (multiValues[field.key] ?? {}).isEmpty;
-      final missingFile = field.isFile && field.required && !editing && !filePaths.containsKey(field.key);
+      final missingList =
+          field.multiSelect &&
+          field.required &&
+          (multiValues[field.key] ?? {}).isEmpty;
+      final missingFile =
+          field.isFile &&
+          field.required &&
+          !editing &&
+          !filePaths.containsKey(field.key);
       if (missingList || missingFile) {
         _showError('${field.label} is required');
         return;
@@ -87,10 +97,13 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
     for (final field in widget.config.fields) {
       if (field.isFile || (editing && field.createOnly)) continue;
       if (field.multiSelect) {
-        body[field.key] = (multiValues[field.key] ?? {}).map((id) => int.tryParse(id) ?? id).toList();
+        body[field.key] = (multiValues[field.key] ?? {})
+            .map((id) => int.tryParse(id) ?? id)
+            .toList();
         continue;
       }
-      final raw = field.hiddenValue ?? controllers[field.key]?.text.trim() ?? '';
+      final raw =
+          field.hiddenValue ?? controllers[field.key]?.text.trim() ?? '';
       if (field.singleSelectAsList) {
         body[field.key] = raw.toString().isEmpty
             ? <dynamic>[]
@@ -107,18 +120,28 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
         if (field.isDate) body[field.key] = null;
         continue;
       }
-      body[field.key] = field.numeric && raw.toString().isNotEmpty ? int.tryParse('$raw') ?? raw : raw;
+      body[field.key] = field.numeric && raw.toString().isNotEmpty
+          ? int.tryParse('$raw') ?? raw
+          : raw;
     }
     try {
       final repository = AdminCatalogRepository(widget.config);
       if (editing) {
-        await repository.update(widget.config.recordId(widget.record!), body, files: filePaths);
+        await repository.update(
+          widget.config.recordId(widget.record!),
+          body,
+          files: filePaths,
+        );
       } else {
         await repository.create(body, files: filePaths);
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(editing ? 'Updated successfully' : 'Created successfully')),
+        SnackBar(
+          content: Text(
+            editing ? 'Updated successfully' : 'Created successfully',
+          ),
+        ),
       );
       Navigator.pop(context, true);
     } catch (error) {
@@ -131,41 +154,51 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Theme.of(context).colorScheme.error),
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: Text('${editing ? 'Edit' : 'Create'} ${widget.config.title}')),
-        body: Form(
-          key: formKey,
-          child: ListView(
-            padding: const EdgeInsets.all(18),
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: Column(children: visibleFields.map(_field).toList()),
-                ),
-              ),
-              const SizedBox(height: 18),
-              SizedBox(
-                height: 52,
-                child: FilledButton.icon(
-                  onPressed: saving ? null : save,
-                  icon: saving
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.save_outlined),
-                  label: Text(editing ? 'Save changes' : 'Create'),
-                ),
-              ),
-            ],
+    appBar: AppBar(
+      title: Text('${editing ? 'Edit' : 'Create'} ${widget.config.title}'),
+    ),
+    body: Form(
+      key: formKey,
+      child: ListView(
+        padding: const EdgeInsets.all(18),
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(children: visibleFields.map(_field).toList()),
+            ),
           ),
-        ),
-      );
+          const SizedBox(height: 18),
+          SizedBox(
+            height: 52,
+            child: FilledButton.icon(
+              onPressed: saving ? null : save,
+              icon: saving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save_outlined),
+              label: Text(editing ? 'Save changes' : 'Create'),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 
-  String _label(AdminFieldConfig field) => '${field.label}${field.required ? ' *' : ''}';
+  String _label(AdminFieldConfig field) =>
+      '${field.label}${field.required ? ' *' : ''}';
 
   Widget _field(AdminFieldConfig field) {
     final Widget child;
@@ -183,28 +216,61 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
           }
           if (snapshot.hasError) {
             return InputDecorator(
-              decoration: InputDecoration(labelText: _label(field), errorText: 'Could not load choices'),
+              decoration: InputDecoration(
+                labelText: _label(field),
+                errorText: 'Could not load choices',
+              ),
               child: const SizedBox.shrink(),
             );
           }
           final options = snapshot.data ?? const <AdminOption>[];
-          return field.multiSelect ? _multiSelect(field, options) : _dropdown(field, options);
+          return field.multiSelect
+              ? _multiSelect(field, options)
+              : _dropdown(field, options);
         },
       );
     } else if (field.options.isNotEmpty) {
-      final options = field.options.map((value) => AdminOption(value, field.optionLabels[value] ?? value)).toList();
-      child = field.multiSelect ? _multiSelect(field, options) : _dropdown(field, options);
+      final options = field.options
+          .map(
+            (value) => AdminOption(value, field.optionLabels[value] ?? value),
+          )
+          .toList();
+      child = field.multiSelect
+          ? _multiSelect(field, options)
+          : _dropdown(field, options);
     } else if (field.isDate) {
       child = _dateField(field);
     } else {
+      final taxFormatter = field.key == 'pan_number'
+          ? const TaxIdInputFormatter.pan()
+          : field.key == 'gst_number'
+          ? const TaxIdInputFormatter.gst()
+          : null;
       child = TextFormField(
         controller: controllers[field.key],
         maxLines: field.multiline ? 4 : 1,
         keyboardType: field.numeric ? TextInputType.number : TextInputType.text,
-        inputFormatters: field.numeric ? [FilteringTextInputFormatter.digitsOnly] : null,
-        decoration: InputDecoration(labelText: _label(field), alignLabelWithHint: field.multiline),
-        validator: (value) =>
-            field.required && (value == null || value.trim().isEmpty) ? '${field.label} is required' : null,
+        inputFormatters: taxFormatter != null
+            ? [taxFormatter]
+            : field.numeric
+            ? [FilteringTextInputFormatter.digitsOnly]
+            : null,
+        maxLength: field.numeric ? 10 : null,
+        decoration: InputDecoration(
+          labelText: _label(field),
+          alignLabelWithHint: field.multiline,
+        ),
+        validator: (value) {
+          final taxError = field.key == 'pan_number'
+              ? TaxIdValidator.pan(value, required: field.required)
+              : field.key == 'gst_number'
+              ? TaxIdValidator.gst(value, required: field.required)
+              : null;
+          return taxError ??
+              (field.required && (value == null || value.trim().isEmpty)
+                  ? '${field.label} is required'
+                  : null);
+        },
       );
     }
     return Padding(padding: const EdgeInsets.only(bottom: 14), child: child);
@@ -213,35 +279,49 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
   Widget _dropdown(AdminFieldConfig field, List<AdminOption> options) {
     final current = controllers[field.key]!.text;
     return DropdownButtonFormField<String>(
-      initialValue: options.any((option) => option.value == current) ? current : null,
+      initialValue: options.any((option) => option.value == current)
+          ? current
+          : null,
       isExpanded: true,
       decoration: InputDecoration(labelText: _label(field)),
       items: options
-          .map((option) => DropdownMenuItem(
-                value: option.value,
-                child: Text(option.label, overflow: TextOverflow.ellipsis),
-              ))
+          .map(
+            (option) => DropdownMenuItem(
+              value: option.value,
+              child: Text(option.label, overflow: TextOverflow.ellipsis),
+            ),
+          )
           .toList(),
       onChanged: (value) => controllers[field.key]!.text = value ?? '',
-      validator: (value) => field.required && value == null ? '${field.label} is required' : null,
+      validator: (value) =>
+          field.required && value == null ? '${field.label} is required' : null,
     );
   }
 
   Widget _multiSelect(AdminFieldConfig field, List<AdminOption> options) {
     final selected = multiValues[field.key]!;
     return InputDecorator(
-      decoration: InputDecoration(labelText: _label(field), border: const OutlineInputBorder()),
+      decoration: InputDecoration(
+        labelText: _label(field),
+        border: const OutlineInputBorder(),
+      ),
       child: options.isEmpty
           ? const Text('No choices available')
           : Wrap(
               spacing: 8,
               runSpacing: 4,
               children: options
-                  .map((option) => FilterChip(
-                        label: Text(option.label),
-                        selected: selected.contains(option.value),
-                        onSelected: (on) => setState(() => on ? selected.add(option.value) : selected.remove(option.value)),
-                      ))
+                  .map(
+                    (option) => FilterChip(
+                      label: Text(option.label),
+                      selected: selected.contains(option.value),
+                      onSelected: (on) => setState(
+                        () => on
+                            ? selected.add(option.value)
+                            : selected.remove(option.value),
+                      ),
+                    ),
+                  )
                   .toList(),
             ),
     );
@@ -256,12 +336,17 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
         final picker = ImagePicker();
         final file = isVideo
             ? await picker.pickVideo(source: ImageSource.gallery)
-            : await picker.pickImage(source: ImageSource.gallery, imageQuality: 88);
+            : await picker.pickImage(
+                source: ImageSource.gallery,
+                imageQuality: 88,
+              );
         if (file != null) setState(() => filePaths[field.key] = file.path);
       },
       icon: Icon(isVideo ? Icons.video_file_outlined : Icons.upload_file),
       label: Text(
-        name != null ? '${field.label}: $name' : (editing ? '${field.label} (tap to replace)' : _label(field)),
+        name != null
+            ? '${field.label}: $name'
+            : (editing ? '${field.label} (tap to replace)' : _label(field)),
         overflow: TextOverflow.ellipsis,
       ),
       style: OutlinedButton.styleFrom(
@@ -281,13 +366,17 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
       final existing = DateTime.tryParse(controller.text);
       final picked = await showDatePicker(
         context: context,
-        initialDate: existing != null && !existing.isBefore(first) ? existing : today,
+        initialDate: existing != null && !existing.isBefore(first)
+            ? existing
+            : today,
         firstDate: first,
         lastDate: DateTime(now.year + 25),
       );
       if (picked != null) {
-        setState(() => controller.text =
-            '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}');
+        setState(
+          () => controller.text =
+              '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}',
+        );
       }
     }
 
@@ -307,7 +396,9 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
               ),
       ),
       validator: (value) =>
-          field.required && (value == null || value.trim().isEmpty) ? '${field.label} is required' : null,
+          field.required && (value == null || value.trim().isEmpty)
+          ? '${field.label} is required'
+          : null,
     );
   }
 }

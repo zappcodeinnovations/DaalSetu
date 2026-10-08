@@ -131,6 +131,7 @@ class _EditOfferViewState extends State<EditOfferView> {
       child: TextField(
         controller: c,
         keyboardType: type,
+        maxLength: type == null ? null : 10,
         maxLines: lines,
         decoration: InputDecoration(labelText: label, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
       ),

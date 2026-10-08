@@ -178,6 +178,7 @@ class _ContractEditViewState extends State<ContractEditView> {
           controller: _text[key],
           keyboardType: TextInputType.numberWithOptions(decimal: decimal),
           inputFormatters: [FilteringTextInputFormatter.allow(RegExp(decimal ? r'^\d*\.?\d{0,3}' : r'^\d*'))],
+          maxLength: 10,
           decoration: InputDecoration(labelText: label),
         ),
       );

@@ -141,7 +141,9 @@ class _TransporterVehicleFormState extends State<TransporterVehicleForm> {
       "rc_number": _rcNumberCtrl.text.trim(),
       "insurance_number": _insuranceNumberCtrl.text.trim(),
       "insurance_expiry_date": _insuranceExpiry,
-      "permit_type": _permit,
+      // The web form submits an empty string for its optional Permit Type.
+      // Sending null makes DRF reject the non-nullable model field.
+      "permit_type": _permit ?? '',
       "permit_type_other": _permit == 'other' ? text(_permitOtherCtrl) : '',
       "permit_expiry_date": _permitExpiry,
       "vehicle_status": _status,
@@ -279,6 +281,7 @@ class _TransporterVehicleFormState extends State<TransporterVehicleForm> {
       child: TextFormField(
         controller: controller,
         keyboardType: number ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
+        maxLength: number ? 10 : null,
         decoration: _decoration(label),
         validator: (value) => required && (value == null || value.trim().isEmpty) ? "Required" : null,
       ),

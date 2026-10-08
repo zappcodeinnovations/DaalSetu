@@ -1,9 +1,9 @@
 import '../../../../services/auth_services.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:daalsetu/utils/tax_id_formatters.dart';
 
 class RegisterController {
-
   /// FORM KEY
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
@@ -16,7 +16,8 @@ class RegisterController {
   final TextEditingController gstController = TextEditingController();
   final TextEditingController dobController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
 
   /// Self sign-up roles (admins are created by admins, never from this screen).
   static const Map<String, String> roles = {
@@ -43,8 +44,7 @@ class RegisterController {
   /// PICK IMAGE
   /// ============================
   Future<void> pickImage(bool isPan) async {
-    final pickedFile =
-        await _picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
       if (isPan) {
@@ -59,10 +59,15 @@ class RegisterController {
   /// REGISTER USER
   /// ============================
   Future<String?> register() async {
-
     if (!formKey.currentState!.validate()) {
       return null;
     }
+
+    final gstPanError = TaxIdValidator.gstMatchesPan(
+      panController.text,
+      gstController.text,
+    );
+    if (gstPanError != null) throw Exception(gstPanError);
 
     if (selectedRole == null) {
       throw Exception("Please select user type");
@@ -100,19 +105,15 @@ class RegisterController {
           "role": selectedRole!,
           "password": passwordController.text,
           "confirm_password": confirmPasswordController.text,
-          "pan_number": panController.text.trim(),
-          "gst_number": gstController.text.trim(),
+          "pan_number": panController.text.trim().toUpperCase(),
+          "gst_number": gstController.text.trim().toUpperCase(),
           "gender": selectedGender!,
           "dob": dobController.text.trim(),
         },
-        files: {
-          "pan_image": panImagePath!,
-          "gst_image": gstImagePath!,
-        },
+        files: {"pan_image": panImagePath!, "gst_image": gstImagePath!},
       );
 
       return message;
-
     } catch (e) {
       rethrow;
     } finally {
