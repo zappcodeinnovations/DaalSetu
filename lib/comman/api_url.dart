@@ -71,8 +71,8 @@ class ApiUrls {
   static String buyerDeliveryChallanReceive(int id) => "/api/buyer/delivery-challans/$id/receive/";
   static const String buyerMyInterests = "/api/offers/my-interests/list/";
   static const String buyerTodayOffers = "/api/offers/today/";
-  static const String buyerPendingOffers = "/api/offers/pending/";
-  static const String buyerPreviousOffers = "/api/offers/previous/";
+  static const String buyerPendingOffers = "/api/offers/previous/";
+  static const String buyerPreviousOffers = "/api/offers/pending/";
 
   static String buyerApproveOffer(int productId) => "/api/offers/$productId/confirm-deal/";
   static String buyerConfirmOffer(int productId) => "/api/offers/$productId/confirm-deal/";

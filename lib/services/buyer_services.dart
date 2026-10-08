@@ -253,35 +253,7 @@ class BuyerServices {
       }
     }
 
-    // 1. Primary server endpoint for pending offers
-    try {
-      final response = await ApiClient.get(
-        endpoint: ApiUrls.buyerPendingOffers,
-        requireAuth: true,
-        suppressErrorDialog: true,
-      );
-      final list = _extractList(response);
-      for (var item in list) {
-        addUnique(item);
-      }
-    } catch (e) {
-      print("⚠️ /api/offers/pending/ fetch error: $e");
-    }
-
-    // 2. Fallback check for buyer-offers with pending status
-    try {
-      final response = await ApiClient.get(
-        endpoint: "${ApiUrls.buyerOffers}?status=pending",
-        requireAuth: true,
-        suppressErrorDialog: true,
-      );
-      final list = _extractList(response);
-      for (var item in list) {
-        addUnique(item);
-      }
-    } catch (_) {}
-
-    // 3. Fallback check for active pending buyer interests (deal negotiations / pending deals)
+    // 1. Primary: Fetch active pending buyer interests & negotiations (deals awaiting confirmation / in negotiation)
     try {
       final interests = await getMyInterests();
       for (var item in interests) {
@@ -297,6 +269,34 @@ class BuyerServices {
             addUnique(item);
           }
         }
+      }
+    } catch (_) {}
+
+    // 2. Also check pending endpoint
+    try {
+      final response = await ApiClient.get(
+        endpoint: ApiUrls.buyerPendingOffers,
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
+      final list = _extractList(response);
+      for (var item in list) {
+        addUnique(item);
+      }
+    } catch (e) {
+      print("⚠️ Pending offers fetch error: $e");
+    }
+
+    // 3. Fallback check for buyer-offers with pending status
+    try {
+      final response = await ApiClient.get(
+        endpoint: "${ApiUrls.buyerOffers}?status=pending",
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
+      final list = _extractList(response);
+      for (var item in list) {
+        addUnique(item);
       }
     } catch (_) {}
 
@@ -322,7 +322,7 @@ class BuyerServices {
       }
     }
 
-    // 1. Primary server endpoint for previous offers
+    // 1. Primary server endpoint for previous listings (loads previous days' offers from server)
     try {
       final response = await ApiClient.get(
         endpoint: ApiUrls.buyerPreviousOffers,
@@ -334,7 +334,7 @@ class BuyerServices {
         addUnique(item);
       }
     } catch (e) {
-      print("⚠️ /api/offers/previous/ fetch error: $e");
+      print("⚠️ Previous offers fetch error: $e");
     }
 
     // 2. Fallback check for buyer-offers with previous status
@@ -350,7 +350,7 @@ class BuyerServices {
       }
     } catch (_) {}
 
-    // 3. Fallback check for completed, closed, rejected or expired buyer interests
+    // 3. Fallback check for completed, closed, rejected or expired buyer deals
     try {
       final interests = await getMyInterests();
       for (var item in interests) {
