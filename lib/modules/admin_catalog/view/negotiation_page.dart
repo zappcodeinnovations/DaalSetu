@@ -70,7 +70,8 @@ class _NegotiationPageState extends State<NegotiationPage> {
         Get.back(result: true); // Pop back to close negotiation screen
       } catch (e) {
         setState(() => _isLoading = false);
-        Get.snackbar('Error', e.toString(), backgroundColor: Colors.red, colorText: Colors.white);
+        final message = e.toString().replaceFirst('Exception: ', '');
+        Get.snackbar('Error', message, backgroundColor: Colors.red, colorText: Colors.white);
       }
     }
   }

@@ -101,7 +101,8 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
         await _loadInterests();
       } catch (e) {
         setState(() => isLoading = false);
-        Get.snackbar('Error', e.toString(), backgroundColor: Colors.red, colorText: Colors.white);
+        final message = e.toString().replaceFirst('Exception: ', '');
+        Get.snackbar('Error', message, backgroundColor: Colors.red, colorText: Colors.white);
       }
     }
   }

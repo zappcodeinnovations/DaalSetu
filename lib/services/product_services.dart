@@ -368,7 +368,11 @@ class ProductService {
             body: body,
           );
           return;
-        } catch (_) {}
+        } catch (_) {
+          // Preserve the fallback endpoint's validation message (for example,
+          // when the selected sub-admin is outside the seller's branch).
+          rethrow;
+        }
       }
       print("❌ confirmOfferDeal Error: $e");
       rethrow;

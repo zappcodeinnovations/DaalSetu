@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:daalsetu/modules/users/model/user_model.dart';
-import 'package:daalsetu/network/api_client.dart';
-import 'package:daalsetu/services/users_services.dart';
+import 'package:daalsetu/modules/admin_catalog/config/admin_actions.dart';
 import 'package:daalsetu/theme/app_theme.dart';
+import 'package:daalsetu/utils/app_preferences.dart';
 
 class ApproveDealResult {
   final String remark;
@@ -31,10 +30,15 @@ class ApproveDealDialog extends StatefulWidget {
 
 class _ApproveDealDialogState extends State<ApproveDealDialog> {
   final TextEditingController _remarkCtrl = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _isLoadingSubAdmins = false;
-  List<UserModel> _subAdmins = [];
-  int? _selectedSubAdminId;
+  List<AdminOption> _subAdmins = [];
+  String? _selectedSubAdminValue;
   String? _subAdminLoadError;
+
+  /// Like the web form: a sub admin approving a deal is assigned automatically,
+  /// so the field is hidden (and the sub-admin list API is admin-only).
+  bool _isSubAdmin = false;
 
   Color get cardColor => Get.theme.cardColor;
   Color get textDark => Get.theme.textTheme.bodyLarge?.color ?? Colors.black;
@@ -43,7 +47,14 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
   @override
   void initState() {
     super.initState();
-    _fetchSubAdmins();
+    AppPreferences.getRole().then((role) {
+      if (!mounted) return;
+      if ((role ?? '').toLowerCase() == 'sub_admin') {
+        setState(() => _isSubAdmin = true);
+      } else {
+        _fetchSubAdmins();
+      }
+    });
   }
 
   @override
@@ -59,35 +70,9 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
     });
 
     try {
-      // 1. Try RBAC endpoint first
-      List<UserModel> loaded = [];
-      try {
-        final rbacRes = await ApiClient.get(
-          endpoint: '/rbac/sub-admins/',
-          requireAuth: true,
-        );
-        final list = rbacRes is Map ? (rbacRes['results'] ?? rbacRes['data'] ?? rbacRes['value']) : rbacRes;
-        if (list is List && list.isNotEmpty) {
-          loaded = list
-              .whereType<Map<String, dynamic>>()
-              .map((e) => UserModel.fromJson(e))
-              .toList();
-        }
-      } catch (_) {
-        // Fallback silently to UserService.getUsers()
-      }
-
-      // 2. If RBAC had no items, fallback to global user directory filtered by role
-      if (loaded.isEmpty) {
-        final allUsers = await UserService.getUsers();
-        loaded = allUsers.where((u) {
-          final r = u.role.toLowerCase().trim();
-          return r == 'sub_admin' ||
-              r == 'subadmin' ||
-              r == 'admin' ||
-              r == 'salesman';
-        }).toList();
-      }
+      // Use the same active sub-admin source as the web flow. The global user
+      // directory can include accounts from another branch.
+      final loaded = await loadSubAdminOptions();
 
       if (mounted) {
         setState(() {
@@ -98,20 +83,16 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _subAdminLoadError = "Could not load sub-admins";
+          _subAdminLoadError = _errorMessage(e);
           _isLoadingSubAdmins = false;
         });
       }
     }
   }
 
-  String _getUserDisplayName(UserModel user) {
-    final names = [user.firstName, user.lastName]
-        .where((s) => s != null && s.trim().isNotEmpty)
-        .join(' ');
-    final name = names.isNotEmpty ? names : user.username;
-    final role = user.role.isNotEmpty ? " (${user.role})" : "";
-    return "$name$role";
+  String _errorMessage(Object error) {
+    final message = error.toString().replaceFirst('Exception: ', '').trim();
+    return message.isEmpty ? 'Could not load sub-admins' : message;
   }
 
   @override
@@ -137,10 +118,12 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
         ],
       ),
       content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Text(
               "Confirm and approve deal with ${widget.buyerName ?? 'Buyer'}?",
               style: TextStyle(color: textDark, fontSize: 14),
@@ -155,11 +138,12 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
             const SizedBox(height: 18),
 
             // ── Sub-Admin Dropdown Field ──────────────────────────────────
+            if (!_isSubAdmin) ...[
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Assign Sub-Admin",
+                  "Assign Sub-Admin *",
                   style: TextStyle(
                     color: textDark,
                     fontSize: 13,
@@ -175,15 +159,15 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
               ],
             ),
             const SizedBox(height: 6),
-            DropdownButtonFormField<int?>(
-              value: _selectedSubAdminId,
+            DropdownButtonFormField<String>(
+              initialValue: _selectedSubAdminValue,
               isExpanded: true,
               dropdownColor: cardColor,
               style: TextStyle(color: textDark, fontSize: 14),
               decoration: InputDecoration(
                 hintText: _isLoadingSubAdmins
                     ? "Loading sub-admins..."
-                    : (_subAdmins.isEmpty ? "No sub-admins found (Optional)" : "Select Sub-Admin (Optional)"),
+                    : (_subAdmins.isEmpty ? "No active sub-admins found" : "Select Sub-Admin"),
                 hintStyle: TextStyle(color: textLight, fontSize: 13),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 enabledBorder: OutlineInputBorder(
@@ -195,28 +179,20 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
                   borderSide: const BorderSide(color: AppTheme.primaryGold, width: 1.5),
                 ),
               ),
-              items: [
-                DropdownMenuItem<int?>(
-                  value: null,
+              validator: (value) => value == null || value.isEmpty ? 'Select a sub-admin' : null,
+              items: _subAdmins.map((option) {
+                return DropdownMenuItem<String>(
+                  value: option.value,
                   child: Text(
-                    "-- None / Do not assign --",
-                    style: TextStyle(color: textLight, fontStyle: FontStyle.italic),
+                    option.label,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: textDark),
                   ),
-                ),
-                ..._subAdmins.map((user) {
-                  return DropdownMenuItem<int?>(
-                    value: user.id,
-                    child: Text(
-                      _getUserDisplayName(user),
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: textDark),
-                    ),
-                  );
-                }),
-              ],
+                );
+              }).toList(),
               onChanged: (value) {
                 setState(() {
-                  _selectedSubAdminId = value;
+                  _selectedSubAdminValue = value;
                 });
               },
             ),
@@ -226,6 +202,7 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
                 _subAdminLoadError!,
                 style: const TextStyle(color: Colors.orange, fontSize: 11),
               ),
+            ],
             ],
 
             const SizedBox(height: 16),
@@ -258,7 +235,8 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
               ),
               maxLines: 2,
             ),
-          ],
+            ],
+          ),
         ),
       ),
       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -269,9 +247,10 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
         ),
         FilledButton(
           onPressed: () {
+            if (!_formKey.currentState!.validate()) return;
             final result = ApproveDealResult(
               remark: _remarkCtrl.text.trim(),
-              subAdminId: _selectedSubAdminId,
+              subAdminId: _isSubAdmin ? null : int.tryParse(_selectedSubAdminValue ?? ''),
             );
             Navigator.pop(context, result);
           },
