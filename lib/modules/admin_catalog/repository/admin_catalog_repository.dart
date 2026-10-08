@@ -52,21 +52,35 @@ class AdminCatalogRepository {
   }
 
   Future<AdminRecord> detail(AdminRecord record) async {
-    if (config.detailEndpoint == null || record.id.isEmpty) return record;
+    final id = config.recordId(record);
+    if (config.detailEndpoint == null || id.isEmpty) return record;
     final response = await ApiClient.get(
-      endpoint: config.detailEndpoint!(record.id),
+      endpoint: config.detailEndpoint!(id),
       requireAuth: true,
     );
     if (response is Map) {
       final map = Map<String, dynamic>.from(response);
-      final data = map['data'];
-      if (data is Map) return AdminRecord(Map<String, dynamic>.from(data));
+      // Detail payloads come as {"data": {...}}, {"buyer_offer": {...}} or the object itself.
+      for (final key in const ['data', 'buyer_offer', 'result', 'item']) {
+        final data = map[key];
+        if (data is Map) return AdminRecord(Map<String, dynamic>.from(data));
+      }
       return AdminRecord(map);
     }
     return record;
   }
 
-  Future<void> create(Map<String, dynamic> body) async {
+  /// [files] maps field keys to local file paths; when present the request is multipart.
+  Future<void> create(Map<String, dynamic> body, {Map<String, String> files = const {}}) async {
+    if (files.isNotEmpty) {
+      await ApiClient.postMultipart(
+        endpoint: config.createEndpoint!,
+        fields: _formFields(body),
+        files: files,
+        requireAuth: true,
+      );
+      return;
+    }
     await ApiClient.post(
       endpoint: config.createEndpoint!,
       body: body,
@@ -74,14 +88,31 @@ class AdminCatalogRepository {
     );
   }
 
-  Future<void> update(String id, Map<String, dynamic> body) async {
+  Future<void> update(String id, Map<String, dynamic> body, {Map<String, String> files = const {}}) async {
     final endpoint = config.updateEndpoint!(id);
+    if (files.isNotEmpty) {
+      await ApiClient.postMultipart(
+        endpoint: endpoint,
+        method: config.updateMethod == AdminRequestMethod.post ? 'POST' : 'PATCH',
+        fields: _formFields(body),
+        files: files,
+        requireAuth: true,
+      );
+      return;
+    }
     if (config.updateMethod == AdminRequestMethod.post) {
       await ApiClient.post(endpoint: endpoint, body: body, requireAuth: true);
     } else {
       await ApiClient.patch(endpoint: endpoint, data: body, requireAuth: true);
     }
   }
+
+  /// Multipart bodies are flat strings; lists go as comma-separated ids (the backend accepts both).
+  Map<String, String> _formFields(Map<String, dynamic> body) => {
+        for (final entry in body.entries)
+          if (entry.value != null)
+            entry.key: entry.value is List ? (entry.value as List).join(',') : '${entry.value}',
+      };
 
   Future<void> delete(String id) async {
     final endpoint = config.deleteEndpoint!(id);
@@ -93,7 +124,7 @@ class AdminCatalogRepository {
       );
       return;
     }
-    if (config.key == 'users' || config.key == 'salesman') {
+    if (config.key == 'users') {
       await ApiClient.post(
         endpoint: endpoint,
         body: const {},
@@ -116,8 +147,12 @@ class AdminCatalogRepository {
       throw Exception('Invalid ${config.title} response');
     }
     final map = Map<String, dynamic>.from(response);
-    dynamic raw =
-        map['results'] ?? map['data'] ?? map['items'] ?? map['brands'];
+    dynamic raw = map['results'] ??
+        map['data'] ??
+        map['items'] ??
+        map['brands'] ??
+        map['buyer_offers'] ??
+        map['contracts'];
     if (raw is Map) {
       raw = raw['results'] ?? raw['data'] ?? raw['items'] ?? raw['brands'];
     }
@@ -125,11 +160,16 @@ class AdminCatalogRepository {
       if (map.containsKey('id')) return ([map], false, 1);
       return (const [], false, 0);
     }
+    // DRF pages use next/count; the parity APIs use {"pagination": {"has_next", "count"}}.
+    final pagination = map['pagination'] is Map ? map['pagination'] as Map : const {};
     final next = map['next'];
-    final count = int.tryParse((map['count'] ?? map['total'] ?? '').toString());
+    final hasNext = pagination.isNotEmpty
+        ? pagination['has_next'] == true
+        : next != null && next.toString().isNotEmpty;
+    final count = int.tryParse((pagination['count'] ?? map['count'] ?? map['total'] ?? '').toString());
     return (
       raw.whereType<Map>().map(Map<String, dynamic>.from).toList(),
-      next != null && next.toString().isNotEmpty,
+      hasNext,
       count,
     );
   }

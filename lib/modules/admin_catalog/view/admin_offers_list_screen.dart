@@ -6,6 +6,7 @@ import 'package:daalsetu/modules/admin_catalog/view/offer_interests_dialog.dart'
 import 'package:daalsetu/modules/admin_catalog/view/stock_history_dialog.dart';
 import 'package:daalsetu/widgets/authenticated_network_image.dart';
 import 'package:daalsetu/theme/app_theme.dart';
+import 'package:daalsetu/modules/products/view/edit_product.dart';
 
 class AdminOffersListScreen extends StatefulWidget {
   const AdminOffersListScreen({super.key});
@@ -271,6 +272,19 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 1,
+                child: _buildOutlinedButton(
+                  icon: Icons.edit_outlined,
+                  label: 'Edit',
+                  color: AppTheme.primaryGold,
+                  onPressed: () async {
+                    final saved = await Get.to(() => EditProductScreen(product: offer));
+                    if (saved == true) controller.fetchOffers();
+                  },
                 ),
               ),
               const SizedBox(width: 8),

@@ -282,14 +282,15 @@ class AdminCategoryMasterController extends GetxController {
         'category_name': nameCtrl.text.trim(),
         'is_active': selectedStatus.value.toLowerCase() == 'active',
         if (selectedParentId.value != null) 'parent': selectedParentId.value,
-        // brands are omitted because the endpoint does not support them in POST/PATCH directly
+        // The backend links brand_ids to top-level categories only (same as the web form).
+        if (selectedParentId.value == null) 'brand_ids': selectedBrandIds.toList(),
       };
 
       int categoryId;
 
       if (editingCategoryId.value != null) {
         // Update
-        final response = await ApiClient.patch(
+        await ApiClient.patch(
           endpoint: '/api/categories/${editingCategoryId.value}/',
           data: body,
           requireAuth: true,
@@ -303,7 +304,9 @@ class AdminCategoryMasterController extends GetxController {
           body: body,
           requireAuth: true,
         );
-        categoryId = response['data']['id'] ?? response['id'];
+        // POST /api/categories/ returns the category itself, not wrapped in "data".
+        final created = response['data'] is Map ? response['data'] : response;
+        categoryId = int.parse('${created['id']}');
         Get.snackbar('Success', 'Category added successfully.', backgroundColor: Colors.green.shade100);
       }
 

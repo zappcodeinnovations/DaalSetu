@@ -17,7 +17,7 @@ class DrawerMenuItem {
     required this.title,
     required this.icon,
     required this.route,
-    this.requiredRoles = const ['admin', 'sub_admin'],
+    this.requiredRoles = const ['super_admin', 'admin', 'sub_admin'],
   });
 
   /// Unique identifier — matches AdminModules key where applicable

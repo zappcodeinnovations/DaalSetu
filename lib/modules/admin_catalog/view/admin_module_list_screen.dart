@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:daalsetu/modules/admin_catalog/config/admin_actions.dart';
 import 'package:daalsetu/modules/admin_catalog/config/admin_module_config.dart';
 import 'package:daalsetu/modules/admin_catalog/controller/admin_catalog_controller.dart';
 import 'package:daalsetu/modules/admin_catalog/model/admin_record.dart';
@@ -215,7 +216,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      title.isEmpty ? '${config.title} #${record.id}' : title,
+                      title.isEmpty ? '${config.title} #${config.recordId(record)}' : title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleMedium?.copyWith(
@@ -327,21 +328,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
     return '';
   }
 
-  String _display(Object? value) {
-    if (value == null) return '';
-    if (value is Map) {
-      return (value['name'] ??
-              value['title'] ??
-              value['username'] ??
-              value['id'] ??
-              '')
-          .toString();
-    }
-    if (value is List) {
-      return value.map(_display).where((e) => e.isNotEmpty).join(', ');
-    }
-    return value.toString().trim();
-  }
+  String _display(Object? value) => adminDisplayValue(value);
 
   String _label(String key) => key
       .split('_')

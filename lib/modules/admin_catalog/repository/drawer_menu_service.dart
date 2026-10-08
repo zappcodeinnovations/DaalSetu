@@ -10,6 +10,24 @@ class DrawerMenuService {
 
     return [
       DrawerMenuSection(
+        sectionTitle: 'GENERAL',
+        items: [
+          DrawerMenuItem(
+            key: 'notifications',
+            title: 'Notifications',
+            icon: Icons.notifications_none_rounded,
+            route: AppRoutes.sellerNotifications,
+          ),
+          DrawerMenuItem(
+            key: 'registered_company',
+            title: 'Registered Company',
+            icon: Icons.apartment_rounded,
+            route: AppRoutes.sellerCompany,
+            requiredRoles: const ['super_admin', 'admin'],
+          ),
+        ],
+      ),
+      DrawerMenuSection(
         sectionTitle: 'MASTERS',
         items: [
           DrawerMenuItem(
@@ -41,6 +59,12 @@ class DrawerMenuService {
             title: AdminModules.byKey('categories').title,
             icon: AdminModules.byKey('categories').icon,
             route: AppRoutes.adminModule('categories'),
+          ),
+          DrawerMenuItem(
+            key: 'sub_categories',
+            title: AdminModules.byKey('sub_categories').title,
+            icon: AdminModules.byKey('sub_categories').icon,
+            route: AppRoutes.adminModule('sub_categories'),
           ),
           DrawerMenuItem(
             key: 'brands',

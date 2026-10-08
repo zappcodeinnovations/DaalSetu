@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:daalsetu/theme/app_theme.dart';
 
 import '../controller/contract_controller.dart';
+import 'contract_edit_view.dart';
 
 class ContractDetailScreen extends StatefulWidget {
   const ContractDetailScreen({super.key});
@@ -109,9 +110,12 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.all(16),
         child: FilledButton.icon(
-          onPressed: _changeStatus,
-          icon: const Icon(Icons.sync_alt_rounded),
-          label: const Text('Change contract status'),
+          onPressed: () {
+            final contract = controller.contractDetail.value;
+            if (contract != null) Get.to(() => ContractEditView(contract: contract));
+          },
+          icon: const Icon(Icons.edit_note_rounded),
+          label: const Text('Edit contract'),
         ),
       ),
     );
@@ -202,93 +206,6 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
         ],
       ),
     );
-  }
-
-  Future<void> _changeStatus() async {
-    final contract = controller.contractDetail.value;
-    if (contract == null) return;
-
-    var status = contract.status.toLowerCase();
-    const statuses = ['pending', 'active', 'completed', 'cancelled'];
-    if (!statuses.contains(status)) status = 'active';
-    final remarkController = TextEditingController(text: contract.adminRemark);
-
-    final result = await showModalBottomSheet<Map<String, String>>(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Padding(
-              padding: EdgeInsets.fromLTRB(
-                20,
-                20,
-                20,
-                MediaQuery.viewInsetsOf(context).bottom + 20,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Update contract',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  DropdownButtonFormField<String>(
-                    initialValue: status,
-                    decoration: const InputDecoration(labelText: 'Status'),
-                    items: statuses
-                        .map(
-                          (value) => DropdownMenuItem(
-                            value: value,
-                            child: Text(_label(value)),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      if (value != null) setModalState(() => status = value);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: remarkController,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: 'Admin remark',
-                      hintText: 'Reason or update note',
-                      alignLabelWithHint: true,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () => Navigator.pop(context, {
-                        'status': status,
-                        'remark': remarkController.text.trim(),
-                      }),
-                      child: const Text('Save status'),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-    remarkController.dispose();
-
-    if (result != null) {
-      await controller.updateContractStatus(
-        contractId: contract.id,
-        status: result['status']!,
-        adminRemark: result['remark']!,
-      );
-    }
   }
 
   String _label(String value) {

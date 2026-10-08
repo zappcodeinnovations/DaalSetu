@@ -40,7 +40,7 @@ class AdminCatalogController extends GetxController {
       );
       records.assignAll(result.records);
       total.value = result.total;
-      _hasNext = result.hasNext || result.records.length == _pageSize;
+      _hasNext = result.hasNext || (result.total == null && result.records.length == _pageSize);
       _page = 1;
     } catch (exception) {
       error.value = _message(exception);
@@ -62,7 +62,7 @@ class AdminCatalogController extends GetxController {
       );
       records.addAll(result.records);
       _page = nextPage;
-      _hasNext = result.hasNext || result.records.length == _pageSize;
+      _hasNext = result.hasNext || (result.total == null && result.records.length == _pageSize);
     } catch (exception) {
       Get.snackbar('Error', _message(exception));
     } finally {
@@ -72,7 +72,7 @@ class AdminCatalogController extends GetxController {
 
   Future<bool> delete(AdminRecord record) async {
     try {
-      await repository.delete(record.id);
+      await repository.delete(repository.config.recordId(record));
       await load(refresh: true);
       Get.snackbar('Success', 'Deleted successfully');
       return true;

@@ -80,8 +80,8 @@ class AdminDrawer extends StatelessWidget {
                   );
                 }
 
-                final isAdmin = controller.userRole.value == 'admin' ||
-                    controller.userRole.value == 'sub_admin';
+                final isAdmin = const ['super_admin', 'admin', 'sub_admin']
+                    .contains(controller.userRole.value);
 
                 if (!isAdmin) {
                   return const Center(

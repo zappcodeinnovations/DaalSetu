@@ -11,6 +11,7 @@ import '../../profile/controller/profile_controller.dart';
 import '../../../theme/glass_widgets.dart';
 import '../../../routes/app_routes.dart';
 import '../../admin_catalog/view/admin_drawer.dart';
+import '../../../services/notification_services.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   AdminDashboardScreen({super.key});
@@ -103,26 +104,36 @@ class AdminDashboardScreen extends StatelessWidget {
       ),
       centerTitle: true,
       actions: [
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            IconButton(
-              icon: const Icon(IconlyLight.notification),
-              onPressed: () {},
-            ),
-            Positioned(
-              right: 12,
-              top: 12,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Colors.deepOrange,
-                  shape: BoxShape.circle,
+        FutureBuilder<int>(
+          future: NotificationServices.getUnreadCount().catchError((_) => 0),
+          builder: (context, snapshot) {
+            final unread = snapshot.data ?? 0;
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
+                  tooltip: 'Notifications',
+                  icon: const Icon(IconlyLight.notification),
+                  onPressed: () => Get.toNamed(AppRoutes.sellerNotifications),
                 ),
-                child: const Text('3', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ],
+                if (unread > 0)
+                  Positioned(
+                    right: 10,
+                    top: 10,
+                    child: IgnorePointer(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        decoration: BoxDecoration(color: Colors.deepOrange, borderRadius: BorderRadius.circular(8)),
+                        child: Text(
+                          unread > 99 ? '99+' : '$unread',
+                          style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
         const SizedBox(width: 8),
         GestureDetector(

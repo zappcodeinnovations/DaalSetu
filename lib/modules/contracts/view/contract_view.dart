@@ -21,7 +21,8 @@ class _ContractsScreenState extends State<ContractsScreen> {
   final selectedFilter = 'All'.obs;
   final selectedContracts = <int>{}.obs;
   final isSelectionMode = false.obs;
-  final filters = const ['All', 'Active', 'Pending', 'Completed', 'Cancelled'];
+  // Backend contract statuses: active, received, completed, cancelled.
+  final filters = const ['All', 'Active', 'Received', 'Completed', 'Cancelled'];
 
   List<ContractModel> get filteredContracts {
     var contracts = controller.contracts.toList();

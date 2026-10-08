@@ -449,9 +449,13 @@ class KycUsersScreen extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(child: _buildActionButton(IconlyLight.show, "View", colorTotal, () => _showViewDialog(context, user))),
-                if (isPending) ...[
+                // Same rules as the web KYC page: approve anything not yet approved,
+                // reject pending or previously rejected users.
+                if (!isApproved) ...[
                   const SizedBox(width: 8),
-                  Expanded(child: _buildActionButton(IconlyLight.tick_square, "Approve", colorApproved, () => controller.approve(user.id))),
+                  Expanded(child: _buildActionButton(IconlyLight.tick_square, "Approve", colorApproved, () => _confirmApprove(user))),
+                ],
+                if (isPending || isRejected) ...[
                   const SizedBox(width: 8),
                   Expanded(child: _buildActionButton(IconlyLight.close_square, "Reject", colorRejected, () => _showRejectDialog(context, user.id))),
                 ],
@@ -548,6 +552,25 @@ class KycUsersScreen extends StatelessWidget {
           TextButton(onPressed: () => Get.back(), child: Text("Close", style: TextStyle(color: colorTotal))),
         ],
       )
+    );
+  }
+
+  void _confirmApprove(KycUserModel user) {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Approve KYC'),
+        content: Text('Approve KYC for ${user.name}?'),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () {
+              Get.back();
+              controller.approve(user.id);
+            },
+            child: const Text('Approve'),
+          ),
+        ],
+      ),
     );
   }
 

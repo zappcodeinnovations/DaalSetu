@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:daalsetu/modules/products/model/product_model.dart';
 import 'package:daalsetu/services/product_services.dart';
+import 'package:daalsetu/services/seller_services.dart';
 import 'package:get/get.dart';
 
 class AdminOffersController extends GetxController {
@@ -36,15 +37,12 @@ class AdminOffersController extends GetxController {
     if (index != -1) {
       final old = offers[index];
       offers[index] = old.copyWith(isActive: !currentValue);
-      // Wait for backend call (API update to patch is_active)
-      // Since we don't have a specific patch for is_active in ProductService yet, 
-      // we'll use updateProduct or just mock it if not strictly required.
       try {
-        // await ProductService.updateProductVisibility(productId, !currentValue);
+        // Same endpoint the web "Active" switch uses.
+        await SellerServices.toggleOfferStatus(productId, !currentValue);
       } catch (e) {
-        // Revert on error
         offers[index] = old;
-        Get.snackbar("Error", "Failed to update visibility");
+        Get.snackbar("Error", e.toString().replaceFirst('Exception: ', ''));
       }
     }
   }

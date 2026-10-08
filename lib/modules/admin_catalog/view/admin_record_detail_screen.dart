@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:daalsetu/comman/api_url.dart';
 import 'package:daalsetu/modules/admin_catalog/config/admin_module_config.dart';
+import 'package:daalsetu/modules/admin_catalog/config/admin_actions.dart';
 import 'package:daalsetu/modules/admin_catalog/config/admin_detail_config.dart';
 import 'package:daalsetu/modules/admin_catalog/model/admin_record.dart';
 import 'package:daalsetu/modules/admin_catalog/repository/admin_catalog_repository.dart';
@@ -229,7 +230,7 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
         case AdminDetailFieldType.text:
         default:
           content = SelectableText(
-            value.toString(),
+            adminDisplayValue(value),
             style: const TextStyle(fontWeight: FontWeight.w600),
           );
           break;
