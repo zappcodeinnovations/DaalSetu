@@ -11,7 +11,7 @@ import '../../profile/controller/profile_controller.dart';
 import '../../../theme/glass_widgets.dart';
 import '../../../routes/app_routes.dart';
 import '../../admin_catalog/view/admin_drawer.dart';
-import '../../../services/notification_services.dart';
+import '../../admin_notifications/controller/admin_notification_controller.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   AdminDashboardScreen({super.key});
@@ -23,6 +23,7 @@ class AdminDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
+      resizeToAvoidBottomInset: false,
       drawer: const AdminDrawer(),
       appBar: _buildAppBar(context),
       body: Obx(() {
@@ -64,7 +65,12 @@ class AdminDashboardScreen extends StatelessWidget {
                 _buildAnalyticsGrid(context, data.charts),
 
                 const SizedBox(height: 24),
-                _buildSectionHeader(context, "Branch Performance", trailingText: "View All"),
+                _buildSectionHeader(
+                  context,
+                  "Branch Performance",
+                  trailingText: "View All",
+                  onTrailingTap: () => Get.toNamed(AppRoutes.adminBranchReports),
+                ),
                 const SizedBox(height: 16),
                 _buildBranchPerformance(context, data.branchPerformance),
 
@@ -104,33 +110,40 @@ class AdminDashboardScreen extends StatelessWidget {
       ),
       centerTitle: true,
       actions: [
-        FutureBuilder<int>(
-          future: NotificationServices.getUnreadCount().catchError((_) => 0),
-          builder: (context, snapshot) {
-            final unread = snapshot.data ?? 0;
+        GetBuilder<AdminNotificationController>(
+          init: AdminNotificationController(),
+          builder: (notifCtrl) {
             return Stack(
               alignment: Alignment.center,
               children: [
                 IconButton(
                   tooltip: 'Notifications',
                   icon: const Icon(IconlyLight.notification),
-                  onPressed: () => Get.toNamed(AppRoutes.sellerNotifications),
+                  onPressed: () => Get.toNamed(AppRoutes.notifications),
                 ),
-                if (unread > 0)
-                  Positioned(
-                    right: 10,
-                    top: 10,
-                    child: IgnorePointer(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                        decoration: BoxDecoration(color: Colors.deepOrange, borderRadius: BorderRadius.circular(8)),
-                        child: Text(
-                          unread > 99 ? '99+' : '$unread',
-                          style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                Obx(() {
+                  final count = notifCtrl.unreadCount.value;
+                  if (count <= 0) return const SizedBox.shrink();
+                  return Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.deepOrange,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        count > 99 ? '99+' : '$count',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                  ),
+                  );
+                }),
               ],
             );
           },
@@ -186,7 +199,7 @@ class AdminDashboardScreen extends StatelessWidget {
     });
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title, {String? trailingText}) {
+  Widget _buildSectionHeader(BuildContext context, String title, {String? trailingText, VoidCallback? onTrailingTap}) {
     final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -200,12 +213,19 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
         ),
         if (trailingText != null)
-          Text(
-            trailingText,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
+          InkWell(
+            onTap: onTrailingTap,
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Text(
+                trailingText,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
             ),
           ),
       ],

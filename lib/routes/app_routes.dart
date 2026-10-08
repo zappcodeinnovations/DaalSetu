@@ -90,4 +90,15 @@ abstract class AppRoutes {
   // ADMIN SIDEBAR
   static String adminModule(String key) => '/admin/$key';
   static const adminCreateOffer = '/admin/create-offer';
+
+  // ADMIN DELIVERY CHALLANS
+  static const adminDeliveryChallans = '/admin/delivery-challans';
+  static const adminCreateDC = '/admin/delivery-challans/create';
+  static const adminDCDetails = '/admin/delivery-challans/details';
+
+  // ADMIN REPORTS
+  static const adminBranchReports = '/admin/reports/branches';
+
+  // ADMIN NOTIFICATIONS
+  static const adminNotifications = '/admin/notifications';
 }

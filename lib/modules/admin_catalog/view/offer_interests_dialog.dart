@@ -4,6 +4,7 @@ import 'package:daalsetu/modules/products/model/offer_interest_model.dart';
 import 'package:daalsetu/services/product_services.dart';
 import 'package:daalsetu/theme/app_theme.dart';
 import 'negotiation_page.dart';
+import 'approve_deal_dialog.dart';
 
 class OfferInterestsDialog extends StatefulWidget {
   final String offerId;
@@ -77,55 +78,23 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
   }
 
   Future<void> _approveDeal(OfferInterestModel interest) async {
-    final remarkCtrl = TextEditingController();
-    final result = await showDialog<bool>(
+    final result = await showDialog<ApproveDealResult>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: cardColor,
-        title: Text("Approve Deal", style: TextStyle(color: textDark)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              "Confirm deal with ${interest.buyerName}?",
-              style: TextStyle(color: textDark),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: remarkCtrl,
-              style: TextStyle(color: textDark),
-              decoration: InputDecoration(
-                labelText: "Admin Remark (Optional)",
-                labelStyle: TextStyle(color: textLight),
-                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: textLight.withValues(alpha: 0.3))),
-                focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: AppTheme.primaryGold)),
-              ),
-              maxLines: 2,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text("Cancel", style: TextStyle(color: textLight)),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(backgroundColor: AppTheme.successGreen),
-            child: const Text("Approve", style: TextStyle(color: Colors.white)),
-          ),
-        ],
+      builder: (ctx) => ApproveDealDialog(
+        buyerName: interest.buyerName,
+        offerTitle: widget.offerTitle,
       ),
     );
 
-    if (result == true && mounted) {
+    if (result != null && mounted) {
       setState(() => isLoading = true);
       try {
         await ProductService.confirmOfferDeal(
           productId: int.parse(widget.offerId),
           interestId: interest.interestId,
           decision: "approve",
-          superadminRemark: remarkCtrl.text,
+          superadminRemark: result.remark,
+          subAdminId: result.subAdminId,
         );
         Get.snackbar('Success', 'Deal approved successfully',
             backgroundColor: Colors.green, colorText: Colors.white);

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../comman/api_url.dart';
 import '../modules/contracts/model/contract_details_model.dart';
 import '../modules/contracts/model/contract_model.dart';
@@ -13,9 +14,9 @@ class ContractService {
       requireAuth: true,
     );
 
-    print("=== CONTRACT API RESPONSE ===");
-    print(response);
-    print("=============================");
+    debugPrint("=== CONTRACT API RESPONSE ===");
+    debugPrint("$response");
+    debugPrint("=============================");
 
     if (response == null || response is! Map<String, dynamic>) {
       throw Exception("Invalid contract response");
@@ -35,11 +36,15 @@ class ContractService {
       requireAuth: true,
     );
 
+    debugPrint("=== CONTRACT DETAIL API RESPONSE (ID: $contractId) ===");
+    debugPrint("$response");
+    debugPrint("==========================================================");
+
     if (response == null || response is! Map<String, dynamic>) {
       throw Exception("Invalid contract detail response");
     }
 
-    final data = response["data"];
+    final data = response["data"] ?? response;
     if (data is! Map<String, dynamic>) {
       throw Exception("Invalid contract detail data");
     }

@@ -48,6 +48,8 @@ dependencies:
     path: third_party/iconly
   url_launcher: ^6.3.2
   intl: ^0.20.3
+  share_plus: ^12.0.2
+  path_provider: ^2.1.6
 
 
 dev_dependencies:

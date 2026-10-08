@@ -2,6 +2,7 @@ import 'package:daalsetu/modules/contracts/model/contract_details_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:daalsetu/theme/app_theme.dart';
+import 'package:daalsetu/routes/app_routes.dart';
 
 import '../controller/contract_controller.dart';
 import 'contract_edit_view.dart';
@@ -109,13 +110,39 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
       }),
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.all(16),
-        child: FilledButton.icon(
-          onPressed: () {
-            final contract = controller.contractDetail.value;
-            if (contract != null) Get.to(() => ContractEditView(contract: contract));
-          },
-          icon: const Icon(Icons.edit_note_rounded),
-          label: const Text('Edit contract'),
+        child: Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => Get.toNamed(AppRoutes.adminCreateDC, arguments: contractId),
+                icon: const Icon(Icons.local_shipping_outlined, color: AppTheme.primaryGold),
+                label: const Text(
+                  'Create DC',
+                  style: TextStyle(color: AppTheme.primaryGold, fontWeight: FontWeight.bold),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppTheme.primaryGold, width: 1.5),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: () {
+                  final contract = controller.contractDetail.value;
+                  if (contract != null) Get.to(() => ContractEditView(contract: contract));
+                },
+                icon: const Icon(Icons.edit_note_rounded),
+                label: const Text('Edit contract'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

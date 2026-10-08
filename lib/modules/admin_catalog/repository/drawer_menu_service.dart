@@ -16,7 +16,7 @@ class DrawerMenuService {
             key: 'notifications',
             title: 'Notifications',
             icon: Icons.notifications_none_rounded,
-            route: AppRoutes.sellerNotifications,
+            route: AppRoutes.notifications,
           ),
           DrawerMenuItem(
             key: 'registered_company',
@@ -130,6 +130,28 @@ class DrawerMenuService {
             title: AdminModules.byKey('offer_videos').title,
             icon: AdminModules.byKey('offer_videos').icon,
             route: AppRoutes.adminModule('offer_videos'),
+          ),
+        ],
+      ),
+      DrawerMenuSection(
+        sectionTitle: 'LOGISTICS & DISPATCH',
+        items: [
+          DrawerMenuItem(
+            key: 'delivery_challans',
+            title: 'Delivery Challans (DC)',
+            icon: Icons.local_shipping_outlined,
+            route: AppRoutes.adminDeliveryChallans,
+          ),
+        ],
+      ),
+      DrawerMenuSection(
+        sectionTitle: 'REPORTS & ANALYTICS',
+        items: [
+          DrawerMenuItem(
+            key: 'branch_reports',
+            title: 'Branch Reports',
+            icon: Icons.assessment_outlined,
+            route: AppRoutes.adminBranchReports,
           ),
         ],
       ),
