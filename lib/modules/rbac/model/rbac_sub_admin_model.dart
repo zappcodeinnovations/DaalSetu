@@ -106,4 +106,45 @@ class RbacSubAdminModel {
       createdAt: json['created_at']?.toString() ?? '',
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'first_name': firstName,
+        'last_name': lastName,
+        'name': fullName,
+        'email': email,
+        'mobile': mobile,
+        'branch_ref_code': branchRefCode,
+        'company': company,
+        'roles': roles,
+        'is_active': isActive,
+        'created_at': createdAt,
+      };
+
+  RbacSubAdminModel copyWith({
+    int? id,
+    String? firstName,
+    String? lastName,
+    String? email,
+    String? mobile,
+    String? branchRefCode,
+    String? company,
+    List<String>? roles,
+    bool? isActive,
+    String? createdAt,
+  }) {
+    return RbacSubAdminModel(
+      id: id ?? this.id,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      email: email ?? this.email,
+      mobile: mobile ?? this.mobile,
+      branchRefCode: branchRefCode ?? this.branchRefCode,
+      company: company ?? this.company,
+      roles: roles ?? this.roles,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 }
+
