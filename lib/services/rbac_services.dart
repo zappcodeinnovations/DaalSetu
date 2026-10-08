@@ -57,6 +57,26 @@ class RbacServices {
   }
 
   /// ============================================================
+  /// FETCH ROLE DETAILS
+  /// ============================================================
+  static Future<RbacRoleModel?> getRoleDetails(int id) async {
+    try {
+      final response = await ApiClient.get(
+        endpoint: ApiUrls.rbacRoleDetails(id),
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
+      final map = response is Map<String, dynamic>
+          ? response
+          : (response['data'] ?? response['role'] ?? response['result']);
+      if (map is Map<String, dynamic>) {
+        return RbacRoleModel.fromJson(map);
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// ============================================================
   /// CREATE ROLE
   /// ============================================================
   static Future<Map<String, dynamic>> createRole({
@@ -69,6 +89,9 @@ class RbacServices {
       "role_name": name,
       "description": description,
       "permissions": permissions,
+      "permission_list": permissions,
+      "permissions_list": permissions,
+      "rights": permissions,
     };
 
     // 1. Primary endpoint: /api/admin/roles/
@@ -112,6 +135,9 @@ class RbacServices {
       "role_name": name,
       "description": description,
       "permissions": permissions,
+      "permission_list": permissions,
+      "permissions_list": permissions,
+      "rights": permissions,
     };
 
     try {

@@ -85,11 +85,18 @@ class RbacRolesController extends GetxController {
     selectedPermissions.clear();
   }
 
-  void startEditRole(RbacRoleModel role) {
+  Future<void> startEditRole(RbacRoleModel role) async {
     editingRole.value = role;
     nameController.text = role.name;
     descController.text = role.description;
     selectedPermissions.assignAll(role.permissions);
+
+    try {
+      final detail = await RbacServices.getRoleDetails(role.id);
+      if (detail != null && detail.permissions.isNotEmpty) {
+        selectedPermissions.assignAll(detail.permissions);
+      }
+    } catch (_) {}
   }
 
   Future<bool> saveRole() async {

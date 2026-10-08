@@ -201,14 +201,35 @@ class RbacRolesView extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                "PERMISSIONS (${role.permissions.length})",
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.1,
-                  color: theme.textTheme.bodySmall?.color,
-                ),
+              Row(
+                children: [
+                  Text(
+                    "PERMISSIONS",
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.1,
+                      color: theme.textTheme.bodySmall?.color,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.blue.withValues(alpha: 0.4)),
+                    ),
+                    child: Text(
+                      "${role.totalPermissions}",
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue.shade700,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               if (role.subAdminsCount != null)
                 Text(
@@ -217,14 +238,14 @@ class RbacRolesView extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
 
-          if (role.permissions.isEmpty)
+          if (role.totalPermissions == 0 && role.permissions.isEmpty)
             Text(
               "No specific permissions assigned (All Denied)",
               style: GoogleFonts.inter(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey),
             )
-          else
+          else if (role.permissions.isNotEmpty)
             Wrap(
               spacing: 6,
               runSpacing: 6,
@@ -247,6 +268,11 @@ class RbacRolesView extends StatelessWidget {
                   ),
                 );
               }).toList(),
+            )
+          else
+            Text(
+              "${role.totalPermissions} permissions granted",
+              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: primaryColor),
             ),
         ],
       ),

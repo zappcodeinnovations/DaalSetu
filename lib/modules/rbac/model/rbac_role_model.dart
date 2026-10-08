@@ -3,17 +3,23 @@ class RbacRoleModel {
   final String name;
   final String description;
   final List<String> permissions;
+  final int permissionsCount;
   final String createdAt;
   final int? subAdminsCount;
+  final dynamic rawPermissions;
 
   RbacRoleModel({
     required this.id,
     required this.name,
     required this.description,
     required this.permissions,
+    required this.permissionsCount,
     required this.createdAt,
     this.subAdminsCount,
+    this.rawPermissions,
   });
+
+  int get totalPermissions => permissionsCount > 0 ? permissionsCount : permissions.length;
 
   factory RbacRoleModel.fromJson(Map<String, dynamic> json) {
     int parseId(dynamic val) {
@@ -21,25 +27,80 @@ class RbacRoleModel {
       return int.tryParse(val?.toString() ?? '0') ?? 0;
     }
 
-    List<String> parsePermissions(dynamic raw) {
+    int parseCount(dynamic raw) {
+      if (raw is int) return raw;
+      if (raw is String) return int.tryParse(raw) ?? 0;
+      return 0;
+    }
+
+    List<String> parsePermissionsList(dynamic raw) {
+      if (raw == null) return [];
       if (raw is List) {
-        return raw.map((e) {
-          if (e is Map) return e['codename']?.toString() ?? e['name']?.toString() ?? e.toString();
-          return e.toString();
-        }).toList();
+        final list = <String>[];
+        for (var e in raw) {
+          if (e == null) continue;
+          if (e is Map) {
+            final code = e['codename'] ?? e['code'] ?? e['name'] ?? e['slug'] ?? e['permission'];
+            if (code != null) list.add(code.toString());
+          } else {
+            list.add(e.toString());
+          }
+        }
+        return list;
+      }
+      if (raw is Map) {
+        final list = <String>[];
+        raw.forEach((k, v) {
+          if (v == true || v == 1 || v == 'true' || v == 'allow') {
+            list.add(k.toString());
+          } else if (v is List) {
+            for (var item in v) {
+              list.add(item.toString());
+            }
+          } else if (v is Map) {
+            v.forEach((subK, subV) {
+              if (subV == true || subV == 1 || subV == 'true') {
+                list.add("${k}_$subK");
+              }
+            });
+          }
+        });
+        return list;
       }
       return [];
     }
+
+    final rawPerms = json['permissions'] ??
+        json['permission_list'] ??
+        json['permissions_list'] ??
+        json['role_permissions'] ??
+        json['permissions_data'] ??
+        json['rights'] ??
+        json['access'];
+
+    final parsedList = parsePermissionsList(rawPerms);
+
+    final count = json['permissions_count'] != null
+        ? parseCount(json['permissions_count'])
+        : (json['permission_count'] != null
+            ? parseCount(json['permission_count'])
+            : (json['total_permissions'] != null
+                ? parseCount(json['total_permissions'])
+                : (json['permissions'] is int
+                    ? parseCount(json['permissions'])
+                    : parsedList.length)));
 
     return RbacRoleModel(
       id: parseId(json['id'] ?? json['role_id']),
       name: json['name']?.toString() ?? json['role_name']?.toString() ?? 'Role',
       description: json['description']?.toString() ?? '',
-      permissions: parsePermissions(json['permissions'] ?? json['permission_list'] ?? json['rights']),
+      permissions: parsedList,
+      permissionsCount: count,
       createdAt: json['created_at']?.toString() ?? '',
       subAdminsCount: json['sub_admins_count'] is int
           ? json['sub_admins_count'] as int
           : (json['users_count'] is int ? json['users_count'] as int : null),
+      rawPermissions: rawPerms,
     );
   }
 
@@ -49,6 +110,7 @@ class RbacRoleModel {
         'role_name': name,
         'description': description,
         'permissions': permissions,
+        'permissions_count': totalPermissions,
         'created_at': createdAt,
       };
 }
@@ -56,8 +118,9 @@ class RbacRoleModel {
 class PermissionItem {
   final String code;
   final String label;
+  final int? id;
 
-  const PermissionItem({required this.code, required this.label});
+  const PermissionItem({required this.code, required this.label, this.id});
 }
 
 class PermissionGroup {
