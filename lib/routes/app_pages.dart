@@ -57,6 +57,8 @@ import '../modules/transporter/products/view/transporter_products_view.dart';
 import '../modules/transporter/rfq/view/transporter_rfq_view.dart';
 import '../modules/transporter/users/view/transporter_users_view.dart';
 import '../modules/transporter/vehicles/view/transporter_vehicles_view.dart';
+import '../modules/rbac/view/rbac_roles_view.dart';
+import '../modules/rbac/view/rbac_sub_admins_view.dart';
 import '../modules/users/view/user_detail_screen.dart';
 import '../modules/users/view/user_view.dart';
 import 'app_routes.dart';
@@ -150,6 +152,10 @@ class AppPages {
     GetPage(name: AppRoutes.buyerDeliveryChallanDetails, page: () => BuyerDeliveryChallanDetailView()),
     GetPage(name: AppRoutes.buyerOrders, page: () => const BuyerOrdersView()),
     GetPage(name: AppRoutes.buyerTransportTracking, page: () => const BuyerTransportTrackingView()),
+
+    // RBAC & TEAM MANAGEMENT
+    GetPage(name: AppRoutes.rbacRoles, page: () => const RbacRolesView()),
+    GetPage(name: AppRoutes.rbacSubAdmins, page: () => const RbacSubAdminsView()),
 
     // ADMIN SIDEBAR MODULES
     ...AdminModules.all.keys.map(

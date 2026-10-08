@@ -86,6 +86,10 @@ abstract class AppRoutes {
   static const buyerOrders = '/buyer/orders';
   static const buyerTransportTracking = '/buyer/transport-tracking';
 
+  // RBAC & TEAM MANAGEMENT
+  static const rbacRoles = '/rbac/roles';
+  static const rbacSubAdmins = '/rbac/sub-admins';
+
   // ADMIN SIDEBAR
   static String adminModule(String key) => '/admin/$key';
   static const adminCreateOffer = '/admin/create-offer';

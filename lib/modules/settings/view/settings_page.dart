@@ -83,6 +83,34 @@ class SettingsScreen extends StatelessWidget {
 
             const SizedBox(height: 26),
 
+            /// STAFF & PERMISSIONS SECTION (RBAC)
+            _sectionLabel(context, "STAFF & PERMISSIONS"),
+            const SizedBox(height: 10),
+            GlassCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  _buildTile(
+                    context,
+                    icon: IconlyLight.user_1,
+                    title: "Sub Admins",
+                    subtitle: "Manage team members and staff access",
+                    onTap: () => Get.toNamed(AppRoutes.rbacSubAdmins),
+                  ),
+                  _glassDivider(context),
+                  _buildTile(
+                    context,
+                    icon: IconlyLight.shield_done,
+                    title: "Roles & Permissions",
+                    subtitle: "Configure custom roles and module access",
+                    onTap: () => Get.toNamed(AppRoutes.rbacRoles),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 26),
+
             /// APP INFO
             _sectionLabel(context, "APP INFORMATION"),
             const SizedBox(height: 10),

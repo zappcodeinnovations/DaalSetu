@@ -135,4 +135,15 @@ class ApiUrls {
   static const String sellerDeliveryChallans = "/api/seller/delivery-challans/";
   static String sellerDeliveryChallanDetails(dynamic id) => "/api/seller/delivery-challans/$id/";
   static String sellerDispatchChallan(dynamic id) => "/api/seller/delivery-challans/$id/dispatch/";
+
+  // RBAC & Sub-Admins
+  static const String rbacRoles = "/api/rbac/roles/";
+  static const String rbacRolesCreate = "/api/rbac/roles/create/";
+  static String rbacRoleDetails(dynamic id) => "/api/rbac/roles/$id/";
+  static const String rbacPermissions = "/api/rbac/permissions/";
+
+  static const String rbacSubAdmins = "/api/rbac/sub-admins/";
+  static const String rbacSubAdminsCreate = "/api/rbac/sub-admins/create/";
+  static String rbacSubAdminDetails(dynamic id) => "/api/rbac/sub-admins/$id/";
+  static String rbacSubAdminToggleStatus(dynamic id) => "/api/rbac/sub-admins/$id/toggle-status/";
 }
