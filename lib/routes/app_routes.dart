@@ -88,7 +88,9 @@ abstract class AppRoutes {
 
   // RBAC & TEAM MANAGEMENT
   static const rbacRoles = '/rbac/roles';
+  static const rbacRolesCreate = '/rbac/roles/create';
   static const rbacSubAdmins = '/rbac/sub-admins';
+  static const rbacSubAdminsCreate = '/rbac/sub-admins/create';
 
   // ADMIN SIDEBAR
   static String adminModule(String key) => '/admin/$key';

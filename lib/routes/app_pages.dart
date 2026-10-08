@@ -57,6 +57,8 @@ import '../modules/transporter/products/view/transporter_products_view.dart';
 import '../modules/transporter/rfq/view/transporter_rfq_view.dart';
 import '../modules/transporter/users/view/transporter_users_view.dart';
 import '../modules/transporter/vehicles/view/transporter_vehicles_view.dart';
+import '../modules/rbac/view/create_role_view.dart';
+import '../modules/rbac/view/create_sub_admin_view.dart';
 import '../modules/rbac/view/rbac_roles_view.dart';
 import '../modules/rbac/view/rbac_sub_admins_view.dart';
 import '../modules/users/view/user_detail_screen.dart';
@@ -155,7 +157,9 @@ class AppPages {
 
     // RBAC & TEAM MANAGEMENT
     GetPage(name: AppRoutes.rbacRoles, page: () => const RbacRolesView()),
+    GetPage(name: AppRoutes.rbacRolesCreate, page: () => const CreateRoleView()),
     GetPage(name: AppRoutes.rbacSubAdmins, page: () => const RbacSubAdminsView()),
+    GetPage(name: AppRoutes.rbacSubAdminsCreate, page: () => const CreateSubAdminView()),
 
     // ADMIN SIDEBAR MODULES
     ...AdminModules.all.keys.map(
