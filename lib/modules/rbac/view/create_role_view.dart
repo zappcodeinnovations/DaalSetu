@@ -120,7 +120,8 @@ class _CreateRoleViewState extends State<CreateRoleView> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: controller.panels.map((panel) {
-                    final isSelected = controller.selectedPanel.value.name == panel.name;
+                    final isSelected = controller.selectedPanel.value.key == panel.key ||
+                        controller.selectedPanel.value.name == panel.name;
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ChoiceChip(
@@ -185,7 +186,7 @@ class _CreateRoleViewState extends State<CreateRoleView> {
                         const SizedBox(height: 8),
 
                         ...group.items.map((item) {
-                          final isAllowed = controller.isPermissionEnabled(item.code);
+                          final isAllowed = controller.isPermissionEnabled(item.id);
                           return Padding(
                             padding: const EdgeInsets.symmetric(vertical: 6),
                             child: Container(
@@ -226,7 +227,7 @@ class _CreateRoleViewState extends State<CreateRoleView> {
                                       Switch(
                                         value: isAllowed,
                                         activeColor: primaryColor,
-                                        onChanged: (_) => controller.togglePermission(item.code),
+                                        onChanged: (_) => controller.togglePermission(item.id),
                                       ),
                                     ],
                                   ),

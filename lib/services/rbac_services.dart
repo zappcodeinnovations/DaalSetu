@@ -3,11 +3,21 @@ import '../network/api_client.dart';
 import '../modules/rbac/model/rbac_role_model.dart';
 import '../modules/rbac/model/rbac_sub_admin_model.dart';
 
+class RbacRolesFetchResult {
+  final List<RbacRoleModel> roles;
+  final List<PermissionPanel> panels;
+
+  RbacRolesFetchResult({required this.roles, required this.panels});
+}
+
 class RbacServices {
   /// ============================================================
-  /// FETCH ALL ROLES
+  /// FETCH ALL ROLES AND PERMISSION CATEGORIES
   /// ============================================================
-  static Future<List<RbacRoleModel>> getRoles({String search = ""}) async {
+  static Future<RbacRolesFetchResult> getRolesWithCategories({String search = ""}) async {
+    List<RbacRoleModel> roles = [];
+    List<PermissionPanel> panels = [];
+
     // 1. Primary: /api/admin/roles/
     try {
       String endpoint = ApiUrls.rbacRoles;
@@ -17,43 +27,49 @@ class RbacServices {
         requireAuth: true,
         suppressErrorDialog: true,
       );
+
       final list = _extractList(response);
       if (list.isNotEmpty) {
-        return list
+        roles = list
             .map((e) => RbacRoleModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e)))
             .toList();
       }
-    } catch (_) {}
 
-    // 2. Fallback: /api/company/roles/
-    try {
-      final response = await ApiClient.get(
-        endpoint: "/api/company/roles/",
-        requireAuth: true,
-        suppressErrorDialog: true,
-      );
-      final list = _extractList(response);
-      if (list.isNotEmpty) {
-        return list
-            .map((e) => RbacRoleModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e)))
-            .toList();
+      if (response is Map && response['permission_categories'] is List) {
+        final catList = response['permission_categories'] as List;
+        for (var c in catList) {
+          if (c is Map<String, dynamic>) {
+            panels.add(PermissionPanel.fromCategoryJson(c));
+          }
+        }
       }
     } catch (_) {}
 
-    // 3. Fallback: /api/seller/roles/
-    try {
-      final response = await ApiClient.get(
-        endpoint: "/api/seller/roles/",
-        requireAuth: true,
-        suppressErrorDialog: true,
-      );
-      final list = _extractList(response);
-      return list
-          .map((e) => RbacRoleModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e)))
-          .toList();
-    } catch (_) {}
+    // Fallback if roles empty
+    if (roles.isEmpty) {
+      try {
+        final response = await ApiClient.get(
+          endpoint: "/api/company/roles/",
+          requireAuth: true,
+          suppressErrorDialog: true,
+        );
+        final list = _extractList(response);
+        roles = list
+            .map((e) => RbacRoleModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e)))
+            .toList();
+      } catch (_) {}
+    }
 
-    return [];
+    if (panels.isEmpty) {
+      panels = PermissionPanel.getDefaultPanels();
+    }
+
+    return RbacRolesFetchResult(roles: roles, panels: panels);
+  }
+
+  static Future<List<RbacRoleModel>> getRoles({String search = ""}) async {
+    final res = await getRolesWithCategories(search: search);
+    return res.roles;
   }
 
   /// ============================================================
@@ -67,8 +83,8 @@ class RbacServices {
         suppressErrorDialog: true,
       );
       final map = response is Map<String, dynamic>
-          ? response
-          : (response['data'] ?? response['role'] ?? response['result']);
+          ? (response['data'] ?? response['role'] ?? response['result'] ?? response)
+          : null;
       if (map is Map<String, dynamic>) {
         return RbacRoleModel.fromJson(map);
       }
@@ -82,16 +98,14 @@ class RbacServices {
   static Future<Map<String, dynamic>> createRole({
     required String name,
     required String description,
-    required List<String> permissions,
+    required List<int> permissionIds,
   }) async {
     final body = <String, dynamic>{
       "name": name,
       "role_name": name,
       "description": description,
-      "permissions": permissions,
-      "permission_list": permissions,
-      "permissions_list": permissions,
-      "rights": permissions,
+      "permission_ids": permissionIds,
+      "permissions": permissionIds,
     };
 
     // 1. Primary endpoint: /api/admin/roles/
@@ -128,16 +142,14 @@ class RbacServices {
     required int id,
     required String name,
     required String description,
-    required List<String> permissions,
+    required List<int> permissionIds,
   }) async {
     final body = <String, dynamic>{
       "name": name,
       "role_name": name,
       "description": description,
-      "permissions": permissions,
-      "permission_list": permissions,
-      "permissions_list": permissions,
-      "rights": permissions,
+      "permission_ids": permissionIds,
+      "permissions": permissionIds,
     };
 
     try {
@@ -210,19 +222,6 @@ class RbacServices {
       }
     } catch (_) {}
 
-    // 3. Fallback: /api/users/?role=sub_admin
-    try {
-      final response = await ApiClient.get(
-        endpoint: "/api/users/?role=sub_admin",
-        requireAuth: true,
-        suppressErrorDialog: true,
-      );
-      final list = _extractList(response);
-      return list
-          .map((e) => RbacSubAdminModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e)))
-          .toList();
-    } catch (_) {}
-
     return [];
   }
 
@@ -287,7 +286,7 @@ class RbacServices {
       );
     } catch (_) {}
 
-    // 4. Fallback: /api/adduser/ (standard user creation with role)
+    // 4. Fallback: /api/adduser/
     try {
       return await ApiClient.post(
         endpoint: ApiUrls.addUser,
@@ -297,7 +296,6 @@ class RbacServices {
       );
     } catch (_) {}
 
-    // Final fallback
     return await ApiClient.post(
       endpoint: ApiUrls.rbacSubAdmins,
       body: body,

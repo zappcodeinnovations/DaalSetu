@@ -10,10 +10,10 @@ class RbacRolesController extends GetxController {
   var roles = <RbacRoleModel>[].obs;
   var searchQuery = ''.obs;
 
-  final panels = PermissionPanel.getDefaultPanels();
+  final panels = <PermissionPanel>[].obs;
   late final Rx<PermissionPanel> selectedPanel;
 
-  final selectedPermissions = <String>{}.obs;
+  final selectedPermissionIds = <int>{}.obs;
 
   final nameController = TextEditingController();
   final descController = TextEditingController();
@@ -27,14 +27,16 @@ class RbacRolesController extends GetxController {
     return roles.where((r) {
       return r.name.toLowerCase().contains(q) ||
           r.description.toLowerCase().contains(q) ||
-          r.permissions.any((p) => p.toLowerCase().contains(q));
+          r.slug.toLowerCase().contains(q);
     }).toList();
   }
 
   @override
   void onInit() {
     super.onInit();
-    selectedPanel = panels.first.obs;
+    final defaults = PermissionPanel.getDefaultPanels();
+    panels.assignAll(defaults);
+    selectedPanel = defaults.first.obs;
     fetchRoles();
   }
 
@@ -49,8 +51,15 @@ class RbacRolesController extends GetxController {
   Future<void> fetchRoles() async {
     try {
       isLoading.value = true;
-      final list = await RbacServices.getRoles();
-      roles.assignAll(list);
+      final res = await RbacServices.getRolesWithCategories();
+      roles.assignAll(res.roles);
+      if (res.panels.isNotEmpty) {
+        panels.assignAll(res.panels);
+        // keep current selected panel or set to first
+        final currentKey = selectedPanel.value.key;
+        final matched = panels.firstWhereOrNull((p) => p.key == currentKey);
+        selectedPanel.value = matched ?? panels.first;
+      }
     } catch (e) {
       print("Roles fetch error: $e");
     } finally {
@@ -66,15 +75,15 @@ class RbacRolesController extends GetxController {
     selectedPanel.value = panel;
   }
 
-  bool isPermissionEnabled(String code) {
-    return selectedPermissions.contains(code);
+  bool isPermissionEnabled(int id) {
+    return selectedPermissionIds.contains(id);
   }
 
-  void togglePermission(String code) {
-    if (selectedPermissions.contains(code)) {
-      selectedPermissions.remove(code);
+  void togglePermission(int id) {
+    if (selectedPermissionIds.contains(id)) {
+      selectedPermissionIds.remove(id);
     } else {
-      selectedPermissions.add(code);
+      selectedPermissionIds.add(id);
     }
   }
 
@@ -82,19 +91,19 @@ class RbacRolesController extends GetxController {
     editingRole.value = null;
     nameController.clear();
     descController.clear();
-    selectedPermissions.clear();
+    selectedPermissionIds.clear();
   }
 
   Future<void> startEditRole(RbacRoleModel role) async {
     editingRole.value = role;
     nameController.text = role.name;
     descController.text = role.description;
-    selectedPermissions.assignAll(role.permissions);
+    selectedPermissionIds.assignAll(role.permissionIds);
 
     try {
       final detail = await RbacServices.getRoleDetails(role.id);
-      if (detail != null && detail.permissions.isNotEmpty) {
-        selectedPermissions.assignAll(detail.permissions);
+      if (detail != null && detail.permissionIds.isNotEmpty) {
+        selectedPermissionIds.assignAll(detail.permissionIds);
       }
     } catch (_) {}
   }
@@ -108,19 +117,21 @@ class RbacRolesController extends GetxController {
 
     try {
       isSaving.value = true;
+      final ids = selectedPermissionIds.toList();
+
       if (editingRole.value != null) {
         await RbacServices.updateRole(
           id: editingRole.value!.id,
           name: name,
           description: descController.text.trim(),
-          permissions: selectedPermissions.toList(),
+          permissionIds: ids,
         );
         AppSnackbar.showSuccess(title: "Role Updated", message: "Role '$name' was updated successfully.");
       } else {
         await RbacServices.createRole(
           name: name,
           description: descController.text.trim(),
-          permissions: selectedPermissions.toList(),
+          permissionIds: ids,
         );
         AppSnackbar.showSuccess(title: "Role Created", message: "New role '$name' created successfully.");
       }
