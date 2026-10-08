@@ -199,7 +199,13 @@ class RbacServices {
   /// ============================================================
   /// SUB ADMINS LOCAL PERSISTENCE & SEEDING
   /// ============================================================
-  static const String _subAdminsStorageKey = "daalsetu_rbac_sub_admins_v2";
+  static const List<String> _storageKeys = [
+    "daalsetu_rbac_sub_admins_v4",
+    "daalsetu_rbac_sub_admins_v3",
+    "daalsetu_rbac_sub_admins_v2",
+    "daalsetu_rbac_sub_admins",
+  ];
+  static final List<RbacSubAdminModel> _cache = [];
 
   /// Pre-seeded with the sub-admin created on the website dashboard
   static final RbacSubAdminModel _defaultWebSubAdmin = RbacSubAdminModel(
@@ -216,34 +222,52 @@ class RbacServices {
   );
 
   static Future<List<RbacSubAdminModel>> _loadFromLocal() async {
+    if (_cache.isNotEmpty) {
+      return List.from(_cache);
+    }
     try {
       final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_subAdminsStorageKey);
-      if (raw != null && raw.isNotEmpty) {
-        final decoded = jsonDecode(raw);
-        if (decoded is List) {
-          final list = decoded
-              .map((e) => RbacSubAdminModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e)))
-              .toList();
-          if (list.isNotEmpty) {
-            // Ensure the web created sub-admin is present
-            if (!list.any((s) => s.mobile == _defaultWebSubAdmin.mobile || s.fullName.toLowerCase().contains("harmanpreet"))) {
-              list.add(_defaultWebSubAdmin);
+      for (final key in _storageKeys) {
+        final raw = prefs.getString(key);
+        if (raw != null && raw.isNotEmpty) {
+          final decoded = jsonDecode(raw);
+          if (decoded is List) {
+            final list = decoded
+                .map((e) => RbacSubAdminModel.fromJson(Map<String, dynamic>.from(e as Map)))
+                .toList();
+            if (list.isNotEmpty) {
+              for (var item in list) {
+                if (!_cache.any((c) => (c.id > 0 && c.id == item.id) || (c.mobile.isNotEmpty && c.mobile == item.mobile))) {
+                  _cache.add(item);
+                }
+              }
             }
-            return list;
           }
         }
       }
-    } catch (_) {}
-    return [_defaultWebSubAdmin];
+    } catch (e) {
+      print("Local load error: $e");
+    }
+
+    if (!_cache.any((s) => s.mobile == _defaultWebSubAdmin.mobile)) {
+      _cache.add(_defaultWebSubAdmin);
+    }
+    return List.from(_cache);
   }
 
   static Future<void> _saveToLocal(List<RbacSubAdminModel> list) async {
+    _cache.clear();
+    _cache.addAll(list);
     try {
       final prefs = await SharedPreferences.getInstance();
-      final mapped = list.map((e) => e.toJson()).toList();
-      await prefs.setString(_subAdminsStorageKey, jsonEncode(mapped));
-    } catch (_) {}
+      final mapped = _cache.map((e) => e.toJson()).toList();
+      final jsonStr = jsonEncode(mapped);
+      for (final key in _storageKeys) {
+        await prefs.setString(key, jsonStr);
+      }
+    } catch (e) {
+      print("Local save error: $e");
+    }
   }
 
   /// ============================================================
@@ -253,45 +277,36 @@ class RbacServices {
     // 1. Load locally cached / seeded sub-admins
     List<RbacSubAdminModel> currentList = await _loadFromLocal();
 
-    // 2. Try fetching from live backend endpoints
+    // 2. Try fetching from live backend endpoint
     final searchParam = search.isNotEmpty ? "?search=${Uri.encodeComponent(search)}" : "";
-    final endpoints = [
-      ApiUrls.rbacSubAdmins + searchParam,
-      "/api/seller/branches/",
-      "/api/company/primary/",
-    ];
+    try {
+      final response = await ApiClient.get(
+        endpoint: ApiUrls.rbacSubAdmins + searchParam,
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
 
-    for (var endpoint in endpoints) {
-      try {
-        final response = await ApiClient.get(
-          endpoint: endpoint,
-          requireAuth: true,
-          suppressErrorDialog: true,
-        );
+      final list = _extractList(response);
+      if (list.isNotEmpty) {
+        final fetched = list
+            .map((e) => RbacSubAdminModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e)))
+            .where((s) => s.fullName.isNotEmpty || s.mobile.isNotEmpty)
+            .toList();
 
-        final list = _extractList(response);
-        if (list.isNotEmpty) {
-          final fetched = list
-              .map((e) => RbacSubAdminModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e)))
-              .where((s) => s.fullName.isNotEmpty || s.mobile.isNotEmpty)
-              .toList();
-
-          if (fetched.isNotEmpty) {
-            // Merge with local list avoiding duplicates
-            for (var item in fetched) {
-              final exists = currentList.any((c) =>
-                  (c.id > 0 && c.id == item.id) ||
-                  (c.mobile.isNotEmpty && c.mobile == item.mobile));
-              if (!exists) {
-                currentList.add(item);
-              }
+        if (fetched.isNotEmpty) {
+          for (var item in fetched) {
+            final exists = _cache.any((c) =>
+                (c.id > 0 && c.id == item.id) ||
+                (c.mobile.isNotEmpty && c.mobile == item.mobile));
+            if (!exists) {
+              _cache.add(item);
             }
-            await _saveToLocal(currentList);
-            break;
           }
+          await _saveToLocal(_cache);
+          currentList = List.from(_cache);
         }
-      } catch (_) {}
-    }
+      }
+    } catch (_) {}
 
     // 3. Apply search filter
     if (search.trim().isNotEmpty) {
@@ -359,8 +374,7 @@ class RbacServices {
           suppressErrorDialog: true,
         );
 
-        if (serverRes is Map<String, dynamic> &&
-            (serverRes['success'] == true || serverRes['id'] != null || serverRes['user'] != null)) {
+        if (serverRes['success'] == true || serverRes['id'] != null || serverRes['user'] != null) {
           // Successfully created on server
           final newSubAdmin = RbacSubAdminModel(
             id: int.tryParse(serverRes['id']?.toString() ?? '') ?? DateTime.now().millisecondsSinceEpoch % 1000000,
@@ -375,16 +389,16 @@ class RbacServices {
             createdAt: DateTime.now().toIso8601String(),
           );
 
-          final local = await _loadFromLocal();
-          local.removeWhere((s) => s.mobile == mobile && mobile.isNotEmpty);
-          local.insert(0, newSubAdmin);
-          await _saveToLocal(local);
+          await _loadFromLocal();
+          _cache.removeWhere((s) => s.mobile == mobile && mobile.isNotEmpty);
+          _cache.insert(0, newSubAdmin);
+          await _saveToLocal(_cache);
           return serverRes;
         }
       } catch (_) {}
     }
 
-    // 2. Graceful fallback: Save sub-admin locally so user workflow is never blocked
+    // 2. Fallback: Save sub-admin in static cache and local storage so user workflow is preserved
     final newSubAdmin = RbacSubAdminModel(
       id: DateTime.now().millisecondsSinceEpoch % 1000000,
       firstName: firstName,
@@ -400,10 +414,10 @@ class RbacServices {
       createdAt: DateTime.now().toIso8601String(),
     );
 
-    final local = await _loadFromLocal();
-    local.removeWhere((s) => s.mobile == mobile && mobile.isNotEmpty);
-    local.insert(0, newSubAdmin);
-    await _saveToLocal(local);
+    await _loadFromLocal();
+    _cache.removeWhere((s) => s.mobile == mobile && mobile.isNotEmpty);
+    _cache.insert(0, newSubAdmin);
+    await _saveToLocal(_cache);
 
     return {
       "success": true,
@@ -416,12 +430,12 @@ class RbacServices {
   /// TOGGLE SUB ADMIN STATUS (ACTIVE / INACTIVE)
   /// ============================================================
   static Future<Map<String, dynamic>> toggleSubAdminStatus(int id, bool isActive) async {
-    // 1. Update in local storage
-    final local = await _loadFromLocal();
-    final index = local.indexWhere((s) => s.id == id);
+    // 1. Update in cache and local storage
+    await _loadFromLocal();
+    final index = _cache.indexWhere((s) => s.id == id);
     if (index != -1) {
-      local[index] = local[index].copyWith(isActive: isActive);
-      await _saveToLocal(local);
+      _cache[index] = _cache[index].copyWith(isActive: isActive);
+      await _saveToLocal(_cache);
     }
 
     // 2. Try server update in background
@@ -442,10 +456,10 @@ class RbacServices {
   /// DELETE SUB ADMIN
   /// ============================================================
   static Future<Map<String, dynamic>> deleteSubAdmin(int id) async {
-    // 1. Delete from local storage
-    final local = await _loadFromLocal();
-    local.removeWhere((s) => s.id == id);
-    await _saveToLocal(local);
+    // 1. Delete from cache and local storage
+    await _loadFromLocal();
+    _cache.removeWhere((s) => s.id == id);
+    await _saveToLocal(_cache);
 
     // 2. Try server delete in background
     try {
