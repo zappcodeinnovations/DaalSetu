@@ -119,6 +119,23 @@ class DrawerMenuService {
         ],
       ),
       DrawerMenuSection(
+        sectionTitle: 'DEALS',
+        items: [
+          DrawerMenuItem(
+            key: 'consignments',
+            title: AdminModules.byKey('consignments').title,
+            icon: AdminModules.byKey('consignments').icon,
+            route: AppRoutes.adminModule('consignments'),
+          ),
+          DrawerMenuItem(
+            key: 'contract_history',
+            title: 'Contract History',
+            icon: Icons.history_rounded,
+            route: AppRoutes.adminContractHistory,
+          ),
+        ],
+      ),
+      DrawerMenuSection(
         sectionTitle: 'OFFER',
         items: [
           DrawerMenuItem(

@@ -2,6 +2,7 @@ import 'package:daalsetu/modules/admin_catalog/config/admin_actions.dart';
 import 'package:daalsetu/modules/admin_catalog/config/admin_module_config.dart';
 import 'package:daalsetu/modules/admin_catalog/model/admin_record.dart';
 import 'package:daalsetu/modules/admin_catalog/repository/drawer_menu_service.dart';
+import 'package:daalsetu/modules/admin_catalog/view/admin_contract_history_screen.dart';
 import 'package:daalsetu/modules/admin_catalog/view/admin_record_form_screen.dart';
 import 'package:daalsetu/routes/app_routes.dart';
 import 'package:flutter/material.dart';
@@ -80,6 +81,26 @@ void main() {
     expect(items['branch_settings']!.route, AppRoutes.adminBranchSettings);
   });
 
+  test('consignments use workflow APIs and server action permissions', () {
+    final config = AdminModules.byKey('consignments');
+    expect(config.listEndpoint, '/api/consignments/');
+    expect(config.detailEndpoint!('31'), '/api/consignments/31/');
+    expect(config.filterParameter, 'workflow_status');
+    expect(config.filterOptions, ['pending', 'ready', 'dispatch', 'received']);
+    expect(config.customActions.map((action) => action.title), ['View Bids', 'Ready for Loading', 'Mark Received']);
+    expect(config.customActions[1].isVisible!({'can_mark_ready': true}), isTrue);
+    expect(config.customActions[1].isVisible!({'can_mark_ready': false}), isFalse);
+    expect(config.customActions[2].isVisible!({'can_mark_received': true}), isTrue);
+  });
+
+  test('deals drawer exposes consignments and contract history', () async {
+    final sections = await DrawerMenuService().fetchMenu();
+    final deals = sections.singleWhere((section) => section.sectionTitle == 'DEALS');
+    final items = {for (final item in deals.items) item.key: item};
+    expect(items['consignments']!.route, AppRoutes.adminModule('consignments'));
+    expect(items['contract_history']!.route, AppRoutes.adminContractHistory);
+  });
+
   for (final key in ['vehicles', 'brands', 'sub_categories', 'offer_images', 'drivers']) {
     testWidgets('$key form renders', (tester) async {
       await tester.pumpWidget(MaterialApp(home: AdminRecordFormScreen(config: AdminModules.byKey(key))));
@@ -88,6 +109,14 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('contract history screen renders its loading state', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: AdminContractHistoryScreen()));
+    await tester.pump();
+    expect(find.text('Contract History'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('editing a vehicle keeps its backend values', (tester) async {
     const record = AdminRecord({

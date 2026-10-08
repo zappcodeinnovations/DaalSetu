@@ -91,6 +91,7 @@ abstract class AppRoutes {
   static String adminModule(String key) => '/admin/$key';
   static const adminCreateOffer = '/admin/create-offer';
   static const adminBranchSettings = '/admin/branches/settings';
+  static const adminContractHistory = '/admin/deals/contract-history';
 
   // ADMIN DELIVERY CHALLANS
   static const adminDeliveryChallans = '/admin/delivery-challans';

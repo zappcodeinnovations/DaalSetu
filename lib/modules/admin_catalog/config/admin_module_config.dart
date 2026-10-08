@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:daalsetu/modules/admin_catalog/view/assign_vehicle_dialog.dart';
 import 'package:daalsetu/modules/admin_catalog/view/offer_interests_dialog.dart';
+import 'package:daalsetu/modules/admin_catalog/view/transport_bids_sheet.dart';
 import 'package:daalsetu/modules/admin_catalog/config/admin_detail_config.dart';
 import 'package:daalsetu/modules/admin_catalog/config/admin_actions.dart';
 import 'package:daalsetu/modules/admin_catalog/model/admin_record.dart';
@@ -482,6 +483,74 @@ class AdminModules {
           endpoint: (record) => '/api/branch/toggle/${record['id']}/',
           action: 'toggle',
           confirmMessage: 'Change this branch active status?',
+        ),
+      ],
+    ),
+    'consignments': AdminModuleConfig(
+      key: 'consignments',
+      title: 'Consignments',
+      icon: Icons.local_shipping_outlined,
+      listEndpoint: '/api/consignments/',
+      titleKeys: const ['contract_id', 'product_title'],
+      subtitleKeys: const ['status', 'product_title', 'deal_quantity', 'loading_from', 'loading_to'],
+      filterParameter: 'workflow_status',
+      filterOptions: const ['pending', 'ready', 'dispatch', 'received'],
+      detailEndpoint: (id) => '/api/consignments/$id/',
+      detailSections: [
+        const AdminDetailSection(
+          title: 'Consignment',
+          fields: [
+            AdminDetailField('contract_id', 'Contract ID', copyable: true),
+            AdminDetailField('status', 'Status', type: AdminDetailFieldType.status),
+            AdminDetailField('product_title', 'Product'),
+            AdminDetailField('deal_quantity', 'Quantity'),
+            AdminDetailField('quantity_unit', 'Quantity Unit'),
+            AdminDetailField('bag_count', 'Bags'),
+            AdminDetailField('deal_amount', 'Rate'),
+            AdminDetailField('amount_unit', 'Rate Unit'),
+            AdminDetailField('trade_value', 'Trade Value'),
+          ],
+        ),
+        const AdminDetailSection(
+          title: 'Route & Delivery',
+          fields: [
+            AdminDetailField('loading_from', 'Loading From'),
+            AdminDetailField('loading_to', 'Loading To'),
+            AdminDetailField('assigned_transporter', 'Transporter'),
+            AdminDetailField('ready_label', 'Ready for Loading'),
+            AdminDetailField('received_label', 'Received'),
+            AdminDetailField('confirmed_at', 'Confirmed At', type: AdminDetailFieldType.date),
+          ],
+        ),
+        const AdminDetailSection(
+          title: 'Parties',
+          fields: [
+            AdminDetailField('display_seller_id', 'Seller ID'),
+            AdminDetailField('display_buyer_id', 'Buyer ID'),
+          ],
+        ),
+      ],
+      customActions: [
+        AdminCustomAction(
+          title: 'View Bids',
+          icon: Icons.gavel_outlined,
+          onPressed: showTransportBidsSheet,
+        ),
+        adminPostAction(
+          title: 'Ready for Loading',
+          icon: Icons.inventory_2_outlined,
+          endpoint: (record) => '/api/consignments/${record['id']}/',
+          action: 'ready_for_loading',
+          confirmMessage: 'Make this consignment available for transporter bids?',
+          isVisible: (record) => record['can_mark_ready'] == true,
+        ),
+        adminPostAction(
+          title: 'Mark Received',
+          icon: Icons.task_alt_outlined,
+          endpoint: (record) => '/api/consignments/${record['id']}/',
+          action: 'received',
+          confirmMessage: 'Mark this dispatched consignment as received?',
+          isVisible: (record) => record['can_mark_received'] == true,
         ),
       ],
     ),
