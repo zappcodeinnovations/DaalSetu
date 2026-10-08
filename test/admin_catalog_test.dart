@@ -139,6 +139,26 @@ void main() {
     expect(challan.raw['challan_number'], 'DC-42');
   });
 
+  test('settings modules expose policy pages and role-aware navigation', () async {
+    final policy = AdminModules.byKey('policy_sections');
+    final fields = {for (final field in policy.fields) field.key: field};
+    expect(policy.listEndpoint, '/api/admin/policy-sections/');
+    expect(policy.updateEndpoint!('4'), '/api/admin/policy-sections/4/');
+    expect(policy.filterOptions, containsAll(['privacy_policy', 'terms_conditions', 'disclaimer', 'refund_policy']));
+    expect(fields['content']!.multiline, isTrue);
+    expect(fields['is_active']!.sendAsBoolean, isTrue);
+
+    final sections = await DrawerMenuService().fetchMenu();
+    final settings = sections.singleWhere((section) => section.sectionTitle == 'SETTINGS');
+    final items = {for (final item in settings.items) item.key: item};
+    expect(items['sub_admins']!.route, AppRoutes.adminModule('salesman'));
+    expect(items['roles']!.route, AppRoutes.adminRoles);
+    expect(items['permissions_matrix']!.route, AppRoutes.adminPermissionsMatrix);
+    expect(items['permissions_matrix']!.isVisibleFor('super_admin'), isTrue);
+    expect(items['permissions_matrix']!.isVisibleFor('admin'), isFalse);
+    expect(items['policy_sections']!.isVisibleFor('admin'), isTrue);
+  });
+
   for (final key in ['vehicles', 'brands', 'sub_categories', 'offer_images', 'drivers']) {
     testWidgets('$key form renders', (tester) async {
       await tester.pumpWidget(MaterialApp(home: AdminRecordFormScreen(config: AdminModules.byKey(key))));

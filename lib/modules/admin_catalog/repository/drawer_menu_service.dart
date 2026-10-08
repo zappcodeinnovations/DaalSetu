@@ -37,12 +37,6 @@ class DrawerMenuService {
             route: AppRoutes.users,
           ),
           DrawerMenuItem(
-            key: 'salesman',
-            title: AdminModules.byKey('salesman').title,
-            icon: AdminModules.byKey('salesman').icon,
-            route: AppRoutes.adminModule('salesman'),
-          ),
-          DrawerMenuItem(
             key: 'kyc',
             title: AdminModules.byKey('kyc').title,
             icon: AdminModules.byKey('kyc').icon,
@@ -214,6 +208,39 @@ class DrawerMenuService {
             title: 'Branch Reports',
             icon: Icons.assessment_outlined,
             route: AppRoutes.adminBranchReports,
+          ),
+        ],
+      ),
+      DrawerMenuSection(
+        sectionTitle: 'SETTINGS',
+        items: [
+          DrawerMenuItem(
+            key: 'sub_admins',
+            title: AdminModules.byKey('salesman').title,
+            icon: AdminModules.byKey('salesman').icon,
+            route: AppRoutes.adminModule('salesman'),
+            requiredRoles: const ['super_admin', 'admin'],
+          ),
+          DrawerMenuItem(
+            key: 'roles',
+            title: 'Roles',
+            icon: Icons.badge_outlined,
+            route: AppRoutes.adminRoles,
+            requiredRoles: const ['super_admin', 'admin'],
+          ),
+          DrawerMenuItem(
+            key: 'permissions_matrix',
+            title: 'Permissions Matrix',
+            icon: Icons.admin_panel_settings_outlined,
+            route: AppRoutes.adminPermissionsMatrix,
+            requiredRoles: const ['super_admin'],
+          ),
+          DrawerMenuItem(
+            key: 'policy_sections',
+            title: AdminModules.byKey('policy_sections').title,
+            icon: AdminModules.byKey('policy_sections').icon,
+            route: AppRoutes.adminModule('policy_sections'),
+            requiredRoles: const ['super_admin', 'admin'],
           ),
         ],
       ),

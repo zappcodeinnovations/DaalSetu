@@ -14,6 +14,8 @@ import '../modules/admin_catalog/view/admin_brokerage_bills_screen.dart';
 import '../modules/admin_catalog/view/admin_contract_history_screen.dart';
 import '../modules/admin_catalog/view/admin_module_list_screen.dart';
 import '../modules/admin_catalog/view/admin_offers_list_screen.dart';
+import '../modules/admin_catalog/view/admin_permissions_matrix_screen.dart';
+import '../modules/admin_catalog/view/admin_roles_screen.dart';
 import '../modules/buyer/dashboard/view/buyer_dashboard_view.dart';
 import '../modules/buyer/delivery_challan/view/buyer_delivery_challan_detail_view.dart';
 import '../modules/buyer/delivery_challan/view/buyer_delivery_challan_view.dart';
@@ -189,6 +191,14 @@ class AppPages {
     GetPage(
       name: AppRoutes.adminBrokerageBills,
       page: () => const AdminBrokerageBillsScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.adminRoles,
+      page: () => const AdminRolesScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.adminPermissionsMatrix,
+      page: () => const AdminPermissionsMatrixScreen(),
     ),
 
     // ADMIN DELIVERY CHALLANS

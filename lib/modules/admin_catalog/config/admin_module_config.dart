@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:daalsetu/modules/admin_catalog/view/assign_vehicle_dialog.dart';
 import 'package:daalsetu/modules/admin_catalog/view/offer_interests_dialog.dart';
 import 'package:daalsetu/modules/admin_catalog/view/transport_bids_sheet.dart';
+import 'package:daalsetu/modules/admin_catalog/view/admin_sub_admin_permissions_screen.dart';
 import 'package:daalsetu/modules/admin_catalog/config/admin_detail_config.dart';
 import 'package:daalsetu/modules/admin_catalog/config/admin_actions.dart';
 import 'package:daalsetu/modules/admin_catalog/model/admin_record.dart';
@@ -294,6 +295,23 @@ class AdminModules {
         ),
       ],
       customActions: [
+        AdminCustomAction(
+          title: 'Permissions',
+          icon: Icons.admin_panel_settings_outlined,
+          onPressed: (context, record) async {
+            final id = record['id'];
+            if (id == null) return false;
+            final changed = await Navigator.of(context).push<bool>(
+              MaterialPageRoute(
+                builder: (_) => AdminSubAdminPermissionsScreen(
+                  subAdminId: id.toString(),
+                  subAdminName: (record['name'] ?? record['username'] ?? '').toString(),
+                ),
+              ),
+            );
+            return changed == true;
+          },
+        ),
         adminPostAction(
           title: 'Suspend',
           icon: Icons.block_outlined,
@@ -1263,6 +1281,84 @@ class AdminModules {
           icon: Icons.verified_outlined,
           isVisible: (record) => recordStatus(record) == 'buyer_confirmed',
           onPressed: confirmBuyerOffer,
+        ),
+      ],
+    ),
+    'policy_sections': AdminModuleConfig(
+      key: 'policy_sections',
+      title: 'Policy Pages',
+      icon: Icons.policy_outlined,
+      listEndpoint: '/api/admin/policy-sections/',
+      titleKeys: const ['title', 'page_label', 'page'],
+      subtitleKeys: const ['page_label', 'is_active', 'updated_at'],
+      detailEndpoint: (id) => '/api/admin/policy-sections/$id/',
+      filterParameter: 'page',
+      filterOptions: const [
+        'privacy_policy',
+        'terms_conditions',
+        'disclaimer',
+        'refund_policy',
+      ],
+      createEndpoint: '/api/admin/policy-sections/',
+      updateEndpoint: (id) => '/api/admin/policy-sections/$id/',
+      deleteEndpoint: (id) => '/api/admin/policy-sections/$id/',
+      fields: const [
+        AdminFieldConfig(
+          'page',
+          'Policy page',
+          required: true,
+          options: [
+            'privacy_policy',
+            'terms_conditions',
+            'disclaimer',
+            'refund_policy',
+          ],
+          optionLabels: {
+            'privacy_policy': 'Privacy Policy',
+            'terms_conditions': 'Terms & Conditions',
+            'disclaimer': 'Disclaimer',
+            'refund_policy': 'Refund Policy',
+          },
+        ),
+        AdminFieldConfig('title', 'Title', required: true),
+        AdminFieldConfig('content', 'Content', required: true, multiline: true),
+        AdminFieldConfig(
+          'is_active',
+          'Status',
+          options: ['true', 'false'],
+          optionLabels: {'true': 'Active', 'false': 'Inactive'},
+          defaultValue: 'true',
+          sendAsBoolean: true,
+        ),
+      ],
+      detailSections: const [
+        AdminDetailSection(
+          title: 'Policy',
+          fields: [
+            AdminDetailField('page_label', 'Page'),
+            AdminDetailField('title', 'Title'),
+            AdminDetailField('is_active', 'Status', type: AdminDetailFieldType.boolean),
+          ],
+        ),
+        AdminDetailSection(
+          title: 'Content',
+          fields: [AdminDetailField('content', 'Content')],
+        ),
+        AdminDetailSection(
+          title: 'Activity',
+          fields: [
+            AdminDetailField('created_at', 'Created', type: AdminDetailFieldType.date),
+            AdminDetailField('updated_at', 'Updated', type: AdminDetailFieldType.date),
+          ],
+        ),
+      ],
+      customActions: [
+        adminPostAction(
+          title: 'Toggle Status',
+          icon: Icons.toggle_on_outlined,
+          endpoint: (record) => '/api/admin/policy-sections/${record['id']}/',
+          action: 'toggle',
+          confirmMessage: 'Change the published status of this policy section?',
         ),
       ],
     ),
