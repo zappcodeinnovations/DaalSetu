@@ -89,13 +89,18 @@ class BuyerOfferModel {
     final rawStatus = json['status'] ??
         json['deal_status'] ??
         json['product_status'] ??
+        json['status_label'] ??
+        json['status_code'] ??
         (json['offer'] is Map ? json['offer']['status'] : null) ??
-        'Pending';
+        '';
 
     final rawQuantity = json['requested_quantity'] ??
         json['required_quantity'] ??
         json['buyer_required_quantity'] ??
         json['quantity'] ??
+        json['available_quantity'] ??
+        json['remaining_quantity'] ??
+        json['original_quantity'] ??
         json['seller_snapshot_quantity'] ??
         (json['offer'] is Map ? json['offer']['quantity'] : null) ??
         '';
@@ -112,15 +117,35 @@ class BuyerOfferModel {
         json['amount'] ??
         json['seller_snapshot_amount'] ??
         json['target_price'] ??
+        json['offer_price'] ??
         json['price'] ??
         (json['offer'] is Map ? json['offer']['price'] : null) ??
-        '0';
+        '';
 
     final isRfqItem = json.containsKey('rfq_id') ||
         json.containsKey('required_quantity') ||
         json.containsKey('target_price') ||
         json.containsKey('visible_branches') ||
         (json['status']?.toString().toLowerCase() == 'open' && json.containsKey('commodity'));
+
+    String formattedPrice = rawPrice.toString().trim();
+    if (formattedPrice.isNotEmpty && formattedPrice != '0' && !formattedPrice.startsWith('₹')) {
+      formattedPrice = '₹$formattedPrice';
+    } else if (formattedPrice == '0' || formattedPrice.isEmpty) {
+      formattedPrice = '';
+    }
+
+    String formattedQuantity = rawQuantity.toString().trim();
+    if (formattedQuantity.isNotEmpty && rawUnit.toString().trim().isNotEmpty) {
+      formattedQuantity = '$formattedQuantity ${rawUnit.toString().trim()}';
+    }
+
+    String formattedStatus = rawStatus.toString().trim();
+    if (formattedStatus.isEmpty) {
+      formattedStatus = isRfqItem ? 'OPEN' : 'AVAILABLE';
+    } else {
+      formattedStatus = formattedStatus.replaceAll('_', ' ').toUpperCase();
+    }
 
     return BuyerOfferModel(
       id: rootId ?? parsedProductId ?? parsedInterestId,
@@ -136,9 +161,9 @@ class BuyerOfferModel {
       createdAt: json['created_at']?.toString() ?? json['updated_at']?.toString() ?? '',
       
       displayTitle: rawTitle.toString(),
-      displayStatus: rawStatus.toString().toUpperCase(),
-      displayQuantity: '$rawQuantity $rawUnit'.trim(),
-      displayPrice: '₹$rawPrice',
+      displayStatus: formattedStatus,
+      displayQuantity: formattedQuantity.isNotEmpty ? formattedQuantity : 'N/A',
+      displayPrice: formattedPrice,
       isRfq: isRfqItem,
     );
   }
@@ -150,7 +175,7 @@ class BuyerOfferModel {
 
   bool get isRejected {
     final s = (displayStatus ?? status ?? '').toString().toLowerCase();
-    return s.contains('reject') || s.contains('cancel') || s.contains('closed');
+    return s.contains('reject') || s.contains('cancel') || s.contains('closed') || s.contains('expire');
   }
 
   bool get isActionable => !isConfirmed && !isRejected;

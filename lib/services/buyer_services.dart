@@ -123,7 +123,7 @@ class BuyerServices {
       print("⚠️ RFQs error in getAllOffers: $e");
     }
 
-    // 3. Try /api/offers/list/ or /api/offers/
+    // 3. Try /api/offers/list/
     try {
       String endpoint = "/api/offers/list/";
       if (query.isNotEmpty) endpoint += "?search=$query";
@@ -138,26 +138,6 @@ class BuyerServices {
       }
     } catch (e) {
       print("⚠️ /api/offers/list/ error in getAllOffers: $e");
-    }
-
-    // 4. Try today/pending/previous/interests feeds
-    try {
-      final results = await Future.wait([
-        ApiClient.get(endpoint: ApiUrls.buyerTodayOffers, requireAuth: true, suppressErrorDialog: true).catchError((_) => null),
-        ApiClient.get(endpoint: ApiUrls.buyerPendingOffers, requireAuth: true, suppressErrorDialog: true).catchError((_) => null),
-        ApiClient.get(endpoint: ApiUrls.buyerPreviousOffers, requireAuth: true, suppressErrorDialog: true).catchError((_) => null),
-        ApiClient.get(endpoint: ApiUrls.buyerMyInterests, requireAuth: true, suppressErrorDialog: true).catchError((_) => null),
-      ]);
-      for (var res in results) {
-        if (res != null) {
-          final list = _extractList(res);
-          for (var item in list) {
-            addUnique(item, 'offer');
-          }
-        }
-      }
-    } catch (e) {
-      print("⚠️ Additional feeds fetch error in getAllOffers: $e");
     }
 
     return allList;
@@ -209,14 +189,14 @@ class BuyerServices {
         final id = item['id']?.toString() ?? item['product_id']?.toString() ?? item['rfq_id']?.toString() ?? '';
         final title = item['title']?.toString() ?? item['product_title']?.toString() ?? item['commodity']?.toString() ?? '';
         final key = "$id-$title";
-        if (!seenKeys.contains(key)) {
+        if (id.isNotEmpty && !seenKeys.contains(key)) {
           seenKeys.add(key);
           todayList.add(item);
         }
       }
     }
 
-    // 1. Try server endpoint
+    // 1. Primary server endpoint
     try {
       final response = await ApiClient.get(
         endpoint: ApiUrls.buyerTodayOffers,
@@ -227,27 +207,29 @@ class BuyerServices {
       for (var item in list) {
         addUnique(item);
       }
-    } catch (_) {}
+    } catch (e) {
+      print("⚠️ /api/offers/today/ fetch error: $e");
+    }
 
-    // 2. Cross-reference all offers & products created/updated today
-    try {
-      final all = await getAllOffers();
-      for (var item in all) {
-        if (item is Map) {
-          final created = item['created_at'] ?? item['updated_at'] ?? item['created'];
-          if (_isToday(created)) {
-            addUnique(item);
+    // 2. If endpoint returned empty, check products created today only
+    if (todayList.isEmpty) {
+      try {
+        final response = await ApiClient.get(
+          endpoint: ApiUrls.products,
+          requireAuth: true,
+          suppressErrorDialog: true,
+        );
+        final list = _extractList(response);
+        for (var item in list) {
+          if (item is Map) {
+            final created = item['created_at'] ?? item['updated_at'] ?? item['created'];
+            if (_isToday(created)) {
+              addUnique(item);
+            }
           }
         }
-      }
-
-      // If still empty (e.g. initial demo products created slightly earlier), fallback to recent active items
-      if (todayList.isEmpty && all.isNotEmpty) {
-        for (var item in all.take(5)) {
-          addUnique(item);
-        }
-      }
-    } catch (_) {}
+      } catch (_) {}
+    }
 
     return todayList;
   }
@@ -261,17 +243,17 @@ class BuyerServices {
 
     void addUnique(dynamic item) {
       if (item is Map) {
-        final id = item['id']?.toString() ?? item['product_id']?.toString() ?? item['rfq_id']?.toString() ?? '';
+        final id = item['id']?.toString() ?? item['product_id']?.toString() ?? item['interest_id']?.toString() ?? item['rfq_id']?.toString() ?? '';
         final title = item['title']?.toString() ?? item['product_title']?.toString() ?? item['commodity']?.toString() ?? '';
         final key = "$id-$title";
-        if (!seenKeys.contains(key)) {
+        if (id.isNotEmpty && !seenKeys.contains(key)) {
           seenKeys.add(key);
           pendingList.add(item);
         }
       }
     }
 
-    // 1. Try server endpoint
+    // 1. Primary server endpoint for pending offers
     try {
       final response = await ApiClient.get(
         endpoint: ApiUrls.buyerPendingOffers,
@@ -282,15 +264,36 @@ class BuyerServices {
       for (var item in list) {
         addUnique(item);
       }
+    } catch (e) {
+      print("⚠️ /api/offers/pending/ fetch error: $e");
+    }
+
+    // 2. Fallback check for buyer-offers with pending status
+    try {
+      final response = await ApiClient.get(
+        endpoint: "${ApiUrls.buyerOffers}?status=pending",
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
+      final list = _extractList(response);
+      for (var item in list) {
+        addUnique(item);
+      }
     } catch (_) {}
 
-    // 2. Cross-reference pending / open items from all offers
+    // 3. Fallback check for active pending buyer interests (deal negotiations / pending deals)
     try {
-      final all = await getAllOffers();
-      for (var item in all) {
+      final interests = await getMyInterests();
+      for (var item in interests) {
         if (item is Map) {
           final s = (item['status'] ?? item['deal_status'] ?? '').toString().toLowerCase();
-          if (s.contains('pending') || s.contains('open') || s.contains('requested') || s.contains('negotiation') || s.contains('waiting')) {
+          if (s == 'interested' ||
+              s == 'negotiation' ||
+              s == 'pending' ||
+              s == 'buyer_confirmed' ||
+              s == 'seller_confirmed' ||
+              s.contains('pending') ||
+              s.contains('negotiat')) {
             addUnique(item);
           }
         }
@@ -309,17 +312,17 @@ class BuyerServices {
 
     void addUnique(dynamic item) {
       if (item is Map) {
-        final id = item['id']?.toString() ?? item['product_id']?.toString() ?? item['rfq_id']?.toString() ?? '';
+        final id = item['id']?.toString() ?? item['product_id']?.toString() ?? item['interest_id']?.toString() ?? item['rfq_id']?.toString() ?? '';
         final title = item['title']?.toString() ?? item['product_title']?.toString() ?? item['commodity']?.toString() ?? '';
         final key = "$id-$title";
-        if (!seenKeys.contains(key)) {
+        if (id.isNotEmpty && !seenKeys.contains(key)) {
           seenKeys.add(key);
           previousList.add(item);
         }
       }
     }
 
-    // 1. Try server endpoint
+    // 1. Primary server endpoint for previous offers
     try {
       final response = await ApiClient.get(
         endpoint: ApiUrls.buyerPreviousOffers,
@@ -330,15 +333,40 @@ class BuyerServices {
       for (var item in list) {
         addUnique(item);
       }
+    } catch (e) {
+      print("⚠️ /api/offers/previous/ fetch error: $e");
+    }
+
+    // 2. Fallback check for buyer-offers with previous status
+    try {
+      final response = await ApiClient.get(
+        endpoint: "${ApiUrls.buyerOffers}?status=previous",
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
+      final list = _extractList(response);
+      for (var item in list) {
+        addUnique(item);
+      }
     } catch (_) {}
 
-    // 2. Cross-reference closed / expired / rejected items from all offers
+    // 3. Fallback check for completed, closed, rejected or expired buyer interests
     try {
-      final all = await getAllOffers();
-      for (var item in all) {
+      final interests = await getMyInterests();
+      for (var item in interests) {
         if (item is Map) {
           final s = (item['status'] ?? item['deal_status'] ?? '').toString().toLowerCase();
-          if (s.contains('expire') || s.contains('closed') || s.contains('reject') || s.contains('completed') || s.contains('cancel') || s.contains('deal_expired')) {
+          if (s == 'deal_confirmed' ||
+              s == 'closed' ||
+              s == 'rejected' ||
+              s == 'expired' ||
+              s == 'completed' ||
+              s == 'cancelled' ||
+              s.contains('confirm') ||
+              s.contains('reject') ||
+              s.contains('close') ||
+              s.contains('expire') ||
+              s.contains('cancel')) {
             addUnique(item);
           }
         }
