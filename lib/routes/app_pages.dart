@@ -10,6 +10,7 @@ import '../modules/Auth/register/view/register_page.dart';
 import '../modules/admin_catalog/config/admin_module_config.dart';
 import '../modules/admin_catalog/view/admin_category_master_screen.dart';
 import '../modules/admin_catalog/view/admin_branch_settings_screen.dart';
+import '../modules/admin_catalog/view/admin_brokerage_bills_screen.dart';
 import '../modules/admin_catalog/view/admin_contract_history_screen.dart';
 import '../modules/admin_catalog/view/admin_module_list_screen.dart';
 import '../modules/admin_catalog/view/admin_offers_list_screen.dart';
@@ -184,6 +185,10 @@ class AppPages {
     GetPage(
       name: AppRoutes.adminContractHistory,
       page: () => const AdminContractHistoryScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.adminBrokerageBills,
+      page: () => const AdminBrokerageBillsScreen(),
     ),
 
     // ADMIN DELIVERY CHALLANS

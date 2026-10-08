@@ -188,6 +188,25 @@ class DrawerMenuService {
         ],
       ),
       DrawerMenuSection(
+        sectionTitle: 'ACCOUNTING',
+        items: [
+          DrawerMenuItem(
+            key: 'brokerage_bills',
+            title: 'Brokerage Bills',
+            icon: Icons.receipt_long_outlined,
+            route: AppRoutes.adminBrokerageBills,
+            requiredRoles: const ['super_admin', 'admin'],
+          ),
+          DrawerMenuItem(
+            key: 'billing_companies',
+            title: AdminModules.byKey('billing_companies').title,
+            icon: AdminModules.byKey('billing_companies').icon,
+            route: AppRoutes.adminModule('billing_companies'),
+            requiredRoles: const ['super_admin', 'admin'],
+          ),
+        ],
+      ),
+      DrawerMenuSection(
         sectionTitle: 'REPORTS & ANALYTICS',
         items: [
           DrawerMenuItem(

@@ -4,6 +4,7 @@ import 'package:daalsetu/modules/admin_catalog/model/admin_record.dart';
 import 'package:daalsetu/modules/admin_catalog/repository/drawer_menu_service.dart';
 import 'package:daalsetu/modules/admin_catalog/view/admin_contract_history_screen.dart';
 import 'package:daalsetu/modules/admin_catalog/view/admin_record_form_screen.dart';
+import 'package:daalsetu/modules/seller/challans/model/seller_challan_model.dart';
 import 'package:daalsetu/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -99,6 +100,43 @@ void main() {
     final items = {for (final item in deals.items) item.key: item};
     expect(items['consignments']!.route, AppRoutes.adminModule('consignments'));
     expect(items['contract_history']!.route, AppRoutes.adminContractHistory);
+  });
+
+  test('accounting drawer and billing company module use brokerage APIs', () async {
+    final config = AdminModules.byKey('billing_companies');
+    expect(config.listEndpoint, '/api/admin/billing-companies/');
+    expect(config.createEndpoint, '/api/admin/billing-companies/');
+    expect(config.updateEndpoint!('9'), '/api/admin/billing-companies/9/');
+    expect(config.deleteEndpoint!('9'), '/api/admin/billing-companies/9/');
+    final fields = {for (final field in config.fields) field.key: field};
+    expect(fields['company_id']!.createOnly, isTrue);
+    expect(fields['company_id']!.optionsLoader, isNotNull);
+    expect(fields['logo']!.isFile, isTrue);
+    expect(fields['authorized_signature']!.isFile, isTrue);
+
+    final sections = await DrawerMenuService().fetchMenu();
+    final accounting = sections.singleWhere((section) => section.sectionTitle == 'ACCOUNTING');
+    final items = {for (final item in accounting.items) item.key: item};
+    expect(items['brokerage_bills']!.route, AppRoutes.adminBrokerageBills);
+    expect(items['brokerage_bills']!.isVisibleFor('admin'), isTrue);
+    expect(items['brokerage_bills']!.isVisibleFor('sub_admin'), isFalse);
+    expect(items['billing_companies']!.isVisibleFor('super_admin'), isTrue);
+  });
+
+  test('seller challan retains the complete item summary from the API', () {
+    final challan = SellerChallanModel.fromJson({
+      'id': 42,
+      'challan_number': 'DC-42',
+      'company': {'legal_name': 'DaalSetu Foods'},
+      'items': [
+        {'product_name': 'Toor Dal', 'bag_count': 10},
+        {'product_name': 'Moong Dal', 'bag_count': 15},
+      ],
+    });
+    expect(challan.companyName, 'DaalSetu Foods');
+    expect(challan.totalBags, 25);
+    expect(challan.itemSummary, 'Toor Dal, Moong Dal');
+    expect(challan.raw['challan_number'], 'DC-42');
   });
 
   for (final key in ['vehicles', 'brands', 'sub_categories', 'offer_images', 'drivers']) {

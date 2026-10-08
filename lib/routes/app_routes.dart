@@ -92,6 +92,7 @@ abstract class AppRoutes {
   static const adminCreateOffer = '/admin/create-offer';
   static const adminBranchSettings = '/admin/branches/settings';
   static const adminContractHistory = '/admin/deals/contract-history';
+  static const adminBrokerageBills = '/admin/accounting/brokerage-bills';
 
   // ADMIN DELIVERY CHALLANS
   static const adminDeliveryChallans = '/admin/delivery-challans';

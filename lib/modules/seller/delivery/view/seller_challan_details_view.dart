@@ -1,204 +1,411 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:iconly/iconly.dart';
+
 import '../controller/seller_delivery_controller.dart';
 
-class SellerChallanDetailsView extends StatelessWidget {
-  final int challanId;
+/// Full seller-facing delivery challan. The API returns the same snapshot-rich
+/// document used by the web panel, so every available party, transport, charge
+/// and audit value is presented here instead of being discarded by the UI.
+class SellerChallanDetailsView extends StatefulWidget {
   const SellerChallanDetailsView({super.key, required this.challanId});
 
-  static const Color primaryColor = Color(0xFFFFB300);
+  final int challanId;
 
   @override
-  Widget build(BuildContext context) {
-    final controller = Get.find<SellerDeliveryController>();
-    final theme = Theme.of(context);
+  State<SellerChallanDetailsView> createState() =>
+      _SellerChallanDetailsViewState();
+}
 
-    // Fetch details on load
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.fetchChallanDetails(challanId);
-    });
+class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
+  static const _primary = Color(0xFFFFB300);
+  late final SellerDeliveryController _controller;
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text("Challan Details", style: TextStyle(fontWeight: FontWeight.bold)),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
-          onPressed: () => Get.back(),
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.isRegistered<SellerDeliveryController>()
+        ? Get.find<SellerDeliveryController>()
+        : Get.put(SellerDeliveryController());
+    _controller.fetchChallanDetails(widget.challanId);
+  }
+
+  String _text(Object? value) {
+    if (value == null) return '';
+    if (value is Map) {
+      for (final key in const [
+        'name',
+        'legal_name',
+        'company_name',
+        'username',
+        'mobile',
+        'id',
+      ]) {
+        final text = (value[key] ?? '').toString().trim();
+        if (text.isNotEmpty) return text;
+      }
+      return '';
+    }
+    return value.toString().trim();
+  }
+
+  String _show(Object? value) {
+    final text = _text(value);
+    return text.isEmpty || text == 'null' ? '—' : text;
+  }
+
+  String _money(Object? value) {
+    final text = _text(value);
+    return text.isEmpty ? '—' : '₹$text';
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: const Text('Challan Details'),
+      actions: [
+        IconButton(
+          tooltip: 'Refresh',
+          onPressed: () => _controller.fetchChallanDetails(widget.challanId),
+          icon: const Icon(Icons.refresh_rounded),
         ),
-      ),
-      body: Obx(() {
-        if (controller.isDetailLoading.value) {
-          return const Center(child: CircularProgressIndicator(color: primaryColor));
-        }
+      ],
+    ),
+    body: Obx(() {
+      if (_controller.isDetailLoading.value) {
+        return const Center(child: CircularProgressIndicator(color: _primary));
+      }
+      final data = _controller.selectedChallan.value;
+      if (data == null) {
+        return const Center(child: Text('Challan details were not found.'));
+      }
+      return _body(data);
+    }),
+  );
 
-        final data = controller.selectedChallan.value;
-        if (data == null) return const Center(child: Text("Details not found"));
+  Widget _body(Map<String, dynamic> data) {
+    final status = _text(data['status']).toLowerCase();
+    final items = (data['items'] is List ? data['items'] as List : const [])
+        .whereType<Map>()
+        .map(Map<String, dynamic>.from)
+        .toList();
+    final company = data['company'] is Map
+        ? Map<String, dynamic>.from(data['company'] as Map)
+        : const <String, dynamic>{};
+    final responsible = data['created_by_display'] is Map
+        ? Map<String, dynamic>.from(data['created_by_display'] as Map)
+        : const <String, dynamic>{};
+    final canDispatch = status == 'draft' || status == 'pending';
 
-        final items = data['items'] as List? ?? [];
-        final status = data['status']?.toString().toLowerCase() ?? 'pending';
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return RefreshIndicator(
+      onRefresh: () => _controller.fetchChallanDetails(widget.challanId),
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 32),
+        children: [
+          _statusBanner(status),
+          const SizedBox(height: 14),
+          _section(
+            icon: Icons.local_shipping_outlined,
+            title: 'Shipment Information',
             children: [
-              _buildStatusBanner(status),
-              const SizedBox(height: 24),
-              
-              _sectionTitle("Shipment Information"),
-              _detailCard([
-                _infoRow("Challan ID", "#${data['challan_number'] ?? data['id']}"),
-                _infoRow("Truck Number", data['truck_number'] ?? "N/A"),
-                _infoRow("Driver", data['driver_name'] ?? "N/A"),
-                _infoRow("Driver Mobile", data['driver_mobile'] ?? "N/A"),
-                _infoRow("Challan Date", data['challan_date'] ?? "N/A"),
-                _infoRow("Total Amount", "₹${data['total_amount'] ?? '0'}"),
-              ]),
-
-              const SizedBox(height: 24),
-              _sectionTitle("Product Items"),
-              ...items.map((item) => _itemCard(item)).toList(),
-
-              const SizedBox(height: 24),
-              _sectionTitle("Parties Involved"),
-              _detailCard([
-                _infoRow("Seller", data['seller_name_display'] ?? "N/A"),
-                _infoRow("Buyer", data['buyer_name_display'] ?? "N/A"),
-                _infoRow("Transporter", data['transporter_name_display'] ?? "N/A"),
-              ]),
-
-              const SizedBox(height: 32),
-              if (status == 'draft' || status == 'pending')
-                SizedBox(
-                  width: double.infinity,
-                  height: 55,
-                  child: ElevatedButton(
-                    onPressed: () => controller.dispatchChallan(challanId),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      "DISPATCH SHIPMENT",
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 40),
+              _row(
+                'Challan number',
+                '#${_show(data['challan_number'] ?? data['id'])}',
+              ),
+              _row('Challan date', _show(data['challan_date'])),
+              _row('Order / interest ID', _show(data['order'])),
+              _row('Status', _show(data['status']).toUpperCase()),
+              _row(
+                'Total amount',
+                _money(data['total_amount']),
+                prominent: true,
+              ),
             ],
           ),
-        );
-      }),
+          const SizedBox(height: 12),
+          _section(
+            icon: Icons.people_outline_rounded,
+            title: 'Seller & Buyer',
+            children: [
+              _row(
+                'Seller',
+                _show(
+                  data['seller_name_display'] ??
+                      data['seller_name'] ??
+                      data['seller'],
+                ),
+              ),
+              _row('Seller GST', _show(data['seller_gst'])),
+              _row(
+                'Seller address',
+                _show(data['seller_address']),
+                multiline: true,
+              ),
+              const Divider(height: 22),
+              _row(
+                'Buyer',
+                _show(
+                  data['buyer_name_display'] ??
+                      data['buyer_name'] ??
+                      data['buyer'],
+                ),
+              ),
+              _row('Buyer GST', _show(data['buyer_gst'])),
+              _row(
+                'Buyer address',
+                _show(data['buyer_address']),
+                multiline: true,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _section(
+            icon: Icons.fire_truck_outlined,
+            title: 'Transport Details',
+            children: [
+              _row(
+                'Transporter',
+                _show(data['transporter_name_display'] ?? data['transporter']),
+              ),
+              _row('Truck number', _show(data['truck_number'])),
+              _row('Driver name', _show(data['driver_name'])),
+              _row('Driver mobile', _show(data['driver_mobile'])),
+              _row('Driver licence', _show(data['driver_license_number'])),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _section(
+            icon: Icons.currency_rupee_rounded,
+            title: 'Charges & Settlement',
+            children: [
+              _row(
+                'Lorry freight / bag',
+                _money(data['lorry_freight_per_bag']),
+              ),
+              _row('Loading charges', _money(data['loading_charges'])),
+              _row('Other expenses', _money(data['other_exp'])),
+              _row('Less advance', _money(data['less_advance'])),
+              _row('Item total', _money(data['total_amount']), prominent: true),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _section(
+            icon: Icons.business_outlined,
+            title: 'Company & Responsibility',
+            children: [
+              _row(
+                'Company',
+                _show(
+                  company['legal_name'] ??
+                      company['company_name'] ??
+                      data['company_name'],
+                ),
+              ),
+              _row(
+                'Company GST',
+                _show(company['gst_number'] ?? company['gst']),
+              ),
+              _row(
+                'Company address',
+                _show(company['address'] ?? company['address_line_1']),
+                multiline: true,
+              ),
+              _row(
+                'Created / managed by',
+                _show(
+                  responsible['name'] ??
+                      data['created_by_name'] ??
+                      data['created_by'],
+                ),
+              ),
+              _row('Responsible mobile', _show(responsible['mobile'])),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _section(
+            icon: Icons.inventory_2_outlined,
+            title: 'Product Items (${items.length})',
+            children: items.isEmpty
+                ? const [
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 6),
+                      child: Text('No item lines available.'),
+                    ),
+                  ]
+                : items.map(_itemCard).toList(),
+          ),
+          const SizedBox(height: 12),
+          _section(
+            icon: Icons.history_rounded,
+            title: 'Timeline',
+            children: [
+              _row('Created at', _show(data['created_at'])),
+              _row('Last updated', _show(data['updated_at'])),
+              _row('Dispatched at', _show(data['dispatched_at'])),
+              _row(
+                'Dispatched by',
+                _show(data['dispatched_by_name'] ?? data['dispatched_by']),
+              ),
+              _row('Received at', _show(data['received_at'])),
+              _row(
+                'Received by',
+                _show(data['received_by_name'] ?? data['received_by']),
+              ),
+            ],
+          ),
+          if (_text(data['narration']).isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _section(
+              icon: Icons.notes_rounded,
+              title: 'Narration',
+              children: [Text(_text(data['narration']))],
+            ),
+          ],
+          if (canDispatch) ...[
+            const SizedBox(height: 18),
+            SizedBox(
+              height: 52,
+              child: FilledButton.icon(
+                onPressed: () => _controller.dispatchChallan(widget.challanId),
+                icon: const Icon(Icons.send_rounded),
+                label: const Text('DISPATCH SHIPMENT'),
+                style: FilledButton.styleFrom(backgroundColor: _primary),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
-  Widget _buildStatusBanner(String status) {
-    Color color = Colors.orange;
-    if (status == 'dispatched') color = Colors.blue;
-    if (status == 'received' || status == 'delivered') color = Colors.green;
-    if (status == 'cancelled') color = Colors.red;
-
+  Widget _statusBanner(String status) {
+    final (color, label) = switch (status) {
+      'dispatched' => (Colors.blue, 'DISPATCHED'),
+      'received' || 'delivered' => (Colors.green, 'DELIVERED'),
+      'cancelled' => (Colors.red, 'CANCELLED'),
+      _ => (Colors.orange, status.isEmpty ? 'DRAFT' : status.toUpperCase()),
+    };
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: .10),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: .28)),
       ),
       child: Row(
         children: [
-          Icon(IconlyLight.info_square, color: color),
-          const SizedBox(width: 12),
+          Icon(Icons.info_outline_rounded, color: color),
+          const SizedBox(width: 10),
           Text(
-            "Current Status: ${status.toUpperCase()}",
-            style: TextStyle(color: color, fontWeight: FontWeight.bold),
+            'Current status: $label',
+            style: TextStyle(color: color, fontWeight: FontWeight.w800),
           ),
         ],
       ),
     );
   }
 
-  Widget _sectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 12),
-      child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-    );
-  }
-
-  Widget _detailCard(List<Widget> children) {
-    return Container(
-      width: double.infinity,
+  Widget _section({
+    required IconData icon,
+    required String title,
+    required List<Widget> children,
+  }) => Card(
+    margin: EdgeInsets.zero,
+    child: Padding(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Get.theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Get.theme.dividerColor.withOpacity(0.05)),
-      ),
-      child: Column(children: children),
-    );
-  }
-
-  Widget _infoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(color: Get.theme.disabledColor)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
-
-  Widget _itemCard(Map<String, dynamic> item) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Get.theme.cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: primaryColor.withOpacity(0.2)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(item['product_name'] ?? "Unknown Product", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          const SizedBox(height: 12),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _smallInfo("Quantity", "${item['quantity']} ${item['unit']}"),
-              _smallInfo("Bags", "${item['bag_count']}"),
-              _smallInfo("Rate", "₹${item['rate']}"),
+              Icon(icon, color: _primary),
+              const SizedBox(width: 8),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
             ],
           ),
           const Divider(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text("Item Total", style: TextStyle(fontWeight: FontWeight.w500)),
-              Text("₹${item['amount']}", style: const TextStyle(fontWeight: FontWeight.bold, color: primaryColor, fontSize: 16)),
-            ],
-          )
+          ...children,
         ],
       ),
-    );
-  }
+    ),
+  );
 
-  Widget _smallInfo(String label, String value) {
-    return Column(
+  Widget _row(
+    String label,
+    String value, {
+    bool prominent = false,
+    bool multiline = false,
+  }) => Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 10, color: Get.theme.disabledColor)),
-        Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+        Text(label, style: Theme.of(context).textTheme.labelMedium),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          maxLines: multiline ? null : 2,
+          overflow: multiline ? null : TextOverflow.ellipsis,
+          style: TextStyle(
+            fontWeight: prominent ? FontWeight.w900 : FontWeight.w600,
+          ),
+        ),
       ],
-    );
-  }
+    ),
+  );
+
+  Widget _itemCard(Map<String, dynamic> item) => Container(
+    width: double.infinity,
+    margin: const EdgeInsets.only(bottom: 10),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      border: Border.all(color: _primary.withValues(alpha: .28)),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _show(item['product_name']),
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 8),
+        _itemRow(
+          'Quantity',
+          '${_show(item['quantity'])} ${_show(item['unit'])}',
+        ),
+        _itemRow(
+          'Bags / packing',
+          '${_show(item['bag_count'])} / ${_show(item['packing_weight_kg'])} KG',
+        ),
+        _itemRow('Rate', _money(item['rate'])),
+        _itemRow(
+          'Commission',
+          '${_show(item['commission_type'])} • ${_show(item['brokerage_rate'])}',
+        ),
+        const Divider(height: 18),
+        _itemRow('Item total', _money(item['amount']), bold: true),
+      ],
+    ),
+  );
+
+  Widget _itemRow(String label, String value, {bool bold = false}) => Padding(
+    padding: const EdgeInsets.only(bottom: 4),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(label, style: Theme.of(context).textTheme.bodySmall),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: TextStyle(
+              fontWeight: bold ? FontWeight.w800 : FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }

@@ -111,6 +111,27 @@ Future<List<AdminOption>> loadSubAdminRoleOptions() => _fromOptions('roles', (r)
 /// Filled only for Super Admin; a normal admin always creates sub admins under themselves.
 Future<List<AdminOption>> loadParentAdminOptions() => _fromOptions('parent_admins', _userLabel);
 
+/// Companies which can be selected as the legal entity on a brokerage bill.
+/// The billing endpoint exposes these separately from the saved billing profiles.
+Future<List<AdminOption>> loadAvailableBillingCompanyOptions() async {
+  final response = await ApiClient.get(
+    endpoint: '/api/admin/billing-companies/',
+    requireAuth: true,
+  );
+  final raw = response is Map ? response['available_companies'] : null;
+  return (raw is List ? raw : const [])
+      .whereType<Map>()
+      .map((item) {
+        final company = Map<String, dynamic>.from(item);
+        return AdminOption(
+          '${company['id'] ?? ''}',
+          (company['legal_name'] ?? company['company_name'] ?? 'Company').toString(),
+        );
+      })
+      .where((option) => option.value.isNotEmpty)
+      .toList();
+}
+
 /// Web "Change Status" on a user: Active, Deactivated or Suspended (suspension needs a reason).
 AdminCustomAction userStatusAction() => AdminCustomAction(
       title: 'Change Status',

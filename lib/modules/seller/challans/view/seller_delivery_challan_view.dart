@@ -60,7 +60,9 @@ class SellerDeliveryChallanView extends StatelessWidget {
                 onTap: item.id == null
                     ? null
                     : () {
-                        if (!Get.isRegistered<SellerDeliveryController>()) Get.put(SellerDeliveryController());
+                        if (!Get.isRegistered<SellerDeliveryController>()) {
+                          Get.put(SellerDeliveryController());
+                        }
                         Get.to(() => SellerChallanDetailsView(challanId: item.id!))?.then((_) => controller.fetchChallans());
                       },
                 child: Card(
@@ -85,7 +87,19 @@ class SellerDeliveryChallanView extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      Text("Buyer: ${item.buyerName ?? 'Buyer'}", style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                      Text(
+                        "Buyer: ${item.buyerName ?? 'Buyer'} • ${item.challanDate ?? 'Date not available'}",
+                        style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                      ),
+                      if (item.itemSummary.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          item.itemSummary,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                        ),
+                      ],
                       const Divider(height: 20),
                       Row(
                         children: [
@@ -117,6 +131,17 @@ class SellerDeliveryChallanView extends StatelessWidget {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          _infoChip(Icons.inventory_2_outlined, '${item.items.length} item${item.items.length == 1 ? '' : 's'}'),
+                          if (item.totalBags > 0) _infoChip(Icons.shopping_bag_outlined, '${item.totalBags} bags'),
+                          if ((item.totalAmount ?? '').isNotEmpty) _infoChip(Icons.currency_rupee_rounded, '₹${item.totalAmount}'),
+                          if ((item.companyName ?? '').isNotEmpty) _infoChip(Icons.apartment_outlined, item.companyName!),
+                        ],
+                      ),
                       if (canDispatch) ...[
                         const SizedBox(height: 16),
                         SizedBox(
@@ -144,4 +169,20 @@ class SellerDeliveryChallanView extends StatelessWidget {
       }),
     );
   }
+
+  Widget _infoChip(IconData icon, String label) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        decoration: BoxDecoration(
+          color: Colors.grey.withValues(alpha: .10),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14),
+            const SizedBox(width: 4),
+            Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+          ],
+        ),
+      );
 }
