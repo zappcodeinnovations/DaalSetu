@@ -198,37 +198,44 @@ class RbacServices {
   /// FETCH ALL SUB ADMINS
   /// ============================================================
   static Future<List<RbacSubAdminModel>> getSubAdmins({String search = ""}) async {
-    // 1. Primary: /api/admin/sub-admins/
-    try {
-      String endpoint = ApiUrls.rbacSubAdmins;
-      if (search.isNotEmpty) endpoint += "?search=${Uri.encodeComponent(search)}";
-      final response = await ApiClient.get(
-        endpoint: endpoint,
-        requireAuth: true,
-        suppressErrorDialog: true,
-      );
-      final list = _extractList(response);
-      if (list.isNotEmpty) {
-        return list
-            .map((e) => RbacSubAdminModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e)))
-            .toList();
-      }
-    } catch (_) {}
+    final searchParam = search.isNotEmpty ? "?search=${Uri.encodeComponent(search)}" : "";
 
-    // 2. Fallback: /api/company/sub-admins/
-    try {
-      final response = await ApiClient.get(
-        endpoint: "/api/company/sub-admins/",
-        requireAuth: true,
-        suppressErrorDialog: true,
-      );
-      final list = _extractList(response);
-      if (list.isNotEmpty) {
-        return list
-            .map((e) => RbacSubAdminModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e)))
-            .toList();
-      }
-    } catch (_) {}
+    final endpoints = [
+      "${ApiUrls.rbacSubAdmins}$searchParam",
+      "/api/admin/sub-admins/$searchParam",
+      "/api/seller/sub-admins/$searchParam",
+      "/api/buyer/sub-admins/$searchParam",
+      "/api/company/sub-admins/$searchParam",
+      "/api/users/?role=sub_admin${search.isNotEmpty ? '&search=${Uri.encodeComponent(search)}' : ''}",
+      "/api/users/$searchParam",
+    ];
+
+    for (var endpoint in endpoints) {
+      try {
+        final response = await ApiClient.get(
+          endpoint: endpoint,
+          requireAuth: true,
+          suppressErrorDialog: true,
+        );
+        final list = _extractList(response);
+        if (list.isNotEmpty) {
+          final items = list
+              .map((e) => RbacSubAdminModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e)))
+              .where((s) {
+                // If fetching from general /api/users/, only keep sub_admins or users with custom roles
+                if (endpoint.contains("/api/users/")) {
+                  return s.roles.isNotEmpty || s.branchRefCode.isNotEmpty || s.fullName.isNotEmpty;
+                }
+                return true;
+              })
+              .toList();
+
+          if (items.isNotEmpty) {
+            return items;
+          }
+        }
+      } catch (_) {}
+    }
 
     return [];
   }
@@ -368,10 +375,24 @@ class RbacServices {
     if (response is Map) {
       if (response['results'] is List) return response['results'] as List;
       if (response['data'] is List) return response['data'] as List;
+      if (response['body'] is List) return response['body'] as List;
       if (response['roles'] is List) return response['roles'] as List;
       if (response['sub_admins'] is List) return response['sub_admins'] as List;
       if (response['users'] is List) return response['users'] as List;
       if (response['items'] is List) return response['items'] as List;
+      if (response['list'] is List) return response['list'] as List;
+      if (response['data'] is Map && response['data']['results'] is List) {
+        return response['data']['results'] as List;
+      }
+      if (response['data'] is Map && response['data']['users'] is List) {
+        return response['data']['users'] as List;
+      }
+      if (response['data'] is Map && response['data']['sub_admins'] is List) {
+        return response['data']['sub_admins'] as List;
+      }
+      if (response['body'] is Map && response['body']['results'] is List) {
+        return response['body']['results'] as List;
+      }
     }
     return [];
   }
