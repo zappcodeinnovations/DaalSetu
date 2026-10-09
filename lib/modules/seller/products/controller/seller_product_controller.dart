@@ -145,16 +145,22 @@ class SellerProductController extends GetxController {
     );
   }
 
+  bool _fetchInProgress = false;
+
   Future<void> fetchProducts({bool silent = false}) async {
+    // Background refresh runs every 10s; skip it while a request is still open.
+    if (silent && _fetchInProgress) return;
+    _fetchInProgress = true;
     try {
       if (!silent) isLoading(true);
-      final data = await SellerServices.getProducts();
+      final data = await SellerServices.getProducts(silent: silent);
       products.assignAll(
         data.map((e) => SellerProductModel.fromJson(e)).toList(),
       );
     } catch (e) {
       if (!silent) SellerUi.error(e);
     } finally {
+      _fetchInProgress = false;
       if (!silent) isLoading(false);
     }
   }

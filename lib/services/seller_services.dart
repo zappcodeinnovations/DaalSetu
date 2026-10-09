@@ -450,10 +450,12 @@ class SellerServices {
   /// ============================================================
   /// GET PRODUCTS
   /// ============================================================
-  static Future<List<dynamic>> getProducts() async {
+  /// [silent] for background refreshes: no global server-error popup on a failed poll.
+  static Future<List<dynamic>> getProducts({bool silent = false}) async {
     final response = await ApiClient.get(
       endpoint: ApiUrls.products,
       requireAuth: true,
+      suppressErrorDialog: silent,
     );
     if (response == null) {
       throw Exception("Failed to fetch products");
@@ -1113,12 +1115,14 @@ class SellerServices {
   static Future<Map<String, dynamic>> getBuyerRequirement(
     String rfqId, {
     int? quotationId,
+    bool silent = false,
   }) async {
     final response = await ApiClient.get(
       endpoint: _withQuery(ApiUrls.buyerRequirementDetail(rfqId), {
         "quotation_id": quotationId?.toString(),
       }),
       requireAuth: true,
+      suppressErrorDialog: silent,
     );
     return _asMap(response, "Failed to load buyer requirement");
   }

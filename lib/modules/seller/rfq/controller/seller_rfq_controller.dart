@@ -68,11 +68,11 @@ class SellerRfqDetailController extends GetxController {
     _refreshInProgress = true;
     try {
       if (!silent) isLoading(true);
-      final data = await SellerServices.getBuyerRequirement(rfqId);
+      final data = await SellerServices.getBuyerRequirement(rfqId, silent: silent);
       final loaded = SellerRfqModel.fromJson(data['data'] as Map<String, dynamic>);
       rfq.value = loaded;
       if (loaded.myQuotationId != null) {
-        final threadData = await SellerServices.getBuyerRequirement(rfqId, quotationId: loaded.myQuotationId);
+        final threadData = await SellerServices.getBuyerRequirement(rfqId, quotationId: loaded.myQuotationId, silent: silent);
         thread.value = SellerQuotationModel.fromJson(threadData['data'] as Map<String, dynamic>);
       } else {
         thread.value = null;

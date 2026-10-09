@@ -219,7 +219,7 @@ class SellerDashboardView extends StatelessWidget {
         // Real unread count instead of a fixed badge; reloads when returning from the list.
         StatefulBuilder(
           builder: (context, setState) => FutureBuilder<int>(
-            future: NotificationServices.getUnreadCount().catchError((_) => 0),
+            future: NotificationServices.getUnreadCount(silent: true).catchError((_) => 0),
             builder: (context, snapshot) {
               final unread = snapshot.data ?? 0;
               return Stack(

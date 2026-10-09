@@ -113,7 +113,7 @@ class TransporterDashboardView extends StatelessWidget {
       actions: [
         StatefulBuilder(
           builder: (context, setState) => FutureBuilder<int>(
-            future: NotificationServices.getUnreadCount().catchError((_) => 0),
+            future: NotificationServices.getUnreadCount(silent: true).catchError((_) => 0),
             builder: (context, snapshot) {
               final unread = snapshot.data ?? 0;
               return Stack(

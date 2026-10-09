@@ -164,7 +164,7 @@ class AdminNotificationController extends GetxController {
   // ── Fetch Unread Count ───────────────────────────────────────────────────
   Future<void> fetchUnreadCount() async {
     try {
-      final count = await NotificationServices.getUnreadCount();
+      final count = await NotificationServices.getUnreadCount(silent: true);
       unreadCount.value = count;
       debugPrint("🔔 [ADMIN NOTIFICATIONS] Live unread count: $count");
     } catch (e) {

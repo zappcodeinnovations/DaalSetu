@@ -94,7 +94,7 @@ class RealtimeNotificationService extends GetxService {
       }
 
       // 1. Fetch latest notifications
-      final res = await NotificationServices.getNotifications(page: 1, pageSize: 10);
+      final res = await NotificationServices.getNotifications(page: 1, pageSize: 10, silent: true);
       final rawList = (res['results'] as List?) ?? [];
       final items = rawList.map((e) => AppNotificationModel.fromJson(e)).toList();
 
@@ -102,7 +102,7 @@ class RealtimeNotificationService extends GetxService {
 
       // 2. Fetch unread count from API and cross-check
       try {
-        final count = await NotificationServices.getUnreadCount();
+        final count = await NotificationServices.getUnreadCount(silent: true);
         unreadCount.value = count;
       } catch (_) {
         unreadCount.value = items.where((n) => n.isRead == false).length;
