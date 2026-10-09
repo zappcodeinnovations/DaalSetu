@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../../services/seller_services.dart';
 import '../../common/seller_ui.dart';
 import '../model/seller_rfq_model.dart';
+import 'package:daalsetu/utils/global_error_handler.dart';
 
 /// Incoming buyer requirements list (single API: /api/buyer-requirements/?tab=incoming).
 class SellerRfqController extends GetxController {
@@ -60,7 +61,9 @@ class SellerRfqDetailController extends GetxController {
   void onInit() {
     super.onInit();
     load();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) => load(silent: true));
+    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (AppForeground.isActive) load(silent: true);
+    });
   }
 
   Future<void> load({bool silent = false}) async {

@@ -17,6 +17,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:async';
 import '../../../../routes/app_routes.dart';
 import '../../../nav_bar/controller/nav_controller.dart';
+import 'package:daalsetu/utils/global_error_handler.dart';
 
 class SellerProductController extends GetxController {
   var isLoading = true.obs;
@@ -141,7 +142,9 @@ class SellerProductController extends GetxController {
     fetchSupportData();
     _refreshTimer = Timer.periodic(
       const Duration(seconds: 10),
-      (_) => fetchProducts(silent: true),
+      (_) {
+        if (AppForeground.isActive) fetchProducts(silent: true);
+      },
     );
   }
 

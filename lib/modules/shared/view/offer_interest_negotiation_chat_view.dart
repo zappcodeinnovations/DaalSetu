@@ -8,6 +8,7 @@ import '../../../services/buyer_services.dart';
 import '../../../services/seller_services.dart';
 import '../../../utils/app_snackbar.dart';
 import '../../seller/common/seller_ui.dart';
+import 'package:daalsetu/utils/global_error_handler.dart';
 
 /// One live chat for a ProductInterest.  It intentionally powers both the
 /// buyer's My Interests route and the seller's Buyer Interests route so the
@@ -53,7 +54,9 @@ class _OfferInterestNegotiationChatViewState
     _load();
     _pollTimer = Timer.periodic(
       const Duration(seconds: 5),
-      (_) => _load(silent: true),
+      (_) {
+        if (AppForeground.isActive) _load(silent: true);
+      },
     );
   }
 

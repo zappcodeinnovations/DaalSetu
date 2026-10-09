@@ -15,6 +15,7 @@ import '../modules/contracts/view/contract_details_view.dart';
 import '../services/product_services.dart';
 import '../utils/app_preferences.dart';
 import 'notification_services.dart';
+import 'package:daalsetu/utils/global_error_handler.dart';
 
 class RealtimeNotificationService extends GetxService {
   static RealtimeNotificationService get to => Get.find<RealtimeNotificationService>();
@@ -48,7 +49,8 @@ class RealtimeNotificationService extends GetxService {
     isPolling.value = true;
     _checkNotifications(); // Immediate first check
     _pollingTimer = Timer.periodic(const Duration(seconds: 8), (_) {
-      _checkNotifications();
+      // Screen off: Android blocks background network, so skip instead of failing.
+      if (AppForeground.isActive) _checkNotifications();
     });
   }
 
