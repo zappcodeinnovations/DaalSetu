@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../controller/transporter_vehicle_controller.dart';
 import '../model/vehicle_model.dart';
+import '../../../../routes/app_routes.dart';
+import '../../../nav_bar/controller/nav_controller.dart';
 
 /// Same fields as the web "Register Vehicle" form. Dropdown values are the backend choices,
 /// so editing a vehicle never hits a value the dropdown does not know.
@@ -152,7 +154,12 @@ class _TransporterVehicleFormState extends State<TransporterVehicleForm> {
     final success = await controller.saveVehicle(id: widget.vehicle?.id, data: data, rcFilePath: _rcFilePath);
     if (!mounted) return;
     setState(() => _isSubmitting = false);
-    if (success) Get.back(result: true);
+    if (success) {
+      if (Get.isRegistered<BottomNavController>()) {
+        Get.find<BottomNavController>().changeIndex(3);
+      }
+      Get.until((route) => route.settings.name == AppRoutes.transporterVehicles || route.settings.name == AppRoutes.mainNav || route.isFirst);
+    }
   }
 
   @override

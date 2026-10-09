@@ -2,26 +2,44 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
+import '../../../network/api_client.dart';
 
 /// Small shared pieces for the seller screens, matching the existing seller look.
 class SellerUi {
   static const Color primary = Color(0xFFFFB300);
 
-  static String errorText(Object error) => error.toString().replaceFirst('Exception: ', '');
+  static String errorText(Object error) =>
+      ApiClient.userFriendlyErrorMessage(error.toString());
 
   static void success(String message) {
-    Get.snackbar("Success", message,
-        snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+    Get.snackbar(
+      "Success",
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.green,
+      colorText: Colors.white,
+    );
   }
 
   static void error(Object error) {
-    Get.snackbar("Error", errorText(error),
-        snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+    Get.snackbar(
+      "Error",
+      errorText(error),
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.red,
+      colorText: Colors.white,
+    );
   }
 
   /// Runs [task] behind a blocking progress dialog and reports the server message.
-  static Future<Map<String, dynamic>?> run(Future<Map<String, dynamic>> Function() task, {String? successMessage}) async {
-    Get.dialog(const Center(child: CircularProgressIndicator(color: primary)), barrierDismissible: false);
+  static Future<Map<String, dynamic>?> run(
+    Future<Map<String, dynamic>> Function() task, {
+    String? successMessage,
+  }) async {
+    Get.dialog(
+      const Center(child: CircularProgressIndicator(color: primary)),
+      barrierDismissible: false,
+    );
     try {
       final result = await task();
       if (Get.isDialogOpen ?? false) Get.back();
@@ -34,17 +52,31 @@ class SellerUi {
     }
   }
 
-  static Future<bool> confirm(String title, String message, {String confirmText = "Yes", Color color = primary}) async {
+  static Future<bool> confirm(
+    String title,
+    String message, {
+    String confirmText = "Yes",
+    Color color = primary,
+  }) async {
     final result = await Get.dialog<bool>(
       AlertDialog(
-        title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Text(
+          title,
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
         content: Text(message),
         actions: [
-          TextButton(onPressed: () => Get.back(result: false), child: const Text("Cancel")),
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text("Cancel"),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: color),
             onPressed: () => Get.back(result: true),
-            child: Text(confirmText, style: const TextStyle(color: Colors.white)),
+            child: Text(
+              confirmText,
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -53,15 +85,27 @@ class SellerUi {
   }
 
   /// Asks for an optional (or required) remark; returns null when cancelled.
-  static Future<String?> askText(String title, {String label = "Remark (optional)", bool required = false, String confirmText = "Submit", Color color = primary}) async {
+  static Future<String?> askText(
+    String title, {
+    String label = "Remark (optional)",
+    bool required = false,
+    String confirmText = "Submit",
+    Color color = primary,
+  }) async {
     final controller = TextEditingController();
     final result = await Get.dialog<String>(
       AlertDialog(
-        title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Text(
+          title,
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
         content: TextField(
           controller: controller,
           maxLines: 3,
-          decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+          decoration: InputDecoration(
+            labelText: label,
+            border: const OutlineInputBorder(),
+          ),
         ),
         actions: [
           TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
@@ -74,7 +118,10 @@ class SellerUi {
               }
               Get.back(result: controller.text.trim());
             },
-            child: Text(confirmText, style: const TextStyle(color: Colors.white)),
+            child: Text(
+              confirmText,
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -84,14 +131,25 @@ class SellerUi {
 
   static Color statusColor(String status) {
     final value = status.toLowerCase();
-    if (value.contains('reject') || value.contains('cancel') || value.contains('expired') || value.contains('closed')) {
+    if (value.contains('reject') ||
+        value.contains('cancel') ||
+        value.contains('expired') ||
+        value.contains('closed')) {
       return Colors.red;
     }
-    if (value.contains('confirm') || value.contains('accept') || value.contains('deliver') ||
-        value.contains('fulfil') || value.contains('received') || value == 'active' || value == 'ready') {
+    if (value.contains('confirm') ||
+        value.contains('accept') ||
+        value.contains('deliver') ||
+        value.contains('fulfil') ||
+        value.contains('received') ||
+        value == 'active' ||
+        value == 'ready') {
       return Colors.green;
     }
-    if (value.contains('dispatch') || value.contains('negotiat') || value.contains('pending_buyer')) return Colors.blue;
+    if (value.contains('dispatch') ||
+        value.contains('negotiat') ||
+        value.contains('pending_buyer'))
+      return Colors.blue;
     return Colors.orange;
   }
 
@@ -99,22 +157,37 @@ class SellerUi {
     final color = statusColor(status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Text(
         status.replaceAll('_', ' ').toUpperCase(),
-        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color),
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
       ),
     );
   }
 
-  static Widget emptyState(String message, {IconData icon = IconlyLight.document}) {
+  static Widget emptyState(
+    String message, {
+    IconData icon = IconlyLight.document,
+  }) {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
         const SizedBox(height: 120),
         Icon(icon, size: 64, color: Colors.grey.shade400),
         const SizedBox(height: 16),
-        Center(child: Text(message, style: GoogleFonts.poppins(color: Colors.grey.shade600))),
+        Center(
+          child: Text(
+            message,
+            style: GoogleFonts.poppins(color: Colors.grey.shade600),
+          ),
+        ),
       ],
     );
   }
@@ -125,13 +198,23 @@ class SellerUi {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(flex: 2, child: Text(label, style: TextStyle(fontSize: 13, color: Colors.grey.shade600))),
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            ),
+          ),
           Expanded(
             flex: 3,
             child: Text(
               (value == null || value.isEmpty || value == 'null') ? '-' : value,
               textAlign: TextAlign.right,
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: valueColor),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: valueColor,
+              ),
             ),
           ),
         ],
@@ -139,7 +222,11 @@ class SellerUi {
     );
   }
 
-  static Widget section(BuildContext context, String title, List<Widget> children) {
+  static Widget section(
+    BuildContext context,
+    String title,
+    List<Widget> children,
+  ) {
     final theme = Theme.of(context);
     return Container(
       width: double.infinity,
@@ -153,7 +240,13 @@ class SellerUi {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15)),
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+            ),
+          ),
           const Divider(height: 20),
           ...children,
         ],
@@ -161,12 +254,22 @@ class SellerUi {
     );
   }
 
-  static AppBar appBar(BuildContext context, String title, {List<Widget>? actions}) {
+  static AppBar appBar(
+    BuildContext context,
+    String title, {
+    List<Widget>? actions,
+  }) {
     final theme = Theme.of(context);
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+      title: Text(
+        title,
+        style: GoogleFonts.poppins(
+          fontWeight: FontWeight.bold,
+          color: theme.textTheme.bodyLarge?.color,
+        ),
+      ),
       actions: actions,
     );
   }
@@ -179,8 +282,11 @@ class SellerUi {
     final local = parsed.toLocal();
     final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
     String two(int n) => n.toString().padLeft(2, '0');
-    final hasTime = value.toString().contains('T') || value.toString().contains(' ');
+    final hasTime =
+        value.toString().contains('T') || value.toString().contains(' ');
     final day = "${two(local.day)}-${two(local.month)}-${local.year}";
-    return hasTime ? "$day ${two(hour)}:${two(local.minute)} ${local.hour >= 12 ? 'PM' : 'AM'}" : day;
+    return hasTime
+        ? "$day ${two(hour)}:${two(local.minute)} ${local.hour >= 12 ? 'PM' : 'AM'}"
+        : day;
   }
 }

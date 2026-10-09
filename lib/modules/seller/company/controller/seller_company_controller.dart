@@ -4,6 +4,7 @@ import '../../common/seller_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:daalsetu/utils/tax_id_formatters.dart';
+import '../../../../routes/app_routes.dart';
 
 class SellerCompanyController extends GetxController {
   var isLoading = true.obs;
@@ -110,7 +111,7 @@ class SellerCompanyController extends GetxController {
 
       await fetchCompanyDetails(newCompany.id);
 
-      Get.back();
+      Get.until((route) => route.settings.name == AppRoutes.sellerCompany || route.settings.name == AppRoutes.mainNav || route.isFirst);
       Get.snackbar("Success", "Company created successfully");
       fetchCompanies();
     } catch (e) {
@@ -128,7 +129,7 @@ class SellerCompanyController extends GetxController {
 
       await SellerServices.updateCompany(currentCompanyId!, body);
 
-      Get.back();
+      Get.until((route) => route.settings.name == AppRoutes.sellerCompany || route.settings.name == AppRoutes.mainNav || route.isFirst);
       Get.snackbar("Success", "Company updated successfully");
       fetchCompanies();
     } catch (e) {

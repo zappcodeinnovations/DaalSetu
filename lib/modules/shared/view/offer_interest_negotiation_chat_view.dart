@@ -483,6 +483,7 @@ class _OfferInterestNegotiationChatViewState
         InputDecoration(
           labelText: label,
           suffixText: suffixText,
+          counterText: '',
           isDense: true,
           filled: true,
           border: OutlineInputBorder(

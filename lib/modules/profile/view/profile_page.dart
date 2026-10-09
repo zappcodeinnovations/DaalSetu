@@ -165,7 +165,7 @@ class ProfileScreen extends StatelessWidget {
                 _buildDocumentRow(
                   context,
                   title: "Aadhaar Card",
-                  subtitle: "Uploaded â€¢ Document",
+                  subtitle: "Uploaded | Document",
                   iconColor: const Color(0xFF8B5CF6),
                   iconText: "ID",
                   documentUrl: user.aadhaarImage,

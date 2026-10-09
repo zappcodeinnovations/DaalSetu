@@ -14,33 +14,83 @@ class SellerSubmitQuoteDialog {
     final termsCtrl = TextEditingController(text: rfq.deliveryTerms ?? '');
     final remarkCtrl = TextEditingController();
 
-    InputDecoration deco(String label) => InputDecoration(labelText: label, border: const OutlineInputBorder());
+    InputDecoration deco(String label) => InputDecoration(
+      labelText: label,
+      border: const OutlineInputBorder(),
+      counterText: '',
+    );
 
     Get.dialog(
       AlertDialog(
-        title: Text("Submit Quotation", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Text(
+          "Submit Quotation",
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text("${rfq.title} • Target ₹${rfq.targetPrice ?? '-'} / ${rfq.priceUnit}",
-                  style: TextStyle(color: Colors.grey.shade700, fontSize: 13, fontWeight: FontWeight.bold)),
+              Text(
+                "${rfq.title} • Target ₹${rfq.targetPrice ?? '-'} / ${rfq.priceUnit}",
+                style: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 12),
-              TextField(controller: priceCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: deco("Your Price (₹ / ${rfq.priceUnit}) *")),
+              TextField(
+                controller: priceCtrl,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                maxLength: 10,
+                decoration: deco("Your Price (₹ / ${rfq.priceUnit}) *"),
+              ),
               const SizedBox(height: 10),
-              TextField(controller: qtyCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: deco("Quantity (${rfq.quantityUnit}) *")),
+              TextField(
+                controller: qtyCtrl,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                maxLength: 10,
+                decoration: deco("Quantity (${rfq.quantityUnit}) *"),
+              ),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Expanded(child: TextField(controller: bagCtrl, keyboardType: TextInputType.number, maxLength: 10, decoration: deco("Bags (optional)"))),
+                  Expanded(
+                    child: TextField(
+                      controller: bagCtrl,
+                      keyboardType: TextInputType.number,
+                      maxLength: 10,
+                      decoration: deco("Bags (optional)"),
+                    ),
+                  ),
                   const SizedBox(width: 8),
-                  Expanded(child: TextField(controller: weightCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: deco("Bag Wt kg"))),
+                  Expanded(
+                    child: TextField(
+                      controller: weightCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      maxLength: 10,
+                      decoration: deco("Bag Wt kg"),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 10),
-              TextField(controller: termsCtrl, decoration: deco("Delivery Terms")),
+              TextField(
+                controller: termsCtrl,
+                decoration: deco("Delivery Terms"),
+              ),
               const SizedBox(height: 10),
-              TextField(controller: remarkCtrl, maxLines: 2, decoration: deco("Remark")),
+              TextField(
+                controller: remarkCtrl,
+                maxLines: 2,
+                decoration: deco("Remark"),
+              ),
             ],
           ),
         ),
@@ -49,7 +99,8 @@ class SellerSubmitQuoteDialog {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: SellerUi.primary),
             onPressed: () {
-              if (priceCtrl.text.trim().isEmpty || qtyCtrl.text.trim().isEmpty) {
+              if (priceCtrl.text.trim().isEmpty ||
+                  qtyCtrl.text.trim().isEmpty) {
                 SellerUi.error("Please enter price and quantity");
                 return;
               }
@@ -58,12 +109,20 @@ class SellerSubmitQuoteDialog {
                 price: priceCtrl.text.trim(),
                 quantity: qtyCtrl.text.trim(),
                 bagCount: bagCtrl.text.trim(),
-                packingWeight: bagCtrl.text.trim().isEmpty ? null : weightCtrl.text.trim(),
+                packingWeight: bagCtrl.text.trim().isEmpty
+                    ? null
+                    : weightCtrl.text.trim(),
                 deliveryTerms: termsCtrl.text.trim(),
                 remark: remarkCtrl.text.trim(),
               );
             },
-            child: const Text("SUBMIT", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: const Text(
+              "SUBMIT",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -76,28 +135,68 @@ class SellerSubmitQuoteDialog {
     final qtyCtrl = TextEditingController();
     final bagCtrl = TextEditingController();
     final weightCtrl = TextEditingController(text: '30');
-    InputDecoration deco(String label) => InputDecoration(labelText: label, border: const OutlineInputBorder());
+    InputDecoration deco(String label) => InputDecoration(
+      labelText: label,
+      border: const OutlineInputBorder(),
+      counterText: '',
+    );
 
     Get.dialog(
       AlertDialog(
-        title: Text("Submit Negotiation", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Text(
+          "Submit Negotiation",
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: priceCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: deco("Counter Price (optional)")),
+              TextField(
+                controller: priceCtrl,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                maxLength: 10,
+                decoration: deco("Counter Price (optional)"),
+              ),
               const SizedBox(height: 10),
-              TextField(controller: qtyCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: deco("Counter Quantity (optional)")),
+              TextField(
+                controller: qtyCtrl,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                maxLength: 10,
+                decoration: deco("Counter Quantity (optional)"),
+              ),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Expanded(child: TextField(controller: bagCtrl, keyboardType: TextInputType.number, maxLength: 10, decoration: deco("Bags (optional)"))),
+                  Expanded(
+                    child: TextField(
+                      controller: bagCtrl,
+                      keyboardType: TextInputType.number,
+                      maxLength: 10,
+                      decoration: deco("Bags (optional)"),
+                    ),
+                  ),
                   const SizedBox(width: 8),
-                  Expanded(child: TextField(controller: weightCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), maxLength: 10, decoration: deco("Packing KG"))),
+                  Expanded(
+                    child: TextField(
+                      controller: weightCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      maxLength: 10,
+                      decoration: deco("Packing KG"),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
-              Text("Only counter price or quantity can be submitted. Free-text messages are disabled.", style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+              Text(
+                "Only counter price or quantity can be submitted. Free-text messages are disabled.",
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
             ],
           ),
         ),
@@ -106,7 +205,9 @@ class SellerSubmitQuoteDialog {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: SellerUi.primary),
             onPressed: () {
-              if (priceCtrl.text.trim().isEmpty && qtyCtrl.text.trim().isEmpty && bagCtrl.text.trim().isEmpty) {
+              if (priceCtrl.text.trim().isEmpty &&
+                  qtyCtrl.text.trim().isEmpty &&
+                  bagCtrl.text.trim().isEmpty) {
                 SellerUi.error("Enter a counter price or quantity");
                 return;
               }
@@ -115,10 +216,18 @@ class SellerSubmitQuoteDialog {
                 counterPrice: priceCtrl.text.trim(),
                 counterQuantity: qtyCtrl.text.trim(),
                 bagCount: bagCtrl.text.trim(),
-                packingWeight: bagCtrl.text.trim().isEmpty ? null : weightCtrl.text.trim(),
+                packingWeight: bagCtrl.text.trim().isEmpty
+                    ? null
+                    : weightCtrl.text.trim(),
               );
             },
-            child: const Text("SUBMIT NEGOTIATION", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: const Text(
+              "SUBMIT NEGOTIATION",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),

@@ -4,11 +4,23 @@ import '../controller/seller_negotiation_controller.dart';
 import '../model/offer_interest_model.dart';
 
 class SellerCounterOfferDialog {
-  static void show(BuildContext context, SellerNegotiationController controller, OfferInterestModel interest) {
-    final priceCtrl = TextEditingController(text: interest.buyerOfferedAmount ?? '');
-    final qtyCtrl = TextEditingController(text: interest.buyerRequiredQuantity ?? '');
-    final bagCtrl = TextEditingController(text: interest.counterBagCount?.toString() ?? '');
-    final weightCtrl = TextEditingController(text: interest.counterPackingWeightKg ?? '');
+  static void show(
+    BuildContext context,
+    SellerNegotiationController controller,
+    OfferInterestModel interest,
+  ) {
+    final priceCtrl = TextEditingController(
+      text: interest.buyerOfferedAmount ?? '',
+    );
+    final qtyCtrl = TextEditingController(
+      text: interest.buyerRequiredQuantity ?? '',
+    );
+    final bagCtrl = TextEditingController(
+      text: interest.counterBagCount?.toString() ?? '',
+    );
+    final weightCtrl = TextEditingController(
+      text: interest.counterPackingWeightKg ?? '',
+    );
 
     Get.defaultDialog(
       title: "Send Counter Offer",
@@ -23,28 +35,44 @@ class SellerCounterOfferDialog {
                 controller: priceCtrl,
                 keyboardType: TextInputType.number,
                 maxLength: 10,
-                decoration: const InputDecoration(labelText: "Counter Price (Rs)", border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                  labelText: "Counter Price (Rs)",
+                  border: OutlineInputBorder(),
+                  counterText: '',
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: qtyCtrl,
                 keyboardType: TextInputType.number,
                 maxLength: 10,
-                decoration: const InputDecoration(labelText: "Counter Quantity (Qtl)", border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                  labelText: "Counter Quantity (Qtl)",
+                  border: OutlineInputBorder(),
+                  counterText: '',
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: bagCtrl,
                 keyboardType: TextInputType.number,
                 maxLength: 10,
-                decoration: const InputDecoration(labelText: "Counter Bag Count", border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                  labelText: "Counter Bag Count",
+                  border: OutlineInputBorder(),
+                  counterText: '',
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: weightCtrl,
                 keyboardType: TextInputType.number,
                 maxLength: 10,
-                decoration: const InputDecoration(labelText: "Counter Packing Weight (KG)", border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                  labelText: "Counter Packing Weight (KG)",
+                  border: OutlineInputBorder(),
+                  counterText: '',
+                ),
               ),
             ],
           ),
@@ -64,7 +92,9 @@ class SellerCounterOfferDialog {
           counterPrice: priceCtrl.text.trim(),
           counterQuantity: qtyCtrl.text.trim(),
           counterBagCount: int.tryParse(bagCtrl.text.trim()),
-          counterPackingWeightKg: weightCtrl.text.trim().isNotEmpty ? weightCtrl.text.trim() : null,
+          counterPackingWeightKg: weightCtrl.text.trim().isNotEmpty
+              ? weightCtrl.text.trim()
+              : null,
         );
       },
     );

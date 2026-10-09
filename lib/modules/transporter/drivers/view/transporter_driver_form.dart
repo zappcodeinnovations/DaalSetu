@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../controller/transporter_driver_controller.dart';
 import '../model/driver_model.dart';
+import '../../../../routes/app_routes.dart';
+import '../../../nav_bar/controller/nav_controller.dart';
 
 /// Same fields as the web "Register Driver" form, including the license upload.
 class TransporterDriverForm extends StatefulWidget {
@@ -94,7 +96,12 @@ class _TransporterDriverFormState extends State<TransporterDriverForm> {
     final success = await controller.saveDriver(id: widget.driver?.id, data: data, licenseFilePath: _licenseFilePath);
     if (!mounted) return;
     setState(() => _isSubmitting = false);
-    if (success) Get.back(result: true);
+    if (success) {
+      if (Get.isRegistered<BottomNavController>()) {
+        Get.find<BottomNavController>().changeIndex(2);
+      }
+      Get.until((route) => route.settings.name == AppRoutes.transporterDrivers || route.settings.name == AppRoutes.mainNav || route.isFirst);
+    }
   }
 
   @override

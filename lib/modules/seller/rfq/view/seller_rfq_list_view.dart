@@ -35,8 +35,13 @@ class SellerRfqListView extends StatelessWidget {
               onChanged: (val) => controller.searchQuery.value = val,
               decoration: InputDecoration(
                 hintText: "Search by requirement title or ID...",
-                prefixIcon: const Icon(IconlyLight.search, color: SellerUi.primary),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                prefixIcon: const Icon(
+                  IconlyLight.search,
+                  color: SellerUi.primary,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 filled: true,
                 fillColor: theme.cardColor,
               ),
@@ -44,26 +49,37 @@ class SellerRfqListView extends StatelessWidget {
           ),
           SizedBox(
             height: 48,
-            child: Obx(() => ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  children: _statuses.entries
-                      .map((entry) => Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                            child: ChoiceChip(
-                              label: Text(entry.value),
-                              selected: controller.statusFilter.value == entry.key,
-                              selectedColor: SellerUi.primary.withValues(alpha: 0.25),
-                              onSelected: (_) => controller.setStatus(entry.key),
-                            ),
-                          ))
-                      .toList(),
-                )),
+            child: Obx(
+              () => ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                children: _statuses.entries
+                    .map(
+                      (entry) => Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 6,
+                        ),
+                        child: ChoiceChip(
+                          label: Text(entry.value),
+                          selected: controller.statusFilter.value == entry.key,
+                          selectedColor: SellerUi.primary.withValues(
+                            alpha: 0.25,
+                          ),
+                          onSelected: (_) => controller.setStatus(entry.key),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
           ),
           Expanded(
             child: Obx(() {
               if (controller.isLoading.value && controller.rfqList.isEmpty) {
-                return const Center(child: CircularProgressIndicator(color: SellerUi.primary));
+                return const Center(
+                  child: CircularProgressIndicator(color: SellerUi.primary),
+                );
               }
               return RefreshIndicator(
                 onRefresh: controller.fetchRFQs,
@@ -73,7 +89,8 @@ class SellerRfqListView extends StatelessWidget {
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
                         itemCount: controller.rfqList.length,
-                        itemBuilder: (context, index) => _card(context, controller.rfqList[index]),
+                        itemBuilder: (context, index) =>
+                            _card(context, controller.rfqList[index]),
                       ),
               );
             }),
@@ -99,32 +116,55 @@ class SellerRfqListView extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Text(item.title, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
+                    child: Text(
+                      item.title,
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                   ),
                   SellerUi.statusChip(item.isQuoted ? 'quoted' : item.status),
                 ],
               ),
               const SizedBox(height: 4),
-              Text("${item.rfqId} • ${item.categoryName ?? 'Pulse'}${item.brandName != null ? ' • ${item.brandName}' : ''}",
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+              Text(
+                "${item.rfqId} • ${item.categoryName ?? 'Pulse'}${item.brandName != null ? ' • ${item.brandName}' : ''}",
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+              ),
               const Divider(height: 20),
               Row(
                 children: [
-                  Expanded(child: _metric("Target Price", "₹${item.targetPrice ?? '-'} / ${item.priceUnit}", highlight: true)),
-                  Expanded(child: _metric("Qty Needed", "${item.requiredQuantity ?? '-'} ${item.quantityUnit}")),
+                  Expanded(
+                    child: _metric(
+                      "Target Price",
+                      "₹${item.targetPrice ?? '-'} / ${item.priceUnit}",
+                      highlight: true,
+                    ),
+                  ),
+                  Expanded(
+                    child: _metric(
+                      "Qty Needed",
+                      "${item.requiredQuantity ?? '-'} ${item.quantityUnit}",
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  const Icon(IconlyLight.time_circle, size: 14, color: Colors.grey),
+                  const Icon(
+                    IconlyLight.time_circle,
+                    size: 14,
+                    color: Colors.grey,
+                  ),
                   const SizedBox(width: 4),
                   Expanded(
-                    child: Text("Expires: ${SellerUi.date(item.expiryDatetime)}",
-                        style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                    child: Text(
+                      "Expires: ${SellerUi.date(item.expiryDatetime)}",
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
                   ),
-                  Text(item.isQuoted ? "VIEW NEGOTIATION" : (item.canQuote ? "SUBMIT QUOTE" : "VIEW"),
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: SellerUi.primary)),
                 ],
               ),
             ],
@@ -138,11 +178,19 @@ class SellerRfqListView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+        Text(
+          label,
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+        ),
         const SizedBox(height: 2),
-        Text(value,
-            style: GoogleFonts.inter(
-                fontWeight: FontWeight.bold, fontSize: 14, color: highlight ? SellerUi.primary : null)),
+        Text(
+          value,
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            color: highlight ? SellerUi.primary : null,
+          ),
+        ),
       ],
     );
   }

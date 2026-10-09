@@ -1,3 +1,9 @@
+import 'dart:io';
+
+import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+
 import '../../categories/model/seller_category_model.dart';
 import '../../company/model/seller_company_model.dart';
 import '../../branches/model/seller_branch_model.dart';
@@ -9,6 +15,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:async';
+import '../../../../routes/app_routes.dart';
+import '../../../nav_bar/controller/nav_controller.dart';
 
 class SellerProductController extends GetxController {
   var isLoading = true.obs;
@@ -50,7 +58,7 @@ class SellerProductController extends GetxController {
     final unit = value ?? 'qtl';
     amountUnit.value = unit;
     quantityUnit.value = unit;
-    
+
     if (quantityController.text.isNotEmpty) {
       _onQuantityChanged();
     } else if (bagCountController.text.isNotEmpty) {
@@ -60,9 +68,13 @@ class SellerProductController extends GetxController {
 
   double get _unitMultiplier {
     switch (quantityUnit.value) {
-      case 'ton': return 1000.0;
-      case 'qtl': return 100.0;
-      case 'kg': default: return 1.0;
+      case 'ton':
+        return 1000.0;
+      case 'qtl':
+        return 100.0;
+      case 'kg':
+      default:
+        return 1.0;
     }
   }
 
@@ -73,13 +85,15 @@ class SellerProductController extends GetxController {
     final bagsStr = bagCountController.text.trim();
     final packingStr = packingWeightController.text.trim();
     if (bagsStr.isEmpty || packingStr.isEmpty) return;
-    
+
     final bags = double.tryParse(bagsStr)?.ceil();
     final packing = double.tryParse(packingStr);
     if (bags != null && packing != null && packing > 0) {
       final quantityInKg = bags * packing;
       final quantity = quantityInKg / _unitMultiplier;
-      final newQty = quantity.toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '');
+      final newQty = quantity
+          .toStringAsFixed(2)
+          .replaceAll(RegExp(r'\.00$'), '');
       if (quantityController.text != newQty) {
         _isCalculating = true;
         quantityController.text = newQty;
@@ -93,7 +107,7 @@ class SellerProductController extends GetxController {
     final qtyStr = quantityController.text.trim();
     final packingStr = packingWeightController.text.trim();
     if (qtyStr.isEmpty || packingStr.isEmpty) return;
-    
+
     final qty = double.tryParse(qtyStr);
     final packing = double.tryParse(packingStr);
     if (qty != null && packing != null && packing > 0) {
@@ -122,10 +136,13 @@ class SellerProductController extends GetxController {
     bagCountController.addListener(_onBagsChanged);
     quantityController.addListener(_onQuantityChanged);
     packingWeightController.addListener(_onPackingChanged);
-    
+
     fetchProducts();
     fetchSupportData();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (_) => fetchProducts(silent: true));
+    _refreshTimer = Timer.periodic(
+      const Duration(seconds: 10),
+      (_) => fetchProducts(silent: true),
+    );
   }
 
   Future<void> fetchProducts({bool silent = false}) async {
@@ -136,9 +153,61 @@ class SellerProductController extends GetxController {
         data.map((e) => SellerProductModel.fromJson(e)).toList(),
       );
     } catch (e) {
-      if (!silent) Get.snackbar("Error", e.toString());
+      if (!silent) SellerUi.error(e);
     } finally {
       if (!silent) isLoading(false);
+    }
+  }
+
+  /// Generates a portable CSV, then lets the user save or share it. This is
+  /// the mobile equivalent of the web panel's offer-list export action.
+  Future<void> exportProducts() async {
+    if (products.isEmpty) {
+      SellerUi.error('There are no offers available to export.');
+      return;
+    }
+
+    try {
+      final csv = StringBuffer()
+        ..writeln('DaalSetu Seller Offers')
+        ..writeln(
+          'Generated on,${DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now())}',
+        )
+        ..writeln()
+        ..writeln(
+          'Title,Category,Brand,Price,Price Unit,Status,Available Bags,Packing (KG),Location,Buyer Interests',
+        );
+
+      String cell(String value) => '"${value.replaceAll('"', '""')}"';
+      for (final product in products) {
+        csv.writeln(
+          [
+            cell(product.title),
+            cell(product.categoryName ?? ''),
+            cell(product.brandName ?? ''),
+            cell(product.amount),
+            cell(product.unit.toUpperCase()),
+            cell(product.status),
+            product.bagCount,
+            product.packingWeight,
+            cell(product.loadingLocation),
+            product.interestCount,
+          ].join(','),
+        );
+      }
+
+      final directory = await getTemporaryDirectory();
+      final stamp = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
+      final file = File('${directory.path}/DaalSetu_Offers_$stamp.csv');
+      await file.writeAsString(csv.toString());
+
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        subject: 'DaalSetu Seller Offers',
+        text: 'Seller offers export generated from DaalSetu.',
+      );
+    } catch (error) {
+      SellerUi.error(error);
     }
   }
 
@@ -169,7 +238,10 @@ class SellerProductController extends GetxController {
     try {
       companies.assignAll(await SellerServices.getCompanies());
       if (selectedCompanyId.value == null && companies.isNotEmpty) {
-        final primary = companies.firstWhere((c) => c.isPrimary, orElse: () => companies.first);
+        final primary = companies.firstWhere(
+          (c) => c.isPrimary,
+          orElse: () => companies.first,
+        );
         selectedCompanyId.value = primary.id;
         sellerName.value = primary.legalName;
       }
@@ -322,7 +394,15 @@ class SellerProductController extends GetxController {
           mediaFailed = true;
         }
       }
-      Get.back();
+      if (Get.isRegistered<BottomNavController>()) {
+        Get.find<BottomNavController>().changeIndex(1);
+      }
+      Get.until(
+        (route) =>
+            route.settings.name == AppRoutes.sellerProducts ||
+            route.settings.name == AppRoutes.mainNav ||
+            route.isFirst,
+      );
       SellerUi.success(
         mediaFailed
             ? "Offer created, but one or more media files could not be uploaded."

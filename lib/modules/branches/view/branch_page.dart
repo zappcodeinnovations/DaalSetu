@@ -43,12 +43,12 @@ class _BranchesScreenState extends State<BranchesScreen> {
                 if (controller.isLoading.value) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                
+
                 final branches = controller.myBranches;
                 if (branches.isEmpty) {
                   return const Center(child: Text("No branches found."));
                 }
-                
+
                 return ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: branches.length,
@@ -91,20 +91,14 @@ class _BranchesScreenState extends State<BranchesScreen> {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.dividerColor.withOpacity(0.2),
-        ),
+        border: Border.all(color: theme.dividerColor.withOpacity(0.2)),
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 24,
-            backgroundColor:
-                theme.colorScheme.primary.withOpacity(0.15),
-            child: Icon(
-              IconlyLight.work,
-              color: theme.colorScheme.primary,
-            ),
+            backgroundColor: theme.colorScheme.primary.withOpacity(0.15),
+            child: Icon(IconlyLight.work, color: theme.colorScheme.primary),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -113,8 +107,9 @@ class _BranchesScreenState extends State<BranchesScreen> {
               children: [
                 Text(
                   branch.locationName,
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -122,22 +117,41 @@ class _BranchesScreenState extends State<BranchesScreen> {
                   style: theme.textTheme.bodySmall,
                 ),
                 const SizedBox(height: 8),
-                if (branch.isPrimary) _buildStatusIndicator(context, "PRIMARY", Colors.green)
+                // A primary branch is the account's home branch, not a live
+                // secondary branch. Keep its label but do not show the green
+                // live-status dot for any role.
+                if (branch.isPrimary)
+                  _buildStatusIndicator(
+                    context,
+                    "PRIMARY",
+                    Colors.green,
+                    showLiveIndicator: false,
+                  ),
               ],
             ),
           ),
-          Icon(IconlyLight.arrow_right_2,
-              size: 16, color: theme.iconTheme.color),
+          Icon(
+            IconlyLight.arrow_right_2,
+            size: 16,
+            color: theme.iconTheme.color,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildStatusIndicator(BuildContext context, String text, Color color) {
+  Widget _buildStatusIndicator(
+    BuildContext context,
+    String text,
+    Color color, {
+    bool showLiveIndicator = true,
+  }) {
     return Row(
       children: [
-        CircleAvatar(radius: 4, backgroundColor: color),
-        const SizedBox(width: 6),
+        if (showLiveIndicator) ...[
+          CircleAvatar(radius: 4, backgroundColor: color),
+          const SizedBox(width: 6),
+        ],
         Text(
           text,
           style: TextStyle(

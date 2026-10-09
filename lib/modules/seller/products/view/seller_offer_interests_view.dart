@@ -272,9 +272,8 @@ class SellerOfferInterestsView extends StatelessWidget {
                             color: Colors.grey.shade600,
                           ),
                         ),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton.icon(
+                      Center(
+                        child: OutlinedButton.icon(
                           onPressed: item.id == null
                               ? null
                               : () => Get.to(
@@ -288,9 +287,17 @@ class SellerOfferInterestsView extends StatelessWidget {
                             size: 16,
                             color: primaryColor,
                           ),
-                          label: const Text(
-                            "View negotiation history",
-                            style: TextStyle(color: primaryColor, fontSize: 12),
+                          label: const Text("View negotiation history"),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: primaryColor,
+                            side: const BorderSide(color: primaryColor),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
                         ),
                       ),

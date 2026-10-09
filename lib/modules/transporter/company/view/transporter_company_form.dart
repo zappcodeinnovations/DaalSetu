@@ -5,6 +5,7 @@ import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/tax_id_formatters.dart';
 import '../controller/transporter_company_controller.dart';
 import '../model/company_model.dart';
+import '../../../../routes/app_routes.dart';
 
 class TransporterCompanyForm extends StatefulWidget {
   final CompanyModel? company; // Null for create, provided for edit
@@ -116,7 +117,7 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
     setState(() => _isSubmitting = false);
 
     if (success) {
-      Get.back();
+      Get.until((route) => route.settings.name == AppRoutes.transporterCompany || route.settings.name == AppRoutes.mainNav || route.isFirst);
     }
   }
 

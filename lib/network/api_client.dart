@@ -7,6 +7,20 @@ import '../comman/api_url.dart';
 import '../utils/app_preferences.dart';
 import '../utils/global_error_handler.dart';
 
+/// An error safe to show directly in the UI.
+///
+/// `Exception.toString()` prefixes messages with "Exception:", which used to
+/// leak backend-style errors into snackbars throughout the app. API failures
+/// now use this type so every panel receives one clean message.
+class ApiRequestException implements Exception {
+  const ApiRequestException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
 class ApiClient {
   static const Duration _timeout = Duration(seconds: 30);
 
@@ -53,11 +67,15 @@ class ApiClient {
     } on SocketException {
       print("❌ NO INTERNET: $endpoint");
       GlobalErrorHandler.showNoInternet();
-      throw Exception("No Internet Connection");
+      throw const ApiRequestException(
+        "No internet connection. Please try again.",
+      );
     } on TimeoutException {
       print("⏳ API TIMEOUT: $endpoint");
       GlobalErrorHandler.showServerError();
-      throw Exception("Server Timeout. Please try again.");
+      throw const ApiRequestException(
+        "The server took too long to respond. Please try again.",
+      );
     } catch (e) {
       rethrow;
     }
@@ -92,11 +110,15 @@ class ApiClient {
     } on SocketException {
       print("❌ NO INTERNET: $endpoint");
       GlobalErrorHandler.showNoInternet();
-      throw Exception("No Internet Connection");
+      throw const ApiRequestException(
+        "No internet connection. Please try again.",
+      );
     } on TimeoutException {
       print("⏳ API TIMEOUT: $endpoint");
       GlobalErrorHandler.showServerError();
-      throw Exception("Server Timeout. Please try again.");
+      throw const ApiRequestException(
+        "The server took too long to respond. Please try again.",
+      );
     } catch (e) {
       rethrow;
     }
@@ -130,11 +152,15 @@ class ApiClient {
     } on SocketException {
       print("❌ NO INTERNET: $endpoint");
       GlobalErrorHandler.showNoInternet();
-      throw Exception("No Internet Connection");
+      throw const ApiRequestException(
+        "No internet connection. Please try again.",
+      );
     } on TimeoutException {
       print("⏳ API TIMEOUT: $endpoint");
       GlobalErrorHandler.showServerError();
-      throw Exception("Server Timeout. Please try again.");
+      throw const ApiRequestException(
+        "The server took too long to respond. Please try again.",
+      );
     } catch (e) {
       rethrow;
     }
@@ -162,11 +188,15 @@ class ApiClient {
     } on SocketException {
       print("❌ NO INTERNET: $endpoint");
       GlobalErrorHandler.showNoInternet();
-      throw Exception("No Internet Connection");
+      throw const ApiRequestException(
+        "No internet connection. Please try again.",
+      );
     } on TimeoutException {
       print("⏳ API TIMEOUT: $endpoint");
       GlobalErrorHandler.showServerError();
-      throw Exception("Server Timeout. Please try again.");
+      throw const ApiRequestException(
+        "The server took too long to respond. Please try again.",
+      );
     } catch (e) {
       rethrow;
     }
@@ -201,11 +231,15 @@ class ApiClient {
     } on SocketException {
       print("❌ NO INTERNET: $endpoint");
       if (!suppressErrorDialog) GlobalErrorHandler.showNoInternet();
-      throw Exception("No Internet Connection");
+      throw const ApiRequestException(
+        "No internet connection. Please try again.",
+      );
     } on TimeoutException {
       print("⏳ API TIMEOUT: $endpoint");
       if (!suppressErrorDialog) GlobalErrorHandler.showServerError();
-      throw Exception("Server Timeout. Please try again.");
+      throw const ApiRequestException(
+        "The server took too long to respond. Please try again.",
+      );
     } catch (e) {
       rethrow;
     }
@@ -236,11 +270,15 @@ class ApiClient {
     } on SocketException {
       print("❌ NO INTERNET: $endpoint");
       if (!suppressErrorDialog) GlobalErrorHandler.showNoInternet();
-      throw Exception("No Internet Connection");
+      throw const ApiRequestException(
+        "No internet connection. Please try again.",
+      );
     } on TimeoutException {
       print("⏳ API TIMEOUT: $endpoint");
       if (!suppressErrorDialog) GlobalErrorHandler.showServerError();
-      throw Exception("Server Timeout. Please try again.");
+      throw const ApiRequestException(
+        "The server took too long to respond. Please try again.",
+      );
     } catch (e) {
       print("❌ API FAILED (GET): $endpoint");
       print("⚠️ ERROR: $e");
@@ -260,7 +298,7 @@ class ApiClient {
       if (token != null) {
         headers["Authorization"] = "Bearer $token";
       } else {
-        throw Exception("Unauthorized: No access token found");
+        throw const ApiRequestException("Please sign in again to continue.");
       }
     }
 
@@ -278,11 +316,18 @@ class ApiClient {
     final body = response.body;
 
     if (statusCode >= 200 && statusCode < 400) {
-      if (body.trim().isEmpty) return <String, dynamic>{"success": true, "message": "Action successful"};
+      if (body.trim().isEmpty)
+        return <String, dynamic>{
+          "success": true,
+          "message": "Action successful",
+        };
       try {
         return jsonDecode(body);
       } catch (_) {
-        return <String, dynamic>{"success": true, "message": "Action successful"};
+        return <String, dynamic>{
+          "success": true,
+          "message": "Action successful",
+        };
       }
     } else {
       print("❌ API RESPONSE ERROR");
@@ -290,8 +335,11 @@ class ApiClient {
       print("📥 RESPONSE BODY: $body");
 
       String errorMessage = "Something went wrong. Please try again.";
-      if (body.trim().startsWith("<") || body.contains("<!doctype") || body.contains("<html")) {
-        errorMessage = "Server is temporarily unavailable (HTML response). Please try again later.";
+      if (body.trim().startsWith("<") ||
+          body.contains("<!doctype") ||
+          body.contains("<html")) {
+        errorMessage =
+            "Server is temporarily unavailable (HTML response). Please try again later.";
       } else {
         try {
           final decoded = jsonDecode(body);
@@ -308,16 +356,23 @@ class ApiClient {
             if (errSource != null) {
               errSource.forEach((key, val) {
                 if (val is List) {
-                  messages.add("$key: ${val.join(', ')}");
+                  messages.add(
+                    _fieldErrorMessage(key.toString(), val.join(', ')),
+                  );
                 } else {
-                  messages.add("$key: $val");
+                  messages.add(
+                    _fieldErrorMessage(key.toString(), val.toString()),
+                  );
                 }
               });
-            } else if (decoded['detail'] is String && decoded['detail'].toString().trim().isNotEmpty) {
+            } else if (decoded['detail'] is String &&
+                decoded['detail'].toString().trim().isNotEmpty) {
               messages.add(decoded['detail']);
-            } else if (decoded['error'] is String && decoded['error'].toString().trim().isNotEmpty) {
+            } else if (decoded['error'] is String &&
+                decoded['error'].toString().trim().isNotEmpty) {
               messages.add(decoded['error']);
-            } else if (decoded['message'] is String && decoded['message'].toString().trim().isNotEmpty) {
+            } else if (decoded['message'] is String &&
+                decoded['message'].toString().trim().isNotEmpty) {
               messages.add(decoded['message']);
             } else {
               decoded.forEach((key, val) {
@@ -332,44 +387,165 @@ class ApiClient {
                 }
 
                 if (val is List) {
-                  messages.add("$key: ${val.join(', ')}");
+                  messages.add(
+                    _fieldErrorMessage(key.toString(), val.join(', ')),
+                  );
                 } else if (val is String && val.trim().isNotEmpty) {
-                  messages.add("$key: $val");
+                  messages.add(_fieldErrorMessage(key.toString(), val));
                 } else if (val is Map) {
-                  val.forEach((k, v) => messages.add("$key.$k: $v"));
+                  val.forEach(
+                    (k, v) => messages.add(
+                      _fieldErrorMessage('$key.$k', v.toString()),
+                    ),
+                  );
                 }
               });
             }
 
             if (messages.isNotEmpty) {
-              errorMessage = messages.join('\n');
+              errorMessage = userFriendlyErrorMessage(messages.join('\n'));
             }
           } else if (decoded is List) {
             errorMessage = decoded.join('\n');
           } else if (decoded is String && decoded.trim().isNotEmpty) {
-            errorMessage = decoded;
+            errorMessage = userFriendlyErrorMessage(decoded);
           }
         } catch (_) {
           if (statusCode >= 500) {
-            errorMessage = "Server error ($statusCode). Please try again later.";
+            errorMessage =
+                "The server is temporarily unavailable. Please try again later.";
           }
         }
       }
 
       if (statusCode >= 500) {
         if (!suppressErrorDialog) GlobalErrorHandler.showServerError();
-        throw Exception(errorMessage);
+        throw ApiRequestException(userFriendlyErrorMessage(errorMessage));
       } else if (statusCode == 400) {
-        throw Exception(errorMessage);
+        throw ApiRequestException(userFriendlyErrorMessage(errorMessage));
       } else if (statusCode == 401) {
-        throw Exception(errorMessage.isNotEmpty && errorMessage != "Something went wrong. Please try again." ? errorMessage : "Unauthorized (401)");
+        throw ApiRequestException(
+          userFriendlyErrorMessage(
+            errorMessage.isNotEmpty &&
+                    errorMessage != "Something went wrong. Please try again."
+                ? errorMessage
+                : "Please sign in again to continue.",
+          ),
+        );
       } else if (statusCode == 403) {
-        throw Exception(errorMessage.isNotEmpty && errorMessage != "Something went wrong. Please try again." ? errorMessage : "Forbidden (403)");
+        throw ApiRequestException(
+          userFriendlyErrorMessage(
+            errorMessage.isNotEmpty &&
+                    errorMessage != "Something went wrong. Please try again."
+                ? errorMessage
+                : "You do not have permission to perform this action.",
+          ),
+        );
       } else if (statusCode == 404) {
-        throw Exception(errorMessage.isNotEmpty && errorMessage != "Something went wrong. Please try again." ? errorMessage : "Resource not found (404)");
+        throw ApiRequestException(
+          userFriendlyErrorMessage(
+            errorMessage.isNotEmpty &&
+                    errorMessage != "Something went wrong. Please try again."
+                ? errorMessage
+                : "The requested item was not found.",
+          ),
+        );
       } else {
-        throw Exception(errorMessage);
+        throw ApiRequestException(userFriendlyErrorMessage(errorMessage));
       }
     }
+  }
+
+  /// Converts common Django/DRF validation output into messages suitable for
+  /// every role's snackbar or dialog. Keep this public for unit tests and for
+  /// UI code that receives an error outside [ApiClient].
+  static String userFriendlyErrorMessage(String message) {
+    final cleaned = message
+        .replaceFirst(RegExp(r'^Exception:\s*', caseSensitive: false), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    final normalized = cleaned.toLowerCase();
+
+    if (normalized.contains('branch') &&
+        (normalized.contains('ref code') ||
+            normalized.contains('reference code') ||
+            normalized.contains('referral code') ||
+            normalized.contains('branch_code')) &&
+        (normalized.contains('invalid') ||
+            normalized.contains('not found') ||
+            normalized.contains('does not exist'))) {
+      return 'Invalid branch reference code. Please check the code and try again.';
+    }
+    if (normalized.contains('branch') &&
+        (normalized.contains('ref code') ||
+            normalized.contains('reference code') ||
+            normalized.contains('referral code') ||
+            normalized.contains('branch_code')) &&
+        normalized.contains('required')) {
+      return 'Enter the branch reference code to continue.';
+    }
+    if (normalized.contains('transporter_id') &&
+        normalized.contains('required')) {
+      return 'Select a transporter before continuing.';
+    }
+    if (normalized.contains('invalid credentials')) {
+      return 'The mobile number or password is incorrect.';
+    }
+    if (normalized.contains('html response') ||
+        normalized.contains('server error') ||
+        normalized.contains('internal server error')) {
+      return 'The server is temporarily unavailable. Please try again later.';
+    }
+    if (normalized.contains('permission denied') ||
+        normalized.contains('forbidden')) {
+      return 'You do not have permission to perform this action.';
+    }
+    if (normalized.contains('not found')) {
+      return 'The requested item was not found.';
+    }
+    return cleaned.isEmpty
+        ? 'Something went wrong. Please try again.'
+        : cleaned;
+  }
+
+  static String _fieldErrorMessage(String field, String detail) {
+    final normalizedField = field.toLowerCase().replaceAll('-', '_');
+    if (normalizedField == 'branch_code' ||
+        normalizedField == 'branch_ref_code' ||
+        normalizedField == 'branch_reference_code') {
+      return 'Branch reference code: $detail';
+    }
+    if (normalizedField == 'transporter_id') {
+      return 'Transporter: $detail';
+    }
+    if (normalizedField == 'non_field_errors' || normalizedField == 'detail') {
+      return detail;
+    }
+    const fieldLabels = <String, String>{
+      'phone': 'Mobile number',
+      'mobile': 'Mobile number',
+      'mobile_number': 'Mobile number',
+      'phone_number': 'Mobile number',
+      'email': 'Email address',
+      'gst_number': 'GST number',
+      'pan_number': 'PAN number',
+      'aadhar_number': 'Aadhaar number',
+      'aadhaar_number': 'Aadhaar number',
+      'password': 'Password',
+      'confirm_password': 'Confirm password',
+      'quantity': 'Quantity',
+      'price': 'Price',
+      'branch_id': 'Branch',
+      'company_id': 'Company',
+      'driver_id': 'Driver',
+      'vehicle_id': 'Vehicle',
+    };
+    final readableField =
+        fieldLabels[normalizedField] ??
+        field
+            .replaceAll(RegExp(r'[_\.]'), ' ')
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim();
+    return readableField.isEmpty ? detail : '$readableField: $detail';
   }
 }

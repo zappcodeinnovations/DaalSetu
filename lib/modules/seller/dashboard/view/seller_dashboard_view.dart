@@ -23,7 +23,9 @@ import '../../../../routes/app_routes.dart';
 class SellerDashboardView extends StatelessWidget {
   SellerDashboardView({super.key});
 
-  final SellerDashboardController controller = Get.put(SellerDashboardController());
+  final SellerDashboardController controller = Get.put(
+    SellerDashboardController(),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +59,13 @@ class SellerDashboardView extends StatelessWidget {
               children: [
                 _buildHeroSection(context, data.header),
                 const SizedBox(height: 16),
-                _buildSectionHeader(context, "Seller Workspace", trailingText: "View All", onTrailingTap: () => Get.to(() => const SellerWorkspaceView())),
+                _buildSectionHeader(
+                  context,
+                  "Seller Workspace",
+                  trailingText: "View All",
+                  onTrailingTap: () =>
+                      Get.to(() => const SellerWorkspaceView()),
+                ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -114,7 +122,8 @@ class SellerDashboardView extends StatelessWidget {
                         subtitle: "Ready for loading & dispatch",
                         icon: IconlyBold.buy,
                         color: Colors.teal,
-                        onTap: () => Get.to(() => const SellerConsignmentsView()),
+                        onTap: () =>
+                            Get.to(() => const SellerConsignmentsView()),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -125,24 +134,42 @@ class SellerDashboardView extends StatelessWidget {
                         subtitle: "Respond to buyer requests",
                         icon: IconlyBold.ticket,
                         color: Colors.indigo,
-                        onTap: () => Get.to(() => const SellerBuyerOffersView()),
+                        onTap: () =>
+                            Get.to(() => const SellerBuyerOffersView()),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 24),
-                
-                _buildSectionHeader(context, "Overview KPIs", trailingText: "View All"),
+
+                _buildSectionHeader(
+                  context,
+                  "Overview KPIs",
+                  trailingText: "View All",
+                  onTrailingTap: () => _showKpiDetails(context, data.kpis),
+                ),
                 const SizedBox(height: 16),
                 _buildTodaysOverview(context, data.kpis),
-                
+
                 const SizedBox(height: 24),
-                _buildSectionHeader(context, "Analytics Overview", trailingText: "View All"),
+                _buildSectionHeader(
+                  context,
+                  "Analytics Overview",
+                  trailingText: "View All",
+                  onTrailingTap: () =>
+                      _showAnalyticsDetails(context, data.charts),
+                ),
                 const SizedBox(height: 16),
                 _buildAnalyticsGrid(context, data.charts),
 
                 const SizedBox(height: 24),
-                _buildSectionHeader(context, "Recent Deals", trailingText: "View All", onTrailingTap: () => Get.to(() => const SellerBuyerOffersView())),
+                _buildSectionHeader(
+                  context,
+                  "Recent Deals",
+                  trailingText: "View All",
+                  onTrailingTap: () =>
+                      Get.to(() => const SellerBuyerOffersView()),
+                ),
                 const SizedBox(height: 16),
                 _buildRecentDeals(context, data.recentDeals),
 
@@ -151,7 +178,8 @@ class SellerDashboardView extends StatelessWidget {
                   context,
                   "Recent Contracts",
                   trailingText: "View All",
-                  onTrailingTap: () => Get.to(() => const SellerContractsView()),
+                  onTrailingTap: () =>
+                      Get.to(() => const SellerContractsView()),
                 ),
                 const SizedBox(height: 16),
                 _buildRecentContracts(context, data.recentContracts),
@@ -177,8 +205,9 @@ class SellerDashboardView extends StatelessWidget {
       backgroundColor: Colors.transparent,
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(IconlyLight.filter),
-        onPressed: () {},
+        tooltip: 'Seller workspace',
+        icon: const Icon(IconlyLight.category),
+        onPressed: () => Get.to(() => const SellerWorkspaceView()),
       ),
       title: Image.asset(
         'assets/images/app_name.png',
@@ -213,8 +242,14 @@ class SellerDashboardView extends StatelessWidget {
                           color: Colors.deepOrange,
                           shape: BoxShape.circle,
                         ),
-                        child: Text(unread > 99 ? '99+' : '$unread',
-                            style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          unread > 99 ? '99+' : '$unread',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                 ],
@@ -223,10 +258,19 @@ class SellerDashboardView extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        CircleAvatar(
-          radius: 16,
-          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-          child: Icon(IconlyLight.user_1, size: 16, color: Theme.of(context).colorScheme.primary),
+        GestureDetector(
+          onTap: () => Get.toNamed(AppRoutes.profile_page),
+          child: CircleAvatar(
+            radius: 16,
+            backgroundColor: Theme.of(
+              context,
+            ).colorScheme.primary.withOpacity(0.1),
+            child: Icon(
+              IconlyLight.user_1,
+              size: 16,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
         ),
         const SizedBox(width: 16),
       ],
@@ -242,11 +286,19 @@ class SellerDashboardView extends StatelessWidget {
           children: [
             Text(
               "Hello, ",
-              style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+              style: GoogleFonts.poppins(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
             ),
             Text(
               header.name,
-              style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
+              style: GoogleFonts.poppins(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.primary,
+              ),
             ),
             const Text(" 👋", style: TextStyle(fontSize: 24)),
           ],
@@ -258,7 +310,11 @@ class SellerDashboardView extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               header.branchName,
-              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: theme.textTheme.bodyLarge?.color),
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
             ),
             const SizedBox(width: 8),
             Container(
@@ -267,7 +323,14 @@ class SellerDashboardView extends StatelessWidget {
                 color: theme.colorScheme.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: Text("KYC: ${header.kycStatus.toUpperCase()}", style: GoogleFonts.inter(fontSize: 10, color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+              child: Text(
+                "KYC: ${header.kycStatus.toUpperCase()}",
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -340,7 +403,11 @@ class SellerDashboardView extends StatelessWidget {
                 color: accentColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(IconlyBold.document, color: accentColor, size: 28),
+              child: const Icon(
+                IconlyBold.document,
+                color: accentColor,
+                size: 28,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -348,7 +415,7 @@ class SellerDashboardView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Buyer Requirements (RFQs)",
+                    "Buyer Requirements",
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -393,19 +460,34 @@ class SellerDashboardView extends StatelessWidget {
                     color: greenColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(IconlyBold.document, color: greenColor, size: 20),
+                  child: const Icon(
+                    IconlyBold.document,
+                    color: greenColor,
+                    size: 20,
+                  ),
                 ),
-                const Icon(IconlyLight.arrow_right_2, color: greenColor, size: 16),
+                const Icon(
+                  IconlyLight.arrow_right_2,
+                  color: greenColor,
+                  size: 16,
+                ),
               ],
             ),
             const SizedBox(height: 10),
             Text(
               "Contracts",
-              style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
             ),
             Text(
               "Signed deal agreements",
-              style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color),
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                color: theme.textTheme.bodyMedium?.color,
+              ),
             ),
           ],
         ),
@@ -433,19 +515,34 @@ class SellerDashboardView extends StatelessWidget {
                     color: purpleColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(IconlyBold.work, color: purpleColor, size: 20),
+                  child: const Icon(
+                    IconlyBold.work,
+                    color: purpleColor,
+                    size: 20,
+                  ),
                 ),
-                const Icon(IconlyLight.arrow_right_2, color: purpleColor, size: 16),
+                const Icon(
+                  IconlyLight.arrow_right_2,
+                  color: purpleColor,
+                  size: 16,
+                ),
               ],
             ),
             const SizedBox(height: 10),
             Text(
               "Challans",
-              style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
             ),
             Text(
               "Dispatch & shipment",
-              style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color),
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                color: theme.textTheme.bodyMedium?.color,
+              ),
             ),
           ],
         ),
@@ -473,19 +570,34 @@ class SellerDashboardView extends StatelessWidget {
                     color: blueColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(IconlyBold.work, color: blueColor, size: 20),
+                  child: const Icon(
+                    IconlyBold.work,
+                    color: blueColor,
+                    size: 20,
+                  ),
                 ),
-                const Icon(IconlyLight.arrow_right_2, color: blueColor, size: 16),
+                const Icon(
+                  IconlyLight.arrow_right_2,
+                  color: blueColor,
+                  size: 16,
+                ),
               ],
             ),
             const SizedBox(height: 10),
             Text(
               "Branches",
-              style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
             ),
             Text(
               "Warehouse network",
-              style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color),
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                color: theme.textTheme.bodyMedium?.color,
+              ),
             ),
           ],
         ),
@@ -513,19 +625,34 @@ class SellerDashboardView extends StatelessWidget {
                     color: orangeColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(IconlyBold.discount, color: orangeColor, size: 20),
+                  child: const Icon(
+                    IconlyBold.discount,
+                    color: orangeColor,
+                    size: 20,
+                  ),
                 ),
-                const Icon(IconlyLight.arrow_right_2, color: orangeColor, size: 16),
+                const Icon(
+                  IconlyLight.arrow_right_2,
+                  color: orangeColor,
+                  size: 16,
+                ),
               ],
             ),
             const SizedBox(height: 10),
             Text(
               "Brands, Tags",
-              style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
             ),
             Text(
               "Your brand & tag detaile",
-              style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color),
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                color: theme.textTheme.bodyMedium?.color,
+              ),
             ),
           ],
         ),
@@ -566,11 +693,18 @@ class SellerDashboardView extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               title,
-              style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
             ),
             Text(
               subtitle,
-              style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color),
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                color: theme.textTheme.bodyMedium?.color,
+              ),
             ),
           ],
         ),
@@ -578,7 +712,13 @@ class SellerDashboardView extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title, {String? trailingText, Widget? trailing, VoidCallback? onTrailingTap}) {
+  Widget _buildSectionHeader(
+    BuildContext context,
+    String title, {
+    String? trailingText,
+    Widget? trailing,
+    VoidCallback? onTrailingTap,
+  }) {
     final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -592,8 +732,14 @@ class SellerDashboardView extends StatelessWidget {
           ),
         ),
         if (trailingText != null)
-          GestureDetector(
-            onTap: onTrailingTap,
+          TextButton(
+            onPressed: onTrailingTap,
+            style: TextButton.styleFrom(
+              minimumSize: const Size(0, 36),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
             child: Text(
               trailingText,
               style: GoogleFonts.inter(
@@ -611,7 +757,7 @@ class SellerDashboardView extends StatelessWidget {
 
   Widget _buildTodaysOverview(BuildContext context, List<SellerKpi> kpis) {
     if (kpis.isEmpty) return const SizedBox();
-    
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       clipBehavior: Clip.none,
@@ -620,7 +766,7 @@ class SellerDashboardView extends StatelessWidget {
           IconData icon = IconlyLight.document;
           if (kpi.type == 'currency') icon = IconlyLight.wallet;
           if (kpi.type == 'number') icon = IconlyLight.graph;
-          
+
           return Padding(
             padding: const EdgeInsets.only(right: 12.0),
             child: _buildDynamicMetricCard(context, kpi, icon),
@@ -630,7 +776,11 @@ class SellerDashboardView extends StatelessWidget {
     );
   }
 
-  Widget _buildDynamicMetricCard(BuildContext context, SellerKpi metric, IconData icon) {
+  Widget _buildDynamicMetricCard(
+    BuildContext context,
+    SellerKpi metric,
+    IconData icon,
+  ) {
     final theme = Theme.of(context);
     return GestureDetector(
       onTap: () => _openKpi(metric.screen),
@@ -654,19 +804,31 @@ class SellerDashboardView extends StatelessWidget {
                 metric.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color),
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  color: theme.textTheme.bodyMedium?.color,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
-                metric.type == 'currency' ? "₹${metric.value}" : metric.value.toString(),
-                style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+                metric.type == 'currency'
+                    ? "₹${metric.value}"
+                    : metric.value.toString(),
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: theme.textTheme.bodyLarge?.color,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 metric.subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(fontSize: 8, color: theme.textTheme.bodyMedium?.color),
+                style: GoogleFonts.inter(
+                  fontSize: 8,
+                  color: theme.textTheme.bodyMedium?.color,
+                ),
               ),
             ],
           ),
@@ -691,60 +853,202 @@ class SellerDashboardView extends StatelessWidget {
     }
   }
 
+  void _showKpiDetails(BuildContext context, List<SellerKpi> kpis) {
+    Get.bottomSheet(
+      SafeArea(
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.72,
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Overview KPIs',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: kpis.isEmpty
+                    ? const Center(child: Text('No KPI data is available yet.'))
+                    : ListView.separated(
+                        itemCount: kpis.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (_, index) {
+                          final kpi = kpis[index];
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(kpi.title),
+                            subtitle: Text(kpi.subtitle),
+                            trailing: Text(
+                              kpi.type == 'currency'
+                                  ? 'Rs ${kpi.value}'
+                                  : '${kpi.value}',
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w700,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                            onTap: () {
+                              Get.back();
+                              _openKpi(kpi.screen);
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  void _showAnalyticsDetails(BuildContext context, SellerCharts charts) {
+    final pipeline = charts.dealPipeline;
+    final commodities = charts.commodityMix;
+    Get.bottomSheet(
+      SafeArea(
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.72,
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: ListView(
+            children: [
+              Text(
+                'Analytics Overview',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'Deal Pipeline',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 4),
+              if (pipeline.isEmpty)
+                const Text('No pipeline data is available yet.')
+              else
+                ...pipeline.entries.map(
+                  (entry) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(entry.key.replaceAll('_', ' ')),
+                    trailing: Text('${entry.value}'),
+                  ),
+                ),
+              const Divider(height: 28),
+              Text(
+                'Commodity Mix',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 4),
+              if (commodities.isEmpty)
+                const Text('No commodity data is available yet.')
+              else
+                ...commodities.map(
+                  (item) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(item.categoryName),
+                    trailing: Text('${item.volume.toStringAsFixed(0)}%'),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
   Widget _buildAnalyticsGrid(BuildContext context, SellerCharts charts) {
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(child: _buildPipelineCard(context, charts.dealPipeline)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildDonutCard(context, "Commodity Mix", "Overall", charts.commodityMix)),
-          ],
+        _buildPipelineCard(context, charts.dealPipeline),
+        const SizedBox(height: 12),
+        _buildDonutCard(
+          context,
+          "Commodity Mix",
+          "Overall",
+          charts.commodityMix,
         ),
       ],
     );
   }
 
-  Widget _buildPipelineCard(BuildContext context, Map<String, dynamic> pipeline) {
+  Widget _buildPipelineCard(
+    BuildContext context,
+    Map<String, dynamic> pipeline,
+  ) {
     final theme = Theme.of(context);
-    
+
     final labels = pipeline.keys.toList();
-    final values = pipeline.values.map((e) => (e as num).toDouble()).toList();
-    double maxY = values.isNotEmpty ? values.reduce((a, b) => a > b ? a : b) : 10;
+    final values = pipeline.values
+        .map((e) => double.tryParse('$e') ?? 0)
+        .toList();
+    double maxY = values.isNotEmpty
+        ? values.reduce((a, b) => a > b ? a : b)
+        : 10;
     if (maxY == 0) maxY = 10;
-    
+
     return GlassCard(
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Deal Pipeline", style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
-          Text("By Stage", style: GoogleFonts.inter(fontSize: 8, color: theme.textTheme.bodyMedium?.color)),
+          Text(
+            "Deal Pipeline",
+            style: GoogleFonts.poppins(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: theme.textTheme.bodyLarge?.color,
+            ),
+          ),
+          Text(
+            "By Stage",
+            style: GoogleFonts.inter(
+              fontSize: 8,
+              color: theme.textTheme.bodyMedium?.color,
+            ),
+          ),
           const SizedBox(height: 12),
           SizedBox(
-            height: 80,
+            height: 112,
             child: BarChart(
               BarChartData(
                 maxY: maxY * 1.2,
+                alignment: BarChartAlignment.spaceAround,
+                groupsSpace: 16,
                 gridData: FlGridData(show: false),
                 borderData: FlBorderData(show: false),
                 titlesData: FlTitlesData(
                   bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 14,
-                      getTitlesWidget: (value, meta) {
-                        final idx = value.toInt();
-                        if (idx >= 0 && idx < labels.length) {
-                          return Text(labels[idx].split(' ').first, style: TextStyle(fontSize: 6, color: theme.textTheme.bodyMedium?.color));
-                        }
-                        return const SizedBox();
-                      },
-                    ),
+                    sideTitles: SideTitles(showTitles: false),
                   ),
-                  leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                 ),
                 barGroups: List.generate(labels.length, (index) {
                   return BarChartGroupData(
@@ -755,36 +1059,89 @@ class SellerDashboardView extends StatelessWidget {
                         width: 8,
                         color: theme.colorScheme.primary,
                         borderRadius: BorderRadius.circular(2),
-                      )
+                      ),
                     ],
                   );
                 }),
               ),
             ),
           ),
+          const SizedBox(height: 8),
+          if (labels.isNotEmpty)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: labels
+                  .map(
+                    (label) => Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 3),
+                        child: Text(
+                          label.replaceAll('_', ' '),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                            fontSize: 9,
+                            height: 1.15,
+                            fontWeight: FontWeight.w600,
+                            color: theme.textTheme.bodyMedium?.color,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildDonutCard(BuildContext context, String title, String subtitle, List<CommodityMix> items) {
+  Widget _buildDonutCard(
+    BuildContext context,
+    String title,
+    String subtitle,
+    List<CommodityMix> items,
+  ) {
     final theme = Theme.of(context);
-    final colors = [theme.colorScheme.primary, Colors.orangeAccent, Colors.redAccent, Colors.purpleAccent, Colors.blueAccent];
-    
+    final colors = [
+      theme.colorScheme.primary,
+      Colors.orangeAccent,
+      Colors.redAccent,
+      Colors.purpleAccent,
+      Colors.blueAccent,
+    ];
+
     if (items.isEmpty) {
-       return GlassCard(
-         padding: const EdgeInsets.all(12),
-         child: const SizedBox(height: 110, child: Center(child: Text("No Data"))),
-       );
+      return GlassCard(
+        padding: const EdgeInsets.all(12),
+        child: const SizedBox(
+          height: 110,
+          child: Center(child: Text("No Data")),
+        ),
+      );
     }
-    
+
     return GlassCard(
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
-          Text(subtitle, style: GoogleFonts.inter(fontSize: 8, color: theme.textTheme.bodyMedium?.color)),
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: theme.textTheme.bodyLarge?.color,
+            ),
+          ),
+          Text(
+            subtitle,
+            style: GoogleFonts.inter(
+              fontSize: 8,
+              color: theme.textTheme.bodyMedium?.color,
+            ),
+          ),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -820,13 +1177,36 @@ class SellerDashboardView extends StatelessWidget {
                           Expanded(
                             child: Row(
                               children: [
-                                Container(width: 6, height: 6, decoration: BoxDecoration(color: colors[e.key % colors.length], shape: BoxShape.circle)),
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    color: colors[e.key % colors.length],
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
                                 const SizedBox(width: 4),
-                                Expanded(child: Text(e.value.categoryName, style: GoogleFonts.inter(fontSize: 8, color: theme.textTheme.bodyLarge?.color), overflow: TextOverflow.ellipsis)),
+                                Expanded(
+                                  child: Text(
+                                    e.value.categoryName,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 8,
+                                      color: theme.textTheme.bodyLarge?.color,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
-                          Text("${e.value.volume.toInt()}%", style: GoogleFonts.inter(fontSize: 8, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+                          Text(
+                            "${e.value.volume.toInt()}%",
+                            style: GoogleFonts.inter(
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                              color: theme.textTheme.bodyLarge?.color,
+                            ),
+                          ),
                         ],
                       ),
                     );
@@ -851,7 +1231,7 @@ class SellerDashboardView extends StatelessWidget {
       itemBuilder: (context, index) {
         final deal = deals[index];
         final theme = Theme.of(context);
-        
+
         return GlassCard(
           padding: const EdgeInsets.all(12),
           child: Row(
@@ -862,33 +1242,69 @@ class SellerDashboardView extends StatelessWidget {
                   color: theme.colorScheme.secondary.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(IconlyLight.swap, color: theme.colorScheme.secondary, size: 20),
+                child: Icon(
+                  IconlyLight.swap,
+                  color: theme.colorScheme.secondary,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("${deal.categoryName} - ${deal.brandName}", style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+                    Text(
+                      "${deal.categoryName} - ${deal.brandName}",
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: theme.textTheme.bodyLarge?.color,
+                      ),
+                    ),
                     const SizedBox(height: 2),
-                    Text("${deal.requestedQuantity} Tons", style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color)),
+                    Text(
+                      "${deal.requestedQuantity} Tons",
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        color: theme.textTheme.bodyMedium?.color,
+                      ),
+                    ),
                   ],
                 ),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text("₹${deal.requestedAmount}", style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+                  Text(
+                    "₹${deal.requestedAmount}",
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primary.withOpacity(0.1),
-                      border: Border.all(color: theme.colorScheme.primary.withOpacity(0.5)),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withOpacity(0.5),
+                      ),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Text(deal.status.replaceAll('_', ' ').toUpperCase(), style: GoogleFonts.inter(fontSize: 8, fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
-                  )
+                    child: Text(
+                      deal.status.replaceAll('_', ' ').toUpperCase(),
+                      style: GoogleFonts.inter(
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -898,7 +1314,10 @@ class SellerDashboardView extends StatelessWidget {
     );
   }
 
-  Widget _buildRecentContracts(BuildContext context, List<SellerContract> contracts) {
+  Widget _buildRecentContracts(
+    BuildContext context,
+    List<SellerContract> contracts,
+  ) {
     if (contracts.isEmpty) return const Text("No recent contracts.");
 
     return ListView.separated(
@@ -909,7 +1328,7 @@ class SellerDashboardView extends StatelessWidget {
       itemBuilder: (context, index) {
         final contract = contracts[index];
         final theme = Theme.of(context);
-        
+
         return GlassCard(
           padding: const EdgeInsets.all(12),
           child: Row(
@@ -920,35 +1339,69 @@ class SellerDashboardView extends StatelessWidget {
                   color: Colors.green.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(IconlyLight.document, color: Colors.green, size: 20),
+                child: const Icon(
+                  IconlyLight.document,
+                  color: Colors.green,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(contract.buyerCompany, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+                    Text(
+                      contract.buyerCompany,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: theme.textTheme.bodyLarge?.color,
+                      ),
+                    ),
                     const SizedBox(height: 2),
-                    Text("ID: ${contract.contractId}", style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color)),
+                    Text(
+                      "ID: ${contract.contractId}",
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        color: theme.textTheme.bodyMedium?.color,
+                      ),
+                    ),
                   ],
                 ),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text("₹${contract.dealAmount}", style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+                  Text(
+                    "₹${contract.dealAmount}",
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.green.withOpacity(0.1),
                       border: Border.all(color: Colors.green.withOpacity(0.5)),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Text(contract.status.toUpperCase(), style: GoogleFonts.inter(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.green)),
-                  )
+                    child: Text(
+                      contract.status.toUpperCase(),
+                      style: GoogleFonts.inter(
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ),
                 ],
-              )
+              ),
             ],
           ),
         );

@@ -3,38 +3,65 @@ import 'package:get/get.dart';
 import '../../../../services/seller_services.dart';
 
 class SellerStockUpdateDialog {
-  static void show(BuildContext context, int productId, {required VoidCallback onSuccess}) {
+  static void show(
+    BuildContext context,
+    int productId, {
+    required VoidCallback onSuccess,
+  }) {
     final qtyCtrl = TextEditingController();
     String selectedMode = 'quantity'; // 'quantity' or 'bag_count'
     String selectedOp = 'set'; // 'set', 'add', 'subtract'
 
     Get.defaultDialog(
-      title: "Update Available Stock",
-      titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      title: '',
       content: StatefulBuilder(
         builder: (context, setState) {
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const Text(
+                  "Update Available Stock",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                const SizedBox(height: 18),
                 DropdownButtonFormField<String>(
                   value: selectedMode,
-                  decoration: const InputDecoration(labelText: "Stock Mode", border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    labelText: "Stock Mode",
+                    border: OutlineInputBorder(),
+                  ),
                   items: const [
-                    DropdownMenuItem(value: 'quantity', child: Text("Quantity (Qtl)")),
-                    DropdownMenuItem(value: 'bag_count', child: Text("Bag Count")),
+                    DropdownMenuItem(
+                      value: 'quantity',
+                      child: Text("Quantity (Qtl)"),
+                    ),
+                    DropdownMenuItem(
+                      value: 'bag_count',
+                      child: Text("Bag Count"),
+                    ),
                   ],
                   onChanged: (val) => setState(() => selectedMode = val!),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   value: selectedOp,
-                  decoration: const InputDecoration(labelText: "Operation", border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    labelText: "Operation",
+                    border: OutlineInputBorder(),
+                  ),
                   items: const [
-                    DropdownMenuItem(value: 'set', child: Text("Set Exact Value")),
+                    DropdownMenuItem(
+                      value: 'set',
+                      child: Text("Set Exact Value"),
+                    ),
                     DropdownMenuItem(value: 'add', child: Text("Add Stock")),
-                    DropdownMenuItem(value: 'subtract', child: Text("Subtract Stock")),
+                    DropdownMenuItem(
+                      value: 'subtract',
+                      child: Text("Subtract Stock"),
+                    ),
                   ],
                   onChanged: (val) => setState(() => selectedOp = val!),
                 ),
@@ -43,7 +70,17 @@ class SellerStockUpdateDialog {
                   controller: qtyCtrl,
                   keyboardType: TextInputType.number,
                   maxLength: 10,
-                  decoration: const InputDecoration(labelText: "Value", border: OutlineInputBorder()),
+                  buildCounter:
+                      (
+                        _, {
+                        required currentLength,
+                        required isFocused,
+                        maxLength,
+                      }) => null,
+                  decoration: const InputDecoration(
+                    labelText: "Value",
+                    border: OutlineInputBorder(),
+                  ),
                 ),
               ],
             ),
@@ -60,7 +97,10 @@ class SellerStockUpdateDialog {
         }
         Get.back();
         try {
-          Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
+          Get.dialog(
+            const Center(child: CircularProgressIndicator()),
+            barrierDismissible: false,
+          );
           final res = await SellerServices.updateOfferStock(
             productId,
             mode: selectedMode,
@@ -69,14 +109,32 @@ class SellerStockUpdateDialog {
           );
           if (Get.isDialogOpen ?? false) Get.back();
           if (res['success'] == true) {
-            Get.snackbar("Success", res['message'] ?? "Stock updated successfully", snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+            Get.snackbar(
+              "Success",
+              res['message'] ?? "Stock updated successfully",
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.green,
+              colorText: Colors.white,
+            );
             onSuccess();
           } else {
-            Get.snackbar("Error", res['message'] ?? "Failed to update stock", snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+            Get.snackbar(
+              "Error",
+              res['message'] ?? "Failed to update stock",
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.red,
+              colorText: Colors.white,
+            );
           }
         } catch (e) {
           if (Get.isDialogOpen ?? false) Get.back();
-          Get.snackbar("Error", e.toString(), snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+          Get.snackbar(
+            "Error",
+            e.toString(),
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
         }
       },
     );

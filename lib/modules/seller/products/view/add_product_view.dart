@@ -385,10 +385,17 @@ class AddProductView extends StatelessWidget {
                     const TextInputType.numberWithOptions(decimal: true)
             ? 10
             : null,
+        buildCounter:
+            (_, {required currentLength, required isFocused, maxLength}) =>
+                null,
         decoration: InputDecoration(
           hintText: hint,
+          hintStyle: TextStyle(
+            color: Get.theme.hintColor.withValues(alpha: 0.9),
+          ),
           prefixIcon: icon != null ? Icon(icon, size: 20) : null,
           filled: true,
+          fillColor: Get.theme.colorScheme.surface,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 16,

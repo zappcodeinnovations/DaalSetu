@@ -1,5 +1,6 @@
 import '../model/seller_dashboard_model.dart';
 import '../../../../services/seller_services.dart';
+import '../../../../network/api_client.dart';
 import 'package:get/get.dart';
 
 class SellerDashboardController extends GetxController {
@@ -22,10 +23,9 @@ class SellerDashboardController extends GetxController {
 
       final data = await SellerServices.getDashboard();
       dashboardData.value = SellerDashboardModel.fromJson(data);
-
     } catch (e) {
       isError(true);
-      errorMessage(e.toString());
+      errorMessage(ApiClient.userFriendlyErrorMessage(e.toString()));
     } finally {
       isLoading(false);
     }
