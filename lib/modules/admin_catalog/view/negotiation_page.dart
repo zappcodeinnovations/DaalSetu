@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:daalsetu/modules/products/model/offer_interest_model.dart';
 import 'package:daalsetu/services/product_services.dart';
 import 'package:daalsetu/theme/app_theme.dart';
-import 'package:intl/intl.dart';
 
 import 'approve_deal_dialog.dart';
 

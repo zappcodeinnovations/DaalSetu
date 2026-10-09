@@ -224,7 +224,7 @@ class _OfferInterestNegotiationChatViewState
               remark: remark,
             );
       AppSnackbar.showSuccess(
-        title: '${accept ? 'Accepted' : 'Rejected'}',
+        title: accept ? 'Accepted' : 'Rejected',
         message: result['message'] ?? 'Negotiation $verb successfully.',
       );
       await _load(silent: true);
