@@ -151,6 +151,7 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
                       (data['seller'] is String ? data['seller'] : null),
                 ),
               ),
+              _row('Seller company', _show(data['seller_company_name'] ?? sellerCompany['legal_name'] ?? sellerCompany['company_name'])),
               _row('Seller GST', _show(data['seller_gst'] ?? sellerCompany['gst_number'] ?? sellerCompany['gst'] ?? sellerInfo['gst_number'] ?? sellerInfo['gst'])),
               _row('Seller PAN', _show(data['seller_pan'] ?? sellerCompany['pan_number'] ?? sellerCompany['pan'] ?? sellerInfo['pan_number'] ?? sellerInfo['pan'])),
               _row(
@@ -171,6 +172,7 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
                       (data['buyer'] is String ? data['buyer'] : null),
                 ),
               ),
+              _row('Buyer company', _show(data['buyer_company_name'] ?? buyerCompany['legal_name'] ?? buyerCompany['company_name'])),
               _row('Buyer GST', _show(data['buyer_gst'] ?? buyerCompany['gst_number'] ?? buyerCompany['gst'] ?? buyerInfo['gst_number'] ?? buyerInfo['gst'])),
               _row('Buyer PAN', _show(data['buyer_pan'] ?? buyerCompany['pan_number'] ?? buyerCompany['pan'] ?? buyerInfo['pan_number'] ?? buyerInfo['pan'])),
               _row(

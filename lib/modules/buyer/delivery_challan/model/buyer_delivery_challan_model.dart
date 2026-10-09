@@ -17,6 +17,11 @@ class BuyerDeliveryChallanModel {
   String? buyerName;
   String? buyerGst;
   String? buyerAddress;
+  // Registered-company details, same as the web challan page.
+  String? sellerCompanyName;
+  String? sellerPan;
+  String? buyerCompanyName;
+  String? buyerPan;
   String? truckNumber;
   String? driverName;
   String? driverLicenseNumber;
@@ -59,6 +64,10 @@ class BuyerDeliveryChallanModel {
     this.buyerName,
     this.buyerGst,
     this.buyerAddress,
+    this.sellerCompanyName,
+    this.sellerPan,
+    this.buyerCompanyName,
+    this.buyerPan,
     this.truckNumber,
     this.driverName,
     this.driverLicenseNumber,
@@ -107,6 +116,10 @@ class BuyerDeliveryChallanModel {
       buyerName: json['buyer_name'],
       buyerGst: json['buyer_gst'],
       buyerAddress: json['buyer_address'],
+      sellerCompanyName: json['seller_company_name'],
+      sellerPan: json['seller_pan'],
+      buyerCompanyName: json['buyer_company_name'],
+      buyerPan: json['buyer_pan'],
       truckNumber: json['truck_number'],
       driverName: json['driver_name'],
       driverLicenseNumber: json['driver_license_number'],

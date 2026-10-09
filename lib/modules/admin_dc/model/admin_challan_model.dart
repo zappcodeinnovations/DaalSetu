@@ -27,6 +27,13 @@ class AdminChallanModel {
   final String? sellerAddress;
   final String? buyerName;
   final String? buyerAddress;
+  // Registered-company details, same as the web challan page.
+  final String? sellerCompanyName;
+  final String? sellerGst;
+  final String? sellerPan;
+  final String? buyerCompanyName;
+  final String? buyerGst;
+  final String? buyerPan;
   final List<AdminChallanItem> items;
 
   AdminChallanModel({
@@ -56,6 +63,12 @@ class AdminChallanModel {
     this.sellerAddress,
     this.buyerName,
     this.buyerAddress,
+    this.sellerCompanyName,
+    this.sellerGst,
+    this.sellerPan,
+    this.buyerCompanyName,
+    this.buyerGst,
+    this.buyerPan,
     required this.items,
   });
 
@@ -103,6 +116,12 @@ class AdminChallanModel {
       sellerAddress: json['seller_address']?.toString(),
       buyerName: json['buyer_name']?.toString(),
       buyerAddress: json['buyer_address']?.toString(),
+      sellerCompanyName: json['seller_company_name']?.toString(),
+      sellerGst: json['seller_gst']?.toString(),
+      sellerPan: json['seller_pan']?.toString(),
+      buyerCompanyName: json['buyer_company_name']?.toString(),
+      buyerGst: json['buyer_gst']?.toString(),
+      buyerPan: json['buyer_pan']?.toString(),
       items: itemsList,
     );
   }

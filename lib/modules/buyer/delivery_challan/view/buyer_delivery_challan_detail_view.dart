@@ -297,11 +297,24 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildInfoRow(
+          ..._partyRows(
             context,
             "Seller",
-            challan.sellerNameDisplay ?? "N/A",
-            IconlyLight.profile,
+            challan.sellerNameDisplay ?? challan.sellerName,
+            challan.sellerCompanyName,
+            challan.sellerGst,
+            challan.sellerPan,
+            challan.sellerAddress,
+          ),
+          const Divider(height: 24),
+          ..._partyRows(
+            context,
+            "Buyer",
+            challan.buyerNameDisplay ?? challan.buyerName,
+            challan.buyerCompanyName,
+            challan.buyerGst,
+            challan.buyerPan,
+            challan.buyerAddress,
           ),
           const Divider(height: 24),
           _buildInfoRow(
@@ -331,6 +344,39 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Name, company, GST, PAN and address for one party, as on the web challan page.
+  List<Widget> _partyRows(
+    BuildContext context,
+    String label,
+    String? name,
+    String? company,
+    String? gst,
+    String? pan,
+    String? address,
+  ) {
+    String show(String? value) => (value == null || value.trim().isEmpty) ? "—" : value.trim();
+    final theme = Theme.of(context);
+    Widget line(String key, String? value) => Padding(
+          padding: const EdgeInsets.only(left: 34, top: 4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(width: 72, child: Text(key, style: theme.textTheme.bodySmall)),
+              Expanded(
+                child: Text(show(value), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              ),
+            ],
+          ),
+        );
+    return [
+      _buildInfoRow(context, label, show(name), IconlyLight.profile),
+      line("Company", company),
+      line("GST", gst),
+      line("PAN", pan),
+      line("Address", address),
+    ];
   }
 
   Widget _buildTransportInfo(

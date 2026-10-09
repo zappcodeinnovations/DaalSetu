@@ -264,6 +264,7 @@ class AdminChallanDetailsView extends StatelessWidget {
                         ),
                       ),
                     ],
+                    ..._partyCompanyLines(challan.sellerCompanyName, challan.sellerGst, challan.sellerPan, isDark),
                   ],
                 ),
               ),
@@ -298,6 +299,7 @@ class AdminChallanDetailsView extends StatelessWidget {
                         ),
                       ),
                     ],
+                    ..._partyCompanyLines(challan.buyerCompanyName, challan.buyerGst, challan.buyerPan, isDark),
                   ],
                 ),
               ),
@@ -596,6 +598,18 @@ class AdminChallanDetailsView extends StatelessWidget {
         child: content,
       );
     });
+  }
+
+  /// Company, GST and PAN lines under a party, as on the web challan page.
+  List<Widget> _partyCompanyLines(String? company, String? gst, String? pan, bool isDark) {
+    final style = TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B));
+    return [
+      for (final entry in {'Company': company, 'GST': gst, 'PAN': pan}.entries)
+        if ((entry.value ?? '').trim().isNotEmpty) ...[
+          const SizedBox(height: 2),
+          Text('${entry.key}: ${entry.value!.trim()}', style: style),
+        ],
+    ];
   }
 
   void _confirm(
