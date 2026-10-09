@@ -54,6 +54,10 @@ class SellerBranchController extends GetxController {
       final res = await SellerServices.requestBranchByCode(code);
       if (Get.isDialogOpen ?? false) Get.back();
 
+      if (res['success'] == false) {
+        _showError('Notice', res['message'] ?? 'Could not submit request');
+        return;
+      }
       Get.snackbar(
         "Success",
         res['message'] ?? "Branch request submitted successfully",
@@ -77,6 +81,10 @@ class SellerBranchController extends GetxController {
       final res = await SellerServices.cancelBranchRequest(branchId);
       if (Get.isDialogOpen ?? false) Get.back();
 
+      if (res['success'] == false) {
+        _showError('Notice', res['message'] ?? 'Could not cancel request');
+        return;
+      }
       pendingRequests.removeWhere((item) => item.branchId == branchId);
       await fetchBranches();
       Get.snackbar(
@@ -100,6 +108,17 @@ class SellerBranchController extends GetxController {
       );
       final res = await SellerServices.leaveBranch(branchId);
       if (Get.isDialogOpen ?? false) Get.back();
+
+      if (res['success'] == false) {
+        Get.snackbar(
+          "Notice",
+          res['message'] ?? "Could not leave branch",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+        return;
+      }
 
       myBranches.removeWhere(
         (item) => item.id == branchId || item.branchId == branchId,
@@ -138,6 +157,10 @@ class SellerBranchController extends GetxController {
       final res = await SellerServices.createBranch(body);
       if (Get.isDialogOpen ?? false) Get.back();
 
+      if (res['success'] == false) {
+        _showError('Notice', res['message'] ?? 'Could not create branch');
+        return;
+      }
       Get.snackbar(
         "Success",
         res['message'] ?? "Branch created successfully",

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../common/seller_ui.dart';
@@ -20,8 +21,6 @@ class SellerSubmitQuoteDialog {
         borderRadius: BorderRadius.circular(10),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      counterText: '',
-      counter: const SizedBox.shrink(),
     );
 
     Get.dialog(
@@ -48,48 +47,48 @@ class SellerSubmitQuoteDialog {
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                maxLength: 10,
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(10),
+                ],
                 decoration: deco("Your Price (₹ / ${rfq.priceUnit}) *"),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
               TextField(
                 controller: qtyCtrl,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                maxLength: 10,
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(10),
+                ],
                 decoration: deco("Quantity (${rfq.quantityUnit}) *"),
               ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: bagCtrl,
-                      keyboardType: TextInputType.number,
-                      maxLength: 10,
-                      decoration: deco("Bags (optional)"),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: weightCtrl,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      maxLength: 10,
-                      decoration: deco("Bag Wt kg"),
-                    ),
-                  ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: bagCtrl,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(10),
                 ],
+                decoration: deco("Bags (optional)"),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
+              TextField(
+                controller: weightCtrl,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(10),
+                ],
+                decoration: deco("Bag Wt kg"),
+              ),
+              const SizedBox(height: 16),
               TextField(
                 controller: termsCtrl,
                 decoration: deco("Delivery Terms"),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
               TextField(
                 controller: remarkCtrl,
                 maxLines: 2,
@@ -145,8 +144,6 @@ class SellerSubmitQuoteDialog {
         borderRadius: BorderRadius.circular(10),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      counterText: '',
-      counter: const SizedBox.shrink(),
     );
 
     Get.dialog(
@@ -164,43 +161,43 @@ class SellerSubmitQuoteDialog {
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                maxLength: 10,
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(10),
+                ],
                 decoration: deco("Counter Price (optional)"),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
               TextField(
                 controller: qtyCtrl,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                maxLength: 10,
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(10),
+                ],
                 decoration: deco("Counter Quantity (optional)"),
               ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: bagCtrl,
-                      keyboardType: TextInputType.number,
-                      maxLength: 10,
-                      decoration: deco("Bags (optional)"),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: weightCtrl,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      maxLength: 10,
-                      decoration: deco("Packing KG"),
-                    ),
-                  ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: bagCtrl,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(10),
                 ],
+                decoration: deco("Bags (optional)"),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
+              TextField(
+                controller: weightCtrl,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(10),
+                ],
+                decoration: deco("Packing KG"),
+              ),
+              const SizedBox(height: 16),
               Text(
                 "Only counter price or quantity can be submitted. Free-text messages are disabled.",
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade600),

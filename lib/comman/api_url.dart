@@ -167,8 +167,7 @@ class ApiUrls {
 
   // Contracts & Delivery Challans
   static const String mobileContracts = "/api/mobile/contracts/";
-  static String mobileContractDetails(dynamic id) =>
-      "/api/mobile/contracts/$id/";
+  static String mobileContractDetails(dynamic id) => "/api/mobile/contracts/$id/";
   static const String sellerDeliveryChallans = "/api/seller/delivery-challans/";
   static String sellerDeliveryChallanDetails(dynamic id) =>
       "/api/seller/delivery-challans/$id/";
