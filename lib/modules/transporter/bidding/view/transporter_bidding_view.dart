@@ -78,9 +78,16 @@ class TransporterBiddingView extends StatelessWidget {
             indicatorColor: _gold,
             labelColor: _gold,
             unselectedLabelColor: Colors.grey,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            labelPadding: const EdgeInsets.symmetric(horizontal: 16),
             labelStyle: GoogleFonts.poppins(
               fontWeight: FontWeight.bold,
-              fontSize: 13,
+              fontSize: 14,
+            ),
+            unselectedLabelStyle: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
             ),
             tabs: const [
               Tab(text: "Active Shipment Offers"),
@@ -164,7 +171,7 @@ class _OffersTab extends StatelessWidget {
                       ],
                     )
                   : ListView.builder(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 180),
                       itemCount: controller.offers.length,
                       itemBuilder: (context, i) =>
                           _offerCard(context, controller.offers[i]),
@@ -392,27 +399,43 @@ class _MyDealsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       children: [
         SizedBox(
-          height: 52,
+          height: 48,
           child: Obx(
             () => ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              children: _filters.entries
-                  .map(
-                    (e) => Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: ChoiceChip(
-                        label: Text(e.value),
-                        selected: controller.bidStatus.value == e.key,
-                        selectedColor: _gold.withValues(alpha: 0.25),
-                        onSelected: (_) => controller.setBidStatus(e.key),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              children: _filters.entries.map((e) {
+                final isSelected = controller.bidStatus.value == e.key;
+                return GestureDetector(
+                  onTap: () => controller.setBidStatus(e.key),
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: isSelected ? _gold : theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSelected ? _gold : theme.dividerColor,
                       ),
                     ),
-                  )
-                  .toList(),
+                    child: Text(
+                      e.value,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected
+                            ? Colors.white
+                            : theme.textTheme.bodyMedium?.color,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
           ),
         ),
@@ -447,12 +470,7 @@ class _MyDealsTab extends StatelessWidget {
                       ],
                     )
                   : ListView.builder(
-                      padding: EdgeInsets.fromLTRB(
-                        16,
-                        16,
-                        16,
-                        64 + MediaQuery.paddingOf(context).bottom,
-                      ),
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 180),
                       itemCount: controller.myBids.length,
                       itemBuilder: (context, i) =>
                           _bidCard(context, controller.myBids[i]),

@@ -44,7 +44,7 @@ class TransporterVehiclesView extends StatelessWidget {
     final inNavShell = !Navigator.of(context).canPop();
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

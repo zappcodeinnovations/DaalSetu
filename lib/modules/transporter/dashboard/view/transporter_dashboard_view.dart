@@ -29,8 +29,9 @@ class TransporterDashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: _buildAppBar(context),
       body: Obx(() {
         if (controller.isLoading.value && controller.kpis.isEmpty) {
@@ -62,7 +63,7 @@ class TransporterDashboardView extends StatelessWidget {
               _sectionTitle(context, "Transporter Workspace"),
               const SizedBox(height: 12),
               _buildQuickActions(context),
-              const SizedBox(height: 24),
+              const SizedBox(height: 15),
               _sectionTitle(context, "Overview KPIs"),
               const SizedBox(height: 12),
               _buildKpiGrid(context),
@@ -346,6 +347,7 @@ class TransporterDashboardView extends StatelessWidget {
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
+      padding: EdgeInsets.zero,
       physics: const NeverScrollableScrollPhysics(),
       mainAxisSpacing: 12,
       crossAxisSpacing: 12,

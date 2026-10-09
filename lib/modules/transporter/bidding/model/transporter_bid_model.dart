@@ -126,7 +126,8 @@ class MyBidModel {
       assignedDriverId: json['assigned_driver_id'] is int ? json['assigned_driver_id'] : null,
       assignment: {for (final e in assignment.entries) '${e.key}': '${e.value ?? ''}'},
       assignmentLocked: json['assignment_locked'] == true,
-      canAssignDriver: json['can_assign_driver'] == true,
+      canAssignDriver: json['can_assign_driver'] == true ||
+          ('${json['status']}'.toLowerCase() == 'accepted' && json['assignment_locked'] != true),
     );
   }
 }
