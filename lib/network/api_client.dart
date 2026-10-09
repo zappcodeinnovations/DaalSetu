@@ -64,8 +64,9 @@ class ApiClient {
       final response = await http.Response.fromStream(streamedResponse);
 
       return _handleResponse(response);
-    } on SocketException {
-      print("❌ NO INTERNET: $endpoint");
+    } on SocketException catch (e) {
+      // The reason (e.g. "Failed host lookup", "Network is unreachable") tells offline from DNS problems.
+      print("❌ NO INTERNET: $endpoint ($e)");
       GlobalErrorHandler.showNoInternet();
       throw const ApiRequestException(
         "No internet connection. Please try again.",
@@ -107,8 +108,9 @@ class ApiClient {
       print("📥 RESPONSE: ${response.body}");
 
       return _handleResponse(response);
-    } on SocketException {
-      print("❌ NO INTERNET: $endpoint");
+    } on SocketException catch (e) {
+      // The reason (e.g. "Failed host lookup", "Network is unreachable") tells offline from DNS problems.
+      print("❌ NO INTERNET: $endpoint ($e)");
       GlobalErrorHandler.showNoInternet();
       throw const ApiRequestException(
         "No internet connection. Please try again.",
@@ -149,8 +151,9 @@ class ApiClient {
       print("📥 STATUS CODE: ${response.statusCode}");
 
       return _handleResponse(response);
-    } on SocketException {
-      print("❌ NO INTERNET: $endpoint");
+    } on SocketException catch (e) {
+      // The reason (e.g. "Failed host lookup", "Network is unreachable") tells offline from DNS problems.
+      print("❌ NO INTERNET: $endpoint ($e)");
       GlobalErrorHandler.showNoInternet();
       throw const ApiRequestException(
         "No internet connection. Please try again.",
@@ -185,8 +188,9 @@ class ApiClient {
       print("📥 STATUS CODE: ${response.statusCode}");
 
       return _handleResponse(response);
-    } on SocketException {
-      print("❌ NO INTERNET: $endpoint");
+    } on SocketException catch (e) {
+      // The reason (e.g. "Failed host lookup", "Network is unreachable") tells offline from DNS problems.
+      print("❌ NO INTERNET: $endpoint ($e)");
       GlobalErrorHandler.showNoInternet();
       throw const ApiRequestException(
         "No internet connection. Please try again.",
@@ -228,8 +232,9 @@ class ApiClient {
         response,
         suppressErrorDialog: suppressErrorDialog,
       );
-    } on SocketException {
-      print("❌ NO INTERNET: $endpoint");
+    } on SocketException catch (e) {
+      // The reason (e.g. "Failed host lookup", "Network is unreachable") tells offline from DNS problems.
+      print("❌ NO INTERNET: $endpoint ($e)");
       if (!suppressErrorDialog) GlobalErrorHandler.showNoInternet();
       throw const ApiRequestException(
         "No internet connection. Please try again.",
@@ -267,8 +272,9 @@ class ApiClient {
         response,
         suppressErrorDialog: suppressErrorDialog,
       );
-    } on SocketException {
-      print("❌ NO INTERNET: $endpoint");
+    } on SocketException catch (e) {
+      // The reason (e.g. "Failed host lookup", "Network is unreachable") tells offline from DNS problems.
+      print("❌ NO INTERNET: $endpoint ($e)");
       if (!suppressErrorDialog) GlobalErrorHandler.showNoInternet();
       throw const ApiRequestException(
         "No internet connection. Please try again.",
