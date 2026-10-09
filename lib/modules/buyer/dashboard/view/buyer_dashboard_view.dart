@@ -38,10 +38,41 @@ class BuyerDashboardView extends StatelessWidget {
         }
 
         if (controller.isError.value) {
-          return Center(
-            child: Text(
-              "Error: ${controller.errorMessage.value}",
-              style: TextStyle(color: theme.colorScheme.error),
+          return RefreshIndicator(
+            onRefresh: controller.fetchDashboardData,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(24),
+              children: [
+                SizedBox(height: MediaQuery.sizeOf(context).height * .2),
+                Icon(
+                  Icons.cloud_off_outlined,
+                  size: 52,
+                  color: theme.colorScheme.error,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Dashboard could not be loaded',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  controller.errorMessage.value,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 20),
+                Center(
+                  child: FilledButton.icon(
+                    onPressed: controller.fetchDashboardData,
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('Try Again'),
+                  ),
+                ),
+              ],
             ),
           );
         }

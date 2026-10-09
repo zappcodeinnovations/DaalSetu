@@ -9,6 +9,7 @@ class BuyerServices {
     final response = await ApiClient.get(
       endpoint: ApiUrls.buyerDashboard,
       requireAuth: true,
+      suppressErrorDialog: true,
     );
 
     if (response == null || response is! Map<String, dynamic>) {
