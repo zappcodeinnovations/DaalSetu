@@ -11,20 +11,21 @@ class AgroBrokerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Get.put(ThemeController());
+    final themeController = Get.put(ThemeController());
     Get.put(RealtimeNotificationService(), permanent: true);
 
-    return GetMaterialApp(
-      title: 'Daal Setu',
-      debugShowCheckedModeBanner: false,
+    return Obx(
+      () => GetMaterialApp(
+        title: 'Daal Setu',
+        debugShowCheckedModeBanner: false,
 
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
 
-      themeMode: ThemeMode.light,
+        themeMode: themeController.themeMode.value,
 
-      initialRoute: AppRoutes.splash,
-      getPages: AppPages.routes,
+        initialRoute: AppRoutes.splash,
+        getPages: AppPages.routes,
       builder: (context, child) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return Stack(
@@ -47,6 +48,6 @@ class AgroBrokerApp extends StatelessWidget {
           ],
         );
       },
-    );
+    ));
   }
 }
