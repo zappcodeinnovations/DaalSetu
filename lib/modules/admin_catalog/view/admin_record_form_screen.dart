@@ -2,6 +2,9 @@ import 'package:daalsetu/modules/admin_catalog/config/admin_actions.dart';
 import 'package:daalsetu/modules/admin_catalog/config/admin_module_config.dart';
 import 'package:daalsetu/modules/admin_catalog/model/admin_record.dart';
 import 'package:daalsetu/modules/admin_catalog/repository/admin_catalog_repository.dart';
+import 'package:daalsetu/modules/admin_catalog/view/admin_permission_toggle_panel.dart';
+import 'package:daalsetu/modules/admin_catalog/view/admin_roles_screen.dart';
+import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -24,6 +27,7 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
   final filePaths = <String, String>{};
   final optionFutures = <String, Future<List<AdminOption>>>{};
   bool saving = false;
+  bool creatingRole = false;
 
   bool get editing => widget.record != null;
 
@@ -35,8 +39,9 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
   void initState() {
     super.initState();
     for (final field in visibleFields) {
-      if (field.optionsLoader != null)
+      if (field.optionsLoader != null) {
         optionFutures[field.key] = field.optionsLoader!();
+      }
       final current = _initialValue(field);
       if (field.multiSelect) {
         multiValues[field.key] = {
@@ -61,7 +66,7 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
       if (relation is Map) current = relation['id'];
     }
     if (current == null && field.key.endsWith('_ids')) {
-      current = record[field.key.substring(0, field.key.length - 4) + 's'];
+      current = record['${field.key.substring(0, field.key.length - 4)}s'];
     }
     if (current is Map) current = current['id'];
     return current;
@@ -200,6 +205,51 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
   String _label(AdminFieldConfig field) =>
       '${field.label}${field.required ? ' *' : ''}';
 
+  bool _canCreateRole(AdminFieldConfig field) =>
+      widget.config.key == 'salesman' && field.key == 'access_role_ids';
+
+  void _reloadOptions(AdminFieldConfig field) {
+    final loader = field.optionsLoader;
+    if (loader == null) return;
+    setState(() => optionFutures[field.key] = loader());
+  }
+
+  Future<void> _createRole(AdminFieldConfig field) async {
+    if (creatingRole) return;
+    setState(() => creatingRole = true);
+    try {
+      final response = await ApiClient.get(
+        endpoint: '/api/admin/roles/',
+        requireAuth: true,
+      );
+      if (response is! Map) {
+        throw Exception('Role permissions could not be loaded.');
+      }
+      final categories = permissionCategoryList(
+        response['permission_categories'],
+      );
+      if (!mounted) return;
+      final created = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) =>
+              AdminRoleEditorScreen(permissionCategories: categories),
+        ),
+      );
+      if (created == true && mounted) {
+        _reloadOptions(field);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Role created. Select it below for this Sub Admin.'),
+          ),
+        );
+      }
+    } catch (error) {
+      _showError(error.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => creatingRole = false);
+    }
+  }
+
   Widget _field(AdminFieldConfig field) {
     final Widget child;
     if (field.isFile) {
@@ -215,12 +265,30 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
             );
           }
           if (snapshot.hasError) {
-            return InputDecorator(
-              decoration: InputDecoration(
-                labelText: _label(field),
-                errorText: 'Could not load choices',
-              ),
-              child: const SizedBox.shrink(),
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: _label(field),
+                    errorText: 'Could not load choices',
+                  ),
+                  child: const SizedBox.shrink(),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () => _reloadOptions(field),
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Retry'),
+                    ),
+                    if (_canCreateRole(field)) _createRoleButton(field),
+                  ],
+                ),
+              ],
             );
           }
           final options = snapshot.data ?? const <AdminOption>[];
@@ -300,32 +368,64 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
 
   Widget _multiSelect(AdminFieldConfig field, List<AdminOption> options) {
     final selected = multiValues[field.key]!;
-    return InputDecorator(
-      decoration: InputDecoration(
-        labelText: _label(field),
-        border: const OutlineInputBorder(),
-      ),
-      child: options.isEmpty
-          ? const Text('No choices available')
-          : Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: options
-                  .map(
-                    (option) => FilterChip(
-                      label: Text(option.label),
-                      selected: selected.contains(option.value),
-                      onSelected: (on) => setState(
-                        () => on
-                            ? selected.add(option.value)
-                            : selected.remove(option.value),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
+    final roleField = _canCreateRole(field);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        InputDecorator(
+          decoration: InputDecoration(
+            labelText: _label(field),
+            helperText: roleField
+                ? 'Select at least one role for this Sub Admin.'
+                : null,
+            border: const OutlineInputBorder(),
+          ),
+          child: options.isEmpty
+              ? Text(
+                  roleField
+                      ? 'No roles available. Create a role first.'
+                      : 'No choices available',
+                )
+              : Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: options
+                      .map(
+                        (option) => FilterChip(
+                          label: Text(option.label),
+                          selected: selected.contains(option.value),
+                          onSelected: (on) => setState(
+                            () => on
+                                ? selected.add(option.value)
+                                : selected.remove(option.value),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+        ),
+        if (roleField) ...[
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _createRoleButton(field),
+          ),
+        ],
+      ],
     );
   }
+
+  Widget _createRoleButton(AdminFieldConfig field) => OutlinedButton.icon(
+    onPressed: creatingRole ? null : () => _createRole(field),
+    icon: creatingRole
+        ? const SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+        : const Icon(Icons.add_moderator_outlined),
+    label: Text(creatingRole ? 'Opening...' : 'Create New Role'),
+  );
 
   Widget _fileField(AdminFieldConfig field) {
     final path = filePaths[field.key];

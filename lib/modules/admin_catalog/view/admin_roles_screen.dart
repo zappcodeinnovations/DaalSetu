@@ -4,7 +4,9 @@ import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
 
 class AdminRolesScreen extends StatefulWidget {
-  const AdminRolesScreen({super.key});
+  const AdminRolesScreen({super.key, this.showAdminDrawer = true});
+
+  final bool showAdminDrawer;
 
   @override
   State<AdminRolesScreen> createState() => _AdminRolesScreenState();
@@ -87,7 +89,9 @@ class _AdminRolesScreenState extends State<AdminRolesScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    drawer: const AdminDrawer(activeKey: 'roles'),
+    drawer: widget.showAdminDrawer
+        ? const AdminDrawer(activeKey: 'roles')
+        : null,
     appBar: AppBar(title: const Text('Roles')),
     floatingActionButton: FloatingActionButton.extended(
       onPressed: _loading ? null : () => _openEditor(),

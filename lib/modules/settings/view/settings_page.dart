@@ -10,6 +10,7 @@ import '../../../theme/theme_controller.dart';
 import '../../../utils/app_preferences.dart';
 import '../../admin_catalog/view/admin_drawer.dart';
 import '../../admin_catalog/view/admin_module_list_screen.dart';
+import '../../admin_catalog/view/admin_roles_screen.dart';
 import '../../seller/common/seller_ui.dart';
 import '../../../services/seller_services.dart';
 import 'package:daalsetu/theme/app_theme.dart';
@@ -86,6 +87,7 @@ class SettingsScreen extends StatelessWidget {
                         'super_admin',
                         'admin',
                         'seller',
+                        'buyer',
                         'transporter',
                         'both_sellerandbuyer',
                       };
@@ -111,6 +113,21 @@ class SettingsScreen extends StatelessWidget {
                               ),
                             ),
                           ),
+                          _glassDivider(context),
+                          _buildTile(
+                            context,
+                            icon: Icons.badge_outlined,
+                            title: "Roles",
+                            subtitle: "Create and manage Sub Admin roles",
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const AdminRolesScreen(
+                                  showAdminDrawer: false,
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       );
                     },
@@ -120,7 +137,9 @@ class SettingsScreen extends StatelessWidget {
                     future: AppPreferences.getRole(),
                     builder: (context, snapshot) {
                       const partyRoles = {'seller', 'buyer', 'transporter', 'both_sellerandbuyer'};
-                      if (!partyRoles.contains(snapshot.data)) return const SizedBox.shrink();
+                      if (!partyRoles.contains(snapshot.data)) {
+                        return const SizedBox.shrink();
+                      }
                       return Column(
                         children: [
                           _glassDivider(context),
@@ -135,7 +154,9 @@ class SettingsScreen extends StatelessWidget {
                                 "Send your KYC to the admin for review again?",
                                 confirmText: "Send Request",
                               );
-                              if (ok) await SellerUi.run(SellerServices.requestKycApproval);
+                              if (ok) {
+                                await SellerUi.run(SellerServices.requestKycApproval);
+                              }
                             },
                           ),
                         ],
