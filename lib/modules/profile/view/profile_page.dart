@@ -1,11 +1,16 @@
+import 'dart:io';
+
 import 'package:iconly/iconly.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_theme.dart';
 import '../../../services/buyer_services.dart';
+import '../../../utils/app_preferences.dart';
 import '../controller/profile_controller.dart';
 import '../model/profile_model.dart';
 
@@ -147,7 +152,6 @@ class ProfileScreen extends StatelessWidget {
                 _buildDocumentRow(
                   context,
                   title: "PAN Card",
-                  subtitle: "Verified • PDF (1.2 MB)",
                   iconColor: accentGreen,
                   iconText: "PAN",
                   documentUrl: user.panImage,
@@ -156,7 +160,6 @@ class ProfileScreen extends StatelessWidget {
                 _buildDocumentRow(
                   context,
                   title: "GST Certificate",
-                  subtitle: "Verified • JPG (2.4 MB)",
                   iconColor: accentBlue,
                   iconText: "GST",
                   documentUrl: user.gstImage,
@@ -165,7 +168,6 @@ class ProfileScreen extends StatelessWidget {
                 _buildDocumentRow(
                   context,
                   title: "Aadhaar Card",
-                  subtitle: "Uploaded | Document",
                   iconColor: const Color(0xFF8B5CF6),
                   iconText: "ID",
                   documentUrl: user.aadhaarImage,
@@ -630,7 +632,6 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildDocumentRow(
     BuildContext context, {
     required String title,
-    required String subtitle,
     required Color iconColor,
     required String iconText,
     required String documentUrl,
@@ -739,21 +740,12 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                // Using RichText to make 'Verified' green and the rest grey
-                RichText(
-                  text: TextSpan(
-                    text: subtitle.split(' • ')[0],
-                    style: TextStyle(
-                      color: accentGreen,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: " • ${subtitle.split(' • ')[1]}",
-                        style: TextStyle(color: textLight, fontSize: 11),
-                      ),
-                    ],
+                Text(
+                  hasDocument ? 'Uploaded • Tap View to open' : 'Not uploaded',
+                  style: TextStyle(
+                    color: hasDocument ? accentGreen : textLight,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -819,16 +811,55 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Future<void> _openDocument(String url, {required bool inApp}) async {
-    final opened = await launchUrl(
-      Uri.parse(url),
-      mode: inApp
-          ? LaunchMode.inAppBrowserView
-          : LaunchMode.externalApplication,
-    );
-    if (!opened) {
+    try {
+      final token = await AppPreferences.getAccessToken();
+      final response = await http.get(
+        Uri.parse(url),
+        headers: token == null || token.isEmpty
+            ? const {}
+            : {'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw Exception(
+          'Document could not be downloaded (${response.statusCode}).',
+        );
+      }
+
+      final uri = Uri.parse(url);
+      var fileName = uri.pathSegments.isEmpty
+          ? 'profile_document'
+          : uri.pathSegments.last;
+      fileName = fileName.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+      if (!fileName.contains('.')) {
+        final contentType = response.headers['content-type'] ?? '';
+        fileName += contentType.contains('pdf') ? '.pdf' : '.jpg';
+      }
+      final directory = inApp
+          ? await getTemporaryDirectory()
+          : await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/$fileName');
+      await file.writeAsBytes(response.bodyBytes, flush: true);
+
+      if (inApp) {
+        final result = await OpenFilex.open(file.path);
+        if (result.type != ResultType.done) {
+          throw Exception(
+            result.message.isEmpty
+                ? 'No app is available to open this document.'
+                : result.message,
+          );
+        }
+      } else {
+        Get.snackbar(
+          'Document downloaded',
+          'Saved to ${file.path}',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    } catch (error) {
       Get.snackbar(
         "Error",
-        "Unable to open document",
+        error.toString().replaceFirst('Exception: ', ''),
         snackPosition: SnackPosition.BOTTOM,
       );
     }

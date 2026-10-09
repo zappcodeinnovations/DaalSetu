@@ -27,6 +27,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _dobController;
   late TextEditingController _panController;
   late TextEditingController _gstController;
+  late String _originalPan;
+  late String _originalGst;
   final ImagePicker _picker = ImagePicker();
   XFile? _profileImage;
   XFile? _panDocument;
@@ -56,6 +58,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _dobController = TextEditingController(text: user?.dob ?? '');
     _panController = TextEditingController(text: user?.panNumber ?? '');
     _gstController = TextEditingController(text: user?.gstNumber ?? '');
+    _originalPan = (user?.panNumber ?? '').trim().toUpperCase();
+    _originalGst = (user?.gstNumber ?? '').trim().toUpperCase();
   }
 
   @override
@@ -141,12 +145,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       data['dob'] = _dobController.text.trim();
     }
     final pan = _panController.text.trim().toUpperCase();
-    if (pan.isNotEmpty) {
+    if (pan.isNotEmpty && pan != _originalPan) {
       data['pan_number'] = pan;
     }
 
     final gst = _gstController.text.trim().toUpperCase();
-    if (gst.isNotEmpty) data['gst_number'] = gst;
+    if (gst.isNotEmpty && gst != _originalGst) data['gst_number'] = gst;
 
     final files = <String, String>{
       if (_profileImage != null) 'profile_image': _profileImage!.path,

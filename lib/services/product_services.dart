@@ -275,9 +275,7 @@ class ProductService {
         apiMode = 'reduce';
       }
 
-      final body = <String, dynamic>{
-        'mode': apiMode,
-      };
+      final body = <String, dynamic>{'mode': apiMode};
 
       if (quantity.isNotEmpty) body['quantity'] = quantity;
       if (bags.isNotEmpty) body['bag_count'] = bags;
@@ -302,7 +300,9 @@ class ProductService {
   /// ===============================
   /// OFFER INTERESTS & APPROVAL
   /// ===============================
-  static Future<List<OfferInterestModel>> getOfferInterests(int productId) async {
+  static Future<List<OfferInterestModel>> getOfferInterests(
+    int productId,
+  ) async {
     try {
       final response = await ApiClient.get(
         endpoint: "/api/offers/$productId/interests/",
@@ -313,7 +313,8 @@ class ProductService {
       if (response is List) {
         data = response;
       } else if (response is Map) {
-        final extracted = response['results'] ??
+        final extracted =
+            response['results'] ??
             response['data'] ??
             response['interests'] ??
             response['interest_list'];
@@ -327,7 +328,10 @@ class ProductService {
       }
 
       final interests = data
-          .map((item) => OfferInterestModel.fromJson(Map<String, dynamic>.from(item)))
+          .map(
+            (item) =>
+                OfferInterestModel.fromJson(Map<String, dynamic>.from(item)),
+          )
           .toList();
 
       return interests;
@@ -355,25 +359,12 @@ class ProductService {
     };
     try {
       await ApiClient.post(
-        endpoint: "/api/products/$productId/confirm-deal/",
+        endpoint: ApiUrls.offerConfirmDeal(productId),
         requireAuth: true,
         body: body,
+        suppressErrorDialog: true,
       );
     } catch (e) {
-      if (e.toString().contains("404") || e.toString().contains("Not Found")) {
-        try {
-          await ApiClient.post(
-            endpoint: ApiUrls.offerConfirmDeal(productId),
-            requireAuth: true,
-            body: body,
-          );
-          return;
-        } catch (_) {
-          // Preserve the fallback endpoint's validation message (for example,
-          // when the selected sub-admin is outside the seller's branch).
-          rethrow;
-        }
-      }
       print("❌ confirmOfferDeal Error: $e");
       rethrow;
     }

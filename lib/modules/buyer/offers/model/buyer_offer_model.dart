@@ -22,7 +22,13 @@ class BuyerOfferModel {
   final String? imageUrl;
   final String? interestCount;
   final String? sellerName;
-  
+  final bool canEditInterest;
+  final bool canCancelInterest;
+  final bool canOpenNegotiation;
+  final bool canBuyerAccept;
+  final bool canBuyerReject;
+  final bool hasSellerProposal;
+
   // Custom fields for UI mapping based on different API formats
   final String? displayTitle;
   final String? displayStatus;
@@ -55,6 +61,12 @@ class BuyerOfferModel {
     this.imageUrl,
     this.interestCount,
     this.sellerName,
+    this.canEditInterest = false,
+    this.canCancelInterest = false,
+    this.canOpenNegotiation = false,
+    this.canBuyerAccept = false,
+    this.canBuyerReject = false,
+    this.hasSellerProposal = false,
     this.displayTitle,
     this.displayStatus,
     this.displayQuantity,
@@ -64,12 +76,16 @@ class BuyerOfferModel {
   });
 
   factory BuyerOfferModel.fromJson(dynamic raw) {
-    final Map<String, dynamic> json = (raw is Map) ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+    final Map<String, dynamic> json = (raw is Map)
+        ? Map<String, dynamic>.from(raw)
+        : <String, dynamic>{};
 
     String cleanMapString(String s) {
       if (s.startsWith('{') && s.endsWith('}')) {
         // Try regex match for "name": "..." or name: ...
-        final nameMatch = RegExp(r'''(?:['"]?name['"]?|['"]?title['"]?|['"]?brand_name['"]?|['"]?category_name['"]?)\s*:\s*['"]?([^,'"}]+)['"]?''').firstMatch(s);
+        final nameMatch = RegExp(
+          r'''(?:['"]?name['"]?|['"]?title['"]?|['"]?brand_name['"]?|['"]?category_name['"]?)\s*:\s*['"]?([^,'"}]+)['"]?''',
+        ).firstMatch(s);
         if (nameMatch != null) {
           final val = nameMatch.group(1)?.trim();
           if (val != null && val.isNotEmpty && val != 'null') {
@@ -85,7 +101,8 @@ class BuyerOfferModel {
       for (final c in candidates) {
         if (c != null) {
           if (c is Map) {
-            final mapName = c['name'] ??
+            final mapName =
+                c['name'] ??
                 c['title'] ??
                 c['label'] ??
                 c['brand_name'] ??
@@ -117,7 +134,11 @@ class BuyerOfferModel {
       for (final c in candidates) {
         if (c != null) {
           final s = c.toString().trim();
-          if (s.isNotEmpty && s != 'null' && s != 'N/A' && s != 'na' && s != 'None') {
+          if (s.isNotEmpty &&
+              s != 'null' &&
+              s != 'N/A' &&
+              s != 'na' &&
+              s != 'None') {
             final cleaned = s.replaceAll(RegExp(r'[^\d.]'), '');
             final numVal = num.tryParse(cleaned);
             if (numVal != null) {
@@ -175,7 +196,9 @@ class BuyerOfferModel {
       parsedInterestId = json['interest'];
     }
 
-    final rootId = json['id'] != null ? int.tryParse(json['id'].toString()) : null;
+    final rootId = json['id'] != null
+        ? int.tryParse(json['id'].toString())
+        : null;
 
     if (parsedProductId == null && parsedInterestId == null) {
       parsedProductId = rootId;
@@ -207,18 +230,36 @@ class BuyerOfferModel {
       json['unique_id'],
       json['contract_id'],
       json['transaction_id'],
-      if (json['seller'] is Map) (json['seller']['seller_mapped_id'] ?? json['seller']['code'] ?? json['seller']['unique_id']),
-      if (json['product'] is Map) (json['product']['code'] ?? json['product']['seller_mapped_id'] ?? json['product']['product_code']),
-      if (json['offer'] is Map) (json['offer']['code'] ?? json['offer']['seller_mapped_id'] ?? json['offer']['offer_code']),
+      if (json['seller'] is Map)
+        (json['seller']['seller_mapped_id'] ??
+            json['seller']['code'] ??
+            json['seller']['unique_id']),
+      if (json['product'] is Map)
+        (json['product']['code'] ??
+            json['product']['seller_mapped_id'] ??
+            json['product']['product_code']),
+      if (json['offer'] is Map)
+        (json['offer']['code'] ??
+            json['offer']['seller_mapped_id'] ??
+            json['offer']['offer_code']),
     ]);
 
     final rawBrand = pickStr([
       json['brand_name'],
       json['brand'],
       json['product_brand'],
-      if (json['brand'] is Map) (json['brand']['name'] ?? json['brand']['brand_name']),
-      if (json['offer'] is Map) (json['offer']['brand_name'] ?? (json['offer']['brand'] is Map ? json['offer']['brand']['name'] : json['offer']['brand'])),
-      if (json['product'] is Map) (json['product']['brand_name'] ?? (json['product']['brand'] is Map ? json['product']['brand']['name'] : json['product']['brand'])),
+      if (json['brand'] is Map)
+        (json['brand']['name'] ?? json['brand']['brand_name']),
+      if (json['offer'] is Map)
+        (json['offer']['brand_name'] ??
+            (json['offer']['brand'] is Map
+                ? json['offer']['brand']['name']
+                : json['offer']['brand'])),
+      if (json['product'] is Map)
+        (json['product']['brand_name'] ??
+            (json['product']['brand'] is Map
+                ? json['product']['brand']['name']
+                : json['product']['brand'])),
     ]);
 
     final rawCategory = pickStr([
@@ -228,9 +269,18 @@ class BuyerOfferModel {
       json['commodity'],
       json['product_category'],
       json['product_category_name'],
-      if (json['category'] is Map) (json['category']['name'] ?? json['category']['category_name']),
-      if (json['offer'] is Map) (json['offer']['category_name'] ?? (json['offer']['category'] is Map ? json['offer']['category']['name'] : json['offer']['category'])),
-      if (json['product'] is Map) (json['product']['category_name'] ?? (json['product']['category'] is Map ? json['product']['category']['name'] : json['product']['category'])),
+      if (json['category'] is Map)
+        (json['category']['name'] ?? json['category']['category_name']),
+      if (json['offer'] is Map)
+        (json['offer']['category_name'] ??
+            (json['offer']['category'] is Map
+                ? json['offer']['category']['name']
+                : json['offer']['category'])),
+      if (json['product'] is Map)
+        (json['product']['category_name'] ??
+            (json['product']['category'] is Map
+                ? json['product']['category']['name']
+                : json['product']['category'])),
     ]);
 
     final rawStatus = pickStr([
@@ -242,8 +292,29 @@ class BuyerOfferModel {
       json['status_label'],
       json['status_code'],
       if (json['offer'] is Map) json['offer']['status'],
-      if (json['product'] is Map) (json['product']['status'] ?? json['product']['stock_status']),
+      if (json['product'] is Map)
+        (json['product']['status'] ?? json['product']['stock_status']),
     ]);
+    final normalizedStatus = rawStatus.trim().toLowerCase();
+
+    bool boolValue(String key, {required bool fallback}) {
+      final value = json[key];
+      if (value is bool) return value;
+      if (value is num) return value != 0;
+      if (value is String) {
+        final normalized = value.trim().toLowerCase();
+        if (const {'true', '1', 'yes'}.contains(normalized)) return true;
+        if (const {'false', '0', 'no'}.contains(normalized)) return false;
+      }
+      return fallback;
+    }
+
+    final terminal = const {
+      'deal_confirmed',
+      'rejected',
+      'cancelled',
+    }.contains(normalizedStatus);
+    final defaultBuyerDecision = normalizedStatus == 'seller_confirmed';
 
     final rawUnit = pickStr([
       json['quantity_unit'],
@@ -373,9 +444,21 @@ class BuyerOfferModel {
       json['deal_amount'],
       json['seller_snapshot_amount'],
       json['buyer_offered_amount'],
-      if (json['offer'] is Map) (json['offer']['price'] ?? json['offer']['amount'] ?? json['offer']['offered_amount'] ?? json['offer']['offer_price'] ?? json['offer']['latest_offered_amount']),
-      if (json['product'] is Map) (json['product']['price'] ?? json['product']['amount'] ?? json['product']['offer_price']),
-      if (json['rfq'] is Map) (json['rfq']['target_price'] ?? json['rfq']['price'] ?? json['rfq']['amount'] ?? json['rfq']['requested_amount']),
+      if (json['offer'] is Map)
+        (json['offer']['price'] ??
+            json['offer']['amount'] ??
+            json['offer']['offered_amount'] ??
+            json['offer']['offer_price'] ??
+            json['offer']['latest_offered_amount']),
+      if (json['product'] is Map)
+        (json['product']['price'] ??
+            json['product']['amount'] ??
+            json['product']['offer_price']),
+      if (json['rfq'] is Map)
+        (json['rfq']['target_price'] ??
+            json['rfq']['price'] ??
+            json['rfq']['amount'] ??
+            json['rfq']['requested_amount']),
     ]);
 
     final rawBags = pickNumStr([
@@ -385,8 +468,12 @@ class BuyerOfferModel {
       json['bags'],
       json['seller_snapshot_bag_count'],
       json['buyer_required_bag_count'],
-      if (json['offer'] is Map) (json['offer']['bag_count'] ?? json['offer']['bags']),
-      if (json['product'] is Map) (json['product']['remaining_bag_count'] ?? json['product']['bag_count'] ?? json['product']['original_bag_count']),
+      if (json['offer'] is Map)
+        (json['offer']['bag_count'] ?? json['offer']['bags']),
+      if (json['product'] is Map)
+        (json['product']['remaining_bag_count'] ??
+            json['product']['bag_count'] ??
+            json['product']['original_bag_count']),
     ]);
 
     final rawPacking = pickNumStr([
@@ -394,14 +481,24 @@ class BuyerOfferModel {
       json['packing'],
       json['seller_snapshot_packing_weight_kg'],
       json['buyer_packing_weight_kg'],
-      if (json['offer'] is Map) (json['offer']['packing_weight_kg'] ?? json['offer']['packing']),
-      if (json['product'] is Map) (json['product']['packing_weight_kg'] ?? json['product']['packing']),
+      if (json['offer'] is Map)
+        (json['offer']['packing_weight_kg'] ?? json['offer']['packing']),
+      if (json['product'] is Map)
+        (json['product']['packing_weight_kg'] ?? json['product']['packing']),
     ]);
 
     // Parse loading_location e.g. "2026-10-10 -> 2026-10-31" as fallback dates
     String? fallbackFromDate;
     String? fallbackToDate;
-    final loadingLocStr = (json['loading_location'] ?? (json['offer'] is Map ? json['offer']['loading_location'] : null) ?? (json['product'] is Map ? json['product']['loading_location'] : null))?.toString();
+    final loadingLocStr =
+        (json['loading_location'] ??
+                (json['offer'] is Map
+                    ? json['offer']['loading_location']
+                    : null) ??
+                (json['product'] is Map
+                    ? json['product']['loading_location']
+                    : null))
+            ?.toString();
     if (loadingLocStr != null && loadingLocStr.contains('->')) {
       final parts = loadingLocStr.split('->');
       if (parts.length >= 2) {
@@ -410,42 +507,64 @@ class BuyerOfferModel {
       }
     }
 
-    final rawPickupFrom = formatDateDisplay(pickStr([
-      json['loading_from'],
-      json['pickup_from'],
-      json['loading_date'],
-      json['pickup_date'],
-      json['from_date'],
-      if (json['offer'] is Map) (json['offer']['loading_from'] ?? json['offer']['pickup_from']),
-      if (json['product'] is Map) (json['product']['loading_from'] ?? json['product']['pickup_from']),
-      fallbackFromDate,
-    ]));
+    final rawPickupFrom = formatDateDisplay(
+      pickStr([
+        json['loading_from'],
+        json['pickup_from'],
+        json['loading_date'],
+        json['pickup_date'],
+        json['from_date'],
+        if (json['offer'] is Map)
+          (json['offer']['loading_from'] ?? json['offer']['pickup_from']),
+        if (json['product'] is Map)
+          (json['product']['loading_from'] ?? json['product']['pickup_from']),
+        fallbackFromDate,
+      ]),
+    );
 
-    final rawPickupTo = formatDateDisplay(pickStr([
-      json['loading_to'],
-      json['pickup_to'],
-      json['delivery_date'],
-      json['to_date'],
-      if (json['offer'] is Map) (json['offer']['loading_to'] ?? json['offer']['pickup_to'] ?? json['offer']['delivery_date']),
-      if (json['product'] is Map) (json['product']['loading_to'] ?? json['product']['pickup_to'] ?? json['product']['delivery_date']),
-      fallbackToDate,
-    ]));
+    final rawPickupTo = formatDateDisplay(
+      pickStr([
+        json['loading_to'],
+        json['pickup_to'],
+        json['delivery_date'],
+        json['to_date'],
+        if (json['offer'] is Map)
+          (json['offer']['loading_to'] ??
+              json['offer']['pickup_to'] ??
+              json['offer']['delivery_date']),
+        if (json['product'] is Map)
+          (json['product']['loading_to'] ??
+              json['product']['pickup_to'] ??
+              json['product']['delivery_date']),
+        fallbackToDate,
+      ]),
+    );
 
-    final rawExpiry = formatDateDisplay(pickStr([
-      json['deal_expiry_datetime'],
-      json['expiry_date'],
-      json['expiry_datetime'],
-      if (json['product'] is Map) json['product']['deal_expiry_datetime'],
-    ]));
+    final rawExpiry = formatDateDisplay(
+      pickStr([
+        json['deal_expiry_datetime'],
+        json['expiry_date'],
+        json['expiry_datetime'],
+        if (json['product'] is Map) json['product']['deal_expiry_datetime'],
+      ]),
+    );
 
     String rawLocationCandidate = pickStr([
       json['visible_branch_labels'],
       json['destination'],
       json['city'],
       json['delivery_location'],
-      if (json['location'] is String && !json['location'].toString().contains('T') && !json['location'].toString().contains('->')) json['location'],
-      if (json['branch'] is Map) (json['branch']['location_name'] ?? json['branch']['city'] ?? json['branch']['name']),
-      if (json['loading_location'] != null && !json['loading_location'].toString().contains('->') && !json['loading_location'].toString().contains('2026'))
+      if (json['location'] is String &&
+          !json['location'].toString().contains('T') &&
+          !json['location'].toString().contains('->'))
+        json['location'],
+      if (json['branch'] is Map)
+        (json['branch']['location_name'] ??
+            json['branch']['city'] ??
+            json['branch']['name']),
+      if (json['loading_location'] != null &&
+          !json['loading_location'].toString().contains('->') &&
+          !json['loading_location'].toString().contains('2026'))
         json['loading_location'],
     ]);
 
@@ -454,11 +573,22 @@ class BuyerOfferModel {
       json['image'],
       json['image_url'],
       if (json['images'] is List && json['images'].isNotEmpty)
-        (json['images'][0] is Map ? (json['images'][0]['image'] ?? json['images'][0]['image_url']) : json['images'][0]),
+        (json['images'][0] is Map
+            ? (json['images'][0]['image'] ?? json['images'][0]['image_url'])
+            : json['images'][0]),
       if (json['product_images'] is List && json['product_images'].isNotEmpty)
-        (json['product_images'][0] is Map ? (json['product_images'][0]['image'] ?? json['product_images'][0]['image_url']) : json['product_images'][0]),
-      if (json['offer'] is Map) (json['offer']['image'] ?? json['offer']['primary_image_url'] ?? json['offer']['image_url']),
-      if (json['product'] is Map) (json['product']['image'] ?? json['product']['primary_image_url'] ?? json['product']['image_url']),
+        (json['product_images'][0] is Map
+            ? (json['product_images'][0]['image'] ??
+                  json['product_images'][0]['image_url'])
+            : json['product_images'][0]),
+      if (json['offer'] is Map)
+        (json['offer']['image'] ??
+            json['offer']['primary_image_url'] ??
+            json['offer']['image_url']),
+      if (json['product'] is Map)
+        (json['product']['image'] ??
+            json['product']['primary_image_url'] ??
+            json['product']['image_url']),
     ]);
 
     final rawInterests = pickNumStr([
@@ -468,33 +598,45 @@ class BuyerOfferModel {
       json['total_interests'],
       if (json['interests'] is List) json['interests'].length.toString(),
       if (json['offer'] is Map) json['offer']['interest_count'],
-      if (json['product'] is Map) (json['product']['interest_count'] ?? json['product']['interested_buyers_count']),
+      if (json['product'] is Map)
+        (json['product']['interest_count'] ??
+            json['product']['interested_buyers_count']),
     ], fallback: '0');
 
     final rawSellerName = pickStr([
       json['seller_name'],
       json['seller_full_name'],
-      if (json['seller'] is Map) (json['seller']['full_name'] ?? json['seller']['username'] ?? json['seller']['name']),
-      if (json['company'] is Map) (json['company']['legal_name'] ?? json['company']['trade_name']),
+      if (json['seller'] is Map)
+        (json['seller']['full_name'] ??
+            json['seller']['username'] ??
+            json['seller']['name']),
+      if (json['company'] is Map)
+        (json['company']['legal_name'] ?? json['company']['trade_name']),
     ]);
 
-    final isRfqItem = json.containsKey('rfq_id') ||
+    final isRfqItem =
+        json.containsKey('rfq_id') ||
         json.containsKey('required_quantity') ||
         json.containsKey('target_price') ||
         json.containsKey('visible_branches') ||
-        (json['status']?.toString().toLowerCase() == 'open' && json.containsKey('commodity'));
+        (json['status']?.toString().toLowerCase() == 'open' &&
+            json.containsKey('commodity'));
 
     // Format display price e.g. "₹60.00/TON"
     String formattedPrice = '';
     if (rawPrice.isNotEmpty) {
       final cleanP = rawPrice.replaceAll('₹', '').trim();
-      final unitStr = rawAmountUnit.isNotEmpty ? rawAmountUnit.toUpperCase() : rawUnit.toUpperCase();
+      final unitStr = rawAmountUnit.isNotEmpty
+          ? rawAmountUnit.toUpperCase()
+          : rawUnit.toUpperCase();
       formattedPrice = '₹$cleanP/$unitStr';
     }
 
     // Format display quantity e.g. "600.000 QTL"
     String formattedQuantity = '';
-    final qtyVal = rawAvailableQuantity.isNotEmpty ? rawAvailableQuantity : rawRequestedQuantity;
+    final qtyVal = rawAvailableQuantity.isNotEmpty
+        ? rawAvailableQuantity
+        : rawRequestedQuantity;
     if (qtyVal.isNotEmpty) {
       final unitUpper = rawUnit.toUpperCase();
       if (qtyVal.toUpperCase().contains(unitUpper)) {
@@ -524,8 +666,12 @@ class BuyerOfferModel {
       code: rawCode,
       brand: rawBrand,
       category: rawCategory,
-      availableQuantity: rawAvailableQuantity.isNotEmpty ? rawAvailableQuantity : rawRequestedQuantity,
-      requestedQuantity: rawRequestedQuantity.isNotEmpty ? rawRequestedQuantity : rawAvailableQuantity,
+      availableQuantity: rawAvailableQuantity.isNotEmpty
+          ? rawAvailableQuantity
+          : rawRequestedQuantity,
+      requestedQuantity: rawRequestedQuantity.isNotEmpty
+          ? rawRequestedQuantity
+          : rawAvailableQuantity,
       quantityUnit: rawUnit,
       requestedAmount: rawPrice,
       amountUnit: rawAmountUnit,
@@ -535,10 +681,37 @@ class BuyerOfferModel {
       pickupTo: rawPickupTo,
       expiryDate: rawExpiry,
       status: rawStatus,
-      createdAt: json['created_at']?.toString() ?? json['updated_at']?.toString() ?? '',
+      createdAt:
+          json['created_at']?.toString() ??
+          json['updated_at']?.toString() ??
+          '',
       imageUrl: rawImage,
       interestCount: rawInterests,
       sellerName: rawSellerName,
+      canEditInterest: boolValue(
+        'can_edit',
+        fallback: normalizedStatus == 'interested',
+      ),
+      canCancelInterest: boolValue(
+        'can_cancel',
+        fallback: normalizedStatus == 'interested',
+      ),
+      canOpenNegotiation: boolValue(
+        'can_open_negotiation',
+        fallback: !terminal && defaultBuyerDecision,
+      ),
+      canBuyerAccept: boolValue(
+        'can_buyer_accept',
+        fallback: defaultBuyerDecision,
+      ),
+      canBuyerReject: boolValue(
+        'can_buyer_reject',
+        fallback: defaultBuyerDecision,
+      ),
+      hasSellerProposal: boolValue(
+        'has_seller_proposal',
+        fallback: defaultBuyerDecision,
+      ),
       location: rawLocationCandidate,
       displayTitle: rawTitle,
       displayStatus: formattedStatus,
@@ -550,12 +723,17 @@ class BuyerOfferModel {
 
   bool get isConfirmed {
     final s = (displayStatus ?? status ?? '').toString().toLowerCase();
-    return s.contains('confirm') || s.contains('deal_confirmed') || s.contains('approved');
+    return s.contains('confirm') ||
+        s.contains('deal_confirmed') ||
+        s.contains('approved');
   }
 
   bool get isRejected {
     final s = (displayStatus ?? status ?? '').toString().toLowerCase();
-    return s.contains('reject') || s.contains('cancel') || s.contains('closed') || s.contains('expire');
+    return s.contains('reject') ||
+        s.contains('cancel') ||
+        s.contains('closed') ||
+        s.contains('expire');
   }
 
   bool get isActionable => !isConfirmed && !isRejected;

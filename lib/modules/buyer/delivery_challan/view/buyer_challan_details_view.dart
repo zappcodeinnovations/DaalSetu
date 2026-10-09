@@ -49,7 +49,7 @@ class BuyerChallanDetailsView extends StatelessWidget {
               _buildStatusBanner(status),
               const SizedBox(height: 24),
               
-              _sectionTitle("Shipment Information"),
+              _sectionTitle("Challan Information"),
               _detailCard([
                 _infoRow("Challan ID", "#${data['challan_number'] ?? data['id']}"),
                 _infoRow("Truck Number", data['truck_number'] ?? "N/A"),

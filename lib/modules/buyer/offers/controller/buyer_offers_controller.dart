@@ -35,12 +35,15 @@ class BuyerOffersController extends GetxController {
     } else {
       final q = searchQuery.value.trim().toLowerCase();
       offersList.assignAll(
-        allOffersList.where((o) =>
-          (o.displayTitle?.toLowerCase().contains(q) ?? false) ||
-          (o.displayQuantity?.toLowerCase().contains(q) ?? false) ||
-          (o.displayPrice?.toLowerCase().contains(q) ?? false) ||
-          (o.displayStatus?.toLowerCase().contains(q) ?? false)
-        ).toList(),
+        allOffersList
+            .where(
+              (o) =>
+                  (o.displayTitle?.toLowerCase().contains(q) ?? false) ||
+                  (o.displayQuantity?.toLowerCase().contains(q) ?? false) ||
+                  (o.displayPrice?.toLowerCase().contains(q) ?? false) ||
+                  (o.displayStatus?.toLowerCase().contains(q) ?? false),
+            )
+            .toList(),
       );
     }
   }
@@ -74,14 +77,22 @@ class BuyerOffersController extends GetxController {
           break;
       }
 
-      print("📦 [BUYER OFFERS CONTROLLER] offerType: '$offerType' | fetched raw items count: ${data.length}");
+      print(
+        "📦 [BUYER OFFERS CONTROLLER] offerType: '$offerType' | fetched raw items count: ${data.length}",
+      );
       final mapped = data.map((e) => BuyerOfferModel.fromJson(e)).toList();
       allOffersList.assignAll(mapped);
       _applyFilter();
     } catch (e) {
       isError(true);
-      final raw = e.toString().replaceAll("Exception: ", "").replaceAll("Error: ", "").trim();
-      errorMessage(raw.isNotEmpty ? raw : "Unable to load offers. Please try again.");
+      final raw = e
+          .toString()
+          .replaceAll("Exception: ", "")
+          .replaceAll("Error: ", "")
+          .trim();
+      errorMessage(
+        raw.isNotEmpty ? raw : "Unable to load offers. Please try again.",
+      );
     } finally {
       isLoading(false);
     }
@@ -97,9 +108,14 @@ class BuyerOffersController extends GetxController {
     String? condition,
     int? interestId,
   }) async {
-    print("⭐ [BUYER SUBMIT INTEREST TRIGGERED] Product ID: $productId | Interest ID: $interestId | Amount: '$amount' | Qty: '$qty' | Date: '$deliveryDate' | To: '$loadingTo' | Condition: '$condition'");
+    print(
+      "⭐ [BUYER SUBMIT INTEREST TRIGGERED] Product ID: $productId | Interest ID: $interestId | Amount: '$amount' | Qty: '$qty' | Date: '$deliveryDate' | To: '$loadingTo' | Condition: '$condition'",
+    );
     if (productId <= 0) {
-      AppSnackbar.showWarning(title: "Notice", message: "Invalid product reference");
+      AppSnackbar.showWarning(
+        title: "Notice",
+        message: "Invalid product reference",
+      );
       return false;
     }
 
@@ -141,10 +157,7 @@ class BuyerOffersController extends GetxController {
         Get.back();
         dialogShown = false;
       }
-      AppSnackbar.showError(
-        title: "Error",
-        message: e.toString(),
-      );
+      AppSnackbar.showError(title: "Error", message: e.toString());
       return false;
     } finally {
       if (dialogShown && (Get.isDialogOpen ?? false)) {
@@ -153,10 +166,20 @@ class BuyerOffersController extends GetxController {
     }
   }
 
-  Future<bool> sendNegotiation(int productId, int interestId, String amount, String qty) async {
-    print("💬 [BUYER COUNTER TRIGGERED] Product ID: $productId | Interest ID: $interestId | Counter Amount: '$amount' | Counter Qty: '$qty'");
+  Future<bool> sendNegotiation(
+    int productId,
+    int interestId,
+    String amount,
+    String qty,
+  ) async {
+    print(
+      "💬 [BUYER COUNTER TRIGGERED] Product ID: $productId | Interest ID: $interestId | Counter Amount: '$amount' | Counter Qty: '$qty'",
+    );
     if (productId <= 0 || interestId <= 0) {
-      AppSnackbar.showWarning(title: "Notice", message: "Invalid offer or interest reference");
+      AppSnackbar.showWarning(
+        title: "Notice",
+        message: "Invalid offer or interest reference",
+      );
       return false;
     }
 
@@ -194,10 +217,7 @@ class BuyerOffersController extends GetxController {
         Get.back();
         dialogShown = false;
       }
-      AppSnackbar.showError(
-        title: "Error",
-        message: e.toString(),
-      );
+      AppSnackbar.showError(title: "Error", message: e.toString());
       return false;
     } finally {
       if (dialogShown && (Get.isDialogOpen ?? false)) {
@@ -206,10 +226,55 @@ class BuyerOffersController extends GetxController {
     }
   }
 
-  Future<void> performAction(String action, int productId, int interestId, String remark) async {
-    print("🚀 [BUYER ACTION TRIGGERED] Action: $action | Product ID: $productId | Interest ID: $interestId | Remark: '$remark'");
+  Future<bool> cancelInterest(int productId, int interestId) async {
     if (productId <= 0 || interestId <= 0) {
-      AppSnackbar.showWarning(title: "Notice", message: "Invalid offer or interest reference. Please refresh and try again.");
+      AppSnackbar.showWarning(
+        title: "Notice",
+        message: "Invalid offer or interest reference.",
+      );
+      return false;
+    }
+
+    try {
+      final response = await BuyerServices.cancelOfferInterest(
+        productId,
+        interestId,
+      );
+      AppSnackbar.showSuccess(
+        title: "Success",
+        message: response['message'] ?? "Interest cancelled successfully",
+      );
+      await fetchOffers();
+      return true;
+    } catch (e) {
+      final message = e
+          .toString()
+          .replaceFirst('Exception: ', '')
+          .replaceFirst('Error: ', '')
+          .trim();
+      AppSnackbar.showError(
+        title: "Error",
+        message: message.isEmpty ? "Could not cancel interest" : message,
+      );
+      return false;
+    }
+  }
+
+  Future<void> performAction(
+    String action,
+    int productId,
+    int interestId,
+    String remark,
+  ) async {
+    print(
+      "🚀 [BUYER ACTION TRIGGERED] Action: $action | Product ID: $productId | Interest ID: $interestId | Remark: '$remark'",
+    );
+    if (productId <= 0 || interestId <= 0) {
+      AppSnackbar.showWarning(
+        title: "Notice",
+        message:
+            "Invalid offer or interest reference. Please refresh and try again.",
+      );
       return;
     }
 
@@ -227,26 +292,42 @@ class BuyerOffersController extends GetxController {
       Map<String, dynamic> response;
       switch (action) {
         case 'confirm':
-          response = await BuyerServices.confirmOffer(productId, interestId, remark);
+          response = await BuyerServices.confirmOffer(
+            productId,
+            interestId,
+            remark,
+          );
           break;
         case 'reject_interest':
-          response = await BuyerServices.rejectInterest(productId, interestId, remark);
+          response = await BuyerServices.rejectInterest(
+            productId,
+            interestId,
+            remark,
+          );
           break;
         case 'approve':
-          response = await BuyerServices.approveOffer(productId, interestId, remark);
+          response = await BuyerServices.approveOffer(
+            productId,
+            interestId,
+            remark,
+          );
           break;
         case 'reject_offer':
-          response = await BuyerServices.rejectOffer(productId, interestId, remark);
+          response = await BuyerServices.rejectOffer(
+            productId,
+            interestId,
+            remark,
+          );
           break;
         default:
           throw Exception("Unknown action");
       }
-      
+
       if (dialogShown && (Get.isDialogOpen ?? false)) {
         Get.back();
         dialogShown = false;
       }
-      
+
       if (response['success'] == true || response['message'] != null) {
         AppSnackbar.showSuccess(
           title: "Success",
@@ -264,10 +345,7 @@ class BuyerOffersController extends GetxController {
         Get.back();
         dialogShown = false;
       }
-      AppSnackbar.showError(
-        title: "Error",
-        message: e.toString(),
-      );
+      AppSnackbar.showError(title: "Error", message: e.toString());
     } finally {
       if (dialogShown && (Get.isDialogOpen ?? false)) {
         Get.back();

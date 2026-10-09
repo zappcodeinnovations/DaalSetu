@@ -9,6 +9,10 @@ class OfferInterestModel {
   final String? condition;
   final String? status;
   final String? createdAt;
+  final bool canSellerAction;
+  final bool canOpenNegotiation;
+  final bool canAdminFinalAction;
+  final bool isReadOnly;
 
   // Convenience getters used by offer_interests_dialog
   int get interestId => id;
@@ -29,10 +33,24 @@ class OfferInterestModel {
     this.condition,
     this.status,
     this.createdAt,
+    this.canSellerAction = false,
+    this.canOpenNegotiation = false,
+    this.canAdminFinalAction = false,
+    this.isReadOnly = false,
     String? transactionId,
   }) : _transactionId = transactionId;
 
   factory OfferInterestModel.fromJson(Map<String, dynamic> json) {
+    bool flag(String key, {bool fallback = false}) {
+      final value = json[key];
+      if (value is bool) return value;
+      if (value is num) return value != 0;
+      final normalized = value?.toString().trim().toLowerCase();
+      if (const {'true', '1', 'yes'}.contains(normalized)) return true;
+      if (const {'false', '0', 'no'}.contains(normalized)) return false;
+      return fallback;
+    }
+
     // API returns interest_id (not id) on the interests endpoint
     final rawId = json['interest_id'] ?? json['id'] ?? 0;
 
@@ -47,12 +65,14 @@ class OfferInterestModel {
     }
 
     // Amount field differs per endpoint: buyer_offered_amount vs offer_price
-    final amount = json['buyer_offered_amount']?.toString() ??
+    final amount =
+        json['buyer_offered_amount']?.toString() ??
         json['offered_amount']?.toString() ??
         json['offer_price']?.toString();
 
     // Quantity field
-    final qty = json['buyer_required_quantity']?.toString() ??
+    final qty =
+        json['buyer_required_quantity']?.toString() ??
         json['required_quantity']?.toString();
 
     return OfferInterestModel(
@@ -66,6 +86,27 @@ class OfferInterestModel {
       condition: json['condition']?.toString(),
       status: json['status']?.toString(),
       createdAt: json['created_at']?.toString(),
+      canSellerAction: flag(
+        'can_seller_action',
+        fallback: json['status']?.toString().toLowerCase() == 'interested',
+      ),
+      canOpenNegotiation: flag(
+        'can_open_negotiation',
+        fallback: !const {
+          'deal_confirmed',
+          'rejected',
+          'cancelled',
+        }.contains(json['status']?.toString().toLowerCase()),
+      ),
+      canAdminFinalAction: flag('can_admin_final_action'),
+      isReadOnly: flag(
+        'is_read_only',
+        fallback: const {
+          'deal_confirmed',
+          'rejected',
+          'cancelled',
+        }.contains(json['status']?.toString().toLowerCase()),
+      ),
       transactionId: json['transaction_id']?.toString(),
     );
   }

@@ -61,7 +61,7 @@ class SellerBranchController extends GetxController {
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
-      fetchBranches();
+      await fetchBranches();
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
       _showError('Invalid Branch Code', e);
@@ -77,6 +77,8 @@ class SellerBranchController extends GetxController {
       final res = await SellerServices.cancelBranchRequest(branchId);
       if (Get.isDialogOpen ?? false) Get.back();
 
+      pendingRequests.removeWhere((item) => item.branchId == branchId);
+      await fetchBranches();
       Get.snackbar(
         "Success",
         res['message'] ?? "Request cancelled successfully",
@@ -84,7 +86,6 @@ class SellerBranchController extends GetxController {
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
-      fetchBranches();
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
       _showError('Could not cancel request', e);
@@ -100,6 +101,10 @@ class SellerBranchController extends GetxController {
       final res = await SellerServices.leaveBranch(branchId);
       if (Get.isDialogOpen ?? false) Get.back();
 
+      myBranches.removeWhere(
+        (item) => item.id == branchId || item.branchId == branchId,
+      );
+      await fetchBranches();
       Get.snackbar(
         "Success",
         res['message'] ?? "Left branch successfully",
@@ -107,7 +112,6 @@ class SellerBranchController extends GetxController {
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
-      fetchBranches();
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
       _showError('Could not leave branch', e);
@@ -141,7 +145,7 @@ class SellerBranchController extends GetxController {
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
-      fetchBranches();
+      await fetchBranches();
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
       _showError('Could not create branch', e);

@@ -94,6 +94,18 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
     final responsible = data['created_by_display'] is Map
         ? Map<String, dynamic>.from(data['created_by_display'] as Map)
         : const <String, dynamic>{};
+    final sellerCompany = data['seller_company'] is Map
+        ? Map<String, dynamic>.from(data['seller_company'] as Map)
+        : const <String, dynamic>{};
+    final buyerCompany = data['buyer_company'] is Map
+        ? Map<String, dynamic>.from(data['buyer_company'] as Map)
+        : const <String, dynamic>{};
+    final sellerInfo = data['seller'] is Map
+        ? Map<String, dynamic>.from(data['seller'] as Map)
+        : const <String, dynamic>{};
+    final buyerInfo = data['buyer'] is Map
+        ? Map<String, dynamic>.from(data['buyer'] as Map)
+        : const <String, dynamic>{};
     final canDispatch = status == 'draft' || status == 'pending';
 
     return RefreshIndicator(
@@ -106,7 +118,7 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
           const SizedBox(height: 14),
           _section(
             icon: Icons.local_shipping_outlined,
-            title: 'Shipment Information',
+            title: 'Challan Information',
             children: [
               _row(
                 'Challan number',
@@ -131,14 +143,19 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
                 'Seller',
                 _show(
                   data['seller_name_display'] ??
+                      sellerCompany['company_name'] ??
+                      sellerCompany['legal_name'] ??
+                      sellerInfo['company_name'] ??
+                      sellerInfo['name'] ??
                       data['seller_name'] ??
-                      data['seller'],
+                      (data['seller'] is String ? data['seller'] : null),
                 ),
               ),
-              _row('Seller GST', _show(data['seller_gst'])),
+              _row('Seller GST', _show(data['seller_gst'] ?? sellerCompany['gst_number'] ?? sellerCompany['gst'] ?? sellerInfo['gst_number'] ?? sellerInfo['gst'])),
+              _row('Seller PAN', _show(data['seller_pan'] ?? sellerCompany['pan_number'] ?? sellerCompany['pan'] ?? sellerInfo['pan_number'] ?? sellerInfo['pan'])),
               _row(
                 'Seller address',
-                _show(data['seller_address']),
+                _show(data['seller_address'] ?? sellerCompany['address_line_1'] ?? sellerCompany['address'] ?? sellerInfo['address_line_1'] ?? sellerInfo['address']),
                 multiline: true,
               ),
               const Divider(height: 22),
@@ -146,14 +163,19 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
                 'Buyer',
                 _show(
                   data['buyer_name_display'] ??
+                      buyerCompany['company_name'] ??
+                      buyerCompany['legal_name'] ??
+                      buyerInfo['company_name'] ??
+                      buyerInfo['name'] ??
                       data['buyer_name'] ??
-                      data['buyer'],
+                      (data['buyer'] is String ? data['buyer'] : null),
                 ),
               ),
-              _row('Buyer GST', _show(data['buyer_gst'])),
+              _row('Buyer GST', _show(data['buyer_gst'] ?? buyerCompany['gst_number'] ?? buyerCompany['gst'] ?? buyerInfo['gst_number'] ?? buyerInfo['gst'])),
+              _row('Buyer PAN', _show(data['buyer_pan'] ?? buyerCompany['pan_number'] ?? buyerCompany['pan'] ?? buyerInfo['pan_number'] ?? buyerInfo['pan'])),
               _row(
                 'Buyer address',
-                _show(data['buyer_address']),
+                _show(data['buyer_address'] ?? buyerCompany['address_line_1'] ?? buyerCompany['address'] ?? buyerInfo['address_line_1'] ?? buyerInfo['address']),
                 multiline: true,
               ),
             ],

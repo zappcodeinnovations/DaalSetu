@@ -1,6 +1,7 @@
 import '../model/category_dashboard_model.dart';
 import '../model/seller_category_model.dart';
 import '../../../../services/seller_services.dart';
+import '../../../../network/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -14,6 +15,7 @@ class SellerCategoryController extends GetxController {
 
   var brandsList = <BrandModel>[].obs;
   var selectedBrandIds = <int>[].obs;
+  var isBrandsLoading = false.obs;
 
   final searchController = TextEditingController();
   final categoryNameController = TextEditingController();
@@ -28,10 +30,7 @@ class SellerCategoryController extends GetxController {
   Future<void> fetchAllData() async {
     try {
       isLoading(true);
-      await Future.wait([
-        fetchDashboard(),
-        fetchTree(),
-      ]);
+      await Future.wait([fetchDashboard(), fetchTree()]);
     } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {
@@ -41,10 +40,17 @@ class SellerCategoryController extends GetxController {
 
   Future<void> fetchBrands() async {
     try {
+      isBrandsLoading.value = true;
       final data = await SellerServices.getBrandsDropdown();
       brandsList.assignAll(data.map((e) => BrandModel.fromJson(e)).toList());
     } catch (e) {
-      print("Error fetching brands: $e");
+      Get.snackbar(
+        "Could not load brands",
+        ApiClient.userFriendlyErrorMessage(e.toString()),
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      isBrandsLoading.value = false;
     }
   }
 
@@ -55,7 +61,9 @@ class SellerCategoryController extends GetxController {
 
   Future<void> fetchTree() async {
     final data = await SellerServices.getCategoriesTree();
-    categoryTree.assignAll(data.map((e) => CategoryTreeModel.fromJson(e)).toList());
+    categoryTree.assignAll(
+      data.map((e) => CategoryTreeModel.fromJson(e)).toList(),
+    );
   }
 
   Future<void> search(String query) async {
@@ -70,7 +78,9 @@ class SellerCategoryController extends GetxController {
     try {
       final data = await SellerServices.searchCategories(cleanQuery);
       if (data.isNotEmpty) {
-        searchResults.assignAll(data.map((e) => CategoryDetailModel.fromJson(e)).toList());
+        searchResults.assignAll(
+          data.map((e) => CategoryDetailModel.fromJson(e)).toList(),
+        );
         return;
       }
     } catch (e) {
@@ -83,26 +93,29 @@ class SellerCategoryController extends GetxController {
       for (final node in nodes) {
         if (node.name.toLowerCase().contains(cleanQuery)) {
           final isNodeActive = node.status.toLowerCase() == 'active';
-          localResults.add(CategoryDetailModel(
-            id: node.id,
-            name: node.name,
-            isActive: isNodeActive,
-            level: node.level,
-            brands: node.brands,
-            path: node.name,
-            status: node.status,
-            childrenCount: node.children.length,
-            fullPath: node.name,
-            isRoot: node.level == 0,
-            isLeaf: node.children.isEmpty,
-            hasChildren: node.children.isNotEmpty,
-          ));
+          localResults.add(
+            CategoryDetailModel(
+              id: node.id,
+              name: node.name,
+              isActive: isNodeActive,
+              level: node.level,
+              brands: node.brands,
+              path: node.name,
+              status: node.status,
+              childrenCount: node.children.length,
+              fullPath: node.name,
+              isRoot: node.level == 0,
+              isLeaf: node.children.isEmpty,
+              hasChildren: node.children.isNotEmpty,
+            ),
+          );
         }
         if (node.children.isNotEmpty) {
           traverse(node.children);
         }
       }
     }
+
     traverse(categoryTree);
     searchResults.assignAll(localResults);
   }
@@ -119,9 +132,9 @@ class SellerCategoryController extends GetxController {
       await SellerServices.createCategory(body);
       categoryNameController.clear();
       selectedBrandIds.clear();
+      await fetchAllData();
       Get.back();
       Get.snackbar("Success", "Category added successfully");
-      fetchAllData();
     } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {
@@ -133,11 +146,14 @@ class SellerCategoryController extends GetxController {
     if (categoryNameController.text.isEmpty) return;
     try {
       isLoading(true);
-      await SellerServices.createSubCategory(parentId, categoryNameController.text.trim());
+      await SellerServices.createSubCategory(
+        parentId,
+        categoryNameController.text.trim(),
+      );
       categoryNameController.clear();
+      await fetchAllData();
       Get.back();
       Get.snackbar("Success", "Sub-category added successfully");
-      fetchAllData();
     } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {
@@ -149,11 +165,14 @@ class SellerCategoryController extends GetxController {
     if (categoryNameController.text.isEmpty) return;
     try {
       isLoading(true);
-      await SellerServices.updateCategory(id, categoryNameController.text.trim());
+      await SellerServices.updateCategory(
+        id,
+        categoryNameController.text.trim(),
+      );
       categoryNameController.clear();
+      await fetchAllData();
       Get.back();
       Get.snackbar("Success", "Category updated successfully");
-      fetchAllData();
     } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {
@@ -182,7 +201,8 @@ class SellerCategoryController extends GetxController {
   void _showForceDeleteConfirm(int id) {
     Get.defaultDialog(
       title: "Confirm Full Delete",
-      middleText: "This category has sub-categories. Do you want to delete the full category tree?",
+      middleText:
+          "This category has sub-categories. Do you want to delete the full category tree?",
       textConfirm: "DELETE ALL",
       confirmTextColor: Colors.white,
       buttonColor: Colors.red,

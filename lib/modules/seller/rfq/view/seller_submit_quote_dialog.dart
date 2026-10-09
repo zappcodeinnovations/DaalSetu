@@ -16,8 +16,12 @@ class SellerSubmitQuoteDialog {
 
     InputDecoration deco(String label) => InputDecoration(
       labelText: label,
-      border: const OutlineInputBorder(),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       counterText: '',
+      counter: const SizedBox.shrink(),
     );
 
     Get.dialog(
@@ -137,8 +141,12 @@ class SellerSubmitQuoteDialog {
     final weightCtrl = TextEditingController(text: '30');
     InputDecoration deco(String label) => InputDecoration(
       labelText: label,
-      border: const OutlineInputBorder(),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       counterText: '',
+      counter: const SizedBox.shrink(),
     );
 
     Get.dialog(

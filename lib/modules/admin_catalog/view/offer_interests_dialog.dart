@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:daalsetu/modules/products/model/offer_interest_model.dart';
 import 'package:daalsetu/services/product_services.dart';
+import 'package:daalsetu/services/seller_services.dart';
 import 'package:daalsetu/theme/app_theme.dart';
-import 'negotiation_page.dart';
+import 'package:daalsetu/utils/app_preferences.dart';
+import 'package:daalsetu/modules/shared/view/offer_interest_negotiation_chat_view.dart';
 import 'approve_deal_dialog.dart';
 
 class OfferInterestsDialog extends StatefulWidget {
@@ -30,6 +32,10 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
   bool isLoading = true;
   String? error;
   List<OfferInterestModel> interests = [];
+  String _role = '';
+
+  bool get _isAdminRole =>
+      const {'admin', 'super_admin', 'sub_admin'}.contains(_role);
 
   Color get bgColor => Get.theme.scaffoldBackgroundColor;
   Color get cardColor => Get.theme.cardColor;
@@ -40,6 +46,9 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
   void initState() {
     super.initState();
     _loadInterests();
+    AppPreferences.getRole().then((role) {
+      if (mounted) setState(() => _role = (role ?? '').trim().toLowerCase());
+    });
   }
 
   Future<void> _loadInterests() async {
@@ -49,7 +58,9 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
     });
 
     try {
-      final res = await ProductService.getOfferInterests(int.parse(widget.offerId));
+      final res = await ProductService.getOfferInterests(
+        int.parse(widget.offerId),
+      );
       setState(() {
         interests = res;
         isLoading = false;
@@ -63,13 +74,14 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
   }
 
   void _openNegotiationPage(OfferInterestModel interest) async {
-    final result = await Get.to(() => NegotiationPage(
-      offerId: widget.offerId,
-      offerTitle: widget.offerTitle,
-      availableStock: widget.availableStock,
-      sellerOfferAmount: widget.sellerOfferAmount,
-      interest: interest,
-    ));
+    final result = await Get.to(
+      () => OfferInterestNegotiationChatView(
+        productId: int.parse(widget.offerId),
+        interestId: interest.interestId,
+        isBuyer: false,
+        allowDecisions: !_isAdminRole,
+      ),
+    );
 
     // If the negotiation page returns true, a deal was accepted/rejected, so we refresh the interests
     if (result == true) {
@@ -78,17 +90,59 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
   }
 
   Future<void> _approveDeal(OfferInterestModel interest) async {
-    final result = await showDialog<ApproveDealResult>(
-      context: context,
-      builder: (ctx) => ApproveDealDialog(
-        buyerName: interest.buyerName,
-        offerTitle: widget.offerTitle,
-      ),
-    );
+    final status = (interest.status ?? '').trim().toLowerCase();
+    late final ApproveDealResult result;
+    if (_isAdminRole) {
+      final adminResult = await showDialog<ApproveDealResult>(
+        context: context,
+        builder: (ctx) => ApproveDealDialog(
+          buyerName: interest.buyerName,
+          offerTitle: widget.offerTitle,
+        ),
+      );
+      if (adminResult == null) return;
+      result = adminResult;
+    } else {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Accept buyer interest?'),
+          content: const Text(
+            'The buyer will receive the final Accept or Reject option.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Accept'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+      result = ApproveDealResult(remark: '');
+    }
 
-    if (result != null && mounted) {
-      setState(() => isLoading = true);
-      try {
+    if (!mounted) return;
+    setState(() => isLoading = true);
+    try {
+      if (status == 'interested') {
+        await SellerServices.approveBuyerInterest(
+          int.parse(widget.offerId),
+          interest.interestId,
+          remark: result.remark,
+          subAdminId: result.subAdminId,
+        );
+        Get.snackbar(
+          'Accepted',
+          'Interest accepted. Waiting for buyer confirmation.',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+      } else {
         await ProductService.confirmOfferDeal(
           productId: int.parse(widget.offerId),
           interestId: interest.interestId,
@@ -96,21 +150,35 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
           superadminRemark: result.remark,
           subAdminId: result.subAdminId,
         );
-        Get.snackbar('Success', 'Deal approved successfully',
-            backgroundColor: Colors.green, colorText: Colors.white);
-        await _loadInterests();
-      } catch (e) {
-        setState(() => isLoading = false);
-        final message = e.toString().replaceFirst('Exception: ', '');
-        Get.snackbar('Error', message, backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar(
+          'Success',
+          'Deal approved successfully',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
       }
+      await _loadInterests();
+    } catch (e) {
+      if (mounted) setState(() => isLoading = false);
+      final message = e.toString().replaceFirst('Exception: ', '');
+      Get.snackbar(
+        'Error',
+        message,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
   Future<void> _rejectDeal(OfferInterestModel interest) async {
     final remarkCtrl = TextEditingController();
     String selectedReason = 'Price too low';
-    final reasons = ['Price too low', 'Quantity not available', 'Buyer not verified', 'Other'];
+    final reasons = [
+      'Price too low',
+      'Quantity not available',
+      'Buyer not verified',
+      'Other',
+    ];
 
     final result = await showModalBottomSheet<bool>(
       context: context,
@@ -124,16 +192,28 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
           builder: (BuildContext context, StateSetter setModalState) {
             return Padding(
               padding: EdgeInsets.only(
-                left: 20, right: 20, top: 20,
+                left: 20,
+                right: 20,
+                top: 20,
                 bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Reject Deal", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.errorRed)),
+                  const Text(
+                    "Reject Deal",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.errorRed,
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  Text("Rejecting deal with ${interest.buyerName}", style: TextStyle(color: textDark)),
+                  Text(
+                    "Rejecting deal with ${interest.buyerName}",
+                    style: TextStyle(color: textDark),
+                  ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     value: selectedReason,
@@ -142,10 +222,18 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                     decoration: InputDecoration(
                       labelText: "Reason",
                       labelStyle: TextStyle(color: textLight),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: textLight.withValues(alpha: 0.3))),
-                      focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: AppTheme.errorRed)),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: textLight.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: AppTheme.errorRed),
+                      ),
                     ),
-                    items: reasons.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+                    items: reasons
+                        .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                        .toList(),
                     onChanged: (v) {
                       if (v != null) {
                         setModalState(() => selectedReason = v);
@@ -159,8 +247,14 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                     decoration: InputDecoration(
                       labelText: "Remarks (Optional)",
                       labelStyle: TextStyle(color: textLight),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: textLight.withValues(alpha: 0.3))),
-                      focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: AppTheme.errorRed)),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: textLight.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: AppTheme.errorRed),
+                      ),
                     ),
                     maxLines: 2,
                   ),
@@ -172,7 +266,9 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                           onPressed: () => Navigator.pop(ctx, false),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: textDark,
-                            side: BorderSide(color: textLight.withValues(alpha: 0.3)),
+                            side: BorderSide(
+                              color: textLight.withValues(alpha: 0.3),
+                            ),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                           child: const Text("Cancel"),
@@ -186,7 +282,10 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                             backgroundColor: AppTheme.errorRed,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          child: const Text("Reject", style: TextStyle(color: Colors.white)),
+                          child: const Text(
+                            "Reject",
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ),
                       ),
                     ],
@@ -194,7 +293,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                 ],
               ),
             );
-          }
+          },
         );
       },
     );
@@ -202,18 +301,37 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
     if (result == true && mounted) {
       setState(() => isLoading = true);
       try {
-        await ProductService.confirmOfferDeal(
-          productId: int.parse(widget.offerId),
-          interestId: interest.interestId,
-          decision: "reject",
-          superadminRemark: '${selectedReason}. ${remarkCtrl.text}'.trim(),
+        final status = (interest.status ?? '').trim().toLowerCase();
+        final remark = '${selectedReason}. ${remarkCtrl.text}'.trim();
+        if (status == 'interested') {
+          await SellerServices.rejectBuyerInterest(
+            int.parse(widget.offerId),
+            interest.interestId,
+            remark: remark,
+          );
+        } else {
+          await ProductService.confirmOfferDeal(
+            productId: int.parse(widget.offerId),
+            interestId: interest.interestId,
+            decision: "reject",
+            superadminRemark: remark,
+          );
+        }
+        Get.snackbar(
+          'Rejected',
+          'Deal rejected successfully',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
         );
-        Get.snackbar('Rejected', 'Deal rejected successfully',
-            backgroundColor: Colors.red, colorText: Colors.white);
         await _loadInterests();
       } catch (e) {
         setState(() => isLoading = false);
-        Get.snackbar('Error', e.toString(), backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar(
+          'Error',
+          e.toString(),
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     }
   }
@@ -245,10 +363,13 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                 ),
               ),
             ),
-            
+
             // Header
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Row(
                 children: [
                   GestureDetector(
@@ -260,10 +381,17 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("Manage Offer", style: TextStyle(color: textLight, fontSize: 12)),
+                        Text(
+                          "Manage Offer",
+                          style: TextStyle(color: textLight, fontSize: 12),
+                        ),
                         Text(
                           widget.offerTitle,
-                          style: TextStyle(color: textDark, fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: textDark,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
@@ -282,28 +410,51 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                 spacing: 12,
                 runSpacing: 12,
                 children: [
-                  _buildSummaryCard("📦 Available Qty", "${widget.availableStock ?? '-'} QTL"),
-                  _buildSummaryCard("💰 Seller Price", "₹${widget.sellerOfferAmount ?? '-'} /QTL"),
+                  _buildSummaryCard(
+                    "📦 Available Qty",
+                    "${widget.availableStock ?? '-'} QTL",
+                  ),
+                  _buildSummaryCard(
+                    "💰 Seller Price",
+                    "₹${widget.sellerOfferAmount ?? '-'} /QTL",
+                  ),
                   _buildSummaryCard("📅 Deal Expiry", widget.dealExpiry ?? '-'),
                 ],
               ),
             ),
-            
+
             // Interests List
             Expanded(
               child: isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryGold))
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: AppTheme.primaryGold,
+                      ),
+                    )
                   : error != null
-                      ? Center(child: Text(error!, style: const TextStyle(color: AppTheme.errorRed)))
-                      : interests.isEmpty
-                          ? Center(child: Text("No interests found.", style: TextStyle(color: textLight)))
-                          : ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              itemCount: interests.length,
-                              itemBuilder: (context, index) {
-                                return _buildInterestCard(interests[index]);
-                              },
-                            ),
+                  ? Center(
+                      child: Text(
+                        error!,
+                        style: const TextStyle(color: AppTheme.errorRed),
+                      ),
+                    )
+                  : interests.isEmpty
+                  ? Center(
+                      child: Text(
+                        "No interests found.",
+                        style: TextStyle(color: textLight),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      itemCount: interests.length,
+                      itemBuilder: (context, index) {
+                        return _buildInterestCard(interests[index]);
+                      },
+                    ),
             ),
           ],
         ),
@@ -325,13 +476,23 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
         children: [
           Text(title, style: TextStyle(color: textLight, fontSize: 11)),
           const SizedBox(height: 4),
-          Text(value, style: TextStyle(color: textDark, fontSize: 14, fontWeight: FontWeight.bold)),
+          Text(
+            value,
+            style: TextStyle(
+              color: textDark,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildInterestCard(OfferInterestModel interest) {
+    final canDecide =
+        interest.canSellerAction ||
+        (_isAdminRole && interest.canAdminFinalAction);
     return Card(
       color: cardColor,
       margin: const EdgeInsets.only(bottom: 16),
@@ -350,8 +511,14 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  interest.transactionId.isNotEmpty ? interest.transactionId : 'INT-${interest.interestId}',
-                  style: TextStyle(color: textDark, fontWeight: FontWeight.bold, fontSize: 14),
+                  interest.transactionId.isNotEmpty
+                      ? interest.transactionId
+                      : 'INT-${interest.interestId}',
+                  style: TextStyle(
+                    color: textDark,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
                 Text(
                   interest.createdAt?.substring(0, 10) ?? '-',
@@ -360,7 +527,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
               ],
             ),
             const SizedBox(height: 12),
-            
+
             // Info Row
             Row(
               children: [
@@ -368,8 +535,18 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Interested Amount", style: TextStyle(color: textLight, fontSize: 11)),
-                      Text("₹${interest.buyerOfferedAmount}/QTL", style: const TextStyle(color: AppTheme.primaryGold, fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text(
+                        "Interested Amount",
+                        style: TextStyle(color: textLight, fontSize: 11),
+                      ),
+                      Text(
+                        "₹${interest.buyerOfferedAmount}/QTL",
+                        style: const TextStyle(
+                          color: AppTheme.primaryGold,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -377,67 +554,122 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Requested Qty", style: TextStyle(color: textLight, fontSize: 11)),
-                      Text("${interest.requiredQuantity ?? '-'} QTL", style: TextStyle(color: textDark, fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text(
+                        "Requested Qty",
+                        style: TextStyle(color: textLight, fontSize: 11),
+                      ),
+                      Text(
+                        "${interest.requiredQuantity ?? '-'} QTL",
+                        style: TextStyle(
+                          color: textDark,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            
+
             // Buyer Info
             Row(
               children: [
                 Icon(Icons.person, color: textLight, size: 16),
                 const SizedBox(width: 6),
-                Text(interest.buyerName ?? 'Unknown Buyer', style: TextStyle(color: textDark, fontSize: 13)),
+                Text(
+                  interest.buyerName ?? 'Unknown Buyer',
+                  style: TextStyle(color: textDark, fontSize: 13),
+                ),
               ],
             ),
             const SizedBox(height: 16),
             Divider(color: textLight.withValues(alpha: 0.1)),
-            
+
             // Action Buttons
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
-                FilledButton.icon(
-                  onPressed: () => _openNegotiationPage(interest),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppTheme.primaryGold.withValues(alpha: 0.15),
-                    foregroundColor: AppTheme.primaryGold,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    elevation: 0,
+                if (interest.canOpenNegotiation || interest.isReadOnly)
+                  FilledButton.icon(
+                    onPressed: () => _openNegotiationPage(interest),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppTheme.primaryGold.withValues(
+                        alpha: 0.15,
+                      ),
+                      foregroundColor: AppTheme.primaryGold,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      elevation: 0,
+                    ),
+                    icon: const Icon(Icons.handshake, size: 14),
+                    label: Text(
+                      interest.isReadOnly ? "History" : "Negotiation",
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                  icon: const Icon(Icons.handshake, size: 14),
-                  label: const Text("Negotiation", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                ),
-                FilledButton.icon(
-                  onPressed: () => _approveDeal(interest),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppTheme.successGreen.withValues(alpha: 0.15),
-                    foregroundColor: AppTheme.successGreen,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    elevation: 0,
+                if (canDecide)
+                  FilledButton.icon(
+                    onPressed: () => _approveDeal(interest),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppTheme.successGreen.withValues(
+                        alpha: 0.15,
+                      ),
+                      foregroundColor: AppTheme.successGreen,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      elevation: 0,
+                    ),
+                    icon: const Icon(Icons.check, size: 14),
+                    label: Text(
+                      interest.canAdminFinalAction ? "Approve" : "Accept",
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                  icon: const Icon(Icons.check, size: 14),
-                  label: const Text("Accept", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                ),
-                FilledButton.icon(
-                  onPressed: () => _rejectDeal(interest),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppTheme.errorRed.withValues(alpha: 0.15),
-                    foregroundColor: AppTheme.errorRed,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    elevation: 0,
+                if (canDecide)
+                  FilledButton.icon(
+                    onPressed: () => _rejectDeal(interest),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppTheme.errorRed.withValues(
+                        alpha: 0.15,
+                      ),
+                      foregroundColor: AppTheme.errorRed,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      elevation: 0,
+                    ),
+                    icon: const Icon(Icons.close, size: 14),
+                    label: const Text(
+                      "Reject",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                  icon: const Icon(Icons.close, size: 14),
-                  label: const Text("Reject", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                ),
               ],
             ),
           ],

@@ -32,9 +32,8 @@ class ApiUrls {
   //users
   static const String users = "/api/users/";
   static const String addUser = "/api/adduser/";
-  static const String addTag =
-      "/api/tags/dropdown/"; // Tag CRUD removed in backend
-  static const String tagsList = "/api/tags/dropdown/";
+  static const String addTag = "/api/tags/";
+  static const String tagsList = "/api/tags/";
   static const String productImages = "/api/product-images/";
   static const String productVideos = "/api/product-videos/";
   static const String parentCategories = "/api/categories/parent-dropdown/";

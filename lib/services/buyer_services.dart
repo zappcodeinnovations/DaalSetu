@@ -621,7 +621,9 @@ class BuyerServices {
       throw Exception('Negotiation thread is unavailable');
     }
     if (response['success'] == false) {
-      throw Exception(response['message'] ?? 'Negotiation thread is unavailable');
+      throw Exception(
+        response['message'] ?? 'Negotiation thread is unavailable',
+      );
     }
     return response;
   }
@@ -639,7 +641,9 @@ class BuyerServices {
       throw Exception('Could not close buyer requirement');
     }
     if (response['success'] == false) {
-      throw Exception(response['message'] ?? 'Could not close buyer requirement');
+      throw Exception(
+        response['message'] ?? 'Could not close buyer requirement',
+      );
     }
     return response;
   }
@@ -671,7 +675,9 @@ class BuyerServices {
       throw Exception('Could not send negotiation message');
     }
     if (response['success'] == false) {
-      throw Exception(response['message'] ?? 'Could not send negotiation message');
+      throw Exception(
+        response['message'] ?? 'Could not send negotiation message',
+      );
     }
     return response;
   }
@@ -719,6 +725,25 @@ class BuyerServices {
     }
     if (response['success'] == false) {
       throw Exception(response['message'] ?? 'Could not reject offer');
+    }
+    return response;
+  }
+
+  static Future<Map<String, dynamic>> cancelOfferInterest(
+    int productId,
+    int interestId,
+  ) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.offerBuyerReject(productId),
+      body: <String, dynamic>{'interest_id': interestId, 'action': 'cancel'},
+      requireAuth: true,
+      suppressErrorDialog: true,
+    );
+    if (response is! Map<String, dynamic>) {
+      throw Exception('Could not cancel interest');
+    }
+    if (response['success'] == false) {
+      throw Exception(response['message'] ?? 'Could not cancel interest');
     }
     return response;
   }
@@ -940,32 +965,29 @@ class BuyerServices {
       "buyer_remark": effectiveRemark,
     };
 
-    dynamic lastError;
-    try {
+    if (interestId != null && interestId > 0) {
       final response = await ApiClient.post(
-        endpoint: ApiUrls.buyerShowInterest(productId),
+        endpoint: "/api/offers/$productId/interests/$interestId/update/",
         body: body,
         requireAuth: true,
+        suppressErrorDialog: true,
       );
-      if (response != null && response is Map<String, dynamic>) return response;
-    } catch (e) {
-      lastError = e;
-      // If offer already has interest from this buyer, fallback to update/toggle-interest
-      try {
-        final updateEndpoint = (interestId != null && interestId > 0)
-            ? "/api/offers/$productId/interests/$interestId/update/"
-            : "/api/offers/$productId/toggle-interest/";
-        final updateRes = await ApiClient.post(
-          endpoint: updateEndpoint,
-          body: body,
-          requireAuth: true,
-        );
-        if (updateRes != null && updateRes is Map<String, dynamic>)
-          return updateRes;
-      } catch (_) {}
+      if (response is! Map<String, dynamic>) {
+        throw Exception('Failed to update interest');
+      }
+      if (response['success'] == false) {
+        throw Exception(response['message'] ?? 'Failed to update interest');
+      }
+      return response;
     }
 
-    if (lastError != null) throw lastError;
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.buyerShowInterest(productId),
+      body: body,
+      requireAuth: true,
+      suppressErrorDialog: true,
+    );
+    if (response is Map<String, dynamic>) return response;
     throw Exception("Failed to submit offer");
   }
 

@@ -199,7 +199,7 @@ class SellerOfferInterestsView extends StatelessWidget {
                       // the seller's primary approve/reject controls on the interest
                       // card.  Otherwise a seller has to discover the action inside
                       // the thread and it looks like the actions are missing.
-                      if (status == 'interested') ...[
+                      if (item.canSellerAction) ...[
                         Row(
                           children: [
                             Expanded(
@@ -238,29 +238,6 @@ class SellerOfferInterestsView extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: item.id == null
-                                ? null
-                                : () => Get.to(
-                                    () => SellerInterestThreadView(
-                                      productId: productId,
-                                      interestId: item.id!,
-                                    ),
-                                  )?.then((_) => controller.fetchInterests()),
-                            icon: const Icon(IconlyLight.chat, size: 16),
-                            label: const Text("NEGOTIATE PRICE / QUANTITY"),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: primaryColor,
-                              side: const BorderSide(color: primaryColor),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                        ),
                       ] else if (status == 'seller_confirmed' ||
                           status == 'buyer_confirmed')
                         Text(
@@ -272,35 +249,45 @@ class SellerOfferInterestsView extends StatelessWidget {
                             color: Colors.grey.shade600,
                           ),
                         ),
-                      Center(
-                        child: OutlinedButton.icon(
-                          onPressed: item.id == null
-                              ? null
-                              : () => Get.to(
-                                  () => SellerInterestThreadView(
-                                    productId: productId,
-                                    interestId: item.id!,
-                                  ),
-                                )?.then((_) => controller.fetchInterests()),
-                          icon: const Icon(
-                            IconlyLight.time_circle,
-                            size: 16,
-                            color: primaryColor,
-                          ),
-                          label: const Text("View negotiation history"),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: primaryColor,
-                            side: const BorderSide(color: primaryColor),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 10,
+                      if (item.canOpenNegotiation ||
+                          const {
+                            'deal_confirmed',
+                            'rejected',
+                            'cancelled',
+                          }.contains(status))
+                        Center(
+                          child: OutlinedButton.icon(
+                            onPressed: item.id == null
+                                ? null
+                                : () => Get.to(
+                                    () => SellerInterestThreadView(
+                                      productId: productId,
+                                      interestId: item.id!,
+                                    ),
+                                  )?.then((_) => controller.fetchInterests()),
+                            icon: const Icon(
+                              IconlyLight.time_circle,
+                              size: 16,
+                              color: primaryColor,
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                            label: Text(
+                              item.canSellerAction
+                                  ? "NEGOTIATE PRICE / QUANTITY"
+                                  : "View negotiation history",
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: primaryColor,
+                              side: const BorderSide(color: primaryColor),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),

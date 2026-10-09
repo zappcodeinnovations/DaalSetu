@@ -17,12 +17,14 @@ class OfferInterestNegotiationChatView extends StatefulWidget {
   final int productId;
   final int interestId;
   final bool isBuyer;
+  final bool allowDecisions;
 
   const OfferInterestNegotiationChatView({
     super.key,
     required this.productId,
     required this.interestId,
     required this.isBuyer,
+    this.allowDecisions = true,
   });
 
   @override
@@ -243,16 +245,19 @@ class _OfferInterestNegotiationChatViewState
     final title = thread?['product_title']?.toString() ?? 'Negotiation';
     final status = thread?['status']?.toString().toLowerCase() ?? '';
     final isReadOnly = _permission(thread?['is_read_only']) ?? false;
-    final canReply = !isReadOnly && (_permission(thread?['can_reply']) ?? true);
-    final canAccept = widget.isBuyer
+    final canReply =
+        !isReadOnly && (_permission(thread?['can_reply']) ?? false);
+    final canAccept = widget.allowDecisions && widget.isBuyer
         ? (_permission(thread?['can_buyer_accept']) ?? false)
-        : !isReadOnly &&
+        : widget.allowDecisions &&
+              !isReadOnly &&
               (_permission(thread?['can_seller_accept']) ??
                   _permission(thread?['can_seller_action']) ??
                   status == 'interested');
-    final canReject = widget.isBuyer
+    final canReject = widget.allowDecisions && widget.isBuyer
         ? (_permission(thread?['can_buyer_reject']) ?? false)
-        : !isReadOnly &&
+        : widget.allowDecisions &&
+              !isReadOnly &&
               (_permission(thread?['can_seller_reject']) ??
                   _permission(thread?['can_seller_action']) ??
                   status == 'interested');
@@ -317,6 +322,8 @@ class _OfferInterestNegotiationChatViewState
                 ),
                 if (canAccept || canReject) _decisionBar(canAccept, canReject),
                 if (canReply) _composer(context),
+                if (!isReadOnly && !canAccept && !canReject && !canReply)
+                  _waitingBar(),
               ],
             ),
     );
@@ -471,6 +478,27 @@ class _OfferInterestNegotiationChatViewState
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _waitingBar() {
+    return SafeArea(
+      top: false,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.06),
+          border: Border(
+            top: BorderSide(color: Theme.of(context).dividerColor),
+          ),
+        ),
+        child: const Text(
+          'Waiting for the other party to respond.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
       ),
     );
   }

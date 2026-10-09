@@ -2,6 +2,7 @@ import 'package:daalsetu/modules/products/model/product_model.dart';
 import 'package:daalsetu/services/product_services.dart';
 import 'package:daalsetu/widgets/authenticated_network_image.dart';
 import 'package:daalsetu/widgets/authenticated_video_player.dart';
+import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:daalsetu/modules/admin_catalog/view/offer_interests_dialog.dart';
 
@@ -15,11 +16,26 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   late Future<ProductModel> _product;
+  String _role = '';
+
+  bool get _canManageInterests => const {
+    'seller',
+    'both_sellerandbuyer',
+    'admin',
+    'super_admin',
+    'sub_admin',
+  }.contains(_role);
 
   @override
   void initState() {
     super.initState();
     _product = ProductService.getProductDetail(widget.productId);
+    _loadRole();
+  }
+
+  Future<void> _loadRole() async {
+    final role = (await AppPreferences.getRole() ?? '').trim().toLowerCase();
+    if (mounted) setState(() => _role = role);
   }
 
   Future<void> _refresh() async {
@@ -57,7 +73,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 _images(product),
                 const SizedBox(height: 14),
                 _header(product),
-                if (!product.isExpired && product.stockStatus.toLowerCase() != 'out_of_stock' && product.interestCount > 0)
+                if (_canManageInterests &&
+                    !product.isExpired &&
+                    product.stockStatus.toLowerCase() != 'out_of_stock' &&
+                    product.interestCount > 0)
                   _actionButtons(product, context),
                 _section('Offer information', [
                   _item('Product ID', product.id),

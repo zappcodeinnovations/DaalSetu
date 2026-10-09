@@ -73,27 +73,57 @@ class SellerMasterManagementView extends StatelessWidget {
                           final brand = controller.brandsList[index];
                           return Card(
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Row(
-                                children: [
-                                  CircleAvatar(
-                                    backgroundColor: primaryColor.withValues(alpha: 0.15),
-                                    child: Text(
-                                      (brand.name != null && brand.name!.isNotEmpty) ? brand.name![0].toUpperCase() : "B",
-                                      style: const TextStyle(fontWeight: FontWeight.bold, color: primaryColor),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () => Get.bottomSheet(
+                                Container(
+                                  color: theme.cardColor,
+                                  child: SafeArea(
+                                    child: Wrap(
+                                      children: [
+                                        ListTile(
+                                          leading: const Icon(IconlyLight.edit),
+                                          title: const Text("Edit Brand"),
+                                          onTap: () {
+                                            Get.back();
+                                            controller.editBrand(brand);
+                                          },
+                                        ),
+                                        ListTile(
+                                          leading: const Icon(IconlyLight.delete, color: Colors.red),
+                                          title: const Text("Delete Brand", style: TextStyle(color: Colors.red)),
+                                          onTap: () {
+                                            Get.back();
+                                            controller.deleteBrand(brand);
+                                          },
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      brand.name ?? 'Brand',
-                                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundColor: primaryColor.withValues(alpha: 0.15),
+                                      child: Text(
+                                        (brand.name != null && brand.name!.isNotEmpty) ? brand.name![0].toUpperCase() : "B",
+                                        style: const TextStyle(fontWeight: FontWeight.bold, color: primaryColor),
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        brand.name ?? 'Brand',
+                                        style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           );

@@ -26,17 +26,61 @@ class BuyerMyInterestsView extends StatelessWidget {
     Get.to(() => BuyerNegotiationView(offer: offer));
   }
 
-  void _showEditDialog(BuildContext context, BuyerOffersController controller, BuyerOfferModel offer) {
+  Future<void> _cancelInterest(
+    BuildContext context,
+    BuyerOffersController controller,
+    BuyerOfferModel offer,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Cancel interest?'),
+        content: const Text(
+          'This interest will be closed and cannot be edited afterward.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Keep'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Cancel interest'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await controller.cancelInterest(
+      offer.productId ?? offer.id ?? 0,
+      offer.interestId ?? 0,
+    );
+  }
+
+  void _showEditDialog(
+    BuildContext context,
+    BuyerOffersController controller,
+    BuyerOfferModel offer,
+  ) {
     final priceCandidate = (offer.requestedAmount?.isNotEmpty == true)
         ? offer.requestedAmount!
         : (offer.displayPrice ?? '');
-    final cleanPrice = priceCandidate.replaceAll('₹', '').replaceAll(RegExp(r'[^\d.]'), '').trim();
-    final cleanQty = (offer.requestedQuantity?.isNotEmpty == true ? offer.requestedQuantity! : (offer.displayQuantity ?? ''))
-        .replaceAll(RegExp(r'[^\d.]'), '').trim();
+    final cleanPrice = priceCandidate
+        .replaceAll('₹', '')
+        .replaceAll(RegExp(r'[^\d.]'), '')
+        .trim();
+    final cleanQty =
+        (offer.requestedQuantity?.isNotEmpty == true
+                ? offer.requestedQuantity!
+                : (offer.displayQuantity ?? ''))
+            .replaceAll(RegExp(r'[^\d.]'), '')
+            .trim();
 
     final priceCtrl = TextEditingController(text: cleanPrice);
     final qtyCtrl = TextEditingController(text: cleanQty);
-    final locationCtrl = TextEditingController(text: offer.location ?? "AMR158M, Amalner, Maharashtra, India");
+    final locationCtrl = TextEditingController(
+      text: offer.location ?? "AMR158M, Amalner, Maharashtra, India",
+    );
     final remarkCtrl = TextEditingController();
 
     DateTime? selectedDate;
@@ -56,47 +100,95 @@ class BuyerMyInterestsView extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Edit Offer", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18)),
+                    Text(
+                      "Edit Offer",
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
                     const SizedBox(height: 2),
-                    Text("Update your target quantity, price, and delivery details.", style: GoogleFonts.inter(fontSize: 12, color: Colors.grey)),
+                    Text(
+                      "Update your target quantity, price, and delivery details.",
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
                     const SizedBox(height: 14),
 
-                    Text("Offer Price *", style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
+                    Text(
+                      "Offer Price *",
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     GlassTextField(
                       controller: priceCtrl,
                       hintText: "Enter price per unit",
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                     ),
                     const SizedBox(height: 12),
 
-                    Text("Required Quantity *", style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
+                    Text(
+                      "Required Quantity *",
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     GlassTextField(
                       controller: qtyCtrl,
                       hintText: "Enter required quantity",
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                     ),
                     const SizedBox(height: 12),
 
-                    Text("Packing", style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
+                    Text(
+                      "Packing",
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: theme.cardColor.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
+                        border: Border.all(
+                          color: theme.dividerColor.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Text(
                         "Bags are calculated automatically for bag-tracked seller stock.",
-                        style: GoogleFonts.inter(fontSize: 11, color: Colors.grey.shade600),
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: Colors.grey.shade600,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
 
-                    Text("Delivery Date *", style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
+                    Text(
+                      "Delivery Date *",
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     InkWell(
                       onTap: () async {
@@ -104,7 +196,9 @@ class BuyerMyInterestsView extends StatelessWidget {
                           context: dialogContext,
                           initialDate: selectedDate ?? DateTime.now(),
                           firstDate: DateTime.now(),
-                          lastDate: DateTime.now().add(const Duration(days: 365)),
+                          lastDate: DateTime.now().add(
+                            const Duration(days: 365),
+                          ),
                         );
                         if (picked != null) {
                           setDialogState(() {
@@ -116,11 +210,16 @@ class BuyerMyInterestsView extends StatelessWidget {
                       },
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: theme.cardColor,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
+                          border: Border.all(
+                            color: theme.dividerColor.withValues(alpha: 0.5),
+                          ),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -130,7 +229,9 @@ class BuyerMyInterestsView extends StatelessWidget {
                               style: GoogleFonts.inter(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
-                                color: formattedDate != null ? null : Colors.grey,
+                                color: formattedDate != null
+                                    ? null
+                                    : Colors.grey,
                               ),
                             ),
                             const Icon(IconlyLight.calendar, size: 18),
@@ -140,7 +241,13 @@ class BuyerMyInterestsView extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
 
-                    Text("Loading To (Delivery Location) *", style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
+                    Text(
+                      "Loading To (Delivery Location) *",
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     GlassTextField(
                       controller: locationCtrl,
@@ -148,7 +255,13 @@ class BuyerMyInterestsView extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
 
-                    Text("Condition (Remark)", style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
+                    Text(
+                      "Condition (Remark)",
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     GlassTextField(
                       controller: remarkCtrl,
@@ -167,12 +280,20 @@ class BuyerMyInterestsView extends StatelessWidget {
                         const SizedBox(width: 8),
                         ElevatedButton(
                           onPressed: () async {
-                            if (qtyCtrl.text.trim().isEmpty || priceCtrl.text.trim().isEmpty) {
-                              AppSnackbar.showWarning(title: "Required", message: "Please enter quantity and price");
+                            if (qtyCtrl.text.trim().isEmpty ||
+                                priceCtrl.text.trim().isEmpty) {
+                              AppSnackbar.showWarning(
+                                title: "Required",
+                                message: "Please enter quantity and price",
+                              );
                               return;
                             }
-                            if (formattedDate == null || formattedDate!.isEmpty) {
-                              AppSnackbar.showWarning(title: "Required", message: "Please select delivery date");
+                            if (formattedDate == null ||
+                                formattedDate!.isEmpty) {
+                              AppSnackbar.showWarning(
+                                title: "Required",
+                                message: "Please select delivery date",
+                              );
                               return;
                             }
                             Get.back();
@@ -204,7 +325,10 @@ class BuyerMyInterestsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final controller = Get.put(BuyerOffersController(offerType: 'interests'), tag: 'interests');
+    final controller = Get.put(
+      BuyerOffersController(offerType: 'interests'),
+      tag: 'interests',
+    );
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -265,26 +389,31 @@ class BuyerMyInterestsView extends StatelessWidget {
               final offer = offers[index];
               final isConfirmed = offer.isConfirmed;
               final isRejected = offer.isRejected;
-              final isActionable = !isConfirmed && !isRejected;
-
               final status = offer.displayStatus ?? 'Interested';
               Color badgeColor = const Color(0xFFFFB300);
               if (isConfirmed) badgeColor = Colors.green;
               if (isRejected) badgeColor = Colors.red;
 
               // Display quantity
-              final displayQty = (offer.displayQuantity != null && offer.displayQuantity!.isNotEmpty && offer.displayQuantity != 'N/A')
+              final displayQty =
+                  (offer.displayQuantity != null &&
+                      offer.displayQuantity!.isNotEmpty &&
+                      offer.displayQuantity != 'N/A')
                   ? offer.displayQuantity!
                   : (offer.requestedQuantity?.isNotEmpty == true
-                      ? "${offer.requestedQuantity} ${offer.quantityUnit ?? 'QTL'}"
-                      : (offer.availableQuantity?.isNotEmpty == true
-                          ? "${offer.availableQuantity} ${offer.quantityUnit ?? 'QTL'}"
-                          : (offer.bagCount?.isNotEmpty == true ? "${offer.bagCount} Bags" : "0.000 QTL")));
+                        ? "${offer.requestedQuantity} ${offer.quantityUnit ?? 'QTL'}"
+                        : (offer.availableQuantity?.isNotEmpty == true
+                              ? "${offer.availableQuantity} ${offer.quantityUnit ?? 'QTL'}"
+                              : (offer.bagCount?.isNotEmpty == true
+                                    ? "${offer.bagCount} Bags"
+                                    : "0.000 QTL")));
 
               // Display price
               final displayPrice = offer.displayPrice?.isNotEmpty == true
                   ? offer.displayPrice!
-                  : (offer.requestedAmount?.isNotEmpty == true ? "₹${offer.requestedAmount}" : "Open");
+                  : (offer.requestedAmount?.isNotEmpty == true
+                        ? "₹${offer.requestedAmount}"
+                        : "Open");
 
               return GlassCard(
                 padding: const EdgeInsets.all(16),
@@ -300,7 +429,8 @@ class BuyerMyInterestsView extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (offer.transactionId != null && offer.transactionId!.isNotEmpty) ...[
+                              if (offer.transactionId != null &&
+                                  offer.transactionId!.isNotEmpty) ...[
                                 Text(
                                   offer.transactionId!,
                                   style: GoogleFonts.inter(
@@ -323,11 +453,16 @@ class BuyerMyInterestsView extends StatelessWidget {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: badgeColor.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: badgeColor.withValues(alpha: 0.3)),
+                            border: Border.all(
+                              color: badgeColor.withValues(alpha: 0.3),
+                            ),
                           ),
                           child: Text(
                             status,
@@ -342,18 +477,32 @@ class BuyerMyInterestsView extends StatelessWidget {
                     ),
 
                     // Category, Brand & Seller chips
-                    if (offer.category != null || offer.brand != null || offer.sellerName != null) ...[
+                    if (offer.category != null ||
+                        offer.brand != null ||
+                        offer.sellerName != null) ...[
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 6,
                         runSpacing: 4,
                         children: [
-                          if (offer.category != null && offer.category!.isNotEmpty && offer.category != offer.displayTitle)
+                          if (offer.category != null &&
+                              offer.category!.isNotEmpty &&
+                              offer.category != offer.displayTitle)
                             _buildMetaChip(theme, Icons.grain, offer.category!),
                           if (offer.brand != null && offer.brand!.isNotEmpty)
-                            _buildMetaChip(theme, Icons.branding_watermark_outlined, offer.brand!),
-                          if (offer.sellerName != null && offer.sellerName!.isNotEmpty && offer.sellerName != '-')
-                            _buildMetaChip(theme, IconlyLight.profile, "Seller: ${offer.sellerName!}"),
+                            _buildMetaChip(
+                              theme,
+                              Icons.branding_watermark_outlined,
+                              offer.brand!,
+                            ),
+                          if (offer.sellerName != null &&
+                              offer.sellerName!.isNotEmpty &&
+                              offer.sellerName != '-')
+                            _buildMetaChip(
+                              theme,
+                              IconlyLight.profile,
+                              "Seller: ${offer.sellerName!}",
+                            ),
                         ],
                       ),
                     ],
@@ -362,11 +511,16 @@ class BuyerMyInterestsView extends StatelessWidget {
 
                     // Stats Grid Card matching website columns
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: theme.cardColor.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
+                        border: Border.all(
+                          color: theme.dividerColor.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Row(
                         children: [
@@ -374,42 +528,81 @@ class BuyerMyInterestsView extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("Offered Amount", style: GoogleFonts.inter(fontSize: 10, color: Colors.grey)),
+                                Text(
+                                  "Offered Amount",
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10,
+                                    color: Colors.grey,
+                                  ),
+                                ),
                                 const SizedBox(height: 2),
                                 Text(
                                   displayPrice,
-                                  style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.primary,
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-                          Container(width: 1, height: 32, color: theme.dividerColor.withValues(alpha: 0.4)),
+                          Container(
+                            width: 1,
+                            height: 32,
+                            color: theme.dividerColor.withValues(alpha: 0.4),
+                          ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("Required Qty", style: GoogleFonts.inter(fontSize: 10, color: Colors.grey)),
+                                Text(
+                                  "Required Qty",
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10,
+                                    color: Colors.grey,
+                                  ),
+                                ),
                                 const SizedBox(height: 2),
                                 Text(
                                   displayQty,
-                                  style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.textTheme.bodyLarge?.color,
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-                          if (offer.bagCount != null && offer.bagCount!.isNotEmpty) ...[
-                            Container(width: 1, height: 32, color: theme.dividerColor.withValues(alpha: 0.4)),
+                          if (offer.bagCount != null &&
+                              offer.bagCount!.isNotEmpty) ...[
+                            Container(
+                              width: 1,
+                              height: 32,
+                              color: theme.dividerColor.withValues(alpha: 0.4),
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text("Bags", style: GoogleFonts.inter(fontSize: 10, color: Colors.grey)),
+                                  Text(
+                                    "Bags",
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
                                   const SizedBox(height: 2),
                                   Text(
                                     "${offer.bagCount} (${offer.packingWeight ?? '30'} kg)",
-                                    style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: theme.textTheme.bodyLarge?.color),
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: theme.textTheme.bodyLarge?.color,
+                                    ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -422,15 +615,23 @@ class BuyerMyInterestsView extends StatelessWidget {
                     ),
 
                     // Date & Timestamp
-                    if (offer.createdAt != null && offer.createdAt!.isNotEmpty) ...[
+                    if (offer.createdAt != null &&
+                        offer.createdAt!.isNotEmpty) ...[
                       const SizedBox(height: 10),
                       Row(
                         children: [
-                          const Icon(IconlyLight.time_circle, size: 13, color: Colors.grey),
+                          const Icon(
+                            IconlyLight.time_circle,
+                            size: 13,
+                            color: Colors.grey,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             "Interest Date: ${offer.createdAt!}",
-                            style: GoogleFonts.inter(fontSize: 11, color: Colors.grey),
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: Colors.grey,
+                            ),
                           ),
                         ],
                       ),
@@ -438,62 +639,77 @@ class BuyerMyInterestsView extends StatelessWidget {
 
                     const Divider(height: 20),
 
-                    // Action buttons row: [ View ] [ Edit ] [ Negotiation ]
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
-                        // 1. View Button
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => _openDetails(offer),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: theme.textTheme.bodyLarge?.color,
-                              side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.6)),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
+                        OutlinedButton(
+                          onPressed: () => _openDetails(offer),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: theme.textTheme.bodyLarge?.color,
+                            side: BorderSide(
+                              color: theme.dividerColor.withValues(alpha: 0.6),
                             ),
-                            child: const Text("View", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text(
+                            "View",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 8),
-
-                        // 2. Edit Button (if active)
-                        if (isActionable) ...[
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => _showEditDialog(context, controller, offer),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: theme.colorScheme.primary,
-                                side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.6)),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                padding: const EdgeInsets.symmetric(vertical: 10),
+                        if (offer.canEditInterest)
+                          OutlinedButton.icon(
+                            onPressed: () =>
+                                _showEditDialog(context, controller, offer),
+                            icon: const Icon(Icons.edit_outlined, size: 15),
+                            label: const Text(
+                              "Edit",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
                               ),
-                              child: const Text("Edit", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                        ],
-
-                        // 3. Negotiation Button
-                        Expanded(
-                          flex: isActionable ? 1 : 2,
-                          child: ElevatedButton(
+                        if (offer.canCancelInterest)
+                          OutlinedButton.icon(
+                            onPressed: () =>
+                                _cancelInterest(context, controller, offer),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: theme.colorScheme.error,
+                            ),
+                            icon: const Icon(Icons.close, size: 15),
+                            label: const Text(
+                              "Cancel",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        if (offer.canOpenNegotiation)
+                          ElevatedButton.icon(
                             onPressed: () => _openNegotiation(offer),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFE65100),
                               foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.chat_outlined, size: 14),
-                                SizedBox(width: 4),
-                                Text("Negotiation", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                              ],
+                            icon: const Icon(Icons.chat_outlined, size: 15),
+                            label: const Text(
+                              "Negotiation",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ],
@@ -507,7 +723,8 @@ class BuyerMyInterestsView extends StatelessWidget {
   }
 
   Widget _buildMetaChip(ThemeData theme, IconData icon, String label) {
-    if (label.trim().isEmpty || (label.startsWith('{') && label.endsWith('}'))) {
+    if (label.trim().isEmpty ||
+        (label.startsWith('{') && label.endsWith('}'))) {
       return const SizedBox.shrink();
     }
     return Container(
@@ -524,7 +741,10 @@ class BuyerMyInterestsView extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color),
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              color: theme.textTheme.bodyMedium?.color,
+            ),
           ),
         ],
       ),

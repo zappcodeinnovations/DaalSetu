@@ -33,11 +33,13 @@ class CategoryTreeModel {
       status: json['status'] ?? "active",
       childrenCount: json['children_count'] ?? 0,
       hasChildren: json['has_children'] ?? false,
-      brands: (json['brands'] as List?)
+      brands:
+          (json['brands'] as List?)
               ?.map((e) => BrandModel.fromJson(e))
               .toList() ??
           [],
-      children: (json['children'] as List?)
+      children:
+          (json['children'] as List?)
               ?.map((e) => CategoryTreeModel.fromJson(e))
               .toList() ??
           [],
@@ -53,8 +55,10 @@ class BrandModel {
 
   factory BrandModel.fromJson(Map<String, dynamic> json) {
     return BrandModel(
-      id: json['id'],
-      brandName: json['brand_name'] ?? "",
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse('${json['id']}') ?? 0,
+      brandName: (json['brand_name'] ?? json['name'] ?? "").toString(),
     );
   }
 }
@@ -110,7 +114,8 @@ class CategoryDetailModel {
       isLeaf: json['is_leaf'] ?? false,
       imageUrl: json['image_url'],
       hasChildren: json['has_children'] ?? false,
-      brands: (json['brands'] as List?)
+      brands:
+          (json['brands'] as List?)
               ?.map((e) => BrandModel.fromJson(e))
               .toList() ??
           [],
