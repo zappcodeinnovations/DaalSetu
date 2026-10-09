@@ -4,6 +4,7 @@ import '../model/vehicle_model.dart';
 import '../../drivers/model/driver_model.dart';
 import '../../drivers/controller/transporter_driver_controller.dart';
 import '../../../../network/api_client.dart';
+import '../../../../utils/app_preferences.dart';
 import 'package:get/get.dart';
 
 /// Vehicles of the logged-in transporter (same actions as the web "Registered Vehicles" page).
@@ -24,15 +25,23 @@ class TransporterVehicleController extends GetxController {
   List<VehicleModel> get filteredVehicles {
     final query = searchQuery.value.trim().toLowerCase();
     return vehicles.where((v) {
-      if (selectedFilter.value != 'all' && v.vehicleStatus.toLowerCase() != selectedFilter.value) return false;
+      if (selectedFilter.value != 'all' &&
+          v.vehicleStatus.toLowerCase() != selectedFilter.value)
+        return false;
       if (query.isEmpty) return true;
-      return [v.vehicleNumber, v.vehicleBrandDisplay, v.modelName ?? '', v.assignedDriverName ?? '', v.vehicleType]
-          .any((field) => field.toLowerCase().contains(query));
+      return [
+        v.vehicleNumber,
+        v.vehicleBrandDisplay,
+        v.modelName ?? '',
+        v.assignedDriverName ?? '',
+        v.vehicleType,
+      ].any((field) => field.toLowerCase().contains(query));
     }).toList();
   }
 
-  int getCount(String filter) =>
-      filter == 'all' ? vehicles.length : vehicles.where((v) => v.vehicleStatus.toLowerCase() == filter).length;
+  int getCount(String filter) => filter == 'all'
+      ? vehicles.length
+      : vehicles.where((v) => v.vehicleStatus.toLowerCase() == filter).length;
 
   @override
   void onInit() {
@@ -43,27 +52,55 @@ class TransporterVehicleController extends GetxController {
   String _message(Object e) => e.toString().replaceFirst('Exception: ', '');
 
   void _snack(String title, String message, Color color) {
-    Get.snackbar(title, message, snackPosition: SnackPosition.BOTTOM, backgroundColor: color, colorText: Colors.white);
+    Get.snackbar(
+      title,
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: color,
+      colorText: Colors.white,
+    );
   }
 
   List<dynamic> _listFrom(dynamic response) {
     if (response is List) return response;
-    if (response is Map && response['results'] is List) return response['results'];
+    if (response is Map && response['results'] is List)
+      return response['results'];
     if (response is Map && response['data'] is List) return response['data'];
     if (response is Map && response['body'] is List) return response['body'];
     return const [];
   }
 
+  /// Match the web form's ownership behaviour.  It also keeps vehicle
+  /// creation compatible with API deployments that still require an explicit
+  /// transporter ID instead of deriving it from the auth token.
+  Future<Map<String, dynamic>> _createPayload(Map<String, dynamic> data) async {
+    final payload = Map<String, dynamic>.from(data);
+    final selectedTransporter = payload['transporter_id']?.toString().trim();
+    if (selectedTransporter?.isNotEmpty ?? false) return payload;
+
+    final userId = (await AppPreferences.getUserId())?.trim() ?? '';
+    if (int.tryParse(userId) != null) {
+      payload['transporter_id'] = userId;
+    }
+    return payload;
+  }
+
   /// Driver assignments change when vehicles change; keep the Drivers tab in sync.
   void _refreshDrivers() {
-    if (Get.isRegistered<TransporterDriverController>()) Get.find<TransporterDriverController>().fetchDrivers();
+    if (Get.isRegistered<TransporterDriverController>())
+      Get.find<TransporterDriverController>().fetchDrivers();
   }
 
   Future<void> fetchVehicles() async {
     try {
       isLoading(true);
-      final response = await ApiClient.get(endpoint: ApiUrls.vehicles, requireAuth: true);
-      vehicles.value = _listFrom(response).whereType<Map<String, dynamic>>().map(VehicleModel.fromJson).toList();
+      final response = await ApiClient.get(
+        endpoint: ApiUrls.vehicles,
+        requireAuth: true,
+      );
+      vehicles.value = _listFrom(
+        response,
+      ).whereType<Map<String, dynamic>>().map(VehicleModel.fromJson).toList();
     } catch (e) {
       _snack('Error', 'Failed to load vehicles: ${_message(e)}', Colors.red);
     } finally {
@@ -73,35 +110,64 @@ class TransporterVehicleController extends GetxController {
 
   Future<VehicleModel?> fetchVehicleDetails(int id) async {
     try {
-      final response = await ApiClient.get(endpoint: ApiUrls.vehicleDetails(id), requireAuth: true);
-      final data = response is Map && response['body'] is Map ? response['body'] : response;
-      if (data is Map<String, dynamic> && data['id'] != null) return VehicleModel.fromJson(data);
+      final response = await ApiClient.get(
+        endpoint: ApiUrls.vehicleDetails(id),
+        requireAuth: true,
+      );
+      final data = response is Map && response['body'] is Map
+          ? response['body']
+          : response;
+      if (data is Map<String, dynamic> && data['id'] != null)
+        return VehicleModel.fromJson(data);
     } catch (e) {
-      _snack('Error', 'Failed to load vehicle details: ${_message(e)}', Colors.red);
+      _snack(
+        'Error',
+        'Failed to load vehicle details: ${_message(e)}',
+        Colors.red,
+      );
     }
     return null;
   }
 
   /// Sends JSON, or multipart when an RC file is attached (PATCH multipart for edits).
-  Future<bool> saveVehicle({int? id, required Map<String, dynamic> data, String? rcFilePath}) async {
+  Future<bool> saveVehicle({
+    int? id,
+    required Map<String, dynamic> data,
+    String? rcFilePath,
+  }) async {
     try {
+      final payload = id == null ? await _createPayload(data) : data;
       if (rcFilePath != null && rcFilePath.isNotEmpty) {
         await ApiClient.postMultipart(
           endpoint: id == null ? ApiUrls.vehicles : ApiUrls.vehicleDetails(id),
           method: id == null ? 'POST' : 'PATCH',
           fields: {
-            for (final e in data.entries)
+            for (final e in payload.entries)
               if (e.value != null) e.key: '${e.value}',
           },
           files: {'rc_upload': rcFilePath},
           requireAuth: true,
         );
       } else if (id == null) {
-        await ApiClient.post(endpoint: ApiUrls.vehicles, body: data, requireAuth: true);
+        await ApiClient.post(
+          endpoint: ApiUrls.vehicles,
+          body: payload,
+          requireAuth: true,
+        );
       } else {
-        await ApiClient.patch(endpoint: ApiUrls.vehicleDetails(id), data: data, requireAuth: true);
+        await ApiClient.patch(
+          endpoint: ApiUrls.vehicleDetails(id),
+          data: data,
+          requireAuth: true,
+        );
       }
-      _snack('Success', id == null ? 'Vehicle registered successfully' : 'Vehicle updated successfully', Colors.green);
+      _snack(
+        'Success',
+        id == null
+            ? 'Vehicle registered successfully'
+            : 'Vehicle updated successfully',
+        Colors.green,
+      );
       await fetchVehicles();
       return true;
     } catch (e) {
@@ -112,7 +178,10 @@ class TransporterVehicleController extends GetxController {
 
   Future<bool> deleteVehicle(int id) async {
     try {
-      await ApiClient.delete(endpoint: ApiUrls.vehicleDetails(id), requireAuth: true);
+      await ApiClient.delete(
+        endpoint: ApiUrls.vehicleDetails(id),
+        requireAuth: true,
+      );
       _snack('Success', 'Vehicle deleted successfully', Colors.green);
       await fetchVehicles();
       _refreshDrivers();
@@ -125,8 +194,16 @@ class TransporterVehicleController extends GetxController {
 
   Future<void> changeStatus(VehicleModel vehicle, String status) async {
     try {
-      await ApiClient.patch(endpoint: ApiUrls.vehicleDetails(vehicle.id), data: {'vehicle_status': status}, requireAuth: true);
-      _snack('Success', 'Status changed to ${statusLabels[status] ?? status}', Colors.green);
+      await ApiClient.patch(
+        endpoint: ApiUrls.vehicleDetails(vehicle.id),
+        data: {'vehicle_status': status},
+        requireAuth: true,
+      );
+      _snack(
+        'Success',
+        'Status changed to ${statusLabels[status] ?? status}',
+        Colors.green,
+      );
       await fetchVehicles();
     } catch (e) {
       _snack('Error', _message(e), Colors.red);
@@ -136,11 +213,19 @@ class TransporterVehicleController extends GetxController {
   /// Active drivers that are free or already on this vehicle (web "Assign Driver" list).
   Future<List<DriverModel>> fetchAssignableDrivers(VehicleModel vehicle) async {
     try {
-      final response = await ApiClient.get(endpoint: "${ApiUrls.drivers}?status=active", requireAuth: true);
+      final response = await ApiClient.get(
+        endpoint: "${ApiUrls.drivers}?status=active",
+        requireAuth: true,
+      );
       return _listFrom(response)
           .whereType<Map<String, dynamic>>()
           .map(DriverModel.fromJson)
-          .where((d) => d.status == 'active' && (d.assignedVehicle == null || d.assignedVehicle!.id == vehicle.id))
+          .where(
+            (d) =>
+                d.status == 'active' &&
+                (d.assignedVehicle == null ||
+                    d.assignedVehicle!.id == vehicle.id),
+          )
           .toList();
     } catch (e) {
       _snack('Error', 'Unable to load drivers: ${_message(e)}', Colors.red);
@@ -156,7 +241,11 @@ class TransporterVehicleController extends GetxController {
         data: {'driver_profile_id': driverId},
         requireAuth: true,
       );
-      _snack('Success', driverId == null ? 'Driver unassigned' : 'Driver assigned successfully', Colors.green);
+      _snack(
+        'Success',
+        driverId == null ? 'Driver unassigned' : 'Driver assigned successfully',
+        Colors.green,
+      );
       await fetchVehicles();
       _refreshDrivers();
     } catch (e) {

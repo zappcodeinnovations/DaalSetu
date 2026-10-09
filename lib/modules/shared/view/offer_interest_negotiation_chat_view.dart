@@ -72,6 +72,17 @@ class _OfferInterestNegotiationChatViewState
           .map(Map<String, dynamic>.from)
           .toList();
 
+  /// Older API deployments can serialise boolean permissions as strings. Keep
+  /// the screen compatible with those responses while current APIs return real
+  /// booleans.
+  bool? _permission(dynamic value) {
+    if (value is bool) return value;
+    final normalized = value?.toString().trim().toLowerCase();
+    if (const {'true', '1', 'yes'}.contains(normalized)) return true;
+    if (const {'false', '0', 'no'}.contains(normalized)) return false;
+    return null;
+  }
+
   Future<void> _load({bool silent = false}) async {
     if (_loadingInBackground) return;
     _loadingInBackground = true;
@@ -152,21 +163,16 @@ class _OfferInterestNegotiationChatViewState
     }
   }
 
-  Future<String?> _askRemark({
-    required String title,
-    required String confirmText,
-    required Color color,
-  }) async {
-    final controller = TextEditingController();
+  Future<bool> _confirmDecision({required bool accept}) async {
     final approved = await Get.dialog<bool>(
       AlertDialog(
-        title: Text(title),
-        content: TextField(
-          controller: controller,
-          maxLines: 2,
-          decoration: const InputDecoration(
-            hintText: 'Remark (optional)',
-          ),
+        title: Text(
+          '${accept ? 'Accept' : 'Reject'} ${widget.isBuyer ? 'offer' : 'buyer interest'}?',
+        ),
+        content: Text(
+          accept
+              ? 'This will move the negotiation to the next confirmation step.'
+              : 'This action cannot be undone.',
         ),
         actions: [
           TextButton(
@@ -175,28 +181,21 @@ class _OfferInterestNegotiationChatViewState
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: color,
+              backgroundColor: accept ? Colors.green : Colors.red,
               foregroundColor: Colors.white,
             ),
             onPressed: () => Get.back(result: true),
-            child: Text(confirmText),
+            child: Text(accept ? 'Accept' : 'Reject'),
           ),
         ],
       ),
     );
-    final remark = controller.text.trim();
-    controller.dispose();
-    return approved == true ? remark : null;
+    return approved == true;
   }
 
   Future<void> _decide({required bool accept}) async {
     final verb = accept ? 'accept' : 'reject';
-    final remark = await _askRemark(
-      title: '${accept ? 'Accept' : 'Reject'} ${widget.isBuyer ? 'offer' : 'buyer interest'}?',
-      confirmText: accept ? 'Accept' : 'Reject',
-      color: accept ? Colors.green : Colors.red,
-    );
-    if (remark == null) return;
+    if (!await _confirmDecision(accept: accept)) return;
 
     setState(() => _sending = true);
     try {
@@ -205,23 +204,23 @@ class _OfferInterestNegotiationChatViewState
                 ? await BuyerServices.confirmOfferInterest(
                     widget.productId,
                     widget.interestId,
-                    remark: remark,
+                    remark: '',
                   )
                 : await BuyerServices.rejectOfferInterest(
                     widget.productId,
                     widget.interestId,
-                    remark: remark,
+                    remark: '',
                   )
           : accept
           ? await SellerServices.approveBuyerInterest(
               widget.productId,
               widget.interestId,
-              remark: remark,
+              remark: '',
             )
           : await SellerServices.rejectBuyerInterest(
               widget.productId,
               widget.interestId,
-              remark: remark,
+              remark: '',
             );
       AppSnackbar.showSuccess(
         title: accept ? 'Accepted' : 'Rejected',
@@ -242,13 +241,21 @@ class _OfferInterestNegotiationChatViewState
   Widget build(BuildContext context) {
     final thread = _thread;
     final title = thread?['product_title']?.toString() ?? 'Negotiation';
-    final canReply = thread?['can_reply'] == true && thread?['is_read_only'] != true;
+    final status = thread?['status']?.toString().toLowerCase() ?? '';
+    final isReadOnly = _permission(thread?['is_read_only']) ?? false;
+    final canReply = !isReadOnly && (_permission(thread?['can_reply']) ?? true);
     final canAccept = widget.isBuyer
-        ? (thread != null && thread['can_buyer_accept'] == true)
-        : (thread != null && thread['can_seller_accept'] == true);
+        ? (_permission(thread?['can_buyer_accept']) ?? false)
+        : !isReadOnly &&
+              (_permission(thread?['can_seller_accept']) ??
+                  _permission(thread?['can_seller_action']) ??
+                  status == 'interested');
     final canReject = widget.isBuyer
-        ? (thread != null && thread['can_buyer_reject'] == true)
-        : (thread != null && thread['can_seller_reject'] == true);
+        ? (_permission(thread?['can_buyer_reject']) ?? false)
+        : !isReadOnly &&
+              (_permission(thread?['can_seller_reject']) ??
+                  _permission(thread?['can_seller_action']) ??
+                  status == 'interested');
 
     return Scaffold(
       appBar: AppBar(
@@ -292,7 +299,9 @@ class _OfferInterestNegotiationChatViewState
                       padding: const EdgeInsets.fromLTRB(14, 16, 14, 20),
                       children: [
                         _initialInterest(context, thread),
-                        ..._messages.map((message) => _bubble(context, message)),
+                        ..._messages.map(
+                          (message) => _bubble(context, message),
+                        ),
                         if (_messages.isEmpty)
                           Padding(
                             padding: const EdgeInsets.all(24),
@@ -340,7 +349,9 @@ class _OfferInterestNegotiationChatViewState
       child: _messageCard(
         context,
         mine: mine,
-        title: mine ? 'You submitted the interest' : 'Buyer submitted the interest',
+        title: mine
+            ? 'You submitted the interest'
+            : 'Buyer submitted the interest',
         body: details.join('\n'),
         time: null,
       ),
@@ -378,7 +389,9 @@ class _OfferInterestNegotiationChatViewState
             ? 'System'
             : role[0].toUpperCase() + role.substring(1),
         body: body.isEmpty ? action : body,
-        time: message['timestamp']?.toString() ?? message['created_at']?.toString(),
+        time:
+            message['timestamp']?.toString() ??
+            message['created_at']?.toString(),
       ),
     );
   }
@@ -413,7 +426,10 @@ class _OfferInterestNegotiationChatViewState
         children: [
           Text(
             title,
-            style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700),
+            style: GoogleFonts.poppins(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           if (body.isNotEmpty) ...[
             const SizedBox(height: 3),
@@ -460,22 +476,29 @@ class _OfferInterestNegotiationChatViewState
   }
 
   Widget _composer(BuildContext context) {
-    InputDecoration decoration(String hint) => InputDecoration(
-      hintText: hint,
-      isDense: true,
-      filled: true,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(22),
-        borderSide: BorderSide.none,
-      ),
-    );
+    final priceUnit = _thread?['price_unit']?.toString().toUpperCase() ?? '';
+    final quantityUnit =
+        _thread?['quantity_unit']?.toString().toUpperCase() ?? '';
+    InputDecoration decoration(String label, {String? suffixText}) =>
+        InputDecoration(
+          labelText: label,
+          suffixText: suffixText,
+          isDense: true,
+          filled: true,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(22),
+            borderSide: BorderSide.none,
+          ),
+        );
     return SafeArea(
       top: false,
       child: Container(
         padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
-          border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
+          border: Border(
+            top: BorderSide(color: Theme.of(context).dividerColor),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -501,7 +524,7 @@ class _OfferInterestNegotiationChatViewState
                           decimal: true,
                         ),
                         maxLength: 10,
-                        decoration: decoration('Packing KG'),
+                        decoration: decoration('Packing KG', suffixText: 'KG'),
                       ),
                     ),
                   ],
@@ -511,7 +534,8 @@ class _OfferInterestNegotiationChatViewState
               children: [
                 if (!widget.isBuyer)
                   IconButton(
-                    onPressed: () => setState(() => _showPacking = !_showPacking),
+                    onPressed: () =>
+                        setState(() => _showPacking = !_showPacking),
                     icon: const Icon(Icons.inventory_2_outlined),
                     tooltip: 'Bags & packing',
                   ),
@@ -522,7 +546,10 @@ class _OfferInterestNegotiationChatViewState
                       decimal: true,
                     ),
                     maxLength: 10,
-                    decoration: decoration('Counter price'),
+                    decoration: decoration(
+                      'Counter price',
+                      suffixText: priceUnit.isEmpty ? null : '/ $priceUnit',
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -533,7 +560,10 @@ class _OfferInterestNegotiationChatViewState
                       decimal: true,
                     ),
                     maxLength: 10,
-                    decoration: decoration('Counter qty'),
+                    decoration: decoration(
+                      'Counter quantity',
+                      suffixText: quantityUnit.isEmpty ? null : quantityUnit,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 6),
