@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/media_url.dart';
 import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -50,7 +51,7 @@ class _AuthenticatedNetworkImageState extends State<AuthenticatedNetworkImage> {
         final token = snapshot.data;
         return FutureBuilder<http.Response>(
           future: http.get(
-            Uri.parse(widget.url),
+            resolveMediaUri(widget.url),
             headers: token == null || token.isEmpty
                 ? const {}
                 : {'Authorization': 'Bearer $token'},

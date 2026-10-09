@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/media_url.dart';
 import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
@@ -25,7 +26,7 @@ class _AuthenticatedVideoPlayerState extends State<AuthenticatedVideoPlayer> {
     try {
       final token = await AppPreferences.getAccessToken();
       final controller = VideoPlayerController.networkUrl(
-        Uri.parse(widget.url),
+        resolveMediaUri(widget.url),
         httpHeaders: token == null || token.isEmpty
             ? const {}
             : {'Authorization': 'Bearer $token'},
