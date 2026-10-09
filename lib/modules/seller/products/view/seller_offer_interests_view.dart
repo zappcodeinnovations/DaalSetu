@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../controller/seller_negotiation_controller.dart';
-import 'seller_counter_offer_dialog.dart';
 import '../../common/seller_ui.dart';
 import 'seller_interest_thread_view.dart';
 
@@ -12,7 +11,8 @@ class SellerOfferInterestsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final productIdStr = Get.parameters['productId'] ?? (Get.arguments?.toString() ?? '0');
+    final productIdStr =
+        Get.parameters['productId'] ?? (Get.arguments?.toString() ?? '0');
     final productId = int.tryParse(productIdStr) ?? 0;
 
     final controller = Get.put(
@@ -30,12 +30,17 @@ class SellerOfferInterestsView extends StatelessWidget {
         elevation: 0,
         title: Text(
           "Buyer Interests & Offers",
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            color: theme.textTheme.bodyLarge?.color,
+          ),
         ),
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator(color: primaryColor));
+          return const Center(
+            child: CircularProgressIndicator(color: primaryColor),
+          );
         }
 
         if (controller.interestsList.isEmpty) {
@@ -43,11 +48,18 @@ class SellerOfferInterestsView extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(IconlyLight.document, size: 64, color: Colors.grey.shade400),
+                Icon(
+                  IconlyLight.document,
+                  size: 64,
+                  color: Colors.grey.shade400,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   "No buyer interests yet for this offer",
-                  style: GoogleFonts.poppins(color: Colors.grey.shade600, fontSize: 14),
+                  style: GoogleFonts.poppins(
+                    color: Colors.grey.shade600,
+                    fontSize: 14,
+                  ),
                 ),
               ],
             ),
@@ -67,7 +79,9 @@ class SellerOfferInterestsView extends StatelessWidget {
               return Card(
                 elevation: 3,
                 margin: const EdgeInsets.only(bottom: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -79,7 +93,10 @@ class SellerOfferInterestsView extends StatelessWidget {
                           Expanded(
                             child: Text(
                               item.buyerName ?? "Buyer #${item.id}",
-                              style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
                           ),
                           SellerUi.statusChip(status),
@@ -92,11 +109,21 @@ class SellerOfferInterestsView extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("Buyer Offer", style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                                Text(
+                                  "Buyer Offer",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
                                 const SizedBox(height: 2),
                                 Text(
                                   "₹${item.buyerOfferedAmount ?? 'N/A'}",
-                                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 15, color: primaryColor),
+                                  style: GoogleFonts.inter(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: primaryColor,
+                                  ),
                                 ),
                               ],
                             ),
@@ -105,25 +132,39 @@ class SellerOfferInterestsView extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("Quantity Needed", style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                                Text(
+                                  "Quantity Needed",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
                                 const SizedBox(height: 2),
                                 Text(
                                   "${item.buyerRequiredQuantity ?? 'N/A'} Qtl",
-                                  style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14),
+                                  style: GoogleFonts.inter(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
                                 ),
                               ],
                             ),
                           ),
                         ],
                       ),
-                      if (item.buyerRemark != null && item.buyerRemark!.isNotEmpty) ...[
+                      if (item.buyerRemark != null &&
+                          item.buyerRemark!.isNotEmpty) ...[
                         const SizedBox(height: 10),
                         Text(
                           "Buyer Remark: ${item.buyerRemark}",
-                          style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 13),
+                          style: const TextStyle(
+                            fontStyle: FontStyle.italic,
+                            fontSize: 13,
+                          ),
                         ),
                       ],
-                      if (item.counterPrice != null && item.counterPrice!.isNotEmpty) ...[
+                      if (item.counterPrice != null &&
+                          item.counterPrice!.isNotEmpty) ...[
                         const SizedBox(height: 10),
                         Container(
                           padding: const EdgeInsets.all(10),
@@ -134,12 +175,19 @@ class SellerOfferInterestsView extends StatelessWidget {
                           ),
                           child: Row(
                             children: [
-                              const Icon(IconlyLight.swap, size: 18, color: Colors.amber),
+                              const Icon(
+                                IconlyLight.swap,
+                                size: 18,
+                                color: Colors.amber,
+                              ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   "Last Counter Offer: ₹${item.counterPrice} for ${item.counterQuantity} Qtl",
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ),
                             ],
@@ -147,38 +195,103 @@ class SellerOfferInterestsView extends StatelessWidget {
                         ),
                       ],
                       const SizedBox(height: 16),
-                      // One live thread owns counter, accept and reject actions. This
-                      // prevents list-card actions from racing the buyer's chat view.
+                      // Keep the common thread for live counter proposals, but retain
+                      // the seller's primary approve/reject controls on the interest
+                      // card.  Otherwise a seller has to discover the action inside
+                      // the thread and it looks like the actions are missing.
                       if (status == 'interested') ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: item.id == null
+                                    ? null
+                                    : () => controller.rejectInterest(item.id!),
+                                icon: const Icon(Icons.close, size: 16),
+                                label: const Text('REJECT'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                  side: const BorderSide(color: Colors.red),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: item.id == null
+                                    ? null
+                                    : () =>
+                                          controller.approveInterest(item.id!),
+                                icon: const Icon(Icons.check, size: 16),
+                                label: const Text('ACCEPT'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton.icon(
-                            onPressed: item.id == null ? null : () => Get.to(() => SellerInterestThreadView(productId: productId, interestId: item.id!))?.then((_) => controller.fetchInterests()),
+                            onPressed: item.id == null
+                                ? null
+                                : () => Get.to(
+                                    () => SellerInterestThreadView(
+                                      productId: productId,
+                                      interestId: item.id!,
+                                    ),
+                                  )?.then((_) => controller.fetchInterests()),
                             icon: const Icon(IconlyLight.chat, size: 16),
-                            label: const Text("OPEN NEGOTIATION"),
+                            label: const Text("NEGOTIATE PRICE / QUANTITY"),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: primaryColor,
                               side: const BorderSide(color: primaryColor),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
                           ),
                         ),
-                      ] else if (status == 'seller_confirmed' || status == 'buyer_confirmed')
+                      ] else if (status == 'seller_confirmed' ||
+                          status == 'buyer_confirmed')
                         Text(
                           status == 'seller_confirmed'
                               ? "You approved this interest. Waiting for the buyer to confirm."
                               : "Buyer confirmed. Waiting for admin to confirm the deal.",
-                          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
                         ),
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton.icon(
                           onPressed: item.id == null
                               ? null
-                              : () => Get.to(() => SellerInterestThreadView(productId: productId, interestId: item.id!))
-                                  ?.then((_) => controller.fetchInterests()),
-                          icon: const Icon(IconlyLight.time_circle, size: 16, color: primaryColor),
-                          label: const Text("View negotiation history", style: TextStyle(color: primaryColor, fontSize: 12)),
+                              : () => Get.to(
+                                  () => SellerInterestThreadView(
+                                    productId: productId,
+                                    interestId: item.id!,
+                                  ),
+                                )?.then((_) => controller.fetchInterests()),
+                          icon: const Icon(
+                            IconlyLight.time_circle,
+                            size: 16,
+                            color: primaryColor,
+                          ),
+                          label: const Text(
+                            "View negotiation history",
+                            style: TextStyle(color: primaryColor, fontSize: 12),
+                          ),
                         ),
                       ),
                     ],

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
-import '../model/login_model.dart';
+import 'package:daalsetu/modules/Auth/login/model/login_model.dart';
 import '../../../../services/auth_services.dart';
 import '../../../../utils/app_preferences.dart';
 import '../../../../routes/app_routes.dart';
@@ -45,7 +45,15 @@ class LoginController extends GetxController {
         return;
       }
 
-      final allowedRoles = ["super_admin", "admin", "seller", "transporter", "buyer", "both_sellerandbuyer", "sub_admin"];
+      final allowedRoles = [
+        "super_admin",
+        "admin",
+        "seller",
+        "transporter",
+        "buyer",
+        "both_sellerandbuyer",
+        "sub_admin",
+      ];
       if (!allowedRoles.contains(role)) {
         await AppPreferences.logout();
 
