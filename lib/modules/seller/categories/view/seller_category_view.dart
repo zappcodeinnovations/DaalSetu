@@ -577,6 +577,16 @@ class SellerCategoryView extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
+                    const SizedBox(height: 4),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        // Backend links only active brands; seller-added brands stay pending until admin approval.
+                        "Brands you add stay pending until the admin approves them, then they appear here.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ),
                     TextButton.icon(
                       onPressed: controller.fetchBrands,
                       icon: const Icon(Icons.refresh),
