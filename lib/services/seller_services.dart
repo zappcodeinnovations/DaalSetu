@@ -860,32 +860,23 @@ class SellerServices {
   /// ============================================================
   /// MASTER DATA (BRANDS, CATEGORIES, TAGS)
   /// ============================================================
+  /// Brand Master list: same as the web page (all statuses, so a seller sees
+  /// their own pending brands). The dropdown API only has active brands.
   static Future<List<dynamic>> getBrandsList() async {
-    try {
-      final response = await ApiClient.get(
-        endpoint: ApiUrls.brandsDropdown,
-        requireAuth: true,
-        suppressErrorDialog: true,
-      );
-      if (response is List) return response;
-      if (response is Map<String, dynamic>) {
-        if (response["data"] is List) return response["data"];
-        if (response["results"] is List) return response["results"];
-      }
-    } catch (_) {}
-
-    try {
-      final response = await ApiClient.get(
-        endpoint: ApiUrls.brands,
-        requireAuth: true,
-        suppressErrorDialog: true,
-      );
-      if (response is List) return response;
-      if (response is Map<String, dynamic> && response["results"] is List)
-        return response["results"];
-      if (response is Map<String, dynamic> && response["data"] is List)
-        return response["data"];
-    } catch (_) {}
+    for (final endpoint in [ApiUrls.brands, ApiUrls.brandsDropdown]) {
+      try {
+        final response = await ApiClient.get(
+          endpoint: endpoint,
+          requireAuth: true,
+          suppressErrorDialog: true,
+        );
+        if (response is List) return response;
+        if (response is Map<String, dynamic>) {
+          if (response["data"] is List) return response["data"];
+          if (response["results"] is List) return response["results"];
+        }
+      } catch (_) {}
+    }
     return [];
   }
 

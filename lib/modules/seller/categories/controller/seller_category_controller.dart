@@ -120,6 +120,15 @@ class SellerCategoryController extends GetxController {
     searchResults.assignAll(localResults);
   }
 
+  /// Seller-created categories wait for admin approval; say so instead of a plain "added".
+  String _savedMessage(Map<String, dynamic> result, String label) {
+    final data = result['data'] is Map ? result['data'] as Map : result;
+    final pending = (data['status'] ?? '').toString().toLowerCase() == 'pending';
+    return pending
+        ? "$label sent for admin approval. It becomes active once approved."
+        : "$label added successfully";
+  }
+
   Future<void> addRootCategory() async {
     if (categoryNameController.text.isEmpty) return;
     try {
@@ -129,12 +138,12 @@ class SellerCategoryController extends GetxController {
         "is_active": "true",
         "brand_ids": selectedBrandIds.toList(),
       };
-      await SellerServices.createCategory(body);
+      final result = await SellerServices.createCategory(body);
       categoryNameController.clear();
       selectedBrandIds.clear();
       await fetchAllData();
       Get.back();
-      Get.snackbar("Success", "Category added successfully");
+      Get.snackbar("Success", _savedMessage(result, "Category"));
     } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {
@@ -146,14 +155,14 @@ class SellerCategoryController extends GetxController {
     if (categoryNameController.text.isEmpty) return;
     try {
       isLoading(true);
-      await SellerServices.createSubCategory(
+      final result = await SellerServices.createSubCategory(
         parentId,
         categoryNameController.text.trim(),
       );
       categoryNameController.clear();
       await fetchAllData();
       Get.back();
-      Get.snackbar("Success", "Sub-category added successfully");
+      Get.snackbar("Success", _savedMessage(result, "Sub-category"));
     } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {

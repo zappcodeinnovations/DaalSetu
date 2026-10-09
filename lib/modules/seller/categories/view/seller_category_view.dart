@@ -609,7 +609,9 @@ class SellerCategoryView extends StatelessWidget {
                 itemCount: controller.brandsList.length,
                 itemBuilder: (context, index) {
                   final brand = controller.brandsList[index];
-                  return CheckboxListTile(
+                  // Own Obx: list items are built lazily, outside the parent Obx,
+                  // so without it a tap never redraws the tick.
+                  return Obx(() => CheckboxListTile(
                     title: Text(
                       brand.brandName,
                       style: const TextStyle(fontSize: 14),
@@ -617,13 +619,15 @@ class SellerCategoryView extends StatelessWidget {
                     value: controller.selectedBrandIds.contains(brand.id),
                     onChanged: (val) =>
                         controller.toggleBrandSelection(brand.id),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    side: BorderSide(color: Colors.grey.shade500, width: 1.5),
                     activeColor: primaryColor,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                     dense: true,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                  );
+                  ));
                 },
               ),
             );

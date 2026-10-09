@@ -115,11 +115,28 @@ class SellerMasterManagementView extends StatelessWidget {
                                     ),
                                     const SizedBox(width: 10),
                                     Expanded(
-                                      child: Text(
-                                        brand.name ?? 'Brand',
-                                        style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            brand.name ?? 'Brand',
+                                            style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          if (brand.status != 'active')
+                                            Text(
+                                              brand.status == 'pending'
+                                                  ? 'Pending approval'
+                                                  : brand.status[0].toUpperCase() + brand.status.substring(1),
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: brand.status == 'pending' ? Colors.orange : Colors.red,
+                                              ),
+                                            ),
+                                        ],
                                       ),
                                     ),
                                   ],

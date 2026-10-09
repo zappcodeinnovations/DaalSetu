@@ -5,12 +5,16 @@ class SellerBrandModel {
   final String? companyName;
   final String? description;
 
+  /// active | pending | inactive | rejected
+  final String status;
+
   SellerBrandModel({
     this.id,
     this.name,
     this.logoUrl,
     this.companyName,
     this.description,
+    this.status = 'active',
   });
 
   factory SellerBrandModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +24,7 @@ class SellerBrandModel {
       logoUrl: json['logo_url'] ?? json['logo'] ?? json['image'],
       companyName: json['company_name'] ?? (json['company'] is Map ? json['company']['name'] : null),
       description: json['description'],
+      status: (json['status'] ?? 'active').toString().toLowerCase(),
     );
   }
 
