@@ -104,7 +104,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
                   Text("Rejecting deal with ${widget.interest.buyerName}", style: TextStyle(color: textDark)),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    value: selectedReason,
+                    initialValue: selectedReason,
                     dropdownColor: cardColor,
                     style: TextStyle(color: textDark),
                     decoration: InputDecoration(
@@ -174,7 +174,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
           productId: int.parse(widget.offerId),
           interestId: widget.interest.interestId,
           decision: "reject",
-          superadminRemark: '${selectedReason}. ${remarkCtrl.text}'.trim(),
+          superadminRemark: '$selectedReason. ${remarkCtrl.text}'.trim(),
         );
         Get.snackbar('Rejected', 'Deal rejected successfully',
             backgroundColor: Colors.red, colorText: Colors.white);
@@ -256,70 +256,151 @@ class _NegotiationPageState extends State<NegotiationPage> {
     );
   }
 
+  String _formatPrice(String? raw) {
+    if (raw == null || raw.trim().isEmpty || raw == '-') return '-';
+    var clean = raw.trim();
+    if (!clean.startsWith('₹')) clean = '₹$clean';
+    if (!clean.contains('/')) clean = '$clean/TON';
+    return clean;
+  }
+
+  String _formatQty(String? raw) {
+    if (raw == null || raw.trim().isEmpty || raw == '-') return '-';
+    var clean = raw.trim();
+    final upper = clean.toUpperCase();
+    if (!upper.contains('QTL') && !upper.contains('TON') && !upper.contains('KG')) {
+      clean = '$clean QTL';
+    }
+    return clean;
+  }
+
   Widget _buildSummaryCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final headerBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFFFF7ED);
+    final headerBorder = isDark ? Colors.white12 : const Color(0xFFFED7AA);
+
     return Container(
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: textLight.withValues(alpha: 0.1)),
+        border: Border.all(color: textLight.withValues(alpha: 0.15)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
+          // ── Highlighted Table/Card Header (Distinct Background, Bold Styling, Clean Bottom Border)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: headerBg,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              border: Border(
+                bottom: BorderSide(color: headerBorder, width: 1.5),
+              ),
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("Negotiation Summary", style: TextStyle(color: textDark, fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(
+                  "Negotiation Summary",
+                  style: TextStyle(
+                    color: textDark,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppTheme.primaryGold.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.primaryGold.withValues(alpha: 0.4)),
                   ),
                   child: Text(
-                    widget.interest.status ?? 'Interested',
-                    style: const TextStyle(fontSize: 12, color: AppTheme.primaryGold, fontWeight: FontWeight.bold),
+                    (widget.interest.status ?? 'Interested').toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.primaryGold,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          const Divider(height: 1),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                _buildSummaryRow("Seller Price:", widget.sellerOfferAmount ?? '-'),
-                const SizedBox(height: 8),
-                _buildSummaryRow("Available Qty:", widget.availableStock ?? '-'),
-                const SizedBox(height: 8),
-                _buildSummaryRow("Current Offer:", widget.interest.buyerOfferedAmount != null ? '₹${widget.interest.buyerOfferedAmount}/TON' : '-'),
-                const SizedBox(height: 8),
-                _buildSummaryRow("Current Qty:", widget.interest.requiredQuantity != null ? '${widget.interest.requiredQuantity} QTL' : '-'),
+                _buildSummaryRow("Seller Price:", _formatPrice(widget.sellerOfferAmount)),
+                const SizedBox(height: 10),
+                _buildSummaryRow("Available Qty:", _formatQty(widget.availableStock)),
+                const SizedBox(height: 10),
+                _buildSummaryRow("Current Offer:", _formatPrice(widget.interest.buyerOfferedAmount)),
+                const SizedBox(height: 10),
+                _buildSummaryRow("Current Qty:", _formatQty(widget.interest.requiredQuantity)),
+                if (widget.interest.condition != null && widget.interest.condition!.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Divider(color: textLight.withValues(alpha: 0.15)),
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Buyer Remark: ",
+                        style: TextStyle(
+                          color: textDark.withValues(alpha: 0.85),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          widget.interest.condition!,
+                          style: TextStyle(
+                            color: textDark,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
-          const Divider(height: 1),
+          Divider(height: 1, color: textLight.withValues(alpha: 0.15)),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Seller Action", style: TextStyle(color: textLight, fontSize: 12)),
+                Text(
+                  "Seller Action",
+                  style: TextStyle(
+                    color: textDark.withValues(alpha: 0.85),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
                       child: FilledButton.icon(
                         icon: const Icon(Icons.check, size: 16),
-                        label: const Text("Accept"),
+                        label: const Text("Accept", style: TextStyle(fontWeight: FontWeight.bold)),
                         style: FilledButton.styleFrom(
                           backgroundColor: AppTheme.successGreen,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
                         onPressed: _approveDeal,
@@ -329,10 +410,11 @@ class _NegotiationPageState extends State<NegotiationPage> {
                     Expanded(
                       child: OutlinedButton.icon(
                         icon: const Icon(Icons.close, size: 16),
-                        label: const Text("Reject"),
+                        label: const Text("Reject", style: TextStyle(fontWeight: FontWeight.bold)),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppTheme.errorRed,
-                          side: const BorderSide(color: AppTheme.errorRed),
+                          side: const BorderSide(color: AppTheme.errorRed, width: 1.5),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
                         onPressed: _rejectDeal,
@@ -352,28 +434,74 @@ class _NegotiationPageState extends State<NegotiationPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: TextStyle(color: textLight, fontSize: 14)),
-        Text(value, style: TextStyle(color: textDark, fontWeight: FontWeight.w600, fontSize: 14)),
+        Text(
+          label,
+          style: TextStyle(
+            color: textDark.withValues(alpha: 0.85),
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: textDark,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildNegotiationLog() {
+    const logHeaderBg = Color(0xFFF58220); // Signature web orange header banner
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: textLight.withValues(alpha: 0.1)),
+        border: Border.all(color: textLight.withValues(alpha: 0.15)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text("Negotiation Log", style: TextStyle(color: textDark, fontWeight: FontWeight.bold, fontSize: 16)),
+          // ── Highlighted Table/Card Header (Web Parity Orange Header with Bottom Border)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            decoration: BoxDecoration(
+              color: logHeaderBg,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              border: Border(
+                bottom: BorderSide(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  width: 1.5,
+                ),
+              ),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.history, color: Colors.white, size: 18),
+                SizedBox(width: 8),
+                Text(
+                  "Negotiation Log",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const Divider(height: 1),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -384,19 +512,37 @@ class _NegotiationPageState extends State<NegotiationPage> {
                   decoration: BoxDecoration(
                     color: textLight.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: textLight.withValues(alpha: 0.1)),
+                    border: Border.all(color: textLight.withValues(alpha: 0.15)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         "${widget.interest.buyerName ?? 'Buyer'} submitted initial offer:",
-                        style: TextStyle(color: textDark, fontWeight: FontWeight.w600, fontSize: 13),
+                        style: TextStyle(
+                          color: textDark,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
                       ),
                       const SizedBox(height: 6),
-                      Text("Price: ₹${widget.interest.buyerOfferedAmount}/TON", style: TextStyle(color: textDark, fontSize: 13)),
+                      Text(
+                        "Price: ${_formatPrice(widget.interest.buyerOfferedAmount)}",
+                        style: TextStyle(
+                          color: textDark,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
                       if (widget.interest.requiredQuantity != null)
-                        Text("Requested: ${widget.interest.requiredQuantity} QTL", style: TextStyle(color: textDark, fontSize: 13)),
+                        Text(
+                          "Requested: ${_formatQty(widget.interest.requiredQuantity)}",
+                          style: TextStyle(
+                            color: textDark,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
                       const SizedBox(height: 6),
                       Text(
                         widget.interest.createdAt ?? "Recently",
@@ -409,10 +555,14 @@ class _NegotiationPageState extends State<NegotiationPage> {
                 Center(
                   child: Text(
                     "No further negotiation proposals yet.",
-                    style: TextStyle(color: textLight, fontSize: 12),
+                    style: TextStyle(
+                      color: textLight,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
               ],
             ),
           ),
