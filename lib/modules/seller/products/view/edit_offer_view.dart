@@ -183,11 +183,12 @@ class _EditOfferViewState extends State<EditOfferView> {
                             padding: const EdgeInsets.only(bottom: 14),
                             child: DropdownButtonFormField<String>(
                               initialValue: _amountUnit,
+                              isExpanded: true,
                               decoration: InputDecoration(labelText: "Per", border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
                               items: const [
-                                DropdownMenuItem(value: 'kg', child: Text('KG')),
-                                DropdownMenuItem(value: 'qtl', child: Text('Quintal')),
-                                DropdownMenuItem(value: 'ton', child: Text('Ton')),
+                                DropdownMenuItem(value: 'kg', child: Text('KG', overflow: TextOverflow.ellipsis)),
+                                DropdownMenuItem(value: 'qtl', child: Text('Quintal', overflow: TextOverflow.ellipsis)),
+                                DropdownMenuItem(value: 'ton', child: Text('Ton', overflow: TextOverflow.ellipsis)),
                               ],
                               onChanged: (value) => setState(() => _amountUnit = value ?? 'qtl'),
                             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:daalsetu/modules/products/model/offer_interest_model.dart';
 import 'package:daalsetu/services/product_services.dart';
 import 'package:daalsetu/services/seller_services.dart';
@@ -153,21 +154,51 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
 
   String _formatDealExpiry(String? raw) {
     if (raw == null || raw.trim().isEmpty || raw == '-') return '-';
-    try {
-      final dt = DateTime.parse(raw);
+    final trimmed = raw.trim();
+
+    // 1. Try ISO datetime regex: 2026-10-14T00:00:00...
+    final isoMatch = RegExp(
+      r'^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})',
+    ).firstMatch(trimmed);
+    if (isoMatch != null) {
+      final y = int.tryParse(isoMatch.group(1)!) ?? 0;
+      final m = int.tryParse(isoMatch.group(2)!) ?? 1;
+      final d = int.tryParse(isoMatch.group(3)!) ?? 1;
+      final h = int.tryParse(isoMatch.group(4)!) ?? 0;
+      final min = int.tryParse(isoMatch.group(5)!) ?? 0;
+
       const months = [
         'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
       ];
-      final month = months[dt.month - 1];
-      final day = dt.day;
-      final year = dt.year;
-      final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
-      final minute = dt.minute.toString().padLeft(2, '0');
-      final amPm = dt.hour >= 12 ? 'PM' : 'AM';
-      return '$day $month $year, $hour:$minute $amPm';
+      final monthName = (m >= 1 && m <= 12) ? months[m - 1] : '$m';
+      final hour12 = h % 12 == 0 ? 12 : h % 12;
+      final minuteStr = min.toString().padLeft(2, '0');
+      final amPm = h >= 12 ? 'PM' : 'AM';
+      return '$d $monthName $y, $hour12:$minuteStr $amPm';
+    }
+
+    // 2. Try ISO date only regex: 2026-10-14
+    final dateOnlyMatch =
+        RegExp(r'^(\d{4})-(\d{2})-(\d{2})$').firstMatch(trimmed);
+    if (dateOnlyMatch != null) {
+      final y = int.tryParse(dateOnlyMatch.group(1)!) ?? 0;
+      final m = int.tryParse(dateOnlyMatch.group(2)!) ?? 1;
+      final d = int.tryParse(dateOnlyMatch.group(3)!) ?? 1;
+      const months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      ];
+      final monthName = (m >= 1 && m <= 12) ? months[m - 1] : '$m';
+      return '$d $monthName $y';
+    }
+
+    // 3. Try standard DateTime parsing with DateFormat
+    try {
+      final dt = DateTime.parse(trimmed).toLocal();
+      return DateFormat('d MMM yyyy, hh:mm a').format(dt);
     } catch (_) {
-      return raw;
+      return trimmed;
     }
   }
 
