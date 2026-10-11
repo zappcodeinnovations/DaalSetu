@@ -71,31 +71,46 @@ class SellerCompanyController extends GetxController {
   }
 
   bool _validateFields() {
-    panController.text = panController.text.trim().toUpperCase();
-    gstController.text = gstController.text.trim().toUpperCase();
-    final panError = TaxIdValidator.pan(panController.text, required: true);
-    if (panError != null) {
-      Get.snackbar("Validation Error", panError);
-      return false;
-    }
-    final gstError = TaxIdValidator.gst(gstController.text, required: true);
-    if (gstError != null) {
-      Get.snackbar("Validation Error", gstError);
-      return false;
-    }
-    final gstPanError = TaxIdValidator.gstMatchesPan(
-      panController.text,
-      gstController.text,
-    );
-    if (gstPanError != null) {
-      Get.snackbar("Validation Error", gstPanError);
+    final legalName = legalNameController.text.trim();
+    if (legalName.isEmpty) {
+      Get.snackbar("Validation Error", "Please enter Legal Name.");
       return false;
     }
 
-    if (legalNameController.text.isEmpty ||
-        cityController.text.isEmpty ||
-        stateController.text.isEmpty) {
-      Get.snackbar("Validation Error", "Please fill all required fields.");
+    final pan = panController.text.trim().toUpperCase();
+    panController.text = pan;
+    if (pan.isNotEmpty) {
+      final panError = TaxIdValidator.pan(pan, required: false);
+      if (panError != null) {
+        Get.snackbar("Validation Error", panError);
+        return false;
+      }
+    }
+
+    final gst = gstController.text.trim().toUpperCase();
+    gstController.text = gst;
+    if (gst.isNotEmpty) {
+      final gstError = TaxIdValidator.gst(gst, required: false);
+      if (gstError != null) {
+        Get.snackbar("Validation Error", gstError);
+        return false;
+      }
+      final gstPanError = TaxIdValidator.gstMatchesPan(pan, gst);
+      if (gstPanError != null) {
+        Get.snackbar("Validation Error", gstPanError);
+        return false;
+      }
+    }
+
+    final pincode = pincodeController.text.trim();
+    if (pincode.isNotEmpty && pincode.length != 6) {
+      Get.snackbar("Validation Error", "Pincode must be exactly 6 digits.");
+      return false;
+    }
+
+    if (cityController.text.trim().isEmpty ||
+        stateController.text.trim().isEmpty) {
+      Get.snackbar("Validation Error", "Please fill required address fields (City, State).");
       return false;
     }
 

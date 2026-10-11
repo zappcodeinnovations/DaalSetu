@@ -101,9 +101,12 @@ class _ContractsScreenState extends State<ContractsScreen> {
                     icon: const Icon(Icons.select_all_rounded),
                   ),
                   IconButton(
-                    tooltip: 'Delete selected',
-                    onPressed: _deleteSelected,
-                    icon: const Icon(Icons.delete_outline_rounded),
+                    tooltip: 'Close selection',
+                    onPressed: () {
+                      selectedContracts.clear();
+                      isSelectionMode.value = false;
+                    },
+                    icon: const Icon(Icons.close_rounded),
                   ),
                 ],
               );
@@ -247,24 +250,29 @@ class _ContractsScreenState extends State<ContractsScreen> {
                 'Contract ID',
                 _text(contract.contractId),
               ),
-              const Divider(height: 22),
-              _party(
-                Icons.person_outline_rounded,
-                'Seller',
-                contract.displaySellerId,
-                contract.sellerName,
+              const Divider(height: 18),
+              Row(
+                children: [
+                  Expanded(
+                    child: _partyCompact(
+                      Icons.person_outline_rounded,
+                      'Seller',
+                      contract.sellerName.isNotEmpty ? contract.sellerName : contract.displaySellerId,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _partyCompact(
+                      Icons.business_center_outlined,
+                      'Buyer',
+                      contract.buyerName.isNotEmpty ? contract.buyerName : contract.displayBuyerId,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
-              _party(
-                Icons.business_center_outlined,
-                'Buyer',
-                contract.displayBuyerId,
-                contract.buyerName,
-              ),
-              const Divider(height: 22),
-              Wrap(
-                spacing: 20,
-                runSpacing: 10,
+              const Divider(height: 18),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   _metric(
                     'Deal amount',
@@ -280,19 +288,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
                   ),
                 ],
               ),
-              const Divider(height: 22),
-              _infoLine(
-                Icons.trip_origin_rounded,
-                'Loading from',
-                _text(contract.loadingFrom),
-              ),
-              const SizedBox(height: 8),
-              _infoLine(
-                Icons.location_on_outlined,
-                'Loading to',
-                _text(contract.loadingTo),
-              ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Align(
                 alignment: Alignment.centerRight,
                 child: Text(
@@ -311,28 +307,24 @@ class _ContractsScreenState extends State<ContractsScreen> {
     });
   }
 
-  Widget _party(IconData icon, String label, String id, String name) {
-    final primary = _text(id);
-    final secondary = name.trim().isEmpty || name.trim() == id.trim()
-        ? ''
-        : name.trim();
+  Widget _partyCompact(IconData icon, String label, String name) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
-        const SizedBox(width: 9),
+        Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(width: 6),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: Theme.of(context).textTheme.bodySmall),
-              const SizedBox(height: 2),
+              Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10)),
+              const SizedBox(height: 1),
               Text(
-                primary,
-                style: const TextStyle(fontWeight: FontWeight.w700),
+                _text(name),
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              if (secondary.isNotEmpty)
-                Text(secondary, style: Theme.of(context).textTheme.bodySmall),
             ],
           ),
         ),
@@ -413,15 +405,6 @@ class _ContractsScreenState extends State<ContractsScreen> {
       selectedContracts.add(id);
     }
     if (selectedContracts.isEmpty) isSelectionMode.value = false;
-  }
-
-  Future<void> _deleteSelected() async {
-    final ids = selectedContracts.toList();
-    for (final id in ids) {
-      await controller.deleteContract(id);
-    }
-    selectedContracts.clear();
-    isSelectionMode.value = false;
   }
 
   String _text(Object? value) {

@@ -22,6 +22,10 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
   void initState() {
     super.initState();
     contractId = Get.arguments as int;
+    final existing = controller.contracts.firstWhereOrNull((c) => c.id == contractId);
+    if (existing != null) {
+      controller.contractDetail.value = ContractDetailModel.fromContractModel(existing);
+    }
     Future.microtask(() => controller.fetchContractDetail(contractId));
   }
 
