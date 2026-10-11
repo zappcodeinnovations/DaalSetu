@@ -22,21 +22,13 @@ class SellerBranchController extends GetxController {
       final res = await SellerServices.getSellerBranches();
       if (res['data'] is Map<String, dynamic>) {
         final data = res['data'] as Map<String, dynamic>;
-        if (data['primary_branch'] is Map<String, dynamic>) {
-          primaryBranch.value = SellerBranchModel.fromJson(
-            data['primary_branch'],
-          );
-        }
-        if (data['my_branches'] is List) {
-          myBranches.value = (data['my_branches'] as List)
-              .map((e) => SellerBranchModel.fromJson(e as Map<String, dynamic>))
-              .toList();
-        }
-        if (data['pending_requests'] is List) {
-          pendingRequests.value = (data['pending_requests'] as List)
-              .map((e) => SellerBranchModel.fromJson(e as Map<String, dynamic>))
-              .toList();
-        }
+        // Replace every section, so a branch the server no longer returns
+        // (left or removed) disappears instead of staying on screen.
+        primaryBranch.value = data['primary_branch'] is Map<String, dynamic>
+            ? SellerBranchModel.fromJson(data['primary_branch'])
+            : null;
+        myBranches.value = _branches(data['my_branches']);
+        pendingRequests.value = _branches(data['pending_requests']);
       }
     } catch (e) {
       _showError('Could not load branches', e);
@@ -109,14 +101,11 @@ class SellerBranchController extends GetxController {
       final res = await SellerServices.leaveBranch(branchId);
       if (Get.isDialogOpen ?? false) Get.back();
 
-      if (res['success'] == false) {
-        Get.snackbar(
-          "Notice",
-          res['message'] ?? "Could not leave branch",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-        );
+      final message = res['message']?.toString() ?? '';
+      // Older servers answer "You are not added to this branch." with success.
+      if (res['success'] == false || _isNotMemberMessage(message)) {
+        await fetchBranches();
+        _showNotice(message.isEmpty ? "Could not leave branch" : message);
         return;
       }
 
@@ -126,15 +115,37 @@ class SellerBranchController extends GetxController {
       await fetchBranches();
       Get.snackbar(
         "Success",
-        res['message'] ?? "Left branch successfully",
+        message.isEmpty ? "Left branch successfully" : message,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
-      _showError('Could not leave branch', e);
+      // 409 "not added" means the card was stale: reload so it disappears.
+      await fetchBranches();
+      _showNotice(ApiClient.userFriendlyErrorMessage(e.toString()));
     }
+  }
+
+  static List<SellerBranchModel> _branches(dynamic raw) => raw is List
+      ? raw
+            .whereType<Map<String, dynamic>>()
+            .map(SellerBranchModel.fromJson)
+            .toList()
+      : <SellerBranchModel>[];
+
+  static bool _isNotMemberMessage(String message) =>
+      message.toLowerCase().contains('not added to this branch');
+
+  void _showNotice(String message) {
+    Get.snackbar(
+      "Notice",
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.orange,
+      colorText: Colors.white,
+    );
   }
 
   Future<void> createBranch({
