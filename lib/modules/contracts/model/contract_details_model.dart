@@ -46,6 +46,10 @@ class ContractDetailModel {
   final String? transporterName;
   final String? transporterMobile;
   final String? bidAmount;
+  final String? buyerEmail;
+  final String? sellerEmail;
+  final String? buyerCompany;
+  final String? sellerCompany;
 
   ContractDetailModel({
     required this.id,
@@ -94,6 +98,10 @@ class ContractDetailModel {
     this.transporterName,
     this.transporterMobile,
     this.bidAmount,
+    this.buyerEmail,
+    this.sellerEmail,
+    this.buyerCompany,
+    this.sellerCompany,
   });
 
   factory ContractDetailModel.fromJson(Map<String, dynamic> json) {
@@ -196,6 +204,35 @@ class ContractDetailModel {
       transporterName: transName.isNotEmpty ? transName : null,
       transporterMobile: text('transporter_mobile').isNotEmpty ? text('transporter_mobile') : null,
       bidAmount: bidAmt,
+      buyerEmail: _extractField(json, 'buyer', ['email', 'email_id', 'user_email']),
+      sellerEmail: _extractField(json, 'seller', ['email', 'email_id', 'user_email']),
+      buyerCompany: _extractField(json, 'buyer', ['company', 'company_name', 'business_name', 'org_name']),
+      sellerCompany: _extractField(json, 'seller', ['company', 'company_name', 'business_name', 'org_name']),
     );
+  }
+
+  static String? _extractField(Map<String, dynamic> json, String prefix, List<String> fieldKeys) {
+    // 1. Direct top-level check: e.g. buyer_email, buyer_company
+    for (final k in fieldKeys) {
+      final direct = json['${prefix}_$k']?.toString().trim();
+      if (direct != null && direct.isNotEmpty) return direct;
+    }
+    // 2. Nested objects check: json['buyer'], json['buyer_details'], etc.
+    final candidates = [
+      json[prefix],
+      json['${prefix}_details'],
+      json['${prefix}_user'],
+      json['${prefix}_profile'],
+      json['${prefix}_data'],
+    ];
+    for (final obj in candidates) {
+      if (obj is Map) {
+        for (final k in fieldKeys) {
+          final val = obj[k]?.toString().trim();
+          if (val != null && val.isNotEmpty) return val;
+        }
+      }
+    }
+    return null;
   }
 }

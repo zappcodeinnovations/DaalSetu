@@ -12,6 +12,7 @@ import '../../../theme/glass_widgets.dart';
 import '../../../routes/app_routes.dart';
 import '../../admin_catalog/view/admin_drawer.dart';
 import '../../admin_notifications/controller/admin_notification_controller.dart';
+import '../../admin_notifications/view/admin_notification_view.dart';
 import '../../contracts/view/contract_view.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
@@ -88,7 +89,7 @@ class AdminDashboardScreen extends StatelessWidget {
                   context,
                   "Recent Activity",
                   trailingText: "View All",
-                  onTrailingTap: () => Get.toNamed(AppRoutes.adminNotifications),
+                  onTrailingTap: () => Get.to(() => const AdminNotificationView()),
                 ),
                 const SizedBox(height: 16),
                 _buildRecentActivity(context, data.recentActivities),
