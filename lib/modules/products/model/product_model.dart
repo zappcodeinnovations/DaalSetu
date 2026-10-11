@@ -181,7 +181,10 @@ class ProductModel {
       dealStatus: text("deal_status"),
       createdAt: text("created_at"),
       updatedAt: text("updated_at"),
-      interestCount: number("interest_count") ?? 0,
+      interestCount: number("interest_count") ??
+          number("interests_count") ??
+          number("interested_buyers_count") ??
+          (json["interests"] is List ? (json["interests"] as List).length : 0),
       images: (json["images"] as List? ?? [])
           .map((item) => ProductImage.fromJson(Map<String, dynamic>.from(item)))
           .toList(),

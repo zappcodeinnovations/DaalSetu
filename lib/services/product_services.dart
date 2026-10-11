@@ -355,7 +355,10 @@ class ProductService {
       "interest_id": interestId,
       "decision": decision,
       "admin_remark": superadminRemark,
-      if (subAdminId != null) "assigned_sub_admin_id": subAdminId,
+      if (subAdminId != null) ...{
+        "assigned_sub_admin_id": subAdminId,
+        "sub_admin_id": subAdminId,
+      },
     };
     try {
       await ApiClient.post(

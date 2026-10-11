@@ -55,9 +55,7 @@ class AdminDashboardScreen extends StatelessWidget {
                 _buildPerformanceInsights(context, data.kpis),
 
                 const SizedBox(height: 24),
-                _buildSectionHeader(context, "GTV & Deals Trend", trailingText: "This Month"),
-                const SizedBox(height: 16),
-                _buildGtvDealsChart(context, data.charts.gtvDeals),
+                _buildGtvDealsSection(context, controller, data),
 
                 const SizedBox(height: 24),
                 _buildSectionHeader(context, "Analytics Overview"),
@@ -430,11 +428,155 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildGtvDealsChart(BuildContext context, GtvDealsChart data) {
+  Widget _buildGtvDealsSection(
+    BuildContext context,
+    DashboardController controller,
+    DashboardModel data,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "GTV & Deals Trend",
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
+            ),
+            Obx(() => InkWell(
+              onTap: () => _showPeriodFilterDialog(context, controller),
+              borderRadius: BorderRadius.circular(6),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.25),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      controller.selectedGtvPeriod.value,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ],
+                ),
+              ),
+            )),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Obx(() {
+          if (controller.isUpdatingTrend.value) {
+            return const SizedBox(
+              height: 180,
+              child: Center(
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            );
+          }
+          final gtvDeals = controller.dashboardData.value?.charts.gtvDeals ?? data.charts.gtvDeals;
+          return _buildGtvDealsChart(context, gtvDeals, controller.selectedGtvPeriod.value);
+        }),
+      ],
+    );
+  }
+
+  void _showPeriodFilterDialog(BuildContext context, DashboardController controller) {
+    final periods = ['This Week', 'This Month', 'This Quarter', 'This Year'];
+    final theme = Theme.of(context);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Text(
+                    "Select Time Period",
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                ),
+                const Divider(),
+                ...periods.map((p) {
+                  return Obx(() {
+                    final isSelected = controller.selectedGtvPeriod.value == p;
+                    return ListTile(
+                      title: Text(
+                        p,
+                        style: TextStyle(
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected
+                              ? theme.colorScheme.primary
+                              : theme.textTheme.bodyMedium?.color,
+                        ),
+                      ),
+                      trailing: isSelected
+                          ? Icon(Icons.check_circle,
+                              color: theme.colorScheme.primary, size: 20)
+                          : null,
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        controller.updateGtvPeriod(p);
+                      },
+                    );
+                  });
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGtvDealsChart(BuildContext context, GtvDealsChart data, [String period = 'This Month']) {
     final theme = Theme.of(context);
     if (data.labels.isEmpty) return const SizedBox();
 
-    double maxY = data.gtvValues.isNotEmpty ? data.gtvValues.reduce((a, b) => a > b ? a : b) : 10;
+    List<String> labels = List<String>.from(data.labels);
+    List<double> gtvValues = List<double>.from(data.gtvValues);
+
+    if (period == 'This Week' && labels.length > 7) {
+      labels = labels.sublist(labels.length - 7);
+      gtvValues = gtvValues.sublist(gtvValues.length - 7);
+    } else if (period == 'This Quarter' && labels.length > 12) {
+      labels = labels.sublist(labels.length - 12);
+      gtvValues = gtvValues.sublist(gtvValues.length - 12);
+    }
+
+    double maxY = gtvValues.isNotEmpty ? gtvValues.reduce((a, b) => a > b ? a : b) : 10;
     if (maxY == 0) maxY = 10;
 
     return GlassCard(
@@ -458,10 +600,10 @@ class AdminDashboardScreen extends StatelessWidget {
                 sideTitles: SideTitles(
                   showTitles: true,
                   getTitlesWidget: (value, meta) {
-                    if (value.toInt() >= 0 && value.toInt() < data.labels.length) {
+                    if (value.toInt() >= 0 && value.toInt() < labels.length) {
                       return Padding(
                         padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(data.labels[value.toInt()], style: TextStyle(fontSize: 8, color: theme.textTheme.bodyMedium?.color)),
+                        child: Text(labels[value.toInt()], style: TextStyle(fontSize: 8, color: theme.textTheme.bodyMedium?.color)),
                       );
                     }
                     return const Text('');
@@ -482,16 +624,16 @@ class AdminDashboardScreen extends StatelessWidget {
               topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
               rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
             ),
-            gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (val) => FlLine(color: theme.dividerColor.withOpacity(0.5), strokeWidth: 1, dashArray: [4, 4])),
+            gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (val) => FlLine(color: theme.dividerColor.withValues(alpha: 0.5), strokeWidth: 1, dashArray: [4, 4])),
             borderData: FlBorderData(show: false),
-            barGroups: List.generate(data.labels.length, (index) {
+            barGroups: List.generate(labels.length, (index) {
               return BarChartGroupData(
                 x: index,
                 barRods: [
                   BarChartRodData(
-                    toY: data.gtvValues[index],
+                    toY: gtvValues[index],
                     color: theme.colorScheme.primary,
-                    width: 8,
+                    width: labels.length > 15 ? 5 : 8,
                     borderRadius: BorderRadius.circular(4),
                   )
                 ],

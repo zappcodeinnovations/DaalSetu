@@ -18,23 +18,33 @@ class AdminOffersListScreen extends StatefulWidget {
 class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
   final AdminOffersController controller = Get.put(AdminOffersController());
 
-  // Colors based on the provided UI
-  final bgColor = AppTheme.bgDarkNavy;
-  final cardColor = AppTheme.cardColor;
-  final borderColor = AppTheme.borderColor;
+  // Dynamic theme-adaptive colors
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+  Color get bgColor => isDark ? AppTheme.bgDarkNavy : AppTheme.bgLight;
+  Color get cardColor => isDark ? AppTheme.cardColor : AppTheme.cardLight;
+  Color get borderColor => isDark ? AppTheme.borderColor : AppTheme.borderLight;
+  Color get textPrimary => isDark ? AppTheme.textPrimary : AppTheme.textPrimaryLight;
+  Color get textSecondary => isDark ? AppTheme.textSecondary : AppTheme.textSecondaryLight;
+  Color get textMuted => isDark ? AppTheme.textMuted : AppTheme.textMutedLight;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text('Admin Offers', style: TextStyle(color: Colors.white)),
+        title: Text(
+          'Admin Offers',
+          style: TextStyle(
+            color: textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: bgColor,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: textPrimary),
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
+            icon: Icon(Icons.refresh, color: textPrimary),
             onPressed: controller.fetchOffers,
           ),
           const SizedBox(width: 8),
@@ -53,7 +63,12 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
           );
         }
         if (controller.offers.isEmpty) {
-          return const Center(child: Text("No offers found", style: TextStyle(color: Colors.white)));
+          return Center(
+            child: Text(
+              "No offers found",
+              style: TextStyle(color: textSecondary),
+            ),
+          );
         }
 
         return RefreshIndicator(
@@ -80,6 +95,15 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -95,10 +119,10 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
                   children: [
                     Text(
                       offer.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: textPrimary,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -106,9 +130,9 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
                     const SizedBox(height: 4),
                     Text(
                       '${offer.category?.name ?? ''} • ${offer.brand?.name ?? ''}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey,
+                        color: textSecondary,
                       ),
                     ),
                   ],
@@ -126,8 +150,8 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
                     fallback: Container(
                       width: 70,
                       height: 70,
-                      color: Colors.black26,
-                      child: const Icon(Icons.broken_image, color: Colors.grey),
+                      color: isDark ? Colors.black26 : Colors.grey.shade200,
+                      child: Icon(Icons.broken_image, color: textMuted),
                     ),
                   ),
                 )
@@ -136,10 +160,10 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
                   width: 70,
                   height: 70,
                   decoration: BoxDecoration(
-                    color: Colors.black26,
+                    color: isDark ? Colors.black26 : Colors.grey.shade200,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.image_outlined, color: Colors.grey),
+                  child: Icon(Icons.image_outlined, color: textMuted),
                 ),
             ],
           ),
@@ -162,8 +186,8 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
                   label: 'Rate',
                   value: '₹${offer.amount}',
                   unit: '/${offer.amountUnit.toUpperCase()}',
-                  bgColor: AppTheme.successGreen.withValues(alpha: 0.15), // Light Green
-                  fgColor: AppTheme.successGreen, // Dark Green
+                  bgColor: AppTheme.successGreen.withValues(alpha: 0.15),
+                  fgColor: AppTheme.successGreen,
                 ),
               ),
               const SizedBox(width: 8),
@@ -173,8 +197,8 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
                   label: 'Bags',
                   value: offer.originalBagCount?.toString() ?? '-',
                   unit: '',
-                  bgColor: AppTheme.secondaryOrange.withValues(alpha: 0.15), // Light Orange
-                  fgColor: AppTheme.secondaryOrange, // Dark Orange
+                  bgColor: AppTheme.secondaryOrange.withValues(alpha: 0.15),
+                  fgColor: AppTheme.secondaryOrange,
                 ),
               ),
               const SizedBox(width: 8),
@@ -184,8 +208,8 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
                   label: 'Quantity',
                   value: offer.availableQuantity.toString(),
                   unit: 'QTL',
-                  bgColor: AppTheme.primaryGold.withValues(alpha: 0.15), // Light Blue
-                  fgColor: AppTheme.primaryGold, // Dark Blue
+                  bgColor: AppTheme.primaryGold.withValues(alpha: 0.15),
+                  fgColor: AppTheme.primaryGold,
                 ),
               ),
             ],
@@ -197,7 +221,7 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
             children: [
               _buildStatusBadge(offer.stockStatus),
               const Spacer(),
-              const Text('Visible', style: TextStyle(color: Colors.grey, fontSize: 13)),
+              Text('Visible', style: TextStyle(color: textSecondary, fontSize: 13)),
               const SizedBox(width: 4),
               SizedBox(
                 height: 24,
@@ -207,10 +231,10 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
                   child: Switch(
                     value: offer.isActive,
                     onChanged: (val) => controller.toggleVisibility(offer.id, offer.isActive),
-                    activeColor: Colors.white,
+                    activeThumbColor: Colors.white,
                     activeTrackColor: AppTheme.successGreen,
                     inactiveThumbColor: Colors.white,
-                    inactiveTrackColor: AppTheme.borderColor,
+                    inactiveTrackColor: isDark ? AppTheme.borderColor : Colors.grey.shade400,
                   ),
                 ),
               ),
@@ -221,8 +245,9 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF334155), // Dark badge
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: borderColor),
                   ),
                   child: Row(
                     children: [
@@ -230,7 +255,7 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
                       const SizedBox(width: 4),
                       Text(
                         '${offer.interestCount}',
-                        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: textPrimary, fontSize: 13, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -257,26 +282,28 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
 
           const SizedBox(height: 16),
 
-          // Bottom Action Buttons
+          // Bottom Action Buttons (Responsive 2-Tier Layout)
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () => _showInterestsDialog(offer.id, offer.title),
+              icon: const Icon(Icons.handshake, size: 18),
+              label: Text(
+                'Manage Bids (${offer.interestCount})',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppTheme.primaryGold,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
-                flex: 2,
-                child: FilledButton.icon(
-                  onPressed: () => _showInterestsDialog(offer.id, offer.title),
-                  icon: const Icon(Icons.handshake, size: 16),
-                  label: Text('Manage Bids (${offer.interestCount})', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppTheme.primaryGold,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 1,
                 child: _buildOutlinedButton(
                   icon: Icons.edit_outlined,
                   label: 'Edit',
@@ -289,7 +316,6 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
               ),
               const SizedBox(width: 8),
               Expanded(
-                flex: 1,
                 child: _buildOutlinedButton(
                   icon: Icons.history,
                   label: 'History',
@@ -299,7 +325,6 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
               ),
               const SizedBox(width: 8),
               Expanded(
-                flex: 1,
                 child: _buildOutlinedButton(
                   icon: Icons.delete_outline,
                   label: 'Delete',
@@ -317,20 +342,20 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
   Widget _buildAttributeRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: Colors.grey),
+        Icon(icon, size: 16, color: textSecondary),
         const SizedBox(width: 8),
         SizedBox(
           width: 70,
           child: Text(
             label,
-            style: const TextStyle(color: Colors.grey, fontSize: 13),
+            style: TextStyle(color: textSecondary, fontSize: 13),
           ),
         ),
-        const Text(': ', style: TextStyle(color: Colors.grey)),
+        Text(': ', style: TextStyle(color: textSecondary)),
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+            style: TextStyle(color: textPrimary, fontSize: 13, fontWeight: FontWeight.w500),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -341,10 +366,10 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
 
   Widget _buildDateRow(ProductModel offer) {
     String dateStr = '-';
-    if (offer.loadingFrom != null && offer.loadingTo != null) {
+    if (offer.loadingFrom.isNotEmpty && offer.loadingTo.isNotEmpty) {
       dateStr = '${offer.loadingFrom} → ${offer.loadingTo}';
-    } else if (offer.createdAt != null) {
-      dateStr = offer.createdAt.toString().split(' ').first; // Just fallback
+    } else if (offer.createdAt.toString().isNotEmpty) {
+      dateStr = offer.createdAt.toString().split(' ').first;
     }
 
     return _buildAttributeRow(Icons.calendar_today_outlined, 'Date', dateStr);
@@ -369,8 +394,8 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(4),
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: isDark ? cardColor : Colors.white,
               shape: BoxShape.circle,
             ),
             child: Icon(icon, size: 14, color: fgColor),
@@ -382,7 +407,7 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
               children: [
                 Text(
                   label,
-                  style: TextStyle(color: fgColor.withOpacity(0.8), fontSize: 11),
+                  style: TextStyle(color: fgColor.withValues(alpha: 0.8), fontSize: 11),
                 ),
                 Text(
                   value,
@@ -395,7 +420,7 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
                 if (unit.isNotEmpty)
                   Text(
                     unit,
-                    style: TextStyle(color: fgColor.withOpacity(0.8), fontSize: 10),
+                    style: TextStyle(color: fgColor.withValues(alpha: 0.8), fontSize: 10),
                   ),
               ],
             ),
@@ -438,16 +463,24 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
         foregroundColor: color,
-        side: BorderSide(color: color.withOpacity(0.5)),
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        side: BorderSide(color: color.withValues(alpha: 0.5)),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16),
-          const SizedBox(width: 6),
-          Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+          Icon(icon, size: 15),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ),
         ],
       ),
     );
@@ -474,12 +507,12 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: cardColor,
-        title: const Text("Delete Offer", style: TextStyle(color: Colors.white)),
-        content: Text("Are you sure you want to delete '$title'?", style: const TextStyle(color: Colors.white70)),
+        title: Text("Delete Offer", style: TextStyle(color: textPrimary)),
+        content: Text("Are you sure you want to delete '$title'?", style: TextStyle(color: textSecondary)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+            child: Text("Cancel", style: TextStyle(color: textSecondary)),
           ),
           FilledButton(
             onPressed: () {
@@ -515,7 +548,14 @@ class _ManageStockRowState extends State<_ManageStockRow> {
   final _quantityCtrl = TextEditingController();
   final _bagsCtrl = TextEditingController();
   final _packingKgCtrl = TextEditingController();
-  bool _isExpanded = false; // Initially expanded in image? Let's make it expandable but true by default for now.
+  bool _isExpanded = false;
+
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+  Color get bgSubCard => isDark ? AppTheme.bgSecondary : const Color(0xFFF1F5F9);
+  Color get fieldBg => isDark ? AppTheme.cardColor : Colors.white;
+  Color get borderColor => isDark ? AppTheme.borderColor : AppTheme.borderLight;
+  Color get textPrimary => isDark ? AppTheme.textPrimary : AppTheme.textPrimaryLight;
+  Color get textSecondary => isDark ? AppTheme.textSecondary : AppTheme.textSecondaryLight;
 
   @override
   void initState() {
@@ -563,9 +603,9 @@ class _ManageStockRowState extends State<_ManageStockRow> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.bgSecondary, // Slightly darker than card
+        color: bgSubCard,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.borderColor),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         children: [
@@ -581,11 +621,11 @@ class _ManageStockRowState extends State<_ManageStockRow> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  const Icon(Icons.inventory_2_outlined, color: Colors.white, size: 20),
+                  Icon(Icons.inventory_2_outlined, color: textPrimary, size: 20),
                   const SizedBox(width: 8),
-                  const Text('Manage Stock', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                  Text('Manage Stock', style: TextStyle(color: textPrimary, fontWeight: FontWeight.bold, fontSize: 14)),
                   const Spacer(),
-                  Icon(_isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, color: Colors.white, size: 20),
+                  Icon(_isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, color: textPrimary, size: 20),
                 ],
               ),
             ),
@@ -608,20 +648,20 @@ class _ManageStockRowState extends State<_ManageStockRow> {
                             height: 40,
                             padding: const EdgeInsets.symmetric(horizontal: 8),
                             decoration: BoxDecoration(
-                              color: AppTheme.cardColor,
-                              border: Border.all(color: AppTheme.borderColor),
+                              color: fieldBg,
+                              border: Border.all(color: borderColor),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton<String>(
                                 value: _action,
-                                dropdownColor: AppTheme.cardColor,
-                                icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white),
+                                dropdownColor: fieldBg,
+                                icon: Icon(Icons.keyboard_arrow_down, color: textPrimary),
                                 isExpanded: true,
-                                style: const TextStyle(color: Colors.white, fontSize: 13),
-                                items: const [
-                                  DropdownMenuItem(value: 'Add', child: Text('Add')),
-                                  DropdownMenuItem(value: 'Remove', child: Text('Remove')),
+                                style: TextStyle(color: textPrimary, fontSize: 13),
+                                items: [
+                                  DropdownMenuItem(value: 'Add', child: Text('Add', style: TextStyle(color: textPrimary))),
+                                  DropdownMenuItem(value: 'Remove', child: Text('Remove', style: TextStyle(color: textPrimary))),
                                 ],
                                 onChanged: (v) {
                                   if (v != null) setState(() => _action = v);
@@ -667,12 +707,12 @@ class _ManageStockRowState extends State<_ManageStockRow> {
                         height: 40,
                         width: 40,
                         decoration: BoxDecoration(
-                          color: AppTheme.cardColor,
-                          border: Border.all(color: AppTheme.borderColor),
+                          color: fieldBg,
+                          border: Border.all(color: borderColor),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: IconButton(
-                          icon: Icon(Icons.file_download_outlined, color: AppTheme.primaryGold, size: 18),
+                          icon: const Icon(Icons.file_download_outlined, color: AppTheme.primaryGold, size: 18),
                           onPressed: () {}, // Sync or download action
                         ),
                       ),
@@ -691,7 +731,8 @@ class _ManageStockRowState extends State<_ManageStockRow> {
                         _packingKgCtrl.clear();
                       },
                       style: FilledButton.styleFrom(
-                        backgroundColor: AppTheme.primaryGold, // Blue 500
+                        backgroundColor: AppTheme.primaryGold,
+                        foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
                       icon: const Icon(Icons.send_outlined, size: 16),
@@ -710,7 +751,7 @@ class _ManageStockRowState extends State<_ManageStockRow> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+        Text(label, style: TextStyle(color: textSecondary, fontSize: 11)),
         const SizedBox(height: 4),
         child,
       ],
@@ -725,16 +766,17 @@ class _ManageStockRowState extends State<_ManageStockRow> {
         keyboardType: TextInputType.number,
         maxLength: 10,
         onChanged: onChanged,
-        style: const TextStyle(color: Colors.white, fontSize: 13),
+        style: TextStyle(color: textPrimary, fontSize: 13),
         decoration: InputDecoration(
+          counterText: '',
           hintText: hint,
-          hintStyle: const TextStyle(color: Colors.grey, fontSize: 12),
+          hintStyle: TextStyle(color: textSecondary, fontSize: 12),
           contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
           filled: true,
-          fillColor: AppTheme.cardColor,
+          fillColor: fieldBg,
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(6),
-            borderSide: BorderSide(color: isHighlight ? AppTheme.primaryGold.withValues(alpha: 0.5) : AppTheme.borderColor),
+            borderSide: BorderSide(color: isHighlight ? AppTheme.primaryGold.withValues(alpha: 0.5) : borderColor),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(6),

@@ -53,6 +53,27 @@ class ProfileModel {
         ? idVal
         : (idVal != null ? int.tryParse(idVal.toString()) ?? 0 : 0);
 
+    String extractDoc(List<String> keys) {
+      for (final key in keys) {
+        final val = data[key];
+        if (val != null && val.toString().trim().isNotEmpty && val.toString() != 'null') {
+          return val.toString().trim();
+        }
+      }
+      for (final parent in ['documents', 'kyc_documents', 'kyc', 'company']) {
+        if (data[parent] is Map) {
+          final sub = data[parent] as Map;
+          for (final key in keys) {
+            final val = sub[key];
+            if (val != null && val.toString().trim().isNotEmpty && val.toString() != 'null') {
+              return val.toString().trim();
+            }
+          }
+        }
+      }
+      return "";
+    }
+
     return ProfileModel(
       id: parsedId,
       username: data["username"] ?? "",
@@ -66,9 +87,35 @@ class ProfileModel {
       profileImage: data["profile_image"],
       gender: data["gender"] ?? "",
       dob: data["dob"] ?? "",
-      panImage: data["pan_image"] ?? "",
-      gstImage: data["gst_image"] ?? "",
-      aadhaarImage: data["adharcard_image"] ?? "",
+      panImage: extractDoc([
+        "pan_card_upload",
+        "pan_image",
+        "pan_card",
+        "pan_document",
+        "pan_card_image",
+        "pan_file",
+        "pan_url",
+      ]),
+      gstImage: extractDoc([
+        "gst_certificate_upload",
+        "gst_image",
+        "gst_certificate",
+        "gst_document",
+        "gst_certificate_image",
+        "gst_file",
+        "gst_url",
+      ]),
+      aadhaarImage: extractDoc([
+        "adhar_front_upload",
+        "adharcard_image",
+        "aadhaar_image",
+        "aadhaar_front_image",
+        "aadhaar_card",
+        "aadhar_image",
+        "aadhaar_document",
+        "aadhaar_file",
+        "aadhaar_url",
+      ]),
       kycStatus: data["kyc_status"] ?? "",
       accountStatus: data["account_status"] ?? "",
       isActive: data["is_active"] ?? false,
