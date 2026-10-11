@@ -35,6 +35,11 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
   List<OfferInterestModel> interests = [];
   String _role = '';
 
+  String? _loadedTitle;
+  String? _loadedStock;
+  String? _loadedPrice;
+  String? _loadedExpiry;
+
   bool get _isAdminRole =>
       const {'admin', 'super_admin', 'sub_admin'}.contains(_role);
 
@@ -42,6 +47,41 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
   Color get cardColor => Get.theme.cardColor;
   Color get textDark => Get.theme.textTheme.bodyLarge?.color ?? Colors.black;
   Color get textLight => Get.theme.textTheme.bodySmall?.color ?? Colors.grey;
+
+  String get displayTitle {
+    if (_loadedTitle != null && _loadedTitle!.isNotEmpty) return _loadedTitle!;
+    if (widget.offerTitle.isNotEmpty &&
+        !widget.offerTitle.startsWith('Offer #') &&
+        !widget.offerTitle.toLowerCase().contains('notification') &&
+        !widget.offerTitle.toLowerCase().contains('confirmed')) {
+      return widget.offerTitle;
+    }
+    return _loadedTitle ?? 'Offer #${widget.offerId}';
+  }
+
+  String get displayStock {
+    if (_loadedStock != null && _loadedStock!.isNotEmpty) return _loadedStock!;
+    if (widget.availableStock != null && widget.availableStock!.isNotEmpty) {
+      return widget.availableStock!.endsWith('QTL')
+          ? widget.availableStock!
+          : "${widget.availableStock} QTL";
+    }
+    return "- QTL";
+  }
+
+  String get displayPrice {
+    if (_loadedPrice != null && _loadedPrice!.isNotEmpty) return _loadedPrice!;
+    if (widget.sellerOfferAmount != null && widget.sellerOfferAmount!.isNotEmpty) {
+      final amt = widget.sellerOfferAmount!;
+      return amt.startsWith('₹') ? amt : "₹$amt/TON";
+    }
+    return "-";
+  }
+
+  String get displayExpiry {
+    final raw = _loadedExpiry ?? widget.dealExpiry;
+    return _formatDealExpiry(raw);
+  }
 
   @override
   void initState() {
@@ -62,15 +102,52 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
       final res = await ProductService.getOfferInterests(
         int.parse(widget.offerId),
       );
-      setState(() {
-        interests = res;
-        isLoading = false;
-      });
+
+      // Auto-fetch extra offer specifications if not passed directly
+      if (_loadedTitle == null) {
+        try {
+          final prodId = int.tryParse(widget.offerId);
+          if (prodId != null) {
+            final detail = await SellerServices.getOfferDetail(prodId);
+            final map = (detail['product'] is Map)
+                ? detail['product']
+                : ((detail['data'] is Map)
+                    ? detail['data']
+                    : ((detail['offer'] is Map) ? detail['offer'] : detail));
+            if (map is Map) {
+              _loadedTitle = map['title']?.toString() ?? map['product_title']?.toString();
+              final stock = map['available_quantity'] ??
+                  map['remaining_quantity'] ??
+                  map['quantity_qtl'] ??
+                  map['quantity'];
+              if (stock != null) _loadedStock = '$stock QTL';
+              final amt = map['amount'] ?? map['seller_offer_amount'] ?? map['price'];
+              final unit = (map['amount_unit'] ?? map['quantity_unit'] ?? 'TON')
+                  .toString()
+                  .toUpperCase();
+              if (amt != null) _loadedPrice = '₹$amt/$unit';
+              _loadedExpiry = map['deal_expiry_datetime']?.toString() ??
+                  map['loading_to']?.toString();
+            }
+          }
+        } catch (e) {
+          debugPrint("Note: Could not fetch additional offer details: $e");
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          interests = res;
+          isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        error = e.toString();
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          error = e.toString();
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -99,9 +176,9 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
       () => _isAdminRole
           ? NegotiationPage(
               offerId: widget.offerId,
-              offerTitle: widget.offerTitle,
-              availableStock: widget.availableStock,
-              sellerOfferAmount: widget.sellerOfferAmount,
+              offerTitle: displayTitle,
+              availableStock: displayStock,
+              sellerOfferAmount: displayPrice,
               interest: interest,
             )
           : OfferInterestNegotiationChatView(
@@ -125,7 +202,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
       context: context,
       builder: (ctx) => ApproveDealDialog(
         buyerName: interest.buyerName,
-        offerTitle: widget.offerTitle,
+        offerTitle: displayTitle,
       ),
     );
     if (adminResult == null) return;
@@ -206,24 +283,17 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     "Reject Deal",
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.errorRed,
+                      color: textDark,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Rejecting deal with ${interest.buyerName}",
-                    style: TextStyle(color: textDark),
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    value: selectedReason,
-                    dropdownColor: cardColor,
-                    style: TextStyle(color: textDark),
+                    initialValue: selectedReason,
                     decoration: InputDecoration(
                       labelText: "Reason",
                       labelStyle: TextStyle(color: textLight),
@@ -307,7 +377,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
       setState(() => isLoading = true);
       try {
         final status = (interest.status ?? '').trim().toLowerCase();
-        final remark = '${selectedReason}. ${remarkCtrl.text}'.trim();
+        final remark = '$selectedReason. ${remarkCtrl.text}'.trim();
         if (status == 'interested') {
           await SellerServices.rejectBuyerInterest(
             int.parse(widget.offerId),
@@ -343,219 +413,95 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dialogBg = isDark ? const Color(0xFF0F172A) : const Color(0xFFFFFDF8);
+    final mediaQuery = MediaQuery.of(context);
+    final screenWidth = mediaQuery.size.width;
+    final isMobile = screenWidth < 600;
+
     return Dialog(
-      alignment: Alignment.bottomCenter,
-      insetPadding: EdgeInsets.zero,
+      alignment: Alignment.center,
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 12 : 24,
+        vertical: isMobile ? 16 : 24,
+      ),
       backgroundColor: Colors.transparent,
-      child: Container(
-        height: MediaQuery.of(context).size.height * 0.9,
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 720,
+          maxHeight: mediaQuery.size.height * 0.88,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Handle for visual bottom sheet cue
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12, bottom: 8),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textLight.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
+        child: Container(
+          decoration: BoxDecoration(
+            color: dialogBg,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 1. Orange Header matching website modal: "Manage Offer: <Title>" + Close "✕"
+                _buildHeader(),
+
+                // 2. Offer Summary Section (Available, Seller Offer Amount, Deal Expiry)
+                _buildSummaryInfo(isDark),
+
+                // 3. Responsive Content: Mobile Cards or Tablet Table (Zero Render Overflow)
+                Expanded(
+                  child: _buildInterestsContent(isDark, isMobile),
                 ),
-              ),
-            ),
 
-            // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Icon(Icons.arrow_back, color: textDark),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Manage Offer",
-                          style: TextStyle(color: textLight, fontSize: 12),
-                        ),
-                        Text(
-                          widget.offerTitle,
-                          style: TextStyle(
-                            color: textDark,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  _buildStatusBadge('Active'),
-                ],
-              ),
+                // 4. Modal Footer: [Close] button
+                _buildFooter(),
+              ],
             ),
-            Divider(color: textLight.withValues(alpha: 0.1)),
-
-            // Summary Section
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: [
-                  _buildSummaryCard(
-                    "📦 Available Qty",
-                    "${widget.availableStock ?? '-'} QTL",
-                  ),
-                  _buildSummaryCard(
-                    "💰 Seller Price",
-                    "₹${widget.sellerOfferAmount ?? '-'}/TON",
-                  ),
-                  _buildSummaryCard("📅 Deal Expiry", _formatDealExpiry(widget.dealExpiry)),
-                ],
-              ),
-            ),
-
-            // Table Header Bar (Web Parity: INTERESTED CODE | INTERESTED AMOUNT | STATUS | ACTION)
-            Container(
-              margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryGold.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
-                border: Border(
-                  bottom: BorderSide(
-                    color: AppTheme.primaryGold.withValues(alpha: 0.35),
-                    width: 1.5,
-                  ),
-                ),
-              ),
-              child: const Row(
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: Text(
-                      "INTERESTED CODE",
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.primaryGold,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: Text(
-                      "INTERESTED AMOUNT",
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.primaryGold,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      "STATUS",
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.primaryGold,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: Text(
-                      "ACTION",
-                      textAlign: TextAlign.end,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.primaryGold,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Interests List
-            Expanded(
-              child: isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        color: AppTheme.primaryGold,
-                      ),
-                    )
-                  : error != null
-                  ? Center(
-                      child: Text(
-                        error!,
-                        style: const TextStyle(color: AppTheme.errorRed),
-                      ),
-                    )
-                  : interests.isEmpty
-                  ? Center(
-                      child: Text(
-                        "No interests found.",
-                        style: TextStyle(color: textLight),
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      itemCount: interests.length,
-                      itemBuilder: (context, index) {
-                        return _buildInterestCard(interests[index]);
-                      },
-                    ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSummaryCard(String title, String value) {
+  // ── 1. Orange Header Banner (Web Parity) ───────────────────────────────────
+  Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: textLight.withValues(alpha: 0.1)),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF58220), // Website's exact orange brand banner
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+      child: Row(
         children: [
-          Text(title, style: TextStyle(color: textLight, fontSize: 11)),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              color: textDark,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+          Expanded(
+            child: Text(
+              "Manage Offer: $displayTitle",
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.close, color: Colors.white, size: 18),
             ),
           ),
         ],
@@ -563,188 +509,379 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
     );
   }
 
-  Widget _buildInterestCard(OfferInterestModel interest) {
-    final canDecide =
-        interest.canSellerAction ||
-        (_isAdminRole && interest.canAdminFinalAction);
-    return Card(
-      color: cardColor,
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: textLight.withValues(alpha: 0.1)),
-      ),
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Top row: Code and Date
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  // ── 2. Summary Info Section (Web Parity) ───────────────────────────────────
+  Widget _buildSummaryInfo(bool isDark) {
+    final infoBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFFFFBEB);
+    return Container(
+      width: double.infinity,
+      color: infoBg,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RichText(
+            text: TextSpan(
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? Colors.white70 : const Color(0xFF334155),
+              ),
               children: [
-                Text(
-                  interest.transactionId.isNotEmpty
-                      ? interest.transactionId
-                      : 'INT-${interest.interestId}',
+                const TextSpan(
+                  text: "Available: ",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(
+                  text: displayStock,
                   style: TextStyle(
-                    color: textDark,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                Text(
-                  interest.createdAt?.substring(0, 10) ?? '-',
-                  style: TextStyle(color: textLight, fontSize: 12),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Info Row
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Interested Amount",
-                        style: TextStyle(color: textLight, fontSize: 11),
-                      ),
-                      Text(
-                        "₹${interest.buyerOfferedAmount}/TON",
-                        style: const TextStyle(
-                          color: AppTheme.primaryGold,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Requested Qty",
-                        style: TextStyle(color: textLight, fontSize: 11),
-                      ),
-                      Text(
-                        "${interest.requiredQuantity ?? '-'} QTL",
-                        style: TextStyle(
-                          color: textDark,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-
-            // Buyer Info
-            Row(
+          ),
+          const SizedBox(height: 4),
+          RichText(
+            text: TextSpan(
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? Colors.white70 : const Color(0xFF334155),
+              ),
               children: [
-                Icon(Icons.person, color: textLight, size: 16),
-                const SizedBox(width: 6),
-                Text(
-                  interest.buyerName ?? 'Unknown Buyer',
-                  style: TextStyle(color: textDark, fontSize: 13),
+                const TextSpan(
+                  text: "Seller Offer Amount: ",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(
+                  text: displayPrice,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            Divider(color: textLight.withValues(alpha: 0.1)),
-
-            // Action Buttons
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+          ),
+          const SizedBox(height: 4),
+          RichText(
+            text: TextSpan(
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? Colors.white70 : const Color(0xFF334155),
+              ),
               children: [
-                if (interest.canOpenNegotiation || interest.isReadOnly)
-                  FilledButton.icon(
-                    onPressed: () => _openNegotiationPage(interest),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppTheme.primaryGold.withValues(
-                        alpha: 0.15,
-                      ),
-                      foregroundColor: AppTheme.primaryGold,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      elevation: 0,
-                    ),
-                    icon: const Icon(Icons.handshake, size: 14),
-                    label: Text(
-                      interest.isReadOnly ? "History" : "Negotiation",
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                const TextSpan(
+                  text: "Deal Expiry: ",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(
+                  text: displayExpiry,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
                   ),
-                if (canDecide)
-                  FilledButton.icon(
-                    onPressed: () => _approveDeal(interest),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppTheme.successGreen.withValues(
-                        alpha: 0.15,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── 3. Responsive Content Section ─────────────────────────────────────────
+  Widget _buildInterestsContent(bool isDark, bool isMobile) {
+    if (isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFFF58220)),
+      );
+    }
+
+    if (error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                error!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppTheme.errorRed),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: _loadInterests,
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text("Retry"),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (interests.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Text(
+            "No interested buyers found for this offer.",
+            style: TextStyle(color: textLight, fontSize: 13),
+          ),
+        ),
+      );
+    }
+
+    // ── On Mobile Phones: Responsive Card Layout (Zero Horizontal Scroll, Zero Overflow)
+    if (isMobile) {
+      return ListView.separated(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        itemCount: interests.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (context, index) {
+          return _buildMobileInterestCard(interests[index], isDark);
+        },
+      );
+    }
+
+    // ── On Tablet / Desktop: Full Web Table Layout
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 620),
+              child: SizedBox(
+                width: 680,
+                child: Column(
+                  children: [
+                    _buildTableHeader(isDark),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: interests.length,
+                        itemBuilder: (context, index) {
+                          final item = interests[index];
+                          final isLast = index == interests.length - 1;
+                          return _buildTableRow(item, isLast, isDark);
+                        },
                       ),
-                      foregroundColor: AppTheme.successGreen,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      elevation: 0,
                     ),
-                    icon: const Icon(Icons.check, size: 14),
-                    label: Text(
-                      interest.canAdminFinalAction ? "Approve" : "Accept",
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                if (canDecide)
-                  FilledButton.icon(
-                    onPressed: () => _rejectDeal(interest),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppTheme.errorRed.withValues(
-                        alpha: 0.15,
-                      ),
-                      foregroundColor: AppTheme.errorRed,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      elevation: 0,
-                    ),
-                    icon: const Icon(Icons.close, size: 14),
-                    label: const Text(
-                      "Reject",
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Mobile Responsive Interest Card (Zero Overflow Guaranteed) ───────────
+  Widget _buildMobileInterestCard(OfferInterestModel interest, bool isDark) {
+    final statusStr = interest.statusLabel.toLowerCase();
+    final canDecide = _isAdminRole ||
+        interest.canSellerAction ||
+        interest.canAdminFinalAction ||
+        statusStr == 'interested' ||
+        statusStr == 'pending' ||
+        statusStr == 'countered';
+
+    final canNegotiate = interest.canOpenNegotiation ||
+        _isAdminRole ||
+        interest.isReadOnly ||
+        statusStr != 'rejected';
+
+    final interestCode = interest.transactionId.isNotEmpty
+        ? interest.transactionId
+        : (interest.buyerName != null && interest.buyerName!.isNotEmpty
+            ? interest.buyerName!
+            : 'INT-${interest.interestId}');
+
+    final interestAmount = interest.buyerOfferedAmount.isNotEmpty
+        ? '₹${interest.buyerOfferedAmount}'
+        : '-';
+
+    const goldText = Color(0xFFB45309);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Row 1: Code and Status
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "INTERESTED CODE",
                       style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: goldText,
+                        letterSpacing: 0.4,
                       ),
                     ),
+                    const SizedBox(height: 2),
+                    Text(
+                      interestCode,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: textDark,
+                      ),
+                    ),
+                    if (interest.createdAt != null && interest.createdAt!.isNotEmpty)
+                      Text(
+                        interest.createdAt!.length >= 10
+                            ? interest.createdAt!.substring(0, 10)
+                            : interest.createdAt!,
+                        style: TextStyle(color: textLight, fontSize: 10),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              _buildStatusBadge(statusStr),
+            ],
+          ),
+
+          const SizedBox(height: 10),
+          Divider(
+            height: 1,
+            color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+          ),
+          const SizedBox(height: 10),
+
+          // Row 2: Amount & Quantity
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "INTERESTED AMOUNT",
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: goldText,
+                      letterSpacing: 0.4,
+                    ),
                   ),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    interestAmount,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: textDark,
+                    ),
+                  ),
+                ],
+              ),
+              if (interest.requiredQuantity != null &&
+                  interest.requiredQuantity!.isNotEmpty)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      "REQ QUANTITY",
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: textLight,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "${interest.requiredQuantity} QTL",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: textDark,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Row 3: Action Buttons (Wrap guarantees 0 horizontal overflow)
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (canNegotiate) _buildNegotiateButton(interest),
+              if (canDecide) _buildAcceptButton(interest),
+              if (canDecide) _buildRejectButton(interest),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Action Buttons ────────────────────────────────────────────────────────
+  Widget _buildNegotiateButton(OfferInterestModel interest) {
+    return InkWell(
+      onTap: () => _openNegotiationPage(interest),
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF7ED),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: const Color(0xFFFDBA74)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.chat_bubble_outline_rounded,
+              size: 13,
+              color: Color(0xFFEA580C),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              interest.isReadOnly ? "History" : "Negotiation",
+              style: const TextStyle(
+                color: Color(0xFFEA580C),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -752,21 +889,305 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
     );
   }
 
-  Widget _buildStatusBadge(String status) {
+  Widget _buildAcceptButton(OfferInterestModel interest) {
+    return InkWell(
+      onTap: () => _approveDeal(interest),
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: const Color(0xFFECFDF5),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: const Color(0xFF6EE7B7)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.check_rounded,
+              size: 14,
+              color: Color(0xFF059669),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              interest.canAdminFinalAction ? "Approve" : "Accept",
+              style: const TextStyle(
+                color: Color(0xFF059669),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRejectButton(OfferInterestModel interest) {
+    return InkWell(
+      onTap: () => _rejectDeal(interest),
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFEF2F2),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: const Color(0xFFFCA5A5)),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.close_rounded,
+              size: 14,
+              color: Color(0xFFDC2626),
+            ),
+            SizedBox(width: 4),
+            Text(
+              "Reject",
+              style: TextStyle(
+                color: Color(0xFFDC2626),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String statusStr) {
+    Color bg;
+    Color text;
+    if (statusStr.contains('accept') || statusStr.contains('confirm')) {
+      bg = const Color(0xFFDCFCE7);
+      text = const Color(0xFF15803D);
+    } else if (statusStr.contains('reject') || statusStr.contains('cancel')) {
+      bg = const Color(0xFFFEE2E2);
+      text = const Color(0xFFB91C1C);
+    } else {
+      bg = const Color(0xFFFEF3C7);
+      text = const Color(0xFFB45309);
+    }
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppTheme.primaryGold.withValues(alpha: 0.2),
+        color: bg,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppTheme.primaryGold.withValues(alpha: 0.3)),
       ),
       child: Text(
-        status,
-        style: const TextStyle(
-          color: AppTheme.primaryGold,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
+        statusStr,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: text,
         ),
+      ),
+    );
+  }
+
+  // ── Tablet / Desktop Table Elements ───────────────────────────────────────
+  Widget _buildTableHeader(bool isDark) {
+    final headerBg = isDark ? const Color(0xFF0F172A) : const Color(0xFFFFFBEB);
+    const goldText = Color(0xFFB45309);
+
+    return Container(
+      color: headerBg,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: const Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Text(
+              "INTERESTED CODE",
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: goldText,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              "INTERESTED AMOUNT",
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: goldText,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              "STATUS",
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: goldText,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 5,
+            child: Text(
+              "ACTION",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: goldText,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTableRow(OfferInterestModel interest, bool isLast, bool isDark) {
+    final statusStr = interest.statusLabel.toLowerCase();
+    final canDecide = _isAdminRole ||
+        interest.canSellerAction ||
+        interest.canAdminFinalAction ||
+        statusStr == 'interested' ||
+        statusStr == 'pending' ||
+        statusStr == 'countered';
+
+    final canNegotiate = interest.canOpenNegotiation ||
+        _isAdminRole ||
+        interest.isReadOnly ||
+        statusStr != 'rejected';
+
+    final interestCode = interest.transactionId.isNotEmpty
+        ? interest.transactionId
+        : (interest.buyerName != null && interest.buyerName!.isNotEmpty
+            ? interest.buyerName!
+            : 'INT-${interest.interestId}');
+
+    final interestAmount = interest.buyerOfferedAmount.isNotEmpty
+        ? '₹${interest.buyerOfferedAmount}'
+        : '-';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        border: isLast
+            ? null
+            : Border(
+                bottom: BorderSide(
+                  color: isDark
+                      ? const Color(0xFF334155)
+                      : const Color(0xFFF1F5F9),
+                  width: 1,
+                ),
+              ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // 1. INTERESTED CODE
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  interestCode,
+                  style: TextStyle(
+                    color: textDark,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+                if (interest.createdAt != null && interest.createdAt!.isNotEmpty)
+                  Text(
+                    interest.createdAt!.length >= 10
+                        ? interest.createdAt!.substring(0, 10)
+                        : interest.createdAt!,
+                    style: TextStyle(color: textLight, fontSize: 10),
+                  ),
+              ],
+            ),
+          ),
+
+          // 2. INTERESTED AMOUNT
+          Expanded(
+            flex: 2,
+            child: Text(
+              interestAmount,
+              style: TextStyle(
+                color: textDark,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
+          ),
+
+          // 3. STATUS
+          Expanded(
+            flex: 2,
+            child: _buildStatusBadge(statusStr),
+          ),
+
+          const SizedBox(width: 8),
+
+          // 4. ACTION (Negotiation | Accept | Reject) with Wrap
+          Expanded(
+            flex: 5,
+            child: Wrap(
+              alignment: WrapAlignment.end,
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                if (canNegotiate) _buildNegotiateButton(interest),
+                if (canDecide) _buildAcceptButton(interest),
+                if (canDecide) _buildRejectButton(interest),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── 4. Bottom Footer (Web Parity) ──────────────────────────────────────────
+  Widget _buildFooter() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      decoration: BoxDecoration(
+        color: bgColor,
+        border: Border(
+          top: BorderSide(color: textLight.withValues(alpha: 0.1)),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          OutlinedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: textDark,
+              side: BorderSide(color: textLight.withValues(alpha: 0.3)),
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              "Close",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+          ),
+        ],
       ),
     );
   }
