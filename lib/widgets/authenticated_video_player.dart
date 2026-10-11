@@ -25,11 +25,13 @@ class _AuthenticatedVideoPlayerState extends State<AuthenticatedVideoPlayer> {
   Future<void> _initialize() async {
     try {
       final token = await AppPreferences.getAccessToken();
+      final hasToken = token != null && token.isNotEmpty;
+      final uri = resolveMediaUri(widget.url);
       final controller = VideoPlayerController.networkUrl(
-        resolveMediaUri(widget.url),
-        httpHeaders: token == null || token.isEmpty
-            ? const {}
-            : {'Authorization': 'Bearer $token'},
+        // Native players can drop custom headers (redirects, iOS AVPlayer), so the
+        // preview endpoint also accepts the token as ?token=.
+        hasToken ? uri.replace(queryParameters: {...uri.queryParameters, 'token': token}) : uri,
+        httpHeaders: hasToken ? {'Authorization': 'Bearer $token'} : const {},
       );
       await controller.initialize();
       if (!mounted) {
@@ -38,6 +40,7 @@ class _AuthenticatedVideoPlayerState extends State<AuthenticatedVideoPlayer> {
       }
       setState(() => _controller = controller);
     } catch (error) {
+      debugPrint('🎬 Media video failed: ${widget.url} ($error)');
       if (mounted) setState(() => _error = error);
     }
   }

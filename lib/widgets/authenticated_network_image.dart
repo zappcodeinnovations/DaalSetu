@@ -70,6 +70,9 @@ class _AuthenticatedNetworkImageState extends State<AuthenticatedNetworkImage> {
             if (responseSnapshot.hasError ||
                 responseSnapshot.data == null ||
                 responseSnapshot.data!.statusCode != 200) {
+              debugPrint(
+                '🖼️ Media image failed ${responseSnapshot.data?.statusCode ?? responseSnapshot.error}: ${widget.url}',
+              );
               return widget.fallback;
             }
 
