@@ -264,7 +264,7 @@ class AdminDashboardScreen extends StatelessWidget {
           const SizedBox(width: 12),
           _buildPerformanceCard(context, "Transporters", kpis.activeTransporters.toString(), "Active", true),
           const SizedBox(width: 12),
-          _buildPerformanceCard(context, "OTD %", "${kpis.otdPercent}%", "On-Time", true),
+          _buildPerformanceCard(context, "OTD %", "${kpis.otdPercent % 1 == 0 ? kpis.otdPercent.toInt() : kpis.otdPercent}%", "On-Time", true),
           const SizedBox(width: 12),
           _buildPerformanceCard(context, "Transit", "${kpis.avgTransitDays}", "Avg Days", false),
         ],
