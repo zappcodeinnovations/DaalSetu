@@ -12,6 +12,7 @@ import '../../../theme/glass_widgets.dart';
 import '../../../routes/app_routes.dart';
 import '../../admin_catalog/view/admin_drawer.dart';
 import '../../admin_notifications/controller/admin_notification_controller.dart';
+import '../../contracts/view/contract_view.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   AdminDashboardScreen({super.key});
@@ -73,12 +74,22 @@ class AdminDashboardScreen extends StatelessWidget {
                 _buildBranchPerformance(context, data.branchPerformance),
 
                 const SizedBox(height: 24),
-                _buildSectionHeader(context, "Recent Contracts", trailingText: "View All"),
+                _buildSectionHeader(
+                  context,
+                  "Recent Contracts",
+                  trailingText: "View All",
+                  onTrailingTap: () => Get.to(() => const ContractsScreen()),
+                ),
                 const SizedBox(height: 16),
                 _buildRecentContracts(context, data.recentContracts),
 
                 const SizedBox(height: 24),
-                _buildSectionHeader(context, "Recent Activity", trailingText: "View All"),
+                _buildSectionHeader(
+                  context,
+                  "Recent Activity",
+                  trailingText: "View All",
+                  onTrailingTap: () => Get.toNamed(AppRoutes.adminNotifications),
+                ),
                 const SizedBox(height: 16),
                 _buildRecentActivity(context, data.recentActivities),
 
@@ -340,15 +351,350 @@ class AdminDashboardScreen extends StatelessWidget {
 
   Widget _buildAnalyticsGrid(BuildContext context, ChartsModel charts) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(child: _buildDonutCard(context, "Pipeline", "Stages", charts.pipelineByStage.labels, charts.pipelineByStage.values)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildDonutCard(context, "Commodity", "Mix", charts.commodityMix.labels, charts.commodityMix.volumes)),
-          ],
+        // 1 & 2: Pipeline by Stage & Commodity Mix (Responsive row / column for small screens)
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 360;
+            if (isNarrow) {
+              return Column(
+                children: [
+                  _buildDonutCard(context, "Pipeline by Stage", "Deals in negotiation & signed", charts.pipelineByStage.labels, charts.pipelineByStage.values),
+                  const SizedBox(height: 12),
+                  _buildDonutCard(context, "Commodity Mix", "Volume distribution by crop", charts.commodityMix.labels, charts.commodityMix.volumes),
+                ],
+              );
+            }
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _buildDonutCard(context, "Pipeline", "By Stages", charts.pipelineByStage.labels, charts.pipelineByStage.values)),
+                const SizedBox(width: 12),
+                Expanded(child: _buildDonutCard(context, "Commodity", "Volume Mix", charts.commodityMix.labels, charts.commodityMix.volumes)),
+              ],
+            );
+          },
         ),
+        const SizedBox(height: 14),
+
+        // 3: Top Buyers (GTV)
+        _buildTopBuyersCard(context, charts.topBuyers),
+        const SizedBox(height: 14),
+
+        // 4: Transporter SLA
+        _buildTransporterSlaCard(context, charts.transporterSla),
       ],
+    );
+  }
+
+  Widget _buildTopBuyersCard(BuildContext context, TopBuyersChart topBuyers) {
+    final theme = Theme.of(context);
+    final labels = topBuyers.labels;
+    final values = topBuyers.gtvValues;
+
+    return GlassCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.leaderboard_rounded, size: 16, color: Colors.amber),
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Top Buyers (GTV)",
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: theme.textTheme.bodyLarge?.color,
+                        ),
+                      ),
+                      Text(
+                        "Highest volume trading partners",
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          color: theme.textTheme.bodyMedium?.color,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  "${labels.length} Buyers",
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          if (labels.isEmpty || values.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: Text(
+                  "No buyer trade data available",
+                  style: GoogleFonts.inter(fontSize: 12, color: theme.textTheme.bodyMedium?.color),
+                ),
+              ),
+            )
+          else ...[
+            ...List.generate(labels.length, (index) {
+              final buyerName = labels[index];
+              final gtv = values[index];
+              final maxVal = values.fold<double>(0.0, (prev, val) => math.max(prev, val));
+              final progress = maxVal > 0 ? (gtv / maxVal).clamp(0.05, 1.0) : 0.05;
+
+              final gtvText = gtv >= 100000
+                  ? "₹${(gtv / 100000).toStringAsFixed(2)} L"
+                  : "₹${gtv.toStringAsFixed(0)}";
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 20,
+                              height: 20,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: index == 0
+                                    ? Colors.amber.withOpacity(0.2)
+                                    : (theme.textTheme.bodyMedium?.color ?? Colors.grey).withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                "#${index + 1}",
+                                style: GoogleFonts.inter(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  color: index == 0 ? Colors.amber[800] : theme.textTheme.bodyMedium?.color,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 160),
+                              child: Text(
+                                buyerName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.textTheme.bodyLarge?.color,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          gtvText,
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 6,
+                        backgroundColor: (theme.textTheme.bodyMedium?.color ?? Colors.grey).withOpacity(0.1),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          index == 0 ? Colors.amber : theme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTransporterSlaCard(BuildContext context, TransporterSlaChart transporterSla) {
+    final theme = Theme.of(context);
+    final labels = transporterSla.labels;
+    final otdList = transporterSla.otdPercentages;
+
+    return GlassCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.local_shipping_rounded, size: 16, color: Color(0xFF10B981)),
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Transporter SLA",
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: theme.textTheme.bodyLarge?.color,
+                        ),
+                      ),
+                      Text(
+                        "On-time delivery performance",
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          color: theme.textTheme.bodyMedium?.color,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  "SLA Target: 90%",
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF10B981),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          if (labels.isEmpty || otdList.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: Text(
+                  "No transporter SLA data recorded",
+                  style: GoogleFonts.inter(fontSize: 12, color: theme.textTheme.bodyMedium?.color),
+                ),
+              ),
+            )
+          else ...[
+            ...List.generate(labels.length, (index) {
+              final name = labels[index];
+              final otd = otdList[index];
+              final progress = (otd / 100.0).clamp(0.0, 1.0);
+              final isTargetMet = otd >= 90;
+              final slaColor = isTargetMet
+                  ? const Color(0xFF10B981)
+                  : (otd >= 70 ? Colors.orange : Colors.redAccent);
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.check_circle_rounded, size: 14, color: slaColor),
+                            const SizedBox(width: 6),
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 180),
+                              child: Text(
+                                name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.textTheme.bodyLarge?.color,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: slaColor.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            "${otd.toStringAsFixed(0)}% On-Time",
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: slaColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 6,
+                        backgroundColor: (theme.textTheme.bodyMedium?.color ?? Colors.grey).withOpacity(0.1),
+                        valueColor: AlwaysStoppedAnimation<Color>(slaColor),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ],
+      ),
     );
   }
 
@@ -370,8 +716,8 @@ class AdminDashboardScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
-          Text(subtitle, style: GoogleFonts.inter(fontSize: 8, color: theme.textTheme.bodyMedium?.color)),
+          Text(title, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+          Text(subtitle, style: GoogleFonts.inter(fontSize: 9, color: theme.textTheme.bodyMedium?.color)),
           const SizedBox(height: 12),
           Row(
             children: [

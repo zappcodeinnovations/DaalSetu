@@ -66,16 +66,17 @@ class AdminReportsController extends GetxController {
   }
 
   // ── Fetch Branch Reports ─────────────────────────────────────────────────
-  Future<void> fetchReports({bool isRefresh = false}) async {
+  Future<void> fetchReports({bool isRefresh = false, String? period}) async {
     try {
       isLoading.value = true;
-      debugPrint("📊 [AdminReportsController] Fetching reports... (isRefresh: $isRefresh)");
+      final activeRange = period ?? selectedDateRange.value;
+      debugPrint("📊 [AdminReportsController] Fetching reports for $activeRange... (isRefresh: $isRefresh)");
 
-      final list = await AdminReportsService.getBranchReports();
+      final list = await AdminReportsService.getBranchReports(period: activeRange);
       reports.assignAll(list);
       applyFilters();
 
-      debugPrint("✅ [AdminReportsController] Loaded ${reports.length} branch reports.");
+      debugPrint("✅ [AdminReportsController] Loaded ${reports.length} branch reports for $activeRange.");
     } catch (e) {
       debugPrint("❌ [AdminReportsController] Error loading reports: $e");
       Get.snackbar(
@@ -98,8 +99,9 @@ class AdminReportsController extends GetxController {
   }
 
   void setDateRange(String range) {
+    if (selectedDateRange.value == range) return;
     selectedDateRange.value = range;
-    applyFilters();
+    fetchReports(period: range);
   }
 
   void onSearchChanged(String query) {
@@ -156,7 +158,7 @@ class AdminReportsController extends GetxController {
     try {
       isExporting.value = true;
       final label = "${selectedBranch.value} (${selectedDateRange.value})";
-      final filePath = await ReportExportService.exportToCsv(
+      final filePath = await ReportExportService.exportToExcel(
         reports: filteredReports,
         filterLabel: label,
       );

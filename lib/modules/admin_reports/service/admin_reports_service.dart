@@ -58,9 +58,14 @@ class AdminReportsService {
   /// Uses S.No 21 (GET /api/admin/dashboard/) where branch_performance is provided.
   /// Falls back to the last real report saved on this device.
   /// ============================================================
-  static Future<List<BranchReportModel>> getBranchReports() async {
+  static Future<List<BranchReportModel>> getBranchReports({String? period}) async {
     final headers = await _buildHeaders();
-    final url = Uri.parse("${ApiUrls.baseUrl}${ApiUrls.adminDashboard}");
+    String query = '';
+    if (period != null && period.isNotEmpty && period != 'All Time') {
+      final slug = period.toLowerCase().replaceAll(' ', '_').replaceAll('(', '').replaceAll(')', '');
+      query = '?period=$slug&timeframe=$slug&range=$slug';
+    }
+    final url = Uri.parse("${ApiUrls.baseUrl}${ApiUrls.adminDashboard}$query");
 
     debugPrint("📊 [ADMIN REPORTS API] Requesting branch report data from: $url");
 
