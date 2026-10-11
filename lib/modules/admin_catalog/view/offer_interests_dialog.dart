@@ -7,6 +7,7 @@ import 'package:daalsetu/theme/app_theme.dart';
 import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:daalsetu/modules/shared/view/offer_interest_negotiation_chat_view.dart';
 import 'approve_deal_dialog.dart';
+import 'negotiation_page.dart';
 
 class OfferInterestsDialog extends StatefulWidget {
   final String offerId;
@@ -73,14 +74,42 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
     }
   }
 
+  String _formatDealExpiry(String? raw) {
+    if (raw == null || raw.trim().isEmpty || raw == '-') return '-';
+    try {
+      final dt = DateTime.parse(raw);
+      const months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      ];
+      final month = months[dt.month - 1];
+      final day = dt.day;
+      final year = dt.year;
+      final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+      final minute = dt.minute.toString().padLeft(2, '0');
+      final amPm = dt.hour >= 12 ? 'PM' : 'AM';
+      return '$day $month $year, $hour:$minute $amPm';
+    } catch (_) {
+      return raw;
+    }
+  }
+
   void _openNegotiationPage(OfferInterestModel interest) async {
     final result = await Get.to(
-      () => OfferInterestNegotiationChatView(
-        productId: int.parse(widget.offerId),
-        interestId: interest.interestId,
-        isBuyer: false,
-        allowDecisions: !_isAdminRole,
-      ),
+      () => _isAdminRole
+          ? NegotiationPage(
+              offerId: widget.offerId,
+              offerTitle: widget.offerTitle,
+              availableStock: widget.availableStock,
+              sellerOfferAmount: widget.sellerOfferAmount,
+              interest: interest,
+            )
+          : OfferInterestNegotiationChatView(
+              productId: int.parse(widget.offerId),
+              interestId: interest.interestId,
+              isBuyer: false,
+              allowDecisions: !_isAdminRole,
+            ),
     );
 
     // If the negotiation page returns true, a deal was accepted/rejected, so we refresh the interests
@@ -92,39 +121,15 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
   Future<void> _approveDeal(OfferInterestModel interest) async {
     final status = (interest.status ?? '').trim().toLowerCase();
     late final ApproveDealResult result;
-    if (_isAdminRole) {
-      final adminResult = await showDialog<ApproveDealResult>(
-        context: context,
-        builder: (ctx) => ApproveDealDialog(
-          buyerName: interest.buyerName,
-          offerTitle: widget.offerTitle,
-        ),
-      );
-      if (adminResult == null) return;
-      result = adminResult;
-    } else {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Accept buyer interest?'),
-          content: const Text(
-            'The buyer will receive the final Accept or Reject option.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Accept'),
-            ),
-          ],
-        ),
-      );
-      if (confirmed != true) return;
-      result = ApproveDealResult(remark: '');
-    }
+    final adminResult = await showDialog<ApproveDealResult>(
+      context: context,
+      builder: (ctx) => ApproveDealDialog(
+        buyerName: interest.buyerName,
+        offerTitle: widget.offerTitle,
+      ),
+    );
+    if (adminResult == null) return;
+    result = adminResult;
 
     if (!mounted) return;
     setState(() => isLoading = true);
@@ -416,9 +421,78 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                   ),
                   _buildSummaryCard(
                     "💰 Seller Price",
-                    "₹${widget.sellerOfferAmount ?? '-'} /QTL",
+                    "₹${widget.sellerOfferAmount ?? '-'}/TON",
                   ),
-                  _buildSummaryCard("📅 Deal Expiry", widget.dealExpiry ?? '-'),
+                  _buildSummaryCard("📅 Deal Expiry", _formatDealExpiry(widget.dealExpiry)),
+                ],
+              ),
+            ),
+
+            // Table Header Bar (Web Parity: INTERESTED CODE | INTERESTED AMOUNT | STATUS | ACTION)
+            Container(
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryGold.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+                border: Border(
+                  bottom: BorderSide(
+                    color: AppTheme.primaryGold.withValues(alpha: 0.35),
+                    width: 1.5,
+                  ),
+                ),
+              ),
+              child: const Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      "INTERESTED CODE",
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.primaryGold,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      "INTERESTED AMOUNT",
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.primaryGold,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      "STATUS",
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.primaryGold,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      "ACTION",
+                      textAlign: TextAlign.end,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.primaryGold,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -540,7 +614,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                         style: TextStyle(color: textLight, fontSize: 11),
                       ),
                       Text(
-                        "₹${interest.buyerOfferedAmount}/QTL",
+                        "₹${interest.buyerOfferedAmount}/TON",
                         style: const TextStyle(
                           color: AppTheme.primaryGold,
                           fontWeight: FontWeight.bold,
