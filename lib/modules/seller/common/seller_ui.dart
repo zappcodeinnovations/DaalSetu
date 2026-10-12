@@ -56,29 +56,46 @@ class SellerUi {
     String title,
     String message, {
     String confirmText = "Yes",
+    String cancelText = "Cancel",
     Color color = primary,
+    bool primaryFirst = true,
   }) async {
+    final confirmButton = ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+      onPressed: () => Get.back(result: true),
+      child: Text(
+        confirmText,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+
+    final cancelButton = TextButton(
+      onPressed: () => Get.back(result: false),
+      child: Text(cancelText),
+    );
+
     final result = await Get.dialog<bool>(
       AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         title: Text(
           title,
           style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: color),
-            onPressed: () => Get.back(result: true),
-            child: Text(
-              confirmText,
-              style: const TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
+        actions: primaryFirst
+            ? [confirmButton, cancelButton]
+            : [cancelButton, confirmButton],
       ),
     );
     return result == true;
@@ -148,8 +165,9 @@ class SellerUi {
     }
     if (value.contains('dispatch') ||
         value.contains('negotiat') ||
-        value.contains('pending_buyer'))
+        value.contains('pending_buyer')) {
       return Colors.blue;
+    }
     return Colors.orange;
   }
 

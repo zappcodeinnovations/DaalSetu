@@ -60,13 +60,22 @@ class _AuthenticatedVideoPlayerState extends State<AuthenticatedVideoPlayer> {
         child: Center(child: CircularProgressIndicator()),
       );
     }
+    final videoSize = controller.value.size;
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         AspectRatio(
           aspectRatio: controller.value.aspectRatio == 0
               ? 16 / 9
               : controller.value.aspectRatio,
-          child: VideoPlayer(controller),
+          child: FittedBox(
+            fit: BoxFit.contain,
+            child: SizedBox(
+              width: videoSize.width > 0 ? videoSize.width : 16,
+              height: videoSize.height > 0 ? videoSize.height : 9,
+              child: VideoPlayer(controller),
+            ),
+          ),
         ),
         VideoProgressIndicator(
           controller,

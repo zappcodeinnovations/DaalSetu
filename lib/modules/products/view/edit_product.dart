@@ -368,9 +368,17 @@ class _EditProductScreenState extends State<EditProductScreen> {
         keyboardType: keyboardType,
         inputFormatters: inputFormatters,
         maxLength: keyboardType == null ? null : 10,
+        buildCounter:
+            (_, {required currentLength, required isFocused, maxLength}) =>
+                null,
         validator: validator,
         maxLines: maxLines,
-        decoration: InputDecoration(labelText: label, prefixIcon: Icon(icon), alignLabelWithHint: maxLines > 1),
+        decoration: InputDecoration(
+          labelText: label,
+          counterText: "",
+          prefixIcon: Icon(icon),
+          alignLabelWithHint: maxLines > 1,
+        ),
       ),
     );
   }

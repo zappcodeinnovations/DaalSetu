@@ -208,10 +208,23 @@ class SellerOfferInterestsView extends StatelessWidget {
                                     ? null
                                     : () => controller.rejectInterest(item.id!),
                                 icon: const Icon(Icons.close, size: 16),
-                                label: const Text('REJECT'),
+                                label: const Text(
+                                  'REJECT',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: Colors.red,
                                   side: const BorderSide(color: Colors.red),
+                                  minimumSize: const Size(0, 42),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
@@ -226,10 +239,24 @@ class SellerOfferInterestsView extends StatelessWidget {
                                     : () =>
                                           controller.approveInterest(item.id!),
                                 icon: const Icon(Icons.check, size: 16),
-                                label: const Text('ACCEPT'),
+                                label: const Text(
+                                  'ACCEPT',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.green,
                                   foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  minimumSize: const Size(0, 42),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
@@ -254,8 +281,10 @@ class SellerOfferInterestsView extends StatelessWidget {
                             'deal_confirmed',
                             'rejected',
                             'cancelled',
-                          }.contains(status))
-                        Center(
+                          }.contains(status)) ...[
+                        if (item.canSellerAction) const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
                           child: OutlinedButton.icon(
                             onPressed: item.id == null
                                 ? null
@@ -274,10 +303,17 @@ class SellerOfferInterestsView extends StatelessWidget {
                               item.canSellerAction
                                   ? "NEGOTIATE PRICE / QUANTITY"
                                   : "View negotiation history",
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: primaryColor,
                               side: const BorderSide(color: primaryColor),
+                              minimumSize: const Size(0, 42),
+                              tapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 14,
                                 vertical: 10,
@@ -288,6 +324,7 @@ class SellerOfferInterestsView extends StatelessWidget {
                             ),
                           ),
                         ),
+                      ],
                     ],
                   ),
                 ),

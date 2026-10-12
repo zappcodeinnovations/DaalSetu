@@ -311,8 +311,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     TextInputType keyboard = TextInputType.text,
     bool obscure = false,
   }) {
-    final isPan = label.toLowerCase().contains('pan');
-    final isGst = label.toLowerCase().contains('gst');
+    final clean = label.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), ' ').trim();
+    final words = clean.split(RegExp(r'\s+'));
+    final isPan = words.contains('pan');
+    final isGst = words.contains('gst');
     final taxFormatter = isPan
         ? const TaxIdInputFormatter.pan()
         : isGst

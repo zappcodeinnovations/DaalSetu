@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
 import 'package:daalsetu/modules/Auth/login/model/login_model.dart';
 import '../../../../services/auth_services.dart';
+import '../../../../services/realtime_notification_service.dart';
 import '../../../../utils/app_preferences.dart';
 import '../../../../routes/app_routes.dart';
 
@@ -73,7 +74,7 @@ class LoginController extends GetxController {
                     width: 70,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFF1661EF).withOpacity(0.15),
+                      color: const Color(0xFF1661EF).withValues(alpha: 0.15),
                     ),
                     child: const Icon(
                       IconlyLight.shield_done,
@@ -139,6 +140,10 @@ class LoginController extends GetxController {
         activeBranchId: response.user.activeBranchId?.toString(),
         activeBranchCode: response.user.activeBranchCode,
       );
+
+      if (Get.isRegistered<RealtimeNotificationService>()) {
+        RealtimeNotificationService.to.startPolling();
+      }
 
       Get.offAllNamed(AppRoutes.mainNav);
     } catch (e) {

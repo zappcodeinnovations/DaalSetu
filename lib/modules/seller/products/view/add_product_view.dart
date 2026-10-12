@@ -4,14 +4,29 @@ import 'package:iconly/iconly.dart';
 import '../../common/seller_ui.dart';
 import '../controller/seller_product_controller.dart';
 
-class AddProductView extends StatelessWidget {
+class AddProductView extends StatefulWidget {
   const AddProductView({super.key});
 
   static const Color primaryColor = Color(0xFFFFB300);
 
   @override
+  State<AddProductView> createState() => _AddProductViewState();
+}
+
+class _AddProductViewState extends State<AddProductView> {
+  static const Color primaryColor = AddProductView.primaryColor;
+  late final SellerProductController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.find<SellerProductController>();
+    controller.clearForm();
+    controller.fetchSupportData();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final controller = Get.find<SellerProductController>();
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -27,11 +42,28 @@ class AddProductView extends StatelessWidget {
           icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh_rounded, color: theme.iconTheme.color),
+            tooltip: "Reset Form",
+            onPressed: () {
+              controller.clearForm();
+              controller.fetchSupportData();
+            },
+          ),
+        ],
       ),
       body: Obx(() {
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
+        return RefreshIndicator(
+          color: primaryColor,
+          onRefresh: () async {
+            controller.clearForm();
+            await controller.fetchSupportData();
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(20),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _sectionTitle("Offer Details"),
@@ -157,7 +189,7 @@ class AddProductView extends StatelessWidget {
                   Expanded(
                     child: _buildTextField(
                       controller.quantityController,
-                      "Offer Quantity *",
+                      "Quantity *",
                       Icons.inventory_2_outlined,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
@@ -207,7 +239,7 @@ class AddProductView extends StatelessWidget {
                 ],
               ),
               Text(
-                "With bags, quantity is calculated as bags × packing weight.",
+                "Updating weight or bags dynamically keeps units in sync with total quantity.",
                 style: TextStyle(fontSize: 12, color: theme.disabledColor),
               ),
 
@@ -236,10 +268,28 @@ class AddProductView extends StatelessWidget {
                 ],
               ),
               _expiryField(context, controller),
-              _buildTextField(
-                controller.locationController,
-                "Loading Location",
-                IconlyLight.location,
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: controller.locationController,
+                builder: (context, value, _) {
+                  return _buildTextField(
+                    controller.locationController,
+                    "Search or enter address / mandi location",
+                    IconlyLight.location,
+                    suffixIcon: value.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            splashRadius: 18,
+                            tooltip: "Clear location",
+                            onPressed: () =>
+                                controller.locationController.clear(),
+                          )
+                        : Icon(
+                            Icons.search,
+                            size: 20,
+                            color: Get.theme.disabledColor,
+                          ),
+                  );
+                },
               ),
               _buildTextField(
                 controller.remarkController,
@@ -354,8 +404,9 @@ class AddProductView extends StatelessWidget {
               const SizedBox(height: 40),
             ],
           ),
-        );
-      }),
+        ),
+      );
+    }),
     );
   }
 
@@ -372,12 +423,15 @@ class AddProductView extends StatelessWidget {
     IconData? icon, {
     int maxLines = 1,
     TextInputType keyboardType = TextInputType.text,
+    Widget? suffixIcon,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
         controller: controller,
         maxLines: maxLines,
+        textAlignVertical:
+            maxLines > 1 ? TextAlignVertical.top : TextAlignVertical.center,
         keyboardType: keyboardType,
         maxLength:
             keyboardType == TextInputType.number ||
@@ -388,17 +442,51 @@ class AddProductView extends StatelessWidget {
         buildCounter:
             (_, {required currentLength, required isFocused, maxLength}) =>
                 null,
+        style: const TextStyle(fontSize: 14),
         decoration: InputDecoration(
+          isDense: true,
           hintText: hint,
           hintStyle: TextStyle(
-            color: Get.theme.hintColor.withValues(alpha: 0.9),
+            fontSize: 14,
+            color: Get.theme.hintColor.withValues(alpha: 0.8),
           ),
-          prefixIcon: icon != null ? Icon(icon, size: 20) : null,
+          suffixIcon: suffixIcon,
+          prefixIcon: icon != null
+              ? SizedBox(
+                  width: 46,
+                  child: Align(
+                    alignment: maxLines > 1
+                        ? Alignment.topCenter
+                        : Alignment.center,
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        left: 14,
+                        right: 8,
+                        top: maxLines > 1 ? 16 : 0,
+                      ),
+                      child: Icon(
+                        icon,
+                        size: 20,
+                        color: Get.theme.iconTheme.color?.withValues(alpha: 0.6) ??
+                            Colors.grey,
+                      ),
+                    ),
+                  ),
+                )
+              : null,
+          prefixIconConstraints: BoxConstraints(
+            minWidth: 46,
+            maxWidth: 46,
+            minHeight: 48,
+            maxHeight: maxLines > 1 ? double.infinity : 48,
+          ),
           filled: true,
           fillColor: Get.theme.colorScheme.surface,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
+          contentPadding: EdgeInsets.only(
+            left: icon != null ? 0 : 16,
+            right: 16,
+            top: maxLines > 1 ? 16 : 14,
+            bottom: maxLines > 1 ? 16 : 14,
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),

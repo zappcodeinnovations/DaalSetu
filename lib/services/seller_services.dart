@@ -617,13 +617,15 @@ class SellerServices {
   /// ============================================================
   static Future<List<dynamic>> getProductImages({int? productId}) async {
     String endpoint = ApiUrls.productImages;
-    if (productId != null) {
+    if (productId != null && productId > 0) {
       endpoint += "?product=$productId";
     }
     final response = await ApiClient.get(endpoint: endpoint, requireAuth: true);
     if (response is List) return response;
-    if (response is Map<String, dynamic> && response["results"] is List)
-      return response["results"];
+    if (response is Map<String, dynamic>) {
+      if (response["results"] is List) return response["results"];
+      if (response["data"] is List) return response["data"];
+    }
     return [];
   }
 
@@ -653,13 +655,15 @@ class SellerServices {
 
   static Future<List<dynamic>> getProductVideos({int? productId}) async {
     String endpoint = ApiUrls.productVideos;
-    if (productId != null) {
+    if (productId != null && productId > 0) {
       endpoint += "?product=$productId";
     }
     final response = await ApiClient.get(endpoint: endpoint, requireAuth: true);
     if (response is List) return response;
-    if (response is Map<String, dynamic> && response["results"] is List)
-      return response["results"];
+    if (response is Map<String, dynamic>) {
+      if (response["results"] is List) return response["results"];
+      if (response["data"] is List) return response["data"];
+    }
     return [];
   }
 

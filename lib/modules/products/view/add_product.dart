@@ -8,6 +8,7 @@ import 'package:daalsetu/theme/app_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../services/realtime_notification_service.dart';
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -194,6 +195,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
       await _productController.fetchProducts();
       if (mounted) Navigator.pop(context);
       _message('Offer created successfully.');
+      if (Get.isRegistered<RealtimeNotificationService>()) {
+        RealtimeNotificationService.to.refreshNow();
+      }
     } catch (error) {
       _message(_friendlyError(error), error: true);
     } finally {
@@ -397,6 +401,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
         ? const TextInputType.numberWithOptions(decimal: true)
         : null,
     maxLength: number ? 10 : null,
+    buildCounter:
+        (_, {required currentLength, required isFocused, maxLength}) => null,
     inputFormatters: number
         ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,3}'))]
         : null,
@@ -407,6 +413,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         : null,
     decoration: InputDecoration(
       labelText: '$label${required ? ' *' : ''}',
+      counterText: "",
       alignLabelWithHint: maxLines > 1,
     ),
   );
