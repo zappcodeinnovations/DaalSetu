@@ -420,13 +420,17 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.9,
-        decoration: BoxDecoration(
-          color: colorSurface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: Column(
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          decoration: BoxDecoration(
+            color: colorSurface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
           children: [
             // Handle
             Container(
@@ -658,8 +662,9 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _showBrandPicker(BuildContext context) {
     controller.brandSearchQuery.value = ''; // Reset search on open

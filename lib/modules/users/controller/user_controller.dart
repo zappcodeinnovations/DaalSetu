@@ -64,15 +64,26 @@ class UserController extends GetxController {
     }
   }
 
+  bool _isSalesman(String role) {
+    final r = role.toLowerCase().trim();
+    return r == 'salesman' ||
+        r == 'sub_admin' ||
+        r == 'sub admin' ||
+        r == 'subadmin';
+  }
+
   // ── Filter ────────────────────────────────────────────────────────────────
   void _applyFilter() {
     var result = users.toList();
 
     if (selectedRole.value != 'all') {
-      result = result
-          .where((u) =>
-              u.role.toLowerCase() == selectedRole.value.toLowerCase())
-          .toList();
+      final sel = selectedRole.value.toLowerCase().trim();
+      result = result.where((u) {
+        if (sel == 'salesman') {
+          return _isSalesman(u.role);
+        }
+        return u.role.toLowerCase().trim() == sel;
+      }).toList();
     }
 
     final q = searchQuery.value.trim().toLowerCase();

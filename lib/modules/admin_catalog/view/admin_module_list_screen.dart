@@ -9,6 +9,7 @@ import 'package:daalsetu/modules/admin_catalog/view/admin_drawer.dart';
 import 'package:daalsetu/modules/admin_catalog/view/admin_record_detail_screen.dart';
 import 'package:daalsetu/modules/admin_catalog/view/admin_record_form_screen.dart';
 import 'package:daalsetu/widgets/admin_common_widgets.dart';
+import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -32,6 +33,12 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
   late final ScrollController scrollController;
   Timer? debounce;
 
+  // Parity state for Category Requests module ("Approval Queue" vs "All Buyers")
+  int _activeCategoryRequestTab = 0; // 0 = Approval Queue, 1 = All Buyers
+  List<Map<String, dynamic>> _buyers = [];
+  bool _isLoadingBuyers = false;
+  String _buyerSearch = '';
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +48,51 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
       tag: 'admin_${widget.moduleKey}_${identityHashCode(this)}',
     );
     scrollController = ScrollController()..addListener(_onScroll);
+    if (widget.moduleKey == 'category_requests') {
+      _fetchBuyers();
+    }
+  }
+
+  Future<void> _fetchBuyers() async {
+    setState(() => _isLoadingBuyers = true);
+    try {
+      dynamic res;
+      try {
+        res = await ApiClient.get(
+          endpoint: '/api/buyer-categories/?tab=buyers',
+          requireAuth: true,
+          suppressErrorDialog: true,
+        );
+      } catch (_) {}
+
+      if (res == null || (res is List && res.isEmpty)) {
+        res = await ApiClient.get(
+          endpoint: '/api/users/?role=buyer',
+          requireAuth: true,
+          suppressErrorDialog: true,
+        );
+      }
+
+      if (res is List) {
+        if (mounted) {
+          setState(() {
+            _buyers = List<Map<String, dynamic>>.from(res);
+            _isLoadingBuyers = false;
+          });
+        }
+      } else if (res is Map && res['results'] is List) {
+        if (mounted) {
+          setState(() {
+            _buyers = List<Map<String, dynamic>>.from(res['results']);
+            _isLoadingBuyers = false;
+          });
+        }
+      } else {
+        if (mounted) setState(() => _isLoadingBuyers = false);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingBuyers = false);
+    }
   }
 
   @override
@@ -85,18 +137,25 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
         : null,
     appBar: AppBar(
       title: Text(
-        config.title,
+        widget.moduleKey == 'category_requests'
+            ? 'Buyer Category Management'
+            : config.title,
         style: const TextStyle(fontWeight: FontWeight.w800),
       ),
       actions: [
         IconButton(
           tooltip: 'Refresh',
-          onPressed: () => controller.load(refresh: true),
+          onPressed: () {
+            controller.load(refresh: true);
+            if (widget.moduleKey == 'category_requests') _fetchBuyers();
+          },
           icon: const Icon(Icons.refresh_rounded),
         ),
       ],
     ),
-    floatingActionButton: config.canCreate
+    floatingActionButton: config.canCreate &&
+            (widget.moduleKey != 'category_requests' ||
+                _activeCategoryRequestTab == 0)
         ? FloatingActionButton.extended(
             heroTag: null,
             onPressed: _openForm,
@@ -106,93 +165,525 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
         : null,
     body: Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-          child: AdminSearchBar(
-            hint: 'Search ${config.title}',
-            onChanged: _onSearch,
-          ),
-        ),
-        if (config.filterOptions.isNotEmpty)
-          SizedBox(
-            height: 44,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: config.filterOptions.length + 1,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (_, index) {
-                final value = index == 0
-                    ? ''
-                    : config.filterOptions[index - 1];
-                return Obx(() => ChoiceChip(
-                  label: Text(value.isEmpty ? 'All' : _label(value)),
-                  selected: controller.selectedFilter.value == value,
-                  onSelected: (_) {
-                    controller.selectedFilter.value = value;
-                    controller.load(refresh: true);
-                  },
-                ));
-              },
+        if (widget.moduleKey == 'category_requests')
+          _buildCategoryRequestsSegment(),
+        if (widget.moduleKey == 'category_requests' &&
+            _activeCategoryRequestTab == 1)
+          Expanded(child: _buildAllBuyersView())
+        else ...[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+            child: AdminSearchBar(
+              hint: 'Search ${config.title}',
+              onChanged: _onSearch,
             ),
           ),
-        if (config.filterOptions.isNotEmpty) const SizedBox(height: 10),
-        Expanded(
-          child: Obx(() {
-            if (controller.isLoading.value && controller.records.isEmpty) {
-              return const AdminLoadingWidget();
-            }
-            if (controller.error.value != null && controller.records.isEmpty) {
-              return AdminErrorWidget(
-                message: controller.error.value!,
-                onRetry: () => controller.load(refresh: true),
-              );
-            }
-            if (controller.records.isEmpty) {
-              return AdminEmptyWidget(title: config.title);
-            }
-            return RefreshIndicator(
-              onRefresh: () => controller.load(refresh: true),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final columns = constraints.maxWidth >= 1050
-                      ? 3
-                      : constraints.maxWidth >= 700
-                      ? 2
-                      : 1;
-                  if (columns == 1) {
-                    return ListView.separated(
-                      controller: scrollController,
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                      itemCount: controller.records.length + 1,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (_, index) =>
-                          index == controller.records.length
-                          ? _loadMoreIndicator()
-                          : _recordCard(controller.records[index]),
-                    );
-                  }
-                  return GridView.builder(
-                    controller: scrollController,
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: columns,
-                      crossAxisSpacing: 14,
-                      mainAxisSpacing: 14,
-                      mainAxisExtent: 230,
-                    ),
-                    itemCount: controller.records.length,
-                    itemBuilder: (_, index) =>
-                        _recordCard(controller.records[index]),
-                  );
+          if (config.filterOptions.isNotEmpty)
+            SizedBox(
+              height: 44,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: config.filterOptions.length + 1,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (_, index) {
+                  final value = index == 0
+                      ? ''
+                      : config.filterOptions[index - 1];
+                  return Obx(() => ChoiceChip(
+                    label: Text(value.isEmpty ? 'All' : _label(value)),
+                    selected: controller.selectedFilter.value == value,
+                    onSelected: (_) {
+                      controller.selectedFilter.value = value;
+                      controller.load(refresh: true);
+                    },
+                  ));
                 },
               ),
-            );
-          }),
-        ),
+            ),
+          if (config.filterOptions.isNotEmpty) const SizedBox(height: 10),
+          Expanded(
+            child: Obx(() {
+              if (controller.isLoading.value && controller.records.isEmpty) {
+                return const AdminLoadingWidget();
+              }
+              if (controller.error.value != null && controller.records.isEmpty) {
+                return AdminErrorWidget(
+                  message: controller.error.value!,
+                  onRetry: () => controller.load(refresh: true),
+                );
+              }
+              if (controller.records.isEmpty) {
+                return AdminEmptyWidget(title: config.title);
+              }
+              return RefreshIndicator(
+                onRefresh: () => controller.load(refresh: true),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final columns = constraints.maxWidth >= 1050
+                        ? 3
+                        : constraints.maxWidth >= 700
+                        ? 2
+                        : 1;
+                    if (columns == 1) {
+                      return ListView.separated(
+                        controller: scrollController,
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                        itemCount: controller.records.length + 1,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (_, index) =>
+                            index == controller.records.length
+                            ? _loadMoreIndicator()
+                            : _recordCard(controller.records[index]),
+                      );
+                    }
+                    return GridView.builder(
+                      controller: scrollController,
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: columns,
+                        crossAxisSpacing: 14,
+                        mainAxisSpacing: 14,
+                        mainAxisExtent: 230,
+                      ),
+                      itemCount: controller.records.length,
+                      itemBuilder: (_, index) =>
+                          _recordCard(controller.records[index]),
+                    );
+                  },
+                ),
+              );
+            }),
+          ),
+        ],
       ],
     ),
   );
+
+  Widget _buildCategoryRequestsSegment() {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: theme.dividerColor),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () => setState(() => _activeCategoryRequestTab = 0),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: _activeCategoryRequestTab == 0
+                        ? theme.colorScheme.primary
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.history_rounded,
+                        size: 16,
+                        color: _activeCategoryRequestTab == 0
+                            ? Colors.white
+                            : theme.textTheme.bodyMedium?.color,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Approval Queue',
+                        style: TextStyle(
+                          color: _activeCategoryRequestTab == 0
+                              ? Colors.white
+                              : theme.textTheme.bodyMedium?.color,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() => _activeCategoryRequestTab = 1);
+                  if (_buyers.isEmpty) _fetchBuyers();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: _activeCategoryRequestTab == 1
+                        ? theme.colorScheme.primary
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.people_alt_rounded,
+                        size: 16,
+                        color: _activeCategoryRequestTab == 1
+                            ? Colors.white
+                            : theme.textTheme.bodyMedium?.color,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'All Buyers',
+                        style: TextStyle(
+                          color: _activeCategoryRequestTab == 1
+                              ? Colors.white
+                              : theme.textTheme.bodyMedium?.color,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAllBuyersView() {
+    final theme = Theme.of(context);
+    final q = _buyerSearch.toLowerCase();
+    final filtered = _buyers.where((b) {
+      if (q.isEmpty) return true;
+      final name = (b['name'] ??
+              b['first_name'] ??
+              b['username'] ??
+              '')
+          .toString()
+          .toLowerCase();
+      final mobile = (b['mobile'] ?? '').toString().toLowerCase();
+      final email = (b['email'] ?? '').toString().toLowerCase();
+      return name.contains(q) || mobile.contains(q) || email.contains(q);
+    }).toList();
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+          child: AdminSearchBar(
+            hint: 'Search buyer or category…',
+            onChanged: (v) =>
+                setState(() => _buyerSearch = v.trim().toLowerCase()),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+          child: Row(
+            children: [
+              Text(
+                '${filtered.length} buyers found',
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: _isLoadingBuyers && _buyers.isEmpty
+              ? const AdminLoadingWidget()
+              : RefreshIndicator(
+                  onRefresh: _fetchBuyers,
+                  child: filtered.isEmpty
+                      ? const AdminEmptyWidget(title: 'Buyers')
+                      : ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (ctx, i) => _buyerCard(filtered[i]),
+                        ),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buyerCard(Map<String, dynamic> buyer) {
+    final theme = Theme.of(context);
+    final name = (buyer['name'] ??
+            '${buyer['first_name'] ?? ''} ${buyer['last_name'] ?? ''}'
+                .trim()
+                .isNotEmpty
+        ? '${buyer['first_name'] ?? ''} ${buyer['last_name'] ?? ''}'.trim()
+        : (buyer['username'] ?? 'Buyer'))
+        .toString();
+    final email = (buyer['email'] ?? '').toString();
+    final mobile = (buyer['mobile'] ?? '').toString();
+
+    dynamic catData = buyer['assigned_categories'] ?? buyer['categories'];
+    String assignedStr = 'No categories assigned';
+    if (catData is List && catData.isNotEmpty) {
+      assignedStr = catData
+          .map((c) =>
+              c is Map ? (c['name'] ?? c['category_name'] ?? '') : c.toString())
+          .where((s) => s.isNotEmpty)
+          .join(', ');
+      if (assignedStr.isEmpty) assignedStr = 'No categories assigned';
+    } else if (catData is String && catData.isNotEmpty) {
+      assignedStr = catData;
+    }
+
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : 'B';
+
+    return Card(
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: theme.dividerColor.withOpacity(0.4)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: theme.colorScheme.primary.withOpacity(0.12),
+                  child: Text(
+                    initial,
+                    style: TextStyle(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                      if (email.isNotEmpty)
+                        Text(
+                          email,
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(fontSize: 12),
+                        ),
+                    ],
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _openManageBuyerCategories(buyer),
+                  icon: const Icon(Icons.edit_outlined, size: 16),
+                  label: const Text('Manage'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: theme.colorScheme.primary,
+                    side: BorderSide(color: theme.colorScheme.primary),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: theme.scaffoldBackgroundColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.phone_outlined,
+                      size: 14, color: Colors.grey),
+                  const SizedBox(width: 6),
+                  Text(
+                    mobile.isNotEmpty ? mobile : '-',
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(width: 16),
+                  const Icon(Icons.category_outlined,
+                      size: 14, color: Colors.grey),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      assignedStr,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: assignedStr == 'No categories assigned'
+                            ? Colors.grey
+                            : theme.colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openManageBuyerCategories(Map<String, dynamic> buyer) async {
+    final buyerId = buyer['id'];
+    final buyerName = buyer['name'] ?? buyer['username'] ?? 'Buyer';
+
+    List<dynamic> allCategories = [];
+    try {
+      final res = await ApiClient.get(
+        endpoint: '/api/categories/',
+        requireAuth: true,
+      );
+      if (res is List) {
+        allCategories = res;
+      } else if (res is Map && res['results'] is List) {
+        allCategories = res['results'];
+      } else if (res is Map && res['data'] is List) {
+        allCategories = res['data'];
+      }
+    } catch (_) {}
+
+    final dynamic assigned =
+        buyer['assigned_categories'] ?? buyer['categories'];
+    final Set<int> selectedCategoryIds = (assigned is List ? assigned : [])
+        .map((c) => c is Map ? c['id'] : int.tryParse(c.toString()))
+        .whereType<int>()
+        .toSet();
+
+    if (!mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          final theme = Theme.of(ctx);
+          return Container(
+            height: MediaQuery.of(ctx).size.height * 0.75,
+            decoration: BoxDecoration(
+              color: theme.cardColor,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Manage Categories',
+                              style: theme.textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold)),
+                          Text('Buyer: $buyerName',
+                              style: theme.textTheme.bodySmall),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(ctx)),
+                  ],
+                ),
+                const Divider(),
+                Expanded(
+                  child: allCategories.isEmpty
+                      ? const Center(
+                          child: Text('No categories available'))
+                      : ListView.builder(
+                          itemCount: allCategories.length,
+                          itemBuilder: (ctx, i) {
+                            final cat = allCategories[i];
+                            final id = cat['id'] is int
+                                ? cat['id']
+                                : int.tryParse(cat['id']?.toString() ?? '0') ??
+                                    0;
+                            final catName = cat['category_name'] ??
+                                cat['name'] ??
+                                'Category $id';
+                            final isChecked = selectedCategoryIds.contains(id);
+                            return CheckboxListTile(
+                              title: Text(catName.toString()),
+                              value: isChecked,
+                              onChanged: (val) {
+                                setModalState(() {
+                                  if (val == true) {
+                                    selectedCategoryIds.add(id);
+                                  } else {
+                                    selectedCategoryIds.remove(id);
+                                  }
+                                });
+                              },
+                            );
+                          },
+                        ),
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      try {
+                        await ApiClient.post(
+                          endpoint: '/api/buyer-categories/',
+                          body: {
+                            'buyer_id': buyerId,
+                            'category_ids': selectedCategoryIds.toList(),
+                          },
+                          requireAuth: true,
+                        );
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        Get.snackbar(
+                          'Success',
+                          'Buyer categories updated successfully',
+                          snackPosition: SnackPosition.TOP,
+                          backgroundColor: Colors.green,
+                          colorText: Colors.white,
+                          duration: const Duration(seconds: 3),
+                        );
+                        _fetchBuyers();
+                      } catch (e) {
+                        Get.snackbar('Error', e.toString(),
+                            backgroundColor: Colors.red,
+                            colorText: Colors.white);
+                      }
+                    },
+                    child: const Text('Save Categories'),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
 
   Widget _recordCard(AdminRecord record) {
     final theme = Theme.of(context);

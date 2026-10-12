@@ -14,7 +14,41 @@ class UserService {
       throw Exception('Invalid users response');
     }
 
-    return response.map<UserModel>((e) => UserModel.fromJson(e)).toList();
+    final users = response.map<UserModel>((e) => UserModel.fromJson(e)).toList();
+
+    // In web admin panel, Salesman accounts = sub admin accounts (/api/admin/sub-admin-accounts/).
+    // Supplement sub admin accounts if not already included in /api/users/.
+    try {
+      final subAdminRes = await ApiClient.get(
+        endpoint: '/api/admin/sub-admin-accounts/',
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
+      if (subAdminRes != null) {
+        final List list = subAdminRes is List
+            ? subAdminRes
+            : (subAdminRes is Map && subAdminRes['results'] is List
+                ? subAdminRes['results']
+                : []);
+        for (var item in list) {
+          if (item is Map<String, dynamic>) {
+            final id = item['id'];
+            if (!users.any((u) => u.id == id)) {
+              final mapped = Map<String, dynamic>.from(item);
+              if (mapped['role'] == null ||
+                  mapped['role'].toString().trim().isEmpty) {
+                mapped['role'] = 'salesman';
+              }
+              users.add(UserModel.fromJson(mapped));
+            }
+          }
+        }
+      }
+    } catch (_) {
+      // Safe fallback - keep existing users list
+    }
+
+    return users;
   }
 
   // ── Get single user ──────────────────────────────────────────────────────

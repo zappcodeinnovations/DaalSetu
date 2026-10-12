@@ -39,6 +39,7 @@ class AddCompanyView extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildSectionHeader("Company Details", theme),
             _buildTextField(
               controller.legalNameController,
               "Legal Name",
@@ -55,6 +56,7 @@ class AddCompanyView extends StatelessWidget {
               IconlyLight.calendar,
               keyboardType: TextInputType.number,
             ),
+            _buildSectionHeader("PAN & GST", theme),
             _buildTextField(
               controller.panController,
               "PAN Number",
@@ -67,6 +69,7 @@ class AddCompanyView extends StatelessWidget {
               IconlyLight.document,
               textCapitalization: TextCapitalization.characters,
             ),
+            _buildSectionHeader("Registered Address", theme),
             _buildTextField(
               controller.address1Controller,
               "Address Line 1",
@@ -149,6 +152,28 @@ class AddCompanyView extends StatelessWidget {
     );
   }
 
+  Widget _buildSectionHeader(String title, ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 10, bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: primaryColor,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Divider(color: theme.dividerColor.withValues(alpha: 0.3), height: 1),
+          const SizedBox(height: 10),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTextField(
     TextEditingController controller,
     String hint,
@@ -171,7 +196,9 @@ class AddCompanyView extends StatelessWidget {
             : null,
         textCapitalization: textCapitalization,
         decoration: InputDecoration(
+          labelText: hint,
           hintText: hint,
+          floatingLabelBehavior: FloatingLabelBehavior.always,
           prefixIcon: icon != null ? Icon(icon, size: 20) : null,
           filled: true,
           contentPadding: const EdgeInsets.symmetric(

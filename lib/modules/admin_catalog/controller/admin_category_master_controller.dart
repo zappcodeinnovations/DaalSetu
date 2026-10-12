@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:daalsetu/network/api_client.dart';
-import 'package:daalsetu/comman/api_url.dart';
 
 class CategoryTreeModel {
   final int id;
@@ -288,7 +287,9 @@ class AdminCategoryMasterController extends GetxController {
 
       int categoryId;
 
-      if (editingCategoryId.value != null) {
+      final bool isEditing = editingCategoryId.value != null;
+
+      if (isEditing) {
         // Update
         await ApiClient.patch(
           endpoint: '/api/categories/${editingCategoryId.value}/',
@@ -296,7 +297,6 @@ class AdminCategoryMasterController extends GetxController {
           requireAuth: true,
         );
         categoryId = editingCategoryId.value!;
-        Get.snackbar('Success', 'Category updated successfully.', backgroundColor: Colors.green.shade100);
       } else {
         // Create
         final response = await ApiClient.post(
@@ -307,7 +307,6 @@ class AdminCategoryMasterController extends GetxController {
         // POST /api/categories/ returns the category itself, not wrapped in "data".
         final created = response['data'] is Map ? response['data'] : response;
         categoryId = int.parse('${created['id']}');
-        Get.snackbar('Success', 'Category added successfully.', backgroundColor: Colors.green.shade100);
       }
 
       // Upload image if selected
@@ -320,14 +319,38 @@ class AdminCategoryMasterController extends GetxController {
             requireAuth: true,
           );
         } catch (imgErr) {
-          Get.snackbar('Warning', 'Category saved but image upload failed: $imgErr', backgroundColor: Colors.orange.shade100);
+          Get.snackbar(
+            'Warning',
+            'Category saved but image upload failed: $imgErr',
+            backgroundColor: Colors.orange.shade100,
+            duration: const Duration(seconds: 3),
+          );
         }
       }
 
       await _fetchCategoriesTree();
-      Get.back(); // Close form bottom sheet
+      Get.back(); // Close form bottom sheet first
+
+      Get.snackbar(
+        'Success',
+        isEditing
+            ? 'Category updated successfully.'
+            : 'Category added successfully.',
+        backgroundColor: Colors.green.shade600,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 3),
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+        icon: const Icon(Icons.check_circle_outline, color: Colors.white),
+      );
     } catch (e) {
-      Get.snackbar('Error', 'Failed to save category: $e', backgroundColor: Colors.red.shade100);
+      Get.snackbar(
+        'Error',
+        'Failed to save category: $e',
+        backgroundColor: Colors.red.shade100,
+        duration: const Duration(seconds: 3),
+      );
     } finally {
       isSubmitting(false);
     }

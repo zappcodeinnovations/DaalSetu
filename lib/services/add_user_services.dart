@@ -10,6 +10,7 @@ class AddUserServices {
     required String firstName,
     String? lastName,
     required String role,
+    required String password,
     String? panNumber,
     String? gstNumber,
     String? gender,
@@ -24,6 +25,7 @@ class AddUserServices {
       "email": email,
       "first_name": firstName,
       "role": role,
+      "password": password,
     };
 
     if (lastName != null) fields["last_name"] = lastName;

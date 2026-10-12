@@ -78,16 +78,29 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           onPressed: () => Get.back(),
         ),
         title: _showSearch
-            ? TextField(
-                controller: _searchCtrl,
-                autofocus: true,
-                style: theme.textTheme.bodyLarge,
-                decoration: InputDecoration(
-                  hintText: 'Search by name, mobile, email…',
-                  hintStyle: theme.textTheme.bodySmall,
-                  border: InputBorder.none,
+            ? Container(
+                height: 40,
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: theme.dividerColor),
                 ),
-                onChanged: controller.setSearch,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: TextField(
+                  controller: _searchCtrl,
+                  autofocus: true,
+                  style: theme.textTheme.bodyMedium,
+                  decoration: InputDecoration(
+                    hintText: 'Search by name, mobile, email…',
+                    hintStyle: theme.textTheme.bodySmall,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                  onChanged: controller.setSearch,
+                ),
               )
             : Text(
                 'User Management',
@@ -146,12 +159,16 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               // ── Stats Section ────────────────────────────────────────
               _buildStatsSection(context),
 
+              const SizedBox(height: 12),
+
               // ── Role Filter Chips ─────────────────────────────────────
               _buildRoleFilters(context),
 
+              const SizedBox(height: 8),
+
               // ── Results count ─────────────────────────────────────────
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
                 child: Text(
                   '${users.length} users found',
                   style: theme.textTheme.bodySmall,
@@ -183,7 +200,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                       )
                     : ListView.builder(
                         padding:
-                            const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                            const EdgeInsets.fromLTRB(16, 0, 16, 120),
                         itemCount: users.length,
                         itemBuilder: (ctx, i) =>
                             _buildUserCard(ctx, users[i]),

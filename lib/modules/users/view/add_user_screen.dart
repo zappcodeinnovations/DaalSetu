@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:iconly/iconly.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -12,16 +13,18 @@ class AddUserScreen extends StatelessWidget {
 
   final mobileController = TextEditingController();
   final emailController = TextEditingController();
+  final passwordController = TextEditingController();
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
   final panController = TextEditingController();
   final gstController = TextEditingController();
 
-  final roles = ["buyer", "seller", "transporter", "admin"];
+  final roles = ["buyer", "seller", "transporter", "admin", "salesman"];
   final genders = ["male", "female", "other"];
 
   final selectedRole = "buyer".obs;
   final selectedGender = "".obs;
+  final obscurePassword = true.obs;
 
   final panImage = Rx<File?>(null);
   final gstImage = Rx<File?>(null);
@@ -59,14 +62,76 @@ class AddUserScreen extends StatelessWidget {
                     height: 50,
                     child: ElevatedButton(
                       onPressed: () {
+                        final mobile = mobileController.text.trim();
+                        final password = passwordController.text.trim();
+                        final firstName = firstNameController.text.trim();
+                        final email = emailController.text.trim();
+
+                        if (mobile.isEmpty) {
+                          Get.snackbar(
+                            "Required",
+                            "Please enter mobile number",
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Colors.red,
+                            colorText: Colors.white,
+                          );
+                          return;
+                        }
+
+                        if (mobile.length != 10 ||
+                            !RegExp(r'^[0-9]{10}$').hasMatch(mobile)) {
+                          Get.snackbar(
+                            "Invalid Mobile",
+                            "Please enter a valid 10-digit numeric mobile number",
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Colors.red,
+                            colorText: Colors.white,
+                          );
+                          return;
+                        }
+
+                        if (firstName.isEmpty) {
+                          Get.snackbar(
+                            "Required",
+                            "Please enter first name",
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Colors.red,
+                            colorText: Colors.white,
+                          );
+                          return;
+                        }
+
+                        if (password.isEmpty) {
+                          Get.snackbar(
+                            "Required",
+                            "Please enter password",
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Colors.red,
+                            colorText: Colors.white,
+                          );
+                          return;
+                        }
+
+                        if (password.length < 4) {
+                          Get.snackbar(
+                            "Weak Password",
+                            "Password must be at least 4 characters long",
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Colors.red,
+                            colorText: Colors.white,
+                          );
+                          return;
+                        }
+
                         controller.createUser(
-                          mobile: mobileController.text,
-                          email: emailController.text,
-                          firstName: firstNameController.text,
-                          lastName: lastNameController.text,
+                          mobile: mobile,
+                          email: email,
+                          password: password,
+                          firstName: firstName,
+                          lastName: lastNameController.text.trim(),
                           role: selectedRole.value,
-                          panNumber: panController.text,
-                          gstNumber: gstController.text,
+                          panNumber: panController.text.trim(),
+                          gstNumber: gstController.text.trim(),
                           gender: selectedGender.value,
                           panImage: panImage.value,
                           gstImage: gstImage.value,
@@ -153,8 +218,37 @@ class AddUserScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _textField("Mobile", mobileController),
-          _textField("Email", emailController),
+          _textField(
+            "Mobile (10 Digits)",
+            mobileController,
+            keyboardType: TextInputType.phone,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(10),
+            ],
+          ),
+          _textField(
+            "Email",
+            emailController,
+            keyboardType: TextInputType.emailAddress,
+          ),
+          Obx(
+            () => _textField(
+              "Password",
+              passwordController,
+              obscureText: obscurePassword.value,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  obscurePassword.value
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  size: 20,
+                ),
+                onPressed: () =>
+                    obscurePassword.value = !obscurePassword.value,
+              ),
+            ),
+          ),
           _textField("First Name", firstNameController),
           _textField("Last Name (Optional)", lastNameController),
 
@@ -188,11 +282,11 @@ class AddUserScreen extends StatelessWidget {
       () => DropdownButtonFormField<int>(
         value: controller.selectedTagId.value,
         items: controller.tags.map((tag) {
-            return DropdownMenuItem<int>(
-              value: tag.id,
-              child: Text(tag.tagName),
-            );
-          }).toList(),
+          return DropdownMenuItem<int>(
+            value: tag.id,
+            child: Text(tag.tagName),
+          );
+        }).toList(),
         onChanged: (value) {
           controller.selectedTagId.value = value;
         },
@@ -205,20 +299,30 @@ class AddUserScreen extends StatelessWidget {
     );
   }
 
-  Widget _textField(String label, TextEditingController controller) {
+  Widget _textField(
+    String label,
+    TextEditingController controller, {
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+    bool obscureText = false,
+    Widget? suffixIcon,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: TextField(
         controller: controller,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+        obscureText: obscureText,
         decoration: InputDecoration(
           labelText: label,
           filled: true,
+          suffixIcon: suffixIcon,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
     );
   }
-
 
   Widget _dropdown(String label, List<String> items, RxString selected) {
     return Obx(
@@ -262,25 +366,25 @@ class AddUserScreen extends StatelessWidget {
             }
           },
           child: Obx(() => Container(
-            height: 120,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: theme.scaffoldBackgroundColor,
-              border: Border.all(color: theme.dividerColor),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: image.value == null
-                ? Center(
-                    child: Text(
-                      "Tap to select image",
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  )
-                : ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: Image.file(image.value!, fit: BoxFit.cover),
-                  ),
-          )),
+                height: 120,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: theme.scaffoldBackgroundColor,
+                  border: Border.all(color: theme.dividerColor),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: image.value == null
+                    ? Center(
+                        child: Text(
+                          "Tap to select image",
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      )
+                    : ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Image.file(image.value!, fit: BoxFit.cover),
+                      ),
+              )),
         ),
       ],
     );

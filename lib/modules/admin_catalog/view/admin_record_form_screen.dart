@@ -327,6 +327,7 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
         decoration: InputDecoration(
           labelText: _label(field),
           alignLabelWithHint: field.multiline,
+          counterText: '',
         ),
         validator: (value) {
           final taxError = field.key == 'pan_number'
