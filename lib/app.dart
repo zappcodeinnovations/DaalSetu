@@ -5,6 +5,7 @@ import 'routes/app_routes.dart';
 import 'services/realtime_notification_service.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
+import 'widgets/realtime_notification_banner_overlay.dart';
 
 class AgroBrokerApp extends StatelessWidget {
   const AgroBrokerApp({super.key});
@@ -45,6 +46,7 @@ class AgroBrokerApp extends StatelessWidget {
                 ),
               ),
             ),
+            const RealtimeNotificationBannerOverlay(),
           ],
         );
       },

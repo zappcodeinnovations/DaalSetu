@@ -16,6 +16,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:async';
 import '../../../../routes/app_routes.dart';
+import '../../../../services/realtime_notification_service.dart';
 import '../../../nav_bar/controller/nav_controller.dart';
 import 'package:daalsetu/utils/global_error_handler.dart';
 
@@ -84,21 +85,43 @@ class SellerProductController extends GetxController {
   void _onBagsChanged() {
     if (_isCalculating) return;
     final bagsStr = bagCountController.text.trim();
-    final packingStr = packingWeightController.text.trim();
-    if (bagsStr.isEmpty || packingStr.isEmpty) return;
+    if (bagsStr.isEmpty) return;
 
-    final bags = double.tryParse(bagsStr)?.ceil();
-    final packing = double.tryParse(packingStr);
-    if (bags != null && packing != null && packing > 0) {
-      final quantityInKg = bags * packing;
-      final quantity = quantityInKg / _unitMultiplier;
-      final newQty = quantity
-          .toStringAsFixed(2)
-          .replaceAll(RegExp(r'\.00$'), '');
-      if (quantityController.text != newQty) {
-        _isCalculating = true;
-        quantityController.text = newQty;
-        _isCalculating = false;
+    final bags = double.tryParse(bagsStr);
+    if (bags == null || bags <= 0) return;
+
+    final qtyStr = quantityController.text.trim();
+    final packingStr = packingWeightController.text.trim();
+
+    if (qtyStr.isNotEmpty) {
+      // Total quantity is already specified; adjust packing weight to keep total quantity intact.
+      final qty = double.tryParse(qtyStr);
+      if (qty != null && qty > 0) {
+        final quantityInKg = qty * _unitMultiplier;
+        final packing = quantityInKg / bags;
+        final newPacking = packing
+            .toStringAsFixed(2)
+            .replaceAll(RegExp(r'\.00$'), '');
+        if (packingWeightController.text != newPacking) {
+          _isCalculating = true;
+          packingWeightController.text = newPacking;
+          _isCalculating = false;
+        }
+      }
+    } else if (packingStr.isNotEmpty) {
+      // Quantity is not yet set; calculate total quantity from bags * packing weight.
+      final packing = double.tryParse(packingStr);
+      if (packing != null && packing > 0) {
+        final quantityInKg = bags * packing;
+        final quantity = quantityInKg / _unitMultiplier;
+        final newQty = quantity
+            .toStringAsFixed(2)
+            .replaceAll(RegExp(r'\.00$'), '');
+        if (quantityController.text != newQty) {
+          _isCalculating = true;
+          quantityController.text = newQty;
+          _isCalculating = false;
+        }
       }
     }
   }
@@ -106,12 +129,14 @@ class SellerProductController extends GetxController {
   void _onQuantityChanged() {
     if (_isCalculating) return;
     final qtyStr = quantityController.text.trim();
-    final packingStr = packingWeightController.text.trim();
-    if (qtyStr.isEmpty || packingStr.isEmpty) return;
+    if (qtyStr.isEmpty) return;
 
     final qty = double.tryParse(qtyStr);
+    if (qty == null || qty <= 0) return;
+
+    final packingStr = packingWeightController.text.trim();
     final packing = double.tryParse(packingStr);
-    if (qty != null && packing != null && packing > 0) {
+    if (packing != null && packing > 0) {
       final quantityInKg = qty * _unitMultiplier;
       final newBags = (quantityInKg / packing).ceil().toString();
       if (bagCountController.text != newBags) {
@@ -119,24 +144,78 @@ class SellerProductController extends GetxController {
         bagCountController.text = newBags;
         _isCalculating = false;
       }
+    } else {
+      final bagsStr = bagCountController.text.trim();
+      final bags = double.tryParse(bagsStr);
+      if (bags != null && bags > 0) {
+        final quantityInKg = qty * _unitMultiplier;
+        final newPacking = (quantityInKg / bags)
+            .toStringAsFixed(2)
+            .replaceAll(RegExp(r'\.00$'), '');
+        if (packingWeightController.text != newPacking) {
+          _isCalculating = true;
+          packingWeightController.text = newPacking;
+          _isCalculating = false;
+        }
+      }
     }
   }
 
   void _onPackingChanged() {
     if (_isCalculating) return;
-    if (bagCountController.text.isNotEmpty) {
-      _onBagsChanged();
-    } else if (quantityController.text.isNotEmpty) {
-      _onQuantityChanged();
+    final packingStr = packingWeightController.text.trim();
+    if (packingStr.isEmpty) return;
+
+    final packing = double.tryParse(packingStr);
+    if (packing == null || packing <= 0) return;
+
+    final qtyStr = quantityController.text.trim();
+    final bagsStr = bagCountController.text.trim();
+
+    if (qtyStr.isNotEmpty) {
+      // Updating weight adjusts number of bags, preserving total quintal quantity.
+      final qty = double.tryParse(qtyStr);
+      if (qty != null && qty > 0) {
+        final quantityInKg = qty * _unitMultiplier;
+        final newBags = (quantityInKg / packing).ceil().toString();
+        if (bagCountController.text != newBags) {
+          _isCalculating = true;
+          bagCountController.text = newBags;
+          _isCalculating = false;
+        }
+      }
+    } else if (bagsStr.isNotEmpty) {
+      // Quantity is not yet set; calculate total quantity from bags * packing weight.
+      final bags = double.tryParse(bagsStr);
+      if (bags != null && bags > 0) {
+        final quantityInKg = bags * packing;
+        final quantity = quantityInKg / _unitMultiplier;
+        final newQty = quantity
+            .toStringAsFixed(2)
+            .replaceAll(RegExp(r'\.00$'), '');
+        if (quantityController.text != newQty) {
+          _isCalculating = true;
+          quantityController.text = newQty;
+          _isCalculating = false;
+        }
+      }
     }
+  }
+
+  void attachCalculationListeners() {
+    bagCountController.removeListener(_onBagsChanged);
+    quantityController.removeListener(_onQuantityChanged);
+    packingWeightController.removeListener(_onPackingChanged);
+
+    bagCountController.addListener(_onBagsChanged);
+    quantityController.addListener(_onQuantityChanged);
+    packingWeightController.addListener(_onPackingChanged);
   }
 
   @override
   void onInit() {
     super.onInit();
-    bagCountController.addListener(_onBagsChanged);
-    quantityController.addListener(_onQuantityChanged);
-    packingWeightController.addListener(_onPackingChanged);
+    attachCalculationListeners();
 
     fetchProducts();
     fetchSupportData();
@@ -419,6 +498,9 @@ class SellerProductController extends GetxController {
       );
       fetchProducts();
       clearForm();
+      if (Get.isRegistered<RealtimeNotificationService>()) {
+        RealtimeNotificationService.to.refreshNow();
+      }
     } catch (e) {
       SellerUi.error(e);
     } finally {
@@ -471,6 +553,7 @@ class SellerProductController extends GetxController {
     }
     selectedCategoryId.value = null;
     selectedBrandId.value = null;
+    brands.clear();
     amountUnit.value = 'qtl';
     quantityUnit.value = 'qtl';
     packingWeightController.text = '30';
@@ -479,6 +562,10 @@ class SellerProductController extends GetxController {
     loadingFrom.value = null;
     loadingTo.value = null;
     dealExpiry.value = null;
+    selectedBranchIds.clear();
+    if (branches.isNotEmpty) {
+      selectedBranchIds.addAll(branches.map((b) => b.id!));
+    }
   }
 
   @override

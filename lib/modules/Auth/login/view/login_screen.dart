@@ -132,20 +132,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   },
                                 ),
                                 const SizedBox(height: 20),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    _label('Password', textColor),
-                                    TextButton(
-                                      onPressed: () => Get.toNamed(
-                                        AppRoutes.forgot_password,
-                                      ),
-                                      child: const Text('Forgot password?'),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
+                                _label('Password', textColor),
+                                const SizedBox(height: 8),
                                 GlassTextField(
                                   controller: controller.passwordController,
                                   hintText: 'Enter your password',
@@ -172,7 +160,26 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ? 'Enter your password'
                                       : null,
                                 ),
-                                const SizedBox(height: 26),
+                                const SizedBox(height: 6),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton(
+                                    onPressed: () => Get.toNamed(
+                                      AppRoutes.forgot_password,
+                                    ),
+                                    style: TextButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                        vertical: 2,
+                                      ),
+                                      minimumSize: Size.zero,
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: const Text('Forgot password?'),
+                                  ),
+                                ),
+                                const SizedBox(height: 18),
                                 Obx(
                                   () => GlassButton(
                                     isLoading: controller.isLoading.value,
@@ -242,9 +249,8 @@ class _LoginScreenState extends State<LoginScreen> {
     return Column(
       children: [
         Container(
-          width: 88,
-          height: 88,
-          padding: const EdgeInsets.all(5),
+          width: 92,
+          height: 92,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.white,
@@ -253,13 +259,27 @@ class _LoginScreenState extends State<LoginScreen> {
                 color: const Color(0xFFFFB300).withValues(alpha: 0.28),
                 blurRadius: 28,
                 spreadRadius: 3,
+                offset: const Offset(0, 3),
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                spreadRadius: 0,
+                offset: const Offset(0, 2),
               ),
             ],
+            border: Border.all(
+              color: Colors.white,
+              width: 2,
+            ),
           ),
           child: ClipOval(
-            child: Image.asset(
-              'assets/images/app_icon.jpeg',
-              fit: BoxFit.cover,
+            child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Image.asset(
+                'assets/images/app_icon.jpeg',
+                fit: BoxFit.contain,
+              ),
             ),
           ),
         ),

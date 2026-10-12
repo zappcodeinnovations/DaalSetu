@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../model/notification_model.dart';
 import '../../../../services/notification_services.dart';
+import '../../../../services/realtime_notification_service.dart';
 
 class SellerNotificationController extends GetxController {
   var isLoading = true.obs;
@@ -19,8 +20,15 @@ class SellerNotificationController extends GetxController {
     try {
       isLoading(true);
       final res = await NotificationServices.getNotifications();
-      final list = (res['results'] as List?) ?? [];
-      notificationsList.value = list.map((e) => AppNotificationModel.fromJson(e)).toList();
+      final rawList = (res['results'] is List)
+          ? res['results'] as List
+          : ((res['data'] is List)
+              ? res['data'] as List
+              : (res is List ? res as List : []));
+      notificationsList.value = rawList
+          .whereType<Map<String, dynamic>>()
+          .map((e) => AppNotificationModel.fromJson(e))
+          .toList();
     } catch (e) {
       // Keep quiet or log error
     } finally {
@@ -40,6 +48,9 @@ class SellerNotificationController extends GetxController {
       await NotificationServices.markAsRead(notificationId);
       fetchNotifications();
       fetchUnreadCount();
+      if (Get.isRegistered<RealtimeNotificationService>()) {
+        RealtimeNotificationService.to.refreshNow();
+      }
     } catch (_) {}
   }
 
@@ -49,8 +60,12 @@ class SellerNotificationController extends GetxController {
       Get.snackbar("Success", "All notifications marked as read", snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
       fetchNotifications();
       fetchUnreadCount();
+      if (Get.isRegistered<RealtimeNotificationService>()) {
+        RealtimeNotificationService.to.refreshNow();
+      }
     } catch (e) {
       Get.snackbar("Error", e.toString(), snackPosition: SnackPosition.BOTTOM);
     }
   }
 }
+

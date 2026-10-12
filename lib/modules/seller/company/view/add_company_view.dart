@@ -47,8 +47,9 @@ class AddCompanyView extends StatelessWidget {
             ),
             _buildTextField(
               controller.companyTypeController,
-              "Company Type (e.g. Private Limited)",
+              "Company Type",
               IconlyLight.category,
+              placeholder: "e.g. Private Limited",
             ),
             _buildTextField(
               controller.yearController,
@@ -174,21 +175,49 @@ class AddCompanyView extends StatelessWidget {
     );
   }
 
+  static bool _isTaxField(String text, String key) {
+    final clean = text.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), ' ').trim();
+    final words = clean.split(RegExp(r'\s+'));
+    return words.contains(key);
+  }
+
   Widget _buildTextField(
     TextEditingController controller,
     String hint,
     IconData? icon, {
     TextInputType keyboardType = TextInputType.text,
     TextCapitalization textCapitalization = TextCapitalization.none,
+    String? placeholder,
   }) {
-    final isPan = hint.toLowerCase().contains('pan');
-    final isGst = hint.toLowerCase().contains('gst');
+    final isPan = _isTaxField(hint, 'pan');
+    final isGst = _isTaxField(hint, 'gst');
+    final clean = hint.toLowerCase();
+    final isYear = clean.contains('year');
+    final isPincode = clean.contains('pincode');
+    final isCompanyType = clean.contains('company type');
+
+    final effectiveHint = placeholder ??
+        (isGst
+            ? "e.g. 22AAAAA0000A1Z5"
+            : isPan
+                ? "e.g. ABCDE1234F"
+                : isCompanyType
+                    ? "e.g. Private Limited"
+                    : isYear
+                        ? "e.g. 2019"
+                        : isPincode
+                            ? "e.g. 400001"
+                            : hint);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
         maxLength: keyboardType == TextInputType.number ? 10 : null,
+        buildCounter:
+            (_, {required currentLength, required isFocused, maxLength}) =>
+                null,
         inputFormatters: isPan
             ? const [TaxIdInputFormatter.pan()]
             : isGst
@@ -197,8 +226,9 @@ class AddCompanyView extends StatelessWidget {
         textCapitalization: textCapitalization,
         decoration: InputDecoration(
           labelText: hint,
-          hintText: hint,
+          hintText: effectiveHint,
           floatingLabelBehavior: FloatingLabelBehavior.always,
+          counterText: "",
           prefixIcon: icon != null ? Icon(icon, size: 20) : null,
           filled: true,
           contentPadding: const EdgeInsets.symmetric(

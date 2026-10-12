@@ -269,6 +269,7 @@ class _TransporterVehicleFormState extends State<TransporterVehicleForm> {
 
   InputDecoration _decoration(String label) => InputDecoration(
         labelText: label,
+        counterText: "",
         filled: true,
         fillColor: Theme.of(context).brightness == Brightness.dark
             ? Colors.white.withValues(alpha: 0.05)
@@ -289,6 +290,9 @@ class _TransporterVehicleFormState extends State<TransporterVehicleForm> {
         controller: controller,
         keyboardType: number ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
         maxLength: number ? 10 : null,
+        buildCounter:
+            (_, {required currentLength, required isFocused, maxLength}) =>
+                null,
         decoration: _decoration(label),
         validator: (value) => required && (value == null || value.trim().isEmpty) ? "Required" : null,
       ),
