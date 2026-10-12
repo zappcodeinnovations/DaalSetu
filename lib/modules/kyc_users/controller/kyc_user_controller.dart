@@ -7,7 +7,9 @@ class KycController extends GetxController {
   final isLoading = false.obs;
   final kycUsers = <KycUserModel>[].obs;
   final selectedFilter = "all".obs;
+  final selectedRole = "all".obs;
   final searchQuery = "".obs;
+  final searchController = TextEditingController();
 
   int get pendingCount => kycUsers.where((u) => u.kycStatus.toLowerCase() == 'pending').length;
   int get approvedCount => kycUsers.where((u) => u.kycStatus.toLowerCase() == 'approved').length;
@@ -16,17 +18,24 @@ class KycController extends GetxController {
 
   List<KycUserModel> get filteredUsers {
     return kycUsers.where((user) {
-      // Filter by tab
+      // Filter by tab / status
       if (selectedFilter.value != 'all' && user.kycStatus.toLowerCase() != selectedFilter.value.toLowerCase()) {
         return false;
       }
+      // Filter by role
+      if (selectedRole.value != 'all' && user.role.toLowerCase() != selectedRole.value.toLowerCase()) {
+        return false;
+      }
       // Filter by search query
-      if (searchQuery.value.isNotEmpty) {
-        final query = searchQuery.value.toLowerCase();
-        if (!user.name.toLowerCase().contains(query) && 
-            !user.email.toLowerCase().contains(query) &&
-            !user.mobile.toLowerCase().contains(query) &&
-            !(user.companyName?.toLowerCase().contains(query) ?? false)) {
+      if (searchQuery.value.trim().isNotEmpty) {
+        final query = searchQuery.value.trim().toLowerCase();
+        final matches = user.name.toLowerCase().contains(query) ||
+            user.email.toLowerCase().contains(query) ||
+            user.mobile.toLowerCase().contains(query) ||
+            user.role.toLowerCase().contains(query) ||
+            (user.companyName?.toLowerCase().contains(query) ?? false) ||
+            (user.branchName?.toLowerCase().contains(query) ?? false);
+        if (!matches) {
           return false;
         }
       }
@@ -40,8 +49,29 @@ class KycController extends GetxController {
     super.onInit();
   }
 
+  @override
+  void onClose() {
+    searchController.dispose();
+    super.onClose();
+  }
+
   void changeFilter(String filter) {
     selectedFilter.value = filter;
+  }
+
+  void setRoleFilter(String role) {
+    selectedRole.value = role;
+  }
+
+  void clearSearch() {
+    searchController.clear();
+    searchQuery.value = '';
+  }
+
+  void resetFilters() {
+    selectedRole.value = 'all';
+    selectedFilter.value = 'all';
+    clearSearch();
   }
 
   Future<void> fetchUsers() async {

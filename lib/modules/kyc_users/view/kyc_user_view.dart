@@ -54,7 +54,7 @@ class KycUsersScreen extends StatelessWidget {
       body: Column(
         children: [
           _buildSummaryCards(),
-          _buildSearchAndFilter(),
+          _buildSearchAndFilter(context),
           _buildTabs(),
           Expanded(
             child: Obx(() {
@@ -196,49 +196,222 @@ class KycUsersScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSearchAndFilter() {
+  Widget _buildSearchAndFilter(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              onChanged: (val) => controller.searchQuery.value = val,
-              style: TextStyle(color: textDark),
-              decoration: InputDecoration(
-                hintText: 'Search by name, email, phone, company...',
-                hintStyle: TextStyle(color: textLight, fontSize: 13),
-                prefixIcon: Icon(IconlyLight.search, color: textLight),
-                filled: true,
-                fillColor: cardColor,
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: textLight.withOpacity(0.2))),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: textLight.withOpacity(0.2))),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: colorTotal)),
+      child: Obx(() {
+        final hasActiveFilter = controller.selectedRole.value != 'all' || controller.selectedFilter.value != 'all';
+        final hasSearch = controller.searchQuery.value.isNotEmpty;
+
+        return Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: controller.searchController,
+                onChanged: (val) => controller.searchQuery.value = val,
+                style: TextStyle(color: textDark),
+                decoration: InputDecoration(
+                  hintText: 'Search by name, email, phone, company...',
+                  hintStyle: TextStyle(color: textLight, fontSize: 13),
+                  prefixIcon: Icon(IconlyLight.search, color: textLight),
+                  suffixIcon: hasSearch
+                      ? IconButton(
+                          icon: Icon(Icons.close, size: 18, color: textLight),
+                          onPressed: () => controller.clearSearch(),
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: cardColor,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: textLight.withOpacity(0.2))),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: textLight.withOpacity(0.2))),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: colorTotal)),
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            height: 48,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: cardColor,
+            const SizedBox(width: 12),
+            InkWell(
+              onTap: () => _showFilterBottomSheet(context),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: textLight.withOpacity(0.2)),
+              child: Container(
+                height: 48,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: hasActiveFilter ? colorTotal.withOpacity(0.12) : cardColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: hasActiveFilter ? colorTotal : textLight.withOpacity(0.2),
+                    width: hasActiveFilter ? 1.5 : 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(IconlyLight.filter, color: hasActiveFilter ? colorTotal : textDark, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Filter',
+                      style: TextStyle(
+                        color: hasActiveFilter ? colorTotal : textDark,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (hasActiveFilter) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: colorTotal,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
-            child: Row(
-              children: [
-                Icon(IconlyLight.filter, color: textDark, size: 18),
-                const SizedBox(width: 8),
-                Text('Filter', style: TextStyle(color: textDark, fontWeight: FontWeight.w600)),
-                const SizedBox(width: 4),
-                Container(width: 6, height: 6, decoration: BoxDecoration(color: colorPending, shape: BoxShape.circle)),
-              ],
-            ),
-          )
-        ],
+          ],
+        );
+      }),
+    );
+  }
+
+  void _showFilterBottomSheet(BuildContext context) {
+    final tempRole = controller.selectedRole.value.obs;
+    final tempStatus = controller.selectedFilter.value.obs;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: cardColor,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      builder: (ctx) {
+        return Obx(() => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).padding.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(IconlyLight.filter, color: colorTotal, size: 22),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Filter KYC Users',
+                        style: TextStyle(color: textDark, fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close, color: textLight),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'USER ROLE',
+                style: TextStyle(color: textLight, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildFilterChoiceChip('All Roles', 'all', tempRole.value, (val) => tempRole.value = val),
+                  _buildFilterChoiceChip('Buyer', 'buyer', tempRole.value, (val) => tempRole.value = val),
+                  _buildFilterChoiceChip('Seller', 'seller', tempRole.value, (val) => tempRole.value = val),
+                  _buildFilterChoiceChip('Transporter', 'transporter', tempRole.value, (val) => tempRole.value = val),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'KYC STATUS',
+                style: TextStyle(color: textLight, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildFilterChoiceChip('All Statuses', 'all', tempStatus.value, (val) => tempStatus.value = val),
+                  _buildFilterChoiceChip('Pending', 'pending', tempStatus.value, (val) => tempStatus.value = val, color: colorPending),
+                  _buildFilterChoiceChip('Approved', 'approved', tempStatus.value, (val) => tempStatus.value = val, color: colorApproved),
+                  _buildFilterChoiceChip('Rejected', 'rejected', tempStatus.value, (val) => tempStatus.value = val, color: colorRejected),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: BorderSide(color: textLight.withOpacity(0.3)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () {
+                        controller.resetFilters();
+                        Navigator.pop(ctx);
+                      },
+                      child: Text('Reset All', style: TextStyle(color: textLight, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: colorTotal,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () {
+                        controller.selectedRole.value = tempRole.value;
+                        controller.selectedFilter.value = tempStatus.value;
+                        Navigator.pop(ctx);
+                      },
+                      child: const Text('Apply Filter', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ));
+      },
+    );
+  }
+
+  Widget _buildFilterChoiceChip(String label, String value, String selectedValue, Function(String) onSelected, {Color? color}) {
+    final isSelected = selectedValue.toLowerCase() == value.toLowerCase();
+    final activeColor = color ?? colorTotal;
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (_) => onSelected(value),
+      selectedColor: activeColor.withOpacity(0.18),
+      backgroundColor: bgColor,
+      labelStyle: TextStyle(
+        color: isSelected ? activeColor : textDark,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        fontSize: 12,
+      ),
+      side: BorderSide(
+        color: isSelected ? activeColor : textLight.withOpacity(0.2),
+        width: isSelected ? 1.5 : 1,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     );
   }
 
@@ -299,9 +472,16 @@ class KycUsersScreen extends StatelessWidget {
     if (user.role.toLowerCase() == 'transporter') roleColor = colorRoleTransporter;
     if (user.role.toLowerCase() == 'seller') roleColor = colorRoleSeller;
 
-    String initials = user.name.isNotEmpty ? (user.name.split(' ').length > 1 ? '${user.name.split(' ')[0][0]}${user.name.split(' ')[1][0]}' : user.name.substring(0, 2)).toUpperCase() : "U";
+    String initials = user.name.isNotEmpty
+        ? (user.name.split(' ').length > 1
+            ? '${user.name.split(' ')[0][0]}${user.name.split(' ')[1][0]}'
+            : user.name.substring(0, user.name.length >= 2 ? 2 : 1))
+            .toUpperCase()
+        : "U";
 
-    String submittedStr = user.kycSubmittedAt != null ? DateFormat('dd MMM yyyy').format(DateTime.parse(user.kycSubmittedAt!)) : "-";
+    String submittedStr = user.kycSubmittedAt != null
+        ? DateFormat('dd MMM yyyy').format(DateTime.parse(user.kycSubmittedAt!))
+        : "-";
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -311,129 +491,214 @@ class KycUsersScreen extends StatelessWidget {
         border: Border.all(color: textLight.withOpacity(0.15)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header: Avatar, Name/Role, Status Badge
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Avatar
                 Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF78350F), // Dark orange/brown
+                  width: 46,
+                  height: 46,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF78350F), // Dark orange/amber
                     shape: BoxShape.circle,
                   ),
-                  child: Center(child: Text(initials, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18))),
+                  child: Center(
+                    child: Text(
+                      initials,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 12),
-                // Info
+                // Name & Role
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(user.name, style: TextStyle(color: textDark, fontSize: 16, fontWeight: FontWeight.bold)),
+                      Text(
+                        user.name,
+                        style: TextStyle(color: textDark, fontSize: 15, fontWeight: FontWeight.bold),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       const SizedBox(height: 4),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(color: roleColor.withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
-                        child: Text(user.role.toUpperCase(), style: TextStyle(color: roleColor, fontSize: 10, fontWeight: FontWeight.bold)),
+                        decoration: BoxDecoration(
+                          color: roleColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: roleColor.withOpacity(0.3), width: 0.8),
+                        ),
+                        child: Text(
+                          user.role.toUpperCase(),
+                          style: TextStyle(color: roleColor, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(user.email.isEmpty ? "No Email" : user.email, style: TextStyle(color: textLight, fontSize: 12)),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(Icons.phone, size: 12, color: textLight),
-                          const SizedBox(width: 4),
-                          Text("+91 ${user.mobile}", style: TextStyle(color: textLight, fontSize: 12)),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(Icons.business, size: 12, color: textLight),
-                          const SizedBox(width: 4),
-                          Text(user.branchName ?? "Not Available", style: TextStyle(color: textLight, fontSize: 12)),
-                          const SizedBox(width: 12),
-                          Icon(Icons.work, size: 12, color: textLight),
-                          const SizedBox(width: 4),
-                          Expanded(child: Text(user.companyName ?? "Not Available", style: TextStyle(color: textLight, fontSize: 12), overflow: TextOverflow.ellipsis)),
-                        ],
-                      )
                     ],
                   ),
                 ),
-                // Right side: Status and Date
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(color: statusColor.withOpacity(0.15), borderRadius: BorderRadius.circular(12), border: Border.all(color: statusColor.withOpacity(0.3))),
-                      child: Row(
-                        children: [
-                          Icon(isApproved ? Icons.check_circle : (isRejected ? Icons.cancel : Icons.info), color: statusColor, size: 12),
-                          const SizedBox(width: 4),
-                          Text(user.kycStatus.toUpperCase(), style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold)),
-                        ],
+                const SizedBox(width: 8),
+                // Status Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: statusColor.withOpacity(0.35)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isApproved ? Icons.check_circle : (isRejected ? Icons.cancel : Icons.access_time_filled),
+                        color: statusColor,
+                        size: 13,
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text("Submitted", style: TextStyle(color: textLight, fontSize: 10)),
-                    Row(
-                      children: [
-                        Icon(Icons.calendar_today, size: 10, color: textLight),
-                        const SizedBox(width: 4),
-                        Text(submittedStr, style: TextStyle(color: textDark, fontSize: 11)),
-                      ],
-                    )
-                  ],
-                )
+                      const SizedBox(width: 5),
+                      Text(
+                        user.kycStatus.toUpperCase(),
+                        style: TextStyle(color: statusColor, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
+
+          // Contact & Entity Details (Full Width to avoid any squeezing/overflow)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: bgColor.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: textLight.withOpacity(0.08)),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.email_outlined, size: 14, color: textLight),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          user.email.isNotEmpty ? user.email : "No Email Provided",
+                          style: TextStyle(color: user.email.isNotEmpty ? textDark : textLight, fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(Icons.phone_outlined, size: 14, color: textLight),
+                      const SizedBox(width: 6),
+                      Text(
+                        "+91 ${user.mobile}",
+                        style: TextStyle(color: textDark, fontSize: 12, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.storefront_outlined, size: 14, color: textLight),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          (user.branchName != null && user.branchName!.trim().isNotEmpty)
+                              ? user.branchName!
+                              : "Branch: General",
+                          style: TextStyle(color: textDark, fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(Icons.business_outlined, size: 14, color: textLight),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          (user.companyName != null && user.companyName!.trim().isNotEmpty)
+                              ? user.companyName!
+                              : "Company: Individual",
+                          style: TextStyle(color: textDark, fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
           
+          const SizedBox(height: 12),
           Divider(color: textLight.withOpacity(0.15), height: 1),
           
           // Stats Row
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
             child: Row(
               children: [
                 Expanded(
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text("KYC Score", style: TextStyle(color: textLight, fontSize: 11)),
                       const SizedBox(width: 8),
                       Stack(
                         alignment: Alignment.center,
                         children: [
-                          SizedBox(width: 32, height: 32, child: CircularProgressIndicator(value: user.kycScore / 100, color: colorApproved, backgroundColor: colorApproved.withOpacity(0.2), strokeWidth: 3)),
-                          Text("${user.kycScore}%", style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                          SizedBox(
+                            width: 28,
+                            height: 28,
+                            child: CircularProgressIndicator(
+                              value: user.kycScore / 100,
+                              color: colorApproved,
+                              backgroundColor: colorApproved.withOpacity(0.2),
+                              strokeWidth: 3,
+                            ),
+                          ),
+                          Text(
+                            "${user.kycScore}%",
+                            style: TextStyle(color: textDark, fontSize: 9, fontWeight: FontWeight.bold),
+                          ),
                         ],
                       )
                     ],
                   ),
                 ),
-                Container(width: 1, height: 30, color: textLight.withOpacity(0.2)),
+                Container(width: 1, height: 26, color: textLight.withOpacity(0.2)),
                 Expanded(
                   child: Column(
                     children: [
                       Text("Role", style: TextStyle(color: textLight, fontSize: 11)),
-                      const SizedBox(height: 4),
-                      Text(user.role.toUpperCase(), style: TextStyle(color: textDark, fontSize: 12, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 2),
+                      Text(
+                        user.role.toUpperCase(),
+                        style: TextStyle(color: textDark, fontSize: 11, fontWeight: FontWeight.bold),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
                   ),
                 ),
-                Container(width: 1, height: 30, color: textLight.withOpacity(0.2)),
+                Container(width: 1, height: 26, color: textLight.withOpacity(0.2)),
                 Expanded(
                   child: Column(
                     children: [
-                      Text("User Since", style: TextStyle(color: textLight, fontSize: 11)),
-                      const SizedBox(height: 4),
-                      Text(submittedStr, style: TextStyle(color: textDark, fontSize: 12, fontWeight: FontWeight.bold)),
+                      Text("Submitted", style: TextStyle(color: textLight, fontSize: 11)),
+                      const SizedBox(height: 2),
+                      Text(
+                        submittedStr,
+                        style: TextStyle(color: textDark, fontSize: 11, fontWeight: FontWeight.bold),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
                   ),
                 ),

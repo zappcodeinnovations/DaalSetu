@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../theme/app_theme.dart';
 import '../controller/admin_dc_details_controller.dart';
 import '../model/admin_challan_model.dart';
+import '../service/admin_challan_pdf_service.dart';
 
 class AdminChallanDetailsView extends StatelessWidget {
   const AdminChallanDetailsView({super.key});
@@ -29,6 +30,25 @@ class AdminChallanDetailsView extends StatelessWidget {
           onPressed: () => Get.back(),
         ),
         actions: [
+          Obx(() {
+            final challan = controller.challan.value;
+            if (challan == null) return const SizedBox.shrink();
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: "Download PDF",
+                  icon: const Icon(Icons.picture_as_pdf_outlined, color: AppTheme.primaryGold),
+                  onPressed: () => _downloadPdf(context, challan),
+                ),
+                IconButton(
+                  tooltip: "Share PDF",
+                  icon: const Icon(Icons.share_outlined),
+                  onPressed: () => _sharePdf(context, challan),
+                ),
+              ],
+            );
+          }),
           IconButton(
             tooltip: "Refresh Details",
             icon: const Icon(Icons.refresh_rounded),
@@ -213,6 +233,40 @@ class AdminChallanDetailsView extends StatelessWidget {
             _metaRow("Dispatched At", _formatDate(challan.dispatchedAt), isDark),
           if (challan.receivedAt != null)
             _metaRow("Delivered / Received At", _formatDate(challan.receivedAt), isDark),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFE07A28),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: () => _downloadPdf(context, challan),
+                  icon: const Icon(Icons.picture_as_pdf_rounded, size: 18, color: Colors.white),
+                  label: const Text(
+                    "Download PDF",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  side: const BorderSide(color: Color(0xFFE07A28)),
+                ),
+                onPressed: () => _sharePdf(context, challan),
+                icon: const Icon(Icons.share_outlined, size: 18, color: Color(0xFFE07A28)),
+                label: const Text(
+                  "Share",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFFE07A28)),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -842,6 +896,118 @@ class AdminChallanDetailsView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _downloadPdf(BuildContext context, AdminChallanModel challan) async {
+    try {
+      // 1. Phone Top Bar download indicator with animated progress
+      Get.showSnackbar(
+        GetSnackBar(
+          titleText: const Text(
+            "Downloading Delivery Challan",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          messageText: const Row(
+            children: [
+              SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryGold),
+              ),
+              SizedBox(width: 10),
+              Text(
+                "Saving PDF to Downloads folder...",
+                style: TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+            ],
+          ),
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: const Color(0xFF1E293B),
+          borderRadius: 12,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          duration: const Duration(seconds: 2),
+          icon: const Icon(Icons.downloading_rounded, color: AppTheme.primaryGold, size: 24),
+        ),
+      );
+
+      final result = await AdminChallanPdfService.download(challan);
+
+      // 2. WhatsApp-like behavior: Automatically open the document immediately in PDF reader!
+      await AdminChallanPdfService.openPdf(result.filePath, uri: result.downloadsUri);
+
+      // 3. Top Bar success notification banner with direct [OPEN] action button
+      Get.showSnackbar(
+        GetSnackBar(
+          titleText: const Text(
+            "Delivery Challan Downloaded",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          messageText: const Text(
+            "Saved in Downloads • Tap OPEN to view anytime",
+            style: TextStyle(color: Colors.white70, fontSize: 12),
+          ),
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: const Color(0xFF0F172A),
+          borderRadius: 12,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          duration: const Duration(seconds: 6),
+          icon: const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 24),
+          mainButton: TextButton.icon(
+            icon: const Icon(Icons.open_in_new_rounded, color: AppTheme.primaryGold, size: 16),
+            label: const Text(
+              "OPEN",
+              style: TextStyle(color: AppTheme.primaryGold, fontWeight: FontWeight.bold),
+            ),
+            onPressed: () {
+              AdminChallanPdfService.openPdf(result.filePath, uri: result.downloadsUri);
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      Get.showSnackbar(
+        GetSnackBar(
+          titleText: const Text(
+            "PDF Download Failed",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          messageText: Text(
+            e.toString(),
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
+          ),
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: const Color(0xFFDC2626),
+          borderRadius: 12,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          duration: const Duration(seconds: 4),
+          icon: const Icon(Icons.error_outline_rounded, color: Colors.white, size: 24),
+        ),
+      );
+    }
+  }
+
+  Future<void> _sharePdf(BuildContext context, AdminChallanModel challan) async {
+    try {
+      await AdminChallanPdfService.share(challan);
+    } catch (e) {
+      Get.showSnackbar(
+        GetSnackBar(
+          titleText: const Text(
+            "PDF Share Failed",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          messageText: Text(
+            e.toString(),
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
+          ),
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: const Color(0xFFDC2626),
+          borderRadius: 12,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
   }
 
   String _formatDate(String? raw) {

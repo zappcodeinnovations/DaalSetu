@@ -99,8 +99,8 @@ class AdminReportsController extends GetxController {
   }
 
   void setDateRange(String range) {
-    if (selectedDateRange.value == range) return;
     selectedDateRange.value = range;
+    applyFilters();
     fetchReports(period: range);
   }
 
@@ -119,26 +119,27 @@ class AdminReportsController extends GetxController {
   void applyFilters() {
     final branch = selectedBranch.value;
     final query = searchQuery.value;
+    final range = selectedDateRange.value;
 
-    filteredReports.assignAll(
-      reports.where((r) {
-        // Branch Match
-        bool matchBranch = true;
-        if (branch != 'All') {
-          matchBranch = r.branchName.toLowerCase() == branch.toLowerCase();
-        }
+    final base = reports.where((r) {
+      // Branch Match
+      bool matchBranch = true;
+      if (branch != 'All') {
+        matchBranch = r.branchName.toLowerCase() == branch.toLowerCase();
+      }
 
-        // Search Match
-        bool matchQuery = true;
-        if (query.isNotEmpty) {
-          final bName = r.branchName.toLowerCase();
-          final aName = r.adminName.toLowerCase();
-          matchQuery = bName.contains(query) || aName.contains(query);
-        }
+      // Search Match
+      bool matchQuery = true;
+      if (query.isNotEmpty) {
+        final bName = r.branchName.toLowerCase();
+        final aName = r.adminName.toLowerCase();
+        matchQuery = bName.contains(query) || aName.contains(query);
+      }
 
-        return matchBranch && matchQuery;
-      }).toList(),
-    );
+      return matchBranch && matchQuery;
+    }).toList();
+
+    filteredReports.assignAll(base.map((r) => r.copyWithTimeframe(range)).toList());
   }
 
   // ── Export Actions ───────────────────────────────────────────────────────

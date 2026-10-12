@@ -186,24 +186,21 @@ class BuyerChallanPdfService {
     final fileName = 'Delivery-Challan-$safeNumber.pdf';
     final pdfBytes = await document.save();
 
-    if (!openShareSheet && Platform.isAndroid) {
+    final directory = await getTemporaryDirectory();
+    final file = File('${directory.path}/$fileName');
+    await file.writeAsBytes(pdfBytes, flush: true);
+
+    if (Platform.isAndroid) {
       try {
-        final savedUri = await _downloadsChannel.invokeMethod<String>(
+        await _downloadsChannel.invokeMethod<String>(
           'savePdfToDownloads',
           <String, dynamic>{'fileName': fileName, 'bytes': pdfBytes},
         );
-        if (savedUri != null && savedUri.isNotEmpty) return savedUri;
-      } on PlatformException {
-        // Fall back to app documents below when an older device blocks
-        // public Downloads access.
+      } catch (_) {
+        // Fall back to local file
       }
     }
 
-    final directory = openShareSheet
-        ? await getTemporaryDirectory()
-        : await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/$fileName');
-    await file.writeAsBytes(pdfBytes, flush: true);
     if (!openShareSheet) return file.path;
 
     await SharePlus.instance.share(

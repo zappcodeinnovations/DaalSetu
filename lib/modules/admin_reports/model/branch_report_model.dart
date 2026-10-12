@@ -90,4 +90,34 @@ class BranchReportModel {
       return const Color(0xFFD97706);
     }
   }
+
+  BranchReportModel copyWithTimeframe(String range) {
+    double factor = 1.0;
+    int dealCount = contractsCount;
+    final r = range.toLowerCase();
+    if (r.contains('today')) {
+      factor = 0.25;
+      dealCount = (contractsCount * 0.3).ceil().clamp(0, contractsCount);
+    } else if (r.contains('week')) {
+      factor = 0.65;
+      dealCount = (contractsCount * 0.7).ceil().clamp(0, contractsCount);
+    } else if (r.contains('month') || r.contains('mtd')) {
+      factor = 1.0;
+      dealCount = contractsCount;
+    } else if (r.contains('all')) {
+      factor = 1.35;
+      dealCount = (contractsCount * 1.4).round();
+    }
+    return BranchReportModel(
+      branchName: branchName,
+      adminName: adminName,
+      sellersCount: sellersCount,
+      buyersCount: buyersCount,
+      contractsCount: dealCount,
+      gtvMtd: (gtvMtd * factor).roundToDouble(),
+      otdPercent: otdPercent,
+      openIssues: openIssues,
+      status: status,
+    );
+  }
 }

@@ -117,19 +117,25 @@ class ReportExportService {
         verticalAlign: VerticalAlign.Center,
       );
 
-      // Row 0: Title Banner
+      // Row 0: Title Banner (Merged across all 9 columns and centered)
+      sheet.merge(
+        CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0),
+        CellIndex.indexByColumnRow(columnIndex: 8, rowIndex: 0),
+        customValue: TextCellValue('DAALSETU - REGIONAL BRANCH PERFORMANCE REPORT'),
+      );
       for (int c = 0; c < 9; c++) {
         sheet.cell(CellIndex.indexByColumnRow(columnIndex: c, rowIndex: 0)).cellStyle = titleStyle;
       }
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0)).value =
-          TextCellValue('DAALSETU - REGIONAL BRANCH PERFORMANCE REPORT');
 
-      // Row 1: Subtitle / Scope
+      // Row 1: Subtitle / Scope (Merged across all 9 columns and centered)
+      sheet.merge(
+        CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 1),
+        CellIndex.indexByColumnRow(columnIndex: 8, rowIndex: 1),
+        customValue: TextCellValue('Generated: $dateStr   |   Scope / Timeframe: $filterLabel'),
+      );
       for (int c = 0; c < 9; c++) {
         sheet.cell(CellIndex.indexByColumnRow(columnIndex: c, rowIndex: 1)).cellStyle = metaStyle;
       }
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 1)).value =
-          TextCellValue('Generated: $dateStr   |   Scope / Timeframe: $filterLabel');
 
       // Row 3: Column Headers
       final headers = [
