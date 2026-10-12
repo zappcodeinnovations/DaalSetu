@@ -31,10 +31,15 @@ class AdminDrawer extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryGold,
-                      borderRadius: BorderRadius.circular(13),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(Icons.grass_rounded, color: theme.scaffoldBackgroundColor),
+                    clipBehavior: Clip.antiAlias,
+                    child: Image.asset(
+                      'assets/images/thumb_logo.png',
+                      width: 44,
+                      height: 44,
+                      fit: BoxFit.contain,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(

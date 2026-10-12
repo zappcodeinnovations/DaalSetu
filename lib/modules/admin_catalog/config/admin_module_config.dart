@@ -440,7 +440,9 @@ class AdminModules {
           title: 'User Information',
           fields: [
             AdminDetailField('id', 'User ID', copyable: true),
-            AdminDetailField('username', 'Name'),
+            AdminDetailField('name|username', 'Name'),
+            AdminDetailField('first_name', 'First Name'),
+            AdminDetailField('last_name', 'Last Name'),
             AdminDetailField(
               'mobile',
               'Mobile Number',
@@ -452,6 +454,16 @@ class AdminModules {
               type: AdminDetailFieldType.email,
             ),
             AdminDetailField('role', 'Role'),
+            AdminDetailField(
+              'account_status|is_active',
+              'Account Status',
+              type: AdminDetailFieldType.status,
+            ),
+            AdminDetailField(
+              'date_joined|created_at',
+              'Date Joined',
+              type: AdminDetailFieldType.date,
+            ),
           ],
         ),
         const AdminDetailSection(
@@ -462,7 +474,25 @@ class AdminModules {
               'KYC Status',
               type: AdminDetailFieldType.status,
             ),
-            AdminDetailField('rejection_reason', 'Rejection Reason'),
+            AdminDetailField(
+              'kyc_submitted_at|submitted_at',
+              'Submitted At',
+              type: AdminDetailFieldType.date,
+            ),
+            AdminDetailField(
+              'kyc_approved_at|approved_at',
+              'Approved At',
+              type: AdminDetailFieldType.date,
+            ),
+            AdminDetailField(
+              'kyc_rejected_at|rejected_at',
+              'Rejected At',
+              type: AdminDetailFieldType.date,
+            ),
+            AdminDetailField(
+              'kyc_rejection_reason|rejection_reason',
+              'Rejection Reason',
+            ),
             AdminDetailField('remarks', 'Remarks'),
           ],
         ),

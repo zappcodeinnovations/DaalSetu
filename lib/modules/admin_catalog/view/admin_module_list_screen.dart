@@ -276,10 +276,17 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
                           label: Text(action.title),
                         ),
                       ),
-                  TextButton.icon(
+                  OutlinedButton.icon(
                     onPressed: () => _view(record),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: theme.colorScheme.primary,
+                      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.08),
+                      side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.45), width: 1.2),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    ),
                     icon: const Icon(Icons.visibility_outlined, size: 18),
-                    label: const Text('View'),
+                    label: const Text('View', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                   if (config.canEdit)
                     TextButton.icon(

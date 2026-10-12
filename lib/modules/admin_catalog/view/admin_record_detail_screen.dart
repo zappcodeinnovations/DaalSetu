@@ -39,16 +39,41 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
   }
 
   dynamic _resolveValue(Map<String, dynamic> data, String keyPath) {
-    final parts = keyPath.split('.');
-    dynamic current = data;
-    for (final part in parts) {
-      if (current is Map) {
-        current = current[part];
-      } else {
-        return null;
+    for (final altKey in keyPath.split('|')) {
+      final parts = altKey.trim().split('.');
+      dynamic current = data;
+      bool found = true;
+      for (final part in parts) {
+        if (current is Map && current.containsKey(part)) {
+          current = current[part];
+        } else {
+          found = false;
+          break;
+        }
+      }
+      if (found && current != null && current.toString().trim().isNotEmpty) {
+        if (altKey == 'is_active' && current is bool) {
+          return current ? 'active' : 'inactive';
+        }
+        return current;
       }
     }
-    return current;
+
+    // Smart fallback derivation for user names
+    if (keyPath.contains('first_name')) {
+      final fullName = (data['name'] ?? data['username'] ?? '').toString().trim();
+      if (fullName.isNotEmpty) {
+        return fullName.split(' ').first;
+      }
+    }
+    if (keyPath.contains('last_name')) {
+      final fullName = (data['name'] ?? data['username'] ?? '').toString().trim();
+      final words = fullName.split(' ');
+      if (words.length > 1) {
+        return words.sublist(1).join(' ');
+      }
+    }
+    return null;
   }
 
   @override

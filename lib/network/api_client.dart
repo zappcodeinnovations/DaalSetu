@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 import '../comman/api_url.dart';
 import '../utils/app_preferences.dart';
@@ -23,6 +24,24 @@ class ApiRequestException implements Exception {
 
 class ApiClient {
   static const Duration _timeout = Duration(seconds: 30);
+
+  static MediaType _resolveMediaType(String path) {
+    final lower = path.toLowerCase();
+    if (lower.endsWith('.png')) {
+      return MediaType('image', 'png');
+    } else if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
+      return MediaType('image', 'jpeg');
+    } else if (lower.endsWith('.webp')) {
+      return MediaType('image', 'webp');
+    } else if (lower.endsWith('.gif')) {
+      return MediaType('image', 'gif');
+    } else if (lower.endsWith('.pdf')) {
+      return MediaType('application', 'pdf');
+    } else if (lower.endsWith('.mp4')) {
+      return MediaType('video', 'mp4');
+    }
+    return MediaType('image', 'jpeg');
+  }
 
   /// ===============================
   /// MULTIPART POST REQUEST
@@ -48,12 +67,16 @@ class ApiClient {
       // Add form fields
       request.fields.addAll(fields);
 
-      // Add files
+      // Add files with explicit media type
       if (files != null) {
         for (var entry in files.entries) {
           if (entry.value.isNotEmpty) {
             request.files.add(
-              await http.MultipartFile.fromPath(entry.key, entry.value),
+              await http.MultipartFile.fromPath(
+                entry.key,
+                entry.value,
+                contentType: _resolveMediaType(entry.value),
+              ),
             );
           }
         }
