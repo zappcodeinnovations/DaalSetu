@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:daalsetu/modules/admin_catalog/config/admin_actions.dart';
+import 'package:daalsetu/network/api_client.dart';
 import 'package:daalsetu/theme/app_theme.dart';
-import 'package:daalsetu/utils/app_preferences.dart';
 
 class ApproveDealResult {
   final String remark;
@@ -36,10 +36,6 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
   String? _selectedSubAdminValue;
   String? _subAdminLoadError;
 
-  /// Like the web form: a sub admin approving a deal is assigned automatically,
-  /// so the field is hidden (and the sub-admin list API is admin-only).
-  bool _isSubAdmin = false;
-
   Color get cardColor => Get.theme.cardColor;
   Color get textDark => Get.theme.textTheme.bodyLarge?.color ?? Colors.black;
   Color get textLight => Get.theme.textTheme.bodySmall?.color ?? Colors.grey;
@@ -47,14 +43,7 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
   @override
   void initState() {
     super.initState();
-    AppPreferences.getRole().then((role) {
-      if (!mounted) return;
-      if ((role ?? '').toLowerCase() == 'sub_admin') {
-        setState(() => _isSubAdmin = true);
-      } else {
-        _fetchSubAdmins();
-      }
-    });
+    _fetchSubAdmins();
   }
 
   @override
@@ -70,13 +59,36 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
     });
 
     try {
-      // Use the same active sub-admin source as the web flow. The global user
-      // directory can include accounts from another branch.
-      final loaded = await loadSubAdminOptions();
+      List<AdminOption> loaded = await loadSubAdminOptions();
+      if (loaded.isEmpty) {
+        // Fallback to /api/users/?role=sub_admin if sub-admin-accounts endpoint returns empty
+        final fallback = await ApiClient.get(
+          endpoint: '/api/users/?role=sub_admin',
+          requireAuth: true,
+          suppressErrorDialog: true,
+        );
+        loaded = adminListFrom(fallback)
+            .map((u) {
+              final name = [u['first_name'], u['last_name']]
+                  .where((p) => (p ?? '').toString().trim().isNotEmpty)
+                  .join(' ');
+              final display = name.isNotEmpty
+                  ? name
+                  : (u['username'] ?? u['name'] ?? '').toString();
+              final mobile = (u['mobile'] ?? '').toString();
+              final label = mobile.isEmpty ? display : '$display ($mobile)';
+              return AdminOption('${u['id'] ?? ''}', label);
+            })
+            .where((o) => o.value.isNotEmpty)
+            .toList();
+      }
 
       if (mounted) {
         setState(() {
           _subAdmins = loaded;
+          if (_subAdmins.isNotEmpty && _selectedSubAdminValue == null) {
+            _selectedSubAdminValue = _subAdmins.first.value;
+          }
           _isLoadingSubAdmins = false;
         });
       }
@@ -124,117 +136,124 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-            Text(
-              "Confirm and approve deal with ${widget.buyerName ?? 'Buyer'}?",
-              style: TextStyle(color: textDark, fontSize: 14),
-            ),
-            if (widget.offerTitle != null && widget.offerTitle!.isNotEmpty) ...[
-              const SizedBox(height: 4),
               Text(
-                "Offer: ${widget.offerTitle}",
-                style: TextStyle(color: textLight, fontSize: 12, fontWeight: FontWeight.w500),
+                "Confirm and approve deal with ${widget.buyerName ?? 'Buyer'}?",
+                style: TextStyle(color: textDark, fontSize: 14),
               ),
-            ],
-            const SizedBox(height: 18),
-
-            // ── Sub-Admin Dropdown Field ──────────────────────────────────
-            if (!_isSubAdmin) ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
+              if (widget.offerTitle != null && widget.offerTitle!.isNotEmpty) ...[
+                const SizedBox(height: 4),
                 Text(
-                  "Assign Sub-Admin *",
-                  style: TextStyle(
-                    color: textDark,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  "Offer: ${widget.offerTitle}",
+                  style: TextStyle(color: textLight, fontSize: 12, fontWeight: FontWeight.w500),
                 ),
-                if (_isLoadingSubAdmins)
-                  const SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryGold),
-                  ),
               ],
-            ),
-            const SizedBox(height: 6),
-            DropdownButtonFormField<String>(
-              initialValue: _selectedSubAdminValue,
-              isExpanded: true,
-              dropdownColor: cardColor,
-              style: TextStyle(color: textDark, fontSize: 14),
-              decoration: InputDecoration(
-                hintText: _isLoadingSubAdmins
-                    ? "Loading sub-admins..."
-                    : (_subAdmins.isEmpty ? "No active sub-admins found" : "Select Sub-Admin"),
-                hintStyle: TextStyle(color: textLight, fontSize: 13),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: textLight.withValues(alpha: 0.3)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppTheme.primaryGold, width: 1.5),
-                ),
-              ),
-              validator: (value) => value == null || value.isEmpty ? 'Select a sub-admin' : null,
-              items: _subAdmins.map((option) {
-                return DropdownMenuItem<String>(
-                  value: option.value,
-                  child: Text(
-                    option.label,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: textDark),
+              const SizedBox(height: 18),
+
+              // ── Sub-Admin Dropdown Field (Assign Contract Under Sub Admin) ─
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Assign Contract Under Sub Admin *",
+                    style: TextStyle(
+                      color: textDark,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedSubAdminValue = value;
-                });
-              },
-            ),
-            if (_subAdminLoadError != null) ...[
+                  if (_isLoadingSubAdmins)
+                    const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryGold),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              DropdownButtonFormField<String>(
+                initialValue: _selectedSubAdminValue,
+                isExpanded: true,
+                dropdownColor: cardColor,
+                style: TextStyle(color: textDark, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: _isLoadingSubAdmins
+                      ? "Loading sub-admins..."
+                      : (_subAdmins.isEmpty ? "No active sub-admins found" : "Select Sub Admin"),
+                  hintStyle: TextStyle(color: textLight, fontSize: 13),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: textLight.withValues(alpha: 0.3)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: AppTheme.primaryGold, width: 1.5),
+                  ),
+                ),
+                validator: (value) => value == null || value.isEmpty ? 'Please select a Sub Admin before approval' : null,
+                items: _subAdmins.map((option) {
+                  return DropdownMenuItem<String>(
+                    value: option.value,
+                    child: Text(
+                      option.label,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: textDark),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedSubAdminValue = value;
+                  });
+                },
+              ),
               const SizedBox(height: 4),
               Text(
-                _subAdminLoadError!,
-                style: const TextStyle(color: Colors.orange, fontSize: 11),
-              ),
-            ],
-            ],
-
-            const SizedBox(height: 16),
-
-            // ── Admin Remark Field ────────────────────────────────────────
-            Text(
-              "Admin Remark",
-              style: TextStyle(
-                color: textDark,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 6),
-            TextField(
-              controller: _remarkCtrl,
-              style: TextStyle(color: textDark),
-              decoration: InputDecoration(
-                hintText: "Enter remarks or instructions (Optional)",
-                hintStyle: TextStyle(color: textLight, fontSize: 13),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: textLight.withValues(alpha: 0.3)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppTheme.primaryGold, width: 1.5),
+                "Only Sub Admins available under your admin account are listed. This field is required for accept/approve.",
+                style: TextStyle(
+                  color: textLight,
+                  fontSize: 11,
+                  height: 1.3,
                 ),
               ),
-              maxLines: 2,
-            ),
+              if (_subAdminLoadError != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  _subAdminLoadError!,
+                  style: const TextStyle(color: Colors.orange, fontSize: 11),
+                ),
+              ],
+
+              const SizedBox(height: 16),
+
+              // ── Admin Remark Field ────────────────────────────────────────
+              Text(
+                "Seller Remark",
+                style: TextStyle(
+                  color: textDark,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _remarkCtrl,
+                style: TextStyle(color: textDark),
+                decoration: InputDecoration(
+                  hintText: "Enter remarks or instructions (Optional)",
+                  hintStyle: TextStyle(color: textLight, fontSize: 13),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: textLight.withValues(alpha: 0.3)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: AppTheme.primaryGold, width: 1.5),
+                  ),
+                ),
+                maxLines: 2,
+              ),
             ],
           ),
         ),
@@ -248,18 +267,28 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
         FilledButton(
           onPressed: () {
             if (!_formKey.currentState!.validate()) return;
+            final subAdminId = int.tryParse(_selectedSubAdminValue ?? '');
+            if (subAdminId == null) {
+              Get.snackbar(
+                'Sub Admin Required',
+                'Please select a Sub Admin before approval.',
+                backgroundColor: Colors.red,
+                colorText: Colors.white,
+              );
+              return;
+            }
             final result = ApproveDealResult(
               remark: _remarkCtrl.text.trim(),
-              subAdminId: _isSubAdmin ? null : int.tryParse(_selectedSubAdminValue ?? ''),
+              subAdminId: subAdminId,
             );
             Navigator.pop(context, result);
           },
           style: FilledButton.styleFrom(
-            backgroundColor: AppTheme.successGreen,
+            backgroundColor: const Color(0xFFC2410C),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
           ),
-          child: const Text("Approve", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          child: const Text("Accept Interest", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ),
       ],
     );

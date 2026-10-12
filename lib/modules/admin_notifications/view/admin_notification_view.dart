@@ -369,6 +369,36 @@ class AdminNotificationView extends StatelessWidget {
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (controller.extractOfferId(item) != null) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF58220).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: const Color(0xFFF58220).withValues(alpha: 0.4),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.handshake_outlined, size: 12, color: Color(0xFFF58220)),
+                          SizedBox(width: 4),
+                          Text(
+                            "Manage Offer & Actions",
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFF58220),
+                            ),
+                          ),
+                          SizedBox(width: 2),
+                          Icon(Icons.chevron_right, size: 12, color: Color(0xFFF58220)),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

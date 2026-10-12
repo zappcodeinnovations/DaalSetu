@@ -355,7 +355,10 @@ class ProductService {
       "interest_id": interestId,
       "decision": decision,
       "admin_remark": superadminRemark,
-      if (subAdminId != null) "assigned_sub_admin_id": subAdminId,
+      if (subAdminId != null) ...{
+        "assigned_sub_admin_id": subAdminId,
+        "sub_admin_id": subAdminId,
+      },
     };
     try {
       await ApiClient.post(
@@ -371,31 +374,66 @@ class ProductService {
   }
 
   /// Send a negotiation counter proposal.
-  static Future<void> sendNegotiationMessage({
+  static Future<Map<String, dynamic>> sendNegotiationMessage({
     required int productId,
     required int interestId,
     required String counterPrice,
-    required String counterQuantity,
+    String? counterQuantity,
     String? counterBagCount,
     String? counterPackingWeightKg,
   }) async {
-    try {
-      await ApiClient.post(
-        endpoint: "/api/offers/$productId/interests/$interestId/",
-        requireAuth: true,
-        body: {
-          "counter_price": counterPrice,
-          "counter_quantity": counterQuantity,
-          if (counterBagCount != null && counterBagCount.isNotEmpty)
-            "counter_bag_count": counterBagCount,
-          if (counterPackingWeightKg != null &&
-              counterPackingWeightKg.isNotEmpty)
-            "counter_packing_weight_kg": counterPackingWeightKg,
-        },
-      );
-    } catch (e) {
-      print("❌ sendNegotiationMessage Error: $e");
-      rethrow;
+    final cleanPrice =
+        counterPrice.replaceAll('₹', '').replaceAll(',', '').trim();
+    final cleanQty =
+        counterQuantity?.replaceAll(',', '').trim() ?? '';
+    final cleanBags = counterBagCount?.trim() ?? '';
+    final cleanWeight = counterPackingWeightKg?.trim() ?? '';
+
+    // Calculate quantity automatically if bags and packing weight are entered
+    String finalQty = cleanQty;
+    if (finalQty.isEmpty && cleanBags.isNotEmpty && cleanWeight.isNotEmpty) {
+      final bags = double.tryParse(cleanBags);
+      final weight = double.tryParse(cleanWeight);
+      if (bags != null && weight != null) {
+        final calculatedQtl = (bags * weight) / 100.0;
+        finalQty = calculatedQtl.toStringAsFixed(3);
+      }
     }
+
+    final body = <String, dynamic>{
+      if (cleanPrice.isNotEmpty) "counter_price": cleanPrice,
+      if (finalQty.isNotEmpty) "counter_quantity": finalQty,
+      if (cleanBags.isNotEmpty) "counter_bag_count": cleanBags,
+      if (cleanWeight.isNotEmpty)
+        "counter_packing_weight_kg": cleanWeight,
+    };
+
+    final endpoints = [
+      ApiUrls.offerInterestThread(productId, interestId),
+      ApiUrls.offerNegotiationMessage(productId, interestId),
+      "/api/products/$productId/interests/$interestId/message/",
+    ];
+
+    dynamic lastError;
+    for (final ep in endpoints) {
+      try {
+        final response = await ApiClient.post(
+          endpoint: ep,
+          body: body,
+          requireAuth: true,
+          suppressErrorDialog: true,
+        );
+        return response;
+      } catch (e) {
+        lastError = e;
+        print("⚠️ sendNegotiationMessage endpoint failed: $ep ($e)");
+      }
+    }
+
+    if (lastError != null) throw lastError;
+    return <String, dynamic>{
+      "success": true,
+      "message": "Counter proposal sent successfully.",
+    };
   }
 }

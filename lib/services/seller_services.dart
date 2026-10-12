@@ -1062,7 +1062,10 @@ class SellerServices {
       body: {
         "interest_id": interestId,
         "seller_remark": remark,
-        if (subAdminId != null) "assigned_sub_admin_id": subAdminId,
+        if (subAdminId != null) ...{
+          "assigned_sub_admin_id": subAdminId,
+          "sub_admin_id": subAdminId,
+        },
       },
       requireAuth: true,
     );

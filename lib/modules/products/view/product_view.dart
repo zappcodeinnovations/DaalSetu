@@ -7,6 +7,7 @@ import '../../../theme/app_theme.dart';
 import '../../../theme/glass_widgets.dart';
 import '../../../widgets/authenticated_network_image.dart';
 import '../../admin_catalog/view/admin_drawer.dart';
+import '../../admin_catalog/view/offer_interests_dialog.dart';
 import '../controller/product_controller.dart';
 import '../model/product_model.dart';
 import './add_product.dart';
@@ -246,7 +247,8 @@ class ProductScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     Divider(color: theme.dividerColor),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
+                    _buildDealActionButton(product, theme),
                     Obx(() {
                       final processing =
                           controller.processingProductId.value == product.id;
@@ -299,6 +301,95 @@ class ProductScreen extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDealActionButton(ProductModel product, ThemeData theme) {
+    final isOutOfStock =
+        product.stockStatus.toLowerCase() == 'out_of_stock' ||
+        product.isExpired;
+    final hasInterests = product.interestCount > 0;
+
+    // 1. Out of stock with 0 interests: Hide button completely (Clean UI)
+    if (isOutOfStock && !hasInterests) {
+      return const SizedBox.shrink();
+    }
+
+    void openDialog(BuildContext context) {
+      showDialog(
+        context: context,
+        builder: (ctx) => OfferInterestsDialog(
+          offerId: product.id.toString(),
+          offerTitle: product.title,
+          availableStock: product.availableQuantity,
+          sellerOfferAmount: product.amount.toString(),
+          dealExpiry: product.dealExpiryDatetime,
+        ),
+      );
+    }
+
+    // 2. Out of stock but has past interests: Secondary "View Deal History"
+    if (isOutOfStock) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: SizedBox(
+          width: double.infinity,
+          child: Builder(
+            builder: (ctx) => OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFF58220),
+                side: const BorderSide(color: Color(0xFFF58220)),
+                padding: const EdgeInsets.symmetric(vertical: 11),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () => openDialog(ctx),
+              icon: const Icon(Icons.history, size: 18),
+              label: Text(
+                'View Deal History (${product.interestCount})',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // 3. In stock: Full active "Manage Deal (Accept / Reject)"
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: SizedBox(
+        width: double.infinity,
+        child: Builder(
+          builder: (ctx) => FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFF58220),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 11),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              elevation: 0,
+            ),
+            onPressed: () => openDialog(ctx),
+            icon: const Icon(Icons.handshake, size: 18, color: Colors.white),
+            label: Text(
+              hasInterests
+                  ? 'Manage Deal (${product.interestCount})'
+                  : 'Manage Deal (Accept / Reject)',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: Colors.white,
+              ),
+            ),
           ),
         ),
       ),

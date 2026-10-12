@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../routes/app_routes.dart';
 import '../../../services/notification_services.dart';
+import '../../admin_catalog/view/offer_interests_dialog.dart';
+import '../../kyc_users/view/kyc_user_view.dart';
 import '../model/admin_notification_model.dart';
 
 class AdminNotificationController extends GetxController {
@@ -30,15 +32,7 @@ class AdminNotificationController extends GetxController {
     debugPrint("🔔 [ADMIN NOTIFICATIONS] Initializing Controller...");
     fetchNotifications();
     fetchUnreadCount();
-
-    // Scroll listener for pagination
-    scrollController.addListener(() {
-      if (scrollController.position.pixels >= scrollController.position.maxScrollExtent - 200) {
-        if (!isLoading.value && !isLoadingMore.value && hasMore.value) {
-          loadMore();
-        }
-      }
-    });
+    _setupPagination();
   }
 
   @override
@@ -48,68 +42,63 @@ class AdminNotificationController extends GetxController {
     super.onClose();
   }
 
-  // ── Fetch Notifications ──────────────────────────────────────────────────
+  void _setupPagination() {
+    scrollController.addListener(() {
+      if (scrollController.position.pixels >=
+              scrollController.position.maxScrollExtent - 200 &&
+          !isLoadingMore.value &&
+          hasMore.value) {
+        loadMoreNotifications();
+      }
+    });
+  }
+
+  // ── Fetch Notifications (Initial or Refresh) ──────────────────────────────
   Future<void> fetchNotifications({bool isRefresh = false}) async {
     try {
       if (isRefresh) {
         isRefreshing.value = true;
-        _currentPage = 1;
-        hasMore.value = true;
       } else {
         isLoading.value = true;
-        _currentPage = 1;
       }
 
-      debugPrint("🔔 [ADMIN NOTIFICATIONS] Fetching notifications from server (Page: $_currentPage)...");
+      _currentPage = 1;
+      hasMore.value = true;
 
-      final res = await NotificationServices.getNotifications(
-        page: _currentPage,
+      debugPrint("🔔 [ADMIN NOTIFICATIONS] Fetching notifications from server (Page: 1)...");
+      final response = await NotificationServices.getNotifications(
+        page: 1,
         pageSize: _pageSize,
       );
 
-      debugPrint("🔔 [ADMIN NOTIFICATIONS] Server raw response: $res");
+      final rawList = (response['results'] is List)
+          ? response['results'] as List
+          : ((response['data'] is List) ? response['data'] as List : []);
 
-      List rawList = [];
-      if (res.containsKey('results') && res['results'] is List) {
-        rawList = res['results'];
-      } else if (res.containsKey('data') && res['data'] is List) {
-        rawList = res['data'];
-      } else if (res.containsKey('notifications') && res['notifications'] is List) {
-        rawList = res['notifications'];
-      }
-
-      final parsedList = rawList
+      final parsed = rawList
           .map((item) => AdminNotificationModel.fromJson(item is Map<String, dynamic> ? item : {}))
           .toList();
 
-      notifications.assignAll(parsedList);
+      notifications.assignAll(parsed);
+      applyFilters();
 
-      if (parsedList.length < _pageSize) {
+      // Check pagination boundary
+      final totalCount = response['count'] ?? response['total'] ?? parsed.length;
+      if (parsed.length >= (totalCount is int ? totalCount : parsed.length) || parsed.length < _pageSize) {
         hasMore.value = false;
       }
 
-      // Sync unread count
-      if (res.containsKey('unread_count')) {
-        final rawCount = res['unread_count'];
-        unreadCount.value = rawCount is int ? rawCount : (int.tryParse(rawCount?.toString() ?? '0') ?? 0);
-      } else {
-        await fetchUnreadCount();
-      }
-
-      applyFilters();
-
-      debugPrint("✅ [ADMIN NOTIFICATIONS] Successfully loaded ${notifications.length} notifications. Unread: ${unreadCount.value}");
+      debugPrint("✅ [ADMIN NOTIFICATIONS] Successfully loaded ${parsed.length} notifications. Unread: ${unreadCount.value}");
     } catch (e) {
       debugPrint("❌ [ADMIN NOTIFICATIONS] Error fetching notifications: $e");
       Get.snackbar(
-        "Notice",
-        "Could not load notifications. Please pull down to refresh.",
+        "Notifications",
+        "Failed to load notifications. Pull down to try again.",
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: const Color(0xFF1E293B),
         colorText: Colors.white,
         margin: const EdgeInsets.all(16),
-        icon: const Icon(Icons.info_outline, color: Color(0xFFF5B400)),
-        duration: const Duration(seconds: 4),
+        duration: const Duration(seconds: 3),
       );
     } finally {
       isLoading.value = false;
@@ -117,26 +106,23 @@ class AdminNotificationController extends GetxController {
     }
   }
 
-  // ── Load More (Pagination) ───────────────────────────────────────────────
-  Future<void> loadMore() async {
+  // ── Load More Notifications (Infinite Scroll) ─────────────────────────────
+  Future<void> loadMoreNotifications() async {
     if (isLoadingMore.value || !hasMore.value) return;
 
     try {
       isLoadingMore.value = true;
       final nextPage = _currentPage + 1;
-      debugPrint("🔔 [ADMIN NOTIFICATIONS] Loading more notifications (Page: $nextPage)...");
+      debugPrint("🔔 [ADMIN NOTIFICATIONS] Loading page $nextPage...");
 
-      final res = await NotificationServices.getNotifications(
+      final response = await NotificationServices.getNotifications(
         page: nextPage,
         pageSize: _pageSize,
       );
 
-      List rawList = [];
-      if (res.containsKey('results') && res['results'] is List) {
-        rawList = res['results'];
-      } else if (res.containsKey('data') && res['data'] is List) {
-        rawList = res['data'];
-      }
+      final rawList = (response['results'] is List)
+          ? response['results'] as List
+          : ((response['data'] is List) ? response['data'] as List : []);
 
       final parsed = rawList
           .map((item) => AdminNotificationModel.fromJson(item is Map<String, dynamic> ? item : {}))
@@ -297,28 +283,106 @@ class AdminNotificationController extends GetxController {
     filteredNotifications.assignAll(list);
   }
 
+  // ── Offer / Product ID Extractor ─────────────────────────────────────────
+  int? extractOfferId(AdminNotificationModel item) {
+    // 1. Check direct relatedProduct (e.g. from deal or contract)
+    if (item.relatedProduct != null && item.relatedProduct! > 0) {
+      return item.relatedProduct;
+    }
+
+    // 2. Check redirect_url for query params or path segments
+    if (item.redirectUrl != null && item.redirectUrl!.isNotEmpty) {
+      final url = item.redirectUrl!;
+      final uri = Uri.tryParse(url);
+      if (uri != null) {
+        final qOffer = uri.queryParameters['offer_id'] ??
+            uri.queryParameters['product_id'] ??
+            uri.queryParameters['productId'];
+        if (qOffer != null) {
+          final parsed = int.tryParse(qOffer);
+          if (parsed != null && parsed > 0) return parsed;
+        }
+
+        final segments = uri.pathSegments;
+        final offerIdx = segments.indexOf('offers');
+        if (offerIdx != -1 && segments.length > offerIdx + 1) {
+          final parsed = int.tryParse(segments[offerIdx + 1]);
+          if (parsed != null && parsed > 0) return parsed;
+        }
+      }
+
+      final match = RegExp(r'(?:offers\/|offer_id=|product_id=)(\d+)').firstMatch(url);
+      if (match != null) {
+        return int.tryParse(match.group(1)!);
+      }
+    }
+
+    // 3. Fallback for offer/deal types where referenceId points to offer
+    final t = item.type.toLowerCase();
+    if (t.contains('offer') || t.contains('deal') || t.contains('interest')) {
+      if (item.referenceId != null && item.referenceId! > 0) {
+        return item.referenceId;
+      }
+    }
+
+    return null;
+  }
+
   // ── Smart Tap Navigation ─────────────────────────────────────────────────
   void handleNotificationTap(AdminNotificationModel item) {
     markAsRead(item);
 
     final t = item.type.toLowerCase();
     final url = (item.redirectUrl ?? '').toLowerCase();
+    final offerId = extractOfferId(item);
 
-    debugPrint("🔔 [ADMIN NOTIFICATIONS] Tapped on #${item.id} (Type: $t, Ref: ${item.referenceId}, Url: $url)");
+    debugPrint("🔔 [ADMIN NOTIFICATIONS] Tapped on #${item.id} (Type: $t, Ref: ${item.referenceId}, RelProd: ${item.relatedProduct}, ExtractedOffer: $offerId, Url: $url)");
 
+    // 1. High Priority: If notification is linked to an Offer or Deal, open the detailed Offer Management Modal
+    if (offerId != null) {
+      openOfferManagementModal(offerId.toString(), title: item.title);
+      return;
+    }
+
+    // 2. Delivery Challan / Consignment
     if (t.contains('challan') || url.contains('challan') || t.contains('consignment')) {
       Get.toNamed(AppRoutes.adminDeliveryChallans);
-    } else {
-      // General or trade notification info preview
-      Get.bottomSheet(
-        _buildNotificationDetailSheet(item),
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-      );
+      return;
     }
+
+    // 3. KYC Approval Verification
+    if (t.contains('kyc') || url.contains('kyc') || url.contains('user')) {
+      Get.to(() => KycUsersScreen());
+      return;
+    }
+
+    // 4. Contract History
+    if (t.contains('contract') || url.contains('contract')) {
+      Get.toNamed(AppRoutes.adminContractHistory);
+      return;
+    }
+
+    // 5. Fallback detail sheet
+    Get.bottomSheet(
+      _buildNotificationDetailSheet(item),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+    );
+  }
+
+  void openOfferManagementModal(String offerId, {String? title}) {
+    Get.dialog(
+      OfferInterestsDialog(
+        offerId: offerId,
+        offerTitle: title ?? 'Offer #$offerId',
+      ),
+      barrierDismissible: true,
+    );
   }
 
   Widget _buildNotificationDetailSheet(AdminNotificationModel item) {
+    final offerId = extractOfferId(item);
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: const BoxDecoration(
@@ -376,12 +440,37 @@ class AdminNotificationController extends GetxController {
             style: const TextStyle(fontSize: 14, height: 1.5, color: Color(0xFF334155)),
           ),
           const SizedBox(height: 24),
+
+          // Action Button to direct admins to the Offer Management Modal
+          if (offerId != null) ...[
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFF58220),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                icon: const Icon(Icons.handshake_outlined),
+                label: const Text(
+                  "Manage Offer (Negotiation, Accept, Reject)",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                onPressed: () {
+                  Get.back();
+                  openOfferManagementModal(offerId.toString(), title: item.title);
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0F172A),
-                foregroundColor: Colors.white,
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF0F172A),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),

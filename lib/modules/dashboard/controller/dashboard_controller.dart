@@ -8,6 +8,8 @@ class DashboardController extends GetxController {
   final dashboardData = Rxn<DashboardModel>();
   final isPaymentsExpanded = false.obs;
   final isKpiExpanded = false.obs;
+  final selectedGtvPeriod = 'This Month'.obs;
+  final isUpdatingTrend = false.obs;
 
   @override
   void onInit() {
@@ -21,6 +23,21 @@ class DashboardController extends GetxController {
 
   void togglePayments() {
     isPaymentsExpanded.value = !isPaymentsExpanded.value;
+  }
+
+  Future<void> updateGtvPeriod(String period) async {
+    selectedGtvPeriod.value = period;
+    isUpdatingTrend.value = true;
+    try {
+      final data = await DashboardService.fetchDashboard(period: period);
+      dashboardData.value = data;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint("Period filter error: $e");
+      }
+    } finally {
+      isUpdatingTrend.value = false;
+    }
   }
 
   Future<void> fetchDashboard() async {

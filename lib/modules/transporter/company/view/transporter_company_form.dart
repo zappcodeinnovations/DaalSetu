@@ -298,9 +298,9 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
         ),
         validator: (value) {
           final taxError = isPan
-              ? TaxIdValidator.pan(value, required: true)
+              ? TaxIdValidator.pan(value, required: isRequired)
               : isGst
-              ? TaxIdValidator.gst(value, required: true)
+              ? TaxIdValidator.gst(value, required: isRequired)
               : null;
           if (taxError != null) return taxError;
           if (isRequired && (value == null || value.trim().isEmpty)) {

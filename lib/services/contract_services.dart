@@ -31,10 +31,24 @@ class ContractService {
   /// FETCH CONTRACT DETAILS
   /// ===============================
   static Future<ContractDetailModel> getContractDetail(int contractId) async {
-    final response = await ApiClient.get(
-      endpoint: "${ApiUrls.contracts}$contractId/",
-      requireAuth: true,
-    );
+    dynamic response;
+    try {
+      response = await ApiClient.get(
+        endpoint: "${ApiUrls.contracts}$contractId/",
+        requireAuth: true,
+      );
+    } catch (e) {
+      debugPrint("⚠️ [ContractService] Mobile contracts failed ($e), falling back to /api/contracts/$contractId/...");
+      try {
+        response = await ApiClient.get(
+          endpoint: "/api/contracts/$contractId/",
+          requireAuth: true,
+        );
+      } catch (fallbackError) {
+        debugPrint("⚠️ [ContractService] Fallback also failed: $fallbackError");
+        rethrow;
+      }
+    }
 
     debugPrint("=== CONTRACT DETAIL API RESPONSE (ID: $contractId) ===");
     debugPrint("$response");

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../model/contract_details_model.dart';
 import 'package:get/get.dart';
 import '../../../services/contract_services.dart';
@@ -40,15 +41,22 @@ class ContractController extends GetxController {
   /// ===============================
   Future<void> fetchContractDetail(int contractId) async {
     try {
-      isLoading.value = true;
-
+      if (contractDetail.value == null || contractDetail.value!.id != contractId) {
+        isLoading.value = true;
+      }
       final result = await ContractService.getContractDetail(contractId);
-
       contractDetail.value = result;
     } catch (e) {
-      Future.microtask(() {
-        Get.snackbar("Error", e.toString());
-      });
+      debugPrint("⚠️ [ContractController] fetchContractDetail notice: $e");
+      if (contractDetail.value == null) {
+        Future.microtask(() {
+          Get.snackbar(
+            "Notice",
+            "Contract details unavailable from server.",
+            snackPosition: SnackPosition.BOTTOM,
+          );
+        });
+      }
     } finally {
       isLoading.value = false;
     }

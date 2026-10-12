@@ -118,7 +118,7 @@ class BranchReportCard extends StatelessWidget {
                 // GTV Metric
                 Expanded(
                   child: _metricBox(
-                    label: "Gross Trade Value (MTD)",
+                    label: "Gross Trade Value",
                     value: report.formattedGtv,
                     color: AppTheme.primaryGold,
                     icon: Icons.currency_rupee_rounded,

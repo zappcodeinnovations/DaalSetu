@@ -207,7 +207,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Expanded(
-                                  flex: 3,
+                                  flex: 7,
                                   child: _field(
                                     _amount,
                                     'Price *',
@@ -220,16 +220,23 @@ class _EditProductScreenState extends State<EditProductScreen> {
                                     },
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 10),
                                 Expanded(
-                                  flex: 2,
+                                  flex: 5,
                                   child: Padding(
                                     padding: const EdgeInsets.only(bottom: 16),
                                     child: DropdownButtonFormField<String>(
                                       initialValue: _amountUnit,
-                                      decoration: const InputDecoration(labelText: 'Per'),
+                                      isExpanded: true,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Per',
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                                      ),
                                       items: _units.entries
-                                          .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                                          .map((e) => DropdownMenuItem(
+                                                value: e.key,
+                                                child: Text(e.value, overflow: TextOverflow.ellipsis),
+                                              ))
                                           .toList(),
                                       onChanged: (value) => _amountUnit = value ?? 'qtl',
                                     ),

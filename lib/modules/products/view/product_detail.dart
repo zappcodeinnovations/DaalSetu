@@ -4,6 +4,7 @@ import 'package:daalsetu/widgets/authenticated_network_image.dart';
 import 'package:daalsetu/widgets/authenticated_video_player.dart';
 import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:daalsetu/modules/admin_catalog/view/offer_interests_dialog.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -73,11 +74,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 _images(product),
                 const SizedBox(height: 14),
                 _header(product),
-                if (_canManageInterests &&
-                    !product.isExpired &&
-                    product.stockStatus.toLowerCase() != 'out_of_stock' &&
-                    product.interestCount > 0)
-                  _actionButtons(product, context),
+                if (_canManageInterests)
+                  _buildDealActionButton(product, context),
                 _section('Offer information', [
                   _item('Product ID', product.id),
                   _item('Title', product.title),
@@ -231,7 +229,60 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _actionButtons(ProductModel product, BuildContext context) {
+  Widget _buildDealActionButton(ProductModel product, BuildContext context) {
+    final isOutOfStock =
+        product.stockStatus.toLowerCase() == 'out_of_stock' ||
+        product.isExpired;
+    final hasInterests = product.interestCount > 0;
+
+    // 1. Out of stock with 0 interests: Hide button completely (Clean UI)
+    if (isOutOfStock && !hasInterests) {
+      return const SizedBox.shrink();
+    }
+
+    void openDialog() {
+      showDialog(
+        context: context,
+        builder: (ctx) => OfferInterestsDialog(
+          offerId: product.id.toString(),
+          offerTitle: product.title,
+          availableStock: product.availableQuantity,
+          sellerOfferAmount: product.amount.toString(),
+          dealExpiry: product.dealExpiryDatetime,
+        ),
+      );
+    }
+
+    // 2. Out of stock but has past interests: Secondary "View Deal History"
+    if (isOutOfStock) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.primary,
+              side: BorderSide(color: Theme.of(context).colorScheme.primary),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: openDialog,
+            icon: const Icon(Icons.history),
+            label: Text(
+              'View Deal History (${product.interestCount})',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // 3. In stock: Full active "Manage Deal (Accept / Reject)"
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: SizedBox(
@@ -244,22 +295,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (ctx) => OfferInterestsDialog(
-                offerId: product.id.toString(),
-                offerTitle: product.title,
-                availableStock: product.availableQuantity,
-                sellerOfferAmount: product.amount.toString(),
-                dealExpiry: product.dealExpiryDatetime,
-              ),
-            );
-          },
+          onPressed: openDialog,
           icon: const Icon(Icons.handshake, color: Colors.white),
-          label: const Text(
-            'Manage Deal (Accept / Reject)',
-            style: TextStyle(
+          label: Text(
+            hasInterests
+                ? 'Manage Deal (${product.interestCount})'
+                : 'Manage Deal (Accept / Reject)',
+            style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,
               color: Colors.white,
@@ -322,11 +364,33 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       .join(' ');
 
   String _date(String value) {
-    final parsed = DateTime.tryParse(value);
+    if (value.trim().isEmpty || value == '-') return '—';
+    final trimmed = value.trim();
+
+    final isoMatch = RegExp(
+      r'^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})',
+    ).firstMatch(trimmed);
+    if (isoMatch != null) {
+      final y = int.tryParse(isoMatch.group(1)!) ?? 0;
+      final m = int.tryParse(isoMatch.group(2)!) ?? 1;
+      final d = int.tryParse(isoMatch.group(3)!) ?? 1;
+      final h = int.tryParse(isoMatch.group(4)!) ?? 0;
+      final min = int.tryParse(isoMatch.group(5)!) ?? 0;
+
+      const months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      ];
+      final monthName = (m >= 1 && m <= 12) ? months[m - 1] : '$m';
+      final hour12 = h % 12 == 0 ? 12 : h % 12;
+      final minuteStr = min.toString().padLeft(2, '0');
+      final amPm = h >= 12 ? 'PM' : 'AM';
+      return '$d $monthName $y, $hour12:$minuteStr $amPm';
+    }
+
+    final parsed = DateTime.tryParse(trimmed);
     if (parsed == null) return value;
     final local = parsed.toLocal();
-    String two(int number) => number.toString().padLeft(2, '0');
-    return '${two(local.day)}/${two(local.month)}/${local.year} '
-        '${two(local.hour)}:${two(local.minute)}';
+    return DateFormat('d MMM yyyy, hh:mm a').format(local);
   }
 }

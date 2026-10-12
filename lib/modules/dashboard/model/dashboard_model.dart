@@ -1,3 +1,15 @@
+int _parseInt(dynamic value) {
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value) ?? (double.tryParse(value)?.toInt() ?? 0);
+  return 0;
+}
+
+double _parseDouble(dynamic value) {
+  if (value is num) return value.toDouble();
+  if (value is String) return double.tryParse(value) ?? 0.0;
+  return 0.0;
+}
+
 class DashboardModel {
   final KpiModel kpis;
   final ChartsModel charts;
@@ -13,18 +25,19 @@ class DashboardModel {
     required this.recentContracts,
   });
 
-  factory DashboardModel.fromJson(Map<String, dynamic> json) {
+  factory DashboardModel.fromJson(Map<String, dynamic>? json) {
+    json ??= {};
     return DashboardModel(
-      kpis: KpiModel.fromJson(json['kpis']),
-      charts: ChartsModel.fromJson(json['charts']),
-      branchPerformance: (json['branch_performance'] as List)
-          .map((e) => BranchPerformanceModel.fromJson(e))
+      kpis: KpiModel.fromJson(json['kpis'] as Map<String, dynamic>?),
+      charts: ChartsModel.fromJson(json['charts'] as Map<String, dynamic>?),
+      branchPerformance: (json['branch_performance'] as List? ?? [])
+          .map((e) => BranchPerformanceModel.fromJson(e as Map<String, dynamic>? ?? {}))
           .toList(),
-      recentActivities: (json['recent_activities'] as List)
-          .map((e) => ActivityModel.fromJson(e))
+      recentActivities: (json['recent_activities'] as List? ?? [])
+          .map((e) => ActivityModel.fromJson(e as Map<String, dynamic>? ?? {}))
           .toList(),
-      recentContracts: (json['recent_contracts'] as List)
-          .map((e) => ContractModel.fromJson(e))
+      recentContracts: (json['recent_contracts'] as List? ?? [])
+          .map((e) => ContractModel.fromJson(e as Map<String, dynamic>? ?? {}))
           .toList(),
     );
   }
@@ -41,12 +54,12 @@ class KpiModel {
   final int activeBuyers;
   final int finalDealsMtd;
   final int openComplaints;
-  final int otdPercent;
+  final double otdPercent;
   final double avgTransitDays;
   final int paymentsOverdue;
   final double atRiskAmount;
   final int activeTransporters;
-  final int capacityUtilized;
+  final double capacityUtilized;
   final int branches;
   final int adminsActive;
   final int dealsInNegotiation;
@@ -78,32 +91,27 @@ class KpiModel {
   factory KpiModel.fromJson(Map<String, dynamic>? json) {
     json ??= {};
 
-    double parseDouble(dynamic value) {
-      if (value is num) return value.toDouble();
-      return 0.0;
-    }
-
     return KpiModel(
-      activeContracts: json['active_contracts'] ?? 0,
-      gtvMtd: parseDouble(json['gtv_mtd']),
-      brokerageEarnedMtd: parseDouble(json['brokerage_earned_mtd']),
-      brokerageRate: parseDouble(json['brokerage_rate']),
-      pendingDispatches: json['pending_dispatches'] ?? 0,
-      activeSellers: json['active_sellers'] ?? 0,
-      listedSkus: json['listed_skus'] ?? 0,
-      activeBuyers: json['active_buyers'] ?? 0,
-      finalDealsMtd: json['final_deals_mtd'] ?? 0,
-      openComplaints: json['open_complaints'] ?? 0,
-      otdPercent: json['otd_percent'] ?? 0,
-      avgTransitDays: parseDouble(json['avg_transit_days']),
-      paymentsOverdue: json['payments_overdue'] ?? 0,
-      atRiskAmount: parseDouble(json['at_risk_amount']),
-      activeTransporters: json['active_transporters'] ?? 0,
-      capacityUtilized: json['capacity_utilized'] ?? 0,
-      branches: json['branches'] ?? 0,
-      adminsActive: json['admins_active'] ?? 0,
-      dealsInNegotiation: json['deals_in_negotiation'] ?? 0,
-      avgTtcDays: parseDouble(json['avg_ttc_days']),
+      activeContracts: _parseInt(json['active_contracts']),
+      gtvMtd: _parseDouble(json['gtv_mtd']),
+      brokerageEarnedMtd: _parseDouble(json['brokerage_earned_mtd']),
+      brokerageRate: _parseDouble(json['brokerage_rate']),
+      pendingDispatches: _parseInt(json['pending_dispatches']),
+      activeSellers: _parseInt(json['active_sellers']),
+      listedSkus: _parseInt(json['listed_skus']),
+      activeBuyers: _parseInt(json['active_buyers']),
+      finalDealsMtd: _parseInt(json['final_deals_mtd']),
+      openComplaints: _parseInt(json['open_complaints']),
+      otdPercent: _parseDouble(json['otd_percent']),
+      avgTransitDays: _parseDouble(json['avg_transit_days']),
+      paymentsOverdue: _parseInt(json['payments_overdue']),
+      atRiskAmount: _parseDouble(json['at_risk_amount']),
+      activeTransporters: _parseInt(json['active_transporters']),
+      capacityUtilized: _parseDouble(json['capacity_utilized']),
+      branches: _parseInt(json['branches']),
+      adminsActive: _parseInt(json['admins_active']),
+      dealsInNegotiation: _parseInt(json['deals_in_negotiation']),
+      avgTtcDays: _parseDouble(json['avg_ttc_days']),
     );
   }
 }
@@ -115,7 +123,7 @@ class BranchPerformanceModel {
   final int buyers;
   final int contracts;
   final double gtvMtd;
-  final int otdPercent;
+  final double otdPercent;
   final String status;
 
   BranchPerformanceModel({
@@ -129,16 +137,17 @@ class BranchPerformanceModel {
     required this.status,
   });
 
-  factory BranchPerformanceModel.fromJson(Map<String, dynamic> json) {
+  factory BranchPerformanceModel.fromJson(Map<String, dynamic>? json) {
+    json ??= {};
     return BranchPerformanceModel(
-      name: json['name'] ?? '',
-      admin: json['admin'] ?? '',
-      sellers: json['sellers'] ?? 0,
-      buyers: json['buyers'] ?? 0,
-      contracts: json['contracts'] ?? 0,
-      gtvMtd: (json['gtv_mtd'] ?? 0).toDouble(),
-      otdPercent: json['otd_percent'] ?? 0,
-      status: json['status'] ?? '',
+      name: json['name']?.toString() ?? '',
+      admin: json['admin']?.toString() ?? '',
+      sellers: _parseInt(json['sellers']),
+      buyers: _parseInt(json['buyers']),
+      contracts: _parseInt(json['contracts']),
+      gtvMtd: _parseDouble(json['gtv_mtd']),
+      otdPercent: _parseDouble(json['otd_percent']),
+      status: json['status']?.toString() ?? '',
     );
   }
 }
@@ -154,11 +163,12 @@ class ActivityModel {
     required this.time,
   });
 
-  factory ActivityModel.fromJson(Map<String, dynamic> json) {
+  factory ActivityModel.fromJson(Map<String, dynamic>? json) {
+    json ??= {};
     return ActivityModel(
-      title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      time: json['time'] ?? '',
+      title: json['title']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      time: json['time']?.toString() ?? '',
     );
   }
 }
@@ -192,20 +202,21 @@ class ContractModel {
     required this.branch,
   });
 
-  factory ContractModel.fromJson(Map<String, dynamic> json) {
+  factory ContractModel.fromJson(Map<String, dynamic>? json) {
+    json ??= {};
     return ContractModel(
-      id: json['id'] ?? '',
-      seller: json['seller'] ?? '',
-      buyer: json['buyer'] ?? '',
-      commodity: json['commodity'] ?? '',
-      quantity: json['quantity'] ?? '',
-      rate: json['rate'] ?? '',
-      value: json['value'] ?? '',
-      brokerage: json['brokerage'] ?? '',
-      paymentStatus: json['payment_status'] ?? '',
-      deliveryStatus: json['delivery_status'] ?? '',
-      transporter: json['transporter'] ?? '',
-      branch: json['branch'] ?? '',
+      id: json['id']?.toString() ?? '',
+      seller: json['seller']?.toString() ?? '',
+      buyer: json['buyer']?.toString() ?? '',
+      commodity: json['commodity']?.toString() ?? '',
+      quantity: json['quantity']?.toString() ?? '',
+      rate: json['rate']?.toString() ?? '',
+      value: json['value']?.toString() ?? '',
+      brokerage: json['brokerage']?.toString() ?? '',
+      paymentStatus: json['payment_status']?.toString() ?? '',
+      deliveryStatus: json['delivery_status']?.toString() ?? '',
+      transporter: json['transporter']?.toString() ?? '',
+      branch: json['branch']?.toString() ?? '',
     );
   }
 }
@@ -233,26 +244,20 @@ class ChartsModel {
     json ??= {};
 
     return ChartsModel(
-      gtvDeals: GtvDealsChart.fromJson(json['gtv_deals'] ?? {}),
-      pipelineByStage: PipelineChart.fromJson(json['pipeline_by_stage'] ?? {}),
-      commodityMix: CommodityMixChart.fromJson(json['commodity_mix'] ?? {}),
-      topBuyers: TopBuyersChart.fromJson(json['top_buyers'] ?? {}),
-      transporterSla: TransporterSlaChart.fromJson(
-        json['transporter_sla'] ?? {},
-      ),
-      paymentsReceivables: PaymentsReceivablesChart.fromJson(
-        json['payments_receivables'] ?? {},
-      ),
-      userDistribution: UserDistributionChart.fromJson(
-        json['user_distribution'] ?? {},
-      ),
+      gtvDeals: GtvDealsChart.fromJson(json['gtv_deals'] as Map<String, dynamic>?),
+      pipelineByStage: PipelineChart.fromJson(json['pipeline_by_stage'] as Map<String, dynamic>?),
+      commodityMix: CommodityMixChart.fromJson(json['commodity_mix'] as Map<String, dynamic>?),
+      topBuyers: TopBuyersChart.fromJson(json['top_buyers'] as Map<String, dynamic>?),
+      transporterSla: TransporterSlaChart.fromJson(json['transporter_sla'] as Map<String, dynamic>?),
+      paymentsReceivables: PaymentsReceivablesChart.fromJson(json['payments_receivables'] as Map<String, dynamic>?),
+      userDistribution: UserDistributionChart.fromJson(json['user_distribution'] as Map<String, dynamic>?),
     );
   }
 }
 
 class TransporterSlaChart {
   final List<String> labels;
-  final List<int> otdPercentages;
+  final List<double> otdPercentages;
 
   TransporterSlaChart({required this.labels, required this.otdPercentages});
 
@@ -260,8 +265,10 @@ class TransporterSlaChart {
     json ??= {};
 
     return TransporterSlaChart(
-      labels: List<String>.from(json['labels'] ?? []),
-      otdPercentages: List<int>.from(json['otd_percentages'] ?? []),
+      labels: (json['labels'] as List? ?? []).map((e) => e.toString()).toList(),
+      otdPercentages: (json['otd_percentages'] as List? ?? [])
+          .map((e) => _parseDouble(e))
+          .toList(),
     );
   }
 }
@@ -281,15 +288,13 @@ class PaymentsReceivablesChart {
     json ??= {};
 
     return PaymentsReceivablesChart(
-      labels: List<String>.from(json['labels'] ?? []),
-      received: (json['received'] ?? [])
-          .map((e) => (e is num) ? e.toDouble() : 0.0)
-          .toList()
-          .cast<double>(),
-      outstanding: (json['outstanding'] ?? [])
-          .map((e) => (e is num) ? e.toDouble() : 0.0)
-          .toList()
-          .cast<double>(),
+      labels: (json['labels'] as List? ?? []).map((e) => e.toString()).toList(),
+      received: (json['received'] as List? ?? [])
+          .map((e) => _parseDouble(e))
+          .toList(),
+      outstanding: (json['outstanding'] as List? ?? [])
+          .map((e) => _parseDouble(e))
+          .toList(),
     );
   }
 }
@@ -304,8 +309,10 @@ class CommodityMixChart {
     json ??= {};
 
     return CommodityMixChart(
-      labels: List<String>.from(json['labels'] ?? []),
-      volumes: List<int>.from(json['volumes'] ?? []),
+      labels: (json['labels'] as List? ?? []).map((e) => e.toString()).toList(),
+      volumes: (json['volumes'] as List? ?? [])
+          .map((e) => _parseInt(e))
+          .toList(),
     );
   }
 }
@@ -320,11 +327,10 @@ class TopBuyersChart {
     json ??= {};
 
     return TopBuyersChart(
-      labels: List<String>.from(json['labels'] ?? []),
-      gtvValues: (json['gtv_values'] ?? [])
-          .map((e) => (e is num) ? e.toDouble() : 0.0)
-          .toList()
-          .cast<double>(),
+      labels: (json['labels'] as List? ?? []).map((e) => e.toString()).toList(),
+      gtvValues: (json['gtv_values'] as List? ?? [])
+          .map((e) => _parseDouble(e))
+          .toList(),
     );
   }
 }
@@ -340,14 +346,16 @@ class GtvDealsChart {
     required this.dealsValues,
   });
 
-  factory GtvDealsChart.fromJson(Map<String, dynamic> json) {
+  factory GtvDealsChart.fromJson(Map<String, dynamic>? json) {
+    json ??= {};
     return GtvDealsChart(
-      labels: List<String>.from(json['labels'] ?? []),
-      gtvValues: (json['gtv_values'] ?? [])
-          .map((e) => (e is num) ? e.toDouble() : 0.0)
-          .toList()
-          .cast<double>(),
-      dealsValues: List<int>.from(json['deals_values'] ?? []),
+      labels: (json['labels'] as List? ?? []).map((e) => e.toString()).toList(),
+      gtvValues: (json['gtv_values'] as List? ?? [])
+          .map((e) => _parseDouble(e))
+          .toList(),
+      dealsValues: (json['deals_values'] as List? ?? [])
+          .map((e) => _parseInt(e))
+          .toList(),
     );
   }
 }
@@ -358,10 +366,13 @@ class PipelineChart {
 
   PipelineChart({required this.labels, required this.values});
 
-  factory PipelineChart.fromJson(Map<String, dynamic> json) {
+  factory PipelineChart.fromJson(Map<String, dynamic>? json) {
+    json ??= {};
     return PipelineChart(
-      labels: List<String>.from(json['labels'] ?? []),
-      values: List<int>.from(json['values'] ?? []),
+      labels: (json['labels'] as List? ?? []).map((e) => e.toString()).toList(),
+      values: (json['values'] as List? ?? [])
+          .map((e) => _parseInt(e))
+          .toList(),
     );
   }
 }
@@ -375,8 +386,10 @@ class UserDistributionChart {
   factory UserDistributionChart.fromJson(Map<String, dynamic>? json) {
     json ??= {};
     return UserDistributionChart(
-      labels: List<String>.from(json['labels'] ?? []),
-      counts: List<int>.from(json['counts'] ?? []),
+      labels: (json['labels'] as List? ?? []).map((e) => e.toString()).toList(),
+      counts: (json['counts'] as List? ?? [])
+          .map((e) => _parseInt(e))
+          .toList(),
     );
   }
 }

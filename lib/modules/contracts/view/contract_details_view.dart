@@ -22,6 +22,10 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
   void initState() {
     super.initState();
     contractId = Get.arguments as int;
+    final existing = controller.contracts.firstWhereOrNull((c) => c.id == contractId);
+    if (existing != null) {
+      controller.contractDetail.value = ContractDetailModel.fromContractModel(existing);
+    }
     Future.microtask(() => controller.fetchContractDetail(contractId));
   }
 
@@ -64,6 +68,9 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
               _section('Buyer', [
                 _item('Buyer', contract.displayBuyerId),
                 _item('Login/mobile', contract.buyerName),
+                _item('Email', contract.buyerEmail),
+                if (contract.buyerCompany != null && contract.buyerCompany!.isNotEmpty)
+                  _item('Company', contract.buyerCompany),
                 _item('Unique ID', contract.buyerUniqueId),
                 _item('Database ID', contract.buyerId),
                 _item('Remark', contract.buyerRemark),
@@ -71,6 +78,9 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
               _section('Seller', [
                 _item('Seller', contract.displaySellerId),
                 _item('Login/mobile', contract.sellerName),
+                _item('Email', contract.sellerEmail),
+                if (contract.sellerCompany != null && contract.sellerCompany!.isNotEmpty)
+                  _item('Company', contract.sellerCompany),
                 _item('Mapped ID', contract.sellerMappedId),
                 _item('Database ID', contract.sellerId),
                 _item('Remark', contract.sellerRemark),
@@ -220,11 +230,18 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 140,
-            child: Text(label, style: Theme.of(context).textTheme.bodySmall),
-          ),
           Expanded(
+            flex: 5,
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 5,
             child: Text(
               value.isEmpty ? '—' : value,
               style: const TextStyle(fontWeight: FontWeight.w600),

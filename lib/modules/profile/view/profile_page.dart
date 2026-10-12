@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_theme.dart';
@@ -130,11 +131,17 @@ class ProfileScreen extends StatelessWidget {
                   value: user.gstNumber.isEmpty
                       ? "Not Available"
                       : user.gstNumber,
-                  trailing: _buildBadge(
-                    "Verified",
-                    accentGreen,
-                    Icons.check_circle_outline,
-                  ),
+                  trailing: user.gstNumber.isNotEmpty
+                      ? _buildBadge(
+                          "Verified",
+                          accentGreen,
+                          Icons.check_circle_outline,
+                        )
+                      : _buildBadge(
+                          "Not Available",
+                          textLight,
+                          Icons.remove_circle_outline,
+                        ),
                 ),
                 const SizedBox(height: 12),
                 if (_hasCompanyManagement(user.role))
@@ -638,63 +645,7 @@ class ProfileScreen extends StatelessWidget {
   }) {
     final resolvedUrl = controller.profileImageUrl(documentUrl);
     final hasDocument = documentUrl.trim().isNotEmpty;
-    if (title == "Aadhaar Card") {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.borderLight),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: iconColor.withValues(alpha: .1),
-              child: Text(
-                iconText,
-                style: TextStyle(color: iconColor, fontWeight: FontWeight.bold),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: textDark,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    hasDocument ? "Uploaded" : "Not uploaded",
-                    style: TextStyle(
-                      color: hasDocument ? accentGreen : textLight,
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            IconButton(
-              tooltip: "View",
-              onPressed: hasDocument
-                  ? () => _openDocument(resolvedUrl, inApp: true)
-                  : null,
-              icon: const Icon(Icons.visibility_outlined),
-            ),
-            IconButton(
-              tooltip: "Download",
-              onPressed: hasDocument
-                  ? () => _openDocument(resolvedUrl, inApp: false)
-                  : null,
-              icon: const Icon(Icons.file_download_outlined),
-            ),
-          ],
-        ),
-      );
-    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -702,17 +653,17 @@ class ProfileScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: Get.isDarkMode
-              ? Colors.white.withOpacity(0.05)
+              ? Colors.white.withValues(alpha: 0.05)
               : AppTheme.borderLight,
         ),
       ),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
+              color: iconColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
@@ -741,7 +692,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  hasDocument ? 'Uploaded • Tap View to open' : 'Not uploaded',
+                  hasDocument ? 'Uploaded' : 'Not uploaded',
                   style: TextStyle(
                     color: hasDocument ? accentGreen : textLight,
                     fontSize: 11,
@@ -752,19 +703,35 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           InkWell(
-            onTap: hasDocument
-                ? () => _openDocument(resolvedUrl, inApp: true)
-                : null,
+            onTap: () {
+              if (!hasDocument) {
+                Get.snackbar(
+                  "Document Missing",
+                  "$title has not been uploaded yet.",
+                  snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: Colors.amber.shade800,
+                  colorText: Colors.white,
+                  icon: const Icon(Icons.info_outline, color: Colors.white),
+                  duration: const Duration(seconds: 2),
+                );
+                return;
+              }
+              _openDocument(resolvedUrl, inApp: true);
+            },
             borderRadius: BorderRadius.circular(8),
             child: Container(
               height: 32,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: BoxDecoration(
-                color: cardLighter,
+                color: hasDocument
+                    ? (Get.isDarkMode
+                        ? const Color(0xFF1E293B)
+                        : const Color(0xFFF1F5F9))
+                    : cardLighter,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: Get.isDarkMode
-                      ? Colors.white.withOpacity(0.1)
+                      ? Colors.white.withValues(alpha: 0.1)
                       : AppTheme.borderLight,
                 ),
               ),
@@ -772,19 +739,32 @@ class ProfileScreen extends StatelessWidget {
                 child: Text(
                   hasDocument ? "View" : "Missing",
                   style: TextStyle(
-                    color: hasDocument ? textDark : textLight,
+                    color: hasDocument ? accentGreen : textLight,
                     fontSize: 12,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           InkWell(
-            onTap: hasDocument
-                ? () => _openDocument(resolvedUrl, inApp: false)
-                : null,
+            onTap: () {
+              if (!hasDocument) {
+                Get.snackbar(
+                  "Cannot Download",
+                  "$title has not been uploaded yet.",
+                  snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: Colors.amber.shade800,
+                  colorText: Colors.white,
+                  icon: const Icon(Icons.file_download_off_outlined,
+                      color: Colors.white),
+                  duration: const Duration(seconds: 2),
+                );
+                return;
+              }
+              _openDocument(resolvedUrl, inApp: false);
+            },
             borderRadius: BorderRadius.circular(8),
             child: Container(
               width: 32,
@@ -794,13 +774,14 @@ class ProfileScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: Get.isDarkMode
-                      ? Colors.white.withOpacity(0.1)
+                      ? Colors.white.withValues(alpha: 0.1)
                       : AppTheme.borderLight,
                 ),
               ),
               child: Icon(
                 Icons.file_download_outlined,
-                color: hasDocument ? textDark : textLight,
+                color:
+                    hasDocument ? textDark : textLight.withValues(alpha: 0.4),
                 size: 16,
               ),
             ),
@@ -811,57 +792,91 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Future<void> _openDocument(String url, {required bool inApp}) async {
-    try {
-      final token = await AppPreferences.getAccessToken();
-      final response = await http.get(
-        Uri.parse(url),
-        headers: token == null || token.isEmpty
-            ? const {}
-            : {'Authorization': 'Bearer $token'},
+    if (url.trim().isEmpty) {
+      Get.snackbar(
+        "Notice",
+        "Document file URL is not available.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
       );
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw Exception(
-          'Document could not be downloaded (${response.statusCode}).',
-        );
-      }
+      return;
+    }
+
+    try {
+      Get.showSnackbar(
+        const GetSnackBar(
+          message: "Opening document...",
+          duration: Duration(seconds: 1),
+          snackPosition: SnackPosition.BOTTOM,
+        ),
+      );
 
       final uri = Uri.parse(url);
-      var fileName = uri.pathSegments.isEmpty
-          ? 'profile_document'
-          : uri.pathSegments.last;
+      final isS3OrPresigned = url.contains('X-Amz-') ||
+          url.contains('s3.') ||
+          url.contains('amazonaws.com');
+      final token = await AppPreferences.getAccessToken();
+
+      http.Response response;
+      if (isS3OrPresigned) {
+        response = await http.get(uri);
+      } else {
+        response = await http.get(
+          uri,
+          headers: token != null && token.isNotEmpty
+              ? {'Authorization': 'Bearer $token'}
+              : {},
+        );
+        if (response.statusCode == 401 || response.statusCode == 403) {
+          response = await http.get(uri);
+        }
+      }
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (!launched) {
+          throw Exception('Document could not be downloaded (${response.statusCode}).');
+        }
+        return;
+      }
+
+      var fileName = uri.pathSegments.isEmpty ? 'profile_document' : uri.pathSegments.last;
       fileName = fileName.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
       if (!fileName.contains('.')) {
         final contentType = response.headers['content-type'] ?? '';
         fileName += contentType.contains('pdf') ? '.pdf' : '.jpg';
       }
-      final directory = inApp
-          ? await getTemporaryDirectory()
-          : await getApplicationDocumentsDirectory();
+
+      final directory = await getTemporaryDirectory();
       final file = File('${directory.path}/$fileName');
       await file.writeAsBytes(response.bodyBytes, flush: true);
 
-      if (inApp) {
-        final result = await OpenFilex.open(file.path);
-        if (result.type != ResultType.done) {
-          throw Exception(
-            result.message.isEmpty
-                ? 'No app is available to open this document.'
-                : result.message,
+      final result = await OpenFilex.open(file.path);
+      if (result.type != ResultType.done) {
+        final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (!launched) {
+          Get.snackbar(
+            'Document Downloaded',
+            'Saved to ${file.path}',
+            snackPosition: SnackPosition.BOTTOM,
           );
         }
-      } else {
-        Get.snackbar(
-          'Document downloaded',
-          'Saved to ${file.path}',
-          snackPosition: SnackPosition.BOTTOM,
-        );
       }
     } catch (error) {
-      Get.snackbar(
-        "Error",
-        error.toString().replaceFirst('Exception: ', ''),
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      try {
+        final uri = Uri.parse(url);
+        final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (!launched) rethrow;
+      } catch (_) {
+        Get.snackbar(
+          "Error",
+          error.toString().replaceFirst('Exception: ', ''),
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
     }
   }
 
@@ -920,10 +935,10 @@ class ProfileScreen extends StatelessWidget {
               style: TextStyle(color: textLight, fontSize: 12),
             ),
             const SizedBox(height: 12),
-            SizedBox(
+            Container(
               width: double.infinity,
-              height: 40,
-              child: ElevatedButton.icon(
+              padding: const EdgeInsets.only(top: 4),
+              child: FilledButton.icon(
                 onPressed: () async {
                   try {
                     Get.dialog(
@@ -950,14 +965,20 @@ class ProfileScreen extends StatelessWidget {
                     );
                   }
                 },
-                icon: const Icon(Icons.send_rounded, size: 16),
+                icon: const Icon(Icons.send_rounded, size: 16, color: Colors.white),
                 label: const Text(
                   "Request KYC Re-approval",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Colors.white,
+                    letterSpacing: 0.2,
+                  ),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: accentGold,
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFEA580C),
                   foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
