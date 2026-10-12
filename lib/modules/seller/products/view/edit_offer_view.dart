@@ -132,8 +132,15 @@ class _EditOfferViewState extends State<EditOfferView> {
         controller: c,
         keyboardType: type,
         maxLength: type == null ? null : 10,
+        buildCounter:
+            (_, {required currentLength, required isFocused, maxLength}) =>
+                null,
         maxLines: lines,
-        decoration: InputDecoration(labelText: label, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+        decoration: InputDecoration(
+          labelText: label,
+          counterText: "",
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
       ),
     );
   }

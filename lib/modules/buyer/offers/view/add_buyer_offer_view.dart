@@ -9,6 +9,7 @@ import '../../../../utils/app_snackbar.dart';
 import '../../../seller/categories/model/seller_category_model.dart';
 import '../controller/buyer_offers_controller.dart';
 import '../../dashboard/controller/buyer_dashboard_controller.dart';
+import '../../../../services/realtime_notification_service.dart';
 
 class AddBuyerOfferScreen extends StatefulWidget {
   const AddBuyerOfferScreen({super.key});
@@ -223,6 +224,9 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
         }
         if (Get.isRegistered<BuyerDashboardController>()) {
           Get.find<BuyerDashboardController>().fetchDashboardData();
+        }
+        if (Get.isRegistered<RealtimeNotificationService>()) {
+          RealtimeNotificationService.to.refreshNow();
         }
       } catch (_) {}
 

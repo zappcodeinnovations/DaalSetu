@@ -100,6 +100,7 @@ class SellerNegotiationController extends GetxController {
       'This will send the buyer interest for the next confirmation step.',
       confirmText: 'Accept',
       color: Colors.green,
+      primaryFirst: true,
     );
     if (!confirmed) return;
     final result = await SellerUi.run(
@@ -114,6 +115,7 @@ class SellerNegotiationController extends GetxController {
       'This action cannot be undone.',
       confirmText: 'Reject',
       color: Colors.red,
+      primaryFirst: true,
     );
     if (!confirmed) return;
     final result = await SellerUi.run(

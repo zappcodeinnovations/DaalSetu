@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../theme/glass_widgets.dart';
 import '../../../theme/theme_controller.dart';
 import '../../../utils/app_preferences.dart';
+import '../../../services/realtime_notification_service.dart';
 import '../../admin_catalog/view/admin_drawer.dart';
 import '../../admin_catalog/view/admin_module_list_screen.dart';
 import '../../admin_catalog/view/admin_roles_screen.dart';
@@ -246,6 +247,9 @@ class SettingsScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                   onTap: () async {
                     await AppPreferences.logout();
+                    if (Get.isRegistered<RealtimeNotificationService>()) {
+                      RealtimeNotificationService.to.clearOnLogout();
+                    }
                     Get.offAllNamed(AppRoutes.login);
                   },
                   child: Center(

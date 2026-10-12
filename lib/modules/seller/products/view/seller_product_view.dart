@@ -305,7 +305,7 @@ class SellerProductView extends StatelessWidget {
               const SizedBox(width: 8),
               OutlinedButton.icon(
                 onPressed: () => Get.to(
-                  () => const SellerMediaGalleryView(),
+                  () => SellerMediaGalleryView(productId: product.id),
                   arguments: product.id,
                 ),
                 icon: const Icon(IconlyLight.image, size: 14),
