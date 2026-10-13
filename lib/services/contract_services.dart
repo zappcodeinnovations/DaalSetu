@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 import '../comman/api_url.dart';
 import '../modules/contracts/model/contract_details_model.dart';
 import '../modules/contracts/model/contract_model.dart';
@@ -36,18 +37,19 @@ class ContractService {
       response = await ApiClient.get(
         endpoint: "${ApiUrls.contracts}$contractId/",
         requireAuth: true,
+        suppressErrorDialog: true,
       );
     } catch (e) {
-      debugPrint("⚠️ [ContractService] Mobile contracts failed ($e), falling back to /api/contracts/$contractId/...");
+      debugPrint("⚠️ [ContractService] Mobile contract $contractId detail error: $e");
+      // Check if the contract is already present in the contracts list
       try {
-        response = await ApiClient.get(
-          endpoint: "/api/contracts/$contractId/",
-          requireAuth: true,
-        );
-      } catch (fallbackError) {
-        debugPrint("⚠️ [ContractService] Fallback also failed: $fallbackError");
-        rethrow;
-      }
+        final list = await fetchContracts();
+        final match = list.firstWhereOrNull((c) => c.id == contractId);
+        if (match != null) {
+          return ContractDetailModel.fromContractModel(match);
+        }
+      } catch (_) {}
+      rethrow;
     }
 
     debugPrint("=== CONTRACT DETAIL API RESPONSE (ID: $contractId) ===");

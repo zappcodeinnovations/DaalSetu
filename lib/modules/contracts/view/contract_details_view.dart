@@ -15,13 +15,19 @@ class ContractDetailScreen extends StatefulWidget {
 }
 
 class _ContractDetailScreenState extends State<ContractDetailScreen> {
-  final controller = Get.find<ContractController>();
+  late final ContractController controller;
   late final int contractId;
 
   @override
   void initState() {
     super.initState();
-    contractId = Get.arguments as int;
+    controller = Get.isRegistered<ContractController>()
+        ? Get.find<ContractController>()
+        : Get.put(ContractController());
+    final rawArgs = Get.arguments;
+    contractId = rawArgs is int
+        ? rawArgs
+        : int.tryParse(rawArgs?.toString() ?? '') ?? 0;
     final existing = controller.contracts.firstWhereOrNull((c) => c.id == contractId);
     if (existing != null) {
       controller.contractDetail.value = ContractDetailModel.fromContractModel(existing);

@@ -86,7 +86,9 @@ class _ContractEditViewState extends State<ContractEditView> {
         data: body,
         requireAuth: true,
       );
-      final controller = Get.find<ContractController>();
+      final controller = Get.isRegistered<ContractController>()
+          ? Get.find<ContractController>()
+          : Get.put(ContractController());
       await controller.fetchContractDetail(widget.contract.id);
       controller.fetchContracts();
       Get.snackbar('Contract updated', (response['message'] ?? 'Contract updated successfully.').toString(),

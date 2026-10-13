@@ -621,6 +621,12 @@ class _AddProductViewState extends State<AddProductView> {
         final time = await showTimePicker(
           context: context,
           initialTime: const TimeOfDay(hour: 18, minute: 0),
+          builder: (context, child) {
+            return MediaQuery(
+              data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+              child: child!,
+            );
+          },
         );
         if (time == null) return;
         controller.dealExpiry.value = DateTime(

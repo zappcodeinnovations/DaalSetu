@@ -141,9 +141,11 @@ class BuyerOffersController extends GetxController {
         remark: remark,
       );
 
-      if (dialogShown && (Get.isDialogOpen ?? false)) {
-        Get.back();
+      if (dialogShown) {
         dialogShown = false;
+        if (Get.isDialogOpen ?? false) {
+          Get.back();
+        }
       }
 
       AppSnackbar.showSuccess(
@@ -153,15 +155,21 @@ class BuyerOffersController extends GetxController {
       fetchOffers();
       return true;
     } catch (e) {
-      if (dialogShown && (Get.isDialogOpen ?? false)) {
-        Get.back();
+      if (dialogShown) {
         dialogShown = false;
+        if (Get.isDialogOpen ?? false) {
+          Get.back();
+        }
       }
-      AppSnackbar.showError(title: "Error", message: e.toString());
+      final msg = e.toString().replaceFirst('Exception: ', '').trim();
+      AppSnackbar.showError(title: "Error", message: msg.isNotEmpty ? msg : "Failed to submit interest.");
       return false;
     } finally {
-      if (dialogShown && (Get.isDialogOpen ?? false)) {
-        Get.back();
+      if (dialogShown) {
+        dialogShown = false;
+        if (Get.isDialogOpen ?? false) {
+          Get.back();
+        }
       }
     }
   }
@@ -187,10 +195,10 @@ class BuyerOffersController extends GetxController {
     try {
       Get.dialog(
         const PopScope(
-          canPop: true,
+          canPop: false,
           child: Center(child: CircularProgressIndicator()),
         ),
-        barrierDismissible: true,
+        barrierDismissible: false,
       );
       dialogShown = true;
 
@@ -201,9 +209,11 @@ class BuyerOffersController extends GetxController {
         counterQuantity: qty.isNotEmpty ? qty : null,
       );
 
-      if (dialogShown && (Get.isDialogOpen ?? false)) {
-        Get.back();
+      if (dialogShown) {
         dialogShown = false;
+        if (Get.isDialogOpen ?? false) {
+          Get.back();
+        }
       }
 
       AppSnackbar.showSuccess(
@@ -213,15 +223,21 @@ class BuyerOffersController extends GetxController {
       fetchOffers();
       return true;
     } catch (e) {
-      if (dialogShown && (Get.isDialogOpen ?? false)) {
-        Get.back();
+      if (dialogShown) {
         dialogShown = false;
+        if (Get.isDialogOpen ?? false) {
+          Get.back();
+        }
       }
-      AppSnackbar.showError(title: "Error", message: e.toString());
+      final msg = e.toString().replaceFirst('Exception: ', '').trim();
+      AppSnackbar.showError(title: "Error", message: msg.isNotEmpty ? msg : "Failed to send negotiation.");
       return false;
     } finally {
-      if (dialogShown && (Get.isDialogOpen ?? false)) {
-        Get.back();
+      if (dialogShown) {
+        dialogShown = false;
+        if (Get.isDialogOpen ?? false) {
+          Get.back();
+        }
       }
     }
   }
@@ -282,10 +298,10 @@ class BuyerOffersController extends GetxController {
     try {
       Get.dialog(
         const PopScope(
-          canPop: true,
+          canPop: false,
           child: Center(child: CircularProgressIndicator()),
         ),
-        barrierDismissible: true,
+        barrierDismissible: false,
       );
       dialogShown = true;
 
@@ -323,9 +339,11 @@ class BuyerOffersController extends GetxController {
           throw Exception("Unknown action");
       }
 
-      if (dialogShown && (Get.isDialogOpen ?? false)) {
-        Get.back();
+      if (dialogShown) {
         dialogShown = false;
+        if (Get.isDialogOpen ?? false) {
+          Get.back();
+        }
       }
 
       if (response['success'] == true || response['message'] != null) {
@@ -341,14 +359,23 @@ class BuyerOffersController extends GetxController {
         );
       }
     } catch (e) {
-      if (dialogShown && (Get.isDialogOpen ?? false)) {
-        Get.back();
+      if (dialogShown) {
         dialogShown = false;
+        if (Get.isDialogOpen ?? false) {
+          Get.back();
+        }
       }
-      AppSnackbar.showError(title: "Error", message: e.toString());
+      final msg = e.toString().replaceFirst('Exception: ', '').trim();
+      AppSnackbar.showError(
+        title: "Error",
+        message: msg.isNotEmpty ? msg : "Action failed. Please try again.",
+      );
     } finally {
-      if (dialogShown && (Get.isDialogOpen ?? false)) {
-        Get.back();
+      if (dialogShown) {
+        dialogShown = false;
+        if (Get.isDialogOpen ?? false) {
+          Get.back();
+        }
       }
     }
   }

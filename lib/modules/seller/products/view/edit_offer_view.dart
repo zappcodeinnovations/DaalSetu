@@ -86,6 +86,12 @@ class _EditOfferViewState extends State<EditOfferView> {
     final time = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(_dealExpiry!),
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+          child: child!,
+        );
+      },
     );
     if (time != null) {
       setState(() => _dealExpiry = DateTime(_dealExpiry!.year, _dealExpiry!.month, _dealExpiry!.day, time.hour, time.minute));

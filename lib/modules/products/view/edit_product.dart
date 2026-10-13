@@ -110,6 +110,12 @@ class _EditProductScreenState extends State<EditProductScreen> {
     final time = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(_dealExpiry ?? DateTime.now()),
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+          child: child!,
+        );
+      },
     );
     if (time == null) return;
     setState(() => _dealExpiry = DateTime(date.year, date.month, date.day, time.hour, time.minute));

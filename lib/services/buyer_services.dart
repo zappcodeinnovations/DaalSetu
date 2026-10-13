@@ -836,8 +836,8 @@ class BuyerServices {
     };
 
     final endpoints = [
+      ApiUrls.offerBuyerConfirm(productId),
       "/products/$productId/buyer-confirm/",
-      "/api/products/$productId/buyer-confirm/",
       "/api/offers/$productId/confirm-deal/",
       "/api/offers/$productId/interests/$interestId/confirm/",
     ];
@@ -851,7 +851,7 @@ class BuyerServices {
           requireAuth: true,
           suppressErrorDialog: true,
         );
-        if (response != null && response is Map<String, dynamic>) {
+        if (response is Map<String, dynamic>) {
           if (response['success'] == true ||
               response.containsKey('interest') ||
               response.containsKey('deal')) {
@@ -884,8 +884,8 @@ class BuyerServices {
     };
 
     final endpoints = [
+      ApiUrls.offerBuyerReject(productId),
       "/products/$productId/buyer-reject-interest/",
-      "/api/products/$productId/buyer-reject-interest/",
       "/api/offers/$productId/confirm-deal/",
     ];
 
@@ -898,7 +898,7 @@ class BuyerServices {
           requireAuth: true,
           suppressErrorDialog: true,
         );
-        if (response != null && response is Map<String, dynamic>) {
+        if (response is Map<String, dynamic>) {
           if (response['success'] == true) {
             return response;
           }

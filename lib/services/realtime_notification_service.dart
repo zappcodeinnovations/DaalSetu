@@ -13,6 +13,8 @@ import '../modules/seller/challans/view/seller_delivery_challan_view.dart';
 import '../modules/seller/notifications/view/seller_notification_view.dart';
 import '../modules/contracts/view/contract_view.dart';
 import '../modules/contracts/view/contract_details_view.dart';
+import '../modules/seller/contracts/view/seller_contract_detail_view.dart';
+import '../modules/seller/contracts/view/seller_contracts_view.dart';
 import '../services/product_services.dart';
 import '../utils/app_preferences.dart';
 import 'notification_services.dart';
@@ -267,7 +269,56 @@ class RealtimeNotificationService extends GetxService {
       final url = notification.redirectUrl ?? "";
       final role = (await AppPreferences.getRole() ?? "").trim().toLowerCase();
 
-      // 1. Try to extract product/offer ID
+      // 1. Try to extract contract ID first if notification relates to contract or deal
+      final isContractOrDeal = type.contains('contract') ||
+          type.contains('deal') ||
+          title.contains('contract') ||
+          title.contains('deal') ||
+          message.contains('contract') ||
+          message.contains('deal');
+
+      int? contractId;
+      if (isContractOrDeal) {
+        contractId = notification.referenceId;
+        // Check url for contract ID (e.g. /contracts/12/ or /api/mobile/contracts/12/)
+        if (contractId == null && url.isNotEmpty) {
+          final contractMatch = RegExp(r'/(?:contracts|mobile/contracts)/(\d+)').firstMatch(url);
+          if (contractMatch != null) {
+            contractId = int.tryParse(contractMatch.group(1)!);
+          }
+        }
+        // Check message for contract ID (e.g. Contract #12 or Contract ID: 12)
+        if (contractId == null && notification.message != null) {
+          final contractMatch = RegExp(r'(?:contract[:\s#]+|deal[:\s#]+)(\d+)', caseSensitive: false).firstMatch(notification.message!);
+          if (contractMatch != null) {
+            contractId = int.tryParse(contractMatch.group(1)!);
+          }
+        }
+        // Fallback to relatedProduct or generic ID if referenceId wasn't set but type is explicitly contract
+        if (contractId == null && (type.contains('contract') || title.contains('contract'))) {
+          contractId = notification.relatedProduct;
+        }
+
+        // Redirect directly to the Contract Details page
+        if (role == 'seller') {
+          if (contractId != null && contractId > 0) {
+            Get.to(() => SellerContractDetailView(contractId: contractId!));
+          } else {
+            Get.to(() => const SellerContractsView());
+          }
+          return;
+        } else {
+          // Buyer / general user
+          if (contractId != null && contractId > 0) {
+            Get.to(() => const ContractDetailScreen(), arguments: contractId);
+          } else {
+            Get.to(() => const ContractsScreen());
+          }
+          return;
+        }
+      }
+
+      // 2. Try to extract product/offer ID
       int? productId = notification.relatedProduct ?? notification.referenceId;
 
       // Check url regex
@@ -356,21 +407,6 @@ class RealtimeNotificationService extends GetxService {
           Get.to(() => const SellerDeliveryChallanView());
         } else {
           Get.to(() => const BuyerDeliveryChallanView());
-        }
-        return;
-      }
-
-      // Contract / Deal related
-      if (type.contains('contract') ||
-          type.contains('deal') ||
-          title.contains('contract') ||
-          title.contains('deal') ||
-          message.contains('contract') ||
-          message.contains('deal')) {
-        if (productId != null && productId > 0) {
-          Get.to(() => const ContractDetailScreen(), arguments: productId);
-        } else {
-          Get.to(() => const ContractsScreen());
         }
         return;
       }

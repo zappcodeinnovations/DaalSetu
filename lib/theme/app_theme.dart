@@ -183,6 +183,19 @@ class AppTheme {
         unselectedItemColor: textMuted,
         type: BottomNavigationBarType.fixed,
       ),
+
+      timePickerTheme: TimePickerThemeData(
+        backgroundColor: bgDarkNavy,
+        hourMinuteTextColor: Colors.white,
+        hourMinuteColor: cardColor,
+        dayPeriodTextColor: Colors.white,
+        dayPeriodColor: cardColor,
+        dialHandColor: primaryGold,
+        dialBackgroundColor: cardColor,
+        dialTextColor: Colors.white,
+        entryModeIconColor: primaryGold,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      ),
     );
   }
 
@@ -319,6 +332,19 @@ class AppTheme {
         selectedItemColor: primaryGold,
         unselectedItemColor: textMutedLight,
         type: BottomNavigationBarType.fixed,
+      ),
+
+      timePickerTheme: TimePickerThemeData(
+        backgroundColor: cardLight,
+        hourMinuteTextColor: textPrimaryLight,
+        hourMinuteColor: const Color(0xFFF1F5F9),
+        dayPeriodTextColor: textPrimaryLight,
+        dayPeriodColor: const Color(0xFFF1F5F9),
+        dialHandColor: primaryGold,
+        dialBackgroundColor: const Color(0xFFF1F5F9),
+        dialTextColor: textPrimaryLight,
+        entryModeIconColor: primaryGold,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
     );
   }

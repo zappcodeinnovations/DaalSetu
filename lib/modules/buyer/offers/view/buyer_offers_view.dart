@@ -1370,13 +1370,16 @@ class _OfferList extends StatelessWidget {
                       foregroundColor: Colors.white,
                     ),
                     onPressed: () {
+                      final remark = remarkCtrl.text.trim();
                       Get.back();
-                      controller.performAction(
-                        action,
-                        productId,
-                        interestId,
-                        remarkCtrl.text,
-                      );
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        controller.performAction(
+                          action,
+                          productId,
+                          interestId,
+                          remark,
+                        );
+                      });
                     },
                     child: Text(isConfirm ? "Confirm" : "Reject"),
                   ),

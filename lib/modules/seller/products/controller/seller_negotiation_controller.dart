@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../model/offer_interest_model.dart';
+import '../../contracts/view/seller_contract_detail_view.dart';
 import '../../../../services/seller_services.dart';
 import '../../common/seller_ui.dart';
 
@@ -125,17 +126,28 @@ class SellerNegotiationController extends GetxController {
   }
 
   Future<void> confirmDeal(int interestId, {String? adminRemark}) async {
+    bool dialogShown = false;
     try {
       Get.dialog(
-        const Center(child: CircularProgressIndicator()),
+        const PopScope(
+          canPop: false,
+          child: Center(child: CircularProgressIndicator()),
+        ),
         barrierDismissible: false,
       );
+      dialogShown = true;
+
       final res = await SellerServices.confirmOfferDeal(
         productId,
         interestId,
         adminRemark: adminRemark,
       );
-      if (Get.isDialogOpen ?? false) Get.back();
+
+      if (dialogShown) {
+        dialogShown = false;
+        if (Get.isDialogOpen ?? false) Get.back();
+      }
+
       if (res['success'] == true) {
         Get.snackbar(
           "Deal Confirmed",
@@ -144,7 +156,21 @@ class SellerNegotiationController extends GetxController {
           backgroundColor: Colors.green,
           colorText: Colors.white,
         );
-        fetchInterests();
+
+        // Check if contract ID was returned
+        final rawContractId = res['contract_id'] ??
+            res['data']?['contract_id'] ??
+            res['contract']?['id'] ??
+            res['data']?['id'];
+        final contractId = rawContractId is int
+            ? rawContractId
+            : int.tryParse(rawContractId?.toString() ?? '');
+
+        if (contractId != null && contractId > 0) {
+          Get.to(() => SellerContractDetailView(contractId: contractId));
+        } else {
+          fetchInterests();
+        }
       } else {
         Get.snackbar(
           "Error",
@@ -155,14 +181,23 @@ class SellerNegotiationController extends GetxController {
         );
       }
     } catch (e) {
-      if (Get.isDialogOpen ?? false) Get.back();
+      if (dialogShown) {
+        dialogShown = false;
+        if (Get.isDialogOpen ?? false) Get.back();
+      }
+      final msg = e.toString().replaceFirst('Exception: ', '').trim();
       Get.snackbar(
         "Error",
-        e.toString(),
+        msg.isNotEmpty ? msg : "Failed to confirm deal",
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
+    } finally {
+      if (dialogShown) {
+        dialogShown = false;
+        if (Get.isDialogOpen ?? false) Get.back();
+      }
     }
   }
 }
