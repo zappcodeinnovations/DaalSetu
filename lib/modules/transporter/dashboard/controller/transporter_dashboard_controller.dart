@@ -1,5 +1,6 @@
 import '../../../../comman/api_url.dart';
 import '../../../../network/api_client.dart';
+import '../../../../services/seller_services.dart';
 import '../../../../utils/app_preferences.dart';
 import 'package:get/get.dart';
 
@@ -74,10 +75,54 @@ class TransporterDashboardController extends GetxController {
       if ('${profile['name'] ?? ''}'.isNotEmpty) {
         username.value = '${profile['name']}';
       }
-      branchCodes.value = (profile['branch_codes'] as List? ?? [])
-          .map((e) => '$e')
-          .toList();
       kycStatus.value = '${profile['kyc_status'] ?? ''}';
+
+      final Set<String> codes = {};
+      void addCodes(dynamic val) {
+        if (val is List) {
+          for (final item in val) {
+            if (item is Map) {
+              final c = item['branch_code'] ?? item['code'] ?? item['name'];
+              if (c != null && '$c'.trim().isNotEmpty) codes.add('$c'.trim());
+            } else if (item != null && '$item'.trim().isNotEmpty) {
+              codes.add('$item'.trim());
+            }
+          }
+        } else if (val is String && val.trim().isNotEmpty) {
+          for (final part in val.split(RegExp(r'[\s,\-]+'))) {
+            if (part.trim().isNotEmpty) codes.add(part.trim());
+          }
+        }
+      }
+
+      addCodes(profile['branch_codes']);
+      addCodes(profile['assigned_branch_codes']);
+      addCodes(profile['branches']);
+      addCodes(profile['branch_code']);
+      addCodes(data['branch_codes']);
+      addCodes(data['branches']);
+
+      // Also fetch from getSellerBranches to guarantee full parity with web branches network
+      try {
+        final branchRes = await SellerServices.getSellerBranches();
+        if (branchRes['data'] is Map<String, dynamic>) {
+          final bData = branchRes['data'] as Map<String, dynamic>;
+          if (bData['primary_branch'] is Map) {
+            final pCode = bData['primary_branch']['branch_code'] ?? bData['primary_branch']['code'];
+            if (pCode != null && '$pCode'.trim().isNotEmpty) codes.add('$pCode'.trim());
+          }
+          if (bData['my_branches'] is List) {
+            for (final b in bData['my_branches']) {
+              if (b is Map) {
+                final bCode = b['branch_code'] ?? b['code'];
+                if (bCode != null && '$bCode'.trim().isNotEmpty) codes.add('$bCode'.trim());
+              }
+            }
+          }
+        }
+      } catch (_) {}
+
+      branchCodes.value = codes.toList();
 
       kpis.value = data['kpis'] is Map
           ? Map<String, dynamic>.from(data['kpis'] as Map)

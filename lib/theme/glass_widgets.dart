@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -260,6 +259,7 @@ class GlassTextField extends StatelessWidget {
   final int? minLines;
   final bool readOnly;
   final VoidCallback? onTap;
+  final TextCapitalization textCapitalization;
 
   const GlassTextField({
     super.key,
@@ -279,6 +279,7 @@ class GlassTextField extends StatelessWidget {
     this.minLines,
     this.readOnly = false,
     this.onTap,
+    this.textCapitalization = TextCapitalization.none,
   });
 
   @override
@@ -296,6 +297,7 @@ class GlassTextField extends StatelessWidget {
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
+      textCapitalization: textCapitalization,
       inputFormatters: inputFormatters,
       textInputAction: textInputAction,
       autofillHints: autofillHints,

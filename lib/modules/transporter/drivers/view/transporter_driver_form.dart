@@ -194,14 +194,32 @@ class _TransporterDriverFormState extends State<TransporterDriverForm> {
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
                 SizedBox(
-                  height: 50,
+                  height: 54,
                   child: ElevatedButton(
                     onPressed: _isSubmitting ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
                     child: _isSubmitting
-                        ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : Text(isEdit ? "Save Changes" : "Register Driver"),
+                        ? const SizedBox(
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            isEdit ? "Save Changes" : "Register Driver",
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              height: 1.2,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ),
               ],

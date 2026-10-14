@@ -253,12 +253,23 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
 
                 const SizedBox(height: 32),
                 SizedBox(
-                  height: 50,
+                  height: 54,
                   child: ElevatedButton(
                     onPressed: _isSubmitting ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
                     child: _isSubmitting
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : Text(isEdit ? "Save Changes" : "Register Company"),
+                        : Text(
+                            isEdit ? "Save Changes" : "Register Company",
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              height: 1.2,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ),
               ],
@@ -941,6 +952,72 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
       "Vasco da Gama",
       "Mapusa",
       "Ponda",
+    ],
+    "Andaman and Nicobar Islands": [
+      "Port Blair",
+    ],
+    "Arunachal Pradesh": [
+      "Itanagar",
+      "Naharlagun",
+      "Pasighat",
+    ],
+    "Chandigarh": [
+      "Chandigarh",
+    ],
+    "Dadra and Nagar Haveli and Daman and Diu": [
+      "Daman",
+      "Diu",
+      "Silvassa",
+    ],
+    "Jammu and Kashmir": [
+      "Srinagar",
+      "Jammu",
+      "Anantnag",
+      "Baramulla",
+      "Udhampur",
+    ],
+    "Ladakh": [
+      "Leh",
+      "Kargil",
+    ],
+    "Lakshadweep": [
+      "Kavaratti",
+    ],
+    "Manipur": [
+      "Imphal",
+      "Churachandpur",
+      "Thoubal",
+    ],
+    "Meghalaya": [
+      "Shillong",
+      "Tura",
+      "Jowai",
+    ],
+    "Mizoram": [
+      "Aizawl",
+      "Lunglei",
+      "Champhai",
+    ],
+    "Nagaland": [
+      "Kohima",
+      "Dimapur",
+      "Mokokchung",
+    ],
+    "Puducherry": [
+      "Puducherry",
+      "Karaikal",
+      "Yanam",
+      "Mahe",
+    ],
+    "Sikkim": [
+      "Gangtok",
+      "Namchi",
+      "Gyalshing",
+    ],
+    "Tripura": [
+      "Agartala",
+      "Dharmanagar",
+      "Udaipur",
     ],
   };
 }

@@ -9,7 +9,12 @@ import '../../common/seller_ui.dart';
 /// Data: `GET /api/mobile/contracts/{id}/` returns the web modal projection under "data".
 class SellerContractDetailView extends StatefulWidget {
   final int contractId;
-  const SellerContractDetailView({super.key, required this.contractId});
+  final Map<String, dynamic>? initialData;
+  const SellerContractDetailView({
+    super.key,
+    required this.contractId,
+    this.initialData,
+  });
 
   @override
   State<SellerContractDetailView> createState() =>
@@ -24,30 +29,44 @@ class _SellerContractDetailViewState extends State<SellerContractDetailView> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialData != null && widget.initialData!.isNotEmpty) {
+      _contract = Map<String, dynamic>.from(widget.initialData!);
+      _loading = false;
+    }
     _load();
   }
 
   Future<void> _load() async {
-    if (mounted) setState(() => _loading = true);
+    if (_contract == null && mounted) setState(() => _loading = true);
     try {
       final response = await SellerServices.getContractDetails(
         widget.contractId,
       );
-      _contract = response['data'] is Map
-          ? Map<String, dynamic>.from(response['data'] as Map)
-          : Map<String, dynamic>.from(response);
+      if (response.isNotEmpty) {
+        final parsed = response['data'] is Map
+            ? Map<String, dynamic>.from(response['data'] as Map)
+            : Map<String, dynamic>.from(response);
+        if (parsed.isNotEmpty) {
+          _contract = parsed;
+        }
+      }
     } catch (_) {
-      // Fall back to the consignment row below when the contract call fails.
+      // Fall back to the consignment row below or initialData when the contract call fails (e.g. 403/404).
     }
     try {
       final response = await SellerServices.getConsignmentDetail(
         widget.contractId,
       );
-      _consignment = response['data'] is Map
-          ? Map<String, dynamic>.from(response['data'] as Map)
-          : null;
+      if (response.isNotEmpty) {
+        final parsed = response['data'] is Map
+            ? Map<String, dynamic>.from(response['data'] as Map)
+            : null;
+        if (parsed != null && parsed.isNotEmpty) {
+          _consignment = parsed;
+        }
+      }
     } catch (_) {
-      _consignment = null;
+      // Ignore 404/403 for consignments
     }
     if (_contract == null && _consignment != null) _contract = _consignment;
     if (mounted) setState(() => _loading = false);
@@ -148,9 +167,11 @@ class _SellerContractDetailViewState extends State<SellerContractDetailView> {
     final realId = _text(c['${prefix}_real_id'] ?? c['${prefix}_id'], '');
     final mapId = _text(c['${prefix}_map_id'] ?? (seller ? c['seller_mapped_id'] : c['buyer_unique_id']), '');
     final idLine = [if (realId.isNotEmpty) 'ID: $realId', if (mapId.isNotEmpty) mapId].join(' | ');
-    final company = _text(c['${prefix}_company_name'], '');
-    final mobile = _text(c['${prefix}_mobile'], '');
+    final company = _text(c['${prefix}_company_name'] ?? c['${prefix}_company'], '');
+    final mobile = _text(c['${prefix}_mobile'] ?? c['${prefix}_phone'] ?? c['${prefix}_contact'], '');
     final email = _text(c['${prefix}_email'], '');
+    final gst = _text(c['${prefix}_gst'] ?? c['${prefix}_gst_no'] ?? c['${prefix}_gst_number'], '');
+    final address = _text(c['${prefix}_address'] ?? c['${prefix}_location'] ?? c['${prefix}_city'], '');
 
     Widget contact(IconData icon, String value, VoidCallback onTap) => InkWell(
           onTap: onTap,
@@ -165,7 +186,7 @@ class _SellerContractDetailViewState extends State<SellerContractDetailView> {
           ),
         );
 
-    return SellerUi.section(context, seller ? 'Seller' : 'Buyer', [
+    return SellerUi.section(context, seller ? 'Seller Details' : 'Buyer Details', [
       Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -188,9 +209,11 @@ class _SellerContractDetailViewState extends State<SellerContractDetailView> {
         ],
       ),
       const SizedBox(height: 8),
+      if (gst.isNotEmpty) SellerUi.infoRow('GST No.', gst),
       if (mobile.isNotEmpty) contact(Icons.phone, mobile, () => _open('tel', mobile)),
       if (email.isNotEmpty) contact(Icons.email_outlined, email, () => _open('mailto', email)),
-      if (mobile.isEmpty && email.isEmpty)
+      if (address.isNotEmpty) SellerUi.infoRow('Address', address),
+      if (mobile.isEmpty && email.isEmpty && gst.isEmpty && address.isEmpty)
         Text('Contact details are not available.', style: theme.textTheme.bodySmall),
     ]);
   }

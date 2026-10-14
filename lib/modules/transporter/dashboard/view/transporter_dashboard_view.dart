@@ -100,10 +100,7 @@ class TransporterDashboardView extends StatelessWidget {
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      leading: IconButton(
-        icon: const Icon(IconlyLight.filter),
-        onPressed: () {},
-      ),
+      automaticallyImplyLeading: false,
       title: Image.asset(
         'assets/images/app_name.png',
         height: 32,
@@ -152,15 +149,18 @@ class TransporterDashboardView extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        CircleAvatar(
-          radius: 16,
-          backgroundColor: Theme.of(
-            context,
-          ).colorScheme.primary.withValues(alpha: 0.1),
-          child: Icon(
-            IconlyLight.user_1,
-            size: 16,
-            color: Theme.of(context).colorScheme.primary,
+        GestureDetector(
+          onTap: () => Get.toNamed(AppRoutes.profile_page),
+          child: CircleAvatar(
+            radius: 16,
+            backgroundColor: Theme.of(
+              context,
+            ).colorScheme.primary.withValues(alpha: 0.1),
+            child: Icon(
+              IconlyLight.user_1,
+              size: 16,
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
         ),
         const SizedBox(width: 16),
@@ -406,54 +406,62 @@ class TransporterDashboardView extends StatelessWidget {
     final k = controller.kpis;
     String v(String key, [String fallback = '—']) =>
         k[key] == null ? fallback : '${k[key]}';
-    final cards = <(String, String, String, IconData)>[
+    final cards = <(String, String, String, IconData, VoidCallback?)>[
       (
         "Earnings (MTD)",
         v('earn', '₹0.00'),
         v('earnDelta', ''),
         Icons.currency_rupee,
+        () => Get.to(() => const TransporterBiddingView(initialTab: 1, initialStatus: 'accepted')),
       ),
       (
         "Active Shipments",
         v('active', '0'),
         "Pickup due: ${v('pickupDue', '0')}",
         IconlyLight.bag,
+        () => Get.to(() => const TransporterBiddingView(initialTab: 1, initialStatus: 'accepted')),
       ),
       (
         "Delivered (MTD)",
         v('delivered', '0'),
         "On-time: ${v('onTime')}",
         IconlyLight.tick_square,
+        () => Get.to(() => const TransporterBiddingView(initialTab: 1, initialStatus: 'all')),
       ),
       (
         "In Transit",
         v('inTransit', '0'),
         "Avg ETA: ${v('avgETA')}",
         Icons.local_shipping_outlined,
+        () => Get.to(() => const TransporterBiddingView(initialTab: 1, initialStatus: 'accepted')),
       ),
       (
         "Delayed / Exceptions",
         v('delayed', '0'),
         "Incidents: ${v('incidents', '0')}",
         IconlyLight.danger,
+        () => Get.to(() => const TransporterBiddingView(initialTab: 1, initialStatus: 'all')),
       ),
       (
         "Cost per KM",
         v('costKm'),
         "Fuel variance: ${v('fuelVar')}",
         Icons.local_gas_station_outlined,
+        () => Get.to(() => const TransporterBiddingView(initialTab: 1)),
       ),
       (
         "Fleet Utilization",
         v('util', '0%'),
         "Active vehicles: ${v('vehicles', '0')}",
         IconlyLight.chart,
+        () => Get.toNamed(AppRoutes.transporterVehicles),
       ),
       (
         "Avg Delivery Time",
         v('avgTime'),
         "SLA breach rate: ${v('breach')}",
         IconlyLight.time_circle,
+        () => Get.to(() => const TransporterBiddingView(initialTab: 1)),
       ),
     ];
     return SingleChildScrollView(
@@ -467,7 +475,7 @@ class TransporterDashboardView extends StatelessWidget {
                 child: SizedBox(
                   width: 145,
                   height: 132,
-                  child: _kpiCard(context, c.$1, c.$2, c.$3, c.$4),
+                  child: _kpiCard(context, c.$1, c.$2, c.$3, c.$4, onTap: c.$5),
                 ),
               ),
             )
@@ -481,10 +489,12 @@ class TransporterDashboardView extends StatelessWidget {
     String title,
     String value,
     String subtitle,
-    IconData icon,
-  ) {
+    IconData icon, {
+    VoidCallback? onTap,
+  }) {
     final theme = Theme.of(context);
     return GlassCard(
+      onTap: onTap,
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -581,25 +591,54 @@ class TransporterDashboardView extends StatelessWidget {
               ),
             )
           else ...[
-            Text(
-              "Shipments",
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                color: theme.textTheme.bodyMedium?.color,
-              ),
+            const SizedBox(height: 16),
+            // Legends matching the web application
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.deepOrange, width: 2.5),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  "Earnings (₹ Lakhs)",
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: theme.textTheme.bodyMedium?.color,
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: _gold.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  "Shipments",
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: theme.textTheme.bodyMedium?.color,
+                  ),
+                ),
+              ],
             ),
-            SizedBox(height: 140, child: _barChart(context, shipments, _gold)),
-            const SizedBox(height: 12),
-            Text(
-              "Earnings (₹ Lakhs)",
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                color: theme.textTheme.bodyMedium?.color,
-              ),
-            ),
+            const SizedBox(height: 16),
+            // Combined Chart with Dual Axis (Left: Earnings, Right: Shipments)
             SizedBox(
-              height: 140,
-              child: _lineChart(context, earnings, Colors.deepOrange),
+              height: 220,
+              child: _buildCombinedChart(context, earnings, shipments),
             ),
           ],
         ],
@@ -607,90 +646,208 @@ class TransporterDashboardView extends StatelessWidget {
     );
   }
 
-  FlTitlesData _titles(BuildContext context, List<String> labels) {
-    final style = TextStyle(
-      fontSize: 9,
-      color: Theme.of(context).textTheme.bodyMedium?.color,
-    );
-    return FlTitlesData(
-      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-      leftTitles: AxisTitles(
-        sideTitles: SideTitles(
-          showTitles: true,
-          reservedSize: 32,
-          getTitlesWidget: (value, meta) => Text(
-            value == value.roundToDouble()
-                ? value.toInt().toString()
-                : value.toStringAsFixed(1),
-            style: style,
-          ),
-        ),
-      ),
-      bottomTitles: AxisTitles(
-        sideTitles: SideTitles(
-          showTitles: true,
-          reservedSize: 22,
-          getTitlesWidget: (value, meta) {
-            final i = value.toInt();
-            if (i < 0 || i >= labels.length || value != i.toDouble()) {
-              return const SizedBox.shrink();
-            }
-            return Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(labels[i], style: style),
-            );
-          },
-        ),
-      ),
-    );
-  }
+  Widget _buildCombinedChart(
+    BuildContext context,
+    ChartSeries earnings,
+    ChartSeries shipments,
+  ) {
+    final theme = Theme.of(context);
+    final labels = earnings.labels.isNotEmpty ? earnings.labels : shipments.labels;
+    final int count = labels.length;
 
-  Widget _barChart(BuildContext context, ChartSeries series, Color color) {
-    return BarChart(
-      BarChartData(
-        gridData: const FlGridData(show: false),
-        borderData: FlBorderData(show: false),
-        titlesData: _titles(context, series.labels),
-        barGroups: [
-          for (var i = 0; i < series.values.length; i++)
-            BarChartGroupData(
-              x: i,
-              barRods: [
-                BarChartRodData(
-                  toY: series.values[i],
-                  color: color,
-                  width: 12,
-                  borderRadius: BorderRadius.circular(4),
+    // Calculate maximum values for clean dual-axis scaling
+    final maxEarnRaw = earnings.values.isEmpty
+        ? 0.05
+        : earnings.values.reduce((a, b) => a > b ? a : b);
+    final double maxEarn = maxEarnRaw > 0 ? (maxEarnRaw * 1.25) : 0.05;
+
+    final maxShipRaw = shipments.values.isEmpty
+        ? 1.0
+        : shipments.values.reduce((a, b) => a > b ? a : b);
+    final double maxShip = maxShipRaw > 0 ? (maxShipRaw * 1.25).ceilToDouble() : 1.0;
+
+    final axisTextStyle = TextStyle(
+      fontSize: 10,
+      fontWeight: FontWeight.w500,
+      color: theme.textTheme.bodySmall?.color ?? Colors.grey.shade600,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Stack(
+          children: [
+            // Layer 1: Background grid, Bottom X-Axis labels, and Right Axis (Shipments)
+            Positioned.fill(
+              child: BarChart(
+                BarChartData(
+                  minY: 0,
+                  maxY: maxShip,
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    horizontalInterval: maxShip / 4 > 0 ? maxShip / 4 : 1,
+                    getDrawingHorizontalLine: (value) => FlLine(
+                      color: theme.dividerColor.withValues(alpha: 0.35),
+                      strokeWidth: 1,
+                    ),
+                  ),
+                  borderData: FlBorderData(
+                    show: true,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: theme.dividerColor.withValues(alpha: 0.5),
+                        width: 1,
+                      ),
+                      left: BorderSide.none,
+                      right: BorderSide.none,
+                      top: BorderSide.none,
+                    ),
+                  ),
+                  titlesData: FlTitlesData(
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    leftTitles: const AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 46, // Reserved for Earnings scale on the left
+                        getTitlesWidget: _emptyTitleWidget,
+                      ),
+                    ),
+                    rightTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 36,
+                        getTitlesWidget: (value, meta) {
+                          if (value < 0) return const SizedBox.shrink();
+                          final formatted = value == value.roundToDouble()
+                              ? value.toInt().toString()
+                              : value.toStringAsFixed(1);
+                          return Padding(
+                            padding: const EdgeInsets.only(left: 6),
+                            child: Text(formatted, style: axisTextStyle),
+                          );
+                        },
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 26,
+                        getTitlesWidget: (value, meta) {
+                          final i = value.toInt();
+                          if (i < 0 || i >= count || value != i.toDouble()) {
+                            return const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(labels[i], style: axisTextStyle),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  barGroups: [
+                    for (int i = 0; i < count; i++)
+                      BarChartGroupData(
+                        x: i,
+                        barRods: [
+                          BarChartRodData(
+                            toY: i < shipments.values.length ? shipments.values[i] : 0.0,
+                            color: _gold.withValues(alpha: 0.75),
+                            width: 32,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(4),
+                              topRight: Radius.circular(4),
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
                 ),
-              ],
+              ),
             ),
-        ],
-      ),
+
+            // Layer 2: Foreground Smooth Curved Line (Earnings in ₹ Lakhs) with Left Axis
+            Positioned.fill(
+              child: LineChart(
+                LineChartData(
+                  minY: 0,
+                  maxY: maxEarn,
+                  gridData: const FlGridData(show: false),
+                  borderData: FlBorderData(show: false),
+                  titlesData: FlTitlesData(
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 36, // Reserve same width as Right Axis to match coordinates
+                        getTitlesWidget: _emptyTitleWidget,
+                      ),
+                    ),
+                    bottomTitles: const AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 26, // Reserve same width as Bottom Axis
+                        getTitlesWidget: _emptyTitleWidget,
+                      ),
+                    ),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 46,
+                        getTitlesWidget: (value, meta) {
+                          if (value < 0) return const SizedBox.shrink();
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: Text(
+                              value == 0 ? "0" : value.toStringAsFixed(3),
+                              textAlign: TextAlign.right,
+                              style: axisTextStyle,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: [
+                        for (int i = 0; i < count; i++)
+                          FlSpot(
+                            i.toDouble(),
+                            i < earnings.values.length ? earnings.values[i] : 0.0,
+                          ),
+                      ],
+                      isCurved: true,
+                      color: Colors.deepOrange,
+                      barWidth: 3,
+                      isStrokeCapRound: true,
+                      dotData: FlDotData(
+                        show: true,
+                        getDotPainter: (spot, percent, barData, index) =>
+                            FlDotCirclePainter(
+                          radius: 4,
+                          color: Colors.deepOrange,
+                          strokeWidth: 2,
+                          strokeColor: Colors.white,
+                        ),
+                      ),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        color: Colors.deepOrange.withValues(alpha: 0.08),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  Widget _lineChart(BuildContext context, ChartSeries series, Color color) {
-    return LineChart(
-      LineChartData(
-        gridData: const FlGridData(show: false),
-        borderData: FlBorderData(show: false),
-        titlesData: _titles(context, series.labels),
-        minY: 0,
-        lineBarsData: [
-          LineChartBarData(
-            spots: [
-              for (var i = 0; i < series.values.length; i++)
-                FlSpot(i.toDouble(), series.values[i]),
-            ],
-            isCurved: true,
-            color: color,
-            barWidth: 3,
-            dotData: const FlDotData(show: true),
-          ),
-        ],
-      ),
-    );
+  static Widget _emptyTitleWidget(double value, TitleMeta meta) {
+    return const SizedBox.shrink();
   }
 
   Widget _buildDeliveryStatusCard(BuildContext context) {

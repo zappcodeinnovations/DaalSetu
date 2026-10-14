@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../controller/transporter_bidding_controller.dart';
 import '../model/transporter_bid_model.dart';
+import '../../../seller/contracts/view/seller_contract_detail_view.dart';
 import '../../../../routes/app_routes.dart';
 
 const _gold = Color(0xFFFFB300);
@@ -53,11 +54,17 @@ Widget _row(String label, String value) => Padding(
 /// Web "Shipment": Active Shipment Offer's (tab 0) and My Deals (tab 1).
 class TransporterBiddingView extends StatelessWidget {
   final int initialTab;
-  const TransporterBiddingView({super.key, this.initialTab = 0});
+  final String? initialStatus;
+  const TransporterBiddingView({super.key, this.initialTab = 0, this.initialStatus});
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(TransporterBiddingController());
+    if (initialStatus != null && initialStatus!.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        controller.setBidStatus(initialStatus!);
+      });
+    }
     final theme = Theme.of(context);
     return DefaultTabController(
       length: 2,
@@ -240,21 +247,42 @@ class _OffersTab extends StatelessWidget {
                     onPressed: () => _showCompetingBids(context, offer),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _gold,
-                      side: const BorderSide(color: _gold),
+                      side: const BorderSide(color: _gold, width: 1.5),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    child: const Text("VIEW BIDS"),
+                    child: const Text(
+                      "VIEW BIDS",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () => _showBidDialog(context, offer),
-                    style: ElevatedButton.styleFrom(backgroundColor: _gold),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _gold,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                     child: Text(
                       hasBid ? "UPDATE BID" : "PLACE BID",
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   ),
@@ -270,58 +298,182 @@ class _OffersTab extends StatelessWidget {
   void _showBidDialog(BuildContext context, ShipmentOfferModel offer) {
     final amount = TextEditingController(text: offer.myBid ?? '');
     Get.dialog(
-      AlertDialog(
-        title: Text(
-          offer.myBid != null ? "Update Freight Bid" : "Place Freight Bid",
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
+      Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "${offer.pickupLocation} → ${offer.deliveryLocation}",
-              style: const TextStyle(fontSize: 12),
-            ),
-            if (offer.currentLowestBid != null)
-              Text(
-                "Current lowest bid: ₹${offer.currentLowestBid}",
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+        clipBehavior: Clip.antiAlias,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(maxWidth: 420),
+          color: Theme.of(context).cardColor,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Dark header bar like web: "Place Bid" with close 'x' icon
+              Container(
+                color: const Color(0xFF131D2E), // Dark navy header as on web
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        offer.myBid != null ? "Update Bid" : "Place Bid",
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white70, size: 20),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      splashRadius: 18,
+                      onPressed: () => Get.back(),
+                    ),
+                  ],
+                ),
               ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: amount,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
+              // Body
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Contract ID
+                    Text(
+                      "Contract ID: ${offer.contractId}",
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                    if (offer.currentLowestBid != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        "Current lowest bid: ₹${offer.currentLowestBid}",
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    // Field label matching web: "Bid Amount"
+                    Text(
+                      "Bid Amount",
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Input field matching web: rounded outline, "Enter bid amount" placeholder, no counter
+                    TextField(
+                      controller: amount,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      style: const TextStyle(fontSize: 14),
+                      decoration: InputDecoration(
+                        hintText: "Enter bid amount",
+                        hintStyle: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade400,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF0F766E),
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // Action Buttons (Cancel and Submit matching web layout and colors)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(
+                          onPressed: () => Get.back(),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.grey.shade700,
+                            side: BorderSide(color: Colors.grey.shade300),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 10,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          child: const Text(
+                            "Cancel",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0F766E), // Green button from web
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 10,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          onPressed: () {
+                            final value = double.tryParse(amount.text.trim());
+                            if (value == null || value <= 0) {
+                              Get.snackbar(
+                                "Error",
+                                "Enter a valid bid amount",
+                                snackPosition: SnackPosition.BOTTOM,
+                              );
+                              return;
+                            }
+                            Get.back();
+                            controller.placeBid(offer, amount.text.trim());
+                          },
+                          child: const Text(
+                            "Submit",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              maxLength: 10,
-              decoration: const InputDecoration(
-                labelText: "Total freight amount (₹)",
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("CANCEL")),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: _gold),
-            onPressed: () {
-              final value = double.tryParse(amount.text.trim());
-              if (value == null || value <= 0) {
-                Get.snackbar(
-                  "Error",
-                  "Enter a valid bid amount",
-                  snackPosition: SnackPosition.BOTTOM,
-                );
-                return;
-              }
-              Get.back();
-              controller.placeBid(offer, amount.text.trim());
-            },
-            child: const Text("SUBMIT", style: TextStyle(color: Colors.white)),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -331,57 +483,171 @@ class _OffersTab extends StatelessWidget {
     ShipmentOfferModel offer,
   ) async {
     final bids = await controller.fetchContractBids(offer.id);
+    if (!context.mounted) return;
+
     Get.bottomSheet(
-      Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Get.theme.cardColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Bids on Contract #${offer.contractId}",
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
+      SafeArea(
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.75,
+          ),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Top drag handle indicator
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 10, bottom: 6),
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              "Transporter identities are hidden.",
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 8),
-            if (bids.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: Text("No bids yet"),
-              ),
-            ...bids.map(
-              (b) => ListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                title: Text("${b['transporter_unique_id'] ?? 'Transporter'}"),
-                subtitle: Text("${b['bid_date'] ?? ''}"),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                child: Row(
                   children: [
-                    Text(
-                      "₹${b['bid_amount']}",
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Bids on Contract #${offer.contractId}",
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            "Transporter identities are hidden.",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(width: 8),
-                    _statusChip('${b['status'] ?? 'pending'}'),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      splashRadius: 20,
+                      onPressed: () => Get.back(),
+                    ),
                   ],
                 ),
               ),
-            ),
-          ],
+              const Divider(height: 1),
+              Flexible(
+                child: bids.isEmpty
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 36,
+                          horizontal: 20,
+                        ),
+                        alignment: Alignment.center,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.gavel_outlined,
+                              size: 40,
+                              color: Colors.grey.shade400,
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              "No bids yet",
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey.shade700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Be the first transporter to place a bid on this shipment.",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.separated(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        itemCount: bids.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (context, index) {
+                          final b = bids[index];
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "${b['transporter_unique_id'] ?? 'Transporter'}",
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      if (b['bid_date'] != null &&
+                                          b['bid_date'].toString().isNotEmpty)
+                                        Text(
+                                          "${b['bid_date']}",
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      "₹${b['bid_amount']}",
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    _statusChip('${b['status'] ?? 'pending'}'),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
       ),
+      isScrollControlled: true,
     );
   }
 }
@@ -539,30 +805,65 @@ class _MyDealsTab extends StatelessWidget {
                   style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                 ),
               ),
-            if (bid.canAssignDriver) ...[
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => _showAssignDialog(context, bid),
-                  icon: const Icon(
-                    Icons.local_shipping,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                  label: Text(
-                    hasAssignment
-                        ? "CHANGE VEHICLE & DRIVER"
-                        : "ASSIGN VEHICLE & DRIVER",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: bid.contractPk > 0
+                        ? () {
+                            final initialMap = Map<String, dynamic>.from(bid.contractData);
+                            // Ensure key contract fields are populated in case contractData was partial
+                            initialMap['id'] ??= bid.contractPk;
+                            initialMap['contract_id'] ??= bid.contractId;
+                            initialMap['product_title'] ??= bid.productTitle;
+                            initialMap['loading_from'] ??= bid.loadingFrom;
+                            initialMap['loading_to'] ??= bid.loadingTo;
+                            initialMap['deal_quantity'] ??= bid.dealQuantity;
+                            initialMap['quantity_unit'] ??= bid.quantityUnit;
+                            initialMap['status'] ??= bid.contractStatus.isNotEmpty ? bid.contractStatus : bid.status;
+                            Get.to(() => SellerContractDetailView(
+                              contractId: bid.contractPk,
+                              initialData: initialMap,
+                            ));
+                          }
+                        : null,
+                    icon: const Icon(IconlyLight.show, size: 16),
+                    label: const Text("VIEW DETAILS"),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _gold,
+                      side: const BorderSide(color: _gold),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),
-                  style: ElevatedButton.styleFrom(backgroundColor: _gold),
                 ),
-              ),
-            ],
+                if (bid.canAssignDriver) ...[
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showAssignDialog(context, bid),
+                      icon: const Icon(
+                        Icons.local_shipping,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                      label: Text(
+                        hasAssignment ? "CHANGE FLEET" : "ASSIGN FLEET",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _gold,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ],
         ),
       ),

@@ -83,6 +83,7 @@ class MyBidModel {
   final Map<String, String> assignment;
   final bool assignmentLocked;
   final bool canAssignDriver;
+  final Map<String, dynamic> contractData;
 
   MyBidModel({
     required this.bidId,
@@ -103,10 +104,11 @@ class MyBidModel {
     required this.assignment,
     required this.assignmentLocked,
     required this.canAssignDriver,
+    this.contractData = const {},
   });
 
   factory MyBidModel.fromJson(Map<String, dynamic> json) {
-    final contract = json['contract'] is Map ? json['contract'] as Map : const {};
+    final contract = json['contract'] is Map ? Map<String, dynamic>.from(json['contract'] as Map) : <String, dynamic>{};
     final assignment = json['assignment'] is Map ? json['assignment'] as Map : const {};
     return MyBidModel(
       bidId: json['bid_id'] is int ? json['bid_id'] : int.tryParse('${json['bid_id']}') ?? 0,
@@ -128,6 +130,7 @@ class MyBidModel {
       assignmentLocked: json['assignment_locked'] == true,
       canAssignDriver: json['can_assign_driver'] == true ||
           ('${json['status']}'.toLowerCase() == 'accepted' && json['assignment_locked'] != true),
+      contractData: contract,
     );
   }
 }
