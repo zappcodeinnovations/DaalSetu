@@ -739,12 +739,46 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
                         ),
                       ),
                       Expanded(
-                        child: Text(
-                          entry.value,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
+                        child: (entry.value == 'Active' || entry.value == 'Inactive')
+                            ? Align(
+                                alignment: Alignment.centerLeft,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: (entry.value == 'Active'
+                                            ? Colors.green
+                                            : Colors.red)
+                                        .withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: (entry.value == 'Active'
+                                              ? Colors.green
+                                              : Colors.red)
+                                          .withValues(alpha: 0.3),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    entry.value,
+                                    style: TextStyle(
+                                      color: entry.value == 'Active'
+                                          ? Colors.green
+                                          : Colors.red,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : Text(
+                                entry.value,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style:
+                                    const TextStyle(fontWeight: FontWeight.w600),
+                              ),
                       ),
                     ],
                   ),
@@ -752,19 +786,37 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
               ),
               const SizedBox(height: 12),
               Wrap(
-                spacing: 6,
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   ...config.customActions
                       .where((action) => action.isVisible?.call(record.data) ?? true)
                       .map(
-                        (action) => TextButton.icon(
+                        (action) => OutlinedButton.icon(
                           onPressed: () async {
                             final success =
                                 await action.onPressed(context, record.data);
                             if (success) controller.load(refresh: true);
                           },
-                          icon: Icon(action.icon, size: 18),
+                          icon: Icon(action.icon, size: 16),
                           label: Text(action.title),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: theme.colorScheme.primary,
+                            side: BorderSide(
+                              color: theme.colorScheme.primary.withValues(alpha: 0.35),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            minimumSize: const Size(0, 32),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
+                          ),
                         ),
                       ),
                   OutlinedButton.icon(
@@ -772,26 +824,69 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: theme.colorScheme.primary,
                       backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.08),
-                      side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.45), width: 1.2),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      side: BorderSide(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.45),
+                        width: 1.2,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      minimumSize: const Size(0, 32),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
                     ),
-                    icon: const Icon(Icons.visibility_outlined, size: 18),
-                    label: const Text('View', style: TextStyle(fontWeight: FontWeight.bold)),
+                    icon: const Icon(Icons.visibility_outlined, size: 16),
+                    label: const Text(
+                      'View',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                   if (config.canEdit)
-                    TextButton.icon(
+                    OutlinedButton.icon(
                       onPressed: () => _openForm(record),
-                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      icon: const Icon(Icons.edit_outlined, size: 16),
                       label: const Text('Edit'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.orange.shade800,
+                        side: BorderSide(
+                          color: Colors.orange.shade300,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        minimumSize: const Size(0, 32),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                      ),
                     ),
                   if (config.canDelete)
-                    TextButton.icon(
+                    OutlinedButton.icon(
                       onPressed: () => _delete(record),
-                      style: TextButton.styleFrom(
+                      style: OutlinedButton.styleFrom(
                         foregroundColor: theme.colorScheme.error,
+                        side: BorderSide(
+                          color: theme.colorScheme.error.withValues(alpha: 0.4),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        minimumSize: const Size(0, 32),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
                       ),
-                      icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                      icon: const Icon(Icons.delete_outline_rounded, size: 16),
                       label: const Text('Delete'),
                     ),
                 ],

@@ -26,6 +26,7 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
   final multiValues = <String, Set<String>>{};
   final filePaths = <String, String>{};
   final optionFutures = <String, Future<List<AdminOption>>>{};
+  final serverErrors = <String, String>{};
   bool saving = false;
   bool creatingRole = false;
 
@@ -97,7 +98,10 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
         return;
       }
     }
-    setState(() => saving = true);
+    setState(() {
+      saving = true;
+      serverErrors.clear();
+    });
     final body = <String, dynamic>{};
     for (final field in widget.config.fields) {
       if (field.isFile || (editing && field.createOnly)) continue;
@@ -125,9 +129,22 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
         if (field.isDate) body[field.key] = null;
         continue;
       }
-      body[field.key] = field.numeric && raw.toString().isNotEmpty
-          ? int.tryParse('$raw') ?? raw
-          : raw;
+      final isPhoneField =
+          field.key.contains('phone') || field.key.contains('mobile');
+      if (isPhoneField) {
+        body[field.key] = raw.toString();
+        continue;
+      }
+      if (field.numeric) {
+        if (raw.toString().isEmpty) {
+          // Send null instead of empty string "" so DRF IntegerField doesn't reject with "A valid integer is required."
+          body[field.key] = null;
+        } else {
+          body[field.key] = int.tryParse('$raw') ?? raw;
+        }
+        continue;
+      }
+      body[field.key] = raw;
     }
     try {
       final repository = AdminCatalogRepository(widget.config);
@@ -149,6 +166,22 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
         ),
       );
       Navigator.pop(context, true);
+    } on ApiRequestException catch (error) {
+      if (error.fieldErrors != null && error.fieldErrors!.isNotEmpty) {
+        setState(() {
+          serverErrors.clear();
+          for (final entry in error.fieldErrors!.entries) {
+            var msg = entry.value;
+            if (msg.toLowerCase().contains('a valid integer is required') ||
+                msg.toLowerCase().contains('valid integer is required')) {
+              msg = 'Please enter a valid number';
+            }
+            serverErrors[entry.key] = msg;
+          }
+        });
+        formKey.currentState?.validate();
+      }
+      _showError(error.message);
     } catch (error) {
       _showError(error.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -309,6 +342,8 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
     } else if (field.isDate) {
       child = _dateField(field);
     } else {
+      final isPhoneField =
+          field.key.contains('phone') || field.key.contains('mobile');
       final taxFormatter = field.key == 'pan_number'
           ? const TaxIdInputFormatter.pan()
           : field.key == 'gst_number'
@@ -323,13 +358,38 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
             : field.numeric
             ? [FilteringTextInputFormatter.digitsOnly]
             : null,
-        maxLength: field.numeric ? 10 : null,
+        maxLength: isPhoneField ? 10 : null,
+        buildCounter: (
+          context, {
+          required currentLength,
+          required isFocused,
+          maxLength,
+        }) => null,
         decoration: InputDecoration(
           labelText: _label(field),
           alignLabelWithHint: field.multiline,
           counterText: '',
+          errorText: serverErrors[field.key],
         ),
+        onChanged: (val) {
+          if (serverErrors.containsKey(field.key)) {
+            setState(() => serverErrors.remove(field.key));
+          }
+        },
         validator: (value) {
+          if (serverErrors[field.key] != null) {
+            return serverErrors[field.key];
+          }
+          if (isPhoneField && value != null && value.trim().isNotEmpty) {
+            if (value.trim().length != 10) {
+              return 'Phone number must be 10 digits';
+            }
+          }
+          if (field.numeric && value != null && value.trim().isNotEmpty) {
+            if (int.tryParse(value.trim()) == null) {
+              return 'Please enter a valid number';
+            }
+          }
           final taxError = field.key == 'pan_number'
               ? TaxIdValidator.pan(value, required: field.required)
               : field.key == 'gst_number'
@@ -352,7 +412,10 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
           ? current
           : null,
       isExpanded: true,
-      decoration: InputDecoration(labelText: _label(field)),
+      decoration: InputDecoration(
+        labelText: _label(field),
+        errorText: serverErrors[field.key],
+      ),
       items: options
           .map(
             (option) => DropdownMenuItem(
@@ -361,9 +424,20 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
             ),
           )
           .toList(),
-      onChanged: (value) => controllers[field.key]!.text = value ?? '',
-      validator: (value) =>
-          field.required && value == null ? '${field.label} is required' : null,
+      onChanged: (value) {
+        controllers[field.key]!.text = value ?? '';
+        if (serverErrors.containsKey(field.key)) {
+          setState(() => serverErrors.remove(field.key));
+        }
+      },
+      validator: (value) {
+        if (serverErrors[field.key] != null) {
+          return serverErrors[field.key];
+        }
+        return field.required && (value == null || value.isEmpty)
+            ? '${field.label} is required'
+            : null;
+      },
     );
   }
 
@@ -488,18 +562,28 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
       decoration: InputDecoration(
         labelText: _label(field),
         hintText: 'Select date',
+        errorText: serverErrors[field.key],
         suffixIcon: controller.text.isEmpty || field.required
             ? const Icon(Icons.calendar_month)
             : IconButton(
                 tooltip: 'Clear',
                 icon: const Icon(Icons.clear),
-                onPressed: () => setState(controller.clear),
+                onPressed: () {
+                  setState(controller.clear);
+                  if (serverErrors.containsKey(field.key)) {
+                    setState(() => serverErrors.remove(field.key));
+                  }
+                },
               ),
       ),
-      validator: (value) =>
-          field.required && (value == null || value.trim().isEmpty)
-          ? '${field.label} is required'
-          : null,
+      validator: (value) {
+        if (serverErrors[field.key] != null) {
+          return serverErrors[field.key];
+        }
+        return field.required && (value == null || value.trim().isEmpty)
+            ? '${field.label} is required'
+            : null;
+      },
     );
   }
 }

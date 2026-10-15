@@ -487,7 +487,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                 _buildSummaryInfo(isDark),
 
                 // 3. Responsive Content: Mobile Cards or Tablet Table (Zero Render Overflow)
-                Expanded(
+                Flexible(
                   child: _buildInterestsContent(isDark, isMobile),
                 ),
 
@@ -721,12 +721,22 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
   // ── Mobile Responsive Interest Card (Zero Overflow Guaranteed) ───────────
   Widget _buildMobileInterestCard(OfferInterestModel interest, bool isDark) {
     final statusStr = interest.statusLabel.toLowerCase();
-    final canDecide = _isAdminRole ||
-        interest.canSellerAction ||
-        interest.canAdminFinalAction ||
-        statusStr == 'interested' ||
-        statusStr == 'pending' ||
-        statusStr == 'countered';
+    final isFinalState = const {
+      'deal_confirmed',
+      'confirmed',
+      'approved',
+      'completed',
+      'rejected',
+      'cancelled',
+    }.contains(statusStr);
+
+    final canDecide = !isFinalState &&
+        (_isAdminRole ||
+            interest.canSellerAction ||
+            interest.canAdminFinalAction ||
+            statusStr == 'interested' ||
+            statusStr == 'pending' ||
+            statusStr == 'countered');
 
     final canNegotiate = interest.canOpenNegotiation ||
         _isAdminRole ||
@@ -1085,12 +1095,22 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
 
   Widget _buildTableRow(OfferInterestModel interest, bool isLast, bool isDark) {
     final statusStr = interest.statusLabel.toLowerCase();
-    final canDecide = _isAdminRole ||
-        interest.canSellerAction ||
-        interest.canAdminFinalAction ||
-        statusStr == 'interested' ||
-        statusStr == 'pending' ||
-        statusStr == 'countered';
+    final isFinalState = const {
+      'deal_confirmed',
+      'confirmed',
+      'approved',
+      'completed',
+      'rejected',
+      'cancelled',
+    }.contains(statusStr);
+
+    final canDecide = !isFinalState &&
+        (_isAdminRole ||
+            interest.canSellerAction ||
+            interest.canAdminFinalAction ||
+            statusStr == 'interested' ||
+            statusStr == 'pending' ||
+            statusStr == 'countered');
 
     final canNegotiate = interest.canOpenNegotiation ||
         _isAdminRole ||

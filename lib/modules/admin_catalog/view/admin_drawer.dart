@@ -58,7 +58,13 @@ class AdminDrawer extends StatelessWidget {
                   ),
                   IconButton(
                     tooltip: 'Close menu',
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
+                        Scaffold.of(context).closeDrawer();
+                      } else {
+                        Navigator.of(context).maybePop();
+                      }
+                    },
                     icon: const Icon(Icons.close_rounded),
                   ),
                 ],

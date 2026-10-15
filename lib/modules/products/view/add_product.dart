@@ -99,6 +99,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
     if (!mounted) return;
     setState(() {
       companies = result[0];
+      if (companies.length == 1) {
+        company = companies.first;
+      } else {
+        company = null;
+      }
       branches = result[1] as List<OfferBranch>;
       selectedBranchIds.addAll(branches.map((item) => item.id));
     });
@@ -400,7 +405,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     keyboardType: number
         ? const TextInputType.numberWithOptions(decimal: true)
         : null,
-    maxLength: number ? 10 : null,
+    maxLength: null,
     buildCounter:
         (_, {required currentLength, required isFocused, maxLength}) => null,
     inputFormatters: number

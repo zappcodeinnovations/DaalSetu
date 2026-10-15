@@ -193,7 +193,21 @@ class _StockHistoryDialogState extends State<StockHistoryDialog> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   FilledButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => StockHistoryFullScreen(
+                            productId: widget.productId,
+                            productTitle: widget.productTitle,
+                            sellerName: widget.sellerName,
+                            currentStock: widget.currentStock,
+                            history: mockHistory,
+                          ),
+                        ),
+                      );
+                    },
                     style: FilledButton.styleFrom(backgroundColor: AppTheme.primaryGold),
                     child: const Text("Open Full Page", style: TextStyle(color: Colors.black)),
                   ),
@@ -208,6 +222,149 @@ class _StockHistoryDialogState extends State<StockHistoryDialog> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class StockHistoryFullScreen extends StatelessWidget {
+  final String productId;
+  final String productTitle;
+  final String sellerName;
+  final String currentStock;
+  final List<Map<String, dynamic>> history;
+
+  const StockHistoryFullScreen({
+    super.key,
+    required this.productId,
+    required this.productTitle,
+    required this.sellerName,
+    required this.currentStock,
+    required this.history,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          "Stock History: $productTitle",
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // Info Card
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.inventory_2_outlined, size: 20, color: AppTheme.primaryGold),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          productTitle,
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Seller: $sellerName", style: TextStyle(color: AppTheme.textMuted)),
+                      Text("Current Stock: $currentStock", style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // History Records
+          Text(
+            "Transaction Records (${history.length})",
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          ...history.map((record) => Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              record['actionType'] ?? '',
+                              style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12),
+                            ),
+                          ),
+                          Text(
+                            record['dateTime'] ?? '',
+                            style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _detailItem("Quantity Change", record['quantityChange'] ?? ''),
+                          ),
+                          Expanded(
+                            child: _detailItem("Bags / Packing", "${record['bags']} / ${record['packingKg']} kg"),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _detailItem("Previous Stock", record['previousStock'] ?? ''),
+                          ),
+                          Expanded(
+                            child: _detailItem("Updated Stock", record['updatedStock'] ?? ''),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 16),
+                      Text(
+                        "Performed by: ${record['performedBy'] ?? ''}",
+                        style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+        const SizedBox(height: 2),
+        Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+      ],
     );
   }
 }

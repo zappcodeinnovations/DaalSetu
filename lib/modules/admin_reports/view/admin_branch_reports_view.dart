@@ -26,6 +26,7 @@ class AdminBranchReportsView extends StatelessWidget {
           backgroundColor: theme.scaffoldBackgroundColor,
           resizeToAvoidBottomInset: false,
           appBar: AppBar(
+            titleSpacing: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
               onPressed: () {
@@ -35,27 +36,32 @@ class AdminBranchReportsView extends StatelessWidget {
             ),
             title: Text(
               "Branch Reports",
-              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             elevation: 0,
             backgroundColor: Colors.transparent,
             actions: [
               // Export Action Button
               Container(
-                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
                 child: ElevatedButton.icon(
                   onPressed: () => _openExportBottomSheet(context, controller, isDark),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryGold,
                     foregroundColor: Colors.black,
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
-                  icon: const Icon(Icons.file_download_outlined, size: 18),
+                  icon: const Icon(Icons.file_download_outlined, size: 16),
                   label: const Text(
                     "Export",
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
                   ),
                 ),
               ),
@@ -340,7 +346,13 @@ class AdminBranchReportsView extends StatelessWidget {
             }
             return const SizedBox.shrink();
           }),
+          isDense: true,
+          filled: false,
           border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          disabledBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         ),
       ),

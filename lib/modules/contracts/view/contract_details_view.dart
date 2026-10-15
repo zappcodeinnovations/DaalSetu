@@ -1,3 +1,11 @@
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:open_filex/open_filex.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:share_plus/share_plus.dart';
+import 'package:daalsetu/comman/api_url.dart';
+import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:daalsetu/modules/contracts/model/contract_details_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -38,7 +46,21 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Contract details')),
+      appBar: AppBar(
+        title: const Text('Contract details'),
+        actions: [
+          IconButton(
+            tooltip: 'Download PDF',
+            icon: const Icon(Icons.download_rounded),
+            onPressed: () {
+              final contract = controller.contractDetail.value;
+              if (contract != null) {
+                _downloadContractPdf(context, contract);
+              }
+            },
+          ),
+        ],
+      ),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
@@ -126,36 +148,53 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
       }),
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.all(16),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => Get.toNamed(AppRoutes.adminCreateDC, arguments: contractId),
-                icon: const Icon(Icons.local_shipping_outlined, color: AppTheme.primaryGold),
-                label: const Text(
-                  'Create DC',
-                  style: TextStyle(color: AppTheme.primaryGold, fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      final contract = controller.contractDetail.value;
+                      if (contract != null) _downloadContractPdf(context, contract);
+                    },
+                    icon: const Icon(Icons.picture_as_pdf_outlined, color: AppTheme.primaryGold),
+                    label: const Text(
+                      'Download PDF',
+                      style: TextStyle(color: AppTheme.primaryGold, fontWeight: FontWeight.bold),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppTheme.primaryGold, width: 1.5),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
                 ),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppTheme.primaryGold, width: 1.5),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: () {
+                      final contract = controller.contractDetail.value;
+                      if (contract != null) Get.to(() => ContractEditView(contract: contract));
+                    },
+                    icon: const Icon(Icons.edit_note_rounded),
+                    label: const Text('Edit contract'),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: () {
-                  final contract = controller.contractDetail.value;
-                  if (contract != null) Get.to(() => ContractEditView(contract: contract));
-                },
-                icon: const Icon(Icons.edit_note_rounded),
-                label: const Text('Edit contract'),
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.tonalIcon(
+                onPressed: () => Get.toNamed(AppRoutes.adminCreateDC, arguments: contractId),
+                icon: const Icon(Icons.local_shipping_outlined),
+                label: const Text('Create Delivery Challan'),
               ),
             ),
           ],
@@ -290,5 +329,226 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
       default:
         return AppTheme.successGreen;
     }
+  }
+
+  Future<void> _downloadContractPdf(
+    BuildContext context,
+    ContractDetailModel contract,
+  ) async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Preparing contract PDF...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+
+      final contractNumber = contract.contractId.isNotEmpty
+          ? contract.contractId
+          : 'Contract_${contract.id}';
+      final fileName =
+          '${contractNumber.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_')}.pdf';
+      final file = File('${Directory.systemTemp.path}/$fileName');
+
+      // 1. Try downloading directly from backend
+      bool downloaded = false;
+      try {
+        final token = await AppPreferences.getAccessToken();
+        if (token != null && token.isNotEmpty) {
+          final endpoints = [
+            '${ApiUrls.baseUrl}/api/contracts/${contract.id}/?download=pdf',
+            '${ApiUrls.baseUrl}/api/contracts/${contract.id}/pdf/',
+          ];
+          for (final url in endpoints) {
+            final res = await http.get(
+              Uri.parse(url),
+              headers: {'Authorization': 'Bearer $token'},
+            );
+            if (res.statusCode == 200 && res.bodyBytes.length > 500) {
+              await file.writeAsBytes(res.bodyBytes, flush: true);
+              downloaded = true;
+              break;
+            }
+          }
+        }
+      } catch (_) {}
+
+      // 2. Client-side fallback generator if backend has no direct PDF endpoint
+      if (!downloaded) {
+        final doc = pw.Document();
+        doc.addPage(
+          pw.Page(
+            pageFormat: PdfPageFormat.a4,
+            build: (pw.Context ctx) {
+              return pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text(
+                        'DAALSETU CONTRACT',
+                        style: pw.TextStyle(
+                          fontSize: 20,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.amber800,
+                        ),
+                      ),
+                      pw.Text(
+                        'Contract #: $contractNumber',
+                        style: pw.TextStyle(
+                          fontSize: 12,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  pw.Divider(thickness: 1.5, color: PdfColors.amber800),
+                  pw.SizedBox(height: 12),
+                  pw.Text(
+                    'Deal & Commodity Details',
+                    style: pw.TextStyle(
+                      fontSize: 13,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  pw.SizedBox(height: 4),
+                  _pdfRow('Product', contract.productTitle),
+                  _pdfRow(
+                    'Quantity',
+                    '${contract.dealQuantity} ${contract.quantityUnit}',
+                  ),
+                  _pdfRow(
+                    'Deal Rate',
+                    'Rs ${contract.dealAmount} ${contract.amountUnit}',
+                  ),
+                  _pdfRow('Status', contract.status.toUpperCase()),
+                  pw.SizedBox(height: 10),
+                  pw.Text(
+                    'Buyer Details',
+                    style: pw.TextStyle(
+                      fontSize: 13,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  pw.SizedBox(height: 4),
+                  _pdfRow('Buyer ID', contract.displayBuyerId.isNotEmpty ? contract.displayBuyerId : contract.buyerName),
+                  _pdfRow('Name', contract.buyerName),
+                  _pdfRow('Company', contract.buyerCompany ?? '-'),
+                  _pdfRow('Email', contract.buyerEmail ?? '-'),
+                  pw.SizedBox(height: 10),
+                  pw.Text(
+                    'Seller Details',
+                    style: pw.TextStyle(
+                      fontSize: 13,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  pw.SizedBox(height: 4),
+                  _pdfRow('Seller ID', contract.displaySellerId.isNotEmpty ? contract.displaySellerId : contract.sellerName),
+                  _pdfRow('Name', contract.sellerName),
+                  _pdfRow('Company', contract.sellerCompany ?? '-'),
+                  _pdfRow('Email', contract.sellerEmail ?? '-'),
+                  pw.SizedBox(height: 10),
+                  pw.Text(
+                    'Logistics & Route',
+                    style: pw.TextStyle(
+                      fontSize: 13,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  pw.SizedBox(height: 4),
+                  _pdfRow('Loading From', contract.loadingFrom),
+                  _pdfRow('Loading To', contract.loadingTo),
+                  _pdfRow(
+                    'Ready For Loading',
+                    contract.readyForLoadingAt.isNotEmpty ? contract.readyForLoadingAt : '-',
+                  ),
+                  _pdfRow(
+                    'Confirmed At',
+                    contract.confirmedAt.isNotEmpty ? contract.confirmedAt : '-',
+                  ),
+                  pw.Spacer(),
+                  pw.Divider(thickness: 0.5),
+                  pw.Align(
+                    alignment: pw.Alignment.center,
+                    child: pw.Text(
+                      'Generated securely via DaalSetu Platform',
+                      style: const pw.TextStyle(
+                        fontSize: 9,
+                        color: PdfColors.grey600,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+        await file.writeAsBytes(await doc.save(), flush: true);
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Contract PDF downloaded successfully.'),
+          ),
+        );
+      }
+
+      try {
+        final result = await OpenFilex.open(file.path, type: 'application/pdf');
+        if (result.type != ResultType.done) {
+          await SharePlus.instance.share(
+            ShareParams(
+              files: [XFile(file.path, mimeType: 'application/pdf')],
+              subject: 'Contract $contractNumber',
+            ),
+          );
+        }
+      } catch (_) {
+        await SharePlus.instance.share(
+          ShareParams(
+            files: [XFile(file.path, mimeType: 'application/pdf')],
+            subject: 'Contract $contractNumber',
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not download PDF: $e')),
+        );
+      }
+    }
+  }
+
+  static pw.Widget _pdfRow(String label, String value) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 2),
+      child: pw.Row(
+        children: [
+          pw.SizedBox(
+            width: 120,
+            child: pw.Text(
+              label,
+              style: const pw.TextStyle(
+                fontSize: 9,
+                color: PdfColors.grey700,
+              ),
+            ),
+          ),
+          pw.Expanded(
+            child: pw.Text(
+              value.isEmpty ? '-' : value,
+              style: pw.TextStyle(
+                fontSize: 9,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

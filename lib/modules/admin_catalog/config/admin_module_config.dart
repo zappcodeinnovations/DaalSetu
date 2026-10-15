@@ -1202,7 +1202,9 @@ class AdminModules {
           'is_active',
           'Active Status',
           options: ['true', 'false'],
+          optionLabels: {'true': 'Active', 'false': 'Inactive'},
           defaultValue: 'true',
+          sendAsBoolean: true,
         ),
       ],
       detailSections: [

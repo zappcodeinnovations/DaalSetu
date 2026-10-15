@@ -14,6 +14,9 @@ class AdminOption {
 /// Readable text for any API value: nested objects show their name, lists are joined.
 String adminDisplayValue(Object? value) {
   if (value == null) return '';
+  if (value is bool) {
+    return value ? 'Active' : 'Inactive';
+  }
   if (value is Map) {
     for (final key in const [
       'name', 'title', 'category_name', 'brand_name', 'legal_name', 'location_name',
@@ -27,7 +30,27 @@ String adminDisplayValue(Object? value) {
   if (value is List) {
     return value.map(adminDisplayValue).where((text) => text.isNotEmpty).join(', ');
   }
-  return value.toString().trim();
+  final text = value.toString().trim();
+  if (text.toLowerCase() == 'true') return 'Active';
+  if (text.toLowerCase() == 'false') return 'Inactive';
+  return text;
+}
+
+void _showAdminToast(String title, String message, {bool isError = false}) {
+  Get.snackbar(
+    title,
+    message,
+    snackPosition: SnackPosition.TOP,
+    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    borderRadius: 12,
+    duration: const Duration(seconds: 3),
+    backgroundColor: isError ? const Color(0xFFB00020) : const Color(0xFF1E2638),
+    colorText: Colors.white,
+    icon: Icon(
+      isError ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded,
+      color: Colors.white,
+    ),
+  );
 }
 
 String _message(Object error) => error.toString().replaceFirst('Exception: ', '');
@@ -192,7 +215,7 @@ AdminCustomAction userStatusAction() => AdminCustomAction(
         reason.dispose();
         if (confirmed != true) return false;
         if (selected == 'suspended' && note.isEmpty) {
-          Get.snackbar('Error', 'Suspension reason is required.', snackPosition: SnackPosition.BOTTOM);
+          _showAdminToast('Error', 'Suspension reason is required.', isError: true);
           return false;
         }
         try {
@@ -201,10 +224,10 @@ AdminCustomAction userStatusAction() => AdminCustomAction(
             body: {'status': selected, if (selected == 'suspended') 'suspension_reason': note},
             requireAuth: true,
           );
-          Get.snackbar('Success', (response['message'] ?? 'Status updated').toString(), snackPosition: SnackPosition.BOTTOM);
+          _showAdminToast('Success', (response['message'] ?? 'Status updated').toString());
           return true;
         } catch (error) {
-          Get.snackbar('Error', _message(error), snackPosition: SnackPosition.BOTTOM);
+          _showAdminToast('Error', _message(error), isError: true);
           return false;
         }
       },
@@ -272,10 +295,10 @@ Future<bool> adminConfirmAndRun(
   try {
     final response = await request(note);
     final text = response is Map ? (response['message'] ?? '').toString() : '';
-    Get.snackbar('Success', text.isEmpty ? 'Done' : text, snackPosition: SnackPosition.BOTTOM);
+    _showAdminToast('Success', text.isEmpty ? 'Done' : text);
     return true;
   } catch (error) {
-    Get.snackbar('Error', _message(error), snackPosition: SnackPosition.BOTTOM);
+    _showAdminToast('Error', _message(error), isError: true);
     return false;
   }
 }
@@ -367,7 +390,7 @@ Future<bool> confirmBuyerOffer(BuildContext context, Map<String, dynamic> record
   remark.dispose();
   if (confirmed != true) return false;
   if (subAdminId == null) {
-    Get.snackbar('Error', 'Select a sub admin to confirm the deal.', snackPosition: SnackPosition.BOTTOM);
+    _showAdminToast('Error', 'Select a sub admin to confirm the deal.', isError: true);
     return false;
   }
   try {
@@ -380,10 +403,10 @@ Future<bool> confirmBuyerOffer(BuildContext context, Map<String, dynamic> record
       },
       requireAuth: true,
     );
-    Get.snackbar('Success', (response['message'] ?? 'Deal confirmed').toString(), snackPosition: SnackPosition.BOTTOM);
+    _showAdminToast('Success', (response['message'] ?? 'Deal confirmed').toString());
     return true;
   } catch (error) {
-    Get.snackbar('Error', _message(error), snackPosition: SnackPosition.BOTTOM);
+    _showAdminToast('Error', _message(error), isError: true);
     return false;
   }
 }

@@ -14,9 +14,10 @@ import '../utils/global_error_handler.dart';
 /// leak backend-style errors into snackbars throughout the app. API failures
 /// now use this type so every panel receives one clean message.
 class ApiRequestException implements Exception {
-  const ApiRequestException(this.message);
+  const ApiRequestException(this.message, {this.fieldErrors});
 
   final String message;
+  final Map<String, String>? fieldErrors;
 
   @override
   String toString() => message;
@@ -364,6 +365,7 @@ class ApiClient {
       print("📥 RESPONSE BODY: $body");
 
       String errorMessage = "Something went wrong. Please try again.";
+      final rawFieldErrors = <String, String>{};
       if (body.trim().startsWith("<") ||
           body.contains("<!doctype") ||
           body.contains("<html")) {
@@ -384,15 +386,10 @@ class ApiClient {
 
             if (errSource != null) {
               errSource.forEach((key, val) {
-                if (val is List) {
-                  messages.add(
-                    _fieldErrorMessage(key.toString(), val.join(', ')),
-                  );
-                } else {
-                  messages.add(
-                    _fieldErrorMessage(key.toString(), val.toString()),
-                  );
-                }
+                final k = key.toString();
+                final text = val is List ? val.join(', ') : val.toString();
+                rawFieldErrors[k] = text;
+                messages.add(_fieldErrorMessage(k, text));
               });
             } else if (decoded['detail'] is String &&
                 decoded['detail'].toString().trim().isNotEmpty) {
@@ -415,17 +412,22 @@ class ApiClient {
                   return;
                 }
 
+                final k = key.toString();
                 if (val is List) {
-                  messages.add(
-                    _fieldErrorMessage(key.toString(), val.join(', ')),
-                  );
+                  final text = val.join(', ');
+                  rawFieldErrors[k] = text;
+                  messages.add(_fieldErrorMessage(k, text));
                 } else if (val is String && val.trim().isNotEmpty) {
-                  messages.add(_fieldErrorMessage(key.toString(), val));
+                  rawFieldErrors[k] = val;
+                  messages.add(_fieldErrorMessage(k, val));
                 } else if (val is Map) {
                   val.forEach(
-                    (k, v) => messages.add(
-                      _fieldErrorMessage('$key.$k', v.toString()),
-                    ),
+                    (kSub, v) {
+                      final composite = '$k.$kSub';
+                      final text = v.toString();
+                      rawFieldErrors[composite] = text;
+                      messages.add(_fieldErrorMessage(composite, text));
+                    },
                   );
                 }
               });
@@ -451,7 +453,10 @@ class ApiClient {
         if (!suppressErrorDialog) GlobalErrorHandler.showServerError();
         throw ApiRequestException(userFriendlyErrorMessage(errorMessage));
       } else if (statusCode == 400) {
-        throw ApiRequestException(userFriendlyErrorMessage(errorMessage));
+        throw ApiRequestException(
+          userFriendlyErrorMessage(errorMessage),
+          fieldErrors: rawFieldErrors.isNotEmpty ? rawFieldErrors : null,
+        );
       } else if (statusCode == 401) {
         throw ApiRequestException(
           userFriendlyErrorMessage(
@@ -539,22 +544,34 @@ class ApiClient {
 
   static String _fieldErrorMessage(String field, String detail) {
     final normalizedField = field.toLowerCase().replaceAll('-', '_');
+    var friendlyDetail = detail.trim();
+    if (friendlyDetail.toLowerCase().contains('a valid integer is required') ||
+        friendlyDetail.toLowerCase().contains('valid integer is required')) {
+      friendlyDetail = 'Please enter a valid number.';
+    }
+
     if (normalizedField == 'branch_code' ||
         normalizedField == 'branch_ref_code' ||
         normalizedField == 'branch_reference_code') {
-      return 'Branch reference code: $detail';
+      return 'Branch reference code: $friendlyDetail';
     }
     if (normalizedField == 'transporter_id') {
-      return 'Transporter: $detail';
+      return friendlyDetail.contains('required') || friendlyDetail.contains('valid number')
+          ? 'Please select a transporter'
+          : 'Transporter: $friendlyDetail';
     }
     if (normalizedField == 'non_field_errors' || normalizedField == 'detail') {
-      return detail;
+      return friendlyDetail;
     }
     const fieldLabels = <String, String>{
       'phone': 'Mobile number',
       'mobile': 'Mobile number',
       'mobile_number': 'Mobile number',
-      'phone_number': 'Mobile number',
+      'phone_number': 'Phone number',
+      'driver_name': 'Driver name',
+      'license_number': 'License number',
+      'license_expiry': 'License expiry',
+      'experience': 'Experience',
       'email': 'Email address',
       'gst_number': 'GST number',
       'pan_number': 'PAN number',
@@ -575,6 +592,6 @@ class ApiClient {
             .replaceAll(RegExp(r'[_\.]'), ' ')
             .replaceAll(RegExp(r'\s+'), ' ')
             .trim();
-    return readableField.isEmpty ? detail : '$readableField: $detail';
+    return readableField.isEmpty ? friendlyDetail : '$readableField: $friendlyDetail';
   }
 }

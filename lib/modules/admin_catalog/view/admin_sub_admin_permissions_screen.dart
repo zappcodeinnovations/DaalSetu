@@ -174,13 +174,25 @@ class _AdminSubAdminPermissionsScreenState
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(_displayName(), style: Theme.of(context).textTheme.titleLarge),
+        Text(
+          _displayName(),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+        ),
         if (permissionText(_user['email']).isNotEmpty)
-          Text(permissionText(_user['email'])),
+          Text(
+            permissionText(_user['email']),
+            style: const TextStyle(color: Colors.black87),
+          ),
         const SizedBox(height: 4),
         Text(
           '${_overrideIds.length} extra permission${_overrideIds.length == 1 ? '' : 's'} • ${_roleIds.length} from roles',
-          style: Theme.of(context).textTheme.bodySmall,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.black87.withValues(alpha: 0.85),
+                fontWeight: FontWeight.w600,
+              ),
         ),
       ],
     ),

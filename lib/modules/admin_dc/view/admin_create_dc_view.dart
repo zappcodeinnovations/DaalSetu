@@ -885,11 +885,8 @@ class AdminCreateChallanView extends StatelessWidget {
           child: TextField(
             controller: controller,
             keyboardType: keyboardType,
-            maxLength: keyboardType == TextInputType.phone ||
-                    keyboardType == TextInputType.number ||
-                    keyboardType == const TextInputType.numberWithOptions(decimal: true)
-                ? 10
-                : null,
+            maxLength: keyboardType == TextInputType.phone ? 10 : null,
+            buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
             maxLines: maxLines,
             style: TextStyle(
               fontSize: 14,
@@ -903,6 +900,9 @@ class AdminCreateChallanView extends StatelessWidget {
               ),
               prefixIcon: Icon(icon, size: 20, color: AppTheme.primaryGold),
               border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              counterText: '',
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             ),
           ),

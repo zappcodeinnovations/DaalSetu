@@ -6,6 +6,8 @@ import 'package:daalsetu/network/api_client.dart';
 import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:open_filex/open_filex.dart';
+import 'package:share_plus/share_plus.dart';
 
 const _billingEndpoint = '/api/admin/brokerage-bills/';
 
@@ -107,16 +109,32 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
         requireAuth: true,
       );
       final data = response is Map ? response['data'] : null;
-      if (!mounted || data is! Map) return;
-      setState(() {
+      if (data is Map) {
         _statuses = _billingMaps(data['statuses']);
         _sellers = _billingMaps(data['sellers']);
         _buyers = _billingMaps(data['buyers']);
-        _companies = _billingMaps(data['billing_companies']);
-      });
+        _companies = _billingMaps(data['billing_companies'] ?? data['companies']);
+      }
     } catch (_) {
       // The bill list remains usable when optional filter choices cannot load.
     }
+
+    if (_companies.isEmpty) {
+      try {
+        final compResponse = await ApiClient.get(
+          endpoint: '/api/admin/billing-companies/',
+          requireAuth: true,
+        );
+        if (compResponse is Map) {
+          final compList = compResponse['results'] ?? compResponse['data'];
+          if (compList is List && compList.isNotEmpty) {
+            _companies = _billingMaps(compList);
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (mounted) setState(() {});
   }
 
   Future<void> _loadBills({bool reset = true}) async {
@@ -322,9 +340,9 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
           label: 'Billing company',
           value: _billingCompany,
           options: _companies,
-          valueOf: (item) => _billingText(item['id']),
+          valueOf: (item) => _billingText(item['id'] ?? item['value']),
           labelOf: (item) =>
-              _billingText(item['label'] ?? item['company_name']),
+              _billingText(item['label'] ?? item['company_name'] ?? item['name'] ?? item['legal_name']),
           onChanged: (value) => setState(() => _billingCompany = value),
         ),
         const SizedBox(height: 8),
@@ -428,8 +446,18 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
   Widget _dateButton(String label, DateTime? value, VoidCallback onPressed) =>
       OutlinedButton.icon(
         onPressed: onPressed,
-        icon: const Icon(Icons.calendar_today_outlined, size: 18),
-        label: Text(value == null ? label : _dateValue(value)),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          minimumSize: const Size(0, 42),
+          alignment: Alignment.centerLeft,
+        ),
+        icon: const Icon(Icons.calendar_today_outlined, size: 16),
+        label: Text(
+          value == null ? label : _dateValue(value),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 12),
+        ),
       );
 
   Widget _loadMoreButton() => Padding(
@@ -1109,9 +1137,11 @@ class _AdminCreateBrokerageBillScreenState
         ? const TextInputType.numberWithOptions(decimal: true)
         : TextInputType.text,
     maxLength: numeric ? 10 : null,
+    buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
     decoration: InputDecoration(
       labelText: label,
       border: const OutlineInputBorder(),
+      counterText: '',
     ),
     validator: validator,
     onChanged: onChanged,
@@ -1272,12 +1302,16 @@ class _AdminBrokerageBillDetailScreenState
         requireAuth: true,
         body: {'action': action, ...extra},
       );
+      final msg = _billingText(response['message']);
       _snack(
-        _billingText(response['message']).isEmpty
-            ? 'Bill updated.'
-            : _billingText(response['message']),
+        msg.isEmpty
+            ? (action == 'generate_pdf' ? 'PDF generated successfully.' : 'Bill updated.')
+            : msg,
       );
       await _load();
+      if (action == 'generate_pdf') {
+        await _downloadPdf();
+      }
     } catch (error) {
       if (mounted) _snack(_billingMessage(error), error: true);
     }
@@ -1529,9 +1563,11 @@ class _AdminBrokerageBillDetailScreenState
         ? const TextInputType.numberWithOptions(decimal: true)
         : null,
     maxLength: numeric ? 10 : null,
+    buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
     decoration: InputDecoration(
       labelText: label,
       border: const OutlineInputBorder(),
+      counterText: '',
     ),
   );
 
@@ -1883,11 +1919,28 @@ class _AdminBrokerageBillDetailScreenState
       final number = _billingText(
         _bill?['bill_number'],
       ).replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
-      final file = File(
-        '${Directory.systemTemp.path}/${number.isEmpty ? 'brokerage_bill_${widget.billId}' : number}.pdf',
-      );
+      final fileName = '${number.isEmpty ? 'brokerage_bill_${widget.billId}' : number}.pdf';
+      final file = File('${Directory.systemTemp.path}/$fileName');
       await file.writeAsBytes(response.bodyBytes, flush: true);
-      if (mounted) _snack('PDF downloaded to ${file.path}');
+      if (mounted) _snack('PDF downloaded successfully.');
+      try {
+        final result = await OpenFilex.open(file.path, type: 'application/pdf');
+        if (result.type != ResultType.done) {
+          await SharePlus.instance.share(
+            ShareParams(
+              files: [XFile(file.path, mimeType: 'application/pdf')],
+              subject: 'Brokerage Bill $number',
+            ),
+          );
+        }
+      } catch (_) {
+        await SharePlus.instance.share(
+          ShareParams(
+            files: [XFile(file.path, mimeType: 'application/pdf')],
+            subject: 'Brokerage Bill $number',
+          ),
+        );
+      }
     } catch (error) {
       if (mounted) _snack(_billingMessage(error), error: true);
     }
@@ -2070,17 +2123,24 @@ class _AdminBrokerageBillDetailScreenState
             ),
           ],
           if (_isIssued) ...[
-            OutlinedButton.icon(
-              onPressed: () => _runAction('generate_pdf'),
-              icon: const Icon(Icons.picture_as_pdf_outlined),
-              label: const Text('Generate PDF'),
-            ),
-            if (bill['has_pdf'] == true)
+            if (bill['has_pdf'] == true) ...[
               OutlinedButton.icon(
                 onPressed: _downloadPdf,
-                icon: const Icon(Icons.download_outlined),
-                label: const Text('Download PDF'),
+                icon: const Icon(Icons.picture_as_pdf_outlined),
+                label: const Text('Download / View PDF'),
               ),
+              OutlinedButton.icon(
+                onPressed: () => _runAction('generate_pdf'),
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Re-generate PDF'),
+              ),
+            ] else ...[
+              OutlinedButton.icon(
+                onPressed: () => _runAction('generate_pdf'),
+                icon: const Icon(Icons.picture_as_pdf_outlined),
+                label: const Text('Generate PDF'),
+              ),
+            ],
             FilledButton.tonalIcon(
               onPressed: () => _confirm(
                 title: 'Cancel issued bill',

@@ -69,14 +69,21 @@ class ProductService {
 
   static Future<List<OfferOption>> getSellerCompanies(int sellerId) async {
     final response = await ApiClient.get(
-      endpoint: "${ApiUrls.company}?seller=$sellerId",
+      endpoint: "${ApiUrls.company}?seller=$sellerId&seller_id=$sellerId&user_id=$sellerId",
       requireAuth: true,
     );
-    return (response as List? ?? [])
+    final dynamic rawList = response is List
+        ? response
+        : (response is Map && response['results'] is List)
+            ? response['results']
+            : (response is Map && response['data'] is List)
+                ? response['data']
+                : null;
+    return (rawList as List? ?? [])
         .map(
           (item) => OfferOption(
             id: item["id"] as int,
-            name: item["legal_name"]?.toString() ?? "",
+            name: item["legal_name"]?.toString() ?? item["company_name"]?.toString() ?? "",
             subtitle: [item["city"], item["state"]]
                 .where((value) => value?.toString().trim().isNotEmpty ?? false)
                 .join(", "),

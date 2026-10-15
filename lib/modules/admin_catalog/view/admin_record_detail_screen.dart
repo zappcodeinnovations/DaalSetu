@@ -219,7 +219,33 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
           break;
         case AdminDetailFieldType.boolean:
           final boolVal = value == true || value.toString().toLowerCase() == 'true';
-          content = Text(boolVal ? "Yes" : "No", style: const TextStyle(fontWeight: FontWeight.w600));
+          final isStatusField = field.label.toLowerCase().contains('status') ||
+              field.label.toLowerCase().contains('active');
+          final labelText = isStatusField
+              ? (boolVal ? 'Active' : 'Inactive')
+              : (boolVal ? 'Yes' : 'No');
+          final color = boolVal ? Colors.green : Colors.red;
+          content = isStatusField
+              ? Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: color.withValues(alpha: 0.3)),
+                  ),
+                  child: Text(
+                    labelText,
+                    style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                )
+              : Text(
+                  labelText,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                );
           break;
         case AdminDetailFieldType.phone:
           content = GestureDetector(
@@ -260,6 +286,84 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
           );
           break;
       }
+    }
+
+    final isLongText = !isNullOrEmpty &&
+        field.type == AdminDetailFieldType.text &&
+        (value.toString().trim().length > 60 || value.toString().contains('\n'));
+
+    if (isLongText) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    field.label,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: Theme.of(context).textTheme.bodySmall?.color,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ),
+                if (field.copyable && !isNullOrEmpty)
+                  GestureDetector(
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: value.toString()));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Copied to clipboard'),
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Icon(
+                        Icons.copy_rounded,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: content,
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (field.type == AdminDetailFieldType.video) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              field.label,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            content,
+          ],
+        ),
+      );
     }
 
     return Padding(
@@ -358,25 +462,42 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
 
   Widget _buildImagePreview(String path) {
     final url = _absoluteUrl(path);
-    return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => _FullScreenImage(url: url)),
-      ),
-      child: Container(
-        height: 100,
-        width: 100,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Theme.of(context).dividerColor),
+    return Wrap(
+      spacing: 12,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => _FullScreenImage(
+                url: url,
+                onDownload: () => _download(url),
+              ),
+            ),
+          ),
+          child: Container(
+            height: 100,
+            width: 100,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Theme.of(context).dividerColor),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: AuthenticatedNetworkImage(
+              url: url,
+              fit: BoxFit.cover,
+              fallback: const Center(child: Icon(Icons.broken_image_outlined)),
+            ),
+          ),
         ),
-        clipBehavior: Clip.antiAlias,
-        child: AuthenticatedNetworkImage(
-          url: url,
-          fit: BoxFit.cover,
-          fallback: const Center(child: Icon(Icons.broken_image_outlined)),
+        FilledButton.tonalIcon(
+          onPressed: () => _download(url),
+          icon: const Icon(Icons.download_rounded, size: 18),
+          label: const Text('Download Image'),
         ),
-      ),
+      ],
     );
   }
 
@@ -428,7 +549,15 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
               Text(_label(key), style: const TextStyle(fontWeight: FontWeight.w800)),
               const SizedBox(height: 10),
               GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => _FullScreenImage(url: url))),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => _FullScreenImage(
+                      url: url,
+                      onDownload: () => _download(url),
+                    ),
+                  ),
+                ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: AuthenticatedNetworkImage(
@@ -436,6 +565,12 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
                     fallback: const SizedBox(height: 100, child: Center(child: Icon(Icons.broken_image_outlined))),
                   ),
                 ),
+              ),
+              const SizedBox(height: 10),
+              FilledButton.tonalIcon(
+                onPressed: () => _download(url),
+                icon: const Icon(Icons.download_rounded, size: 18),
+                label: const Text('Download Image'),
               ),
             ],
           ),
@@ -517,13 +652,25 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
 }
 
 class _FullScreenImage extends StatelessWidget {
-  const _FullScreenImage({required this.url});
+  const _FullScreenImage({required this.url, this.onDownload});
   final String url;
+  final VoidCallback? onDownload;
 
   @override
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: Colors.black,
-        appBar: AppBar(backgroundColor: Colors.black, foregroundColor: Colors.white),
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+          actions: [
+            if (onDownload != null)
+              IconButton(
+                tooltip: 'Download',
+                icon: const Icon(Icons.download_rounded),
+                onPressed: onDownload,
+              ),
+          ],
+        ),
         body: InteractiveViewer(
           minScale: .5, maxScale: 5,
           child: Center(
