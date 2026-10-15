@@ -6,6 +6,7 @@ import '../../../../services/buyer_services.dart';
 import '../../../../services/seller_services.dart';
 import '../../../../services/product_services.dart';
 import '../../../../utils/app_snackbar.dart';
+import '../../../products/model/offer_option_model.dart';
 import '../../../seller/categories/model/seller_category_model.dart';
 import '../controller/buyer_offers_controller.dart';
 import '../../dashboard/controller/buyer_dashboard_controller.dart';
@@ -30,7 +31,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
   String selectedUnit = "qtl";
   String selectedAmountUnit = "qtl";
 
-  List<CategoryTreeModel> categories = [];
+  List<OfferOption> categories = [];
   List<BrandModel> brands = [];
   List<Map<String, dynamic>> availableBranches = [];
   final Set<int> selectedBranchIds = {};
@@ -58,42 +59,108 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
   }
 
   void _calculateBags() {
-    final qty = double.tryParse(quantityController.text.trim());
-    final packingKg = double.tryParse(packingController.text.trim());
+    final qtyText = quantityController.text.trim();
+    final packingText = packingController.text.trim();
 
-    if (qty != null && qty > 0 && packingKg != null && packingKg > 0) {
-      double totalKg = 0;
-      switch (selectedUnit.toLowerCase()) {
-        case 'qtl':
-        case 'quintal':
-          totalKg = qty * 100;
-          break;
-        case 'ton':
-        case 'tonne':
-          totalKg = qty * 1000;
-          break;
-        case 'kg':
-        default:
-          totalKg = qty;
-          break;
-      }
-
-      final bags = (totalKg / packingKg).round();
-      final bagText = bags > 0 ? bags.toString() : '';
-      if (bagCountController.text != bagText) {
-        bagCountController.value = TextEditingValue(
-          text: bagText,
-          selection: TextSelection.collapsed(offset: bagText.length),
+    // If either quantity or packing is cleared or empty, reset calculated bags gracefully
+    if (qtyText.isEmpty || packingText.isEmpty) {
+      if (bagCountController.text.isNotEmpty) {
+        bagCountController.value = const TextEditingValue(
+          text: '',
+          selection: TextSelection.collapsed(offset: 0),
         );
       }
+      return;
     }
+
+    final qty = double.tryParse(qtyText);
+    final packingKg = double.tryParse(packingText);
+
+    if (qty == null || qty <= 0 || packingKg == null || packingKg <= 0) {
+      if (bagCountController.text.isNotEmpty) {
+        bagCountController.value = const TextEditingValue(
+          text: '',
+          selection: TextSelection.collapsed(offset: 0),
+        );
+      }
+      return;
+    }
+
+    double totalKg = 0;
+    switch (selectedUnit.toLowerCase()) {
+      case 'qtl':
+      case 'quintal':
+        totalKg = qty * 100;
+        break;
+      case 'ton':
+      case 'tonne':
+        totalKg = qty * 1000;
+        break;
+      case 'kg':
+      default:
+        totalKg = qty;
+        break;
+    }
+
+    final bags = (totalKg / packingKg).round();
+    final bagText = bags > 0 ? bags.toString() : '';
+    if (bagCountController.text != bagText) {
+      bagCountController.value = TextEditingValue(
+        text: bagText,
+        selection: TextSelection.collapsed(offset: bagText.length),
+      );
+    }
+  }
+
+  bool _isDummyOrTestCategory(String name) {
+    final trimmed = name.trim().toLowerCase();
+    if (trimmed.isEmpty) return true;
+    if (trimmed == 'test' ||
+        trimmed == 'xyz' ||
+        trimmed.startsWith('test ') ||
+        trimmed.endsWith(' test') ||
+        trimmed == 'test category' ||
+        trimmed == 'testing' ||
+        RegExp(r'^(.)\1+$').hasMatch(trimmed)) {
+      return true;
+    }
+    return false;
   }
 
   Future<void> _loadSupportData() async {
     try {
-      final catData = await SellerServices.getCategoriesTree();
+      List<OfferOption> catOptions = [];
 
-      // Load branches
+      // 1. Fetch from master parent categories API (/api/categories/parent-dropdown/)
+      try {
+        final parentCats = await ProductService.getParentCategories();
+        if (parentCats.isNotEmpty) {
+          catOptions = parentCats
+              .where((c) => !_isDummyOrTestCategory(c.name))
+              .toList();
+        }
+      } catch (e) {
+        print("⚠️ Master parent categories fetch error: $e");
+      }
+
+      // 2. Fallback to categories tree if parent dropdown fails or returns empty
+      if (catOptions.isEmpty) {
+        try {
+          final catData = await SellerServices.getCategoriesTree();
+          final parsed = catData.map((e) => CategoryTreeModel.fromJson(e)).toList();
+          catOptions = parsed
+              .where((c) =>
+                  (c.level == 0 || c.parentId == null) &&
+                  c.status.toLowerCase() == 'active' &&
+                  !_isDummyOrTestCategory(c.name))
+              .map((c) => OfferOption(id: c.id, name: c.name))
+              .toList();
+        } catch (e) {
+          print("⚠️ Fallback categories tree fetch error: $e");
+        }
+      }
+
+      // Load branches with multi-source fallback (seller branches, public branches, default branch)
       List<Map<String, dynamic>> branchList = [];
       try {
         final branchRes = await SellerServices.getBranches();
@@ -115,16 +182,40 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
         print("⚠️ Branches fetch error: $e");
       }
 
-      setState(() {
-        categories = catData.map((e) => CategoryTreeModel.fromJson(e)).toList();
-        availableBranches = branchList;
-        // Default select all available branches
-        for (var b in branchList) {
-          if (b['id'] != null) {
-            final id = int.tryParse(b['id'].toString());
-            if (id != null) selectedBranchIds.add(id);
+      // If user has no branches assigned via seller endpoint, load public branches
+      if (branchList.isEmpty) {
+        try {
+          final publicBranches = await SellerServices.getPublicBranches();
+          if (publicBranches.isNotEmpty) {
+            branchList.addAll(publicBranches);
           }
+        } catch (e) {
+          print("⚠️ Public branches fetch error: $e");
         }
+      }
+
+      // Guarantee at least the primary AMR158M / default branch so branches are never empty or non-selectable
+      if (branchList.isEmpty) {
+        branchList.add({
+          'id': 1,
+          'branch_code': 'AMR158M',
+          'location_name': 'AMR158M',
+        });
+      }
+
+      final branchIdsToSelect = <int>{};
+      for (var b in branchList) {
+        if (b['id'] != null) {
+          final id = int.tryParse(b['id'].toString());
+          if (id != null) branchIdsToSelect.add(id);
+        }
+      }
+
+      setState(() {
+        categories = catOptions;
+        availableBranches = branchList;
+        selectedBranchIds.clear();
+        selectedBranchIds.addAll(branchIdsToSelect);
         isLoading = false;
       });
     } catch (e) {
@@ -135,21 +226,102 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
   Future<void> _onCategoryChanged(int? catId) async {
     setState(() {
       selectedCategoryId = catId;
-      selectedBrandId = null;
+      selectedBrandId = 0; // Default to "Any Brand / Loose"
       brands = [];
     });
 
     if (catId == null) return;
 
     try {
-      final catBrands = await ProductService.getCategoryBrands(catId);
+      final Map<int, String> brandMap = {};
+      final Set<String> normalizedSeen = {};
+
+      void addBrandIfValid(dynamic idRaw, dynamic nameRaw) {
+        if (idRaw == null || nameRaw == null) return;
+        final id = int.tryParse(idRaw.toString()) ?? 0;
+        final name = nameRaw.toString().trim();
+        if (id <= 0 || name.isEmpty) return;
+
+        final norm = name.toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+        if (!normalizedSeen.contains(norm)) {
+          normalizedSeen.add(norm);
+          brandMap[id] = name;
+        }
+      }
+
+      // 1. Fetch category-specific brands from /api/categories/$catId/brands/
+      try {
+        final catBrands = await ProductService.getCategoryBrands(catId);
+        for (final b in catBrands) {
+          addBrandIfValid(b.id, b.name);
+        }
+      } catch (e) {
+        print("⚠️ Category brands fetch error: $e");
+      }
+
+      // 2. Fetch master brands from /api/brands/ or /api/brands/dropdown/
+      try {
+        final masterBrands = await SellerServices.getBrandsList();
+        for (final item in masterBrands) {
+          if (item is Map) {
+            final status = (item['status'] ?? 'active').toString().toLowerCase();
+            final isActive = item['is_active'] != false;
+            if (isActive && status != 'inactive') {
+              addBrandIfValid(item['id'], item['brand_name'] ?? item['name']);
+            }
+          }
+        }
+      } catch (e) {
+        print("⚠️ Master brands fetch error: $e");
+      }
+
+      // 3. Harvest brands from categories tree (guarantees full catalogue parity with web portal)
+      try {
+        final catData = await SellerServices.getCategoriesTree();
+        void extractTreeBrands(dynamic node) {
+          if (node is Map) {
+            if (node['brands'] is List) {
+              for (final b in node['brands']) {
+                if (b is Map) {
+                  addBrandIfValid(b['id'], b['brand_name'] ?? b['name']);
+                }
+              }
+            }
+            if (node['children'] is List) {
+              for (final child in node['children']) {
+                extractTreeBrands(child);
+              }
+            }
+          }
+        }
+
+        for (final root in catData) {
+          extractTreeBrands(root);
+        }
+      } catch (e) {
+        print("⚠️ Category tree brands extraction error: $e");
+      }
+
+      // 4. Construct brand models with "Any Brand / Loose" (id 0) at the top, followed by sorted brands
+      final List<BrandModel> brandList = [
+        BrandModel(id: 0, brandName: "Any Brand / Loose"),
+      ];
+
+      final sortedEntries = brandMap.entries.toList()
+        ..sort((a, b) => a.value.toLowerCase().compareTo(b.value.toLowerCase()));
+
+      for (final entry in sortedEntries) {
+        brandList.add(BrandModel(id: entry.key, brandName: entry.value));
+      }
+
       if (mounted) {
         setState(() {
-          brands = catBrands.map((b) => BrandModel(id: b.id, brandName: b.name)).toList();
+          brands = brandList;
+          selectedBrandId = 0;
         });
       }
     } catch (e) {
-      print("⚠️ Category brands fetch error: $e");
+      print("⚠️ Preferred brands resolution error: $e");
     }
   }
 
@@ -188,8 +360,10 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
         "description": titleController.text.trim(),
         "category": selectedCategoryId.toString(),
         "category_id": selectedCategoryId,
-        if (selectedBrandId != null) "brand": selectedBrandId.toString(),
-        if (selectedBrandId != null) "brand_id": selectedBrandId,
+        if (selectedBrandId != null && selectedBrandId! > 0)
+          "brand": selectedBrandId.toString(),
+        if (selectedBrandId != null && selectedBrandId! > 0)
+          "brand_id": selectedBrandId,
         "required_quantity": qtyNum.toString(),
         "requested_quantity": qtyNum,
         "quantity": qtyNum,
