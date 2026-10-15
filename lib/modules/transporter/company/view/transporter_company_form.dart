@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/tax_id_formatters.dart';
+import '../../../../utils/india_location_data.dart';
 import '../controller/transporter_company_controller.dart';
 import '../model/company_model.dart';
 import '../../../../routes/app_routes.dart';
@@ -67,7 +68,7 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
   void _onPincodeChanged() {
     final pin = _pincodeCtrl.text.trim();
     if (pin.length == 6) {
-      final detected = _getStateFromPincode(pin);
+      final detected = IndiaLocationData.getStateFromPincode(pin);
       if (detected != null &&
           detected.toLowerCase() != _stateCtrl.text.trim().toLowerCase()) {
         setState(() {
@@ -438,7 +439,7 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
           } else if (val != null) {
             setState(() {
               _cityCtrl.text = val;
-              final inferredState = _getStateForCity(val);
+              final inferredState = IndiaLocationData.getStateForCity(val);
               if (inferredState != null &&
                   _stateCtrl.text.trim().toLowerCase() != inferredState.toLowerCase()) {
                 _stateCtrl.text = inferredState;
@@ -457,7 +458,7 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
   }
 
   Widget _buildStateDropdown() {
-    final states = _stateCities.keys.toList()..sort();
+    final states = IndiaLocationData.stateCities.keys.toList()..sort();
     final currentState = _stateCtrl.text.trim();
     final matched = states.firstWhere(
       (s) => s.toLowerCase() == currentState.toLowerCase(),
@@ -502,7 +503,7 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
             setState(() {
               _stateCtrl.text = val;
               // If current city is not part of newly chosen state, switch to first city of that state
-              final stateCities = _stateCities[val] ?? [];
+              final stateCities = IndiaLocationData.stateCities[val] ?? [];
               if (!stateCities.any((c) => c.toLowerCase() == _cityCtrl.text.trim().toLowerCase())) {
                 _cityCtrl.text = stateCities.isNotEmpty ? stateCities.first : '';
               }
@@ -521,7 +522,7 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
 
   List<String> _getAvailableCities() {
     final state = _stateCtrl.text.trim();
-    final matched = _stateCities.keys.firstWhere(
+    final matched = IndiaLocationData.stateCities.keys.firstWhere(
       (k) => k.toLowerCase() == state.toLowerCase(),
       orElse: () => '',
     );
@@ -529,10 +530,10 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
 
     List<String> list;
     if (matchedKey != null) {
-      list = List<String>.from(_stateCities[matchedKey]!);
+      list = List<String>.from(IndiaLocationData.stateCities[matchedKey]!);
     } else {
       final all = <String>{};
-      for (final cities in _stateCities.values) {
+      for (final cities in IndiaLocationData.stateCities.values) {
         all.addAll(cities);
       }
       list = all.toList()..sort();
@@ -549,44 +550,6 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
     }
 
     return list;
-  }
-
-  String? _getStateForCity(String city) {
-    for (final entry in _stateCities.entries) {
-      if (entry.value.any((c) => c.toLowerCase() == city.toLowerCase())) {
-        return entry.key;
-      }
-    }
-    return null;
-  }
-
-  static String? _getStateFromPincode(String pincode) {
-    if (pincode.length < 2) return null;
-    final prefix = int.tryParse(pincode.substring(0, 2));
-    if (prefix == null) return null;
-
-    if (prefix == 11) return "Delhi";
-    if (prefix >= 12 && prefix <= 13) return "Haryana";
-    if (prefix >= 14 && prefix <= 15) return "Punjab";
-    if (prefix == 16) return "Punjab";
-    if (prefix == 17) return "Himachal Pradesh";
-    if (prefix >= 18 && prefix <= 19) return "Jammu & Kashmir";
-    if (prefix >= 20 && prefix <= 28) return "Uttar Pradesh";
-    if (prefix >= 30 && prefix <= 34) return "Rajasthan";
-    if (prefix >= 36 && prefix <= 39) return "Gujarat";
-    if (prefix >= 40 && prefix <= 44) return "Maharashtra";
-    if (prefix >= 45 && prefix <= 48) return "Madhya Pradesh";
-    if (prefix == 49) return "Chhattisgarh";
-    if (prefix == 50) return "Telangana";
-    if (prefix >= 51 && prefix <= 53) return "Andhra Pradesh";
-    if (prefix >= 56 && prefix <= 59) return "Karnataka";
-    if (prefix >= 60 && prefix <= 64) return "Tamil Nadu";
-    if (prefix >= 67 && prefix <= 69) return "Kerala";
-    if (prefix >= 70 && prefix <= 74) return "West Bengal";
-    if (prefix >= 75 && prefix <= 77) return "Odisha";
-    if (prefix == 78) return "Assam";
-    if (prefix >= 80 && prefix <= 85) return "Bihar";
-    return null;
   }
 
   void _showCustomCityDialog() {
@@ -626,399 +589,6 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
       ),
     );
   }
-
-  static const Map<String, List<String>> _stateCities = {
-    "Maharashtra": [
-      "Nagpur",
-      "Mumbai",
-      "Pune",
-      "Akola",
-      "Amravati",
-      "Latur",
-      "Jalgaon",
-      "Nashik",
-      "Chhatrapati Sambhaji Nagar",
-      "Nanded",
-      "Solapur",
-      "Ahmednagar",
-      "Kolhapur",
-      "Sangli",
-      "Parbhani",
-      "Hingoli",
-      "Yavatmal",
-      "Wardha",
-      "Gondia",
-      "Chandrapur",
-      "Washim",
-      "Buldhana",
-      "Dhule",
-      "Satara",
-      "Thane",
-      "Navi Mumbai",
-      "Kalyan",
-      "Amalner",
-    ],
-    "Madhya Pradesh": [
-      "Indore",
-      "Bhopal",
-      "Jabalpur",
-      "Ujjain",
-      "Gwalior",
-      "Sagar",
-      "Dewas",
-      "Satna",
-      "Ratlam",
-      "Katni",
-      "Khandwa",
-      "Khargone",
-      "Vidisha",
-      "Sehore",
-      "Hoshangabad",
-      "Harda",
-      "Betul",
-      "Neemuch",
-      "Mandsaur",
-      "Chhindwara",
-      "Damoh",
-      "Narsinghpur",
-      "Shivpuri",
-      "Rewa",
-      "Burhanpur",
-    ],
-    "Gujarat": [
-      "Ahmedabad",
-      "Surat",
-      "Rajkot",
-      "Vadodara",
-      "Bhavnagar",
-      "Jamnagar",
-      "Junagadh",
-      "Gandhidham",
-      "Morbi",
-      "Gondal",
-      "Unjha",
-      "Mehsana",
-      "Anand",
-      "Nadiad",
-      "Bharuch",
-      "Himatnagar",
-      "Dahod",
-      "Amreli",
-      "Surendranagar",
-      "Porbandar",
-      "Navsari",
-      "Vapi",
-      "Valsad",
-      "Gandhinagar",
-    ],
-    "Rajasthan": [
-      "Jaipur",
-      "Jodhpur",
-      "Kota",
-      "Bikaner",
-      "Alwar",
-      "Sriganganagar",
-      "Hanumangarh",
-      "Ajmer",
-      "Udaipur",
-      "Bhilwara",
-      "Bharatpur",
-      "Baran",
-      "Bundi",
-      "Tonk",
-      "Nagaur",
-      "Pali",
-      "Jhalawar",
-      "Sikar",
-      "Churu",
-      "Chittorgarh",
-    ],
-    "Karnataka": [
-      "Bengaluru",
-      "Hubli",
-      "Dharwad",
-      "Belagavi",
-      "Kalaburagi",
-      "Bidar",
-      "Raichur",
-      "Davanagere",
-      "Ballari",
-      "Shivamogga",
-      "Mysuru",
-      "Vijayapura",
-      "Bagalkot",
-      "Gadag",
-      "Yadgir",
-    ],
-    "Telangana": [
-      "Hyderabad",
-      "Warangal",
-      "Nizamabad",
-      "Karimnagar",
-      "Khammam",
-      "Ramagundam",
-      "Mahbubnagar",
-      "Nalgonda",
-      "Adilabad",
-      "Suryapet",
-      "Siddipet",
-    ],
-    "Andhra Pradesh": [
-      "Vijayawada",
-      "Guntur",
-      "Visakhapatnam",
-      "Kurnool",
-      "Nellore",
-      "Rajahmundry",
-      "Tirupati",
-      "Kakinada",
-      "Anantapur",
-      "Kadapa",
-      "Eluru",
-      "Ongole",
-      "Vizianagaram",
-    ],
-    "Uttar Pradesh": [
-      "Kanpur",
-      "Lucknow",
-      "Varanasi",
-      "Agra",
-      "Meerut",
-      "Bareilly",
-      "Aligarh",
-      "Moradabad",
-      "Prayagraj",
-      "Gorakhpur",
-      "Jhansi",
-      "Saharanpur",
-      "Muzaffarnagar",
-      "Mathura",
-      "Hathras",
-      "Shahjahanpur",
-      "Hapur",
-      "Noida",
-      "Ghaziabad",
-    ],
-    "Chhattisgarh": [
-      "Raipur",
-      "Bilaspur",
-      "Durg",
-      "Bhilai",
-      "Rajnandgaon",
-      "Raigarh",
-      "Korba",
-      "Jagdalpur",
-      "Ambikapur",
-      "Dhamtari",
-      "Mahasamund",
-    ],
-    "Punjab": [
-      "Ludhiana",
-      "Amritsar",
-      "Jalandhar",
-      "Patiala",
-      "Bathinda",
-      "Khanna",
-      "Moga",
-      "Abohar",
-      "Firozpur",
-      "Sangrur",
-      "Hoshiarpur",
-      "Pathankot",
-      "Mohali",
-    ],
-    "Haryana": [
-      "Karnal",
-      "Panipat",
-      "Ambala",
-      "Rohtak",
-      "Hisar",
-      "Sirsa",
-      "Kurukshetra",
-      "Jind",
-      "Kaithal",
-      "Sonipat",
-      "Faridabad",
-      "Gurugram",
-      "Yamunanagar",
-      "Rewari",
-    ],
-    "Delhi": [
-      "New Delhi",
-      "Delhi",
-      "North Delhi",
-      "South Delhi",
-      "West Delhi",
-      "East Delhi",
-      "Central Delhi",
-    ],
-    "Bihar": [
-      "Patna",
-      "Muzaffarpur",
-      "Gaya",
-      "Bhagalpur",
-      "Purnia",
-      "Darbhanga",
-      "Begusarai",
-      "Samastipur",
-      "Katihar",
-      "Munger",
-      "Chhapra",
-      "Arrah",
-    ],
-    "West Bengal": [
-      "Kolkata",
-      "Siliguri",
-      "Asansol",
-      "Durgapur",
-      "Howrah",
-      "Malda",
-      "Burdwan",
-      "Kharagpur",
-    ],
-    "Tamil Nadu": [
-      "Chennai",
-      "Coimbatore",
-      "Madurai",
-      "Tiruchirappalli",
-      "Salem",
-      "Erode",
-      "Tirunelveli",
-      "Vellore",
-      "Thoothukudi",
-      "Dindigul",
-      "Thanjavur",
-      "Tiruppur",
-    ],
-    "Kerala": [
-      "Kochi",
-      "Thiruvananthapuram",
-      "Kozhikode",
-      "Thrissur",
-      "Kollam",
-      "Palakkad",
-      "Alappuzha",
-      "Kannur",
-    ],
-    "Odisha": [
-      "Bhubaneswar",
-      "Cuttack",
-      "Rourkela",
-      "Berhampur",
-      "Sambalpur",
-      "Puri",
-      "Balasore",
-      "Jharsuguda",
-    ],
-    "Jharkhand": [
-      "Ranchi",
-      "Jamshedpur",
-      "Dhanbad",
-      "Bokaro",
-      "Deoghar",
-      "Hazaribagh",
-      "Giridih",
-    ],
-    "Assam": [
-      "Guwahati",
-      "Silchar",
-      "Dibrugarh",
-      "Jorhat",
-      "Nagaon",
-      "Tinsukia",
-      "Tezpur",
-    ],
-    "Uttarakhand": [
-      "Dehradun",
-      "Haridwar",
-      "Roorkee",
-      "Haldwani",
-      "Rudrapur",
-      "Kashipur",
-      "Rishikesh",
-    ],
-    "Himachal Pradesh": [
-      "Shimla",
-      "Solan",
-      "Dharamshala",
-      "Mandi",
-      "Baddi",
-      "Kullu",
-      "Una",
-    ],
-    "Goa": [
-      "Panaji",
-      "Margao",
-      "Vasco da Gama",
-      "Mapusa",
-      "Ponda",
-    ],
-    "Andaman and Nicobar Islands": [
-      "Port Blair",
-    ],
-    "Arunachal Pradesh": [
-      "Itanagar",
-      "Naharlagun",
-      "Pasighat",
-    ],
-    "Chandigarh": [
-      "Chandigarh",
-    ],
-    "Dadra and Nagar Haveli and Daman and Diu": [
-      "Daman",
-      "Diu",
-      "Silvassa",
-    ],
-    "Jammu and Kashmir": [
-      "Srinagar",
-      "Jammu",
-      "Anantnag",
-      "Baramulla",
-      "Udhampur",
-    ],
-    "Ladakh": [
-      "Leh",
-      "Kargil",
-    ],
-    "Lakshadweep": [
-      "Kavaratti",
-    ],
-    "Manipur": [
-      "Imphal",
-      "Churachandpur",
-      "Thoubal",
-    ],
-    "Meghalaya": [
-      "Shillong",
-      "Tura",
-      "Jowai",
-    ],
-    "Mizoram": [
-      "Aizawl",
-      "Lunglei",
-      "Champhai",
-    ],
-    "Nagaland": [
-      "Kohima",
-      "Dimapur",
-      "Mokokchung",
-    ],
-    "Puducherry": [
-      "Puducherry",
-      "Karaikal",
-      "Yanam",
-      "Mahe",
-    ],
-    "Sikkim": [
-      "Gangtok",
-      "Namchi",
-      "Gyalshing",
-    ],
-    "Tripura": [
-      "Agartala",
-      "Dharmanagar",
-      "Udaipur",
-    ],
-  };
 }
+
 

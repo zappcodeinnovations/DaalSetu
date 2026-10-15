@@ -1,17 +1,121 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
+import 'package:daalsetu/utils/india_location_data.dart';
 import 'package:daalsetu/utils/tax_id_formatters.dart';
 import '../controller/seller_company_controller.dart';
 
-class AddCompanyView extends StatelessWidget {
+class AddCompanyView extends StatefulWidget {
   const AddCompanyView({super.key});
 
+  @override
+  State<AddCompanyView> createState() => _AddCompanyViewState();
+}
+
+class _AddCompanyViewState extends State<AddCompanyView> {
   static const Color primaryColor = Color(0xFFFFB300);
+  final Set<String> _customCities = {};
+  late final SellerCompanyController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.find<SellerCompanyController>();
+    controller.pincodeController.addListener(_onPincodeChanged);
+  }
+
+  @override
+  void dispose() {
+    controller.pincodeController.removeListener(_onPincodeChanged);
+    super.dispose();
+  }
+
+  void _onPincodeChanged() {
+    final pin = controller.pincodeController.text.trim();
+    if (pin.length == 6) {
+      final detected = IndiaLocationData.getStateFromPincode(pin);
+      if (detected != null &&
+          detected.toLowerCase() !=
+              controller.stateController.text.trim().toLowerCase()) {
+        setState(() {
+          controller.stateController.text = detected;
+        });
+      }
+    }
+  }
+
+  List<String> _getAvailableCities() {
+    final state = controller.stateController.text.trim();
+    final matched = IndiaLocationData.stateCities.keys.firstWhere(
+      (k) => k.toLowerCase() == state.toLowerCase(),
+      orElse: () => '',
+    );
+    final matchedKey = matched.isNotEmpty ? matched : null;
+
+    List<String> list;
+    if (matchedKey != null) {
+      list = List<String>.from(IndiaLocationData.stateCities[matchedKey]!);
+    } else {
+      final all = <String>{};
+      for (final cities in IndiaLocationData.stateCities.values) {
+        all.addAll(cities);
+      }
+      list = all.toList()..sort();
+    }
+
+    for (final custom in _customCities) {
+      if (!list.contains(custom)) {
+        list.insert(0, custom);
+      }
+    }
+    final cur = controller.cityController.text.trim();
+    if (cur.isNotEmpty && !list.contains(cur)) {
+      list.insert(0, cur);
+    }
+
+    return list;
+  }
+
+  void _showCustomCityDialog() {
+    final textController = TextEditingController();
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text("Enter City Name"),
+        content: TextField(
+          controller: textController,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          decoration: InputDecoration(
+            hintText: "e.g. Wardha",
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final newCity = textController.text.trim();
+              if (newCity.isNotEmpty) {
+                setState(() {
+                  _customCities.add(newCity);
+                  controller.cityController.text = newCity;
+                });
+                Get.back();
+              }
+            },
+            child: const Text("Select"),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<SellerCompanyController>();
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -84,19 +188,11 @@ class AddCompanyView extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: _buildTextField(
-                    controller.cityController,
-                    "City",
-                    null,
-                  ),
+                  child: _buildCityDropdown(theme),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _buildTextField(
-                    controller.stateController,
-                    "State",
-                    null,
-                  ),
+                  child: _buildStateDropdown(theme),
                 ),
               ],
             ),
@@ -149,6 +245,161 @@ class AddCompanyView extends StatelessWidget {
             const SizedBox(height: 40),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCityDropdown(ThemeData theme) {
+    final availableCities = _getAvailableCities();
+    final currentCity = controller.cityController.text.trim();
+    final selectedCity =
+        availableCities.contains(currentCity) && currentCity.isNotEmpty
+            ? currentCity
+            : null;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: DropdownButtonFormField<String>(
+        key: ValueKey("city_${controller.stateController.text}_$selectedCity"),
+        initialValue: selectedCity,
+        isExpanded: true,
+        menuMaxHeight: 320,
+        icon: const Icon(Icons.keyboard_arrow_down_rounded),
+        decoration: InputDecoration(
+          labelText: "City",
+          hintText: "Select City",
+          floatingLabelBehavior: FloatingLabelBehavior.always,
+          counterText: "",
+          filled: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: primaryColor, width: 1.5),
+          ),
+        ),
+        items: [
+          ...availableCities.map((city) {
+            return DropdownMenuItem<String>(
+              value: city,
+              child: Text(
+                city,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 14),
+              ),
+            );
+          }),
+          const DropdownMenuItem<String>(
+            value: "__custom__",
+            child: Row(
+              children: [
+                Icon(Icons.edit_note_rounded, size: 18, color: Colors.amber),
+                SizedBox(width: 8),
+                Text(
+                  "Other (Custom City)",
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.amber,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        onChanged: (val) {
+          if (val == "__custom__") {
+            _showCustomCityDialog();
+          } else if (val != null) {
+            setState(() {
+              controller.cityController.text = val;
+              final inferredState = IndiaLocationData.getStateForCity(val);
+              if (inferredState != null &&
+                  controller.stateController.text.trim().toLowerCase() !=
+                      inferredState.toLowerCase()) {
+                controller.stateController.text = inferredState;
+              }
+            });
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildStateDropdown(ThemeData theme) {
+    final states = IndiaLocationData.stateCities.keys.toList()..sort();
+    final currentState = controller.stateController.text.trim();
+    final matched = states.firstWhere(
+      (s) => s.toLowerCase() == currentState.toLowerCase(),
+      orElse: () => '',
+    );
+    final matchedState = matched.isNotEmpty ? matched : null;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: DropdownButtonFormField<String>(
+        key: ValueKey("state_$matchedState"),
+        initialValue: matchedState,
+        isExpanded: true,
+        menuMaxHeight: 320,
+        icon: const Icon(Icons.keyboard_arrow_down_rounded),
+        decoration: InputDecoration(
+          labelText: "State",
+          hintText: "Select State",
+          floatingLabelBehavior: FloatingLabelBehavior.always,
+          counterText: "",
+          filled: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: primaryColor, width: 1.5),
+          ),
+        ),
+        items: states.map((state) {
+          return DropdownMenuItem<String>(
+            value: state,
+            child: Text(
+              state,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 14),
+            ),
+          );
+        }).toList(),
+        onChanged: (val) {
+          if (val != null) {
+            setState(() {
+              controller.stateController.text = val;
+              final stateCities = IndiaLocationData.stateCities[val] ?? [];
+              if (!stateCities.any((c) =>
+                  c.toLowerCase() ==
+                  controller.cityController.text.trim().toLowerCase())) {
+                controller.cityController.text =
+                    stateCities.isNotEmpty ? stateCities.first : '';
+              }
+            });
+          }
+        },
       ),
     );
   }
