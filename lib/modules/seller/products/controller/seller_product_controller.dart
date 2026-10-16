@@ -219,12 +219,9 @@ class SellerProductController extends GetxController {
 
     fetchProducts();
     fetchSupportData();
-    _refreshTimer = Timer.periodic(
-      const Duration(seconds: 10),
-      (_) {
-        if (AppForeground.isActive) fetchProducts(silent: true);
-      },
-    );
+    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      if (AppForeground.isActive) fetchProducts(silent: true);
+    });
   }
 
   bool _fetchInProgress = false;
@@ -456,30 +453,48 @@ class SellerProductController extends GetxController {
 
     try {
       isSaving(true);
-      final result = await SellerServices.createOffer(body);
+      final imageToUpload = selectedImagePath.value;
+      final videoToUpload = selectedVideoPath.value;
+
+      final result = await SellerServices.createOffer(
+        body,
+        imagePath: imageToUpload,
+        videoPath: videoToUpload,
+      );
       // /api/offers/create/ returns the new offer under "product".
       final data = result['product'] ?? result['data'];
       final productId = data is Map ? int.tryParse('${data['id']}') : null;
       var mediaFailed = false;
-      if (productId != null && selectedImagePath.value != null) {
-        try {
-          await SellerServices.uploadProductImage(
-            productId,
-            selectedImagePath.value!,
-          );
-        } catch (_) {
-          mediaFailed = true;
+
+      // Resilient fallback: If the backend did not attach media during offer creation,
+      // upload via dedicated endpoints.
+      if (productId != null) {
+        final existingImages = (data is Map && data['images'] is List)
+            ? (data['images'] as List)
+            : [];
+        final existingVideos =
+            (data is Map &&
+                (data['product_videos'] is List || data['videos'] is List))
+            ? ((data['product_videos'] ?? data['videos']) as List)
+            : [];
+
+        if (imageToUpload != null && existingImages.isEmpty) {
+          try {
+            await SellerServices.uploadProductImage(productId, imageToUpload);
+          } catch (_) {
+            mediaFailed = true;
+          }
         }
-      }
-      if (productId != null && selectedVideoPath.value != null) {
-        try {
-          await SellerServices.uploadProductVideo(
-            productId,
-            selectedVideoPath.value!,
-            'Offer Video',
-          );
-        } catch (_) {
-          mediaFailed = true;
+        if (videoToUpload != null && existingVideos.isEmpty) {
+          try {
+            await SellerServices.uploadProductVideo(
+              productId,
+              videoToUpload,
+              'Offer Video',
+            );
+          } catch (_) {
+            mediaFailed = true;
+          }
         }
       }
       if (Get.isRegistered<BottomNavController>()) {

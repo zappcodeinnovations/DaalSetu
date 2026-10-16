@@ -128,11 +128,16 @@ class ProductScreen extends StatelessWidget {
                       top: Radius.circular(20),
                     ),
                     child: imageUrl != null
-                        ? AuthenticatedNetworkImage(
-                            url: imageUrl,
-                            height: 180,
-                            width: double.infinity,
-                            fallback: _imageFallback(theme),
+                        ? ColoredBox(
+                            color: theme.colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.35),
+                            child: AuthenticatedNetworkImage(
+                              url: imageUrl,
+                              height: 180,
+                              width: double.infinity,
+                              fit: BoxFit.contain,
+                              fallback: _imageFallback(theme),
+                            ),
                           )
                         : _imageFallback(theme),
                   ),
@@ -147,13 +152,19 @@ class ProductScreen extends StatelessWidget {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: (isAvailable ? AppTheme.successGreen : AppTheme.errorRed)
-                            .withValues(alpha: 0.9),
+                        color:
+                            (isAvailable
+                                    ? AppTheme.successGreen
+                                    : AppTheme.errorRed)
+                                .withValues(alpha: 0.9),
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: (isAvailable ? AppTheme.successGreen : AppTheme.errorRed)
-                                .withValues(alpha: 0.3),
+                            color:
+                                (isAvailable
+                                        ? AppTheme.successGreen
+                                        : AppTheme.errorRed)
+                                    .withValues(alpha: 0.3),
                             blurRadius: 8,
                           ),
                         ],

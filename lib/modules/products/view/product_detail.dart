@@ -179,12 +179,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             padding: const EdgeInsets.only(right: 8),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(22),
-              child: AuthenticatedNetworkImage(
-                url: product.images[index].imageUrl,
-                width: double.infinity,
-                height: 240,
-                fallback: const Center(
-                  child: Icon(Icons.broken_image_outlined),
+              child: ColoredBox(
+                color: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                child: AuthenticatedNetworkImage(
+                  url: product.images[index].imageUrl,
+                  width: double.infinity,
+                  height: 240,
+                  fit: BoxFit.contain,
+                  fallback: const Center(
+                    child: Icon(Icons.broken_image_outlined),
+                  ),
                 ),
               ),
             ),
@@ -272,10 +278,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             icon: const Icon(Icons.history),
             label: Text(
               'View Deal History (${product.interestCount})',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ),
         ),
@@ -378,8 +381,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       final min = int.tryParse(isoMatch.group(5)!) ?? 0;
 
       const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       final monthName = (m >= 1 && m <= 12) ? months[m - 1] : '$m';
       final hour12 = h % 12 == 0 ? 12 : h % 12;

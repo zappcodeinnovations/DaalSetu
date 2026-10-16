@@ -27,24 +27,25 @@ class _SellerMediaGalleryViewState extends State<SellerMediaGalleryView> {
   @override
   void initState() {
     super.initState();
-    final raw = widget.productId ??
-        Get.parameters['productId'] ??
-        Get.arguments;
+    final raw =
+        widget.productId ?? Get.parameters['productId'] ?? Get.arguments;
     if (raw is int) {
       productId = raw;
     } else {
       productId = int.tryParse(raw?.toString() ?? '') ?? 0;
     }
 
-    controller = Get.put(
-      SellerMediaController(productId: productId),
-      tag: 'seller_media_$productId',
-    );
+    final tag = 'seller_media_$productId';
+    controller = Get.isRegistered<SellerMediaController>(tag: tag)
+        ? Get.find<SellerMediaController>(tag: tag)
+        : Get.put(SellerMediaController(productId: productId), tag: tag);
   }
 
   @override
   void dispose() {
-    if (Get.isRegistered<SellerMediaController>(tag: 'seller_media_$productId')) {
+    if (Get.isRegistered<SellerMediaController>(
+      tag: 'seller_media_$productId',
+    )) {
       Get.delete<SellerMediaController>(tag: 'seller_media_$productId');
     }
     super.dispose();
@@ -84,11 +85,14 @@ class _SellerMediaGalleryViewState extends State<SellerMediaGalleryView> {
       builder: (dialogContext) {
         final screenSize = MediaQuery.of(dialogContext).size;
         return Dialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           clipBehavior: Clip.antiAlias,
-          insetPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 24,
+          ),
           child: ConstrainedBox(
             constraints: BoxConstraints(
               maxWidth: math.min(screenSize.width * 0.95, 600.0),
@@ -194,7 +198,7 @@ class _SellerMediaGalleryViewState extends State<SellerMediaGalleryView> {
                                       borderRadius: BorderRadius.circular(12),
                                       child: AuthenticatedNetworkImage(
                                         url: _url(item.imageUrl),
-                                        fit: BoxFit.cover,
+                                        fit: BoxFit.contain,
                                         width: double.infinity,
                                         height: double.infinity,
                                         fallback: Container(
@@ -250,23 +254,42 @@ class _SellerMediaGalleryViewState extends State<SellerMediaGalleryView> {
                   Positioned(
                     bottom: 16,
                     right: 16,
-                    child: FloatingActionButton.extended(
-                      heroTag: null,
-                      backgroundColor: primaryColor,
-                      onPressed: () async {
-                        if (controller.imagesList.isNotEmpty) {
-                          _showLimitMessage(context, 'Image');
-                          return;
-                        }
-                        final picked = await picker.pickImage(
-                          source: ImageSource.gallery,
-                        );
-                        if (picked != null) {
-                          controller.uploadImage(picked.path);
-                        }
-                      },
-                      icon: const Icon(Icons.add_a_photo),
-                      label: const Text("Upload Image"),
+                    child: Obx(
+                      () => FloatingActionButton.extended(
+                        heroTag: null,
+                        backgroundColor: controller.isUploading.value
+                            ? Colors.grey
+                            : primaryColor,
+                        onPressed: controller.isUploading.value
+                            ? null
+                            : () async {
+                                if (controller.imagesList.isNotEmpty) {
+                                  _showLimitMessage(context, 'Image');
+                                  return;
+                                }
+                                final picked = await picker.pickImage(
+                                  source: ImageSource.gallery,
+                                );
+                                if (picked != null) {
+                                  controller.uploadImage(picked.path);
+                                }
+                              },
+                        icon: controller.isUploading.value
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.add_a_photo),
+                        label: Text(
+                          controller.isUploading.value
+                              ? "Uploading..."
+                              : "Upload Image",
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -309,23 +332,45 @@ class _SellerMediaGalleryViewState extends State<SellerMediaGalleryView> {
                   Positioned(
                     bottom: 16,
                     right: 16,
-                    child: FloatingActionButton.extended(
-                      heroTag: null,
-                      backgroundColor: primaryColor,
-                      onPressed: () async {
-                        if (controller.videosList.isNotEmpty) {
-                          _showLimitMessage(context, 'Video');
-                          return;
-                        }
-                        final picked = await picker.pickVideo(
-                          source: ImageSource.gallery,
-                        );
-                        if (picked != null) {
-                          controller.uploadVideo(picked.path, "Product Video");
-                        }
-                      },
-                      icon: const Icon(Icons.videocam),
-                      label: const Text("Upload Video"),
+                    child: Obx(
+                      () => FloatingActionButton.extended(
+                        heroTag: null,
+                        backgroundColor: controller.isUploading.value
+                            ? Colors.grey
+                            : primaryColor,
+                        onPressed: controller.isUploading.value
+                            ? null
+                            : () async {
+                                if (controller.videosList.isNotEmpty) {
+                                  _showLimitMessage(context, 'Video');
+                                  return;
+                                }
+                                final picked = await picker.pickVideo(
+                                  source: ImageSource.gallery,
+                                );
+                                if (picked != null) {
+                                  controller.uploadVideo(
+                                    picked.path,
+                                    "Product Video",
+                                  );
+                                }
+                              },
+                        icon: controller.isUploading.value
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.videocam),
+                        label: Text(
+                          controller.isUploading.value
+                              ? "Uploading..."
+                              : "Upload Video",
+                        ),
+                      ),
                     ),
                   ),
                 ],

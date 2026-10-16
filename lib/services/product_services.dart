@@ -123,6 +123,7 @@ class ProductService {
   static Future<dynamic> uploadProductVideo({
     required int productId,
     required String videoPath,
+    Duration timeout = const Duration(minutes: 3),
   }) {
     return ApiClient.postMultipart(
       endpoint: ApiUrls.productVideos,
@@ -133,6 +134,7 @@ class ProductService {
       },
       files: {"video": videoPath},
       requireAuth: true,
+      timeout: timeout,
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../services/seller_services.dart';
+import '../../common/seller_ui.dart';
 
 class SellerStockUpdateDialog {
   static void show(
@@ -92,7 +93,7 @@ class SellerStockUpdateDialog {
       buttonColor: Colors.amber.shade700,
       onConfirm: () async {
         if (qtyCtrl.text.trim().isEmpty) {
-          Get.snackbar("Error", "Please enter a valid stock value");
+          SellerUi.error("Please enter a valid stock value");
           return;
         }
         Get.back();
@@ -109,32 +110,14 @@ class SellerStockUpdateDialog {
           );
           if (Get.isDialogOpen ?? false) Get.back();
           if (res['success'] == true) {
-            Get.snackbar(
-              "Success",
-              res['message'] ?? "Stock updated successfully",
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.green,
-              colorText: Colors.white,
-            );
+            SellerUi.success(res['message'] ?? "Stock updated successfully");
             onSuccess();
           } else {
-            Get.snackbar(
-              "Error",
-              res['message'] ?? "Failed to update stock",
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.red,
-              colorText: Colors.white,
-            );
+            SellerUi.error(res['message'] ?? "Failed to update stock");
           }
         } catch (e) {
           if (Get.isDialogOpen ?? false) Get.back();
-          Get.snackbar(
-            "Error",
-            e.toString(),
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-          );
+          SellerUi.error(e);
         }
       },
     );

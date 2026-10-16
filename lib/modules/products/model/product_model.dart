@@ -1,3 +1,5 @@
+import '../../../comman/api_url.dart';
+
 class ProductModel {
   ProductModel({
     required this.id,
@@ -188,7 +190,9 @@ class ProductModel {
       images: (json["images"] as List? ?? [])
           .map((item) => ProductImage.fromJson(Map<String, dynamic>.from(item)))
           .toList(),
-      videos: (json["video"] as List? ?? [])
+      videos: ((json["product_videos"] ?? json["videos"] ?? json["video"])
+                  as List? ??
+              [])
           .map((item) => ProductVideo.fromJson(Map<String, dynamic>.from(item)))
           .toList(),
     );
@@ -239,6 +243,20 @@ class Seller {
   );
 }
 
+String _resolveProductMediaUrl(String? raw) {
+  if (raw == null) return '';
+  final url = raw.trim();
+  if (url.isEmpty) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  final base = ApiUrls.baseUrl.endsWith('/')
+      ? ApiUrls.baseUrl.substring(0, ApiUrls.baseUrl.length - 1)
+      : ApiUrls.baseUrl;
+  final path = url.startsWith('/') ? url : '/$url';
+  return '$base$path';
+}
+
 class ProductImage {
   const ProductImage({
     required this.id,
@@ -251,12 +269,22 @@ class ProductImage {
   final String downloadUrl;
   final bool isPrimary;
 
-  factory ProductImage.fromJson(Map<String, dynamic> json) => ProductImage(
-    id: json["id"] as int? ?? 0,
-    imageUrl: json["image_url"]?.toString() ?? "",
-    downloadUrl: json["download_url"]?.toString() ?? "",
-    isPrimary: json["is_primary"] == true,
-  );
+  factory ProductImage.fromJson(Map<String, dynamic> json) {
+    final rawUrl = json["image_url"]?.toString() ??
+        json["image"]?.toString() ??
+        json["file"]?.toString() ??
+        json["url"]?.toString() ??
+        "";
+    final rawDownload = json["download_url"]?.toString() ?? "";
+    return ProductImage(
+      id: json["id"] as int? ?? 0,
+      imageUrl: _resolveProductMediaUrl(rawUrl),
+      downloadUrl: _resolveProductMediaUrl(rawDownload),
+      isPrimary: json["is_primary"] == true ||
+          json["is_primary"] == 'true' ||
+          json["is_primary"] == 1,
+    );
+  }
 }
 
 class ProductVideo {
@@ -273,11 +301,21 @@ class ProductVideo {
   final String downloadUrl;
   final bool isPrimary;
 
-  factory ProductVideo.fromJson(Map<String, dynamic> json) => ProductVideo(
-    id: json["id"] as int? ?? 0,
-    title: json["title"]?.toString() ?? "Product video",
-    videoUrl: json["url"]?.toString() ?? "",
-    downloadUrl: json["download_url"]?.toString() ?? "",
-    isPrimary: json["is_primary"] == true,
-  );
+  factory ProductVideo.fromJson(Map<String, dynamic> json) {
+    final rawUrl = json["video_url"]?.toString() ??
+        json["video"]?.toString() ??
+        json["url"]?.toString() ??
+        json["file"]?.toString() ??
+        "";
+    final rawDownload = json["download_url"]?.toString() ?? "";
+    return ProductVideo(
+      id: json["id"] as int? ?? 0,
+      title: json["title"]?.toString() ?? "Product video",
+      videoUrl: _resolveProductMediaUrl(rawUrl),
+      downloadUrl: _resolveProductMediaUrl(rawDownload),
+      isPrimary: json["is_primary"] == true ||
+          json["is_primary"] == 'true' ||
+          json["is_primary"] == 1,
+    );
+  }
 }

@@ -31,7 +31,8 @@ class SellerDeliveryController extends GetxController {
       isDetailLoading(true);
       final data = await SellerServices.getChallanDetails(id);
       // API wraps the challan as {"success": true, "data": {...}}.
-      selectedChallan.value = data['data'] is Map<String, dynamic> ? data['data'] : data;
+      final payload = data['data'] is Map ? data['data'] as Map : data;
+      selectedChallan.value = Map<String, dynamic>.from(payload);
     } catch (e) {
       Get.snackbar("Error", "Could not fetch details");
     } finally {

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:daalsetu/utils/tax_id_formatters.dart';
 import '../../../../routes/app_routes.dart';
+import '../../../../utils/app_snackbar.dart';
+import '../../../../network/api_client.dart';
 
 class SellerCompanyController extends GetxController {
   var isLoading = true.obs;
@@ -12,6 +14,9 @@ class SellerCompanyController extends GetxController {
 
   var isEditing = false.obs;
   int? currentCompanyId;
+  final errors = <String, String>{}.obs;
+
+  void clearError(String field) => errors.remove(field);
 
   // Form Controllers
   final legalNameController = TextEditingController();
@@ -70,47 +75,88 @@ class SellerCompanyController extends GetxController {
     }
   }
 
+  bool validateFields() => _validateFields();
+
+  void _applyServerFieldErrors(Map<String, String> fieldErrors) {
+    const aliases = <String, String>{
+      'pan': 'pan_number',
+      'gst': 'gst_number',
+      'year': 'year_of_establishment',
+      'address': 'address_line_1',
+    };
+    for (final entry in fieldErrors.entries) {
+      errors[aliases[entry.key] ?? entry.key] = entry.value;
+    }
+  }
+
   bool _validateFields() {
+    errors.clear();
+
     final legalName = legalNameController.text.trim();
     if (legalName.isEmpty) {
-      Get.snackbar("Validation Error", "Please enter Legal Name.");
-      return false;
+      errors['legal_name'] = "Please enter Legal Name.";
+    }
+
+    final yearText = yearController.text.trim();
+    final year = int.tryParse(yearText);
+    final currentYear = DateTime.now().year;
+    if (yearText.isEmpty) {
+      errors['year_of_establishment'] =
+          "Please enter Year of Establishment.";
+    } else if (year == null || year < 1800 || year > currentYear) {
+      errors['year_of_establishment'] =
+          "Year must be between 1800 and $currentYear.";
     }
 
     final pan = panController.text.trim().toUpperCase();
     panController.text = pan;
-    if (pan.isNotEmpty) {
-      final panError = TaxIdValidator.pan(pan, required: false);
-      if (panError != null) {
-        Get.snackbar("Validation Error", panError);
-        return false;
-      }
+    final panError = TaxIdValidator.pan(pan, required: true);
+    if (panError != null) {
+      errors['pan_number'] = panError;
     }
 
     final gst = gstController.text.trim().toUpperCase();
     gstController.text = gst;
-    if (gst.isNotEmpty) {
-      final gstError = TaxIdValidator.gst(gst, required: false);
-      if (gstError != null) {
-        Get.snackbar("Validation Error", gstError);
-        return false;
-      }
+    final gstError = TaxIdValidator.gst(gst, required: true);
+    if (gstError != null) {
+      errors['gst_number'] = gstError;
+    } else {
       final gstPanError = TaxIdValidator.gstMatchesPan(pan, gst);
       if (gstPanError != null) {
-        Get.snackbar("Validation Error", gstPanError);
-        return false;
+        errors['gst_number'] = gstPanError;
       }
+    }
+
+    if (address1Controller.text.trim().isEmpty) {
+      errors['address_line_1'] = "Please enter Address Line 1.";
     }
 
     final pincode = pincodeController.text.trim();
-    if (pincode.isNotEmpty && pincode.length != 6) {
-      Get.snackbar("Validation Error", "Pincode must be exactly 6 digits.");
-      return false;
+    if (!RegExp(r'^\d{6}$').hasMatch(pincode)) {
+      errors['pincode'] = pincode.isEmpty
+          ? "Please enter Pincode."
+          : "Pincode must be exactly 6 digits.";
     }
 
-    if (cityController.text.trim().isEmpty ||
-        stateController.text.trim().isEmpty) {
-      Get.snackbar("Validation Error", "Please fill required address fields (City, State).");
+    if (cityController.text.trim().isEmpty) {
+      errors['city'] = "Please select City.";
+    }
+
+    if (stateController.text.trim().isEmpty) {
+      errors['state'] = "Please select State.";
+    }
+
+    if (countryController.text.trim().isEmpty) {
+      errors['country'] = "Please enter Country.";
+    }
+
+    if (errors.isNotEmpty) {
+      if (!Get.testMode && Get.context != null) {
+        AppSnackbar.showError(
+          title: "Validation Error",
+          message: errors.values.first,
+        );
+      }
       return false;
     }
 
@@ -126,11 +172,19 @@ class SellerCompanyController extends GetxController {
 
       await fetchCompanyDetails(newCompany.id);
 
-      Get.until((route) => route.settings.name == AppRoutes.sellerCompany || route.settings.name == AppRoutes.mainNav || route.isFirst);
-      Get.snackbar("Success", "Company created successfully");
+      Get.until((route) =>
+          route.settings.name == AppRoutes.sellerCompany ||
+          route.settings.name == AppRoutes.mainNav ||
+          route.isFirst);
+      AppSnackbar.showSuccess(message: "Company created successfully");
       fetchCompanies();
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      if (e is ApiRequestException && e.fieldErrors != null) {
+        _applyServerFieldErrors(e.fieldErrors!);
+      }
+      AppSnackbar.showError(
+        message: ApiClient.userFriendlyErrorMessage(e.toString()),
+      );
     } finally {
       isLoading(false);
     }
@@ -144,11 +198,19 @@ class SellerCompanyController extends GetxController {
 
       await SellerServices.updateCompany(currentCompanyId!, body);
 
-      Get.until((route) => route.settings.name == AppRoutes.sellerCompany || route.settings.name == AppRoutes.mainNav || route.isFirst);
-      Get.snackbar("Success", "Company updated successfully");
+      Get.until((route) =>
+          route.settings.name == AppRoutes.sellerCompany ||
+          route.settings.name == AppRoutes.mainNav ||
+          route.isFirst);
+      AppSnackbar.showSuccess(message: "Company updated successfully");
       fetchCompanies();
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      if (e is ApiRequestException && e.fieldErrors != null) {
+        _applyServerFieldErrors(e.fieldErrors!);
+      }
+      AppSnackbar.showError(
+        message: ApiClient.userFriendlyErrorMessage(e.toString()),
+      );
     } finally {
       isLoading(false);
     }
@@ -211,6 +273,7 @@ class SellerCompanyController extends GetxController {
   void clearForm() {
     isEditing.value = false;
     currentCompanyId = null;
+    errors.clear();
     legalNameController.clear();
     companyTypeController.clear();
     yearController.clear();

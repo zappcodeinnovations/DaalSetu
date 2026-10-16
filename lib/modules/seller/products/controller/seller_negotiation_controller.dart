@@ -33,11 +33,7 @@ class SellerNegotiationController extends GetxController {
             .toList();
       }
     } catch (e) {
-      Get.snackbar(
-        "Error",
-        "Could not fetch offer interests: $e",
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      SellerUi.error("Could not fetch offer interests: $e");
     } finally {
       isLoading(false);
     }
@@ -65,32 +61,14 @@ class SellerNegotiationController extends GetxController {
       );
       if (Get.isDialogOpen ?? false) Get.back();
       if (res['success'] == true) {
-        Get.snackbar(
-          "Success",
-          res['message'] ?? "Counter offer sent",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        SellerUi.success(res['message'] ?? "Counter offer sent");
         fetchInterests();
       } else {
-        Get.snackbar(
-          "Error",
-          res['message'] ?? "Failed to send counter offer",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        SellerUi.error(res['message'] ?? "Failed to send counter offer");
       }
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
-      Get.snackbar(
-        "Error",
-        e.toString(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      SellerUi.error(e);
     }
   }
 
@@ -149,13 +127,7 @@ class SellerNegotiationController extends GetxController {
       }
 
       if (res['success'] == true) {
-        Get.snackbar(
-          "Deal Confirmed",
-          res['message'] ?? "Deal confirmed successfully!",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        SellerUi.success(res['message'] ?? "Deal confirmed successfully!");
 
         // Check if contract ID was returned
         final rawContractId = res['contract_id'] ??
@@ -172,13 +144,7 @@ class SellerNegotiationController extends GetxController {
           fetchInterests();
         }
       } else {
-        Get.snackbar(
-          "Error",
-          res['message'] ?? "Failed to confirm deal",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        SellerUi.error(res['message'] ?? "Failed to confirm deal");
       }
     } catch (e) {
       if (dialogShown) {
@@ -186,13 +152,7 @@ class SellerNegotiationController extends GetxController {
         if (Get.isDialogOpen ?? false) Get.back();
       }
       final msg = e.toString().replaceFirst('Exception: ', '').trim();
-      Get.snackbar(
-        "Error",
-        msg.isNotEmpty ? msg : "Failed to confirm deal",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      SellerUi.error(msg.isNotEmpty ? msg : "Failed to confirm deal");
     } finally {
       if (dialogShown) {
         dialogShown = false;

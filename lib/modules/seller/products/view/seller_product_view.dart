@@ -129,7 +129,7 @@ class SellerProductView extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Product Image
+              // Product Image / Media
               Container(
                 width: 80,
                 height: 80,
@@ -137,17 +137,58 @@ class SellerProductView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(15),
                   color: primaryColor.withOpacity(0.1),
                 ),
-                child: product.imageUrls.isNotEmpty
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(15),
-                        child: Image.network(
-                          product.imageUrls.first,
-                          fit: BoxFit.cover,
-                          errorBuilder: (c, e, s) =>
-                              const Icon(IconlyLight.bag, color: primaryColor),
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: product.imageUrls.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(15),
+                              child: Image.network(
+                                product.imageUrls.first,
+                                fit: BoxFit.contain,
+                                errorBuilder: (c, e, s) =>
+                                    product.videoUrls.isNotEmpty
+                                    ? const Icon(
+                                        IconlyLight.video,
+                                        color: primaryColor,
+                                        size: 32,
+                                      )
+                                    : const Icon(
+                                        IconlyLight.bag,
+                                        color: primaryColor,
+                                      ),
+                              ),
+                            )
+                          : Center(
+                              child: Icon(
+                                product.videoUrls.isNotEmpty
+                                    ? IconlyLight.video
+                                    : IconlyLight.bag,
+                                color: primaryColor,
+                                size: product.videoUrls.isNotEmpty ? 32 : 24,
+                              ),
+                            ),
+                    ),
+                    if (product.imageUrls.isNotEmpty &&
+                        product.videoUrls.isNotEmpty)
+                      Positioned(
+                        right: 4,
+                        bottom: 4,
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.65),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.play_arrow_rounded,
+                            size: 14,
+                            color: Colors.white,
+                          ),
                         ),
-                      )
-                    : const Icon(IconlyLight.bag, color: primaryColor),
+                      ),
+                  ],
+                ),
               ),
               const SizedBox(width: 16),
               // Product Info

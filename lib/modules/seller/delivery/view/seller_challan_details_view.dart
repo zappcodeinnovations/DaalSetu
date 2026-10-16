@@ -48,6 +48,20 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
     return value.toString().trim();
   }
 
+  String _firstNonEmpty(List<dynamic> candidates) {
+    for (final item in candidates) {
+      if (item == null) continue;
+      if (item is Map) {
+        final mapText = _text(item);
+        if (mapText.isNotEmpty && mapText != 'null') return mapText;
+        continue;
+      }
+      final text = item.toString().trim();
+      if (text.isNotEmpty && text != 'null') return text;
+    }
+    return '';
+  }
+
   String _show(Object? value) {
     final text = _text(value);
     return text.isEmpty || text == 'null' ? '—' : text;
@@ -55,7 +69,41 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
 
   String _money(Object? value) {
     final text = _text(value);
-    return text.isEmpty ? '—' : '₹$text';
+    return text.isEmpty || text == 'null' ? '—' : '₹$text';
+  }
+
+  String _formatDate(Object? value) {
+    if (value == null) return '—';
+    final str = value.toString().trim();
+    if (str.isEmpty || str == 'null') return '—';
+    try {
+      final dt = DateTime.parse(str);
+      final day = dt.day.toString().padLeft(2, '0');
+      final month = dt.month.toString().padLeft(2, '0');
+      final year = dt.year.toString();
+      return '$day-$month-$year';
+    } catch (_) {
+      return str;
+    }
+  }
+
+  String _formatDateTime(Object? value) {
+    if (value == null) return '—';
+    final str = value.toString().trim();
+    if (str.isEmpty || str == 'null') return '—';
+    try {
+      final dt = DateTime.parse(str).toLocal();
+      final day = dt.day.toString().padLeft(2, '0');
+      final month = dt.month.toString().padLeft(2, '0');
+      final year = dt.year.toString();
+      final hour12 = dt.hour == 0 ? 12 : (dt.hour > 12 ? dt.hour - 12 : dt.hour);
+      final hour = hour12.toString().padLeft(2, '0');
+      final minute = dt.minute.toString().padLeft(2, '0');
+      final period = dt.hour >= 12 ? 'PM' : 'AM';
+      return '$day-$month-$year $hour:$minute $period';
+    } catch (_) {
+      return str;
+    }
   }
 
   @override
@@ -82,7 +130,11 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
     }),
   );
 
-  Widget _body(Map<String, dynamic> data) {
+  Widget _body(Map<String, dynamic> rawData) {
+    final data = rawData['data'] is Map
+        ? Map<String, dynamic>.from(rawData['data'] as Map)
+        : rawData;
+
     final status = _text(data['status']).toLowerCase();
     final items = (data['items'] is List ? data['items'] as List : const [])
         .whereType<Map>()
@@ -106,7 +158,143 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
     final buyerInfo = data['buyer'] is Map
         ? Map<String, dynamic>.from(data['buyer'] as Map)
         : const <String, dynamic>{};
+    final transporterInfo = data['transporter'] is Map
+        ? Map<String, dynamic>.from(data['transporter'] as Map)
+        : const <String, dynamic>{};
     final canDispatch = status == 'draft' || status == 'pending';
+
+    final createdByName = _firstNonEmpty([
+      data['created_by_name'],
+      responsible['name'],
+      data['display_responsible_name'],
+      (data['display_responsible_snapshot'] is Map
+          ? data['display_responsible_snapshot']['name']
+          : null),
+      (data['created_by_display'] is Map
+          ? data['created_by_display']['name']
+          : null),
+      (data['created_by'] is Map
+          ? (data['created_by']['full_name'] ?? data['created_by']['name'])
+          : null),
+      (data['created_by'] is String &&
+              int.tryParse(data['created_by'].toString()) == null
+          ? data['created_by']
+          : null),
+    ]);
+
+    final sellerName = _firstNonEmpty([
+      data['seller_name_display'],
+      data['seller_name'],
+      sellerInfo['full_name'],
+      sellerInfo['name'],
+      sellerCompany['legal_name'],
+      sellerCompany['company_name'],
+      sellerCompany['name'],
+      (data['seller'] is String &&
+              int.tryParse(data['seller'].toString()) == null
+          ? data['seller']
+          : null),
+    ]);
+    final sellerCompanyName = _firstNonEmpty([
+      data['seller_company_name'],
+      sellerCompany['legal_name'],
+      sellerCompany['company_name'],
+      sellerInfo['company_name'],
+    ]);
+    final sellerGst = _firstNonEmpty([
+      data['seller_gst'],
+      sellerCompany['gst_number'],
+      sellerCompany['gst'],
+      sellerInfo['gst_number'],
+      sellerInfo['gst'],
+    ]);
+    final sellerPan = _firstNonEmpty([
+      data['seller_pan'],
+      sellerCompany['pan_number'],
+      sellerCompany['pan'],
+      sellerInfo['pan_number'],
+      sellerInfo['pan'],
+    ]);
+    final sellerAddress = _firstNonEmpty([
+      data['seller_address'],
+      sellerCompany['address_display'],
+      sellerCompany['address'],
+      sellerCompany['address_line_1'],
+      sellerInfo['address'],
+      sellerInfo['address_line_1'],
+    ]);
+
+    final buyerName = _firstNonEmpty([
+      data['buyer_name_display'],
+      data['buyer_name'],
+      buyerInfo['full_name'],
+      buyerInfo['name'],
+      buyerCompany['legal_name'],
+      buyerCompany['company_name'],
+      buyerCompany['name'],
+      (data['buyer'] is String &&
+              int.tryParse(data['buyer'].toString()) == null
+          ? data['buyer']
+          : null),
+    ]);
+    final buyerCompanyName = _firstNonEmpty([
+      data['buyer_company_name'],
+      buyerCompany['legal_name'],
+      buyerCompany['company_name'],
+      buyerInfo['company_name'],
+    ]);
+    final buyerGst = _firstNonEmpty([
+      data['buyer_gst'],
+      buyerCompany['gst_number'],
+      buyerCompany['gst'],
+      buyerInfo['gst_number'],
+      buyerInfo['gst'],
+    ]);
+    final buyerPan = _firstNonEmpty([
+      data['buyer_pan'],
+      buyerCompany['pan_number'],
+      buyerCompany['pan'],
+      buyerInfo['pan_number'],
+      buyerInfo['pan'],
+    ]);
+    final buyerAddress = _firstNonEmpty([
+      data['buyer_address'],
+      buyerCompany['address_display'],
+      buyerCompany['address'],
+      buyerCompany['address_line_1'],
+      buyerInfo['address'],
+      buyerInfo['address_line_1'],
+    ]);
+
+    final transporterName = _firstNonEmpty([
+      data['transporter_name_display'],
+      data['transporter_name'],
+      transporterInfo['full_name'],
+      transporterInfo['name'],
+      transporterInfo['company_name'],
+      (data['transporter'] is String &&
+              int.tryParse(data['transporter'].toString()) == null
+          ? data['transporter']
+          : null),
+    ]);
+    final truckNumber = _firstNonEmpty([
+      data['truck_number'],
+      data['vehicle_number'],
+    ]);
+    final driverName = _firstNonEmpty([
+      data['driver_name'],
+      (data['driver'] is Map ? data['driver']['name'] : null),
+    ]);
+    final driverMobile = _firstNonEmpty([
+      data['driver_mobile'],
+      data['driver_phone'],
+      (data['driver'] is Map ? data['driver']['mobile'] : null),
+    ]);
+    final driverLicense = _firstNonEmpty([
+      data['driver_license_number'],
+      data['license_number'],
+      data['driver_licence'],
+    ]);
 
     return RefreshIndicator(
       onRefresh: () => _controller.fetchChallanDetails(widget.challanId),
@@ -124,62 +312,42 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
                 'Challan number',
                 '#${_show(data['challan_number'] ?? data['id'])}',
               ),
-              _row('Challan date', _show(data['challan_date'])),
-              _row('Order / interest ID', _show(data['order'])),
-              _row('Status', _show(data['status']).toUpperCase()),
+              _row('Challan date', _formatDate(data['challan_date'])),
+              if (_text(data['order']).isNotEmpty)
+                _row('Order / interest ID', _show(data['order'])),
+              _row('Status', _show(data['status_display'] ?? data['status']).toUpperCase()),
               _row(
                 'Total amount',
                 _money(data['total_amount']),
                 prominent: true,
               ),
+              _row('Created by', _show(createdByName)),
+              _row('Created at', _formatDateTime(data['created_at'])),
+              _row('Updated at', _formatDateTime(data['updated_at'])),
             ],
           ),
           const SizedBox(height: 12),
           _section(
-            icon: Icons.people_outline_rounded,
-            title: 'Seller & Buyer',
+            icon: Icons.storefront_outlined,
+            title: 'Seller Information',
             children: [
-              _row(
-                'Seller',
-                _show(
-                  data['seller_name_display'] ??
-                      sellerCompany['company_name'] ??
-                      sellerCompany['legal_name'] ??
-                      sellerInfo['company_name'] ??
-                      sellerInfo['name'] ??
-                      data['seller_name'] ??
-                      (data['seller'] is String ? data['seller'] : null),
-                ),
-              ),
-              _row('Seller company', _show(data['seller_company_name'] ?? sellerCompany['legal_name'] ?? sellerCompany['company_name'])),
-              _row('Seller GST', _show(data['seller_gst'] ?? sellerCompany['gst_number'] ?? sellerCompany['gst'] ?? sellerInfo['gst_number'] ?? sellerInfo['gst'])),
-              _row('Seller PAN', _show(data['seller_pan'] ?? sellerCompany['pan_number'] ?? sellerCompany['pan'] ?? sellerInfo['pan_number'] ?? sellerInfo['pan'])),
-              _row(
-                'Seller address',
-                _show(data['seller_address'] ?? sellerCompany['address_line_1'] ?? sellerCompany['address'] ?? sellerInfo['address_line_1'] ?? sellerInfo['address']),
-                multiline: true,
-              ),
-              const Divider(height: 22),
-              _row(
-                'Buyer',
-                _show(
-                  data['buyer_name_display'] ??
-                      buyerCompany['company_name'] ??
-                      buyerCompany['legal_name'] ??
-                      buyerInfo['company_name'] ??
-                      buyerInfo['name'] ??
-                      data['buyer_name'] ??
-                      (data['buyer'] is String ? data['buyer'] : null),
-                ),
-              ),
-              _row('Buyer company', _show(data['buyer_company_name'] ?? buyerCompany['legal_name'] ?? buyerCompany['company_name'])),
-              _row('Buyer GST', _show(data['buyer_gst'] ?? buyerCompany['gst_number'] ?? buyerCompany['gst'] ?? buyerInfo['gst_number'] ?? buyerInfo['gst'])),
-              _row('Buyer PAN', _show(data['buyer_pan'] ?? buyerCompany['pan_number'] ?? buyerCompany['pan'] ?? buyerInfo['pan_number'] ?? buyerInfo['pan'])),
-              _row(
-                'Buyer address',
-                _show(data['buyer_address'] ?? buyerCompany['address_line_1'] ?? buyerCompany['address'] ?? buyerInfo['address_line_1'] ?? buyerInfo['address']),
-                multiline: true,
-              ),
+              _row('Name', _show(sellerName)),
+              _row('Company', _show(sellerCompanyName)),
+              _row('GST Number', _show(sellerGst)),
+              _row('PAN Number', _show(sellerPan)),
+              _row('Address', _show(sellerAddress)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _section(
+            icon: Icons.person_outline_rounded,
+            title: 'Buyer Information',
+            children: [
+              _row('Name', _show(buyerName)),
+              _row('Company', _show(buyerCompanyName)),
+              _row('GST Number', _show(buyerGst)),
+              _row('PAN Number', _show(buyerPan)),
+              _row('Address', _show(buyerAddress)),
             ],
           ),
           const SizedBox(height: 12),
@@ -187,14 +355,11 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
             icon: Icons.fire_truck_outlined,
             title: 'Transport Details',
             children: [
-              _row(
-                'Transporter',
-                _show(data['transporter_name_display'] ?? data['transporter']),
-              ),
-              _row('Truck number', _show(data['truck_number'])),
-              _row('Driver name', _show(data['driver_name'])),
-              _row('Driver mobile', _show(data['driver_mobile'])),
-              _row('Driver licence', _show(data['driver_license_number'])),
+              _row('Truck number', _show(truckNumber)),
+              _row('Driver name', _show(driverName)),
+              _row('License number', _show(driverLicense)),
+              _row('Mobile', _show(driverMobile)),
+              _row('Transporter', _show(transporterName)),
             ],
           ),
           const SizedBox(height: 12),
@@ -263,14 +428,14 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
             icon: Icons.history_rounded,
             title: 'Timeline',
             children: [
-              _row('Created at', _show(data['created_at'])),
-              _row('Last updated', _show(data['updated_at'])),
-              _row('Dispatched at', _show(data['dispatched_at'])),
+              _row('Created at', _formatDateTime(data['created_at'])),
+              _row('Last updated', _formatDateTime(data['updated_at'])),
+              _row('Dispatched at', _formatDateTime(data['dispatched_at'])),
               _row(
                 'Dispatched by',
                 _show(data['dispatched_by_name'] ?? data['dispatched_by']),
               ),
-              _row('Received at', _show(data['received_at'])),
+              _row('Received at', _formatDateTime(data['received_at'])),
               _row(
                 'Received by',
                 _show(data['received_by_name'] ?? data['received_by']),
@@ -358,7 +523,7 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
     String label,
     String value, {
     bool prominent = false,
-    bool multiline = false,
+    bool multiline = true,
   }) => Padding(
     padding: const EdgeInsets.only(bottom: 10),
     child: Column(
@@ -368,9 +533,9 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
         const SizedBox(height: 2),
         Text(
           value,
-          maxLines: multiline ? null : 2,
-          overflow: multiline ? null : TextOverflow.ellipsis,
+          softWrap: true,
           style: TextStyle(
+            fontSize: prominent ? 16 : 14,
             fontWeight: prominent ? FontWeight.w900 : FontWeight.w600,
           ),
         ),
@@ -391,6 +556,7 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
       children: [
         Text(
           _show(item['product_name']),
+          softWrap: true,
           style: const TextStyle(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 8),
@@ -416,14 +582,19 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
   Widget _itemRow(String label, String value, {bool bold = false}) => Padding(
     padding: const EdgeInsets.only(bottom: 4),
     child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
+          flex: 4,
           child: Text(label, style: Theme.of(context).textTheme.bodySmall),
         ),
+        const SizedBox(width: 8),
         Expanded(
+          flex: 6,
           child: Text(
             value,
             textAlign: TextAlign.end,
+            softWrap: true,
             style: TextStyle(
               fontWeight: bold ? FontWeight.w800 : FontWeight.w500,
             ),

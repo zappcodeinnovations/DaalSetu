@@ -672,6 +672,7 @@ class SellerServices {
     String videoPath,
     String title, {
     bool isPrimary = true,
+    Duration timeout = const Duration(minutes: 3),
   }) async {
     final response = await ApiClient.postMultipart(
       endpoint: ApiUrls.productVideos,
@@ -682,6 +683,7 @@ class SellerServices {
       },
       files: {"video": videoPath},
       requireAuth: true,
+      timeout: timeout,
     );
     return response;
   }
@@ -1006,13 +1008,45 @@ class SellerServices {
   /// OFFER MANAGEMENT (edit, delete, stock history, buyer interests)
   /// ============================================================
   static Future<Map<String, dynamic>> createOffer(
-    Map<String, dynamic> body,
-  ) async {
-    final response = await ApiClient.post(
-      endpoint: ApiUrls.offerCreate,
-      body: body,
-      requireAuth: true,
-    );
+    Map<String, dynamic> body, {
+    String? imagePath,
+    String? videoPath,
+  }) async {
+    final hasImage = imagePath != null && imagePath.trim().isNotEmpty;
+    final hasVideo = videoPath != null && videoPath.trim().isNotEmpty;
+
+    dynamic response;
+    if (hasImage || hasVideo) {
+      final Map<String, String> fields = {};
+      body.forEach((key, value) {
+        if (value != null) {
+          if (value is List) {
+            fields[key] = value.join(',');
+          } else {
+            fields[key] = value.toString();
+          }
+        }
+      });
+
+      final Map<String, String> files = {};
+      if (hasImage) files['product_image'] = imagePath.trim();
+      if (hasVideo) files['product_video'] = videoPath.trim();
+
+      response = await ApiClient.postMultipart(
+        endpoint: ApiUrls.offerCreate,
+        fields: fields,
+        files: files,
+        requireAuth: true,
+        // Offer videos can take longer than the normal API timeout to upload.
+        timeout: hasVideo ? const Duration(minutes: 3) : null,
+      );
+    } else {
+      response = await ApiClient.post(
+        endpoint: ApiUrls.offerCreate,
+        body: body,
+        requireAuth: true,
+      );
+    }
     return _asMap(response, "Failed to create offer");
   }
 

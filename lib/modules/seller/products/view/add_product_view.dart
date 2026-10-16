@@ -273,10 +273,14 @@ class _AddProductViewState extends State<AddProductView> {
                 builder: (context, value, _) {
                   return _buildTextField(
                     controller.locationController,
-                    "Search or enter address / mandi location",
+                    "Search or enter loading location",
                     IconlyLight.location,
+                    minLines: 1,
+                    maxLines: 2,
+                    hintMaxLines: 2,
                     suffixIcon: value.text.isNotEmpty
                         ? IconButton(
+                            key: const Key('clear_location_btn'),
                             icon: const Icon(Icons.clear, size: 18),
                             splashRadius: 18,
                             tooltip: "Clear location",
@@ -285,6 +289,7 @@ class _AddProductViewState extends State<AddProductView> {
                           )
                         : Icon(
                             Icons.search,
+                            key: const Key('search_location_icon'),
                             size: 20,
                             color: Get.theme.disabledColor,
                           ),
@@ -422,16 +427,21 @@ class _AddProductViewState extends State<AddProductView> {
     String hint,
     IconData? icon, {
     int maxLines = 1,
+    int? minLines,
+    int? hintMaxLines,
     TextInputType keyboardType = TextInputType.text,
     Widget? suffixIcon,
   }) {
+    final bool isMultiLine =
+        maxLines > 1 || (minLines != null && minLines > 1);
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
         controller: controller,
+        minLines: minLines,
         maxLines: maxLines,
         textAlignVertical:
-            maxLines > 1 ? TextAlignVertical.top : TextAlignVertical.center,
+            isMultiLine ? TextAlignVertical.top : TextAlignVertical.center,
         keyboardType: keyboardType,
         maxLength:
             keyboardType == TextInputType.number ||
@@ -446,6 +456,7 @@ class _AddProductViewState extends State<AddProductView> {
         decoration: InputDecoration(
           isDense: true,
           hintText: hint,
+          hintMaxLines: hintMaxLines ?? maxLines,
           hintStyle: TextStyle(
             fontSize: 14,
             color: Get.theme.hintColor.withValues(alpha: 0.8),
@@ -455,14 +466,14 @@ class _AddProductViewState extends State<AddProductView> {
               ? SizedBox(
                   width: 46,
                   child: Align(
-                    alignment: maxLines > 1
+                    alignment: isMultiLine
                         ? Alignment.topCenter
                         : Alignment.center,
                     child: Padding(
                       padding: EdgeInsets.only(
                         left: 14,
                         right: 8,
-                        top: maxLines > 1 ? 16 : 0,
+                        top: isMultiLine ? 16 : 0,
                       ),
                       child: Icon(
                         icon,
@@ -478,15 +489,15 @@ class _AddProductViewState extends State<AddProductView> {
             minWidth: 46,
             maxWidth: 46,
             minHeight: 48,
-            maxHeight: maxLines > 1 ? double.infinity : 48,
+            maxHeight: isMultiLine ? double.infinity : 48,
           ),
           filled: true,
           fillColor: Get.theme.colorScheme.surface,
           contentPadding: EdgeInsets.only(
             left: icon != null ? 0 : 16,
             right: 16,
-            top: maxLines > 1 ? 16 : 14,
-            bottom: maxLines > 1 ? 16 : 14,
+            top: isMultiLine ? 16 : 14,
+            bottom: isMultiLine ? 16 : 14,
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),

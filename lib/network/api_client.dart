@@ -40,6 +40,18 @@ class ApiClient {
       return MediaType('application', 'pdf');
     } else if (lower.endsWith('.mp4')) {
       return MediaType('video', 'mp4');
+    } else if (lower.endsWith('.mov')) {
+      return MediaType('video', 'quicktime');
+    } else if (lower.endsWith('.avi')) {
+      return MediaType('video', 'x-msvideo');
+    } else if (lower.endsWith('.webm')) {
+      return MediaType('video', 'webm');
+    } else if (lower.endsWith('.m4v')) {
+      return MediaType('video', 'x-m4v');
+    } else if (lower.endsWith('.3gp')) {
+      return MediaType('video', '3gpp');
+    } else if (lower.endsWith('.mkv')) {
+      return MediaType('video', 'x-matroska');
     }
     return MediaType('image', 'jpeg');
   }
@@ -53,6 +65,7 @@ class ApiClient {
     Map<String, String>? files,
     bool requireAuth = false,
     String method = 'POST', // 'PATCH' for edits that also upload a file
+    Duration? timeout,
   }) async {
     try {
       final uri = Uri.parse(ApiUrls.baseUrl + endpoint);
@@ -62,8 +75,11 @@ class ApiClient {
 
       final request = http.MultipartRequest(method, uri);
 
-      // Add headers
-      request.headers.addAll(await _buildHeaders(requireAuth));
+      // Add headers: remove Content-Type so http.MultipartRequest auto-sets
+      // multipart/form-data; boundary=... instead of leaking application/json.
+      final headers = await _buildHeaders(requireAuth);
+      headers.removeWhere((k, _) => k.toLowerCase() == 'content-type');
+      request.headers.addAll(headers);
 
       // Add form fields
       request.fields.addAll(fields);
@@ -83,7 +99,8 @@ class ApiClient {
         }
       }
 
-      final streamedResponse = await request.send().timeout(_timeout);
+      final effectiveTimeout = timeout ?? _timeout;
+      final streamedResponse = await request.send().timeout(effectiveTimeout);
 
       final response = await http.Response.fromStream(streamedResponse);
 
@@ -421,14 +438,12 @@ class ApiClient {
                   rawFieldErrors[k] = val;
                   messages.add(_fieldErrorMessage(k, val));
                 } else if (val is Map) {
-                  val.forEach(
-                    (kSub, v) {
-                      final composite = '$k.$kSub';
-                      final text = v.toString();
-                      rawFieldErrors[composite] = text;
-                      messages.add(_fieldErrorMessage(composite, text));
-                    },
-                  );
+                  val.forEach((kSub, v) {
+                    final composite = '$k.$kSub';
+                    final text = v.toString();
+                    rawFieldErrors[composite] = text;
+                    messages.add(_fieldErrorMessage(composite, text));
+                  });
                 }
               });
             }
@@ -556,7 +571,8 @@ class ApiClient {
       return 'Branch reference code: $friendlyDetail';
     }
     if (normalizedField == 'transporter_id') {
-      return friendlyDetail.contains('required') || friendlyDetail.contains('valid number')
+      return friendlyDetail.contains('required') ||
+              friendlyDetail.contains('valid number')
           ? 'Please select a transporter'
           : 'Transporter: $friendlyDetail';
     }
@@ -592,6 +608,8 @@ class ApiClient {
             .replaceAll(RegExp(r'[_\.]'), ' ')
             .replaceAll(RegExp(r'\s+'), ' ')
             .trim();
-    return readableField.isEmpty ? friendlyDetail : '$readableField: $friendlyDetail';
+    return readableField.isEmpty
+        ? friendlyDetail
+        : '$readableField: $friendlyDetail';
   }
 }

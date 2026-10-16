@@ -20,7 +20,9 @@ class _AddCompanyViewState extends State<AddCompanyView> {
   @override
   void initState() {
     super.initState();
-    controller = Get.find<SellerCompanyController>();
+    controller = Get.isRegistered<SellerCompanyController>()
+        ? Get.find<SellerCompanyController>()
+        : Get.put(SellerCompanyController());
     controller.pincodeController.addListener(_onPincodeChanged);
   }
 
@@ -92,10 +94,7 @@ class _AddCompanyViewState extends State<AddCompanyView> {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text("Cancel"),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
           ElevatedButton(
             onPressed: () {
               final newCity = textController.text.trim();
@@ -138,112 +137,125 @@ class _AddCompanyViewState extends State<AddCompanyView> {
           onPressed: () => Get.back(),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSectionHeader("Company Details", theme),
-            _buildTextField(
-              controller.legalNameController,
-              "Legal Name",
-              IconlyLight.home,
-            ),
-            _buildTextField(
-              controller.companyTypeController,
-              "Company Type",
-              IconlyLight.category,
-              placeholder: "e.g. Private Limited",
-            ),
-            _buildTextField(
-              controller.yearController,
-              "Year of Establishment",
-              IconlyLight.calendar,
-              keyboardType: TextInputType.number,
-            ),
-            _buildSectionHeader("PAN & GST", theme),
-            _buildTextField(
-              controller.panController,
-              "PAN Number",
-              IconlyLight.document,
-              textCapitalization: TextCapitalization.characters,
-            ),
-            _buildTextField(
-              controller.gstController,
-              "GST Number",
-              IconlyLight.document,
-              textCapitalization: TextCapitalization.characters,
-            ),
-            _buildSectionHeader("Registered Address", theme),
-            _buildTextField(
-              controller.address1Controller,
-              "Address Line 1",
-              IconlyLight.location,
-            ),
-            _buildTextField(
-              controller.address2Controller,
-              "Address Line 2",
-              IconlyLight.location,
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildCityDropdown(theme),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildStateDropdown(theme),
-                ),
-              ],
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTextField(
-                    controller.pincodeController,
-                    "Pincode",
-                    null,
-                    keyboardType: TextInputType.number,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: EdgeInsets.fromLTRB(
+            20,
+            20,
+            20,
+            MediaQuery.of(context).viewInsets.bottom > 0 ? 120 : 40,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSectionHeader("Company Details", theme),
+              _buildTextField(
+                controller.legalNameController,
+                "Legal Name",
+                IconlyLight.home,
+                required: true,
+              ),
+              _buildTextField(
+                controller.companyTypeController,
+                "Company Type",
+                IconlyLight.category,
+                placeholder: "e.g. Private Limited",
+              ),
+              _buildTextField(
+                controller.yearController,
+                "Year of Establishment",
+                IconlyLight.calendar,
+                keyboardType: TextInputType.number,
+                errorKey: 'year_of_establishment',
+                required: true,
+              ),
+              _buildSectionHeader("PAN & GST", theme),
+              _buildTextField(
+                controller.panController,
+                "PAN Number",
+                IconlyLight.document,
+                textCapitalization: TextCapitalization.characters,
+                errorKey: 'pan_number',
+                required: true,
+              ),
+              _buildTextField(
+                controller.gstController,
+                "GST Number",
+                IconlyLight.document,
+                textCapitalization: TextCapitalization.characters,
+                errorKey: 'gst_number',
+                required: true,
+              ),
+              _buildSectionHeader("Registered Address", theme),
+              _buildTextField(
+                controller.address1Controller,
+                "Address Line 1",
+                IconlyLight.location,
+                errorKey: 'address_line_1',
+                required: true,
+              ),
+              _buildTextField(
+                controller.address2Controller,
+                "Address Line 2",
+                IconlyLight.location,
+              ),
+              _buildStateDropdown(theme),
+              _buildCityDropdown(theme),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _buildTextField(
+                      controller.pincodeController,
+                      "Pincode",
+                      null,
+                      keyboardType: TextInputType.number,
+                      required: true,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildTextField(
-                    controller.countryController,
-                    "Country",
-                    null,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildTextField(
+                      controller.countryController,
+                      "Country",
+                      null,
+                      errorKey: 'country',
+                      required: true,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(
-                onPressed: controller.saveCompany,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                ],
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 55,
+                child: ElevatedButton(
+                  onPressed: controller.saveCompany,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
                   ),
-                  elevation: 0,
-                ),
-                child: Obx(
-                  () => Text(
-                    controller.isEditing.value ? "UPDATE" : "SUBMIT",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      letterSpacing: 1.2,
+                  child: Obx(
+                    () => Text(
+                      controller.isEditing.value ? "UPDATE" : "SUBMIT",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        letterSpacing: 1.2,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 40),
-          ],
+              const SizedBox(height: 40),
+            ],
+          ),
         ),
       ),
     );
@@ -254,86 +266,86 @@ class _AddCompanyViewState extends State<AddCompanyView> {
     final currentCity = controller.cityController.text.trim();
     final selectedCity =
         availableCities.contains(currentCity) && currentCity.isNotEmpty
-            ? currentCity
-            : null;
+        ? currentCity
+        : null;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: DropdownButtonFormField<String>(
-        key: ValueKey("city_${controller.stateController.text}_$selectedCity"),
-        initialValue: selectedCity,
-        isExpanded: true,
-        menuMaxHeight: 320,
-        icon: const Icon(Icons.keyboard_arrow_down_rounded),
-        decoration: InputDecoration(
-          labelText: "City",
-          hintText: "Select City",
-          floatingLabelBehavior: FloatingLabelBehavior.always,
-          counterText: "",
-          filled: true,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
+    return Obx(() {
+      final errorText = controller.errors['city'];
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 20),
+        child: DropdownButtonFormField<String>(
+          key: ValueKey(
+            "city_${controller.stateController.text}_$selectedCity",
           ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
+          initialValue: selectedCity,
+          isExpanded: true,
+          menuMaxHeight: 320,
+          borderRadius: BorderRadius.circular(16),
+          dropdownColor: theme.colorScheme.surface,
+          icon: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface,
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: primaryColor, width: 1.5),
+          decoration: _dropdownDecoration(
+            theme: theme,
+            label: "City *",
+            hint: "Select City",
+            icon: Icons.location_city_outlined,
+            errorText: errorText,
           ),
-        ),
-        items: [
-          ...availableCities.map((city) {
-            return DropdownMenuItem<String>(
-              value: city,
-              child: Text(
-                city,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 14),
-              ),
-            );
-          }),
-          const DropdownMenuItem<String>(
-            value: "__custom__",
-            child: Row(
-              children: [
-                Icon(Icons.edit_note_rounded, size: 18, color: Colors.amber),
-                SizedBox(width: 8),
-                Text(
-                  "Other (Custom City)",
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontStyle: FontStyle.italic,
-                    color: Colors.amber,
-                  ),
+          items: [
+            ...availableCities.map((city) {
+              return DropdownMenuItem<String>(
+                value: city,
+                child: Text(
+                  city,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 14),
                 ),
-              ],
+              );
+            }),
+            const DropdownMenuItem<String>(
+              value: "__custom__",
+              child: Row(
+                children: [
+                  Icon(Icons.edit_note_rounded, size: 18, color: Colors.amber),
+                  SizedBox(width: 8),
+                  Text(
+                    "Other (Custom City)",
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.amber,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-        onChanged: (val) {
-          if (val == "__custom__") {
-            _showCustomCityDialog();
-          } else if (val != null) {
-            setState(() {
-              controller.cityController.text = val;
-              final inferredState = IndiaLocationData.getStateForCity(val);
-              if (inferredState != null &&
-                  controller.stateController.text.trim().toLowerCase() !=
-                      inferredState.toLowerCase()) {
-                controller.stateController.text = inferredState;
-              }
-            });
-          }
-        },
-      ),
-    );
+          ],
+          onChanged: (val) {
+            controller.clearError('city');
+            if (val == "__custom__") {
+              _showCustomCityDialog();
+            } else if (val != null) {
+              setState(() {
+                controller.cityController.text = val;
+                final inferredState = IndiaLocationData.getStateForCity(val);
+                if (inferredState != null &&
+                    controller.stateController.text.trim().toLowerCase() !=
+                        inferredState.toLowerCase()) {
+                  controller.stateController.text = inferredState;
+                  controller.clearError('state');
+                }
+              });
+            }
+          },
+        ),
+      );
+    });
   }
 
   Widget _buildStateDropdown(ThemeData theme) {
@@ -345,61 +357,108 @@ class _AddCompanyViewState extends State<AddCompanyView> {
     );
     final matchedState = matched.isNotEmpty ? matched : null;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: DropdownButtonFormField<String>(
-        key: ValueKey("state_$matchedState"),
-        initialValue: matchedState,
-        isExpanded: true,
-        menuMaxHeight: 320,
-        icon: const Icon(Icons.keyboard_arrow_down_rounded),
-        decoration: InputDecoration(
-          labelText: "State",
-          hintText: "Select State",
-          floatingLabelBehavior: FloatingLabelBehavior.always,
-          counterText: "",
-          filled: true,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
+    return Obx(() {
+      final errorText = controller.errors['state'];
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 20),
+        child: DropdownButtonFormField<String>(
+          key: ValueKey("state_$matchedState"),
+          initialValue: matchedState,
+          isExpanded: true,
+          menuMaxHeight: 320,
+          borderRadius: BorderRadius.circular(16),
+          dropdownColor: theme.colorScheme.surface,
+          icon: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface,
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
+          decoration: _dropdownDecoration(
+            theme: theme,
+            label: "State *",
+            hint: "Select State",
+            icon: Icons.map_outlined,
+            errorText: errorText,
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: primaryColor, width: 1.5),
-          ),
+          items: states.map((state) {
+            return DropdownMenuItem<String>(
+              value: state,
+              child: Text(
+                state,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 14),
+              ),
+            );
+          }).toList(),
+          onChanged: (val) {
+            controller.clearError('state');
+            if (val != null) {
+              setState(() {
+                controller.stateController.text = val;
+                final stateCities = IndiaLocationData.stateCities[val] ?? [];
+                if (!stateCities.any(
+                  (c) =>
+                      c.toLowerCase() ==
+                      controller.cityController.text.trim().toLowerCase(),
+                )) {
+                  controller.cityController.text = stateCities.isNotEmpty
+                      ? stateCities.first
+                      : '';
+                }
+              });
+            }
+          },
         ),
-        items: states.map((state) {
-          return DropdownMenuItem<String>(
-            value: state,
-            child: Text(
-              state,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 14),
-            ),
-          );
-        }).toList(),
-        onChanged: (val) {
-          if (val != null) {
-            setState(() {
-              controller.stateController.text = val;
-              final stateCities = IndiaLocationData.stateCities[val] ?? [];
-              if (!stateCities.any((c) =>
-                  c.toLowerCase() ==
-                  controller.cityController.text.trim().toLowerCase())) {
-                controller.cityController.text =
-                    stateCities.isNotEmpty ? stateCities.first : '';
-              }
-            });
-          }
-        },
+      );
+    });
+  }
+
+  InputDecoration _dropdownDecoration({
+    required ThemeData theme,
+    required String label,
+    required String hint,
+    required IconData icon,
+    String? errorText,
+  }) {
+    final radius = BorderRadius.circular(16);
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      floatingLabelBehavior: FloatingLabelBehavior.always,
+      prefixIcon: Icon(icon, size: 20),
+      filled: true,
+      fillColor: theme.inputDecorationTheme.fillColor,
+      errorText: errorText,
+      errorMaxLines: 2,
+      errorStyle: const TextStyle(
+        fontSize: 12,
+        color: Colors.red,
+        fontWeight: FontWeight.w500,
+        height: 1.25,
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      border: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: const BorderSide(color: primaryColor, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: const BorderSide(color: Colors.red, width: 1.5),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: const BorderSide(color: Colors.red, width: 2),
       ),
     );
   }
@@ -427,18 +486,23 @@ class _AddCompanyViewState extends State<AddCompanyView> {
   }
 
   static bool _isTaxField(String text, String key) {
-    final clean = text.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), ' ').trim();
+    final clean = text
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]'), ' ')
+        .trim();
     final words = clean.split(RegExp(r'\s+'));
     return words.contains(key);
   }
 
   Widget _buildTextField(
-    TextEditingController controller,
+    TextEditingController textController,
     String hint,
     IconData? icon, {
     TextInputType keyboardType = TextInputType.text,
     TextCapitalization textCapitalization = TextCapitalization.none,
     String? placeholder,
+    String? errorKey,
+    bool required = false,
   }) {
     final isPan = _isTaxField(hint, 'pan');
     final isGst = _isTaxField(hint, 'gst');
@@ -446,60 +510,107 @@ class _AddCompanyViewState extends State<AddCompanyView> {
     final isYear = clean.contains('year');
     final isPincode = clean.contains('pincode');
     final isCompanyType = clean.contains('company type');
+    final isLegalName = clean.contains('legal name');
 
-    final effectiveHint = placeholder ??
+    final effectiveKey =
+        errorKey ??
+        (isLegalName
+            ? 'legal_name'
+            : isPan
+            ? 'pan'
+            : isGst
+            ? 'gst'
+            : isPincode
+            ? 'pincode'
+            : null);
+
+    final effectiveHint =
+        placeholder ??
         (isGst
             ? "e.g. 22AAAAA0000A1Z5"
             : isPan
-                ? "e.g. ABCDE1234F"
-                : isCompanyType
-                    ? "e.g. Private Limited"
-                    : isYear
-                        ? "e.g. 2019"
-                        : isPincode
-                            ? "e.g. 400001"
-                            : hint);
+            ? "e.g. ABCDE1234F"
+            : isCompanyType
+            ? "e.g. Private Limited"
+            : isYear
+            ? "e.g. 2019"
+            : isPincode
+            ? "e.g. 400001"
+            : hint);
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        maxLength: keyboardType == TextInputType.number ? 10 : null,
-        buildCounter:
-            (_, {required currentLength, required isFocused, maxLength}) =>
-                null,
-        inputFormatters: isPan
-            ? const [TaxIdInputFormatter.pan()]
-            : isGst
-            ? const [TaxIdInputFormatter.gst()]
-            : null,
-        textCapitalization: textCapitalization,
-        decoration: InputDecoration(
-          labelText: hint,
-          hintText: effectiveHint,
-          floatingLabelBehavior: FloatingLabelBehavior.always,
-          counterText: "",
-          prefixIcon: icon != null ? Icon(icon, size: 20) : null,
-          filled: true,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: primaryColor, width: 1.5),
+    Widget buildField(String? errorText) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 20),
+        child: TextField(
+          controller: textController,
+          onChanged: (val) {
+            if (effectiveKey != null &&
+                controller.errors.containsKey(effectiveKey)) {
+              controller.clearError(effectiveKey);
+            }
+          },
+          keyboardType: keyboardType,
+          maxLength: keyboardType == TextInputType.number ? 10 : null,
+          buildCounter:
+              (_, {required currentLength, required isFocused, maxLength}) =>
+                  null,
+          inputFormatters: isPan
+              ? const [TaxIdInputFormatter.pan()]
+              : isGst
+              ? const [TaxIdInputFormatter.gst()]
+              : null,
+          textCapitalization: textCapitalization,
+          decoration: InputDecoration(
+            labelText: required ? '$hint *' : hint,
+            hintText: effectiveHint,
+            floatingLabelBehavior: FloatingLabelBehavior.always,
+            counterText: "",
+            errorText: errorText,
+            errorMaxLines: 3,
+            errorStyle: const TextStyle(
+              fontSize: 12,
+              color: Colors.red,
+              fontWeight: FontWeight.w500,
+              height: 1.25,
+            ),
+            prefixIcon: icon != null ? Icon(icon, size: 20) : null,
+            filled: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: primaryColor, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Colors.red, width: 1.5),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Colors.red, width: 2.0),
+            ),
           ),
         ),
-      ),
-    );
+      );
+    }
+
+    if (effectiveKey == null) {
+      return buildField(null);
+    }
+
+    return Obx(() {
+      final errorText = controller.errors[effectiveKey];
+      return buildField(errorText);
+    });
   }
 }

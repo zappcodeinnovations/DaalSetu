@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
 
-import '../../../../services/seller_services.dart';
 import '../../../../theme/app_theme.dart';
-import '../../../../theme/glass_widgets.dart';
 import '../controller/seller_company_controller.dart';
 import '../model/seller_company_model.dart';
 import 'add_company_view.dart';

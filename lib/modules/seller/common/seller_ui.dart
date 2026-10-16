@@ -13,21 +13,91 @@ class SellerUi {
 
   static void success(String message) {
     Get.snackbar(
-      "Success",
-      message,
+      '',
+      '',
+      titleText: Text(
+        "Success",
+        style: GoogleFonts.poppins(
+          fontWeight: FontWeight.w700,
+          fontSize: 14,
+          color: Colors.white,
+        ),
+      ),
+      messageText: Text(
+        message,
+        style: GoogleFonts.inter(
+          fontSize: 13,
+          color: const Color(0xFFE2E8F0),
+          height: 1.3,
+        ),
+      ),
+      icon: const Icon(
+        Icons.check_circle_rounded,
+        color: Colors.greenAccent,
+        size: 24,
+      ),
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.green,
+      backgroundColor: const Color(0xFF1E293B),
       colorText: Colors.white,
+      borderRadius: 14,
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 88),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      duration: const Duration(seconds: 3),
+      barBlur: 0,
+      isDismissible: true,
+      boxShadows: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.3),
+          blurRadius: 12,
+          offset: const Offset(0, 4),
+        ),
+      ],
+      forwardAnimationCurve: Curves.easeOutCirc,
     );
   }
 
   static void error(Object error) {
     Get.snackbar(
-      "Error",
-      errorText(error),
+      '',
+      '',
+      titleText: Text(
+        "Error",
+        style: GoogleFonts.poppins(
+          fontWeight: FontWeight.w700,
+          fontSize: 14,
+          color: Colors.white,
+        ),
+      ),
+      messageText: Text(
+        errorText(error),
+        style: GoogleFonts.inter(
+          fontSize: 13,
+          color: const Color(0xFFE2E8F0),
+          height: 1.3,
+        ),
+      ),
+      icon: const Icon(
+        Icons.error_outline_rounded,
+        color: Colors.redAccent,
+        size: 24,
+      ),
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red,
+      backgroundColor: const Color(0xFF1E293B),
       colorText: Colors.white,
+      borderRadius: 14,
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 88),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      duration: const Duration(seconds: 4),
+      barBlur: 0,
+      isDismissible: true,
+      boxShadows: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.3),
+          blurRadius: 12,
+          offset: const Offset(0, 4),
+        ),
+      ],
+      forwardAnimationCurve: Curves.easeOutCirc,
     );
   }
 

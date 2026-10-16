@@ -31,6 +31,9 @@ class SellerCategoryController extends GetxController {
     try {
       isLoading(true);
       await Future.wait([fetchDashboard(), fetchTree()]);
+      if (isSearching.value && searchController.text.trim().isNotEmpty) {
+        await search(searchController.text);
+      }
     } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {
@@ -75,48 +78,75 @@ class SellerCategoryController extends GetxController {
     }
 
     isSearching(true);
-    try {
-      final data = await SellerServices.searchCategories(cleanQuery);
-      if (data.isNotEmpty) {
-        searchResults.assignAll(
-          data.map((e) => CategoryDetailModel.fromJson(e)).toList(),
-        );
-        return;
-      }
-    } catch (e) {
-      print("Search API Error, falling back to local search: $e");
+
+    if (categoryTree.isEmpty && isLoading.value) {
+      await fetchTree();
     }
 
-    // Local fallback: search inside categoryTree
     final List<CategoryDetailModel> localResults = [];
-    void traverse(List<CategoryTreeModel> nodes) {
+    void traverse(
+      List<CategoryTreeModel> nodes, {
+      String parentPath = '',
+      String? parentName,
+    }) {
       for (final node in nodes) {
-        if (node.name.toLowerCase().contains(cleanQuery)) {
+        final currentPath = parentPath.isEmpty
+            ? node.name
+            : '$parentPath > ${node.name}';
+
+        if (node.name.toLowerCase().contains(cleanQuery) ||
+            currentPath.toLowerCase().contains(cleanQuery)) {
           final isNodeActive = node.status.toLowerCase() == 'active';
           localResults.add(
             CategoryDetailModel(
               id: node.id,
               name: node.name,
-              isActive: isNodeActive,
+              parent: node.parentId,
+              parentName: parentName,
               level: node.level,
-              brands: node.brands,
-              path: node.name,
+              path: currentPath,
+              isActive: isNodeActive,
               status: node.status,
               childrenCount: node.children.length,
-              fullPath: node.name,
-              isRoot: node.level == 0,
+              fullPath: currentPath,
+              isRoot: node.level == 0 || node.parentId == null,
               isLeaf: node.children.isEmpty,
+              imageUrl: node.image,
               hasChildren: node.children.isNotEmpty,
+              brands: node.brands,
             ),
           );
         }
+
         if (node.children.isNotEmpty) {
-          traverse(node.children);
+          traverse(
+            node.children,
+            parentPath: currentPath,
+            parentName: node.name,
+          );
         }
       }
     }
 
     traverse(categoryTree);
+
+    if (localResults.isEmpty && categoryTree.isEmpty) {
+      try {
+        final data = await SellerServices.searchCategories(cleanQuery);
+        for (final item in data) {
+          if (item is Map<String, dynamic>) {
+            final name =
+                (item['category_name'] ?? item['name'] ?? '').toString();
+            if (name.toLowerCase().contains(cleanQuery)) {
+              localResults.add(CategoryDetailModel.fromJson(item));
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint("API search fallback error: $e");
+      }
+    }
+
     searchResults.assignAll(localResults);
   }
 

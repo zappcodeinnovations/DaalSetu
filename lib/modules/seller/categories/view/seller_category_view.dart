@@ -12,7 +12,9 @@ class SellerCategoryView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(SellerCategoryController());
+    final controller = Get.isRegistered<SellerCategoryController>()
+        ? Get.find<SellerCategoryController>()
+        : Get.put(SellerCategoryController());
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -152,25 +154,77 @@ class SellerCategoryView extends StatelessWidget {
   Widget _buildSearchBar(BuildContext context) {
     final controller = Get.find<SellerCategoryController>();
     return Padding(
-      padding: const EdgeInsets.all(16),
-      child: TextField(
-        controller: controller.searchController,
-        onChanged: controller.search,
-        decoration: InputDecoration(
-          hintText: "Search Categories...",
-          prefixIcon: const Icon(IconlyLight.search),
-          filled: true,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-        ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: ValueListenableBuilder<TextEditingValue>(
+        valueListenable: controller.searchController,
+        builder: (context, value, _) {
+          return TextField(
+            controller: controller.searchController,
+            onChanged: controller.search,
+            decoration: InputDecoration(
+              hintText: "Search Categories...",
+              prefixIcon: const Icon(IconlyLight.search),
+              suffixIcon: value.text.isNotEmpty
+                  ? IconButton(
+                      key: const Key('clear_category_search_btn'),
+                      icon: const Icon(Icons.clear, size: 20),
+                      splashRadius: 20,
+                      tooltip: "Clear search",
+                      onPressed: () {
+                        controller.searchController.clear();
+                        controller.search('');
+                      },
+                    )
+                  : null,
+              filled: true,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
   Widget _buildSearchResults(BuildContext context) {
     final controller = Get.find<SellerCategoryController>();
+    final theme = Theme.of(context);
+
+    if (controller.searchResults.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                IconlyLight.search,
+                size: 64,
+                color: theme.disabledColor,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "No categories found",
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "No categories match \"${controller.searchController.text.trim()}\"",
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.disabledColor,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
       itemCount: controller.searchResults.length,
@@ -210,7 +264,9 @@ class SellerCategoryView extends StatelessWidget {
                 ),
               ],
       ),
-      child: ListTile(
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Container(
           padding: const EdgeInsets.all(2),
@@ -240,18 +296,25 @@ class SellerCategoryView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 6),
+            if (category.fullPath.isNotEmpty &&
+                category.fullPath.toLowerCase() != category.name.toLowerCase())
+              _categoryInfoRow(
+                IconlyLight.arrow_right_2,
+                category.fullPath,
+                theme,
+              ),
             _categoryInfoRow(
               IconlyLight.category,
               "${category.childrenCount} sub-categories",
               theme,
             ),
             _categoryInfoRow(
-              category.status == 'active'
+              category.status.toLowerCase() == 'active'
                   ? Icons.check_circle_outline
                   : Icons.pending_actions,
               "Status: ${category.status.toUpperCase()}",
               theme,
-              textColor: category.status == 'active'
+              textColor: category.status.toLowerCase() == 'active'
                   ? Colors.green
                   : Colors.orange,
             ),
@@ -317,12 +380,38 @@ class SellerCategoryView extends StatelessWidget {
             ),
           ],
         ),
+        ),
       ),
     );
   }
 
   Widget _buildCategoryTree(BuildContext context) {
     final controller = Get.find<SellerCategoryController>();
+    if (controller.categoryTree.isEmpty) {
+      final theme = Theme.of(context);
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                IconlyLight.category,
+                size: 64,
+                color: theme.disabledColor,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "No categories available",
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
       physics: const AlwaysScrollableScrollPhysics(),
@@ -358,7 +447,9 @@ class SellerCategoryView extends StatelessWidget {
                 ),
               ],
       ),
-      child: Theme(
+      child: Material(
+        color: Colors.transparent,
+        child: Theme(
         data: theme.copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -480,6 +571,7 @@ class SellerCategoryView extends StatelessWidget {
               .toList(),
         ),
       ),
+      ),
     );
   }
 
@@ -598,37 +690,42 @@ class SellerCategoryView extends StatelessWidget {
             }
 
             return Container(
-              constraints: const BoxConstraints(maxHeight: 200),
+              constraints: const BoxConstraints(maxHeight: 180),
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: ListView.builder(
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
-                itemCount: controller.brandsList.length,
-                itemBuilder: (context, index) {
-                  final brand = controller.brandsList[index];
-                  // Own Obx: list items are built lazily, outside the parent Obx,
-                  // so without it a tap never redraws the tick.
-                  return Obx(() => CheckboxListTile(
-                    title: Text(
-                      brand.brandName,
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                    value: controller.selectedBrandIds.contains(brand.id),
-                    onChanged: (val) =>
-                        controller.toggleBrandSelection(brand.id),
-                    controlAffinity: ListTileControlAffinity.leading,
-                    side: BorderSide(color: Colors.grey.shade500, width: 1.5),
-                    activeColor: primaryColor,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    dense: true,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ));
-                },
+              child: Material(
+                color: Colors.transparent,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  primary: false,
+                  physics: const ClampingScrollPhysics(),
+                  padding: EdgeInsets.zero,
+                  itemCount: controller.brandsList.length,
+                  itemBuilder: (context, index) {
+                    final brand = controller.brandsList[index];
+                    // Own Obx: list items are built lazily, outside the parent Obx,
+                    // so without it a tap never redraws the tick.
+                    return Obx(() => CheckboxListTile(
+                      title: Text(
+                        brand.brandName,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      value: controller.selectedBrandIds.contains(brand.id),
+                      onChanged: (val) =>
+                          controller.toggleBrandSelection(brand.id),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      side: BorderSide(color: Colors.grey.shade500, width: 1.5),
+                      activeColor: primaryColor,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                      dense: true,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ));
+                  },
+                ),
               ),
             );
           }),
@@ -688,57 +785,100 @@ class SellerCategoryView extends StatelessWidget {
     required Widget content,
     required VoidCallback onConfirm,
   }) {
+    final theme = Theme.of(context);
     Get.dialog(
       BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: Dialog(
-          backgroundColor: Theme.of(context).cardColor.withOpacity(0.8),
+          backgroundColor: theme.cardColor.withOpacity(0.95),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                content,
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Get.back(),
-                      child: const Text(
-                        "CANCEL",
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: onConfirm,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          clipBehavior: Clip.antiAlias,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                      child: const Text(
-                        "SAVE",
-                        style: TextStyle(color: Colors.white),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20),
+                        splashRadius: 18,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        tooltip: "Close",
+                        onPressed: () => Get.back(),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      physics: const ClampingScrollPhysics(),
+                      child: content,
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Get.back(),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                        ),
+                        child: Text(
+                          "CANCEL",
+                          style: TextStyle(
+                            color: theme.disabledColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: onConfirm,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          "SAVE",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),

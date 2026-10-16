@@ -28,10 +28,51 @@ class SellerWorkspaceView extends StatelessWidget {
 
   void _openOfferMedia() {
     Get.to(() => const SellerProductView());
+    Get.closeCurrentSnackbar();
     Get.snackbar(
-      'Offer Media',
-      'Open an offer and choose its image or video option.',
+      '',
+      '',
+      titleText: Text(
+        'Offer Media',
+        style: GoogleFonts.poppins(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+          fontSize: 14,
+        ),
+      ),
+      messageText: Text(
+        'Open an offer and choose its image or video option.',
+        style: GoogleFonts.inter(
+          color: Colors.white,
+          fontWeight: FontWeight.w400,
+          fontSize: 13,
+          height: 1.3,
+        ),
+      ),
+      icon: const Icon(
+        IconlyLight.image,
+        color: Color(0xFFFFB300),
+        size: 24,
+      ),
       snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: const Color(0xFF0F172A),
+      colorText: Colors.white,
+      borderRadius: 14,
+      borderColor: const Color(0xFF334155),
+      borderWidth: 1,
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 88),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      duration: const Duration(seconds: 3),
+      barBlur: 0,
+      isDismissible: true,
+      boxShadows: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.3),
+          blurRadius: 12,
+          offset: const Offset(0, 4),
+        ),
+      ],
+      forwardAnimationCurve: Curves.easeOutCirc,
     );
   }
 

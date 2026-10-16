@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/seller_negotiation_controller.dart';
 import '../model/offer_interest_model.dart';
+import '../../common/seller_ui.dart';
 
 class SellerCounterOfferDialog {
   static void show(
@@ -83,7 +84,7 @@ class SellerCounterOfferDialog {
       buttonColor: Colors.amber.shade700,
       onConfirm: () {
         if (priceCtrl.text.trim().isEmpty || qtyCtrl.text.trim().isEmpty) {
-          Get.snackbar("Error", "Please enter counter price and quantity");
+          SellerUi.error("Please enter counter price and quantity");
           return;
         }
         Get.back();
