@@ -6,12 +6,83 @@ class BuyerOfferDetailController extends GetxController {
   var isLoading = true.obs;
   var isSending = false.obs;
   var offerDetails = Rxn<Map<String, dynamic>>();
+  var negotiationThread = Rxn<Map<String, dynamic>>();
+
+  Future<void> loadNegotiationThread(int productId, int interestId) async {
+    try {
+      final res = await BuyerServices.getOfferInterestThread(productId, interestId);
+      final raw = res['data'];
+      if (raw is Map) {
+        negotiationThread.value = Map<String, dynamic>.from(raw);
+      }
+    } catch (_) {}
+  }
+
+  Future<bool> confirmOfferInterest({
+    required int productId,
+    required int interestId,
+    String remark = '',
+  }) async {
+    try {
+      isSending(true);
+      final res = await BuyerServices.confirmOfferInterest(
+        productId,
+        interestId,
+        remark: remark,
+      );
+      AppSnackbar.showSuccess(
+        title: "Accepted",
+        message: res['message'] ?? "Offer accepted successfully",
+      );
+      await loadNegotiationThread(productId, interestId);
+      return true;
+    } catch (e) {
+      AppSnackbar.showError(
+        title: "Failed",
+        message: e.toString().replaceAll("Exception: ", ""),
+      );
+      return false;
+    } finally {
+      isSending(false);
+    }
+  }
+
+  Future<bool> rejectOfferInterest({
+    required int productId,
+    required int interestId,
+    String remark = '',
+  }) async {
+    try {
+      isSending(true);
+      final res = await BuyerServices.rejectOfferInterest(
+        productId,
+        interestId,
+        remark: remark,
+      );
+      AppSnackbar.showSuccess(
+        title: "Rejected",
+        message: res['message'] ?? "Offer rejected successfully",
+      );
+      await loadNegotiationThread(productId, interestId);
+      return true;
+    } catch (e) {
+      AppSnackbar.showError(
+        title: "Failed",
+        message: e.toString().replaceAll("Exception: ", ""),
+      );
+      return false;
+    } finally {
+      isSending(false);
+    }
+  }
 
   Future<void> fetchDetails(
     int id, {
     bool silent = false,
     bool preferBuyerOffer = false,
     bool preferBuyerRequirement = false,
+    int? productId,
+    int? interestId,
   }) async {
     try {
       if (!silent) isLoading(true);
@@ -21,6 +92,15 @@ class BuyerOfferDetailController extends GetxController {
           ? await BuyerServices.getBuyerRequirementDetails(id)
           : await BuyerServices.getOfferDetails(id);
       offerDetails.value = data;
+
+      final pId = productId ??
+          int.tryParse((data['product_id'] ?? data['product']?['id'] ?? (data['is_interest'] == true ? data['id'] : null) ?? '').toString());
+      final iId = interestId ??
+          int.tryParse((data['interest_id'] ?? data['interest']?['id'] ?? (data['is_interest'] == true ? data['interest_id'] : null) ?? '').toString());
+
+      if (pId != null && pId > 0 && iId != null && iId > 0) {
+        await loadNegotiationThread(pId, iId);
+      }
     } catch (e) {
       if (!silent) {
         AppSnackbar.showError(

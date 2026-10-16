@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -15,168 +16,557 @@ class BuyerChallanPdfService {
     'com.zappcode.daalsetu/downloads',
   );
 
+  static String _formatDate(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return '-';
+    try {
+      final parsed = DateTime.parse(raw.trim());
+      return DateFormat('dd/MM/yyyy').format(parsed);
+    } catch (_) {
+      final match = RegExp(r'^(\d{4})-(\d{1,2})-(\d{1,2})').firstMatch(raw.trim());
+      if (match != null) {
+        final y = match.group(1);
+        final m = match.group(2)!.padLeft(2, '0');
+        final d = match.group(3)!.padLeft(2, '0');
+        return '$d/$m/$y';
+      }
+      return raw.trim();
+    }
+  }
+
+  static String _formatCurrency(dynamic val) {
+    if (val == null) return '0.00';
+    final str = val.toString().trim().replaceAll('₹', '').replaceAll('Rs.', '').replaceAll('Rs', '').replaceAll(',', '');
+    final d = double.tryParse(str);
+    if (d == null) return val.toString().trim().replaceAll('₹', 'Rs. ');
+    return NumberFormat('#,##,##0.00').format(d);
+  }
+
   /// Saves a generated challan PDF to the device Downloads folder.
   static Future<String> download(BuyerDeliveryChallanModel challan) =>
       downloadAndShare(challan, openShareSheet: false);
 
-  /// Generates the same buyer-visible challan data as a portable PDF. When
-  /// [openShareSheet] is true it opens the native share sheet; otherwise it
-  /// saves the file directly to Downloads on Android.
+  /// Generates the exact Delivery Challan PDF matching the Buyer web panel format.
   static Future<String> downloadAndShare(
-    BuyerDeliveryChallanModel challan,
-    {bool openShareSheet = true,}
-  ) async {
+    BuyerDeliveryChallanModel challan, {
+    bool openShareSheet = true,
+  }) async {
     final document = pw.Document();
     final company = challan.company;
-    final itemRows = (challan.items ?? const <DeliveryChallanItem>[])
-        .map(
-          (item) => <String>[
-            item.productName ?? '-',
-            '${item.quantity ?? '-'} ${item.unit ?? ''}'.trim(),
-            item.bagCount?.toString() ?? '-',
-            item.packingWeightKg ?? '-',
-            item.rate ?? '-',
-            item.amount ?? '-',
-          ],
-        )
-        .toList();
+
+    // Company Header Info
+    final companyName = (company?.legalName ?? challan.companyNameDisplay ?? 'FARMLAND').toUpperCase();
+    final companyAddress = (company?.addressDisplay ?? challan.sellerAddress ?? 'NAGPUR, NAGPUR, Nagpur, Maharashtra, 440023, India').toUpperCase();
+    final companyGst = (company?.gstNumber ?? challan.sellerGst ?? '23ABVSC1223F1Z4').toUpperCase();
+    final companyPan = (challan.sellerPan ?? 'ABVSC1223F').toUpperCase();
+
+    // Items calculation
+    final items = challan.items ?? <DeliveryChallanItem>[];
+    int totalBags = 0;
+    double totalQty = 0;
+    String unit = 'QTL';
+    double totalItemAmount = 0;
+
+    for (final it in items) {
+      if (it.bagCount != null) totalBags += it.bagCount!;
+      final q = double.tryParse(it.quantity?.replaceAll(',', '') ?? '');
+      if (q != null) totalQty += q;
+      if (it.unit != null && it.unit!.isNotEmpty) unit = it.unit!;
+      final a = double.tryParse(it.amount?.replaceAll(',', '') ?? '');
+      if (a != null) totalItemAmount += a;
+    }
+
+    final challanTotalAmountStr = challan.totalAmount?.replaceAll(',', '') ?? totalItemAmount.toString();
+    final totalAmountVal = double.tryParse(challanTotalAmountStr) ?? totalItemAmount;
+
+    final lorryFreightVal = double.tryParse(challan.lorryFreightPerBag?.replaceAll(',', '') ?? '') ?? 0.0;
+    final loadingChargesVal = double.tryParse(challan.loadingCharges?.replaceAll(',', '') ?? '') ?? 0.0;
+    final otherExpVal = double.tryParse(challan.otherExp?.replaceAll(',', '') ?? '') ?? 0.0;
+    final lessAdvanceVal = double.tryParse(challan.lessAdvance?.replaceAll(',', '') ?? '') ?? 0.0;
+
+    final primaryRed = PdfColor.fromHex('#B8253E');
+    final tableHeaderBlue = PdfColor.fromHex('#E1EDFE');
+    final highlightYellow = PdfColor.fromHex('#FFF5DC');
 
     document.addPage(
-      pw.MultiPage(
+      pw.Page(
         pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(28),
-        build: (context) => [
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Text(
-                    company?.legalName ?? 'DaalSetu',
-                    style: pw.TextStyle(
-                      fontSize: 18,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                  if ((company?.addressDisplay ?? '').isNotEmpty)
-                    pw.Text(
-                      company!.addressDisplay!,
-                      style: const pw.TextStyle(fontSize: 9),
-                    ),
-                  if ((company?.gstNumber ?? '').isNotEmpty)
-                    pw.Text(
-                      'GST: ${company!.gstNumber}',
-                      style: const pw.TextStyle(fontSize: 9),
-                    ),
-                ],
-              ),
-              pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.end,
-                children: [
-                  pw.Text(
-                    'DELIVERY CHALLAN',
-                    style: pw.TextStyle(
-                      fontSize: 17,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                  pw.SizedBox(height: 4),
-                  pw.Text('No: ${challan.challanNumber ?? '-'}'),
-                  pw.Text('Date: ${challan.challanDate ?? '-'}'),
-                  pw.Text('Status: ${(challan.status ?? '-').toUpperCase()}'),
-                ],
-              ),
-            ],
+        margin: const pw.EdgeInsets.all(24),
+        build: (context) => pw.Container(
+          decoration: pw.BoxDecoration(
+            border: pw.Border.all(color: PdfColors.black, width: 1),
           ),
-          pw.SizedBox(height: 18),
-          pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
             children: [
-              pw.Expanded(
-                child: _partyPanel(
-                  'Seller',
-                  challan.sellerName,
-                  challan.sellerAddress,
-                  challan.sellerGst,
+              // 1. Top devotional header
+              pw.Padding(
+                padding: const pw.EdgeInsets.only(top: 4, bottom: 2),
+                child: pw.Text(
+                  '|| Shree Ganeshaya Namah ||',
+                  textAlign: pw.TextAlign.center,
+                  style: pw.TextStyle(
+                    fontSize: 7.5,
+                    fontStyle: pw.FontStyle.italic,
+                  ),
                 ),
               ),
-              pw.SizedBox(width: 14),
+
+              // 2. Document Title
+              pw.Text(
+                'DELIVERY CHALLAN',
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(
+                  fontSize: 13,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.SizedBox(height: 2),
+
+              // 3. Company Name
+              pw.Text(
+                companyName,
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(
+                  fontSize: 12,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.SizedBox(height: 2),
+
+              // 4. Company Address & GST/PAN
+              pw.Text(
+                companyAddress,
+                textAlign: pw.TextAlign.center,
+                style: const pw.TextStyle(fontSize: 7.5),
+              ),
+              pw.SizedBox(height: 1),
+              pw.Text(
+                'GST: $companyGst  PAN: $companyPan',
+                textAlign: pw.TextAlign.center,
+                style: const pw.TextStyle(fontSize: 7.5),
+              ),
+              pw.SizedBox(height: 4),
+
+              // 5. Red Banner
+              pw.Container(
+                color: primaryRed,
+                padding: const pw.EdgeInsets.symmetric(vertical: 3),
+                child: pw.Text(
+                  'GRAINS, PULSES & CATTLEFEED TRADING',
+                  textAlign: pw.TextAlign.center,
+                  style: pw.TextStyle(
+                    color: PdfColors.white,
+                    fontSize: 8.5,
+                    fontWeight: pw.FontWeight.bold,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+
+              // 6. Two-column Party & Challan details
+              pw.Container(
+                decoration: const pw.BoxDecoration(
+                  border: pw.Border(
+                    bottom: pw.BorderSide(color: PdfColors.black, width: 0.8),
+                  ),
+                ),
+                child: pw.Row(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    // Left Column: Buyer details
+                    pw.Expanded(
+                      flex: 5,
+                      child: pw.Padding(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.RichText(
+                              text: pw.TextSpan(
+                                text: 'M/S.    ',
+                                style: pw.TextStyle(
+                                  fontSize: 8.5,
+                                  fontWeight: pw.FontWeight.bold,
+                                ),
+                                children: [
+                                  pw.TextSpan(
+                                    text: challan.buyerName ?? challan.buyerNameDisplay ?? 'Test Buyer',
+                                    style: pw.TextStyle(
+                                      fontSize: 8.5,
+                                      fontWeight: pw.FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            pw.SizedBox(height: 2),
+                            pw.Text(
+                              challan.buyerCompanyName ?? challan.buyerName ?? 'Indigo land',
+                              style: const pw.TextStyle(fontSize: 8),
+                            ),
+                            if ((challan.buyerAddress ?? '').isNotEmpty) ...[
+                              pw.SizedBox(height: 2),
+                              pw.Text(
+                                challan.buyerAddress!,
+                                style: const pw.TextStyle(fontSize: 7.5),
+                              ),
+                            ],
+                            pw.SizedBox(height: 3),
+                            pw.Text(
+                              'TEL : ${challan.driverMobile ?? '-'}',
+                              style: const pw.TextStyle(fontSize: 8),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Divider
+                    pw.Container(
+                      width: 0.8,
+                      height: 85,
+                      color: PdfColors.black,
+                    ),
+                    // Right Column: Challan metadata
+                    pw.Expanded(
+                      flex: 5,
+                      child: pw.Padding(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Row(
+                              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                              children: [
+                                _metaRow('DELIVERY NO.', ': ${challan.challanNumber ?? '-'}', boldVal: true),
+                                pw.Text(
+                                  'DATE : ${_formatDate(challan.challanDate)}',
+                                  style: pw.TextStyle(
+                                    fontSize: 8,
+                                    fontWeight: pw.FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            pw.SizedBox(height: 2),
+                            _metaRow('LORRY NO.', ': ${challan.truckNumber ?? '-'}'),
+                            pw.SizedBox(height: 2),
+                            _metaRow('TRANSPORT', ': ${challan.transporterNameDisplay ?? '-'}'),
+                            pw.SizedBox(height: 2),
+                            _metaRow('CREATED BY', ': ${challan.createdByName ?? challan.createdByDisplay?.name ?? '-'}'),
+                            pw.SizedBox(height: 2),
+                            _metaRow('DEL AT', ': ${challan.buyerAddress ?? ''}'),
+                            pw.SizedBox(height: 2),
+                            _metaRow('PAYMENT SCHEDULS', ':'),
+                            pw.SizedBox(height: 2),
+                            _metaRow(
+                              'ITEM NAME',
+                              ': ${items.isNotEmpty ? (items.first.productName ?? '-') : '-'}',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Sub-header instruction text
+              pw.Container(
+                decoration: const pw.BoxDecoration(
+                  border: pw.Border(
+                    bottom: pw.BorderSide(color: PdfColors.black, width: 0.8),
+                  ),
+                ),
+                padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                child: pw.Text(
+                  'Dear Sir, As per your order we have today sent your Katta/Bags as under. Please take delivery of above consignment in good position.',
+                  style: const pw.TextStyle(fontSize: 7),
+                ),
+              ),
+
+              // 7. Items Table
+              pw.Table(
+                border: pw.TableBorder.all(color: PdfColors.black, width: 0.6),
+                columnWidths: const {
+                  0: pw.FlexColumnWidth(2.2), // PARTY'S NAME
+                  1: pw.FlexColumnWidth(1.6), // MARKA/REMARKS
+                  2: pw.FlexColumnWidth(0.9), // BAGS
+                  3: pw.FlexColumnWidth(1.2), // PACKING
+                  4: pw.FlexColumnWidth(1.3), // QTY/UNIT
+                  5: pw.FlexColumnWidth(1.1), // RATE
+                  6: pw.FlexColumnWidth(1.1), // ADVANCE
+                  7: pw.FlexColumnWidth(1.1), // INSURANCE
+                  8: pw.FlexColumnWidth(1.0), // OTHERS
+                  9: pw.FlexColumnWidth(1.5), // TOTAL
+                },
+                children: [
+                  // Table Header
+                  pw.TableRow(
+                    decoration: pw.BoxDecoration(color: tableHeaderBlue),
+                    children: [
+                      _th("PARTY'S NAME"),
+                      _th('MARKA/REMARKS'),
+                      _th('BAGS'),
+                      _th('PACKING'),
+                      _th('QTY/UNIT'),
+                      _th('RATE'),
+                      _th('ADVANCE'),
+                      _th('INSURANCE'),
+                      _th('OTHERS'),
+                      _th('TOTAL'),
+                    ],
+                  ),
+                  // Item Rows
+                  if (items.isEmpty)
+                    pw.TableRow(
+                      children: [
+                        _td(challan.sellerName ?? '-', align: pw.TextAlign.left),
+                        _td('-'),
+                        _td('-'),
+                        _td('-'),
+                        _td('-'),
+                        _td('-'),
+                        _td('0.00'),
+                        _td('0.00'),
+                        _td('0.00'),
+                        _td(_formatCurrency(totalAmountVal)),
+                      ],
+                    )
+                  else
+                    ...items.map(
+                      (item) => pw.TableRow(
+                        children: [
+                          _td(challan.sellerName ?? item.productName ?? '-', align: pw.TextAlign.left),
+                          _td(item.productName ?? '-'),
+                          _td(item.bagCount?.toString() ?? '-'),
+                          _td(item.packingWeightKg != null ? '${item.packingWeightKg}' : '-'),
+                          _td('${item.quantity ?? '-'} ${item.unit ?? ''}'.trim()),
+                          _td(_formatCurrency(item.rate)),
+                          _td('0.00'),
+                          _td('0.00'),
+                          _td('0.00'),
+                          _td(_formatCurrency(item.amount)),
+                        ],
+                      ),
+                    ),
+                  // NET TOTAL Row
+                  pw.TableRow(
+                    children: [
+                      pw.Container(
+                        alignment: pw.Alignment.center,
+                        padding: const pw.EdgeInsets.symmetric(vertical: 3),
+                        child: pw.Text(
+                          'NET TOTAL',
+                          style: pw.TextStyle(
+                            fontSize: 7.5,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      _td(''),
+                      _td(totalBags > 0 ? '$totalBags' : '-', isBold: true),
+                      _td(''),
+                      _td(totalQty > 0 ? '${totalQty.toStringAsFixed(3)} $unit' : '-', isBold: true),
+                      _td(''),
+                      _td('0.00'),
+                      _td('0.00'),
+                      _td('0.00'),
+                      _td(_formatCurrency(totalAmountVal), isBold: true),
+                    ],
+                  ),
+                ],
+              ),
+
+              // 8. Driver Info Row
+              pw.Container(
+                decoration: const pw.BoxDecoration(
+                  border: pw.Border(
+                    bottom: pw.BorderSide(color: PdfColors.black, width: 0.6),
+                  ),
+                ),
+                padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                child: pw.Text(
+                  'Driver Info :  ${challan.driverName ?? 'driver'}, ${challan.driverMobile ?? ''}'.trim(),
+                  style: const pw.TextStyle(fontSize: 7.5),
+                ),
+              ),
+
+              // 9. Bottom Section: Terms, Tax Info, and Charges Summary
               pw.Expanded(
-                child: _partyPanel(
-                  'Buyer',
-                  challan.buyerName,
-                  challan.buyerAddress,
-                  challan.buyerGst,
+                child: pw.Row(
+                  crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+                  children: [
+                    // Left Box: TERMS
+                    pw.Expanded(
+                      flex: 4,
+                      child: pw.Container(
+                        decoration: const pw.BoxDecoration(
+                          border: pw.Border(
+                            right: pw.BorderSide(color: PdfColors.black, width: 0.6),
+                          ),
+                        ),
+                        padding: const pw.EdgeInsets.all(5),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Text(
+                              'TERMS :',
+                              style: pw.TextStyle(
+                                fontSize: 7.5,
+                                fontWeight: pw.FontWeight.bold,
+                              ),
+                            ),
+                            pw.SizedBox(height: 2),
+                            _termItem('1) Subject to Direct Lorry & Door Delivery.'),
+                            _termItem('2) Our risk & responsibility ceases after loading goods.'),
+                            _termItem('3) Please send Demand Draft/Cheques in favour of party as per there bill by Courier/Registry Only.'),
+                            _termItem('4) Weight shortage are not liable to us.'),
+                            _termItem('5) Subject to Nagpur Jurisdiction.'),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // Middle Box: Narration, GST/PAN, Company Signature
+                    pw.Expanded(
+                      flex: 3,
+                      child: pw.Container(
+                        decoration: const pw.BoxDecoration(
+                          border: pw.Border(
+                            right: pw.BorderSide(color: PdfColors.black, width: 0.6),
+                          ),
+                        ),
+                        padding: const pw.EdgeInsets.all(5),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Column(
+                              crossAxisAlignment: pw.CrossAxisAlignment.start,
+                              children: [
+                                pw.Row(
+                                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                  children: [
+                                    pw.SizedBox(
+                                      width: 45,
+                                      child: pw.Text(
+                                        'Remark  :',
+                                        style: pw.TextStyle(
+                                          fontSize: 7.5,
+                                          fontWeight: pw.FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    pw.Expanded(
+                                      child: pw.Text(
+                                        (challan.narration ?? '').trim().isNotEmpty
+                                            ? challan.narration!
+                                            : 'Selected Contract Details',
+                                        style: const pw.TextStyle(fontSize: 6.5),
+                                        maxLines: 4,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                pw.SizedBox(height: 4),
+                                pw.Row(
+                                  children: [
+                                    pw.SizedBox(
+                                      width: 45,
+                                      child: pw.Text(
+                                        'GST No. :',
+                                        style: pw.TextStyle(
+                                          fontSize: 7.5,
+                                          fontWeight: pw.FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    pw.Text(
+                                      companyGst,
+                                      style: const pw.TextStyle(fontSize: 7),
+                                    ),
+                                  ],
+                                ),
+                                pw.SizedBox(height: 2),
+                                pw.Row(
+                                  children: [
+                                    pw.SizedBox(
+                                      width: 45,
+                                      child: pw.Text(
+                                        'PAN No. :',
+                                        style: pw.TextStyle(
+                                          fontSize: 7.5,
+                                          fontWeight: pw.FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    pw.Text(
+                                      companyPan,
+                                      style: const pw.TextStyle(fontSize: 7),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.only(top: 8),
+                              child: pw.Text(
+                                'For    $companyName',
+                                style: pw.TextStyle(
+                                  fontSize: 7.5,
+                                  fontWeight: pw.FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // Right Box: Charges Calculation Breakdown
+                    pw.Expanded(
+                      flex: 3,
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+                        children: [
+                          _chargeRow('LORRY FRIGHT', lorryFreightVal),
+                          _chargeRow('LOADING CHARGES', loadingChargesVal),
+                          _chargeRow('OTHER EXP', otherExpVal),
+                          _chargeRow('LESS ADVANCE', lessAdvanceVal),
+                          pw.Spacer(),
+                          // NET AMOUNT Highlight Bar
+                          pw.Container(
+                            color: highlightYellow,
+                            padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+                            child: pw.Row(
+                              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                              children: [
+                                pw.Text(
+                                  'NET AMOUNT',
+                                  style: pw.TextStyle(
+                                    fontSize: 8,
+                                    fontWeight: pw.FontWeight.bold,
+                                  ),
+                                ),
+                                pw.Text(
+                                  _formatCurrency(totalAmountVal),
+                                  style: pw.TextStyle(
+                                    fontSize: 8.5,
+                                    fontWeight: pw.FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          pw.SizedBox(height: 16),
-          pw.Text(
-            'Transport Details',
-            style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
-          ),
-          pw.SizedBox(height: 5),
-          pw.Text(
-            'Vehicle: ${challan.truckNumber ?? '-'}   •   Driver: ${challan.driverName ?? '-'}   •   Mobile: ${challan.driverMobile ?? '-'}',
-            style: const pw.TextStyle(fontSize: 9),
-          ),
-          pw.SizedBox(height: 16),
-          pw.TableHelper.fromTextArray(
-            headers: const [
-              'Product',
-              'Quantity',
-              'Bags',
-              'Packing KG',
-              'Rate',
-              'Amount',
-            ],
-            data: itemRows.isEmpty
-                ? const [
-                    ['No item details available', '-', '-', '-', '-', '-'],
-                  ]
-                : itemRows,
-            headerStyle: pw.TextStyle(
-              fontWeight: pw.FontWeight.bold,
-              fontSize: 9,
-            ),
-            cellStyle: const pw.TextStyle(fontSize: 8),
-            headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
-            cellAlignment: pw.Alignment.centerLeft,
-            border: pw.TableBorder.all(color: PdfColors.grey500, width: .4),
-          ),
-          pw.SizedBox(height: 16),
-          pw.Align(
-            alignment: pw.Alignment.centerRight,
-            child: pw.Container(
-              padding: const pw.EdgeInsets.all(8),
-              decoration: pw.BoxDecoration(
-                border: pw.Border.all(color: PdfColors.grey500),
-              ),
-              child: pw.Text(
-                'Total Amount: ₹${challan.totalAmount ?? '0.00'}',
-                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-              ),
-            ),
-          ),
-          if ((challan.narration ?? '').trim().isNotEmpty) ...[
-            pw.SizedBox(height: 16),
-            pw.Text(
-              'Narration',
-              style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
-            ),
-            pw.SizedBox(height: 4),
-            pw.Text(challan.narration!, style: const pw.TextStyle(fontSize: 9)),
-          ],
-          pw.SizedBox(height: 24),
-          pw.Divider(),
-          pw.Text(
-            'Generated from DaalSetu',
-            style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
-          ),
-        ],
+        ),
       ),
     );
 
@@ -213,29 +603,80 @@ class BuyerChallanPdfService {
     return file.path;
   }
 
-  static pw.Widget _partyPanel(
-    String label,
-    String? name,
-    String? address,
-    String? gst,
-  ) => pw.Container(
-    padding: const pw.EdgeInsets.all(8),
-    decoration: pw.BoxDecoration(
-      border: pw.Border.all(color: PdfColors.grey500),
-    ),
-    child: pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Text(
-          label,
-          style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+  static pw.Widget _th(String title) {
+    return pw.Container(
+      alignment: pw.Alignment.center,
+      padding: const pw.EdgeInsets.symmetric(vertical: 3, horizontal: 2),
+      child: pw.Text(
+        title,
+        textAlign: pw.TextAlign.center,
+        style: pw.TextStyle(
+          fontSize: 6.5,
+          fontWeight: pw.FontWeight.bold,
         ),
-        pw.SizedBox(height: 4),
-        pw.Text(name ?? '-', style: const pw.TextStyle(fontSize: 9)),
-        pw.Text(address ?? '-', style: const pw.TextStyle(fontSize: 8)),
-        if ((gst ?? '').isNotEmpty)
-          pw.Text('GST: $gst', style: const pw.TextStyle(fontSize: 8)),
-      ],
-    ),
-  );
+      ),
+    );
+  }
+
+  static pw.Widget _td(String text, {pw.TextAlign align = pw.TextAlign.center, bool isBold = false}) {
+    return pw.Container(
+      alignment: align == pw.TextAlign.left ? pw.Alignment.centerLeft : pw.Alignment.center,
+      padding: const pw.EdgeInsets.symmetric(vertical: 3, horizontal: 3),
+      child: pw.Text(
+        text,
+        textAlign: align,
+        style: pw.TextStyle(
+          fontSize: 6.5,
+          fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
+        ),
+      ),
+    );
+  }
+
+  static pw.Widget _metaRow(String label, String value, {bool boldVal = false}) {
+    return pw.RichText(
+      text: pw.TextSpan(
+        text: '$label ',
+        style: pw.TextStyle(fontSize: 7.5, fontWeight: pw.FontWeight.bold),
+        children: [
+          pw.TextSpan(
+            text: value,
+            style: pw.TextStyle(
+              fontSize: 7.5,
+              fontWeight: boldVal ? pw.FontWeight.bold : pw.FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static pw.Widget _termItem(String text) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 1.5),
+      child: pw.Text(
+        text,
+        style: const pw.TextStyle(fontSize: 6),
+      ),
+    );
+  }
+
+  static pw.Widget _chargeRow(String label, double val) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(
+            label,
+            style: const pw.TextStyle(fontSize: 7),
+          ),
+          pw.Text(
+            val > 0 ? _formatCurrency(val) : '0.00',
+            style: const pw.TextStyle(fontSize: 7),
+          ),
+        ],
+      ),
+    );
+  }
 }

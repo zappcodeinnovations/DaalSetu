@@ -11,12 +11,16 @@ import '../../../../services/buyer_services.dart';
 
 class BuyerOfferDetailsView extends StatefulWidget {
   final int offerId;
+  final int? productId;
+  final int? interestId;
   final bool preferBuyerOffer;
   final bool preferBuyerRequirement;
 
   const BuyerOfferDetailsView({
     super.key,
     required this.offerId,
+    this.productId,
+    this.interestId,
     this.preferBuyerOffer = false,
     this.preferBuyerRequirement = false,
   });
@@ -37,6 +41,8 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
       widget.offerId,
       preferBuyerOffer: widget.preferBuyerOffer,
       preferBuyerRequirement: widget.preferBuyerRequirement,
+      productId: widget.productId,
+      interestId: widget.interestId,
     );
     if (widget.preferBuyerRequirement) {
       _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
@@ -44,6 +50,8 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
           widget.offerId,
           silent: true,
           preferBuyerRequirement: true,
+          productId: widget.productId,
+          interestId: widget.interestId,
         );
       });
     }
@@ -105,7 +113,19 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
 
         final rfqCode =
             data['rfq_id'] ?? data['code'] ?? widget.offerId.toString();
-        final status = data['status']?.toString().toLowerCase() ?? 'requested';
+
+        final thread = controller.negotiationThread.value;
+        final rawStatus = (thread != null && thread['status'] != null)
+            ? thread['status'].toString()
+            : (data['negotiation_status'] ??
+                data['interest_status'] ??
+                data['deal_status'] ??
+                data['status'] ??
+                'requested')
+                .toString();
+
+        final displayStatus = _titleCase(rawStatus.replaceAll('_', ' '));
+
         final List<dynamic> quotations = (data['quotations'] is List)
             ? data['quotations']
             : ((data['quotes'] is List) ? data['quotes'] : []);
@@ -118,11 +138,29 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
             ? Map<String, dynamic>.from(data['permissions'] as Map)
             : const <String, dynamic>{};
 
+        // Resolve clean loading location
+        String? validLoadingLocation;
+        final candidateLocation = (data['loading_location'] ??
+                data['location'] ??
+                data['destination'] ??
+                data['delivery_location'] ??
+                data['city'])
+            ?.toString()
+            .trim();
+        if (candidateLocation != null &&
+            candidateLocation.isNotEmpty &&
+            !candidateLocation.contains('->') &&
+            !RegExp(r'\d{4}-\d{2}-\d{2}').hasMatch(candidateLocation)) {
+          validLoadingLocation = candidateLocation;
+        }
+
         return RefreshIndicator(
           onRefresh: () => controller.fetchDetails(
             widget.offerId,
             preferBuyerOffer: widget.preferBuyerOffer,
             preferBuyerRequirement: widget.preferBuyerRequirement,
+            productId: widget.productId,
+            interestId: widget.interestId,
           ),
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -130,7 +168,7 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildStatusHeader(status),
+                _buildStatusHeader(rawStatus, displayLabel: displayStatus),
                 const SizedBox(height: 24),
 
                 _sectionTitle("Product Specifications"),
@@ -191,9 +229,8 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                       "Packing Weight",
                       "${data['packing_weight_kg']} kg",
                     ),
-                  if (data['loading_location'] != null &&
-                      data['loading_location'].toString().isNotEmpty)
-                    _infoRow("Loading Location", data['loading_location']),
+                  if (validLoadingLocation != null && validLoadingLocation.isNotEmpty)
+                    _infoRow("Loading Location", validLoadingLocation),
                   if (data['delivery_terms'] != null &&
                       data['delivery_terms'].toString().trim().isNotEmpty)
                     _infoRow("Delivery Terms", data['delivery_terms']),
@@ -203,6 +240,14 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                   if (data['total_value'] != null)
                     _infoRow("Total Value", "₹${data['total_value']}"),
                 ]),
+
+                // Negotiation Summary, Log & Actions (matching Web panel)
+                if (thread != null)
+                  _buildNegotiationSection(
+                    thread: thread,
+                    theme: theme,
+                    primaryColor: primaryColor,
+                  ),
 
                 if (quotations.isNotEmpty) ...[
                   const SizedBox(height: 24),
@@ -989,14 +1034,20 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
     }
   }
 
-  Widget _buildStatusHeader(String status) {
+  Widget _buildStatusHeader(String status, {String? displayLabel}) {
+    final normalized = status.toLowerCase();
     Color color = const Color(0xFFFFB300);
-    if (status.contains('confirm') ||
-        status.contains('active') ||
-        status.contains('open'))
+    if (normalized.contains('confirm') ||
+        normalized.contains('deal') ||
+        normalized.contains('active') ||
+        normalized.contains('open')) {
       color = Colors.green;
-    if (status.contains('cancel') || status.contains('reject'))
+    } else if (normalized.contains('cancel') || normalized.contains('reject')) {
       color = Colors.red;
+    }
+
+    final text = displayLabel ??
+        (status.replaceAll('_', ' ').toUpperCase());
 
     return Container(
       width: double.infinity,
@@ -1010,9 +1061,11 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
         children: [
           Icon(IconlyLight.info_square, color: color),
           const SizedBox(width: 12),
-          Text(
-            "STATUS: ${status.toUpperCase()}",
-            style: TextStyle(color: color, fontWeight: FontWeight.bold),
+          Expanded(
+            child: Text(
+              "STATUS: $text",
+              style: TextStyle(color: color, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -1069,6 +1122,382 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
         ],
       ),
     );
+  }
+
+  Widget _buildNegotiationSection({
+    required Map<String, dynamic> thread,
+    required ThemeData theme,
+    required Color primaryColor,
+  }) {
+    final status = thread['status']?.toString().replaceAll('_', ' ') ?? 'Pending';
+    final sellerPrice = thread['seller_price'] ??
+        thread['seller_amount'] ??
+        thread['amount'] ??
+        thread['product_amount'] ??
+        '-';
+    final priceUnit = thread['price_unit'] ?? 'QTL';
+    final availableQty = thread['available_quantity'] ??
+        thread['available_stock'] ??
+        thread['quantity'] ??
+        '-';
+    final currentOffer = thread['latest_offered_amount'] ??
+        thread['offered_amount'] ??
+        thread['amount'] ??
+        '-';
+    final currentQty = thread['latest_offered_quantity'] ??
+        thread['required_quantity'] ??
+        thread['quantity'] ??
+        '-';
+    final qtyUnit = thread['quantity_unit'] ?? 'QTL';
+    final buyerRemark = thread['buyer_remark'] ??
+        thread['remark'] ??
+        thread['initial_remark'];
+
+    final canBuyerAccept = thread['can_buyer_accept'] == true ||
+        thread['can_accept'] == true ||
+        thread['status']?.toString().toLowerCase() == 'seller_confirmed';
+    final canBuyerReject = thread['can_buyer_reject'] == true ||
+        thread['can_reject'] == true ||
+        thread['status']?.toString().toLowerCase() == 'seller_confirmed';
+
+    final messages = ((thread['messages'] as List?) ?? const [])
+        .whereType<Map>()
+        .map(Map<String, dynamic>.from)
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 24),
+        _sectionTitle("Negotiation Summary"),
+        GlassCard(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Status:", style: TextStyle(color: theme.disabledColor)),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                    ),
+                    child: Text(
+                      _titleCase(status),
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(height: 20),
+              _infoRow("Seller Price:", "₹$sellerPrice/$priceUnit"),
+              _infoRow("Available Qty:", "$availableQty $qtyUnit"),
+              _infoRow("Current Offer:", "₹$currentOffer/$priceUnit"),
+              _infoRow("Current Qty:", "$currentQty $qtyUnit"),
+              if (buyerRemark != null && buyerRemark.toString().trim().isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Buyer Remark",
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        buyerRemark.toString().trim(),
+                        style: GoogleFonts.inter(fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 24),
+        _sectionTitle("Negotiation Log"),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: theme.cardColor.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF95B12),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(13),
+                    topRight: Radius.circular(13),
+                  ),
+                ),
+                child: Text(
+                  "Negotiation Log",
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Initial submission log bubble
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.cardColor,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.4)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "${thread['buyer_display_id'] ?? thread['buyer_name'] ?? 'Buyer'} submitted initial offer:",
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "Price: ₹${thread['offered_amount'] ?? currentOffer}/${thread['price_unit'] ?? priceUnit}",
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: primaryColor,
+                            ),
+                          ),
+                          Text(
+                            "Requested: ${thread['required_quantity'] ?? currentQty} ${thread['quantity_unit'] ?? qtyUnit}",
+                            style: GoogleFonts.inter(fontSize: 12),
+                          ),
+                          if (thread['created_at'] != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              thread['created_at'].toString(),
+                              style: GoogleFonts.inter(
+                                fontSize: 10,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    if (messages.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      ...messages.map((m) {
+                        final role = m['actor_role']?.toString().toUpperCase() ??
+                            m['sender_role']?.toString().toUpperCase() ??
+                            'PROPOSAL';
+                        final p = m['counter_price'] ?? '';
+                        final q = m['counter_quantity'] ?? '';
+                        return Container(
+                          margin: const EdgeInsets.only(top: 8),
+                          padding: const EdgeInsets.all(12),
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: theme.cardColor,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: theme.dividerColor.withValues(alpha: 0.4),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                role,
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              if (p.toString().isNotEmpty || q.toString().isNotEmpty) ...[
+                                const SizedBox(height: 3),
+                                Text(
+                                  "Counter: ₹$p | $q $qtyUnit",
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    color: const Color(0xFFE65100),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      }),
+                    ] else ...[
+                      const SizedBox(height: 14),
+                      Center(
+                        child: Text(
+                          "No negotiation proposals yet.",
+                          style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Buyer Actions
+        if (canBuyerAccept || canBuyerReject) ...[
+          const SizedBox(height: 24),
+          _sectionTitle("Buyer Action"),
+          Row(
+            children: [
+              if (canBuyerAccept)
+                Expanded(
+                  child: SizedBox(
+                    height: 46,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _handleBuyerDecision(
+                        thread: thread,
+                        accept: true,
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      icon: const Icon(Icons.check, size: 18),
+                      label: const Text(
+                        "Accept",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ),
+              if (canBuyerAccept && canBuyerReject) const SizedBox(width: 12),
+              if (canBuyerReject)
+                Expanded(
+                  child: SizedBox(
+                    height: 46,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _handleBuyerDecision(
+                        thread: thread,
+                        accept: false,
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      icon: const Icon(Icons.close, size: 18),
+                      label: const Text(
+                        "Reject",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _handleBuyerDecision({
+    required Map<String, dynamic> thread,
+    required bool accept,
+  }) async {
+    final confirmed = await Get.dialog<bool>(
+      AlertDialog(
+        title: Text(accept ? 'Accept seller offer?' : 'Reject seller offer?'),
+        content: Text(
+          accept
+              ? 'This confirms the seller offer and completes the deal agreement.'
+              : 'This negotiation will be rejected and closed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: accept ? Colors.green : Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Get.back(result: true),
+            child: Text(accept ? 'Confirm Deal' : 'Reject'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final pId = widget.productId ??
+        int.tryParse((thread['product_id'] ?? thread['product']?['id'] ?? '').toString()) ??
+        widget.offerId;
+    final iId = widget.interestId ??
+        int.tryParse((thread['interest_id'] ?? thread['id'] ?? '').toString()) ??
+        0;
+
+    if (pId <= 0 || iId <= 0) {
+      AppSnackbar.showError(
+        title: 'Error',
+        message: 'Product or Interest ID not found for negotiation.',
+      );
+      return;
+    }
+
+    if (accept) {
+      await controller.confirmOfferInterest(productId: pId, interestId: iId);
+    } else {
+      await controller.rejectOfferInterest(productId: pId, interestId: iId);
+    }
+  }
+
+  String _titleCase(String text) {
+    if (text.isEmpty) return text;
+    return text.split(' ').map((w) {
+      if (w.isEmpty) return w;
+      return '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}';
+    }).join(' ');
   }
 
   void _showCancelConfirm(

@@ -45,6 +45,44 @@ class BuyerDeliveryChallanModel {
   int? receivedBy;
   int? createdBy;
 
+  String? get companyNameDisplay {
+    final comp = company?.legalName ?? company?.addressDisplay;
+    if (comp != null && comp.trim().isNotEmpty) return comp.trim();
+    if (sellerCompanyName != null && sellerCompanyName!.trim().isNotEmpty) {
+      return sellerCompanyName!.trim();
+    }
+    if (buyerCompanyName != null && buyerCompanyName!.trim().isNotEmpty) {
+      return buyerCompanyName!.trim();
+    }
+    return null;
+  }
+
+  String? get totalQuantityDisplay {
+    if (items != null && items!.isNotEmpty) {
+      double total = 0;
+      bool hasNumeric = false;
+      String unit = items!.first.unit ?? 'QTL';
+      for (final item in items!) {
+        final q = double.tryParse(item.quantity?.replaceAll(',', '') ?? '');
+        if (q != null) {
+          total += q;
+          hasNumeric = true;
+        }
+        if (item.unit != null && item.unit!.isNotEmpty) {
+          unit = item.unit!;
+        }
+      }
+      if (hasNumeric && total > 0) {
+        return "${total.toStringAsFixed(3)} $unit";
+      }
+      final firstQty = items!.first.quantity;
+      if (firstQty != null && firstQty.trim().isNotEmpty) {
+        return "$firstQty ${items!.first.unit ?? 'QTL'}";
+      }
+    }
+    return null;
+  }
+
   BuyerDeliveryChallanModel({
     this.id,
     this.items,

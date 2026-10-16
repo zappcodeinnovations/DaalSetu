@@ -257,12 +257,9 @@ class BuyerServices {
             item['product_title']?.toString() ??
             item['commodity']?.toString() ??
             '';
-        final key = "$prefix-$id-$title";
-        if (id.isNotEmpty && !seenKeys.contains(key)) {
+        final key = id.isNotEmpty ? id : "$prefix-$title";
+        if (!seenKeys.contains(key)) {
           seenKeys.add(key);
-          allList.add(item);
-        } else if (id.isEmpty && !seenKeys.contains(title)) {
-          seenKeys.add(title);
           allList.add(item);
         }
       }

@@ -29,16 +29,80 @@ class CategoryService {
               ? (data["pending_category_ids"] as List).map((e) => int.tryParse(e.toString()) ?? 0).toSet()
               : <int>{};
 
-          // 1. Filter all_categories by assigned/pending IDs
-          if (assignedIds.isNotEmpty || pendingIds.isNotEmpty) {
+          // Helper to check if a category is a dummy or test category
+          bool isDummyCategory(String name) {
+            final t = name.trim().toLowerCase();
+            if (t.isEmpty) return true;
+            if (t == 'test' ||
+                t == 'xyz' ||
+                t == 'sub' ||
+                t == 'teat sub' ||
+                t == 'test category' ||
+                t == 'testing' ||
+                t.startsWith('test') ||
+                t.endsWith('test') ||
+                t.contains('test') ||
+                RegExp(r'^(.)\1+$').hasMatch(t)) {
+              return true;
+            }
+            return false;
+          }
+
+          // Build a map of requested timestamps from data["requests"]
+          final Map<int, String> requestedAtMap = {};
+          if (data["requests"] is List) {
+            for (var req in (data["requests"] as List)) {
+              if (req is Map<String, dynamic> && req["categories"] is List) {
+                final reqTime = req["requested_at"]?.toString() ?? req["created_at"]?.toString();
+                if (reqTime != null && reqTime.isNotEmpty) {
+                  for (var cat in (req["categories"] as List)) {
+                    if (cat is Map<String, dynamic>) {
+                      final id = int.tryParse((cat["id"] ?? 0).toString()) ?? 0;
+                      if (id > 0 && !requestedAtMap.containsKey(id)) {
+                        requestedAtMap[id] = reqTime;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          // Map all_categories with their status (matching Buyer web panel)
+          if (allCats.isNotEmpty) {
             for (var c in allCats) {
               if (c is Map<String, dynamic>) {
                 final id = int.tryParse((c["id"] ?? 0).toString()) ?? 0;
-                if (assignedIds.contains(id) || pendingIds.contains(id)) {
-                  final status = assignedIds.contains(id) ? "Approved" : "Pending";
+                final name = (c["category_name"] ?? c["name"] ?? "").toString();
+                if (id > 0 && !isDummyCategory(name)) {
+                  String status = "Request";
+                  if (assignedIds.contains(id)) {
+                    status = "Approved";
+                  } else if (pendingIds.contains(id)) {
+                    status = "Pending";
+                  }
+                  final reqCreatedAt = requestedAtMap[id] ?? c["created_at"] ?? c["requested_at"];
                   buyerCats.add(CategoryModel.fromJson({
                     ...c,
                     "status": status,
+                    if (reqCreatedAt != null) "created_at": reqCreatedAt,
+                  }));
+                }
+              }
+            }
+          } else if (assignedIds.isNotEmpty || pendingIds.isNotEmpty) {
+            // Fallback if all_categories was not provided
+            for (var c in allCats) {
+              if (c is Map<String, dynamic>) {
+                final id = int.tryParse((c["id"] ?? 0).toString()) ?? 0;
+                final name = (c["category_name"] ?? c["name"] ?? "").toString();
+                if ((assignedIds.contains(id) || pendingIds.contains(id)) && !isDummyCategory(name)) {
+                  final status = assignedIds.contains(id) ? "Approved" : "Pending";
+                  final reqCreatedAt = requestedAtMap[id] ?? c["created_at"] ?? c["requested_at"];
+                  buyerCats.add(CategoryModel.fromJson({
+                    ...c,
+                    "status": status,
+                    if (reqCreatedAt != null) "created_at": reqCreatedAt,
                   }));
                 }
               }
@@ -51,15 +115,17 @@ class CategoryService {
             for (var req in (data["requests"] as List)) {
               if (req is Map<String, dynamic> && req["categories"] is List) {
                 final reqStatus = req["status"]?.toString() ?? "Approved";
+                final reqCreatedAt = req["requested_at"] ?? req["created_at"];
                 for (var cat in (req["categories"] as List)) {
                   if (cat is Map<String, dynamic>) {
                     final id = int.tryParse((cat["id"] ?? 0).toString()) ?? 0;
-                    if (id > 0 && !seenIds.contains(id)) {
+                    final name = (cat["category_name"] ?? cat["name"] ?? "").toString();
+                    if (id > 0 && !seenIds.contains(id) && !isDummyCategory(name)) {
                       seenIds.add(id);
                       buyerCats.add(CategoryModel.fromJson({
                         ...cat,
                         "status": reqStatus,
-                        "created_at": req["requested_at"],
+                        "created_at": reqCreatedAt,
                       }));
                     }
                   }
@@ -72,14 +138,24 @@ class CategoryService {
             return buyerCats;
           }
         } else if (response is List) {
-          return response.map((item) => CategoryModel.fromJson(Map<String, dynamic>.from(item))).toList();
+          return response
+              .map((item) => CategoryModel.fromJson(Map<String, dynamic>.from(item)))
+              .where((c) {
+                final t = c.categoryName.trim().toLowerCase();
+                return t.isNotEmpty && !t.contains('test') && t != 'xyz' && t != 'sub';
+              })
+              .toList();
         }
       }
     } catch (e) {
       print("⚠️ Buyer categories API failed, falling back: $e");
     }
 
-    return fetchCategories();
+    final allSys = await fetchCategories();
+    return allSys.where((c) {
+      final t = c.categoryName.trim().toLowerCase();
+      return t.isNotEmpty && !t.contains('test') && t != 'xyz' && t != 'sub';
+    }).toList();
   }
 
   /// ===============================

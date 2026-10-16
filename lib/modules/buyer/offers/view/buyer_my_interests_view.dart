@@ -6,7 +6,6 @@ import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/app_snackbar.dart';
 import '../controller/buyer_offers_controller.dart';
 import '../model/buyer_offer_model.dart';
-import '../../../products/view/product_detail.dart';
 import 'buyer_offer_details_view.dart';
 import 'buyer_negotiation_view.dart';
 
@@ -16,9 +15,21 @@ class BuyerMyInterestsView extends StatelessWidget {
   void _openDetails(BuyerOfferModel offer) {
     final pId = offer.productId ?? offer.id;
     if (pId != null) {
-      Get.to(() => ProductDetailScreen(productId: pId));
+      Get.to(
+        () => BuyerOfferDetailsView(
+          offerId: pId,
+          productId: offer.productId,
+          interestId: offer.interestId,
+        ),
+      );
     } else if (offer.id != null) {
-      Get.to(() => BuyerOfferDetailsView(offerId: offer.id!));
+      Get.to(
+        () => BuyerOfferDetailsView(
+          offerId: offer.id!,
+          productId: offer.productId,
+          interestId: offer.interestId,
+        ),
+      );
     }
   }
 
@@ -691,7 +702,7 @@ class BuyerMyInterestsView extends StatelessWidget {
                               ),
                             ),
                           ),
-                        if (offer.canOpenNegotiation)
+                        if (offer.canOpenNegotiation && !offer.isConfirmed)
                           ElevatedButton.icon(
                             onPressed: () => _openNegotiation(offer),
                             style: ElevatedButton.styleFrom(

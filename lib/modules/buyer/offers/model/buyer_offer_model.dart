@@ -156,16 +156,30 @@ class BuyerOfferModel {
       return zeroVal ?? fallback;
     }
 
-    String formatDateDisplay(String? raw) {
+    String formatDateDisplay(String? raw, {bool withTime = false}) {
       if (raw == null || raw.trim().isEmpty) return '';
       final s = raw.trim();
       try {
         if (s.contains('T')) {
           final dt = DateTime.parse(s).toLocal();
-          return "${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year}";
+          final d = "${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year}";
+          if (withTime) {
+            final t = "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+            return "$d $t";
+          }
+          return d;
         }
-        if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(s)) {
-          final parts = s.split('-');
+        if (RegExp(r'^\d{4}-\d{2}-\d{2}').hasMatch(s)) {
+          final dt = DateTime.tryParse(s)?.toLocal();
+          if (dt != null) {
+            final d = "${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year}";
+            if (withTime) {
+              final t = "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+              return "$d $t";
+            }
+            return d;
+          }
+          final parts = s.split(' ')[0].split('-');
           return "${parts[2]}-${parts[1]}-${parts[0]}";
         }
       } catch (_) {}
@@ -284,16 +298,17 @@ class BuyerOfferModel {
     ]);
 
     final rawStatus = pickStr([
-      json['status'],
-      json['deal_status'],
-      json['deal_status_label'],
       json['stock_status'],
-      json['product_status'],
+      json['deal_status_label'],
+      json['deal_status'],
       json['status_label'],
+      json['product_status'],
+      json['status'],
       json['status_code'],
-      if (json['offer'] is Map) json['offer']['status'],
       if (json['product'] is Map)
-        (json['product']['status'] ?? json['product']['stock_status']),
+        (json['product']['stock_status'] ?? json['product']['status']),
+      if (json['offer'] is Map)
+        (json['offer']['stock_status'] ?? json['offer']['status']),
     ]);
     final normalizedStatus = rawStatus.trim().toLowerCase();
 
@@ -681,10 +696,16 @@ class BuyerOfferModel {
       pickupTo: rawPickupTo,
       expiryDate: rawExpiry,
       status: rawStatus,
-      createdAt:
-          json['created_at']?.toString() ??
-          json['updated_at']?.toString() ??
-          '',
+      createdAt: formatDateDisplay(
+        pickStr([
+          json['created_at'],
+          json['interest_date'],
+          json['interest_datetime'],
+          json['created_datetime'],
+          json['updated_at'],
+        ]),
+        withTime: true,
+      ),
       imageUrl: rawImage,
       interestCount: rawInterests,
       sellerName: rawSellerName,
@@ -696,10 +717,12 @@ class BuyerOfferModel {
         'can_cancel',
         fallback: normalizedStatus == 'interested',
       ),
-      canOpenNegotiation: boolValue(
-        'can_open_negotiation',
-        fallback: !terminal && defaultBuyerDecision,
-      ),
+      canOpenNegotiation: terminal
+          ? false
+          : boolValue(
+              'can_open_negotiation',
+              fallback: defaultBuyerDecision,
+            ),
       canBuyerAccept: boolValue(
         'can_buyer_accept',
         fallback: defaultBuyerDecision,

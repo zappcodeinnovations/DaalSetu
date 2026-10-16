@@ -544,6 +544,19 @@ class BuyerDeliveryChallanView extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      if (challan.companyNameDisplay != null) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          "Company: ${challan.companyNameDisplay!}",
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.primary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -558,9 +571,20 @@ class BuyerDeliveryChallanView extends StatelessWidget {
                         color: theme.textTheme.bodyLarge?.color,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    if (challan.totalQuantityDisplay != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        challan.totalQuantityDisplay!,
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: theme.textTheme.bodyMedium?.color,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 3),
                     Text(
-                      _formatDate(challan.challanDate),
+                      _formatDateTime(challan.createdAt ?? challan.challanDate),
                       style: GoogleFonts.inter(
                         fontSize: 10,
                         color: Colors.grey,
@@ -597,12 +621,19 @@ class BuyerDeliveryChallanView extends StatelessWidget {
     );
   }
 
-  String _formatDate(String? dateStr) {
-    if (dateStr == null || dateStr.isEmpty) return "N/A";
+  String _formatDateTime(String? dateStr) {
+    if (dateStr == null || dateStr.trim().isEmpty) return "N/A";
     try {
-      final date = DateTime.parse(dateStr);
-      return "${date.day}/${date.month}/${date.year}";
-    } catch (e) {
+      final date = DateTime.parse(dateStr).toLocal();
+      final day = date.day.toString().padLeft(2, '0');
+      final month = date.month.toString().padLeft(2, '0');
+      final year = date.year.toString();
+      final h = date.hour;
+      final hour12 = (h % 12 == 0 ? 12 : h % 12).toString().padLeft(2, '0');
+      final minute = date.minute.toString().padLeft(2, '0');
+      final amPm = h >= 12 ? 'PM' : 'AM';
+      return "$day-$month-$year $hour12:$minute $amPm";
+    } catch (_) {
       return dateStr;
     }
   }

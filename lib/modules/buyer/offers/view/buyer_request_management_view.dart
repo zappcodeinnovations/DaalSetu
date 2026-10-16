@@ -656,7 +656,6 @@ class _BuyerRequestManagementViewState
         item['commodity'] ??
         'Untitled request';
     final status = item['status']?.toString() ?? 'pending';
-    final category = item['category_name'] ?? item['category'] ?? '';
     final seller = item['seller_name'] ?? item['seller'] ?? '';
     final qty =
         item['required_quantity'] ??
@@ -680,6 +679,57 @@ class _BuyerRequestManagementViewState
     final canClose =
         _isRequirement && actionPermissions['can_close'] == true;
 
+    final rfqCode = item['buyer_id'] ??
+        item['rfq_code'] ??
+        item['rfq_id'] ??
+        item['code'] ??
+        item['unique_id'] ??
+        item['transaction_id'] ??
+        (_isRequirement && item['id'] != null ? 'RFQ-${item['id']}' : null);
+
+    final displayIdentifier = _isRequirement
+        ? (rfqCode?.toString().isNotEmpty == true
+              ? rfqCode.toString()
+              : 'RFQ: $id')
+        : 'Request: $id';
+
+    String cleanCategoryName(dynamic cat) {
+      if (cat == null) return '';
+      if (cat is Map) {
+        return (cat['name'] ?? cat['category_name'] ?? cat['title'] ?? '').toString();
+      }
+      final s = cat.toString().trim();
+      if (s.startsWith('{') && s.endsWith('}')) {
+        final match = RegExp(r'''(?:name|category_name|title)\s*:\s*([^,}]+)''').firstMatch(s);
+        if (match != null) {
+          return match.group(1)?.trim() ?? '';
+        }
+      }
+      return s;
+    }
+
+    final categoryStr = cleanCategoryName(item['category_name'] ?? item['category'] ?? item['commodity']);
+
+    final bagCount = item['required_bag_count'] ??
+        item['bag_count'] ??
+        item['bags'] ??
+        item['total_bags'];
+
+    String? formattedExpiry;
+    final rawExpiry = item['expiry_datetime'] ??
+        item['expiry_date'] ??
+        item['deal_expiry_datetime'] ??
+        item['expires_at'];
+    if (rawExpiry != null && rawExpiry.toString().trim().isNotEmpty) {
+      final s = rawExpiry.toString().trim();
+      final dt = DateTime.tryParse(s)?.toLocal();
+      if (dt != null) {
+        formattedExpiry = DateFormat('dd MMM yyyy, hh:mm a').format(dt);
+      } else {
+        formattedExpiry = s;
+      }
+    }
+
     return GlassCard(
       padding: const EdgeInsets.all(14),
       child: Column(
@@ -698,15 +748,17 @@ class _BuyerRequestManagementViewState
           ),
           const SizedBox(height: 4),
           Text(
-            '${_isRequirement ? 'RFQ' : 'Request'}: $id',
-            style: theme.textTheme.bodySmall,
+            displayIdentifier,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.primary,
+            ),
           ),
-          if (category.toString().isNotEmpty ||
-              seller.toString().isNotEmpty) ...[
+          if (categoryStr.isNotEmpty || seller.toString().isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
               [
-                if (category.toString().isNotEmpty) category.toString(),
+                if (categoryStr.isNotEmpty) categoryStr,
                 if (seller.toString().isNotEmpty) 'Seller: $seller',
               ].join(' • '),
               style: theme.textTheme.bodySmall,
@@ -723,6 +775,13 @@ class _BuyerRequestManagementViewState
                   '₹$price / ${item['price_unit'] ?? unit}',
                   style: theme.textTheme.bodySmall,
                 ),
+              if (bagCount != null && bagCount.toString().trim().isNotEmpty && bagCount.toString() != '0')
+                Text(
+                  '$bagCount Bags',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               if (quoteCount != null)
                 Text(
                   '$quoteCount quotation(s)',
@@ -730,6 +789,26 @@ class _BuyerRequestManagementViewState
                 ),
             ],
           ),
+          if (formattedExpiry != null && formattedExpiry.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(
+                  Icons.schedule,
+                  size: 13,
+                  color: Colors.grey,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Expiry: $formattedExpiry',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.grey,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ],
           const Divider(height: 22),
           Row(
             children: [

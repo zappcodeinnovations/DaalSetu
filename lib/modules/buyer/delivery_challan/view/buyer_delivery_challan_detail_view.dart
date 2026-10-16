@@ -121,7 +121,7 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
                   const SizedBox(height: 16),
                   _buildTransportInfo(context, challan),
                   const SizedBox(height: 16),
-                  _buildItemsList(context, challan.items ?? []),
+                  _buildItemsList(context, challan.items ?? [], challan.totalAmount),
                   const SizedBox(height: 16),
                   _buildAmountDetails(context, challan),
                   if (challan.narration != null &&
@@ -129,47 +129,12 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
                     const SizedBox(height: 16),
                     _buildNarration(context, challan.narration!),
                   ],
-                  const SizedBox(height: 100), // Space for bottom button
+                  const SizedBox(height: 16),
+                  _buildActionsCard(context, challan),
+                  const SizedBox(height: 32),
                 ],
               ),
             ),
-            if (() {
-              final status = challan.status?.toLowerCase() ?? '';
-              return (status == 'dispatched' ||
-                      status == 'in_transit' ||
-                      status == 'shipped') &&
-                  status != 'delivered' &&
-                  status != 'received' &&
-                  status != 'completed';
-            }())
-              Positioned(
-                bottom: 16,
-                left: 16,
-                right: 16,
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: () => _showReceiveDialog(context, challan.id!),
-                    child: controller.isReceiving.value
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : Text(
-                            "Mark as Received",
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                  ),
-                ),
-              ),
           ],
         );
       }),
@@ -267,7 +232,7 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
               const Icon(IconlyLight.calendar, size: 16, color: Colors.grey),
               const SizedBox(width: 8),
               Text(
-                "Date: ${challan.challanDate ?? "N/A"}",
+                "Date: ${_formatDateOnly(challan.challanDate)}",
                 style: GoogleFonts.inter(fontSize: 14),
               ),
             ],
@@ -278,11 +243,24 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
               const Icon(IconlyLight.time_circle, size: 16, color: Colors.grey),
               const SizedBox(width: 8),
               Text(
-                "Created: ${_formatDate(challan.createdAt)}",
+                "Created At: ${_formatDateTime(challan.createdAt)}",
                 style: GoogleFonts.inter(fontSize: 14),
               ),
             ],
           ),
+          if (challan.updatedAt != null && challan.updatedAt!.trim().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(IconlyLight.edit, size: 16, color: Colors.grey),
+                const SizedBox(width: 8),
+                Text(
+                  "Updated At: ${_formatDateTime(challan.updatedAt)}",
+                  style: GoogleFonts.inter(fontSize: 14),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -315,13 +293,6 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
             challan.buyerGst,
             challan.buyerPan,
             challan.buyerAddress,
-          ),
-          const Divider(height: 24),
-          _buildInfoRow(
-            context,
-            "Transporter",
-            challan.transporterNameDisplay ?? "N/A",
-            IconlyLight.send,
           ),
           if (challan.dispatchedByName != null) ...[
             const Divider(height: 24),
@@ -416,6 +387,13 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
             challan.driverMobile ?? "N/A",
             IconlyLight.call,
           ),
+          const SizedBox(height: 12),
+          _buildInfoRow(
+            context,
+            "Transporter",
+            challan.transporterNameDisplay ?? "N/A",
+            IconlyLight.send,
+          ),
         ],
       ),
     );
@@ -424,6 +402,7 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
   Widget _buildItemsList(
     BuildContext context,
     List<DeliveryChallanItem> items,
+    String? totalAmount,
   ) {
     return GlassCard(
       padding: const EdgeInsets.all(16),
@@ -508,6 +487,27 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
               );
             },
           ),
+          const Divider(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Total",
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                "₹${totalAmount ?? '0.00'}",
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -523,7 +523,7 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Amount Details",
+            "Charges Summary",
             style: GoogleFonts.poppins(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -541,27 +541,6 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
           _buildAmountRow(context, "Other Expenses", challan.otherExp),
           const SizedBox(height: 8),
           _buildAmountRow(context, "Less Advance", challan.lessAdvance),
-          const Divider(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Total Amount",
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                "₹${challan.totalAmount ?? '0.0'}",
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -594,6 +573,104 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
           Text(
             narration,
             style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[700]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionsCard(
+    BuildContext context,
+    BuyerDeliveryChallanModel challan,
+  ) {
+    final status = challan.status?.toLowerCase() ?? '';
+    final canReceive = (status == 'dispatched' ||
+            status == 'in_transit' ||
+            status == 'shipped') &&
+        status != 'delivered' &&
+        status != 'received' &&
+        status != 'completed';
+
+    return GlassCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Actions",
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 14),
+          if (canReceive) ...[
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () => _showReceiveDialog(context, challan.id!),
+                icon: const Icon(Icons.check_circle_outline, size: 20),
+                label: controller.isReceiving.value
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(
+                        "Mark as Received",
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.primary,
+                side: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 1.5,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () async {
+                try {
+                  await BuyerChallanPdfService.downloadAndShare(challan);
+                } catch (error) {
+                  AppSnackbar.showError(
+                    title: 'PDF generation failed',
+                    message: error.toString().replaceFirst('Exception: ', ''),
+                  );
+                }
+              },
+              icon: const Icon(Icons.picture_as_pdf_outlined, size: 20),
+              label: Text(
+                "Download PDF",
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -641,12 +718,32 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
     return Colors.orange;
   }
 
-  String _formatDate(String? dateStr) {
-    if (dateStr == null || dateStr.isEmpty) return "N/A";
+  String _formatDateOnly(String? dateStr) {
+    if (dateStr == null || dateStr.trim().isEmpty) return "N/A";
     try {
-      final date = DateTime.parse(dateStr);
-      return "${date.day}/${date.month}/${date.year}";
-    } catch (e) {
+      final date = DateTime.parse(dateStr).toLocal();
+      final day = date.day.toString().padLeft(2, '0');
+      final month = date.month.toString().padLeft(2, '0');
+      final year = date.year.toString();
+      return "$day-$month-$year";
+    } catch (_) {
+      return dateStr;
+    }
+  }
+
+  String _formatDateTime(String? dateStr) {
+    if (dateStr == null || dateStr.trim().isEmpty) return "N/A";
+    try {
+      final date = DateTime.parse(dateStr).toLocal();
+      final day = date.day.toString().padLeft(2, '0');
+      final month = date.month.toString().padLeft(2, '0');
+      final year = date.year.toString();
+      final h = date.hour;
+      final hour12 = (h % 12 == 0 ? 12 : h % 12).toString().padLeft(2, '0');
+      final minute = date.minute.toString().padLeft(2, '0');
+      final amPm = h >= 12 ? 'PM' : 'AM';
+      return "$day-$month-$year $hour12:$minute $amPm";
+    } catch (_) {
       return dateStr;
     }
   }

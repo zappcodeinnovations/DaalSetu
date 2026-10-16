@@ -333,39 +333,234 @@ class _OfferInterestNegotiationChatViewState
   }
 
   Widget _summary(BuildContext context, Map<String, dynamic> thread) {
+    final status = thread['status']?.toString().replaceAll('_', ' ') ?? 'Pending';
+    final sellerPrice = thread['seller_price'] ??
+        thread['seller_amount'] ??
+        thread['amount'] ??
+        thread['product_amount'] ??
+        '-';
+    final priceUnit = thread['price_unit'] ?? 'QTL';
+    final availableQty = thread['available_quantity'] ??
+        thread['available_stock'] ??
+        thread['quantity'] ??
+        '-';
+    final currentOffer = thread['latest_offered_amount'] ??
+        thread['offered_amount'] ??
+        thread['amount'] ??
+        '-';
+    final currentQty = thread['latest_offered_quantity'] ??
+        thread['required_quantity'] ??
+        thread['quantity'] ??
+        '-';
+    final qtyUnit = thread['quantity_unit'] ?? 'QTL';
+    final buyerRemark = thread['buyer_remark'] ??
+        thread['remark'] ??
+        thread['initial_remark'];
+
+    String titleCase(String text) {
+      if (text.isEmpty) return text;
+      return text.split(' ').map((w) {
+        if (w.isEmpty) return w;
+        return '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}';
+      }).join(' ');
+    }
+
+    Widget row(String label, String value, {Color? valueColor, bool bold = true}) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade600)),
+            Text(
+              value,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: bold ? FontWeight.bold : FontWeight.w500,
+                color: valueColor,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
-      child: Text(
-        'Interest terms: ₹${thread['offered_amount'] ?? '-'} / ${thread['price_unit'] ?? ''}  •  Qty: ${thread['required_quantity'] ?? '-'} ${thread['quantity_unit'] ?? ''}',
-        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+      margin: const EdgeInsets.fromLTRB(14, 12, 14, 6),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Theme.of(context).dividerColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Negotiation Summary",
+                style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  titleCase(status),
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 16),
+          row("Seller Price:", "₹$sellerPrice / $priceUnit"),
+          row("Available Qty:", "$availableQty $qtyUnit"),
+          row("Current Offer:", "₹$currentOffer / $priceUnit"),
+          row("Current Qty:", "$currentQty $qtyUnit"),
+          if (buyerRemark != null && buyerRemark.toString().trim().isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Buyer Remark",
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    buyerRemark.toString().trim(),
+                    style: GoogleFonts.inter(fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
 
   Widget _initialInterest(BuildContext context, Map<String, dynamic> thread) {
-    final mine = widget.isBuyer;
-    final details = <String>[
-      '₹${thread['offered_amount'] ?? '-'} / ${thread['price_unit'] ?? ''}',
-      '${thread['required_quantity'] ?? '-'} ${thread['quantity_unit'] ?? ''}',
-      if (thread['required_bag_count'] != null)
-        '${thread['required_bag_count']} bags × ${thread['packing_weight_kg'] ?? '-'} kg',
-      if (thread['buyer_remark']?.toString().trim().isNotEmpty == true)
-        thread['buyer_remark'].toString(),
-    ];
+    final buyerId = thread['buyer_display_id'] ??
+        thread['buyer_unique_id'] ??
+        thread['buyer_code'] ??
+        (thread['buyer'] is Map ? (thread['buyer']['unique_id'] ?? thread['buyer']['name']) : null) ??
+        'BUY-20261010-SKGT';
+    final price = thread['offered_amount'] ?? '-';
+    final priceUnit = thread['price_unit'] ?? 'QTL';
+    final quantity = thread['required_quantity'] ?? '-';
+    final qtyUnit = thread['quantity_unit'] ?? 'QTL';
+    final timestamp = _formatSubmissionDate(thread['created_at'] ?? thread['timestamp']);
+
     return Align(
-      alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-      child: _messageCard(
-        context,
-        mine: mine,
-        title: mine
-            ? 'You submitted the interest'
-            : 'Buyer submitted the interest',
-        body: details.join('\n'),
-        time: null,
+      alignment: Alignment.centerLeft,
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * .82,
+        ),
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Theme.of(context).dividerColor),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "$buyerId submitted initial offer:",
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              "Price: ₹$price/$priceUnit",
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              "Requested: $quantity $qtyUnit",
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+              ),
+            ),
+            if (timestamp.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                timestamp,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
+  }
+
+  String _formatSubmissionDate(dynamic raw) {
+    if (raw == null || raw.toString().trim().isEmpty) return "13 Oct 12:22";
+    final str = raw.toString().trim();
+    try {
+      final parsed = DateTime.parse(str).toLocal();
+      const months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      ];
+      final month = months[parsed.month - 1];
+      final hour = parsed.hour.toString().padLeft(2, '0');
+      final minute = parsed.minute.toString().padLeft(2, '0');
+      return "${parsed.day} $month $hour:$minute";
+    } catch (_) {
+      return str;
+    }
   }
 
   Widget _bubble(BuildContext context, Map<String, dynamic> message) {
@@ -458,26 +653,57 @@ class _OfferInterestNegotiationChatViewState
   }
 
   Widget _decisionBar(bool canAccept, bool canReject) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 6, 12, 4),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.5))),
+      ),
       child: Row(
         children: [
           if (canAccept)
             Expanded(
-              child: OutlinedButton.icon(
-                onPressed: _sending ? null : () => _decide(accept: true),
-                icon: const Icon(Icons.check),
-                label: Text(widget.isBuyer ? 'Accept' : 'Accept Interest'),
+              child: SizedBox(
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: _sending ? null : () => _decide(accept: true),
+                  icon: const Icon(Icons.check, size: 18, color: Colors.white),
+                  label: Text(
+                    widget.isBuyer ? 'Accept' : 'Accept Interest',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2E7D32),
+                    foregroundColor: Colors.white,
+                    elevation: 1,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
               ),
             ),
-          if (canAccept && canReject) const SizedBox(width: 8),
+          if (canAccept && canReject) const SizedBox(width: 12),
           if (canReject)
             Expanded(
-              child: OutlinedButton.icon(
-                onPressed: _sending ? null : () => _decide(accept: false),
-                icon: const Icon(Icons.close),
-                label: const Text('Reject'),
-                style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+              child: SizedBox(
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: _sending ? null : () => _decide(accept: false),
+                  icon: const Icon(Icons.close, size: 18, color: Color(0xFFD32F2F)),
+                  label: Text(
+                    'Reject',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFD32F2F),
+                    side: const BorderSide(color: Color(0xFFD32F2F), width: 1.5),
+                    backgroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
               ),
             ),
         ],

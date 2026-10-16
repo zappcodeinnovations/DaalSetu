@@ -270,8 +270,15 @@ class _OfferList extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final offer = offers[index];
                   final isReq = offerType == 'requirements' || offer.isRfq;
-                  final displayQtyStr =
-                      (offer.displayQuantity != null &&
+                  final isInterestsTab = offerType == 'interests';
+                  final qtyLabel = isInterestsTab
+                      ? "Required Qty"
+                      : (isReq ? "Required Quantity" : "Available Quantity");
+                  final priceLabel = isInterestsTab
+                      ? "Offered Amount"
+                      : (isReq ? "Target Price" : "Offer Price");
+
+                  final displayQtyStr = (offer.displayQuantity != null &&
                           offer.displayQuantity!.isNotEmpty &&
                           offer.displayQuantity != 'N/A')
                       ? offer.displayQuantity!
@@ -282,6 +289,25 @@ class _OfferList extends StatelessWidget {
                                   : (offer.bagCount?.isNotEmpty == true
                                         ? "${offer.bagCount} Bags"
                                         : "0.000 QTL")));
+
+                  final displayPriceStr = isInterestsTab
+                      ? (offer.requestedAmount?.isNotEmpty == true
+                            ? "₹${offer.requestedAmount}"
+                            : (offer.displayPrice?.isNotEmpty == true
+                                  ? offer.displayPrice!
+                                  : 'Open'))
+                      : (offer.displayPrice?.isNotEmpty == true
+                            ? offer.displayPrice!
+                            : (offer.requestedAmount?.isNotEmpty == true
+                                  ? "₹${offer.requestedAmount}/${(offer.amountUnit ?? offer.quantityUnit ?? 'QTL').toUpperCase()}"
+                                  : 'Open'));
+
+                  final displayBagsStr = offer.bagCount != null && offer.bagCount!.isNotEmpty
+                      ? "${offer.bagCount} Bags"
+                      : null;
+                  final displayPackingStr = offer.packingWeight != null && offer.packingWeight!.isNotEmpty
+                      ? "${offer.packingWeight} KG"
+                      : null;
 
                   return InkWell(
                     borderRadius: BorderRadius.circular(16),
@@ -405,7 +431,7 @@ class _OfferList extends StatelessWidget {
 
                           const SizedBox(height: 10),
 
-                          // Main Highlights Box: Available Quantity & Offer Price
+                          // Main Highlights Box: Available/Required Quantity & Offer/Target Price / Offered Amount
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
@@ -437,9 +463,7 @@ class _OfferList extends StatelessWidget {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              isReq
-                                                  ? "Required Quantity"
-                                                  : "Available Quantity",
+                                              qtyLabel,
                                               style: GoogleFonts.inter(
                                                 fontSize: 10,
                                                 color: Colors.grey,
@@ -485,24 +509,14 @@ class _OfferList extends StatelessWidget {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              isReq
-                                                  ? "Target Price"
-                                                  : "Offer Price",
+                                              priceLabel,
                                               style: GoogleFonts.inter(
                                                 fontSize: 10,
                                                 color: Colors.grey,
                                               ),
                                             ),
                                             Text(
-                                              offer.displayPrice?.isNotEmpty ==
-                                                      true
-                                                  ? offer.displayPrice!
-                                                  : (offer
-                                                                .requestedAmount
-                                                                ?.isNotEmpty ==
-                                                            true
-                                                        ? "₹${offer.requestedAmount}/${(offer.amountUnit ?? offer.quantityUnit ?? 'QTL').toUpperCase()}"
-                                                        : 'Open'),
+                                              displayPriceStr,
                                               style: GoogleFonts.poppins(
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.bold,
@@ -522,7 +536,7 @@ class _OfferList extends StatelessWidget {
 
                           const SizedBox(height: 10),
 
-                          // Metadata Chips: Variety, Bags/Packing, Pickup, Location
+                          // Metadata Chips: Variety, Bags/Packing, Interest Date, Pickup, Location
                           Wrap(
                             spacing: 6,
                             runSpacing: 6,
@@ -535,12 +549,26 @@ class _OfferList extends StatelessWidget {
                                   Icons.grain,
                                   offer.category!,
                                 ),
-                              if (offer.bagCount != null &&
-                                  offer.bagCount!.isNotEmpty)
+                              if (displayBagsStr != null)
                                 _buildBadge(
                                   theme,
                                   IconlyLight.work,
-                                  "${offer.bagCount} Bags${(offer.packingWeight != null && offer.packingWeight!.isNotEmpty) ? ' (${offer.packingWeight} kg)' : ''}",
+                                  displayBagsStr,
+                                ),
+                              if (displayPackingStr != null)
+                                _buildBadge(
+                                  theme,
+                                  Icons.scale_outlined,
+                                  "Packing: $displayPackingStr",
+                                ),
+                              if (offer.createdAt != null &&
+                                  offer.createdAt!.isNotEmpty)
+                                _buildBadge(
+                                  theme,
+                                  IconlyLight.time_circle,
+                                  isInterestsTab
+                                      ? "Interest Date: ${offer.createdAt!}"
+                                      : offer.createdAt!,
                                 ),
                               if (offer.pickupFrom != null &&
                                   offer.pickupFrom!.isNotEmpty)
@@ -566,7 +594,6 @@ class _OfferList extends StatelessWidget {
                             ],
                           ),
 
-                          const SizedBox(height: 12),
                           _buildActionButtons(
                             context,
                             controller,
@@ -646,8 +673,11 @@ class _OfferList extends StatelessWidget {
         sUpper.contains('EXPIRED') ||
         sUpper.contains('REJECT') ||
         sUpper.contains('CANCEL') ||
-        sUpper.contains('CLOSED');
+        sUpper.contains('CLOSED') ||
+        (sUpper.contains('SOLD') && !sUpper.contains('PARTIAL'));
     final isWarning =
+        sUpper.contains('PARTIAL') ||
+        sUpper.contains('PARTIALLY SOLD') ||
         sUpper.contains('NEGOTIAT') ||
         sUpper.contains('PENDING') ||
         sUpper.contains('INTEREST');
@@ -738,12 +768,13 @@ class _OfferList extends StatelessWidget {
               onTap: () =>
                   _showInterestDialog(context, controller, productId, offer),
             ),
-          _ActionBtn(
-            label: "Negotiation",
-            color: const Color(0xFFE65100),
-            icon: Icons.chat_outlined,
-            onTap: () => Get.to(() => BuyerNegotiationView(offer: offer)),
-          ),
+          if (offer.canOpenNegotiation && !isConfirmed)
+            _ActionBtn(
+              label: "Negotiation",
+              color: const Color(0xFFE65100),
+              icon: Icons.chat_outlined,
+              onTap: () => Get.to(() => BuyerNegotiationView(offer: offer)),
+            ),
         ],
       );
     }

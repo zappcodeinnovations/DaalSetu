@@ -117,16 +117,36 @@ class CategoryPageView extends StatelessWidget {
   /// ===============================
   /// SEND FOR APPROVAL BOTTOM SHEET
   /// ===============================
+  bool _isDummyOrTestCategory(String name) {
+    final t = name.trim().toLowerCase();
+    if (t.isEmpty) return true;
+    if (t == 'test' ||
+        t == 'xyz' ||
+        t == 'sub' ||
+        t == 'teat sub' ||
+        t == 'test category' ||
+        t == 'testing' ||
+        t.startsWith('test') ||
+        t.endsWith('test') ||
+        t.contains('test') ||
+        RegExp(r'^(.)\1+$').hasMatch(t)) {
+      return true;
+    }
+    return false;
+  }
+
   void _showSendForApprovalBottomSheet(BuildContext context, CategoryController controller) {
     final theme = Theme.of(context);
     final customNameCtrl = TextEditingController();
-    final noteCtrl = TextEditingController();
     final Set<int> selectedCategoryIds = {};
 
-    // Get assigned category IDs to filter out already approved categories
-    final assignedIds = controller.allCategories.map((c) => c.id).toSet();
+    // Get assigned category IDs (Approved or Pending) to filter out
+    final assignedIds = controller.allCategories
+        .where((c) => c.status == 'Approved' || c.status == 'Pending')
+        .map((c) => c.id)
+        .toSet();
     final unassignedSystemCategories = controller.systemCategories
-        .where((c) => !assignedIds.contains(c.id))
+        .where((c) => !assignedIds.contains(c.id) && !_isDummyOrTestCategory(c.categoryName))
         .toList();
 
     Get.bottomSheet(
@@ -249,29 +269,6 @@ class CategoryPageView extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-
-                  Text(
-                    "Remark / Note (Optional)",
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: noteCtrl,
-                    maxLines: 2,
-                    decoration: InputDecoration(
-                      hintText: "Add note for administrator...",
-                      prefixIcon: const Icon(IconlyLight.document, size: 20),
-                      filled: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
                   const SizedBox(height: 24),
 
                   SizedBox(
@@ -289,7 +286,6 @@ class CategoryPageView extends StatelessWidget {
                         await controller.sendForApproval(
                           categoryIds: selectedCategoryIds.toList(),
                           categoryName: customNameCtrl.text.trim().isNotEmpty ? customNameCtrl.text.trim() : null,
-                          note: noteCtrl.text.trim().isNotEmpty ? noteCtrl.text.trim() : null,
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -460,8 +456,14 @@ class CategoryPageView extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         category.createdAt != null
-                            ? "Created on ${_formatDate(category.createdAt!)}"
-                            : "Approved Category",
+                            ? (category.status?.toLowerCase() == 'pending'
+                                ? "Requested on ${_formatDateTime(category.createdAt!)}"
+                                : "Created on ${_formatDateTime(category.createdAt!)}")
+                            : (category.status?.toLowerCase() == 'pending'
+                                ? "Waiting for approval"
+                                : (category.status?.toLowerCase() == 'request'
+                                    ? "Click to request approval"
+                                    : "Approved Category")),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
                         ),
@@ -526,23 +528,18 @@ class CategoryPageView extends StatelessWidget {
   }
 
   /// ===============================
-  /// DATE FORMAT
+  /// DATE & TIME FORMAT
   /// ===============================
-  String _formatDate(DateTime date) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return "${date.day} ${months[date.month - 1]} ${date.year}";
+  String _formatDateTime(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year.toString();
+
+    final hour = date.hour > 12 ? date.hour - 12 : (date.hour == 0 ? 12 : date.hour);
+    final minute = date.minute.toString().padLeft(2, '0');
+    final amPm = date.hour >= 12 ? "PM" : "AM";
+    final hourFormatted = hour.toString().padLeft(2, '0');
+
+    return "$day/$month/$year, $hourFormatted:$minute $amPm";
   }
 }
