@@ -175,27 +175,107 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       child: PageView.builder(
         itemCount: product.images.length,
         itemBuilder: (context, index) {
+          final imageUrl = product.images[index].imageUrl;
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(22),
-              child: ColoredBox(
-                color: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-                child: AuthenticatedNetworkImage(
-                  url: product.images[index].imageUrl,
-                  width: double.infinity,
-                  height: 240,
-                  fit: BoxFit.contain,
-                  fallback: const Center(
-                    child: Icon(Icons.broken_image_outlined),
-                  ),
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _showImagePreview(imageUrl),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ColoredBox(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest
+                          .withValues(alpha: 0.35),
+                      child: AuthenticatedNetworkImage(
+                        url: imageUrl,
+                        width: double.infinity,
+                        height: 240,
+                        fit: BoxFit.contain,
+                        fallback: const Center(
+                          child: Icon(Icons.broken_image_outlined),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: 12,
+                      bottom: 12,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.62),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Icon(
+                            Icons.zoom_out_map_rounded,
+                            size: 20,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  void _showImagePreview(String imageUrl) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.92),
+      builder: (dialogContext) => Dialog(
+        insetPadding: EdgeInsets.zero,
+        backgroundColor: Colors.black,
+        child: SafeArea(
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: InteractiveViewer(
+                  minScale: 1,
+                  maxScale: 5,
+                  child: Center(
+                    child: AuthenticatedNetworkImage(
+                      url: imageUrl,
+                      width: MediaQuery.sizeOf(dialogContext).width,
+                      height: MediaQuery.sizeOf(dialogContext).height,
+                      fit: BoxFit.contain,
+                      fallback: const Center(
+                        child: Icon(
+                          Icons.broken_image_outlined,
+                          size: 56,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 12,
+                right: 12,
+                child: IconButton.filled(
+                  tooltip: 'Close image',
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.black.withValues(alpha: 0.65),
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
