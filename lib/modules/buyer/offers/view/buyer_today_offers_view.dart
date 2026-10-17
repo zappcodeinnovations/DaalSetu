@@ -139,10 +139,21 @@ class BuyerTodayOffersView extends StatelessWidget {
     final controller = Get.put(BuyerOffersController(offerType: 'today'), tag: 'today');
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: theme.scaffoldBackgroundColor,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new,
+                  color: theme.textTheme.bodyLarge?.color,
+                  size: 20,
+                ),
+                onPressed: () => Get.back(),
+              )
+            : null,
         title: Text(
           "Today's Offers",
           style: GoogleFonts.poppins(

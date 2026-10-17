@@ -441,11 +441,22 @@ class BuyerMyInterestsView extends StatelessWidget {
     );
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: showAppBar
           ? AppBar(
-              backgroundColor: Colors.transparent,
+              backgroundColor: theme.scaffoldBackgroundColor,
+              surfaceTintColor: Colors.transparent,
               elevation: 0,
+              leading: Navigator.canPop(context)
+                  ? IconButton(
+                      icon: Icon(
+                        Icons.arrow_back_ios_new,
+                        color: theme.textTheme.bodyLarge?.color,
+                        size: 20,
+                      ),
+                      onPressed: () => Get.back(),
+                    )
+                  : null,
               title: Text(
                 "My Interests",
                 style: GoogleFonts.poppins(

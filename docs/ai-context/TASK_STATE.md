@@ -47,7 +47,12 @@
   - Added unit suffixes/affordances (`/$priceUnit` and `quantityUnit`) directly inside the text fields.
   - Replaced cramped circular send icon with a prominent, full-width `Submit Negotiation` button with proper 46px touch target and loading state.
   - Added helper note matching Buyer web panel specifications.
-- **Verification**: Created `test/buyer_challan_pdf_test.dart`, `test/requirement_details_broadcast_expiry_test.dart`, `test/offers_and_requirements_tab_test.dart`, `test/buyer_submit_offer_date_format_test.dart`, and `test/negotiation_timestamp_test.dart`.
+- **Task 19 (Side Panel Screens: No Material Widget Crash & Dark Screen Fix)**:
+  - Fixed red-screen crash (`No Material widget found` & `A RenderFlex overflowed by 99280 pixels`) when opening "Buyer Requirements" from side panel by adding `wrapInScaffold: true` and wrapping `BuyerRequestManagementView` in a `Scaffold` with `AppBar` and back button when standalone.
+  - Fixed pitch-black unreadable screens for "My Interests", "Today's Offers", and "Settings" by replacing `backgroundColor: Colors.transparent` with `theme.scaffoldBackgroundColor` on `Scaffold` and `AppBar`.
+  - Added standard `Icons.arrow_back_ios_new` back buttons with `Navigator.canPop(context)` checks on all four side-panel destinations.
+  - Wired contextual negotiation fields (`availableStock`, `sellerOfferAmount`, `initialRequestedQty`, `initialOfferedPrice`, `initialCreatedAt`, `priceUnit`, `quantityUnit`) from `BuyerNegotiationView` to `OfferInterestNegotiationChatView`.
+- **Verification**: Created `test/buyer_challan_pdf_test.dart`, `test/requirement_details_broadcast_expiry_test.dart`, `test/offers_and_requirements_tab_test.dart`, `test/buyer_submit_offer_date_format_test.dart`, and `test/negotiation_timestamp_test.dart`. All tests passing.
 - **Customization**: Created full persistent repository memory system under `docs/ai-context/` (9 docs) and 10 agent skills under `.agents/skills/`.
 
 

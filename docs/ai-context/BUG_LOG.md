@@ -30,12 +30,22 @@
 
 ---
 
-## Bug 12: Admin Panel — Brand Master Search Not Clearing on Refresh
-- **Symptom**: In Admin Panel → Brand Master, the search field retained previously entered text and the list retained the search filter after refreshing the page.
-- **Root Cause**: `AdminSearchBar` lacked an external `TextEditingController`. Refresh button and `RefreshIndicator` invoked `controller.load(refresh: true)` without clearing `controller.search.value` or cancelling pending debounce timers.
-- **Fix**: Added `controller` and `onClear` to `AdminSearchBar`. Instantiated `_searchController` in `_AdminModuleListScreenState`. Created unified `_refresh()` that cancels debounce, clears `_searchController`, calls `controller.resetSearch()`, and reloads page 1 with `controller.load(refresh: true)`.
+## Bug 16: Side Panel Navigation — Crash & Black Screen Fix
+- **Symptom**:
+  1. Opening "Buyer Requirements" from side panel crashed with `No Material widget found` and `RenderFlex overflowed by 99280 pixels on the bottom`.
+  2. Opening "My Interests", "Today's Offers", and "Settings" from side panel displayed pitch black backgrounds with unreadable dark text.
+- **Root Cause**:
+  1. `BuyerRequestManagementView` returned a bare `Column` with a `TextField` and `Expanded` with no `Scaffold` ancestor when navigated to via `Get.to(...)`.
+  2. `BuyerMyInterestsView`, `BuyerTodayOffersView`, and `SettingsScreen` used `backgroundColor: Colors.transparent` on their `Scaffold`s, which exposed the unpainted Android activity surface.
+- **Fix**:
+  1. Added `wrapInScaffold: true` option in `BuyerRequestManagementView` to dynamically wrap in a `Scaffold` with `AppBar` and back button when accessed standalone.
+  2. Replaced `Colors.transparent` with `theme.scaffoldBackgroundColor` on `Scaffold` and `AppBar` across `BuyerMyInterestsView`, `BuyerTodayOffersView`, and `SettingsScreen`.
+  3. Added `Navigator.canPop(context)` back button navigation for seamless return to previous screen.
 - **Files Changed**:
-  - `lib/modules/admin_catalog/controller/admin_catalog_controller.dart`
-  - `lib/widgets/admin_common_widgets.dart`
-  - `lib/modules/admin_catalog/view/admin_module_list_screen.dart`
-- **Verification**: `test/brand_master_search_refresh_test.dart` (7 tests PASSED).
+  - `lib/modules/buyer/offers/view/buyer_request_management_view.dart`
+  - `lib/modules/admin_catalog/view/admin_drawer.dart`
+  - `lib/modules/buyer/offers/view/buyer_my_interests_view.dart`
+  - `lib/modules/buyer/offers/view/buyer_today_offers_view.dart`
+  - `lib/modules/settings/view/settings_page.dart`
+  - `lib/modules/buyer/offers/view/buyer_negotiation_view.dart`
+- **Verification**: `flutter test test/negotiation_timestamp_test.dart` (PASSED), `flutter analyze` (0 errors).

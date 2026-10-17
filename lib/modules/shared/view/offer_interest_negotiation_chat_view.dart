@@ -22,6 +22,13 @@ class OfferInterestNegotiationChatView extends StatefulWidget {
   final bool allowDecisions;
   final bool isAdmin;
   final String? title;
+  final String? availableStock;
+  final String? sellerOfferAmount;
+  final String? initialRequestedQty;
+  final String? initialOfferedPrice;
+  final String? initialCreatedAt;
+  final String? priceUnit;
+  final String? quantityUnit;
   final Future<void> Function()? onAdminAccept;
   final Future<void> Function()? onAdminReject;
 
@@ -33,6 +40,13 @@ class OfferInterestNegotiationChatView extends StatefulWidget {
     this.allowDecisions = true,
     this.isAdmin = false,
     this.title,
+    this.availableStock,
+    this.sellerOfferAmount,
+    this.initialRequestedQty,
+    this.initialOfferedPrice,
+    this.initialCreatedAt,
+    this.priceUnit,
+    this.quantityUnit,
     this.onAdminAccept,
     this.onAdminReject,
   });
@@ -60,6 +74,20 @@ class _OfferInterestNegotiationChatViewState
   @override
   void initState() {
     super.initState();
+    if (widget.availableStock != null ||
+        widget.sellerOfferAmount != null ||
+        widget.initialRequestedQty != null) {
+      _thread = {
+        'seller_price': widget.sellerOfferAmount,
+        'available_quantity': widget.availableStock,
+        'buyer_required_quantity': widget.initialRequestedQty,
+        'initial_required_quantity': widget.initialRequestedQty,
+        'initial_offered_amount': widget.initialOfferedPrice,
+        'created_at': widget.initialCreatedAt,
+        'price_unit': widget.priceUnit ?? 'TON',
+        'quantity_unit': widget.quantityUnit ?? 'QTL',
+      };
+    }
     _load();
     _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (AppForeground.isActive) _load(silent: true);

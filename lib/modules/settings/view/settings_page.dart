@@ -26,11 +26,35 @@ class SettingsScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.scaffoldBackgroundColor,
       drawer: const AdminDrawer(activeKey: 'settings'),
+      appBar: AppBar(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new,
+                  color: theme.textTheme.bodyLarge?.color,
+                  size: 20,
+                ),
+                onPressed: () => Get.back(),
+              )
+            : Builder(
+                builder: (ctx) => IconButton(
+                  icon: Icon(
+                    Icons.menu_rounded,
+                    color: theme.textTheme.bodyLarge?.color,
+                  ),
+                  onPressed: () => Scaffold.of(ctx).openDrawer(),
+                ),
+              ),
+      ),
       body: SafeArea(
+        top: false,
         child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           children: [
             /// PAGE TITLE
             Text(
