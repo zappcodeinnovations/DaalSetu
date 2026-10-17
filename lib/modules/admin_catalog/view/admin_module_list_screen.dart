@@ -31,6 +31,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
   late final AdminModuleConfig config;
   late final AdminCatalogController controller;
   late final ScrollController scrollController;
+  late final TextEditingController _searchController;
   Timer? debounce;
 
   // Parity state for Category Requests module ("Approval Queue" vs "All Buyers")
@@ -42,11 +43,13 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
   @override
   void initState() {
     super.initState();
+    _searchController = TextEditingController();
     config = AdminModules.byKey(widget.moduleKey);
     controller = Get.put(
       AdminCatalogController(AdminCatalogRepository(config)),
       tag: 'admin_${widget.moduleKey}_${identityHashCode(this)}',
     );
+    controller.resetSearch();
     scrollController = ScrollController()..addListener(_onScroll);
     if (widget.moduleKey == 'category_requests') {
       _fetchBuyers();
@@ -98,6 +101,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
   @override
   void dispose() {
     debounce?.cancel();
+    _searchController.dispose();
     scrollController
       ..removeListener(_onScroll)
       ..dispose();
@@ -118,6 +122,16 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
       controller.search.value = value.trim();
       controller.load(refresh: true);
     });
+  }
+
+  Future<void> _refresh() async {
+    debounce?.cancel();
+    _searchController.clear();
+    controller.resetSearch();
+    await controller.load(refresh: true);
+    if (widget.moduleKey == 'category_requests') {
+      _fetchBuyers();
+    }
   }
 
   Future<void> _openForm([AdminRecord? record]) async {
@@ -145,10 +159,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
       actions: [
         IconButton(
           tooltip: 'Refresh',
-          onPressed: () {
-            controller.load(refresh: true);
-            if (widget.moduleKey == 'category_requests') _fetchBuyers();
-          },
+          onPressed: _refresh,
           icon: const Icon(Icons.refresh_rounded),
         ),
       ],
@@ -174,8 +185,14 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
             child: AdminSearchBar(
+              controller: _searchController,
               hint: 'Search ${config.title}',
               onChanged: _onSearch,
+              onClear: () {
+                debounce?.cancel();
+                controller.resetSearch();
+                controller.load(refresh: true);
+              },
             ),
           ),
           if (config.filterOptions.isNotEmpty)
@@ -217,7 +234,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
                 return AdminEmptyWidget(title: config.title);
               }
               return RefreshIndicator(
-                onRefresh: () => controller.load(refresh: true),
+                onRefresh: _refresh,
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final columns = constraints.maxWidth >= 1050

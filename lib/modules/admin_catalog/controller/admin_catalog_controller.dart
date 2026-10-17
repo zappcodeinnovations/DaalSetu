@@ -20,11 +20,19 @@ class AdminCatalogController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    search.value = '';
     load();
   }
 
-  Future<void> load({bool refresh = false}) async {
+  void resetSearch() {
+    search.value = '';
+  }
+
+  Future<void> load({bool refresh = false, bool resetSearch = false}) async {
     if (isLoading.value) return;
+    if (resetSearch) {
+      search.value = '';
+    }
     if (refresh) {
       _page = 1;
       _hasNext = true;

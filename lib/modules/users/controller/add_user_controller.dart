@@ -4,6 +4,7 @@ import '../model/tag_model.dart';
 import '../../../services/tag_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import './user_controller.dart';
 
 class AddUserController extends GetxController {
   var isLoading = false.obs;
@@ -75,6 +76,10 @@ class AddUserController extends GetxController {
       );
 
       if (response["status"] == "success") {
+        if (Get.isRegistered<UserController>()) {
+          Get.find<UserController>().fetchUsers();
+        }
+
         Get.snackbar(
           "Success",
           response["message"] ?? "User created successfully",

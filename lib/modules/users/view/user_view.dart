@@ -130,7 +130,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       // ── FAB ─────────────────────────────────────────────────────────────
       floatingActionButton: FloatingActionButton.extended(
         heroTag: null,
-        onPressed: () => Get.to(() => AddUserScreen()),
+        onPressed: () async {
+          final result = await Get.to(() => AddUserScreen());
+          if (result == true) {
+            await controller.fetchUsers();
+          }
+        },
         icon: const Icon(IconlyLight.add_user),
         label: const Text('Add User'),
         backgroundColor: theme.colorScheme.primary,

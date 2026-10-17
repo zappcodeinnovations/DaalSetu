@@ -41,13 +41,15 @@ class UserController extends GetxController {
   void onInit() {
     super.onInit();
     fetchUsers();
-    // React to search/filter changes without wrapping entire screen in Obx
+    // React to search/filter/user list changes without wrapping entire screen in Obx
+    ever(users, (_) => _applyFilter());
     ever(searchQuery, (_) => _applyFilter());
     ever(selectedRole, (_) => _applyFilter());
   }
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
   Future<void> fetchUsers() async {
+    if (isLoading.value) return;
     try {
       isLoading.value = true;
       final data = await UserService.getUsers();

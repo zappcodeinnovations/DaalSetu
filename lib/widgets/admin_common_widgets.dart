@@ -4,19 +4,41 @@ class AdminSearchBar extends StatelessWidget {
   const AdminSearchBar({
     super.key,
     required this.onChanged,
+    this.controller,
+    this.onClear,
     this.hint = 'Search',
   });
 
   final ValueChanged<String> onChanged;
+  final TextEditingController? controller;
+  final VoidCallback? onClear;
   final String hint;
 
   @override
   Widget build(BuildContext context) => TextField(
+    controller: controller,
     onChanged: onChanged,
     textInputAction: TextInputAction.search,
     decoration: InputDecoration(
       hintText: hint,
       prefixIcon: const Icon(Icons.search_rounded),
+      suffixIcon: controller != null
+          ? ValueListenableBuilder<TextEditingValue>(
+              valueListenable: controller!,
+              builder: (context, value, _) {
+                if (value.text.isEmpty) return const SizedBox.shrink();
+                return IconButton(
+                  icon: const Icon(Icons.clear_rounded),
+                  tooltip: 'Clear search',
+                  onPressed: () {
+                    controller!.clear();
+                    onClear?.call();
+                    onChanged('');
+                  },
+                );
+              },
+            )
+          : null,
       filled: true,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
