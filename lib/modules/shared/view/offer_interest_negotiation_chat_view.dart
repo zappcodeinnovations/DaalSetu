@@ -1177,7 +1177,7 @@ class _OfferInterestNegotiationChatViewState
             ),
             SizedBox(
               width: double.infinity,
-              height: 46,
+              height: 50,
               child: ElevatedButton.icon(
                 onPressed: _sending ? null : _send,
                 icon: _sending
@@ -1193,7 +1193,7 @@ class _OfferInterestNegotiationChatViewState
                 label: Text(
                   _sending ? 'Submitting...' : 'Submit Negotiation',
                   style: GoogleFonts.inter(
-                    fontSize: 14,
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -1201,6 +1201,7 @@ class _OfferInterestNegotiationChatViewState
                   backgroundColor: const Color(0xFFF58220),
                   foregroundColor: Colors.white,
                   elevation: 1,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
