@@ -18,25 +18,14 @@
 - **Bug 10**: Resolved negotiation timestamp discrepancy in `negotiation_page.dart`.
 - **Bug 11**: Resolved user list refresh defect in `user_view.dart`, `user_controller.dart`, and `add_user_controller.dart`.
 - **Bug 12**: Resolved Brand Master search persistence defect in `admin_catalog_controller.dart`, `admin_common_widgets.dart`, and `admin_module_list_screen.dart`.
+- **Bug 13 (Buyer Drawer)**: Fixed Buyer Drawer navigation and permission checks for buyer roles in `admin_drawer.dart`.
+- **Bug 14 (Delivery Challan PDF Formatting & Typos)**:
+  - Corrected label typo "PAYMENT SCHEDULS :" -> "PAYMENT SCHEDULE :".
+  - Professionalized salutation text to formal business standard.
+  - Corrected charge breakdown label typo "LORRY FRIGHT" -> "LORRY FREIGHT".
+  - Fixed vertical empty stretch by replacing `pw.Expanded` / `pw.Spacer()` with compact `pw.Table` (flex 4, 3, 3) and top-aligned container.
+  - Formatted all monetary totals, rates, and charges with consistent vector Rupee (₹) prefixes via `_currencyWidget`.
+  - Resolved `color: highlightYellow` and `decoration: BoxDecoration` container assertion collision.
+- **Verification**: Created `test/buyer_challan_pdf_test.dart` and verified with passing test suite and clean `flutter analyze`.
 - **Customization**: Created full persistent repository memory system under `docs/ai-context/` (9 docs) and 10 agent skills under `.agents/skills/`.
-- **Git Push**: Rebased with latest remote commits and pushed commit `ad8a27a` to `origin/rohit` cleanly.
 
----
-
-## In-Progress Items
-- Creating remaining persistent context files (`BUG_LOG.md`, `API_CONTRACTS.md`, `TEST_STRATEGY.md`, `UI_DESIGN_SYSTEM.md`, `DEPLOYMENT_NOTES.md`).
-- Creating 10 workspace agent skills in `.agents/skills/`.
-
----
-
-## Blockers & Dependencies
-- None. `P:\DaalSetu` test environment is healthy and all bug fixes have passing tests.
-
----
-
-## Exact Next Steps
-1. Write remaining persistent context files in `docs/ai-context/`.
-2. Write the 10 `.agents/skills/` modules.
-3. Write `P:\DaalSetu\GEMINI.md`.
-4. Validate with `flutter test` and `flutter analyze`.
-5. Deliver the comprehensive onboarding report.

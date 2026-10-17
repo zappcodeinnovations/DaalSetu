@@ -80,22 +80,6 @@ class BuyerChallanPdfService {
     );
   }
 
-  static String _formatCurrency(dynamic val) {
-    if (val == null) return '₹0.00';
-    final str = val
-        .toString()
-        .trim()
-        .replaceAll('₹', '')
-        .replaceAll('Rs.', '')
-        .replaceAll('Rs', '')
-        .replaceAll(',', '');
-    final d = double.tryParse(str);
-    if (d == null) {
-      final s = val.toString().trim();
-      return s.startsWith('₹') ? s : '₹$s';
-    }
-    return '₹${NumberFormat('#,##,##0.00').format(d)}';
-  }
 
   /// Saves a generated challan PDF to the device Downloads folder.
   static Future<String> download(BuyerDeliveryChallanModel challan) =>
@@ -147,13 +131,16 @@ class BuyerChallanPdfService {
       pw.Page(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(24),
-        build: (context) => pw.Container(
-          decoration: pw.BoxDecoration(
-            border: pw.Border.all(color: PdfColors.black, width: 1),
-          ),
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-            children: [
+        build: (context) => pw.Align(
+          alignment: pw.Alignment.topCenter,
+          child: pw.Container(
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(color: PdfColors.black, width: 1),
+            ),
+            child: pw.Column(
+              mainAxisSize: pw.MainAxisSize.min,
+              crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+              children: [
               // 1. Top devotional header
               pw.Padding(
                 padding: const pw.EdgeInsets.only(top: 4, bottom: 2),
@@ -594,10 +581,10 @@ class BuyerChallanPdfService {
                             pw.SizedBox(height: 4),
                             // NET AMOUNT Highlight Bar
                             pw.Container(
-                              color: highlightYellow,
                               padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 3.5),
-                              decoration: const pw.BoxDecoration(
-                                border: pw.Border(
+                              decoration: pw.BoxDecoration(
+                                color: highlightYellow,
+                                border: const pw.Border(
                                   top: pw.BorderSide(color: PdfColors.black, width: 0.6),
                                 ),
                               ),
@@ -626,7 +613,8 @@ class BuyerChallanPdfService {
           ),
         ),
       ),
-    );
+    ),
+  );
 
     final safeNumber =
         (challan.challanNumber ?? challan.id?.toString() ?? 'challan')
