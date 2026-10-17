@@ -31,6 +31,12 @@
   - Added comprehensive fallback extraction (`broadcast_expiry`, `broadcast_expiry_datetime`, `expiry_datetime`, `deal_expiry_datetime`, `expiry_date`, `expires_at`, nested RFQ/Offer/Product maps).
   - Formatted into web panel format `dd MMM yyyy, hh:mm a` (e.g. `22 Oct 2026, 01:52 PM`) with timezone localization.
   - Verified with unit and widget test `test/requirement_details_broadcast_expiry_test.dart` and clean `flutter analyze`.
-- **Verification**: Created `test/buyer_challan_pdf_test.dart` and `test/requirement_details_broadcast_expiry_test.dart` and verified with passing test suites and clean `flutter analyze`.
+- **Task 16 (Rename 'All' Category to 'Offers')**:
+  - Confirmed and updated primary tab in "Offers & Requirements" page (`buyer_offers_view.dart`) to `'Offers'`.
+  - Cleaned empty state text interpolation for `offerType == 'all'` to display "No offers are available at the moment." instead of "No all offers...".
+  - Renamed "All Offers" tab in `transporter_offers_view.dart` to "Offers" with clean empty state phrasing.
+  - Removed unused import in `transporter_offers_view.dart`.
+  - Verified with automated widget test `test/offers_and_requirements_tab_test.dart` and 0-issue `flutter analyze`.
+- **Verification**: Created `test/buyer_challan_pdf_test.dart`, `test/requirement_details_broadcast_expiry_test.dart`, and `test/offers_and_requirements_tab_test.dart` and verified with passing test suites and clean `flutter analyze`.
 - **Customization**: Created full persistent repository memory system under `docs/ai-context/` (9 docs) and 10 agent skills under `.agents/skills/`.
 

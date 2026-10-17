@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../buyer/offers/controller/buyer_offers_controller.dart';
-import '../../../buyer/offers/model/buyer_offer_model.dart';
 import '../../../../theme/app_theme.dart';
 
 class TransporterOffersView extends StatelessWidget {
@@ -44,7 +43,7 @@ class TransporterOffersView extends StatelessWidget {
             unselectedLabelColor: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
             labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13),
             tabs: const [
-              Tab(text: "All Offers"),
+              Tab(text: "Offers"),
               Tab(text: "Today"),
               Tab(text: "Pending"),
               Tab(text: "Previous"),
@@ -104,7 +103,9 @@ class _TransporterOfferList extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                "There are no $offerType trade offers at the moment.",
+                offerType == 'all'
+                    ? "There are no trade offers at the moment."
+                    : "There are no $offerType trade offers at the moment.",
                 style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
               ),
             ],
