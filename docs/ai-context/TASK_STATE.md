@@ -40,6 +40,14 @@
   - Formatted delivery date strictly as `dd-mm-yyyy` (e.g. `18-10-2026`) upon date selection across Buyer Panel modals (`buyer_offers_view.dart`, `buyer_today_offers_view.dart`, `buyer_my_interests_view.dart`).
   - Added automatic ISO date normalizer in `BuyerServices.showInterest` to ensure full backend compatibility with `yyyy-MM-dd`.
   - Verified with automated test `test/buyer_submit_offer_date_format_test.dart` and 0-issue `flutter analyze`.
-- **Verification**: Created `test/buyer_challan_pdf_test.dart`, `test/requirement_details_broadcast_expiry_test.dart`, `test/offers_and_requirements_tab_test.dart`, and `test/buyer_submit_offer_date_format_test.dart` and verified with passing test suites and clean `flutter analyze`.
+- **Task 18 (Negotiation Summary Data, Standardized Timestamps & Composer Layout)**:
+  - Fixed unbound summary data in `OfferInterestNegotiationChatView` (`seller_price` and `available_quantity` now populate via product fallback and format as `₹10,000.00 / TON` and `5000.100 QTL`).
+  - Standardized date/time parsing and formatting in negotiation log to `dd/MM/yyyy hh:mm a` across mobile (`offer_interest_negotiation_chat_view.dart`) and web (`negotiation_page.dart`), removing hardcoded `"13 Oct 12:22"` and converting UTC naive timestamps to local IST.
+  - Resolved input placeholder truncation ("Counter qua...") by separating inputs and send action into a balanced layout with full labels `Counter Price (₹)` and `Counter Qty`.
+  - Added unit suffixes/affordances (`/$priceUnit` and `quantityUnit`) directly inside the text fields.
+  - Replaced cramped circular send icon with a prominent, full-width `Submit Negotiation` button with proper 46px touch target and loading state.
+  - Added helper note matching Buyer web panel specifications.
+- **Verification**: Created `test/buyer_challan_pdf_test.dart`, `test/requirement_details_broadcast_expiry_test.dart`, `test/offers_and_requirements_tab_test.dart`, `test/buyer_submit_offer_date_format_test.dart`, and `test/negotiation_timestamp_test.dart`.
 - **Customization**: Created full persistent repository memory system under `docs/ai-context/` (9 docs) and 10 agent skills under `.agents/skills/`.
+
 

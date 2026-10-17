@@ -3,11 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 import '../../../services/buyer_services.dart';
+import '../../../services/product_services.dart';
 import '../../../services/seller_services.dart';
 import '../../../utils/app_snackbar.dart';
-import '../../seller/common/seller_ui.dart';
 import 'package:daalsetu/utils/global_error_handler.dart';
 
 /// One live chat for a ProductInterest.  It intentionally powers both the
@@ -106,6 +107,33 @@ class _OfferInterestNegotiationChatViewState
       final raw = response['data'];
       if (raw is! Map || !mounted) return;
       final newThread = Map<String, dynamic>.from(raw);
+      final productMap = (newThread['product'] is Map ? newThread['product'] : null) ??
+          (newThread['offer'] is Map ? newThread['offer'] : null) ??
+          (newThread['product_detail'] is Map ? newThread['product_detail'] : null);
+      if (productMap != null) {
+        newThread['seller_price'] ??= productMap['amount'] ?? productMap['seller_price'] ?? productMap['price'];
+        newThread['available_quantity'] ??= productMap['available_quantity'] ?? productMap['remaining_quantity'] ?? productMap['stock_quantity'] ?? productMap['quantity'];
+        newThread['price_unit'] ??= productMap['amount_unit'] ?? productMap['price_unit'];
+        newThread['quantity_unit'] ??= productMap['quantity_unit'];
+      }
+
+      if (widget.productId > 0 &&
+          (newThread['seller_price'] == null || newThread['available_quantity'] == null)) {
+        try {
+          final productDetail = await ProductService.getProductDetail(widget.productId);
+          newThread['seller_price'] ??= productDetail.amount;
+          newThread['available_quantity'] ??= productDetail.availableQuantity.isNotEmpty
+              ? productDetail.availableQuantity
+              : productDetail.remainingQuantity;
+          if (newThread['price_unit'] == null || newThread['price_unit'].toString().isEmpty) {
+            newThread['price_unit'] = productDetail.amountUnit.isNotEmpty ? productDetail.amountUnit : 'TON';
+          }
+          if (newThread['quantity_unit'] == null || newThread['quantity_unit'].toString().isEmpty) {
+            newThread['quantity_unit'] = productDetail.quantityUnit.isNotEmpty ? productDetail.quantityUnit : 'QTL';
+          }
+        } catch (_) {}
+      }
+
       final newCount = (newThread['messages'] as List?)?.length ?? 0;
       setState(() => _thread = newThread);
       if (!silent || newCount > oldCount) _scrollToLatest();
@@ -364,7 +392,9 @@ class _OfferInterestNegotiationChatViewState
         thread['amount'] ??
         thread['product_amount'] ??
         '-';
-    final priceUnit = thread['price_unit'] ?? 'QTL';
+    final priceUnit = (thread['price_unit'] ?? thread['amount_unit'] ?? 'TON')
+        .toString()
+        .toUpperCase();
     final availableQty =
         thread['available_quantity'] ??
         thread['available_stock'] ??
@@ -377,12 +407,44 @@ class _OfferInterestNegotiationChatViewState
         '-';
     final currentQty =
         thread['latest_offered_quantity'] ??
+        thread['buyer_required_quantity'] ??
         thread['required_quantity'] ??
         thread['quantity'] ??
         '-';
-    final qtyUnit = thread['quantity_unit'] ?? 'QTL';
+    final qtyUnit = (thread['quantity_unit'] ?? 'QTL')
+        .toString()
+        .toUpperCase();
     final buyerRemark =
         thread['buyer_remark'] ?? thread['remark'] ?? thread['initial_remark'];
+
+    String formatPrice(dynamic raw) {
+      if (raw == null || raw.toString().trim().isEmpty || raw.toString().trim() == '-') return '-';
+      final clean = raw.toString().replaceAll('₹', '').replaceAll(',', '').trim();
+      final numVal = double.tryParse(clean);
+      if (numVal != null) {
+        return NumberFormat('#,##0.00', 'en_IN').format(numVal);
+      }
+      return clean;
+    }
+
+    String formatQty(dynamic raw) {
+      if (raw == null || raw.toString().trim().isEmpty || raw.toString().trim() == '-') return '-';
+      final clean = raw.toString().replaceAll(',', '').trim();
+      final numVal = double.tryParse(clean);
+      if (numVal != null) {
+        if (clean.contains('.')) {
+          final decimals = clean.split('.')[1].length;
+          return numVal.toStringAsFixed(decimals < 3 ? 3 : decimals);
+        }
+        return numVal.toStringAsFixed(3);
+      }
+      return clean;
+    }
+
+    final pSeller = formatPrice(sellerPrice);
+    final qAvail = formatQty(availableQty);
+    final pOffer = formatPrice(currentOffer);
+    final qOffer = formatQty(currentQty);
 
     String titleCase(String text) {
       if (text.isEmpty) return text;
@@ -479,10 +541,10 @@ class _OfferInterestNegotiationChatViewState
             ],
           ),
           const Divider(height: 16),
-          row("Seller Price:", "₹$sellerPrice / $priceUnit"),
-          row("Available Qty:", "$availableQty $qtyUnit"),
-          row("Current Offer:", "₹$currentOffer / $priceUnit"),
-          row("Current Qty:", "$currentQty $qtyUnit"),
+          row("Seller Price:", pSeller == '-' ? '₹-' : "₹$pSeller / $priceUnit"),
+          row("Available Qty:", qAvail == '-' ? '-' : "$qAvail $qtyUnit"),
+          row("Current Offer:", pOffer == '-' ? '₹-' : "₹$pOffer / $priceUnit"),
+          row("Current Qty:", qOffer == '-' ? '-' : "$qOffer $qtyUnit"),
           if (buyerRemark != null &&
               buyerRemark.toString().trim().isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -529,14 +591,44 @@ class _OfferInterestNegotiationChatViewState
         (thread['buyer'] is Map
             ? (thread['buyer']['unique_id'] ?? thread['buyer']['name'])
             : null) ??
-        'BUY-20261010-SKGT';
-    final price = thread['offered_amount'] ?? '-';
-    final priceUnit = thread['price_unit'] ?? 'QTL';
-    final quantity = thread['required_quantity'] ?? '-';
-    final qtyUnit = thread['quantity_unit'] ?? 'QTL';
-    final timestamp = _formatSubmissionDate(
-      thread['created_at'] ?? thread['timestamp'],
+        'Buyer';
+    final rawPrice = thread['initial_offered_amount'] ??
+        thread['buyer_offered_amount'] ??
+        thread['offered_amount'] ??
+        '-';
+    final priceUnit = (thread['price_unit'] ?? thread['amount_unit'] ?? 'TON')
+        .toString()
+        .toUpperCase();
+    final rawQuantity = thread['buyer_required_quantity'] ??
+        thread['initial_required_quantity'] ??
+        thread['initial_quantity'] ??
+        thread['requested_quantity'] ??
+        thread['required_quantity'] ??
+        '-';
+    final qtyUnit = (thread['quantity_unit'] ?? 'QTL')
+        .toString()
+        .toUpperCase();
+    final timestamp = _formatNegotiationDateTime(
+      thread['created_at'] ??
+      thread['interest_created_at'] ??
+      thread['submitted_at'] ??
+      thread['timestamp'] ??
+      (_messages.isNotEmpty ? _messages.first['created_at'] : null),
     );
+
+    final cleanPrice = rawPrice.toString().replaceAll('₹', '').replaceAll(',', '').trim();
+    final numPrice = double.tryParse(cleanPrice);
+    final displayPrice = numPrice != null
+        ? NumberFormat('#,##0.00', 'en_IN').format(numPrice)
+        : rawPrice;
+
+    final cleanQty = rawQuantity.toString().replaceAll(',', '').trim();
+    final numQty = double.tryParse(cleanQty);
+    final displayQty = numQty != null
+        ? (cleanQty.contains('.')
+            ? numQty.toStringAsFixed(cleanQty.split('.')[1].length < 3 ? 3 : cleanQty.split('.')[1].length)
+            : numQty.toStringAsFixed(3))
+        : rawQuantity;
 
     return Align(
       alignment: Alignment.centerLeft,
@@ -571,7 +663,7 @@ class _OfferInterestNegotiationChatViewState
             ),
             const SizedBox(height: 6),
             Text(
-              "Price: ₹$price/$priceUnit",
+              displayPrice == '-' ? "Price: ₹-" : "Price: ₹$displayPrice/$priceUnit",
               style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
@@ -580,7 +672,7 @@ class _OfferInterestNegotiationChatViewState
             ),
             const SizedBox(height: 2),
             Text(
-              "Requested: $quantity $qtyUnit",
+              displayQty == '-' ? "Requested: -" : "Requested: $displayQty $qtyUnit",
               style: GoogleFonts.inter(
                 fontSize: 12,
                 color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -602,32 +694,73 @@ class _OfferInterestNegotiationChatViewState
     );
   }
 
-  String _formatSubmissionDate(dynamic raw) {
-    if (raw == null || raw.toString().trim().isEmpty) return "13 Oct 12:22";
-    final str = raw.toString().trim();
-    try {
-      final parsed = DateTime.parse(str).toLocal();
-      const months = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ];
-      final month = months[parsed.month - 1];
-      final hour = parsed.hour.toString().padLeft(2, '0');
-      final minute = parsed.minute.toString().padLeft(2, '0');
-      return "${parsed.day} $month $hour:$minute";
-    } catch (_) {
-      return str;
+  String _formatNegotiationDateTime(dynamic raw) {
+    if (raw == null || raw.toString().trim().isEmpty || raw.toString().trim() == '-') return '';
+    final trimmed = raw.toString().trim();
+
+    DateTime? dt = DateTime.tryParse(trimmed);
+
+    if (dt == null && trimmed.contains(' ')) {
+      final isoCandidate = trimmed.replaceFirst(' ', 'T');
+      dt = DateTime.tryParse(isoCandidate);
     }
+
+    if (dt != null && !dt.isUtc) {
+      final hasTz = RegExp(
+        r'(Z|[+-]\d{2}:?\d{2})$',
+        caseSensitive: false,
+      ).hasMatch(trimmed);
+      if (!hasTz) {
+        dt = DateTime.utc(
+          dt.year,
+          dt.month,
+          dt.day,
+          dt.hour,
+          dt.minute,
+          dt.second,
+          dt.millisecond,
+          dt.microsecond,
+        );
+      }
+    }
+
+    if (dt == null) {
+      final formats = [
+        DateFormat('MMM d, yyyy h:mm a'),
+        DateFormat('MMM dd, yyyy h:mm a'),
+        DateFormat('MMM d, yyyy hh:mm a'),
+        DateFormat('MMM dd, yyyy hh:mm a'),
+        DateFormat('d MMM yyyy, h:mm a'),
+        DateFormat('dd MMM yyyy, h:mm a'),
+        DateFormat('d MMM yyyy, hh:mm a'),
+        DateFormat('dd MMM yyyy, hh:mm a'),
+        DateFormat('dd-MM-yyyy hh:mm a'),
+        DateFormat('dd/MM/yyyy hh:mm a'),
+        DateFormat('yyyy-MM-dd HH:mm:ss'),
+        DateFormat('yyyy-MM-dd HH:mm'),
+        DateFormat('dd-MM-yyyy HH:mm'),
+      ];
+      for (final fmt in formats) {
+        try {
+          final parsed = fmt.parseLoose(trimmed);
+          dt = DateTime.utc(
+            parsed.year,
+            parsed.month,
+            parsed.day,
+            parsed.hour,
+            parsed.minute,
+            parsed.second,
+          );
+          break;
+        } catch (_) {}
+      }
+    }
+
+    if (dt != null) {
+      return DateFormat('dd/MM/yyyy hh:mm a').format(dt.toLocal());
+    }
+
+    return trimmed;
   }
 
   Widget _bubble(BuildContext context, Map<String, dynamic> message) {
@@ -683,6 +816,7 @@ class _OfferInterestNegotiationChatViewState
     required String body,
     required String? time,
   }) {
+    final formattedTime = _formatNegotiationDateTime(time);
     return Container(
       constraints: BoxConstraints(
         maxWidth: MediaQuery.of(context).size.width * .78,
@@ -691,7 +825,7 @@ class _OfferInterestNegotiationChatViewState
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: mine
-            ? SellerUi.primary.withValues(alpha: .18)
+            ? const Color(0xFFF58220).withValues(alpha: .15)
             : Theme.of(context).cardColor,
         borderRadius: BorderRadius.only(
           topLeft: const Radius.circular(16),
@@ -699,7 +833,11 @@ class _OfferInterestNegotiationChatViewState
           bottomLeft: Radius.circular(mine ? 16 : 4),
           bottomRight: Radius.circular(mine ? 4 : 16),
         ),
-        border: Border.all(color: Theme.of(context).dividerColor),
+        border: Border.all(
+          color: mine
+              ? const Color(0xFFF58220).withValues(alpha: .3)
+              : Theme.of(context).dividerColor,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -715,11 +853,11 @@ class _OfferInterestNegotiationChatViewState
             const SizedBox(height: 3),
             Text(body, style: GoogleFonts.inter(fontSize: 13, height: 1.35)),
           ],
-          if (time != null && time.isNotEmpty) ...[
+          if (formattedTime.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
-              SellerUi.date(time),
-              style: TextStyle(fontSize: 9, color: Colors.grey.shade600),
+              formattedTime,
+              style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
             ),
           ],
         ],
@@ -829,37 +967,85 @@ class _OfferInterestNegotiationChatViewState
   }
 
   Widget _composer(BuildContext context) {
-    final priceUnit = _thread?['price_unit']?.toString().toUpperCase() ?? '';
-    final quantityUnit =
+    final rawPriceUnit = _thread?['price_unit']?.toString().toUpperCase() ?? '';
+    final priceUnit = rawPriceUnit.isNotEmpty ? rawPriceUnit : 'TON';
+    final rawQuantityUnit =
         _thread?['quantity_unit']?.toString().toUpperCase() ?? '';
-    InputDecoration decoration(String label, {String? suffixText}) =>
+    final quantityUnit = rawQuantityUnit.isNotEmpty ? rawQuantityUnit : 'QTL';
+
+    InputDecoration inputDecoration({
+      required String label,
+      String? hint,
+      String? suffixText,
+    }) =>
         InputDecoration(
           labelText: label,
+          hintText: hint ?? 'Optional',
           suffixText: suffixText,
           counterText: '',
           isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 12,
+          ),
           filled: true,
+          fillColor: Theme.of(context).cardColor,
+          labelStyle: GoogleFonts.inter(
+            fontSize: 12,
+            color: Colors.grey.shade600,
+          ),
+          hintStyle: GoogleFonts.inter(
+            fontSize: 12,
+            color: Colors.grey.shade400,
+          ),
+          suffixStyle: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade700,
+          ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(22),
-            borderSide: BorderSide.none,
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Theme.of(context).dividerColor),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
+            ),
+          ),
+          focusedBorder: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(10)),
+            borderSide: BorderSide(
+              color: Color(0xFFF58220),
+              width: 1.5,
+            ),
           ),
         );
+
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
           border: Border(
             top: BorderSide(color: Theme.of(context).dividerColor),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (_showPacking && !widget.isBuyer)
               Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.only(bottom: 10),
                 child: Row(
                   children: [
                     Expanded(
@@ -867,10 +1053,14 @@ class _OfferInterestNegotiationChatViewState
                         controller: _bagsController,
                         keyboardType: TextInputType.number,
                         maxLength: 10,
-                        decoration: decoration('Bags'),
+                        decoration: inputDecoration(
+                          label: 'Counter Bags',
+                          hint: 'Optional',
+                          suffixText: 'bags',
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: TextField(
                         controller: _packingController,
@@ -878,7 +1068,11 @@ class _OfferInterestNegotiationChatViewState
                           decimal: true,
                         ),
                         maxLength: 10,
-                        decoration: decoration('Packing KG', suffixText: 'KG'),
+                        decoration: inputDecoration(
+                          label: 'Packing Weight',
+                          hint: 'KG',
+                          suffixText: 'KG',
+                        ),
                       ),
                     ),
                   ],
@@ -890,7 +1084,10 @@ class _OfferInterestNegotiationChatViewState
                   IconButton(
                     onPressed: () =>
                         setState(() => _showPacking = !_showPacking),
-                    icon: const Icon(Icons.inventory_2_outlined),
+                    icon: Icon(
+                      _showPacking ? Icons.inventory_2 : Icons.inventory_2_outlined,
+                      color: const Color(0xFFF58220),
+                    ),
                     tooltip: 'Bags & packing',
                   ),
                 Expanded(
@@ -900,13 +1097,14 @@ class _OfferInterestNegotiationChatViewState
                       decimal: true,
                     ),
                     maxLength: 10,
-                    decoration: decoration(
-                      'Counter price',
-                      suffixText: priceUnit.isEmpty ? null : '/ $priceUnit',
+                    decoration: inputDecoration(
+                      label: 'Counter Price (₹)',
+                      hint: 'Optional',
+                      suffixText: '/$priceUnit',
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 Expanded(
                   child: TextField(
                     controller: _quantityController,
@@ -914,25 +1112,72 @@ class _OfferInterestNegotiationChatViewState
                       decimal: true,
                     ),
                     maxLength: 10,
-                    decoration: decoration(
-                      'Counter quantity',
-                      suffixText: quantityUnit.isEmpty ? null : quantityUnit,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                CircleAvatar(
-                  backgroundColor: SellerUi.primary,
-                  child: IconButton(
-                    onPressed: _sending ? null : _send,
-                    icon: const Icon(
-                      Icons.send_rounded,
-                      color: Colors.white,
-                      size: 20,
+                    decoration: inputDecoration(
+                      label: 'Counter Qty',
+                      hint: 'Optional',
+                      suffixText: quantityUnit,
                     ),
                   ),
                 ),
               ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 13,
+                    color: Colors.grey.shade600,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      widget.isBuyer
+                          ? "Bags are calculated automatically from the seller's packing configuration. Free text messages are disabled."
+                          : "Seller packing changes require both Bags and Packing Weight; quantity is calculated automatically.",
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: Colors.grey.shade600,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(
+              width: double.infinity,
+              height: 46,
+              child: ElevatedButton.icon(
+                onPressed: _sending ? null : _send,
+                icon: _sending
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Icon(Icons.send_rounded, size: 18),
+                label: Text(
+                  _sending ? 'Submitting...' : 'Submit Negotiation',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF58220),
+                  foregroundColor: Colors.white,
+                  elevation: 1,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
             ),
           ],
         ),

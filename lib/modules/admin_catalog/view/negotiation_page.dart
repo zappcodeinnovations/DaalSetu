@@ -725,7 +725,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
     }
 
     if (dt != null) {
-      return DateFormat('dd MMM yyyy, hh:mm a').format(dt.toLocal());
+      return DateFormat('dd/MM/yyyy hh:mm a').format(dt.toLocal());
     }
 
     return trimmed;
