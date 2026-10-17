@@ -136,7 +136,29 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                   map['remaining_quantity'] ??
                   map['quantity_qtl'] ??
                   map['quantity'];
-              if (stock != null) _loadedStock = '$stock QTL';
+              final num? stockNum = num.tryParse(
+                (stock ?? '').toString().replaceAll(RegExp(r'[^\d.]'), ''),
+              );
+              if (stockNum != null && stockNum > 0) {
+                _loadedStock = '${stockNum.toStringAsFixed(3)} QTL';
+              } else {
+                final bags = map['remaining_bag_count'] ??
+                    map['original_bag_count'] ??
+                    map['bag_count'];
+                final packing = map['packing_weight_kg'] ?? map['packing'];
+                final num? bNum = num.tryParse(
+                  (bags ?? '').toString().replaceAll(RegExp(r'[^\d.]'), ''),
+                );
+                final num? pNum = num.tryParse(
+                  (packing ?? '').toString().replaceAll(RegExp(r'[^\d.]'), ''),
+                );
+                if (bNum != null && bNum > 0 && pNum != null && pNum > 0) {
+                  _loadedStock =
+                      '${((bNum * pNum) / 100.0).toStringAsFixed(3)} QTL';
+                } else if (stock != null) {
+                  _loadedStock = '$stock QTL';
+                }
+              }
               final amt =
                   map['amount'] ?? map['seller_offer_amount'] ?? map['price'];
               final unit = (map['amount_unit'] ?? map['quantity_unit'] ?? 'TON')

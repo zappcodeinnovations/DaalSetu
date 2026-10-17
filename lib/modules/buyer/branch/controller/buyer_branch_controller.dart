@@ -1,10 +1,14 @@
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../services/seller_services.dart';
+import '../../../../services/realtime_notification_service.dart';
 import '../../../../utils/app_snackbar.dart';
+import '../../../nav_bar/controller/nav_controller.dart';
 import '../../../seller/branches/model/seller_branch_model.dart';
+import '../../../seller/notifications/model/notification_model.dart';
 
-class BuyerBranchController extends GetxController {
+class BuyerBranchController extends GetxController with WidgetsBindingObserver {
   var isLoading = false.obs;
   var primaryBranch = Rxn<SellerBranchModel>();
   var myBranches = <SellerBranchModel>[].obs;
@@ -13,11 +17,252 @@ class BuyerBranchController extends GetxController {
   final Set<int> _leftBranchIds = {};
   final Set<String> _leftBranchCodes = {};
 
+  Worker? _navWorker;
+  Worker? _notifBannerWorker;
+  Worker? _notifListWorker;
+
+  // Search & Filter state
+  final searchQuery = ''.obs;
+  final selectedTypeFilter = 'all'.obs; // 'all', 'primary', 'additional', 'pending'
+  final TextEditingController searchTextController = TextEditingController();
+
+  void setSearchQuery(String query) {
+    searchQuery.value = query.trim();
+  }
+
+  void setTypeFilter(String type) {
+    selectedTypeFilter.value = type;
+  }
+
+  void applyFilter() {
+    searchQuery.value = searchTextController.text.trim();
+  }
+
+  void resetFilter() {
+    searchTextController.clear();
+    searchQuery.value = '';
+    selectedTypeFilter.value = 'all';
+  }
+
+  bool get isFilterActive =>
+      searchQuery.value.isNotEmpty || selectedTypeFilter.value != 'all';
+
+  bool _matchesQuery(SellerBranchModel branch, String query) {
+    if (query.isEmpty) return true;
+    final q = query.toLowerCase();
+    final code = (branch.branchCode ?? '').toLowerCase();
+    final loc = (branch.locationName ?? '').toLowerCase();
+    final city = (branch.city ?? '').toLowerCase();
+    final state = (branch.state ?? '').toLowerCase();
+    final area = (branch.area ?? '').toLowerCase();
+    final admin = (branch.adminName ?? '').toLowerCase();
+    final user = (branch.userName ?? '').toLowerCase();
+
+    return code.contains(q) ||
+        loc.contains(q) ||
+        city.contains(q) ||
+        state.contains(q) ||
+        area.contains(q) ||
+        admin.contains(q) ||
+        user.contains(q);
+  }
+
+  /// Filtered Primary Branch (null if excluded by type or search)
+  SellerBranchModel? get filteredPrimaryBranch {
+    final pb = primaryBranch.value;
+    if (pb == null) return null;
+    if (selectedTypeFilter.value == 'additional' ||
+        selectedTypeFilter.value == 'pending') {
+      return null;
+    }
+    return _matchesQuery(pb, searchQuery.value) ? pb : null;
+  }
+
+  /// Filtered My Branches (Additional connected branches)
+  List<SellerBranchModel> get filteredMyBranches {
+    if (selectedTypeFilter.value == 'primary' ||
+        selectedTypeFilter.value == 'pending') {
+      return [];
+    }
+    return myBranches
+        .where((b) => _matchesQuery(b, searchQuery.value))
+        .toList();
+  }
+
+  /// Filtered Pending Requests
+  List<SellerBranchModel> get filteredPendingRequests {
+    if (selectedTypeFilter.value == 'primary' ||
+        selectedTypeFilter.value == 'additional') {
+      return [];
+    }
+    return pendingRequests
+        .where((b) => _matchesQuery(b, searchQuery.value))
+        .toList();
+  }
+
+  /// True if any branches match current filters
+  bool get hasFilteredResults =>
+      filteredPrimaryBranch != null ||
+      filteredMyBranches.isNotEmpty ||
+      filteredPendingRequests.isNotEmpty;
+
   @override
   void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
     _clearLegacyDiskCache();
     fetchBranches();
+    _setupListeners();
+  }
+
+  @override
+  void onReady() {
+    super.onReady();
+    _setupListeners();
+  }
+
+  @override
+  void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _navWorker?.dispose();
+    _notifBannerWorker?.dispose();
+    _notifListWorker?.dispose();
+    searchTextController.dispose();
+    super.onClose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      fetchBranches(silent: true);
+    }
+  }
+
+  void _setupListeners() {
+    // 1. Listen for BottomNavController tab focus (index 4 is Buyer Branch tab)
+    if (_navWorker == null && Get.isRegistered<BottomNavController>()) {
+      final nav = Get.find<BottomNavController>();
+      _navWorker = ever(nav.selectedIndex, (int index) {
+        if (index == 4) {
+          fetchBranches(silent: true);
+        }
+      });
+    }
+
+    // 2. Listen for RealtimeNotificationService notifications
+    if (Get.isRegistered<RealtimeNotificationService>()) {
+      final rns = RealtimeNotificationService.to;
+      _notifBannerWorker ??= ever(rns.activeBannerNotification, (AppNotificationModel? notif) {
+        if (notif != null && _isBranchNotification(notif)) {
+          handleBranchNotification(notif);
+        }
+      });
+
+      _notifListWorker ??= ever(rns.latestNotifications, (List<AppNotificationModel> list) {
+        for (final notif in list) {
+          if (_isBranchNotification(notif) && notif.isRead != true) {
+            handleBranchNotification(notif);
+            break;
+          }
+        }
+      });
+    }
+  }
+
+  bool _isBranchNotification(AppNotificationModel notif) {
+    final title = (notif.title ?? '').toLowerCase();
+    final msg = (notif.message ?? '').toLowerCase();
+    final type = (notif.type ?? '').toLowerCase();
+    final url = (notif.redirectUrl ?? '').toLowerCase();
+    return title.contains('branch') ||
+        msg.contains('branch') ||
+        type.contains('branch') ||
+        url.contains('branch');
+  }
+
+  /// Handles branch approval/rejection notification immediately
+  void handleBranchNotification(AppNotificationModel notif) {
+    final title = (notif.title ?? '').toLowerCase();
+    final msg = (notif.message ?? '').trim();
+    final lowerMsg = msg.toLowerCase();
+
+    final isApproval = title.contains('approv') ||
+        lowerMsg.contains('approv') ||
+        title.contains('accept') ||
+        lowerMsg.contains('accept') ||
+        title.contains('joined') ||
+        lowerMsg.contains('joined');
+
+    final isRejection = title.contains('reject') ||
+        lowerMsg.contains('reject') ||
+        title.contains('declin') ||
+        lowerMsg.contains('declin') ||
+        title.contains('cancel') ||
+        lowerMsg.contains('cancel');
+
+    if (isApproval) {
+      String? matchedCode;
+      SellerBranchModel? pendingItem;
+
+      for (final req in pendingRequests) {
+        final code = req.branchCode?.trim().toUpperCase();
+        if (code != null && code.isNotEmpty && msg.toUpperCase().contains(code)) {
+          matchedCode = code;
+          pendingItem = req;
+          break;
+        }
+      }
+
+      if (matchedCode == null) {
+        final match = RegExp(r'(?:for|branch|code)\s+([A-Z0-9]{4,12})', caseSensitive: false).firstMatch(msg);
+        if (match != null) {
+          matchedCode = match.group(1)?.toUpperCase();
+          pendingItem = pendingRequests.firstWhereOrNull((r) =>
+              r.branchCode?.trim().toUpperCase() == matchedCode);
+        }
+      }
+
+      if (matchedCode != null && matchedCode.isNotEmpty) {
+        _leftBranchCodes.remove(matchedCode);
+        if (pendingItem?.id != null) _leftBranchIds.remove(pendingItem!.id);
+        if (pendingItem?.branchId != null) _leftBranchIds.remove(pendingItem!.branchId);
+
+        // Optimistically remove from pending requests immediately
+        pendingRequests.removeWhere((r) =>
+            r.branchCode?.trim().toUpperCase() == matchedCode ||
+            (pendingItem != null && (r.id == pendingItem.id || r.id == pendingItem.branchId)));
+
+        // Optimistically add to myBranches if not present
+        final alreadyInMyBranches = myBranches.any((b) =>
+            b.branchCode?.trim().toUpperCase() == matchedCode);
+        final alreadyInPrimary = primaryBranch.value?.branchCode?.trim().toUpperCase() == matchedCode;
+
+        if (!alreadyInMyBranches && !alreadyInPrimary && pendingItem != null) {
+          myBranches.add(SellerBranchModel(
+            id: pendingItem.branchId ?? pendingItem.id,
+            branchId: pendingItem.branchId ?? pendingItem.id,
+            branchCode: matchedCode,
+            locationName: pendingItem.locationName ?? "Branch $matchedCode",
+            city: pendingItem.city,
+            state: pendingItem.state,
+            area: pendingItem.area,
+            isPrimary: false,
+            status: 'active',
+          ));
+        }
+      }
+    } else if (isRejection) {
+      for (final req in pendingRequests) {
+        final code = req.branchCode?.trim().toUpperCase();
+        if (code != null && code.isNotEmpty && msg.toUpperCase().contains(code)) {
+          pendingRequests.removeWhere((r) => r.branchCode?.trim().toUpperCase() == code);
+          break;
+        }
+      }
+    }
+
+    // Always fetch latest authoritative data from backend
+    fetchBranches(silent: true);
   }
 
   /// Wipes legacy disk cache from previous iterations so nothing is falsely blocked
@@ -29,9 +274,9 @@ class BuyerBranchController extends GetxController {
     } catch (_) {}
   }
 
-  Future<void> fetchBranches() async {
+  Future<void> fetchBranches({bool silent = false}) async {
     try {
-      isLoading.value = true;
+      if (!silent) isLoading.value = true;
       final res = await SellerServices.getSellerBranches();
       if (res['data'] is Map<String, dynamic>) {
         final data = res['data'] as Map<String, dynamic>;
@@ -99,7 +344,9 @@ class BuyerBranchController extends GetxController {
         }
       }
     } catch (e) {
-      AppSnackbar.showError(title: "Error", message: e.toString());
+      if (!silent) {
+        AppSnackbar.showError(title: "Error", message: e.toString());
+      }
     } finally {
       isLoading.value = false;
     }

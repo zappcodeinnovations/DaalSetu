@@ -5,16 +5,54 @@ import '../network/api_client.dart';
 
 class ProfileService {
   static Future<ProfileModel> getProfile() async {
-    final response = await ApiClient.get(
-      endpoint: ApiUrls.profile, // "/api/user/"
-      requireAuth: true,
-    );
+    final Map<String, dynamic> combined = {};
 
-    if (response == null || response is! Map<String, dynamic>) {
+    // 1. Query base user endpoint (/api/user/)
+    try {
+      final userResponse = await ApiClient.get(
+        endpoint: ApiUrls.profile,
+        requireAuth: true,
+      );
+      if (userResponse is Map<String, dynamic>) {
+        if (userResponse['body'] is Map<String, dynamic>) {
+          combined.addAll(userResponse['body'] as Map<String, dynamic>);
+        } else if (userResponse['data'] is Map<String, dynamic>) {
+          combined.addAll(userResponse['data'] as Map<String, dynamic>);
+        } else {
+          combined.addAll(userResponse);
+        }
+      }
+    } catch (_) {}
+
+    // 2. Query detailed profile endpoint (/api/profile/update/) which contains dob, gender, kyc documents, etc.
+    try {
+      final profileResponse = await ApiClient.get(
+        endpoint: ApiUrls.profileUpdate,
+        requireAuth: true,
+      );
+      if (profileResponse is Map<String, dynamic>) {
+        Map<String, dynamic> pData = profileResponse;
+        if (pData['body'] is Map<String, dynamic>) {
+          pData = pData['body'] as Map<String, dynamic>;
+        }
+        if (pData['data'] is Map<String, dynamic>) {
+          pData = pData['data'] as Map<String, dynamic>;
+        }
+        pData.forEach((key, val) {
+          if (val != null &&
+              val.toString() != 'null' &&
+              val.toString().trim().isNotEmpty) {
+            combined[key] = val;
+          }
+        });
+      }
+    } catch (_) {}
+
+    if (combined.isEmpty) {
       throw Exception("Invalid profile response");
     }
 
-    return ProfileModel.fromJson(response);
+    return ProfileModel.fromJson(combined);
   }
 
   static Future<ProfileModel> updateProfile(Map<String, dynamic> data) async {
@@ -24,9 +62,13 @@ class ProfileService {
       requireAuth: true,
     );
 
-    // Re-fetch the complete user profile to ensure fields like role and account_status remain intact
     try {
-      return await getProfile();
+      final refreshed = await getProfile();
+      final targetDob = data['dob']?.toString().trim();
+      if (targetDob != null && targetDob.isNotEmpty && (refreshed.dob.isEmpty || refreshed.dob == 'null')) {
+        return refreshed.copyWith(dob: targetDob);
+      }
+      return refreshed;
     } catch (_) {
       return ProfileModel.fromJson(response);
     }
@@ -40,8 +82,9 @@ class ProfileService {
     final documentFiles = Map<String, String>.from(files)
       ..remove('profile_image');
 
+    dynamic patchResponse;
     if (documentFiles.isNotEmpty) {
-      await ApiClient.postMultipart(
+      patchResponse = await ApiClient.postMultipart(
         endpoint: ApiUrls.profileUpdate,
         fields: fields,
         files: documentFiles,
@@ -49,7 +92,7 @@ class ProfileService {
         method: 'PATCH',
       );
     } else if (fields.isNotEmpty) {
-      await ApiClient.patch(
+      patchResponse = await ApiClient.patch(
         endpoint: ApiUrls.profileUpdate,
         data: fields,
         requireAuth: true,
@@ -64,6 +107,19 @@ class ProfileService {
         requireAuth: true,
       );
     }
-    return getProfile();
+
+    try {
+      final refreshed = await getProfile();
+      final targetDob = fields['dob']?.toString().trim();
+      if (targetDob != null && targetDob.isNotEmpty && (refreshed.dob.isEmpty || refreshed.dob == 'null')) {
+        return refreshed.copyWith(dob: targetDob);
+      }
+      return refreshed;
+    } catch (_) {
+      if (patchResponse is Map<String, dynamic>) {
+        return ProfileModel.fromJson(patchResponse);
+      }
+      throw Exception("Failed to update profile");
+    }
   }
 }

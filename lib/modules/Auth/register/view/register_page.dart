@@ -29,10 +29,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final RegisterController _controller = RegisterController();
 
   Future<void> _selectDate() async {
+    DateTime initial = DateTime.now();
+    final currentText = _controller.dobController.text.trim();
+    if (currentText.isNotEmpty) {
+      try {
+        if (currentText.contains('/')) {
+          final parts = currentText.split('/');
+          if (parts.length == 3) {
+            initial = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+          }
+        } else if (currentText.contains('-')) {
+          final parsed = DateTime.tryParse(currentText);
+          if (parsed != null) initial = parsed;
+        }
+      } catch (_) {}
+    }
+    final now = DateTime.now();
+    if (initial.isAfter(now)) {
+      initial = now;
+    }
+
     DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: DateTime(2000),
-      firstDate: DateTime(1950),
+      initialDate: initial,
+      firstDate: DateTime(1900),
       lastDate: DateTime.now(),
       builder: (context, child) {
         return Theme(
@@ -51,10 +71,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (pickedDate != null) {
       setState(() {
-        _controller.dobController.text = pickedDate
-            .toIso8601String()
-            .split("T")
-            .first;
+        _controller.dobController.text =
+            "${pickedDate.day.toString().padLeft(2, '0')}/${pickedDate.month.toString().padLeft(2, '0')}/${pickedDate.year}";
       });
     }
   }

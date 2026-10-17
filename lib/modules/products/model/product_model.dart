@@ -165,8 +165,31 @@ class ProductModel {
       amountUnit: text("amount_unit"),
       originalQuantity: text("original_quantity"),
       remainingQuantity: text("remaining_quantity"),
-      availableQuantity: text("available_quantity"),
-      quantityQtl: text("quantity_qtl"),
+      availableQuantity: () {
+        final rawAvail = text("available_quantity");
+        final rawQtl = text("quantity_qtl");
+        final num? availNum = num.tryParse(rawAvail.replaceAll(RegExp(r'[^\d.]'), ''));
+        if (availNum != null && availNum > 0) return rawAvail;
+        final num? qtlNum = num.tryParse(rawQtl.replaceAll(RegExp(r'[^\d.]'), ''));
+        if (qtlNum != null && qtlNum > 0) return rawQtl;
+        final int? bags = number("remaining_bag_count") ?? number("original_bag_count") ?? number("bag_count");
+        final num? packing = num.tryParse(text("packing_weight_kg").replaceAll(RegExp(r'[^\d.]'), ''));
+        if (bags != null && bags > 0 && packing != null && packing > 0) {
+          return ((bags * packing) / 100.0).toStringAsFixed(3);
+        }
+        return rawAvail.isNotEmpty ? rawAvail : text("remaining_quantity");
+      }(),
+      quantityQtl: () {
+        final rawQtl = text("quantity_qtl");
+        final num? qtlNum = num.tryParse(rawQtl.replaceAll(RegExp(r'[^\d.]'), ''));
+        if (qtlNum != null && qtlNum > 0) return rawQtl;
+        final int? bags = number("remaining_bag_count") ?? number("original_bag_count") ?? number("bag_count");
+        final num? packing = num.tryParse(text("packing_weight_kg").replaceAll(RegExp(r'[^\d.]'), ''));
+        if (bags != null && bags > 0 && packing != null && packing > 0) {
+          return ((bags * packing) / 100.0).toStringAsFixed(3);
+        }
+        return rawQtl.isNotEmpty ? rawQtl : text("available_quantity");
+      }(),
       stockStatus: text("stock_status"),
       packingWeightKg: text("packing_weight_kg"),
       originalBagCount: number("original_bag_count"),

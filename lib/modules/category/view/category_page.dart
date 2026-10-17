@@ -120,15 +120,9 @@ class CategoryPageView extends StatelessWidget {
   bool _isDummyOrTestCategory(String name) {
     final t = name.trim().toLowerCase();
     if (t.isEmpty) return true;
-    if (t == 'test' ||
-        t == 'xyz' ||
+    if (t == 'xyz' ||
         t == 'sub' ||
         t == 'teat sub' ||
-        t == 'test category' ||
-        t == 'testing' ||
-        t.startsWith('test') ||
-        t.endsWith('test') ||
-        t.contains('test') ||
         RegExp(r'^(.)\1+$').hasMatch(t)) {
       return true;
     }
@@ -140,13 +134,21 @@ class CategoryPageView extends StatelessWidget {
     final customNameCtrl = TextEditingController();
     final Set<int> selectedCategoryIds = {};
 
-    // Get assigned category IDs (Approved or Pending) to filter out
+    // Get assigned category IDs & names (Approved or Pending) to filter out
     final assignedIds = controller.allCategories
-        .where((c) => c.status == 'Approved' || c.status == 'Pending')
+        .where((c) => c.status?.toLowerCase() == 'approved' || c.status?.toLowerCase() == 'pending')
         .map((c) => c.id)
         .toSet();
+    final assignedNames = controller.allCategories
+        .where((c) => c.status?.toLowerCase() == 'approved' || c.status?.toLowerCase() == 'pending')
+        .map((c) => c.categoryName.trim().toLowerCase())
+        .toSet();
+
     final unassignedSystemCategories = controller.systemCategories
-        .where((c) => !assignedIds.contains(c.id) && !_isDummyOrTestCategory(c.categoryName))
+        .where((c) =>
+            !assignedIds.contains(c.id) &&
+            !assignedNames.contains(c.categoryName.trim().toLowerCase()) &&
+            !_isDummyOrTestCategory(c.categoryName))
         .toList();
 
     Get.bottomSheet(
@@ -247,10 +249,37 @@ class CategoryPageView extends StatelessWidget {
                       }).toList(),
                     ),
                     const SizedBox(height: 20),
+                  ] else ...[
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.check_circle_outline, color: Colors.green, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              "All existing system categories are already approved for your account. You can request a custom category below.",
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.green.shade800,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                   ],
 
                   Text(
-                    "Or Enter Custom Category Name",
+                    unassignedSystemCategories.isNotEmpty
+                        ? "Or Enter Custom Category Name"
+                        : "Enter Custom Category Name",
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,

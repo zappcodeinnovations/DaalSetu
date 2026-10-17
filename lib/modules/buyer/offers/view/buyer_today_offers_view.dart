@@ -40,17 +40,25 @@ class BuyerTodayOffersView extends StatelessWidget {
   }
 
   Widget _buildStatusBadge(String status, ThemeData theme) {
-    final sUpper = status.toUpperCase();
-    final isGood = sUpper.contains('ACTIVE') ||
-        sUpper.contains('AVAILABLE') ||
-        sUpper.contains('OPEN') ||
-        sUpper.contains('CONFIRM') ||
-        sUpper.contains('DEAL CONFIRMED');
-    final isBad = sUpper.contains('EXPIRED') ||
+    final sUpper = status.toUpperCase().replaceAll('_', ' ');
+    final isOutOfStock = sUpper.contains('OUT OF STOCK') || sUpper.contains('SOLD OUT');
+    final isGood = !isOutOfStock &&
+        (sUpper.contains('ACTIVE') ||
+            sUpper.contains('AVAILABLE') ||
+            sUpper.contains('OPEN') ||
+            sUpper.contains('CONFIRM') ||
+            sUpper.contains('DEAL CONFIRMED'));
+    final isBad = isOutOfStock ||
+        sUpper.contains('EXPIRED') ||
         sUpper.contains('REJECT') ||
         sUpper.contains('CANCEL') ||
-        sUpper.contains('CLOSED');
-    final isWarning = sUpper.contains('NEGOTIAT') || sUpper.contains('PENDING') || sUpper.contains('INTEREST');
+        sUpper.contains('CLOSED') ||
+        sUpper.contains('INACTIVE') ||
+        sUpper.contains('DISABLED');
+    final isWarning = !isOutOfStock &&
+        (sUpper.contains('NEGOTIAT') ||
+            sUpper.contains('PENDING') ||
+            sUpper.contains('INTEREST'));
 
     final color = isGood
         ? Colors.green
@@ -63,6 +71,8 @@ class BuyerTodayOffersView extends StatelessWidget {
     String displayStatus = status;
     if (sUpper.contains('EXPIRED')) {
       displayStatus = 'Deal Expired';
+    } else if (isOutOfStock) {
+      displayStatus = 'OUT OF STOCK';
     } else if (status.trim().toUpperCase() == 'AVAILABLE') {
       displayStatus = 'ACTIVE';
     }
@@ -167,17 +177,36 @@ class BuyerTodayOffersView extends StatelessWidget {
           separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final offer = offers[index];
-            final displayQtyStr = (offer.displayQuantity != null &&
-                    offer.displayQuantity!.isNotEmpty &&
-                    offer.displayQuantity != 'N/A')
-                ? offer.displayQuantity!
-                : (offer.availableQuantity?.isNotEmpty == true
-                    ? "${offer.availableQuantity} ${offer.quantityUnit ?? 'QTL'}"
-                    : (offer.requestedQuantity?.isNotEmpty == true
-                        ? "${offer.requestedQuantity} ${offer.quantityUnit ?? 'QTL'}"
-                        : (offer.bagCount?.isNotEmpty == true
-                            ? "${offer.bagCount} Bags"
-                            : "0.000 QTL")));
+            final num? availNum = num.tryParse(
+              (offer.availableQuantity ?? '').replaceAll(RegExp(r'[^\d.]'), ''),
+            );
+            final num? bagsNum = num.tryParse(
+              (offer.bagCount ?? '').replaceAll(RegExp(r'[^\d.]'), ''),
+            );
+            final num? packingNum = num.tryParse(
+              (offer.packingWeight ?? '').replaceAll(RegExp(r'[^\d.]'), ''),
+            );
+
+            String displayQtyStr;
+            if (availNum != null && availNum > 0) {
+              displayQtyStr = "${availNum.toStringAsFixed(3)} ${offer.quantityUnit ?? 'QTL'}";
+            } else if (bagsNum != null && bagsNum > 0 && packingNum != null && packingNum > 0) {
+              final calcQtl = (bagsNum * packingNum) / 100.0;
+              displayQtyStr = "${calcQtl.toStringAsFixed(3)} QTL";
+            } else if (offer.displayQuantity != null &&
+                offer.displayQuantity!.isNotEmpty &&
+                offer.displayQuantity != 'N/A' &&
+                !offer.displayQuantity!.startsWith('0.000') &&
+                !offer.displayQuantity!.startsWith('0 QTL')) {
+              displayQtyStr = offer.displayQuantity!;
+            } else if (offer.requestedQuantity?.isNotEmpty == true &&
+                (num.tryParse(offer.requestedQuantity!.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0) > 0) {
+              displayQtyStr = "${offer.requestedQuantity} ${offer.quantityUnit ?? 'QTL'}";
+            } else if (bagsNum != null && bagsNum > 0) {
+              displayQtyStr = "$bagsNum Bags";
+            } else {
+              displayQtyStr = offer.displayQuantity ?? "0.000 QTL";
+            }
 
             return InkWell(
               borderRadius: BorderRadius.circular(16),
@@ -399,9 +428,29 @@ class BuyerTodayOffersView extends StatelessWidget {
                                       message: "Deal has expired. You cannot show interest.",
                                     );
                                   }
-                                : (offer.canSubmitOffer
-                                    ? () => _showInterestDialog(context, controller, offer.productId ?? offer.id ?? 0, offer)
-                                    : null),
+                                : (offer.isOutOfStock
+                                    ? () {
+                                        AppSnackbar.showWarning(
+                                          title: "Out of Stock",
+                                          message:
+                                              "This item is currently out of stock. You cannot submit an offer.",
+                                        );
+                                      }
+                                    : (!offer.isActive
+                                        ? () {
+                                            AppSnackbar.showWarning(
+                                              title: "Unavailable",
+                                              message:
+                                                  "This offer is no longer active.",
+                                            );
+                                          }
+                                        : (offer.canSubmitOffer
+                                            ? () => _showInterestDialog(
+                                                context,
+                                                controller,
+                                                offer.productId ?? offer.id ?? 0,
+                                                offer)
+                                            : null))),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: offer.canSubmitOffer
                                   ? theme.colorScheme.primary
@@ -411,17 +460,30 @@ class BuyerTodayOffersView extends StatelessWidget {
                                   : Colors.grey.shade600,
                               disabledBackgroundColor: Colors.grey.shade200,
                               disabledForegroundColor: Colors.grey.shade500,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
                             ),
                             icon: Icon(
-                              offer.isExpired ? Icons.timer_off_outlined : IconlyLight.send,
+                              offer.isExpired
+                                  ? Icons.timer_off_outlined
+                                  : (offer.isOutOfStock
+                                      ? Icons.remove_shopping_cart_outlined
+                                      : (!offer.isActive
+                                          ? Icons.block
+                                          : IconlyLight.send)),
                               size: 16,
-                              color: offer.canSubmitOffer ? Colors.white : Colors.grey.shade500,
+                              color: offer.canSubmitOffer
+                                  ? Colors.white
+                                  : Colors.grey.shade500,
                             ),
                             label: Text(
                               offer.isExpired
                                   ? "Deal Expired"
-                                  : (offer.isOutOfStock ? "Out of Stock" : "Submit Offer"),
+                                  : (offer.isOutOfStock
+                                      ? "Out of Stock"
+                                      : (!offer.isActive
+                                          ? "Unavailable"
+                                          : "Submit Offer")),
                               style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -453,6 +515,21 @@ class BuyerTodayOffersView extends StatelessWidget {
   }
 
   void _showInterestDialog(BuildContext context, BuyerOffersController controller, int productId, BuyerOfferModel offer) {
+    if (!offer.canSubmitOffer ||
+        offer.isOutOfStock ||
+        !offer.isActive ||
+        offer.isExpired) {
+      AppSnackbar.showWarning(
+        title: "Notice",
+        message: offer.isOutOfStock
+            ? "This item is currently out of stock."
+            : (offer.isExpired
+                ? "This deal has expired."
+                : "This offer is no longer active."),
+      );
+      return;
+    }
+
     // 1. Prefill quantity from available quantity, requested quantity, or display quantity
     String resolveInitialQty() {
       final rawAvail = (offer.availableQuantity ?? '').replaceAll(RegExp(r'[^\d.]'), '').trim();

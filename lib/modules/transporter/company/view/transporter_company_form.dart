@@ -346,7 +346,22 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
             ? const [TaxIdInputFormatter.gst()]
             : null,
         decoration: InputDecoration(
-          labelText: label,
+          label: isRequired
+              ? Text.rich(
+                  TextSpan(
+                    text: label,
+                    children: const [
+                      TextSpan(
+                        text: ' *',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : Text(label),
           hintText: effectiveHint,
           floatingLabelBehavior: FloatingLabelBehavior.always,
           counterText: "",

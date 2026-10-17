@@ -58,7 +58,7 @@ class MainNavigationScreen extends StatelessWidget {
             const BuyerOffersView(),
             const BuyerActivityView(),
             const BuyerDeliveryChallanView(),
-            BuyerBranchView(),
+            const BuyerBranchView(),
           ] +
           [SettingsScreen()];
     }

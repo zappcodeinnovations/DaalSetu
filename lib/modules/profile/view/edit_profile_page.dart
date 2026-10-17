@@ -23,6 +23,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
+  late TextEditingController _emailController;
+  late TextEditingController _mobileController;
   late TextEditingController _genderController;
   late TextEditingController _dobController;
   late TextEditingController _panController;
@@ -42,6 +44,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     _firstNameController = TextEditingController(text: user?.firstName ?? '');
     _lastNameController = TextEditingController(text: user?.lastName ?? '');
+    _emailController = TextEditingController(text: user?.email ?? '');
+    _mobileController = TextEditingController(text: user?.mobile ?? '');
 
     String initialGender = 'Male';
     if (user != null && user.gender.isNotEmpty) {
@@ -55,7 +59,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
     }
     _genderController = TextEditingController(text: initialGender);
-    _dobController = TextEditingController(text: user?.dob ?? '');
+    String initialDob = '';
+    final rawDob = (user?.dob ?? '').trim();
+    if (rawDob.isNotEmpty && rawDob != 'null') {
+      if (rawDob.contains('-')) {
+        final parts = rawDob.split('-');
+        if (parts.length == 3) {
+          if (parts[0].length == 4) {
+            initialDob = '${parts[2].padLeft(2, '0')}/${parts[1].padLeft(2, '0')}/${parts[0]}';
+          } else {
+            initialDob = '${parts[0].padLeft(2, '0')}/${parts[1].padLeft(2, '0')}/${parts[2]}';
+          }
+        } else {
+          initialDob = rawDob;
+        }
+      } else {
+        initialDob = rawDob;
+      }
+    }
+    _dobController = TextEditingController(text: initialDob);
     _panController = TextEditingController(text: user?.panNumber ?? '');
     _gstController = TextEditingController(text: user?.gstNumber ?? '');
     _originalPan = (user?.panNumber ?? '').trim().toUpperCase();
@@ -66,6 +88,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
+    _emailController.dispose();
+    _mobileController.dispose();
     _genderController.dispose();
     _dobController.dispose();
     _panController.dispose();
@@ -74,9 +98,33 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _selectDate() async {
+    DateTime initial = DateTime.now();
+    final currentText = _dobController.text.trim();
+    if (currentText.isNotEmpty) {
+      try {
+        if (currentText.contains('/')) {
+          final parts = currentText.split('/');
+          if (parts.length == 3) {
+            final day = int.parse(parts[0]);
+            final month = int.parse(parts[1]);
+            final year = int.parse(parts[2]);
+            initial = DateTime(year, month, day);
+          }
+        } else if (currentText.contains('-')) {
+          final parsed = DateTime.tryParse(currentText);
+          if (parsed != null) initial = parsed;
+        }
+      } catch (_) {}
+    }
+
+    final now = DateTime.now();
+    if (initial.isAfter(now)) {
+      initial = now;
+    }
+
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now().subtract(const Duration(days: 365 * 20)),
+      initialDate: initial,
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
       builder: (context, child) {
@@ -95,7 +143,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
     if (picked != null) {
       setState(() {
-        _dobController.text = DateFormat('yyyy-MM-dd').format(picked);
+        _dobController.text = DateFormat('dd/MM/yyyy').format(picked);
       });
     }
   }
@@ -142,8 +190,54 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     };
 
     if (_dobController.text.trim().isNotEmpty) {
-      data['dob'] = _dobController.text.trim();
+      final dobStr = _dobController.text.trim();
+      if (dobStr.contains('/')) {
+        final parts = dobStr.split('/');
+        if (parts.length == 3) {
+          final day = parts[0].padLeft(2, '0');
+          final month = parts[1].padLeft(2, '0');
+          final year = parts[2];
+          final formattedIso = '$year-$month-$day';
+          data['dob'] = formattedIso;
+          data['date_of_birth'] = formattedIso;
+        } else {
+          data['dob'] = dobStr;
+          data['date_of_birth'] = dobStr;
+        }
+      } else if (dobStr.contains('-')) {
+        final parts = dobStr.split('-');
+        if (parts.length == 3) {
+          if (parts[0].length == 4) {
+            data['dob'] = dobStr;
+            data['date_of_birth'] = dobStr;
+          } else {
+            final day = parts[0].padLeft(2, '0');
+            final month = parts[1].padLeft(2, '0');
+            final year = parts[2];
+            final formattedIso = '$year-$month-$day';
+            data['dob'] = formattedIso;
+            data['date_of_birth'] = formattedIso;
+          }
+        } else {
+          data['dob'] = dobStr;
+          data['date_of_birth'] = dobStr;
+        }
+      } else {
+        data['dob'] = dobStr;
+        data['date_of_birth'] = dobStr;
+      }
     }
+
+    final email = _emailController.text.trim();
+    if (email.isNotEmpty && email != (controller.profile.value?.email ?? '')) {
+      data['email'] = email;
+    }
+
+    final mobile = _mobileController.text.trim();
+    if (mobile.isNotEmpty && mobile != (controller.profile.value?.mobile ?? '')) {
+      data['mobile'] = mobile;
+    }
+
     final pan = _panController.text.trim().toUpperCase();
     if (pan.isNotEmpty && pan != _originalPan) {
       data['pan_number'] = pan;
@@ -232,6 +326,48 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7).withValues(
+                        alpha: theme.brightness == Brightness.dark ? 0.15 : 0.9,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          size: 20,
+                          color: theme.brightness == Brightness.dark
+                              ? const Color(0xFFFBBF24)
+                              : const Color(0xFFB45309),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            "Some field cannot be modified after profile verification.",
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: theme.brightness == Brightness.dark
+                                  ? const Color(0xFFFDE68A)
+                                  : const Color(0xFF92400E),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
                   Center(
                     child: GestureDetector(
                       onTap: () => _pickImage('profile'),
@@ -323,6 +459,45 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     controller: _lastNameController,
                     hintText: "Enter last name",
                     prefixIcon: IconlyLight.profile,
+                  ),
+                  const SizedBox(height: 20),
+
+                  _buildLabel("Email"),
+                  GlassTextField(
+                    controller: _emailController,
+                    hintText: "Enter email (e.g. buyer@gmail.com)",
+                    prefixIcon: IconlyLight.message,
+                    keyboardType: TextInputType.emailAddress,
+                    readOnly: (controller.profile.value?.email ?? '').isNotEmpty,
+                    suffixIcon: (controller.profile.value?.email ?? '').isNotEmpty
+                        ? const Icon(Icons.lock_outline, size: 18, color: Colors.grey)
+                        : null,
+                  ),
+                  const SizedBox(height: 20),
+
+                  _buildLabel("Mobile"),
+                  GlassTextField(
+                    controller: _mobileController,
+                    hintText: "Enter mobile (e.g. 1234567891)",
+                    prefixIcon: IconlyLight.call,
+                    keyboardType: TextInputType.phone,
+                    readOnly: (controller.profile.value?.mobile ?? '').isNotEmpty,
+                    suffixIcon: (controller.profile.value?.mobile ?? '').isNotEmpty
+                        ? const Icon(Icons.lock_outline, size: 18, color: Colors.grey)
+                        : null,
+                  ),
+                  const SizedBox(height: 20),
+
+                  _buildLabel("Date of Birth"),
+                  GestureDetector(
+                    onTap: _selectDate,
+                    child: AbsorbPointer(
+                      child: GlassTextField(
+                        controller: _dobController,
+                        hintText: "dd/mm/yyyy",
+                        prefixIcon: IconlyLight.calendar,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 20),
 
@@ -427,19 +602,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         });
                       }
                     },
-                  ),
-                  const SizedBox(height: 20),
-
-                  _buildLabel("Date of Birth"),
-                  GestureDetector(
-                    onTap: _selectDate,
-                    child: AbsorbPointer(
-                      child: GlassTextField(
-                        controller: _dobController,
-                        hintText: "Select date",
-                        prefixIcon: IconlyLight.calendar,
-                      ),
-                    ),
                   ),
                   const SizedBox(height: 20),
 

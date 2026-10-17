@@ -21,19 +21,18 @@ class CategoryController extends GetxController {
     try {
       isLoading.value = true;
 
-      // 1. Fetch system categories for approval picker
-      try {
-        final sysData = await CategoryService.fetchCategories();
-        systemCategories.assignAll(sysData);
-      } catch (_) {}
-
-      // 2. Fetch buyer's approved/requested categories
-      final data = await CategoryService.fetchBuyerCategories();
-      allCategories.assignAll(data);
-      _applyFilter();
-
+      final result = await CategoryService.fetchBuyerCategoryData();
+      if (result.buyerCategories.isNotEmpty) {
+        allCategories.assignAll(result.buyerCategories);
+        systemCategories.assignAll(result.systemCategories);
+        _applyFilter();
+      } else if (allCategories.isEmpty && result.systemCategories.isNotEmpty) {
+        systemCategories.assignAll(result.systemCategories);
+      }
     } catch (e) {
-      Get.snackbar("Error", e.toString().replaceAll("Exception: ", ""));
+      // Background and screen-load failures should fail silently with graceful fallback
+      // rather than interrupting the user with generic server error toasts.
+      print("⚠️ fetchCategories error: $e");
     } finally {
       isLoading.value = false;
     }

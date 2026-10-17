@@ -108,7 +108,7 @@ class RegisterController {
           "pan_number": panController.text.trim().toUpperCase(),
           "gst_number": gstController.text.trim().toUpperCase(),
           "gender": selectedGender!,
-          "dob": dobController.text.trim(),
+          "dob": _formatDobForApi(dobController.text.trim()),
         },
         files: {"pan_image": panImagePath!, "gst_image": gstImagePath!},
       );
@@ -119,6 +119,19 @@ class RegisterController {
     } finally {
       isLoading = false;
     }
+  }
+
+  String _formatDobForApi(String raw) {
+    if (raw.contains('/')) {
+      final parts = raw.split('/');
+      if (parts.length == 3) {
+        final day = parts[0].padLeft(2, '0');
+        final month = parts[1].padLeft(2, '0');
+        final year = parts[2];
+        return '$year-$month-$day';
+      }
+    }
+    return raw;
   }
 
   /// ============================

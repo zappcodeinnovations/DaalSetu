@@ -19,6 +19,9 @@ import '../services/product_services.dart';
 import '../utils/app_preferences.dart';
 import 'notification_services.dart';
 import 'package:daalsetu/utils/global_error_handler.dart';
+import '../modules/buyer/branch/controller/buyer_branch_controller.dart';
+import '../modules/seller/branches/controller/seller_branch_controller.dart';
+import '../modules/branches/controller/branch_controller.dart';
 
 class RealtimeNotificationService extends GetxService {
   static RealtimeNotificationService get to => Get.find<RealtimeNotificationService>();
@@ -188,6 +191,12 @@ class RealtimeNotificationService extends GetxService {
 
       if (newNotifications.isNotEmpty) {
         await _saveSeenIdsToStorage();
+        // Check if any new notification is branch-related and notify branch controllers immediately
+        for (var newNotif in newNotifications) {
+          if (isBranchNotification(newNotif)) {
+            notifyBranchControllers(newNotif);
+          }
+        }
         // Enqueue pop-up banner for each new notification (oldest first so order is preserved)
         for (var newNotif in newNotifications.reversed) {
           enqueueBanner(newNotif);
@@ -196,6 +205,34 @@ class RealtimeNotificationService extends GetxService {
     } catch (_) {
       // Keep silent for background polling
     }
+  }
+
+  /// Check whether a notification is related to branch network
+  static bool isBranchNotification(AppNotificationModel notification) {
+    final title = (notification.title ?? "").toLowerCase();
+    final message = (notification.message ?? "").toLowerCase();
+    final type = (notification.type ?? "").toLowerCase();
+    final url = (notification.redirectUrl ?? "").toLowerCase();
+
+    return type.contains('branch') ||
+        title.contains('branch') ||
+        message.contains('branch') ||
+        url.contains('branch');
+  }
+
+  /// Triggers immediate refresh on all active branch controllers
+  static void notifyBranchControllers(AppNotificationModel notification) {
+    try {
+      if (Get.isRegistered<BuyerBranchController>()) {
+        Get.find<BuyerBranchController>().handleBranchNotification(notification);
+      }
+      if (Get.isRegistered<SellerBranchController>()) {
+        Get.find<SellerBranchController>().fetchBranches();
+      }
+      if (Get.isRegistered<BranchController>()) {
+        Get.find<BranchController>().fetchBranches();
+      }
+    } catch (_) {}
   }
 
   /// Show floating real-time banner on top of the screen (Instance or Static)
@@ -207,6 +244,10 @@ class RealtimeNotificationService extends GetxService {
 
   /// Enqueue notification banner for display
   void enqueueBanner(AppNotificationModel notification) {
+    if (isBranchNotification(notification)) {
+      notifyBranchControllers(notification);
+    }
+
     if (activeBannerNotification.value == null) {
       activeBannerNotification.value = notification;
     } else {
@@ -388,10 +429,11 @@ class RealtimeNotificationService extends GetxService {
 
       // Branch related
       if (type.contains('branch') || title.contains('branch') || message.contains('branch')) {
+        notifyBranchControllers(notification);
         if (role == 'seller') {
           Get.to(() => const SellerBranchesView());
         } else {
-          Get.to(() => BuyerBranchView());
+          Get.to(() => const BuyerBranchView());
         }
         return;
       }

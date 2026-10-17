@@ -182,62 +182,30 @@ class SellerCompanyView extends StatelessWidget {
           _infoRow(IconlyLight.document, "GST: ${company.gstNumber}", theme),
           const SizedBox(height: 12),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      controller.populateFields(company);
-                      Get.to(() => const AddCompanyView());
-                    },
-                    icon: const Icon(Icons.edit_outlined, size: 16),
-                    label: const Text("Edit"),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.blue,
-                      side: const BorderSide(color: Colors.blue),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: () => controller.deleteCompany(company),
-                    icon: const Icon(Icons.delete_outline, color: Colors.red),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.red.withOpacity(0.1),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
-                ],
+              OutlinedButton.icon(
+                onPressed: () {
+                  controller.populateFields(company);
+                  Get.to(() => const AddCompanyView());
+                },
+                icon: const Icon(Icons.edit_outlined, size: 16),
+                label: const Text("Edit"),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.blue,
+                  side: const BorderSide(color: Colors.blue),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
               ),
-              if (company.isVerified) ...[
-                Row(
-                  children: [
-                    const Icon(Icons.verified, color: Colors.blue, size: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      "Verified",
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.blue,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: () => controller.deleteCompany(company),
+                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.red.withValues(alpha: 0.1),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-              ] else ...[
-                Row(
-                  children: [
-                    Text(
-                      "Not Verified",
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.redAccent,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ]
+              ),
             ],
           ),
         ],

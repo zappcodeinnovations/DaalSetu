@@ -3,159 +3,195 @@ import '../modules/category/model/subcategory_model.dart';
 import '../network/api_client.dart';
 import '../modules/category/model/category_model.dart';
 
+class BuyerCategoriesResult {
+  final List<CategoryModel> buyerCategories;
+  final List<CategoryModel> systemCategories;
+
+  const BuyerCategoriesResult({
+    required this.buyerCategories,
+    required this.systemCategories,
+  });
+}
+
 class CategoryService {
   /// ===============================
-  /// FETCH BUYER CATEGORIES
+  /// FETCH BUYER CATEGORIES WITH SYSTEM CATEGORIES
+  /// Single source of truth for buyer screen and approval picker.
   /// ===============================
-  static Future<List<CategoryModel>> fetchBuyerCategories() async {
+  static Future<BuyerCategoriesResult> fetchBuyerCategoryData() async {
     try {
       final dynamic response = await ApiClient.get(
         endpoint: ApiUrls.buyerCategories,
         requireAuth: true,
+        suppressErrorDialog: true,
       );
 
       print("📥 BUYER CATEGORIES RESPONSE: $response");
 
       if (response != null) {
-        List<CategoryModel> buyerCats = [];
-        
-        if (response is Map<String, dynamic> && response["data"] is Map<String, dynamic>) {
-          final data = response["data"] as Map<String, dynamic>;
-          final allCats = data["all_categories"] is List ? (data["all_categories"] as List) : [];
-          final assignedIds = (data["assigned_category_ids"] is List)
-              ? (data["assigned_category_ids"] as List).map((e) => int.tryParse(e.toString()) ?? 0).toSet()
-              : <int>{};
-          final pendingIds = (data["pending_category_ids"] is List)
-              ? (data["pending_category_ids"] as List).map((e) => int.tryParse(e.toString()) ?? 0).toSet()
-              : <int>{};
+        final List<CategoryModel> buyerCats = [];
+        final List<CategoryModel> sysCats = [];
+        final Map<String, dynamic> data = (response is Map<String, dynamic> && response["data"] is Map<String, dynamic>)
+            ? (response["data"] as Map<String, dynamic>)
+            : (response is Map<String, dynamic> ? response : <String, dynamic>{});
 
-          // Helper to check if a category is a dummy or test category
-          bool isDummyCategory(String name) {
-            final t = name.trim().toLowerCase();
-            if (t.isEmpty) return true;
-            if (t == 'test' ||
-                t == 'xyz' ||
-                t == 'sub' ||
-                t == 'teat sub' ||
-                t == 'test category' ||
-                t == 'testing' ||
-                t.startsWith('test') ||
-                t.endsWith('test') ||
-                t.contains('test') ||
-                RegExp(r'^(.)\1+$').hasMatch(t)) {
-              return true;
-            }
-            return false;
+        final allCats = data["all_categories"] is List ? (data["all_categories"] as List) : [];
+        final assignedIds = (data["assigned_category_ids"] is List)
+            ? (data["assigned_category_ids"] as List).map((e) => int.tryParse(e.toString()) ?? 0).toSet()
+            : <int>{};
+        final pendingIds = (data["pending_category_ids"] is List)
+            ? (data["pending_category_ids"] as List).map((e) => int.tryParse(e.toString()) ?? 0).toSet()
+            : <int>{};
+
+        // Helper to check if a category is a dummy or test category
+        bool isDummyCategory(String name) {
+          final t = name.trim().toLowerCase();
+          if (t.isEmpty) return true;
+          if (t == 'xyz' ||
+              t == 'sub' ||
+              t == 'teat sub' ||
+              RegExp(r'^(.)\1+$').hasMatch(t)) {
+            return true;
           }
+          return false;
+        }
 
-          // Build a map of requested timestamps from data["requests"]
-          final Map<int, String> requestedAtMap = {};
-          if (data["requests"] is List) {
-            for (var req in (data["requests"] as List)) {
-              if (req is Map<String, dynamic> && req["categories"] is List) {
-                final reqTime = req["requested_at"]?.toString() ?? req["created_at"]?.toString();
-                if (reqTime != null && reqTime.isNotEmpty) {
-                  for (var cat in (req["categories"] as List)) {
-                    if (cat is Map<String, dynamic>) {
-                      final id = int.tryParse((cat["id"] ?? 0).toString()) ?? 0;
-                      if (id > 0 && !requestedAtMap.containsKey(id)) {
-                        requestedAtMap[id] = reqTime;
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-
-          // Map all_categories with their status (matching Buyer web panel)
-          if (allCats.isNotEmpty) {
-            for (var c in allCats) {
-              if (c is Map<String, dynamic>) {
-                final id = int.tryParse((c["id"] ?? 0).toString()) ?? 0;
-                final name = (c["category_name"] ?? c["name"] ?? "").toString();
-                if (id > 0 && !isDummyCategory(name)) {
-                  String status = "Request";
-                  if (assignedIds.contains(id)) {
-                    status = "Approved";
-                  } else if (pendingIds.contains(id)) {
-                    status = "Pending";
-                  }
-                  final reqCreatedAt = requestedAtMap[id] ?? c["created_at"] ?? c["requested_at"];
-                  buyerCats.add(CategoryModel.fromJson({
-                    ...c,
-                    "status": status,
-                    if (reqCreatedAt != null) "created_at": reqCreatedAt,
-                  }));
-                }
-              }
-            }
-          } else if (assignedIds.isNotEmpty || pendingIds.isNotEmpty) {
-            // Fallback if all_categories was not provided
-            for (var c in allCats) {
-              if (c is Map<String, dynamic>) {
-                final id = int.tryParse((c["id"] ?? 0).toString()) ?? 0;
-                final name = (c["category_name"] ?? c["name"] ?? "").toString();
-                if ((assignedIds.contains(id) || pendingIds.contains(id)) && !isDummyCategory(name)) {
-                  final status = assignedIds.contains(id) ? "Approved" : "Pending";
-                  final reqCreatedAt = requestedAtMap[id] ?? c["created_at"] ?? c["requested_at"];
-                  buyerCats.add(CategoryModel.fromJson({
-                    ...c,
-                    "status": status,
-                    if (reqCreatedAt != null) "created_at": reqCreatedAt,
-                  }));
-                }
-              }
-            }
-          }
-
-          // 2. Also check requests list if buyerCats is still empty
-          if (buyerCats.isEmpty && data["requests"] is List) {
-            final Set<int> seenIds = {};
-            for (var req in (data["requests"] as List)) {
-              if (req is Map<String, dynamic> && req["categories"] is List) {
-                final reqStatus = req["status"]?.toString() ?? "Approved";
-                final reqCreatedAt = req["requested_at"] ?? req["created_at"];
+        // Build a map of requested timestamps from data["requests"]
+        final Map<int, String> requestedAtMap = {};
+        if (data["requests"] is List) {
+          for (var req in (data["requests"] as List)) {
+            if (req is Map<String, dynamic> && req["categories"] is List) {
+              final reqTime = req["requested_at"]?.toString() ?? req["created_at"]?.toString();
+              if (reqTime != null && reqTime.isNotEmpty) {
                 for (var cat in (req["categories"] as List)) {
                   if (cat is Map<String, dynamic>) {
                     final id = int.tryParse((cat["id"] ?? 0).toString()) ?? 0;
-                    final name = (cat["category_name"] ?? cat["name"] ?? "").toString();
-                    if (id > 0 && !seenIds.contains(id) && !isDummyCategory(name)) {
-                      seenIds.add(id);
-                      buyerCats.add(CategoryModel.fromJson({
-                        ...cat,
-                        "status": reqStatus,
-                        "created_at": reqCreatedAt,
-                      }));
+                    if (id > 0 && !requestedAtMap.containsKey(id)) {
+                      requestedAtMap[id] = reqTime;
                     }
                   }
                 }
               }
             }
           }
+        }
 
-          if (buyerCats.isNotEmpty) {
-            return buyerCats;
+        // 1. Process all_categories into systemCategories & buyer approved/pending list
+        if (allCats.isNotEmpty) {
+          for (var c in allCats) {
+            if (c is Map<String, dynamic>) {
+              final id = int.tryParse((c["id"] ?? 0).toString()) ?? 0;
+              final name = (c["category_name"] ?? c["name"] ?? "").toString();
+              if (id > 0 && !isDummyCategory(name)) {
+                final baseCat = CategoryModel.fromJson(c);
+                sysCats.add(baseCat);
+
+                final rawStatus = (c["status"] ?? "").toString().trim().toLowerCase();
+                String status = "Approved";
+                if (assignedIds.contains(id) || rawStatus == "approved" || rawStatus == "active" || c["is_approved"] == true) {
+                  status = "Approved";
+                } else if (pendingIds.contains(id) || rawStatus == "pending") {
+                  status = "Pending";
+                } else if (rawStatus.isNotEmpty) {
+                  status = rawStatus[0].toUpperCase() + rawStatus.substring(1);
+                } else if (assignedIds.isNotEmpty && !assignedIds.contains(id)) {
+                  status = "Request";
+                }
+
+                // If assignedIds/pendingIds are specified, include assigned, pending, or approved categories
+                final bool isRelevantForBuyer = assignedIds.isEmpty && pendingIds.isEmpty
+                    ? true
+                    : (assignedIds.contains(id) ||
+                       pendingIds.contains(id) ||
+                       rawStatus == "approved" ||
+                       rawStatus == "active" ||
+                       c["is_approved"] == true);
+
+                if (isRelevantForBuyer) {
+                  final reqCreatedAt = requestedAtMap[id] ?? c["created_at"] ?? c["requested_at"];
+                  buyerCats.add(CategoryModel.fromJson({
+                    ...c,
+                    "status": status,
+                    if (reqCreatedAt != null) "created_at": reqCreatedAt,
+                  }));
+                }
+              }
+            }
           }
-        } else if (response is List) {
-          return response
+        } else if (assignedIds.isNotEmpty || pendingIds.isNotEmpty) {
+          // Fallback if all_categories was not provided
+          for (var c in allCats) {
+            if (c is Map<String, dynamic>) {
+              final id = int.tryParse((c["id"] ?? 0).toString()) ?? 0;
+              final name = (c["category_name"] ?? c["name"] ?? "").toString();
+              if ((assignedIds.contains(id) || pendingIds.contains(id)) && !isDummyCategory(name)) {
+                final status = assignedIds.contains(id) ? "Approved" : "Pending";
+                final reqCreatedAt = requestedAtMap[id] ?? c["created_at"] ?? c["requested_at"];
+                final cat = CategoryModel.fromJson({
+                  ...c,
+                  "status": status,
+                  if (reqCreatedAt != null) "created_at": reqCreatedAt,
+                });
+                buyerCats.add(cat);
+                sysCats.add(cat);
+              }
+            }
+          }
+        }
+
+        // 2. Also check requests list if buyerCats is still empty
+        if (buyerCats.isEmpty && data["requests"] is List) {
+          final Set<int> seenIds = {};
+          for (var req in (data["requests"] as List)) {
+            if (req is Map<String, dynamic> && req["categories"] is List) {
+              final reqStatus = req["status"]?.toString() ?? "Approved";
+              final reqCreatedAt = req["requested_at"] ?? req["created_at"];
+              for (var cat in (req["categories"] as List)) {
+                if (cat is Map<String, dynamic>) {
+                  final id = int.tryParse((cat["id"] ?? 0).toString()) ?? 0;
+                  final name = (cat["category_name"] ?? cat["name"] ?? "").toString();
+                  if (id > 0 && !seenIds.contains(id) && !isDummyCategory(name)) {
+                    seenIds.add(id);
+                    final catModel = CategoryModel.fromJson({
+                      ...cat,
+                      "status": reqStatus,
+                      "created_at": reqCreatedAt,
+                    });
+                    buyerCats.add(catModel);
+                    sysCats.add(catModel);
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        if (response is List) {
+          final list = response
               .map((item) => CategoryModel.fromJson(Map<String, dynamic>.from(item)))
               .where((c) {
                 final t = c.categoryName.trim().toLowerCase();
-                return t.isNotEmpty && !t.contains('test') && t != 'xyz' && t != 'sub';
+                return t.isNotEmpty && t != 'xyz' && t != 'sub';
               })
               .toList();
+          return BuyerCategoriesResult(buyerCategories: list, systemCategories: list);
         }
+
+        return BuyerCategoriesResult(buyerCategories: buyerCats, systemCategories: sysCats);
       }
     } catch (e) {
-      print("⚠️ Buyer categories API failed, falling back: $e");
+      print("⚠️ Buyer categories API failed gracefully: $e");
     }
 
-    final allSys = await fetchCategories();
-    return allSys.where((c) {
-      final t = c.categoryName.trim().toLowerCase();
-      return t.isNotEmpty && !t.contains('test') && t != 'xyz' && t != 'sub';
-    }).toList();
+    return const BuyerCategoriesResult(buyerCategories: [], systemCategories: []);
+  }
+
+  /// ===============================
+  /// FETCH BUYER CATEGORIES
+  /// ===============================
+  static Future<List<CategoryModel>> fetchBuyerCategories() async {
+    final result = await fetchBuyerCategoryData();
+    return result.buyerCategories;
   }
 
   /// ===============================
@@ -166,30 +202,37 @@ class CategoryService {
       final dynamic response = await ApiClient.get(
         endpoint: ApiUrls.categories,
         requireAuth: true,
+        suppressErrorDialog: true,
       );
 
       if (response == null) {
-        throw Exception("Invalid Categories response");
+        return [];
       }
 
       if (response is! List) {
-        if (response is Map<String, dynamic> && response["results"] is List) {
-          return (response["results"] as List)
-              .map((item) => CategoryModel.fromJson(Map<String, dynamic>.from(item)))
-              .toList();
+        if (response is Map<String, dynamic>) {
+          if (response["results"] is List) {
+            return (response["results"] as List)
+                .map((item) => CategoryModel.fromJson(Map<String, dynamic>.from(item)))
+                .toList();
+          }
+          if (response["data"] is List) {
+            return (response["data"] as List)
+                .map((item) => CategoryModel.fromJson(Map<String, dynamic>.from(item)))
+                .toList();
+          }
         }
-        throw Exception("Expected List but got ${response.runtimeType}");
+        return [];
       }
 
       final List<CategoryModel> categories = [];
-
       for (var item in response) {
         categories.add(CategoryModel.fromJson(Map<String, dynamic>.from(item)));
       }
-
       return categories;
     } catch (e) {
-      rethrow;
+      print("⚠️ fetchCategories failed gracefully: $e");
+      return [];
     }
   }
 

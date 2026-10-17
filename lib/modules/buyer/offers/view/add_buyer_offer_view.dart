@@ -115,12 +115,9 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
   bool _isDummyOrTestCategory(String name) {
     final trimmed = name.trim().toLowerCase();
     if (trimmed.isEmpty) return true;
-    if (trimmed == 'test' ||
-        trimmed == 'xyz' ||
-        trimmed.startsWith('test ') ||
-        trimmed.endsWith(' test') ||
-        trimmed == 'test category' ||
-        trimmed == 'testing' ||
+    if (trimmed == 'xyz' ||
+        trimmed == 'sub' ||
+        trimmed == 'teat sub' ||
         RegExp(r'^(.)\1+$').hasMatch(trimmed)) {
       return true;
     }

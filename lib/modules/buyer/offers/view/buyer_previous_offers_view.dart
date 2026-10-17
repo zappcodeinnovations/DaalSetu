@@ -86,13 +86,36 @@ class BuyerPreviousOffersView extends StatelessWidget {
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final offer = offers[index];
-              final displayQty = (offer.displayQuantity != null && offer.displayQuantity!.isNotEmpty && offer.displayQuantity != 'N/A')
-                  ? offer.displayQuantity!
-                  : (offer.availableQuantity?.isNotEmpty == true
-                      ? "${offer.availableQuantity} ${offer.quantityUnit ?? 'QTL'}"
-                      : (offer.requestedQuantity?.isNotEmpty == true
-                          ? "${offer.requestedQuantity} ${offer.quantityUnit ?? 'QTL'}"
-                          : (offer.bagCount?.isNotEmpty == true ? "${offer.bagCount} Bags" : "0.000 QTL")));
+              final num? availNum = num.tryParse(
+                (offer.availableQuantity ?? '').replaceAll(RegExp(r'[^\d.]'), ''),
+              );
+              final num? bagsNum = num.tryParse(
+                (offer.bagCount ?? '').replaceAll(RegExp(r'[^\d.]'), ''),
+              );
+              final num? packingNum = num.tryParse(
+                (offer.packingWeight ?? '').replaceAll(RegExp(r'[^\d.]'), ''),
+              );
+
+              String displayQty;
+              if (availNum != null && availNum > 0) {
+                displayQty = "${availNum.toStringAsFixed(3)} ${offer.quantityUnit ?? 'QTL'}";
+              } else if (bagsNum != null && bagsNum > 0 && packingNum != null && packingNum > 0) {
+                final calcQtl = (bagsNum * packingNum) / 100.0;
+                displayQty = "${calcQtl.toStringAsFixed(3)} QTL";
+              } else if (offer.displayQuantity != null &&
+                  offer.displayQuantity!.isNotEmpty &&
+                  offer.displayQuantity != 'N/A' &&
+                  !offer.displayQuantity!.startsWith('0.000') &&
+                  !offer.displayQuantity!.startsWith('0 QTL')) {
+                displayQty = offer.displayQuantity!;
+              } else if (offer.requestedQuantity?.isNotEmpty == true &&
+                  (num.tryParse(offer.requestedQuantity!.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0) > 0) {
+                displayQty = "${offer.requestedQuantity} ${offer.quantityUnit ?? 'QTL'}";
+              } else if (bagsNum != null && bagsNum > 0) {
+                displayQty = "$bagsNum Bags";
+              } else {
+                displayQty = offer.displayQuantity ?? "0.000 QTL";
+              }
 
               return InkWell(
                 borderRadius: BorderRadius.circular(16),

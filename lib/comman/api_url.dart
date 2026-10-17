@@ -191,6 +191,8 @@ class ApiUrls {
       "/api/offers/$productId/buyer-reject-interest/";
   static String offerInterestThread(int productId, int interestId) =>
       "/api/offers/$productId/interests/$interestId/";
+  static String offerInterestUpdate(int productId, int interestId) =>
+      "/api/offers/$productId/interests/$interestId/update/";
 
   // Single APIs: one collection URL + one item URL, item steps are POST {"action": ...}
   static const String buyerRequirements = "/api/buyer-requirements/";

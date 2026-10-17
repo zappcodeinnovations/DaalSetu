@@ -9,7 +9,8 @@ import '../model/contract_model.dart';
 import './contract_details_view.dart';
 
 class ContractsScreen extends StatefulWidget {
-  const ContractsScreen({super.key});
+  final String? initialFilter;
+  const ContractsScreen({super.key, this.initialFilter});
 
   @override
   State<ContractsScreen> createState() => _ContractsScreenState();
@@ -18,21 +19,36 @@ class ContractsScreen extends StatefulWidget {
 class _ContractsScreenState extends State<ContractsScreen> {
   final ContractController controller = Get.put(ContractController());
   final TextEditingController searchController = TextEditingController();
-  final selectedFilter = 'All'.obs;
+  late final RxString selectedFilter;
   final selectedContracts = <int>{}.obs;
   final isSelectionMode = false.obs;
-  // Backend contract statuses: active, received, completed, cancelled.
-  final filters = const ['All', 'Active', 'Received', 'Completed', 'Cancelled'];
+  // Backend contract statuses: active, in_transit, received, completed, cancelled.
+  final filters = const ['All', 'Active', 'In Transit', 'Received', 'Completed', 'Cancelled'];
+
+  @override
+  void initState() {
+    super.initState();
+    selectedFilter = (widget.initialFilter ?? 'All').obs;
+  }
 
   List<ContractModel> get filteredContracts {
     var contracts = controller.contracts.toList();
     if (selectedFilter.value != 'All') {
-      contracts = contracts
-          .where(
-            (item) =>
-                item.status.toLowerCase() == selectedFilter.value.toLowerCase(),
-          )
-          .toList();
+      final filterNorm = selectedFilter.value.toLowerCase().replaceAll(' ', '_');
+      contracts = contracts.where((item) {
+        final statusNorm = item.status.toLowerCase().replaceAll(' ', '_');
+        if (filterNorm == 'in_transit') {
+          return statusNorm == 'in_transit' ||
+              statusNorm == 'transit' ||
+              statusNorm == 'dispatched' ||
+              statusNorm == 'on_the_way' ||
+              ((item.truckNumber?.isNotEmpty == true || item.driverName?.isNotEmpty == true) &&
+                  statusNorm != 'completed' &&
+                  statusNorm != 'cancelled' &&
+                  statusNorm != 'received');
+        }
+        return statusNorm == filterNorm;
+      }).toList();
     }
     final query = searchController.text.trim().toLowerCase();
     if (query.isNotEmpty) {
@@ -65,7 +81,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        drawer: const AdminDrawer(activeKey: 'buyer_offers'),
+        drawer: const AdminDrawer(activeKey: 'deals'),
         appBar: AppBar(
           title: Obx(
             () => Text(
