@@ -19,6 +19,10 @@ class OfferInterestNegotiationChatView extends StatefulWidget {
   final int interestId;
   final bool isBuyer;
   final bool allowDecisions;
+  final bool isAdmin;
+  final String? title;
+  final Future<void> Function()? onAdminAccept;
+  final Future<void> Function()? onAdminReject;
 
   const OfferInterestNegotiationChatView({
     super.key,
@@ -26,6 +30,10 @@ class OfferInterestNegotiationChatView extends StatefulWidget {
     required this.interestId,
     required this.isBuyer,
     this.allowDecisions = true,
+    this.isAdmin = false,
+    this.title,
+    this.onAdminAccept,
+    this.onAdminReject,
   });
 
   @override
@@ -52,12 +60,9 @@ class _OfferInterestNegotiationChatViewState
   void initState() {
     super.initState();
     _load();
-    _pollTimer = Timer.periodic(
-      const Duration(seconds: 5),
-      (_) {
-        if (AppForeground.isActive) _load(silent: true);
-      },
-    );
+    _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (AppForeground.isActive) _load(silent: true);
+    });
   }
 
   @override
@@ -200,6 +205,18 @@ class _OfferInterestNegotiationChatViewState
 
   Future<void> _decide({required bool accept}) async {
     final verb = accept ? 'accept' : 'reject';
+    if (widget.isAdmin) {
+      final action = accept ? widget.onAdminAccept : widget.onAdminReject;
+      if (action == null) return;
+      setState(() => _sending = true);
+      try {
+        await action();
+        await _load(silent: true);
+      } finally {
+        if (mounted) setState(() => _sending = false);
+      }
+      return;
+    }
     if (!await _confirmDecision(accept: accept)) return;
 
     setState(() => _sending = true);
@@ -245,19 +262,25 @@ class _OfferInterestNegotiationChatViewState
   @override
   Widget build(BuildContext context) {
     final thread = _thread;
-    final title = thread?['product_title']?.toString() ?? 'Negotiation';
+    final title =
+        widget.title ?? thread?['product_title']?.toString() ?? 'Negotiation';
     final status = thread?['status']?.toString().toLowerCase() ?? '';
     final isReadOnly = _permission(thread?['is_read_only']) ?? false;
     final canReply =
-        !isReadOnly && (_permission(thread?['can_reply']) ?? false);
-    final canAccept = widget.allowDecisions && widget.isBuyer
+        widget.isAdmin ||
+        (!isReadOnly && (_permission(thread?['can_reply']) ?? false));
+    final canAccept = widget.isAdmin
+        ? true
+        : widget.allowDecisions && widget.isBuyer
         ? (_permission(thread?['can_buyer_accept']) ?? false)
         : widget.allowDecisions &&
               !isReadOnly &&
               (_permission(thread?['can_seller_accept']) ??
                   _permission(thread?['can_seller_action']) ??
                   status == 'interested');
-    final canReject = widget.allowDecisions && widget.isBuyer
+    final canReject = widget.isAdmin
+        ? true
+        : widget.allowDecisions && widget.isBuyer
         ? (_permission(thread?['can_buyer_reject']) ?? false)
         : widget.allowDecisions &&
               !isReadOnly &&
@@ -333,45 +356,63 @@ class _OfferInterestNegotiationChatViewState
   }
 
   Widget _summary(BuildContext context, Map<String, dynamic> thread) {
-    final status = thread['status']?.toString().replaceAll('_', ' ') ?? 'Pending';
-    final sellerPrice = thread['seller_price'] ??
+    final status =
+        thread['status']?.toString().replaceAll('_', ' ') ?? 'Pending';
+    final sellerPrice =
+        thread['seller_price'] ??
         thread['seller_amount'] ??
         thread['amount'] ??
         thread['product_amount'] ??
         '-';
     final priceUnit = thread['price_unit'] ?? 'QTL';
-    final availableQty = thread['available_quantity'] ??
+    final availableQty =
+        thread['available_quantity'] ??
         thread['available_stock'] ??
         thread['quantity'] ??
         '-';
-    final currentOffer = thread['latest_offered_amount'] ??
+    final currentOffer =
+        thread['latest_offered_amount'] ??
         thread['offered_amount'] ??
         thread['amount'] ??
         '-';
-    final currentQty = thread['latest_offered_quantity'] ??
+    final currentQty =
+        thread['latest_offered_quantity'] ??
         thread['required_quantity'] ??
         thread['quantity'] ??
         '-';
     final qtyUnit = thread['quantity_unit'] ?? 'QTL';
-    final buyerRemark = thread['buyer_remark'] ??
-        thread['remark'] ??
-        thread['initial_remark'];
+    final buyerRemark =
+        thread['buyer_remark'] ?? thread['remark'] ?? thread['initial_remark'];
 
     String titleCase(String text) {
       if (text.isEmpty) return text;
-      return text.split(' ').map((w) {
-        if (w.isEmpty) return w;
-        return '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}';
-      }).join(' ');
+      return text
+          .split(' ')
+          .map((w) {
+            if (w.isEmpty) return w;
+            return '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}';
+          })
+          .join(' ');
     }
 
-    Widget row(String label, String value, {Color? valueColor, bool bold = true}) {
+    Widget row(
+      String label,
+      String value, {
+      Color? valueColor,
+      bool bold = true,
+    }) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade600)),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: Colors.grey.shade600,
+              ),
+            ),
             Text(
               value,
               style: GoogleFonts.inter(
@@ -409,14 +450,22 @@ class _OfferInterestNegotiationChatViewState
             children: [
               Text(
                 "Negotiation Summary",
-                style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold),
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 3,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.green.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: Colors.green.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Text(
                   titleCase(status),
@@ -434,7 +483,8 @@ class _OfferInterestNegotiationChatViewState
           row("Available Qty:", "$availableQty $qtyUnit"),
           row("Current Offer:", "₹$currentOffer / $priceUnit"),
           row("Current Qty:", "$currentQty $qtyUnit"),
-          if (buyerRemark != null && buyerRemark.toString().trim().isNotEmpty) ...[
+          if (buyerRemark != null &&
+              buyerRemark.toString().trim().isNotEmpty) ...[
             const SizedBox(height: 6),
             Container(
               width: double.infinity,
@@ -442,7 +492,9 @@ class _OfferInterestNegotiationChatViewState
               decoration: BoxDecoration(
                 color: Theme.of(context).scaffoldBackgroundColor,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+                border: Border.all(
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,16 +522,21 @@ class _OfferInterestNegotiationChatViewState
   }
 
   Widget _initialInterest(BuildContext context, Map<String, dynamic> thread) {
-    final buyerId = thread['buyer_display_id'] ??
+    final buyerId =
+        thread['buyer_display_id'] ??
         thread['buyer_unique_id'] ??
         thread['buyer_code'] ??
-        (thread['buyer'] is Map ? (thread['buyer']['unique_id'] ?? thread['buyer']['name']) : null) ??
+        (thread['buyer'] is Map
+            ? (thread['buyer']['unique_id'] ?? thread['buyer']['name'])
+            : null) ??
         'BUY-20261010-SKGT';
     final price = thread['offered_amount'] ?? '-';
     final priceUnit = thread['price_unit'] ?? 'QTL';
     final quantity = thread['required_quantity'] ?? '-';
     final qtyUnit = thread['quantity_unit'] ?? 'QTL';
-    final timestamp = _formatSubmissionDate(thread['created_at'] ?? thread['timestamp']);
+    final timestamp = _formatSubmissionDate(
+      thread['created_at'] ?? thread['timestamp'],
+    );
 
     return Align(
       alignment: Alignment.centerLeft,
@@ -551,8 +608,18 @@ class _OfferInterestNegotiationChatViewState
     try {
       final parsed = DateTime.parse(str).toLocal();
       const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       final month = months[parsed.month - 1];
       final hour = parsed.hour.toString().padLeft(2, '0');
@@ -564,8 +631,16 @@ class _OfferInterestNegotiationChatViewState
   }
 
   Widget _bubble(BuildContext context, Map<String, dynamic> message) {
-    final role = message['actor_role']?.toString().toLowerCase() ?? '';
-    final mine = widget.isBuyer ? role == 'buyer' : role == 'seller';
+    final role =
+        (message['actor_role'] ?? message['sender_role'])
+            ?.toString()
+            .toLowerCase() ??
+        '';
+    final mine = widget.isAdmin
+        ? role.contains('admin')
+        : widget.isBuyer
+        ? role == 'buyer'
+        : role == 'seller';
     String text(dynamic value) =>
         value == null || value.toString().trim().isEmpty || value == 'null'
         ? ''
@@ -657,7 +732,11 @@ class _OfferInterestNegotiationChatViewState
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
-        border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.5))),
+        border: Border(
+          top: BorderSide(
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+          ),
+        ),
       ),
       child: Row(
         children: [
@@ -669,8 +748,15 @@ class _OfferInterestNegotiationChatViewState
                   onPressed: _sending ? null : () => _decide(accept: true),
                   icon: const Icon(Icons.check, size: 18, color: Colors.white),
                   label: Text(
-                    widget.isBuyer ? 'Accept' : 'Accept Interest',
-                    style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14),
+                    widget.isAdmin
+                        ? 'Approve Deal'
+                        : widget.isBuyer
+                        ? 'Accept'
+                        : 'Accept Interest',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2E7D32),
@@ -690,14 +776,24 @@ class _OfferInterestNegotiationChatViewState
                 height: 48,
                 child: OutlinedButton.icon(
                   onPressed: _sending ? null : () => _decide(accept: false),
-                  icon: const Icon(Icons.close, size: 18, color: Color(0xFFD32F2F)),
+                  icon: const Icon(
+                    Icons.close,
+                    size: 18,
+                    color: Color(0xFFD32F2F),
+                  ),
                   label: Text(
                     'Reject',
-                    style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14),
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFFD32F2F),
-                    side: const BorderSide(color: Color(0xFFD32F2F), width: 1.5),
+                    side: const BorderSide(
+                      color: Color(0xFFD32F2F),
+                      width: 1.5,
+                    ),
                     backgroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),

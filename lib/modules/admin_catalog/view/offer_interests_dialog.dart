@@ -8,7 +8,6 @@ import 'package:daalsetu/theme/app_theme.dart';
 import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:daalsetu/modules/shared/view/offer_interest_negotiation_chat_view.dart';
 import 'approve_deal_dialog.dart';
-import 'negotiation_page.dart';
 
 class OfferInterestsDialog extends StatefulWidget {
   final String offerId;
@@ -72,7 +71,8 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
 
   String get displayPrice {
     if (_loadedPrice != null && _loadedPrice!.isNotEmpty) return _loadedPrice!;
-    if (widget.sellerOfferAmount != null && widget.sellerOfferAmount!.isNotEmpty) {
+    if (widget.sellerOfferAmount != null &&
+        widget.sellerOfferAmount!.isNotEmpty) {
       final amt = widget.sellerOfferAmount!;
       return amt.startsWith('₹') ? amt : "₹$amt/TON";
     }
@@ -113,21 +113,25 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
             final map = (detail['product'] is Map)
                 ? detail['product']
                 : ((detail['data'] is Map)
-                    ? detail['data']
-                    : ((detail['offer'] is Map) ? detail['offer'] : detail));
+                      ? detail['data']
+                      : ((detail['offer'] is Map) ? detail['offer'] : detail));
             if (map is Map) {
-              _loadedTitle = map['title']?.toString() ?? map['product_title']?.toString();
-              final stock = map['available_quantity'] ??
+              _loadedTitle =
+                  map['title']?.toString() ?? map['product_title']?.toString();
+              final stock =
+                  map['available_quantity'] ??
                   map['remaining_quantity'] ??
                   map['quantity_qtl'] ??
                   map['quantity'];
               if (stock != null) _loadedStock = '$stock QTL';
-              final amt = map['amount'] ?? map['seller_offer_amount'] ?? map['price'];
+              final amt =
+                  map['amount'] ?? map['seller_offer_amount'] ?? map['price'];
               final unit = (map['amount_unit'] ?? map['quantity_unit'] ?? 'TON')
                   .toString()
                   .toUpperCase();
               if (amt != null) _loadedPrice = '₹$amt/$unit';
-              _loadedExpiry = map['deal_expiry_datetime']?.toString() ??
+              _loadedExpiry =
+                  map['deal_expiry_datetime']?.toString() ??
                   map['loading_to']?.toString();
             }
           }
@@ -168,8 +172,18 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
       final min = int.tryParse(isoMatch.group(5)!) ?? 0;
 
       const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       final monthName = (m >= 1 && m <= 12) ? months[m - 1] : '$m';
       final hour12 = h % 12 == 0 ? 12 : h % 12;
@@ -179,15 +193,26 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
     }
 
     // 2. Try ISO date only regex: 2026-10-14
-    final dateOnlyMatch =
-        RegExp(r'^(\d{4})-(\d{2})-(\d{2})$').firstMatch(trimmed);
+    final dateOnlyMatch = RegExp(
+      r'^(\d{4})-(\d{2})-(\d{2})$',
+    ).firstMatch(trimmed);
     if (dateOnlyMatch != null) {
       final y = int.tryParse(dateOnlyMatch.group(1)!) ?? 0;
       final m = int.tryParse(dateOnlyMatch.group(2)!) ?? 1;
       final d = int.tryParse(dateOnlyMatch.group(3)!) ?? 1;
       const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       final monthName = (m >= 1 && m <= 12) ? months[m - 1] : '$m';
       return '$d $monthName $y';
@@ -204,20 +229,15 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
 
   void _openNegotiationPage(OfferInterestModel interest) async {
     final result = await Get.to(
-      () => _isAdminRole
-          ? NegotiationPage(
-              offerId: widget.offerId,
-              offerTitle: displayTitle,
-              availableStock: displayStock,
-              sellerOfferAmount: displayPrice,
-              interest: interest,
-            )
-          : OfferInterestNegotiationChatView(
-              productId: int.parse(widget.offerId),
-              interestId: interest.interestId,
-              isBuyer: false,
-              allowDecisions: !_isAdminRole,
-            ),
+      () => OfferInterestNegotiationChatView(
+        productId: int.parse(widget.offerId),
+        interestId: interest.interestId,
+        isBuyer: false,
+        isAdmin: _isAdminRole,
+        title: displayTitle,
+        onAdminAccept: _isAdminRole ? () => _approveDeal(interest) : null,
+        onAdminReject: _isAdminRole ? () => _rejectDeal(interest) : null,
+      ),
     );
 
     // If the negotiation page returns true, a deal was accepted/rejected, so we refresh the interests
@@ -487,9 +507,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                 _buildSummaryInfo(isDark),
 
                 // 3. Responsive Content: Mobile Cards or Tablet Table (Zero Render Overflow)
-                Flexible(
-                  child: _buildInterestsContent(isDark, isMobile),
-                ),
+                Flexible(child: _buildInterestsContent(isDark, isMobile)),
 
                 // 4. Modal Footer: [Close] button
                 _buildFooter(),
@@ -730,7 +748,8 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
       'cancelled',
     }.contains(statusStr);
 
-    final canDecide = !isFinalState &&
+    final canDecide =
+        !isFinalState &&
         (_isAdminRole ||
             interest.canSellerAction ||
             interest.canAdminFinalAction ||
@@ -738,7 +757,8 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
             statusStr == 'pending' ||
             statusStr == 'countered');
 
-    final canNegotiate = interest.canOpenNegotiation ||
+    final canNegotiate =
+        interest.canOpenNegotiation ||
         _isAdminRole ||
         interest.isReadOnly ||
         statusStr != 'rejected';
@@ -746,8 +766,8 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
     final interestCode = interest.transactionId.isNotEmpty
         ? interest.transactionId
         : (interest.buyerName != null && interest.buyerName!.isNotEmpty
-            ? interest.buyerName!
-            : 'INT-${interest.interestId}');
+              ? interest.buyerName!
+              : 'INT-${interest.interestId}');
 
     final interestAmount = interest.buyerOfferedAmount.isNotEmpty
         ? '₹${interest.buyerOfferedAmount}'
@@ -801,7 +821,8 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                         color: textDark,
                       ),
                     ),
-                    if (interest.createdAt != null && interest.createdAt!.isNotEmpty)
+                    if (interest.createdAt != null &&
+                        interest.createdAt!.isNotEmpty)
                       Text(
                         interest.createdAt!.length >= 10
                             ? interest.createdAt!.substring(0, 10)
@@ -944,11 +965,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.check_rounded,
-              size: 14,
-              color: Color(0xFF059669),
-            ),
+            const Icon(Icons.check_rounded, size: 14, color: Color(0xFF059669)),
             const SizedBox(width: 4),
             Text(
               interest.canAdminFinalAction ? "Approve" : "Accept",
@@ -978,11 +995,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
         child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.close_rounded,
-              size: 14,
-              color: Color(0xFFDC2626),
-            ),
+            Icon(Icons.close_rounded, size: 14, color: Color(0xFFDC2626)),
             SizedBox(width: 4),
             Text(
               "Reject",
@@ -1104,7 +1117,8 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
       'cancelled',
     }.contains(statusStr);
 
-    final canDecide = !isFinalState &&
+    final canDecide =
+        !isFinalState &&
         (_isAdminRole ||
             interest.canSellerAction ||
             interest.canAdminFinalAction ||
@@ -1112,7 +1126,8 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
             statusStr == 'pending' ||
             statusStr == 'countered');
 
-    final canNegotiate = interest.canOpenNegotiation ||
+    final canNegotiate =
+        interest.canOpenNegotiation ||
         _isAdminRole ||
         interest.isReadOnly ||
         statusStr != 'rejected';
@@ -1120,8 +1135,8 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
     final interestCode = interest.transactionId.isNotEmpty
         ? interest.transactionId
         : (interest.buyerName != null && interest.buyerName!.isNotEmpty
-            ? interest.buyerName!
-            : 'INT-${interest.interestId}');
+              ? interest.buyerName!
+              : 'INT-${interest.interestId}');
 
     final interestAmount = interest.buyerOfferedAmount.isNotEmpty
         ? '₹${interest.buyerOfferedAmount}'
@@ -1159,7 +1174,8 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                     fontSize: 13,
                   ),
                 ),
-                if (interest.createdAt != null && interest.createdAt!.isNotEmpty)
+                if (interest.createdAt != null &&
+                    interest.createdAt!.isNotEmpty)
                   Text(
                     interest.createdAt!.length >= 10
                         ? interest.createdAt!.substring(0, 10)
@@ -1184,10 +1200,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
           ),
 
           // 3. STATUS
-          Expanded(
-            flex: 2,
-            child: _buildStatusBadge(statusStr),
-          ),
+          Expanded(flex: 2, child: _buildStatusBadge(statusStr)),
 
           const SizedBox(width: 8),
 
