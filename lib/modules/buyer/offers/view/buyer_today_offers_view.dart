@@ -686,7 +686,7 @@ class BuyerTodayOffersView extends StatelessWidget {
                           setDialogState(() {
                             selectedDeliveryDate = picked;
                             formattedDeliveryDate =
-                                "${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                                "${picked.day.toString().padLeft(2, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.year.toString().padLeft(4, '0')}";
                           });
                         }
                       },

@@ -36,7 +36,10 @@
   - Cleaned empty state text interpolation for `offerType == 'all'` to display "No offers are available at the moment." instead of "No all offers...".
   - Renamed "All Offers" tab in `transporter_offers_view.dart` to "Offers" with clean empty state phrasing.
   - Removed unused import in `transporter_offers_view.dart`.
-  - Verified with automated widget test `test/offers_and_requirements_tab_test.dart` and 0-issue `flutter analyze`.
-- **Verification**: Created `test/buyer_challan_pdf_test.dart`, `test/requirement_details_broadcast_expiry_test.dart`, and `test/offers_and_requirements_tab_test.dart` and verified with passing test suites and clean `flutter analyze`.
+- **Task 17 (Buyer Submit Offer dd-mm-yyyy Date Format)**:
+  - Formatted delivery date strictly as `dd-mm-yyyy` (e.g. `18-10-2026`) upon date selection across Buyer Panel modals (`buyer_offers_view.dart`, `buyer_today_offers_view.dart`, `buyer_my_interests_view.dart`).
+  - Added automatic ISO date normalizer in `BuyerServices.showInterest` to ensure full backend compatibility with `yyyy-MM-dd`.
+  - Verified with automated test `test/buyer_submit_offer_date_format_test.dart` and 0-issue `flutter analyze`.
+- **Verification**: Created `test/buyer_challan_pdf_test.dart`, `test/requirement_details_broadcast_expiry_test.dart`, `test/offers_and_requirements_tab_test.dart`, and `test/buyer_submit_offer_date_format_test.dart` and verified with passing test suites and clean `flutter analyze`.
 - **Customization**: Created full persistent repository memory system under `docs/ai-context/` (9 docs) and 10 agent skills under `.agents/skills/`.
 
