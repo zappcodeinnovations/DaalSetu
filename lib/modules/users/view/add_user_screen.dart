@@ -67,6 +67,17 @@ class AddUserScreen extends StatelessWidget {
                         final firstName = firstNameController.text.trim();
                         final email = emailController.text.trim();
 
+                        if (firstName.isEmpty) {
+                          Get.snackbar(
+                            "Required",
+                            "Please enter first name",
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Colors.red,
+                            colorText: Colors.white,
+                          );
+                          return;
+                        }
+
                         if (mobile.isEmpty) {
                           Get.snackbar(
                             "Required",
@@ -83,17 +94,6 @@ class AddUserScreen extends StatelessWidget {
                           Get.snackbar(
                             "Invalid Mobile",
                             "Please enter a valid 10-digit numeric mobile number",
-                            snackPosition: SnackPosition.BOTTOM,
-                            backgroundColor: Colors.red,
-                            colorText: Colors.white,
-                          );
-                          return;
-                        }
-
-                        if (firstName.isEmpty) {
-                          Get.snackbar(
-                            "Required",
-                            "Please enter first name",
                             snackPosition: SnackPosition.BOTTOM,
                             backgroundColor: Colors.red,
                             colorText: Colors.white,
@@ -203,6 +203,24 @@ class AddUserScreen extends StatelessWidget {
     );
   }
 
+  Widget _sectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 12),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFFF58220),
+            letterSpacing: 0.3,
+          ),
+        ),
+      ),
+    );
+  }
+
   /// ===============================
   /// FORM CARD
   /// ===============================
@@ -217,9 +235,14 @@ class AddUserScreen extends StatelessWidget {
         border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── 1. Personal Information ──
+          _sectionHeader("Personal Information"),
+          _textField("First Name *", firstNameController),
+          _textField("Last Name (Optional)", lastNameController),
           _textField(
-            "Mobile (10 Digits)",
+            "Mobile (10 Digits) *",
             mobileController,
             keyboardType: TextInputType.phone,
             inputFormatters: [
@@ -232,9 +255,21 @@ class AddUserScreen extends StatelessWidget {
             emailController,
             keyboardType: TextInputType.emailAddress,
           ),
+          _dropdown("Role *", roles, selectedRole),
+          const SizedBox(height: 16),
+          _tagDropdown(context),
+          const SizedBox(height: 16),
+          _dropdown("Gender (Optional)", genders, selectedGender),
+
+          const SizedBox(height: 20),
+          const Divider(height: 1),
+          const SizedBox(height: 12),
+
+          // ── 2. Authentication ──
+          _sectionHeader("Authentication"),
           Obx(
             () => _textField(
-              "Password",
+              "Password *",
               passwordController,
               obscureText: obscurePassword.value,
               suffixIcon: IconButton(
@@ -249,23 +284,15 @@ class AddUserScreen extends StatelessWidget {
               ),
             ),
           ),
-          _textField("First Name", firstNameController),
-          _textField("Last Name (Optional)", lastNameController),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
+          const Divider(height: 1),
+          const SizedBox(height: 12),
 
-          _dropdown("Role", roles, selectedRole),
-          const SizedBox(height: 16),
-          _tagDropdown(context),
-
-          const SizedBox(height: 16),
-
+          // ── 3. Business Information ──
+          _sectionHeader("Business Information"),
           _textField("PAN Number (Optional)", panController),
           _textField("GST Number (Optional)", gstController),
-
-          const SizedBox(height: 16),
-
-          _dropdown("Gender (Optional)", genders, selectedGender),
 
           const SizedBox(height: 20),
 

@@ -12,28 +12,76 @@ class AdminOption {
 }
 
 /// Readable text for any API value: nested objects show their name, lists are joined.
-String adminDisplayValue(Object? value) {
+String adminDisplayValue(Object? value, {String? key}) {
   if (value == null) return '';
   if (value is bool) {
     return value ? 'Active' : 'Inactive';
   }
   if (value is Map) {
-    for (final key in const [
+    for (final k in const [
       'name', 'title', 'category_name', 'brand_name', 'legal_name', 'location_name',
       'vehicle_number', 'driver_name', 'username', 'id',
     ]) {
-      final text = (value[key] ?? '').toString().trim();
+      final text = (value[k] ?? '').toString().trim();
       if (text.isNotEmpty) return text;
     }
     return '';
   }
   if (value is List) {
-    return value.map(adminDisplayValue).where((text) => text.isNotEmpty).join(', ');
+    return value.map((item) => adminDisplayValue(item, key: key)).where((text) => text.isNotEmpty).join(', ');
   }
   final text = value.toString().trim();
   if (text.toLowerCase() == 'true') return 'Active';
   if (text.toLowerCase() == 'false') return 'Inactive';
+
+  // Format date / timestamp values nicely (e.g. 2026-07-25T10:13:26.684876+05:30 -> 25 Jul 2026, 10:13 AM)
+  final formattedDate = formatAdminDateValue(text, key: key);
+  if (formattedDate != null) {
+    return formattedDate;
+  }
+
   return text;
+}
+
+/// Formats raw ISO date-time strings into user-friendly text like "25 Jul 2026, 10:13 AM"
+String? formatAdminDateValue(String text, {String? key}) {
+  if (text.isEmpty) return null;
+
+  final isIsoDateTime = RegExp(r'^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}').hasMatch(text);
+  final isDateOnly = RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(text);
+  final isKeyDate = key != null && (
+    key.toLowerCase().contains('created_at') ||
+    key.toLowerCase().contains('updated_at') ||
+    key.toLowerCase().contains('date')
+  );
+
+  if (!isIsoDateTime && !isDateOnly && !isKeyDate) {
+    return null;
+  }
+
+  try {
+    final parsed = DateTime.tryParse(text);
+    if (parsed == null) return null;
+    final date = parsed.toLocal();
+
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    final month = months[date.month - 1];
+    final day = date.day.toString().padLeft(2, '0');
+
+    if (isDateOnly || (!text.contains(':') && !text.contains('T'))) {
+      return "$day $month ${date.year}";
+    }
+
+    final hour = date.hour == 0 ? 12 : (date.hour > 12 ? date.hour - 12 : date.hour);
+    final amPm = date.hour >= 12 ? 'PM' : 'AM';
+    final min = date.minute.toString().padLeft(2, '0');
+    return "$day $month ${date.year}, $hour:$min $amPm";
+  } catch (_) {
+    return null;
+  }
 }
 
 void _showAdminToast(String title, String message, {bool isError = false}) {

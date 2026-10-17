@@ -50,12 +50,23 @@ String formatNegotiationTimestamp(String? raw) {
       DateFormat('yyyy-MM-dd HH:mm:ss'),
       DateFormat('yyyy-MM-dd HH:mm'),
       DateFormat('dd-MM-yyyy HH:mm'),
+      DateFormat('d MMM HH:mm'),
+      DateFormat('dd MMM HH:mm'),
+      DateFormat('d MMM, HH:mm'),
+      DateFormat('dd MMM, HH:mm'),
+      DateFormat('d MMM yyyy HH:mm'),
+      DateFormat('dd MMM yyyy HH:mm'),
+      DateFormat('d MMM yyyy'),
+      DateFormat('dd MMM yyyy'),
+      DateFormat('MMM d, yyyy'),
+      DateFormat('MMM dd, yyyy'),
     ];
     for (final fmt in formats) {
       try {
         final parsed = fmt.parseLoose(trimmed);
+        final year = parsed.year <= 1970 ? DateTime.now().year : parsed.year;
         dt = DateTime.utc(
-          parsed.year,
+          year,
           parsed.month,
           parsed.day,
           parsed.hour,
@@ -127,6 +138,14 @@ void main() {
         DateTime.parse(rawLateNight).toLocal(),
       );
       expect(formatted, expected);
+    });
+
+    test('Parses short timestamp "16 Oct 16:50" and formats cleanly with AM/PM', () {
+      const raw = '16 Oct 16:50';
+      final formatted = formatNegotiationTimestamp(raw);
+      expect(formatted.isNotEmpty, isTrue);
+      expect(formatted.contains('AM') || formatted.contains('PM'), isTrue);
+      expect(formatted.contains('Oct'), isTrue);
     });
 
     test('Preserves unknown text without throwing exception', () {

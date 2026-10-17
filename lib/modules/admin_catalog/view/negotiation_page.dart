@@ -641,15 +641,32 @@ class _NegotiationPageState extends State<NegotiationPage> {
 
   String get _displayBuyerCode {
     final fromThread =
+        _thread?['buyer_company_name'] ??
+        _thread?['buyer_company'] ??
+        _thread?['company_name'] ??
+        _thread?['buyer_name'] ??
         _thread?['buyer_code'] ??
-        _thread?['buyer_username'] ??
-        _thread?['buyer_name'];
+        _thread?['buyer_username'];
     if (fromThread != null && fromThread.toString().trim().isNotEmpty) {
-      return fromThread.toString().trim();
+      final name = fromThread.toString().trim();
+      if (RegExp(r'^buyer\s+(\d+)$', caseSensitive: false).hasMatch(name)) {
+        return name.replaceAllMapped(
+          RegExp(r'^buyer\s+(\d+)$', caseSensitive: false),
+          (m) => 'Buyer #${m[1]}',
+        );
+      }
+      return name;
     }
     if (widget.interest.buyerName != null &&
         widget.interest.buyerName!.trim().isNotEmpty) {
-      return widget.interest.buyerName!.trim();
+      final name = widget.interest.buyerName!.trim();
+      if (RegExp(r'^buyer\s+(\d+)$', caseSensitive: false).hasMatch(name)) {
+        return name.replaceAllMapped(
+          RegExp(r'^buyer\s+(\d+)$', caseSensitive: false),
+          (m) => 'Buyer #${m[1]}',
+        );
+      }
+      return name;
     }
     return 'Buyer';
   }
@@ -691,7 +708,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
       }
     }
 
-    // 4. Try parsing common formats like "Jul 29, 2026 10:48 AM" or "29 Jul 2026, 10:48 AM"
+    // 4. Try parsing common formats like "Jul 29, 2026 10:48 AM", "16 Oct 16:50", "16 Oct 2026 16:50"
     if (dt == null) {
       final formats = [
         DateFormat('MMM d, yyyy h:mm a'),
@@ -706,13 +723,24 @@ class _NegotiationPageState extends State<NegotiationPage> {
         DateFormat('yyyy-MM-dd HH:mm:ss'),
         DateFormat('yyyy-MM-dd HH:mm'),
         DateFormat('dd-MM-yyyy HH:mm'),
+        DateFormat('d MMM HH:mm'),
+        DateFormat('dd MMM HH:mm'),
+        DateFormat('d MMM, HH:mm'),
+        DateFormat('dd MMM, HH:mm'),
+        DateFormat('d MMM yyyy HH:mm'),
+        DateFormat('dd MMM yyyy HH:mm'),
+        DateFormat('d MMM yyyy'),
+        DateFormat('dd MMM yyyy'),
+        DateFormat('MMM d, yyyy'),
+        DateFormat('MMM dd, yyyy'),
       ];
       for (final fmt in formats) {
         try {
           final parsed = fmt.parseLoose(trimmed);
+          final year = parsed.year <= 1970 ? DateTime.now().year : parsed.year;
           // Backend strftime format '%b %d, %Y %I:%M %p' produces UTC representation
           dt = DateTime.utc(
-            parsed.year,
+            year,
             parsed.month,
             parsed.day,
             parsed.hour,
@@ -871,7 +899,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
             children: [
               Expanded(
                 child: Text(
-                  "$buyerCode submitted initial offer:",
+                  "$buyerCode (Initial Offer)",
                   style: TextStyle(
                     color: textDark,
                     fontWeight: FontWeight.bold,
@@ -879,6 +907,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
                   ),
                 ),
               ),
+              const SizedBox(width: 8),
               if (formattedDate.isNotEmpty)
                 Text(
                   formattedDate,
@@ -955,7 +984,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
         ? (role == 'seller'
               ? 'Seller (Counter-Proposal)'
               : 'Admin (Counter-Proposal)')
-        : 'Buyer (Counter-Proposal)';
+        : '$_displayBuyerCode (Counter-Proposal)';
     final titleColor = isAdminOrSeller ? const Color(0xFFEA580C) : textDark;
 
     return Container(
@@ -973,26 +1002,33 @@ class _NegotiationPageState extends State<NegotiationPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    isAdminOrSeller
-                        ? Icons.admin_panel_settings_outlined
-                        : Icons.person_outline,
-                    size: 15,
-                    color: titleColor,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    roleTitle,
-                    style: TextStyle(
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(
+                      isAdminOrSeller
+                          ? Icons.admin_panel_settings_outlined
+                          : Icons.person_outline,
+                      size: 15,
                       color: titleColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        roleTitle,
+                        style: TextStyle(
+                          color: titleColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               if (formattedTime.isNotEmpty)
                 Text(
                   formattedTime,
@@ -1187,44 +1223,57 @@ class _NegotiationPageState extends State<NegotiationPage> {
     required TextEditingController controller,
     String? suffix,
   }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      style: TextStyle(
-        color: textDark,
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-      ),
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        hintStyle: TextStyle(
-          color: textLight.withValues(alpha: 0.6),
-          fontSize: 12,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: textDark.withValues(alpha: 0.85),
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
         ),
-        labelStyle: TextStyle(color: textLight, fontSize: 12),
-        suffixText: suffix,
-        suffixStyle: TextStyle(
-          color: textLight,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          style: TextStyle(
+            color: textDark,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: textLight.withValues(alpha: 0.6),
+              fontSize: 12,
+            ),
+            suffixText: suffix,
+            suffixStyle: TextStyle(
+              color: textLight,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 11,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: textLight.withValues(alpha: 0.3)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            focusedBorder: const OutlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFFF58220), width: 1.5),
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+            ),
+            filled: true,
+            fillColor: bgColor,
+          ),
         ),
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 12,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: textLight.withValues(alpha: 0.3)),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        focusedBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Color(0xFFF58220), width: 1.5),
-          borderRadius: BorderRadius.all(Radius.circular(8)),
-        ),
-        filled: true,
-        fillColor: bgColor,
-      ),
+      ],
     );
   }
 }

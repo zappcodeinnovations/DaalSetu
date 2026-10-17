@@ -8,6 +8,7 @@ import 'package:daalsetu/theme/app_theme.dart';
 import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:daalsetu/modules/shared/view/offer_interest_negotiation_chat_view.dart';
 import 'approve_deal_dialog.dart';
+import 'negotiation_page.dart';
 
 class OfferInterestsDialog extends StatefulWidget {
   final String offerId;
@@ -247,15 +248,23 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
 
   void _openNegotiationPage(OfferInterestModel interest) async {
     final result = await Get.to(
-      () => OfferInterestNegotiationChatView(
-        productId: int.parse(widget.offerId),
-        interestId: interest.interestId,
-        isBuyer: false,
-        isAdmin: _isAdminRole,
-        title: displayTitle,
-        onAdminAccept: _isAdminRole ? () => _approveDeal(interest) : null,
-        onAdminReject: _isAdminRole ? () => _rejectDeal(interest) : null,
-      ),
+      () => _isAdminRole
+          ? NegotiationPage(
+              offerId: widget.offerId,
+              offerTitle: displayTitle,
+              availableStock: displayStock,
+              sellerOfferAmount: displayPrice,
+              interest: interest,
+            )
+          : OfferInterestNegotiationChatView(
+              productId: int.parse(widget.offerId),
+              interestId: interest.interestId,
+              isBuyer: false,
+              isAdmin: _isAdminRole,
+              title: displayTitle,
+              onAdminAccept: _isAdminRole ? () => _approveDeal(interest) : null,
+              onAdminReject: _isAdminRole ? () => _rejectDeal(interest) : null,
+            ),
     );
 
     // If the negotiation page returns true, a deal was accepted/rejected, so we refresh the interests

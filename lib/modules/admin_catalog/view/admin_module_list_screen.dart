@@ -706,7 +706,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
     final theme = Theme.of(context);
     final title = _first(record, config.titleKeys);
     final subtitles = config.subtitleKeys
-        .map((key) => MapEntry(key, _display(record[key])))
+        .map((key) => MapEntry(key, _display(record[key], key: key)))
         .where((entry) => entry.value.isNotEmpty)
         .take(4)
         .toList();
@@ -939,13 +939,13 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
 
   String _first(AdminRecord record, List<String> keys) {
     for (final key in keys) {
-      final value = _display(record[key]);
+      final value = _display(record[key], key: key);
       if (value.isNotEmpty) return value;
     }
     return '';
   }
 
-  String _display(Object? value) => adminDisplayValue(value);
+  String _display(Object? value, {String? key}) => adminDisplayValue(value, key: key);
 
   String _label(String key) => key
       .split('_')

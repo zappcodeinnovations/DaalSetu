@@ -77,6 +77,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () => Get.back(),
         ),
+        titleSpacing: 0,
         title: _showSearch
             ? Container(
                 height: 40,
@@ -104,8 +105,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               )
             : Text(
                 'User Management',
-                style: theme.textTheme.titleLarge
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold, fontSize: 18),
               ),
         actions: [
           IconButton(
@@ -164,12 +165,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               // ── Stats Section ────────────────────────────────────────
               _buildStatsSection(context),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // ── Role Filter Chips ─────────────────────────────────────
               _buildRoleFilters(context),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
 
               // ── Results count ─────────────────────────────────────────
               Padding(
@@ -205,7 +206,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                       )
                     : ListView.builder(
                         padding:
-                            const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                            const EdgeInsets.fromLTRB(16, 0, 16, 150),
                         itemCount: users.length,
                         itemBuilder: (ctx, i) =>
                             _buildUserCard(ctx, users[i]),
@@ -301,6 +302,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             onTap: () => controller.setRole(role),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
+              alignment: Alignment.center,
               padding: const EdgeInsets.symmetric(
                   horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
