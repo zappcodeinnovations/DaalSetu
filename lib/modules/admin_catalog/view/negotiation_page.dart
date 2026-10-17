@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -5,6 +7,7 @@ import 'package:daalsetu/modules/products/model/offer_interest_model.dart';
 import 'package:daalsetu/services/buyer_services.dart';
 import 'package:daalsetu/services/product_services.dart';
 import 'package:daalsetu/theme/app_theme.dart';
+import 'package:daalsetu/utils/global_error_handler.dart';
 
 import 'approve_deal_dialog.dart';
 
@@ -34,7 +37,9 @@ class _NegotiationPageState extends State<NegotiationPage> {
   final TextEditingController _negWeightCtrl = TextEditingController();
   bool _isLoading = false;
   bool _isLoadingThread = false;
+  bool _threadRefreshInProgress = false;
   Map<String, dynamic>? _thread;
+  Timer? _refreshTimer;
 
   Color get bgColor => Get.theme.scaffoldBackgroundColor;
   Color get cardColor => Get.theme.cardColor;
@@ -45,11 +50,15 @@ class _NegotiationPageState extends State<NegotiationPage> {
   void initState() {
     super.initState();
     _loadThread();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (AppForeground.isActive) _loadThread(silent: true);
+    });
   }
 
-  Future<void> _loadThread() async {
-    if (!mounted) return;
-    setState(() => _isLoadingThread = true);
+  Future<void> _loadThread({bool silent = false}) async {
+    if (!mounted || _threadRefreshInProgress) return;
+    _threadRefreshInProgress = true;
+    if (!silent) setState(() => _isLoadingThread = true);
     try {
       final response = await BuyerServices.getOfferInterestThread(
         int.tryParse(widget.offerId) ?? 0,
@@ -64,12 +73,14 @@ class _NegotiationPageState extends State<NegotiationPage> {
     } catch (e) {
       debugPrint('Could not load negotiation thread: $e');
     } finally {
-      if (mounted) setState(() => _isLoadingThread = false);
+      _threadRefreshInProgress = false;
+      if (!silent && mounted) setState(() => _isLoadingThread = false);
     }
   }
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     _negPriceCtrl.dispose();
     _negBagsCtrl.dispose();
     _negWeightCtrl.dispose();
@@ -95,13 +106,22 @@ class _NegotiationPageState extends State<NegotiationPage> {
           superadminRemark: result.remark,
           subAdminId: result.subAdminId,
         );
-        Get.snackbar('Success', 'Deal approved successfully',
-            backgroundColor: Colors.green, colorText: Colors.white);
+        Get.snackbar(
+          'Success',
+          'Deal approved successfully',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
         Get.back(result: true); // Pop back to close negotiation screen
       } catch (e) {
         setState(() => _isLoading = false);
         final message = e.toString().replaceFirst('Exception: ', '');
-        Get.snackbar('Error', message, backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar(
+          'Error',
+          message,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     }
   }
@@ -109,7 +129,12 @@ class _NegotiationPageState extends State<NegotiationPage> {
   Future<void> _rejectDeal() async {
     final remarkCtrl = TextEditingController();
     String selectedReason = 'Price too low';
-    final reasons = ['Price too low', 'Quantity not available', 'Buyer not verified', 'Other'];
+    final reasons = [
+      'Price too low',
+      'Quantity not available',
+      'Buyer not verified',
+      'Other',
+    ];
 
     final result = await showModalBottomSheet<bool>(
       context: context,
@@ -123,16 +148,28 @@ class _NegotiationPageState extends State<NegotiationPage> {
           builder: (BuildContext context, StateSetter setModalState) {
             return Padding(
               padding: EdgeInsets.only(
-                left: 20, right: 20, top: 20,
+                left: 20,
+                right: 20,
+                top: 20,
                 bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Reject Deal", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.errorRed)),
+                  const Text(
+                    "Reject Deal",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.errorRed,
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  Text("Rejecting deal with ${widget.interest.buyerName}", style: TextStyle(color: textDark)),
+                  Text(
+                    "Rejecting deal with ${widget.interest.buyerName}",
+                    style: TextStyle(color: textDark),
+                  ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     initialValue: selectedReason,
@@ -141,10 +178,18 @@ class _NegotiationPageState extends State<NegotiationPage> {
                     decoration: InputDecoration(
                       labelText: "Reason",
                       labelStyle: TextStyle(color: textLight),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: textLight.withValues(alpha: 0.3))),
-                      focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: AppTheme.errorRed)),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: textLight.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: AppTheme.errorRed),
+                      ),
                     ),
-                    items: reasons.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+                    items: reasons
+                        .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                        .toList(),
                     onChanged: (v) {
                       if (v != null) {
                         setModalState(() => selectedReason = v);
@@ -158,8 +203,14 @@ class _NegotiationPageState extends State<NegotiationPage> {
                     decoration: InputDecoration(
                       labelText: "Remarks (Optional)",
                       labelStyle: TextStyle(color: textLight),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: textLight.withValues(alpha: 0.3))),
-                      focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: AppTheme.errorRed)),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: textLight.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: AppTheme.errorRed),
+                      ),
                     ),
                     maxLines: 2,
                   ),
@@ -171,7 +222,9 @@ class _NegotiationPageState extends State<NegotiationPage> {
                           onPressed: () => Navigator.pop(ctx, false),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: textDark,
-                            side: BorderSide(color: textLight.withValues(alpha: 0.3)),
+                            side: BorderSide(
+                              color: textLight.withValues(alpha: 0.3),
+                            ),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                           child: const Text("Cancel"),
@@ -185,7 +238,10 @@ class _NegotiationPageState extends State<NegotiationPage> {
                             backgroundColor: AppTheme.errorRed,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          child: const Text("Reject", style: TextStyle(color: Colors.white)),
+                          child: const Text(
+                            "Reject",
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ),
                       ),
                     ],
@@ -193,7 +249,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
                 ],
               ),
             );
-          }
+          },
         );
       },
     );
@@ -207,12 +263,21 @@ class _NegotiationPageState extends State<NegotiationPage> {
           decision: "reject",
           superadminRemark: '$selectedReason. ${remarkCtrl.text}'.trim(),
         );
-        Get.snackbar('Rejected', 'Deal rejected successfully',
-            backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar(
+          'Rejected',
+          'Deal rejected successfully',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
         Get.back(result: true); // Pop back to close negotiation screen
       } catch (e) {
         setState(() => _isLoading = false);
-        Get.snackbar('Error', e.toString(), backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar(
+          'Error',
+          e.toString(),
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     }
   }
@@ -245,7 +310,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
 
     setState(() => _isLoading = true);
     try {
-      await ProductService.sendNegotiationMessage(
+      final res = await ProductService.sendNegotiationMessage(
         productId: int.parse(widget.offerId),
         interestId: widget.interest.interestId,
         counterPrice: priceText,
@@ -254,9 +319,13 @@ class _NegotiationPageState extends State<NegotiationPage> {
         counterPackingWeightKg: weightText,
       );
 
+      if (res['success'] == false) {
+        throw Exception(res['message'] ?? 'Failed to submit counter proposal');
+      }
+
       Get.snackbar(
         'Success',
-        'Counter proposal submitted successfully',
+        res['message']?.toString() ?? 'Counter proposal submitted successfully',
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
@@ -284,12 +353,32 @@ class _NegotiationPageState extends State<NegotiationPage> {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: Text("Negotiation: ${widget.offerTitle}", style: TextStyle(fontSize: 16)),
+        titleSpacing: 0,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Negotiation: ${widget.offerTitle}",
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+            const Text(
+              'Live negotiation • auto-refresh',
+              style: TextStyle(fontSize: 11, color: Colors.green),
+            ),
+          ],
+        ),
         backgroundColor: bgColor,
         surfaceTintColor: Colors.transparent,
+        actions: [
+          IconButton(
+            onPressed: _isLoading ? null : _loadThread,
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Refresh negotiation',
+          ),
+        ],
       ),
-      body: _isLoading 
-          ? const Center(child: CircularProgressIndicator()) 
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
           : _buildLayout(),
     );
   }
@@ -299,10 +388,11 @@ class _NegotiationPageState extends State<NegotiationPage> {
     return Column(
       children: [
         Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          child: RefreshIndicator(
+            onRefresh: _loadThread,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
               children: [
                 _buildSummaryCard(),
                 const SizedBox(height: 20),
@@ -328,7 +418,9 @@ class _NegotiationPageState extends State<NegotiationPage> {
     if (raw == null || raw.trim().isEmpty || raw == '-') return '-';
     var clean = raw.trim();
     final upper = clean.toUpperCase();
-    if (!upper.contains('QTL') && !upper.contains('TON') && !upper.contains('KG')) {
+    if (!upper.contains('QTL') &&
+        !upper.contains('TON') &&
+        !upper.contains('KG')) {
       clean = '$clean QTL';
     }
     return clean;
@@ -360,7 +452,9 @@ class _NegotiationPageState extends State<NegotiationPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: headerBg,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
               border: Border(
                 bottom: BorderSide(color: headerBorder, width: 1.5),
               ),
@@ -377,11 +471,16 @@ class _NegotiationPageState extends State<NegotiationPage> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.primaryGold.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.primaryGold.withValues(alpha: 0.4)),
+                    border: Border.all(
+                      color: AppTheme.primaryGold.withValues(alpha: 0.4),
+                    ),
                   ),
                   child: Text(
                     (widget.interest.status ?? 'Interested').toUpperCase(),
@@ -399,14 +498,27 @@ class _NegotiationPageState extends State<NegotiationPage> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                _buildSummaryRow("Seller Price:", _formatPrice(widget.sellerOfferAmount)),
+                _buildSummaryRow(
+                  "Seller Price:",
+                  _formatPrice(widget.sellerOfferAmount),
+                ),
                 const SizedBox(height: 10),
-                _buildSummaryRow("Available Qty:", _formatQty(widget.availableStock)),
+                _buildSummaryRow(
+                  "Available Qty:",
+                  _formatQty(widget.availableStock),
+                ),
                 const SizedBox(height: 10),
-                _buildSummaryRow("Current Offer:", _formatPrice(widget.interest.buyerOfferedAmount)),
+                _buildSummaryRow(
+                  "Current Offer:",
+                  _formatPrice(widget.interest.buyerOfferedAmount),
+                ),
                 const SizedBox(height: 10),
-                _buildSummaryRow("Current Qty:", _formatQty(widget.interest.requiredQuantity)),
-                if (widget.interest.condition != null && widget.interest.condition!.isNotEmpty) ...[
+                _buildSummaryRow(
+                  "Current Qty:",
+                  _formatQty(widget.interest.requiredQuantity),
+                ),
+                if (widget.interest.condition != null &&
+                    widget.interest.condition!.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Divider(color: textLight.withValues(alpha: 0.15)),
                   const SizedBox(height: 8),
@@ -457,11 +569,16 @@ class _NegotiationPageState extends State<NegotiationPage> {
                     Expanded(
                       child: FilledButton.icon(
                         icon: const Icon(Icons.check, size: 16),
-                        label: const Text("Accept", style: TextStyle(fontWeight: FontWeight.bold)),
+                        label: const Text(
+                          "Accept",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         style: FilledButton.styleFrom(
                           backgroundColor: AppTheme.successGreen,
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         onPressed: _approveDeal,
                       ),
@@ -470,12 +587,20 @@ class _NegotiationPageState extends State<NegotiationPage> {
                     Expanded(
                       child: OutlinedButton.icon(
                         icon: const Icon(Icons.close, size: 16),
-                        label: const Text("Reject", style: TextStyle(fontWeight: FontWeight.bold)),
+                        label: const Text(
+                          "Reject",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppTheme.errorRed,
-                          side: const BorderSide(color: AppTheme.errorRed, width: 1.5),
+                          side: const BorderSide(
+                            color: AppTheme.errorRed,
+                            width: 1.5,
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         onPressed: _rejectDeal,
                       ),
@@ -515,7 +640,8 @@ class _NegotiationPageState extends State<NegotiationPage> {
   }
 
   String get _displayBuyerCode {
-    final fromThread = _thread?['buyer_code'] ??
+    final fromThread =
+        _thread?['buyer_code'] ??
         _thread?['buyer_username'] ??
         _thread?['buyer_name'];
     if (fromThread != null && fromThread.toString().trim().isNotEmpty) {
@@ -531,16 +657,77 @@ class _NegotiationPageState extends State<NegotiationPage> {
   String _formatTimestamp(String? raw) {
     if (raw == null || raw.trim().isEmpty || raw == '-') return '';
     final trimmed = raw.trim();
-    try {
-      DateTime? dt = DateTime.tryParse(trimmed);
-      if (dt == null) {
-        final isoCandidate = trimmed.replaceFirst(' ', 'T');
-        dt = DateTime.tryParse(isoCandidate);
+
+    DateTime? dt;
+
+    // 1. Try standard ISO 8601 parsing
+    dt = DateTime.tryParse(trimmed);
+
+    // 2. If it contains a space between date and time (e.g. "2026-10-17 05:19:28")
+    if (dt == null && trimmed.contains(' ')) {
+      final isoCandidate = trimmed.replaceFirst(' ', 'T');
+      dt = DateTime.tryParse(isoCandidate);
+    }
+
+    // 3. If ISO parsed as naive (isUtc == false) and had no explicit timezone offset,
+    // backend timestamps are UTC by contract in Django (USE_TZ = True).
+    // An ISO string without 'Z', '+', or '-' (after time) must be treated as UTC.
+    if (dt != null && !dt.isUtc) {
+      final hasTz = RegExp(
+        r'(Z|[+-]\d{2}:?\d{2})$',
+        caseSensitive: false,
+      ).hasMatch(trimmed);
+      if (!hasTz) {
+        dt = DateTime.utc(
+          dt.year,
+          dt.month,
+          dt.day,
+          dt.hour,
+          dt.minute,
+          dt.second,
+          dt.millisecond,
+          dt.microsecond,
+        );
       }
-      if (dt != null) {
-        return DateFormat('dd MMM HH:mm').format(dt.toLocal());
+    }
+
+    // 4. Try parsing common formats like "Jul 29, 2026 10:48 AM" or "29 Jul 2026, 10:48 AM"
+    if (dt == null) {
+      final formats = [
+        DateFormat('MMM d, yyyy h:mm a'),
+        DateFormat('MMM dd, yyyy h:mm a'),
+        DateFormat('MMM d, yyyy hh:mm a'),
+        DateFormat('MMM dd, yyyy hh:mm a'),
+        DateFormat('d MMM yyyy, h:mm a'),
+        DateFormat('dd MMM yyyy, h:mm a'),
+        DateFormat('d MMM yyyy, hh:mm a'),
+        DateFormat('dd MMM yyyy, hh:mm a'),
+        DateFormat('dd-MM-yyyy hh:mm a'),
+        DateFormat('yyyy-MM-dd HH:mm:ss'),
+        DateFormat('yyyy-MM-dd HH:mm'),
+        DateFormat('dd-MM-yyyy HH:mm'),
+      ];
+      for (final fmt in formats) {
+        try {
+          final parsed = fmt.parseLoose(trimmed);
+          // Backend strftime format '%b %d, %Y %I:%M %p' produces UTC representation
+          dt = DateTime.utc(
+            parsed.year,
+            parsed.month,
+            parsed.day,
+            parsed.hour,
+            parsed.minute,
+            parsed.second,
+          );
+          break;
+        } catch (_) {}
       }
-    } catch (_) {}
+    }
+
+    if (dt != null) {
+      return DateFormat('dd MMM yyyy, hh:mm a').format(dt.toLocal());
+    }
+
     return trimmed;
   }
 
@@ -570,7 +757,9 @@ class _NegotiationPageState extends State<NegotiationPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
             decoration: BoxDecoration(
               color: logHeaderBg,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
               border: Border(
                 bottom: BorderSide(
                   color: Colors.black.withValues(alpha: 0.1),
@@ -606,7 +795,11 @@ class _NegotiationPageState extends State<NegotiationPage> {
                   )
                 else
                   IconButton(
-                    icon: const Icon(Icons.refresh, color: Colors.white, size: 18),
+                    icon: const Icon(
+                      Icons.refresh,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                     onPressed: _loadThread,
@@ -737,8 +930,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
   Widget _buildProposalCard(Map<String, dynamic> msg) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final role = (msg['actor_role'] ?? '').toString().toLowerCase();
-    final isAdminOrSeller =
-        role == 'admin' || role == 'seller' || role.isEmpty;
+    final isAdminOrSeller = role == 'admin' || role == 'seller' || role.isEmpty;
 
     String textVal(dynamic v) =>
         v == null || v.toString().trim() == 'null' ? '' : v.toString().trim();
@@ -761,11 +953,10 @@ class _NegotiationPageState extends State<NegotiationPage> {
         : textLight.withValues(alpha: 0.2);
     final roleTitle = isAdminOrSeller
         ? (role == 'seller'
-            ? 'Seller (Counter-Proposal)'
-            : 'Admin (Counter-Proposal)')
+              ? 'Seller (Counter-Proposal)'
+              : 'Admin (Counter-Proposal)')
         : 'Buyer (Counter-Proposal)';
-    final titleColor =
-        isAdminOrSeller ? const Color(0xFFEA580C) : textDark;
+    final titleColor = isAdminOrSeller ? const Color(0xFFEA580C) : textDark;
 
     return Container(
       width: double.infinity,
@@ -860,9 +1051,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
-                  color: isAdminOrSeller
-                      ? const Color(0xFFC2410C)
-                      : textDark,
+                  color: isAdminOrSeller ? const Color(0xFFC2410C) : textDark,
                 ),
               ),
             ),
@@ -883,6 +1072,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
   }
 
   Widget _buildBottomForm() {
+    final priceUnit = _thread?['price_unit']?.toString().toUpperCase() ?? 'QTL';
     return Container(
       decoration: BoxDecoration(
         color: cardColor,
@@ -915,7 +1105,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
                   label: "Counter Price (₹)",
                   hint: "Optional",
                   controller: _negPriceCtrl,
-                  suffix: "/TON",
+                  suffix: "/$priceUnit",
                 ),
               ),
               const SizedBox(width: 12),
@@ -1000,19 +1190,30 @@ class _NegotiationPageState extends State<NegotiationPage> {
     return TextFormField(
       controller: controller,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      style: TextStyle(color: textDark, fontSize: 13, fontWeight: FontWeight.w600),
+      style: TextStyle(
+        color: textDark,
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+      ),
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        hintStyle:
-            TextStyle(color: textLight.withValues(alpha: 0.6), fontSize: 12),
+        hintStyle: TextStyle(
+          color: textLight.withValues(alpha: 0.6),
+          fontSize: 12,
+        ),
         labelStyle: TextStyle(color: textLight, fontSize: 12),
         suffixText: suffix,
-        suffixStyle:
-            TextStyle(color: textLight, fontSize: 12, fontWeight: FontWeight.w500),
+        suffixStyle: TextStyle(
+          color: textLight,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
         isDense: true,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
         enabledBorder: OutlineInputBorder(
           borderSide: BorderSide(color: textLight.withValues(alpha: 0.3)),
           borderRadius: BorderRadius.circular(8),

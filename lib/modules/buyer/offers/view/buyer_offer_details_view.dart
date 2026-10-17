@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:daalsetu/utils/global_error_handler.dart';
 import '../controller/buyer_offer_detail_controller.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/app_snackbar.dart';
@@ -44,17 +45,18 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
       productId: widget.productId,
       interestId: widget.interestId,
     );
-    if (widget.preferBuyerRequirement) {
-      _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (AppForeground.isActive && !controller.isSending.value) {
         controller.fetchDetails(
           widget.offerId,
           silent: true,
-          preferBuyerRequirement: true,
+          preferBuyerOffer: widget.preferBuyerOffer,
+          preferBuyerRequirement: widget.preferBuyerRequirement,
           productId: widget.productId,
           interestId: widget.interestId,
         );
-      });
-    }
+      }
+    });
   }
 
   @override
@@ -73,11 +75,24 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text(
-          widget.preferBuyerOffer
-              ? "Buyer Offer Details"
-              : "Requirement Details",
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+        titleSpacing: 0,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.preferBuyerOffer
+                  ? "Buyer Offer Details"
+                  : "Requirement Details",
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              'Live negotiation • auto-refresh',
+              style: GoogleFonts.inter(fontSize: 11, color: Colors.green),
+            ),
+          ],
         ),
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
@@ -118,11 +133,11 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
         final rawStatus = (thread != null && thread['status'] != null)
             ? thread['status'].toString()
             : (data['negotiation_status'] ??
-                data['interest_status'] ??
-                data['deal_status'] ??
-                data['status'] ??
-                'requested')
-                .toString();
+                      data['interest_status'] ??
+                      data['deal_status'] ??
+                      data['status'] ??
+                      'requested')
+                  .toString();
 
         final displayStatus = _titleCase(rawStatus.replaceAll('_', ' '));
 
@@ -140,13 +155,14 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
 
         // Resolve clean loading location
         String? validLoadingLocation;
-        final candidateLocation = (data['loading_location'] ??
-                data['location'] ??
-                data['destination'] ??
-                data['delivery_location'] ??
-                data['city'])
-            ?.toString()
-            .trim();
+        final candidateLocation =
+            (data['loading_location'] ??
+                    data['location'] ??
+                    data['destination'] ??
+                    data['delivery_location'] ??
+                    data['city'])
+                ?.toString()
+                .trim();
         if (candidateLocation != null &&
             candidateLocation.isNotEmpty &&
             !candidateLocation.contains('->') &&
@@ -229,7 +245,8 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                       "Packing Weight",
                       "${data['packing_weight_kg']} kg",
                     ),
-                  if (validLoadingLocation != null && validLoadingLocation.isNotEmpty)
+                  if (validLoadingLocation != null &&
+                      validLoadingLocation.isNotEmpty)
                     _infoRow("Loading Location", validLoadingLocation),
                   if (data['delivery_terms'] != null &&
                       data['delivery_terms'].toString().trim().isNotEmpty)
@@ -945,7 +962,8 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                             bagCtrl.text.trim().isEmpty) {
                           AppSnackbar.showWarning(
                             title: "Counter required",
-                            message: "Enter a counter price, quantity, or bags.",
+                            message:
+                                "Enter a counter price, quantity, or bags.",
                           );
                           return;
                         }
@@ -1046,8 +1064,7 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
       color = Colors.red;
     }
 
-    final text = displayLabel ??
-        (status.replaceAll('_', ' ').toUpperCase());
+    final text = displayLabel ?? (status.replaceAll('_', ' ').toUpperCase());
 
     return Container(
       width: double.infinity,
@@ -1129,34 +1146,40 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
     required ThemeData theme,
     required Color primaryColor,
   }) {
-    final status = thread['status']?.toString().replaceAll('_', ' ') ?? 'Pending';
-    final sellerPrice = thread['seller_price'] ??
+    final status =
+        thread['status']?.toString().replaceAll('_', ' ') ?? 'Pending';
+    final sellerPrice =
+        thread['seller_price'] ??
         thread['seller_amount'] ??
         thread['amount'] ??
         thread['product_amount'] ??
         '-';
     final priceUnit = thread['price_unit'] ?? 'QTL';
-    final availableQty = thread['available_quantity'] ??
+    final availableQty =
+        thread['available_quantity'] ??
         thread['available_stock'] ??
         thread['quantity'] ??
         '-';
-    final currentOffer = thread['latest_offered_amount'] ??
+    final currentOffer =
+        thread['latest_offered_amount'] ??
         thread['offered_amount'] ??
         thread['amount'] ??
         '-';
-    final currentQty = thread['latest_offered_quantity'] ??
+    final currentQty =
+        thread['latest_offered_quantity'] ??
         thread['required_quantity'] ??
         thread['quantity'] ??
         '-';
     final qtyUnit = thread['quantity_unit'] ?? 'QTL';
-    final buyerRemark = thread['buyer_remark'] ??
-        thread['remark'] ??
-        thread['initial_remark'];
+    final buyerRemark =
+        thread['buyer_remark'] ?? thread['remark'] ?? thread['initial_remark'];
 
-    final canBuyerAccept = thread['can_buyer_accept'] == true ||
+    final canBuyerAccept =
+        thread['can_buyer_accept'] == true ||
         thread['can_accept'] == true ||
         thread['status']?.toString().toLowerCase() == 'seller_confirmed';
-    final canBuyerReject = thread['can_buyer_reject'] == true ||
+    final canBuyerReject =
+        thread['can_buyer_reject'] == true ||
         thread['can_reject'] == true ||
         thread['status']?.toString().toLowerCase() == 'seller_confirmed';
 
@@ -1180,11 +1203,16 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                 children: [
                   Text("Status:", style: TextStyle(color: theme.disabledColor)),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.green.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: Colors.green.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Text(
                       _titleCase(status),
@@ -1202,7 +1230,8 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
               _infoRow("Available Qty:", "$availableQty $qtyUnit"),
               _infoRow("Current Offer:", "₹$currentOffer/$priceUnit"),
               _infoRow("Current Qty:", "$currentQty $qtyUnit"),
-              if (buyerRemark != null && buyerRemark.toString().trim().isNotEmpty) ...[
+              if (buyerRemark != null &&
+                  buyerRemark.toString().trim().isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Container(
                   width: double.infinity,
@@ -1210,7 +1239,9 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                   decoration: BoxDecoration(
                     color: theme.cardColor.withValues(alpha: 0.6),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: theme.dividerColor.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1243,14 +1274,19 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
           decoration: BoxDecoration(
             color: theme.cardColor.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
+            border: Border.all(
+              color: theme.dividerColor.withValues(alpha: 0.3),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: const BoxDecoration(
                   color: Color(0xFFF95B12),
                   borderRadius: BorderRadius.only(
@@ -1279,7 +1315,9 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                       decoration: BoxDecoration(
                         color: theme.cardColor,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.4)),
+                        border: Border.all(
+                          color: theme.dividerColor.withValues(alpha: 0.4),
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1320,7 +1358,8 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                     if (messages.isNotEmpty) ...[
                       const SizedBox(height: 10),
                       ...messages.map((m) {
-                        final role = m['actor_role']?.toString().toUpperCase() ??
+                        final role =
+                            m['actor_role']?.toString().toUpperCase() ??
                             m['sender_role']?.toString().toUpperCase() ??
                             'PROPOSAL';
                         final p = m['counter_price'] ?? '';
@@ -1346,7 +1385,8 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              if (p.toString().isNotEmpty || q.toString().isNotEmpty) ...[
+                              if (p.toString().isNotEmpty ||
+                                  q.toString().isNotEmpty) ...[
                                 const SizedBox(height: 3),
                                 Text(
                                   "Counter: ₹$p | $q $qtyUnit",
@@ -1366,7 +1406,10 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                       Center(
                         child: Text(
                           "No negotiation proposals yet.",
-                          style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
                         ),
                       ),
                     ],
@@ -1388,10 +1431,8 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                   child: SizedBox(
                     height: 46,
                     child: ElevatedButton.icon(
-                      onPressed: () => _handleBuyerDecision(
-                        thread: thread,
-                        accept: true,
-                      ),
+                      onPressed: () =>
+                          _handleBuyerDecision(thread: thread, accept: true),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         foregroundColor: Colors.white,
@@ -1413,10 +1454,8 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                   child: SizedBox(
                     height: 46,
                     child: OutlinedButton.icon(
-                      onPressed: () => _handleBuyerDecision(
-                        thread: thread,
-                        accept: false,
-                      ),
+                      onPressed: () =>
+                          _handleBuyerDecision(thread: thread, accept: false),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red,
                         side: const BorderSide(color: Colors.red),
@@ -1470,11 +1509,17 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
 
     if (confirmed != true) return;
 
-    final pId = widget.productId ??
-        int.tryParse((thread['product_id'] ?? thread['product']?['id'] ?? '').toString()) ??
+    final pId =
+        widget.productId ??
+        int.tryParse(
+          (thread['product_id'] ?? thread['product']?['id'] ?? '').toString(),
+        ) ??
         widget.offerId;
-    final iId = widget.interestId ??
-        int.tryParse((thread['interest_id'] ?? thread['id'] ?? '').toString()) ??
+    final iId =
+        widget.interestId ??
+        int.tryParse(
+          (thread['interest_id'] ?? thread['id'] ?? '').toString(),
+        ) ??
         0;
 
     if (pId <= 0 || iId <= 0) {
@@ -1494,10 +1539,13 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
 
   String _titleCase(String text) {
     if (text.isEmpty) return text;
-    return text.split(' ').map((w) {
-      if (w.isEmpty) return w;
-      return '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}';
-    }).join(' ');
+    return text
+        .split(' ')
+        .map((w) {
+          if (w.isEmpty) return w;
+          return '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}';
+        })
+        .join(' ');
   }
 
   void _showCancelConfirm(

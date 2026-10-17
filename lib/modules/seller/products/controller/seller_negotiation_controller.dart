@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import 'package:daalsetu/utils/global_error_handler.dart';
 import '../model/offer_interest_model.dart';
 import '../../contracts/view/seller_contract_detail_view.dart';
 import '../../../../services/seller_services.dart';
@@ -12,16 +15,23 @@ class SellerNegotiationController extends GetxController {
   var isLoading = true.obs;
   var interestsList = <OfferInterestModel>[].obs;
   var productData = Rxn<Map<String, dynamic>>();
+  Timer? _refreshTimer;
+  bool _refreshInProgress = false;
 
   @override
   void onInit() {
     super.onInit();
     fetchInterests();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (AppForeground.isActive) fetchInterests(silent: true);
+    });
   }
 
-  Future<void> fetchInterests() async {
+  Future<void> fetchInterests({bool silent = false}) async {
+    if (_refreshInProgress) return;
+    _refreshInProgress = true;
     try {
-      isLoading(true);
+      if (!silent) isLoading(true);
       final response = await SellerServices.getOfferInterests(productId);
       if (response['success'] == true) {
         if (response['product'] is Map<String, dynamic>) {
@@ -33,10 +43,17 @@ class SellerNegotiationController extends GetxController {
             .toList();
       }
     } catch (e) {
-      SellerUi.error("Could not fetch offer interests: $e");
+      if (!silent) SellerUi.error("Could not fetch offer interests: $e");
     } finally {
-      isLoading(false);
+      if (!silent) isLoading(false);
+      _refreshInProgress = false;
     }
+  }
+
+  @override
+  void onClose() {
+    _refreshTimer?.cancel();
+    super.onClose();
   }
 
   Future<void> sendCounterOffer({
@@ -130,7 +147,8 @@ class SellerNegotiationController extends GetxController {
         SellerUi.success(res['message'] ?? "Deal confirmed successfully!");
 
         // Check if contract ID was returned
-        final rawContractId = res['contract_id'] ??
+        final rawContractId =
+            res['contract_id'] ??
             res['data']?['contract_id'] ??
             res['contract']?['id'] ??
             res['data']?['id'];

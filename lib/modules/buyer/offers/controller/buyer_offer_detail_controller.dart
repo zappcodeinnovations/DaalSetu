@@ -7,10 +7,14 @@ class BuyerOfferDetailController extends GetxController {
   var isSending = false.obs;
   var offerDetails = Rxn<Map<String, dynamic>>();
   var negotiationThread = Rxn<Map<String, dynamic>>();
+  bool _fetchInProgress = false;
 
   Future<void> loadNegotiationThread(int productId, int interestId) async {
     try {
-      final res = await BuyerServices.getOfferInterestThread(productId, interestId);
+      final res = await BuyerServices.getOfferInterestThread(
+        productId,
+        interestId,
+      );
       final raw = res['data'];
       if (raw is Map) {
         negotiationThread.value = Map<String, dynamic>.from(raw);
@@ -84,6 +88,8 @@ class BuyerOfferDetailController extends GetxController {
     int? productId,
     int? interestId,
   }) async {
+    if (_fetchInProgress) return;
+    _fetchInProgress = true;
     try {
       if (!silent) isLoading(true);
       final data = preferBuyerOffer
@@ -93,10 +99,26 @@ class BuyerOfferDetailController extends GetxController {
           : await BuyerServices.getOfferDetails(id);
       offerDetails.value = data;
 
-      final pId = productId ??
-          int.tryParse((data['product_id'] ?? data['product']?['id'] ?? (data['is_interest'] == true ? data['id'] : null) ?? '').toString());
-      final iId = interestId ??
-          int.tryParse((data['interest_id'] ?? data['interest']?['id'] ?? (data['is_interest'] == true ? data['interest_id'] : null) ?? '').toString());
+      final pId =
+          productId ??
+          int.tryParse(
+            (data['product_id'] ??
+                    data['product']?['id'] ??
+                    (data['is_interest'] == true ? data['id'] : null) ??
+                    '')
+                .toString(),
+          );
+      final iId =
+          interestId ??
+          int.tryParse(
+            (data['interest_id'] ??
+                    data['interest']?['id'] ??
+                    (data['is_interest'] == true
+                        ? data['interest_id']
+                        : null) ??
+                    '')
+                .toString(),
+          );
 
       if (pId != null && pId > 0 && iId != null && iId > 0) {
         await loadNegotiationThread(pId, iId);
@@ -110,6 +132,7 @@ class BuyerOfferDetailController extends GetxController {
       }
     } finally {
       if (!silent) isLoading(false);
+      _fetchInProgress = false;
     }
   }
 

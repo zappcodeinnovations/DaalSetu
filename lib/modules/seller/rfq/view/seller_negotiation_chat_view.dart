@@ -100,7 +100,7 @@ class _SellerNegotiationChatViewState extends State<SellerNegotiationChatView> {
                 ),
               ),
               Text(
-                'Auto-refresh on',
+                'Live negotiation • auto-refresh',
                 style: GoogleFonts.inter(fontSize: 11, color: Colors.green),
               ),
             ],
@@ -109,7 +109,7 @@ class _SellerNegotiationChatViewState extends State<SellerNegotiationChatView> {
             IconButton(
               onPressed: () => controller.load(),
               icon: const Icon(IconlyLight.swap),
-              tooltip: 'Refresh',
+              tooltip: 'Refresh negotiation',
             ),
           ],
         ),
@@ -145,6 +145,11 @@ class _SellerNegotiationChatViewState extends State<SellerNegotiationChatView> {
                   if (quotation.canAccept || quotation.canReject)
                     _decisionBar(quotation),
                   if (quotation.canReply) _composer(context),
+                  if (!quotation.isReadOnly &&
+                      !quotation.canAccept &&
+                      !quotation.canReject &&
+                      !quotation.canReply)
+                    _waitingBar(context),
                 ],
               ),
       );
@@ -156,13 +161,107 @@ class _SellerNegotiationChatViewState extends State<SellerNegotiationChatView> {
     SellerRfqModel? rfq,
     SellerQuotationModel quotation,
   ) {
+    final status = quotation.status.replaceAll('_', ' ');
+
+    Widget row(String label, String value) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Text(
+                value,
+                textAlign: TextAlign.end,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
-      child: Text(
-        'Buyer target: ₹${rfq?.targetPrice ?? '-'} / ${rfq?.priceUnit ?? ''}  •  Latest: ₹${quotation.latestPrice ?? quotation.offeredPrice ?? '-'} / ${quotation.priceUnit ?? ''}',
-        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+      margin: const EdgeInsets.fromLTRB(14, 12, 14, 6),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Theme.of(context).dividerColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Negotiation Summary',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 3,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.green.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Text(
+                  status.capitalizeFirst ?? status,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 16),
+          row(
+            'Buyer Target:',
+            '₹${rfq?.targetPrice ?? '-'} / ${rfq?.priceUnit ?? quotation.priceUnit ?? ''}',
+          ),
+          row(
+            'Initial Offer:',
+            '₹${quotation.offeredPrice ?? '-'} / ${quotation.priceUnit ?? ''}',
+          ),
+          row(
+            'Latest Offer:',
+            '₹${quotation.latestPrice ?? quotation.offeredPrice ?? '-'} / ${quotation.priceUnit ?? ''}',
+          ),
+          row(
+            'Latest Quantity:',
+            '${quotation.latestQuantity ?? quotation.offeredQuantity ?? '-'} ${quotation.quantityUnit ?? ''}',
+          ),
+        ],
       ),
     );
   }
@@ -261,29 +360,87 @@ class _SellerNegotiationChatViewState extends State<SellerNegotiationChatView> {
   }
 
   Widget _decisionBar(SellerQuotationModel quotation) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 6, 12, 4),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        border: Border(
+          top: BorderSide(
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+          ),
+        ),
+      ),
       child: Row(
         children: [
           if (quotation.canAccept)
             Expanded(
-              child: OutlinedButton.icon(
-                onPressed: controller.accept,
-                icon: const Icon(Icons.check),
-                label: const Text('Accept'),
+              child: SizedBox(
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: controller.accept,
+                  icon: const Icon(Icons.check, size: 18),
+                  label: Text(
+                    'Accept',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2E7D32),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
               ),
             ),
           if (quotation.canAccept && quotation.canReject)
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
           if (quotation.canReject)
             Expanded(
-              child: OutlinedButton.icon(
-                onPressed: controller.reject,
-                icon: const Icon(Icons.close),
-                label: const Text('Withdraw'),
+              child: SizedBox(
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: controller.reject,
+                  icon: const Icon(Icons.close, size: 18),
+                  label: Text(
+                    'Reject',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFD32F2F),
+                    side: const BorderSide(
+                      color: Color(0xFFD32F2F),
+                      width: 1.5,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _waitingBar(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.06),
+          border: Border(
+            top: BorderSide(color: Theme.of(context).dividerColor),
+          ),
+        ),
+        child: const Text(
+          'Waiting for the other party to respond.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
       ),
     );
   }

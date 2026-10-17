@@ -28,13 +28,31 @@ class SellerOfferInterestsView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text(
-          "Buyer Interests & Offers",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
+        titleSpacing: 0,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Buyer Interests & Offers",
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
+            ),
+            Text(
+              'Live negotiation • auto-refresh',
+              style: GoogleFonts.inter(fontSize: 11, color: Colors.green),
+            ),
+          ],
         ),
+        actions: [
+          IconButton(
+            onPressed: controller.fetchInterests,
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Refresh interests',
+          ),
+        ],
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
@@ -312,8 +330,7 @@ class SellerOfferInterestsView extends StatelessWidget {
                               foregroundColor: primaryColor,
                               side: const BorderSide(color: primaryColor),
                               minimumSize: const Size(0, 42),
-                              tapTargetSize:
-                                  MaterialTapTargetSize.shrinkWrap,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 14,
                                 vertical: 10,

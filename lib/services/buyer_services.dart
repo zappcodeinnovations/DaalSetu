@@ -1021,36 +1021,18 @@ class BuyerServices {
       },
     };
 
-    final endpoints = [
-      ApiUrls.offerNegotiationMessage(productId, interestId),
-      "/api/products/$productId/interests/$interestId/message/",
-      "/api/offers/$productId/interests/$interestId/update/",
-      "/api/offers/$productId/interests/$interestId/negotiate/",
-    ];
-
-    dynamic lastError;
-    for (final ep in endpoints) {
-      try {
-        final response = await ApiClient.post(
-          endpoint: ep,
-          body: body,
-          requireAuth: true,
-          suppressErrorDialog: true,
-        );
-        if (response != null && response is Map<String, dynamic>) {
-          return response;
-        }
-      } catch (e) {
-        lastError = e;
-        print("⚠️ sendNegotiationMessage endpoint failed: $ep ($e)");
-      }
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.offerInterestThread(productId, interestId),
+      body: body,
+      requireAuth: true,
+      suppressErrorDialog: true,
+    );
+    if (response['success'] == false) {
+      throw Exception(
+        response['message'] ?? 'Could not send negotiation message',
+      );
     }
-
-    if (lastError != null) throw lastError;
-    return <String, dynamic>{
-      "success": true,
-      "message": "Counter proposal sent successfully.",
-    };
+    return response;
   }
 
   /// ============================================================

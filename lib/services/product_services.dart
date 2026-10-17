@@ -417,32 +417,18 @@ class ProductService {
         "counter_packing_weight_kg": cleanWeight,
     };
 
-    final endpoints = [
-      ApiUrls.offerInterestThread(productId, interestId),
-      ApiUrls.offerNegotiationMessage(productId, interestId),
-      "/api/products/$productId/interests/$interestId/message/",
-    ];
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.offerInterestThread(productId, interestId),
+      body: body,
+      requireAuth: true,
+      suppressErrorDialog: true,
+    );
 
-    dynamic lastError;
-    for (final ep in endpoints) {
-      try {
-        final response = await ApiClient.post(
-          endpoint: ep,
-          body: body,
-          requireAuth: true,
-          suppressErrorDialog: true,
-        );
-        return response;
-      } catch (e) {
-        lastError = e;
-        print("⚠️ sendNegotiationMessage endpoint failed: $ep ($e)");
-      }
+    if (response['success'] == false) {
+      throw Exception(
+        response['message'] ?? 'Could not send negotiation message',
+      );
     }
-
-    if (lastError != null) throw lastError;
-    return <String, dynamic>{
-      "success": true,
-      "message": "Counter proposal sent successfully.",
-    };
+    return response;
   }
 }

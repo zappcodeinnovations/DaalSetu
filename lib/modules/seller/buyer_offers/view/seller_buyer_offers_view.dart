@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../../services/seller_services.dart';
 import '../../../../utils/app_preferences.dart';
+import '../../../../utils/global_error_handler.dart';
 import '../../common/seller_ui.dart';
 
 /// Buyer offer requests a seller can respond to (web: "Buyer Offers").
@@ -171,15 +174,22 @@ class _SellerBuyerOfferDetailViewState
   Map<String, dynamic>? _offer;
   Map<String, dynamic>? _thread;
   bool _loading = true;
+  bool _refreshInProgress = false;
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (AppForeground.isActive) _load(silent: true);
+    });
   }
 
-  Future<void> _load() async {
-    setState(() => _loading = true);
+  Future<void> _load({bool silent = false}) async {
+    if (_refreshInProgress) return;
+    _refreshInProgress = true;
+    if (!silent && mounted) setState(() => _loading = true);
     try {
       final offer = await SellerServices.getBuyerOfferRequest(widget.offerId);
       final myId = int.tryParse(await AppPreferences.getUserId() ?? '');
@@ -194,15 +204,24 @@ class _SellerBuyerOfferDetailViewState
             .cast<Map<String, dynamic>?>()
             .firstWhere((_) => true, orElse: () => null);
       }
-      setState(() {
-        _offer = offer;
-        _thread = thread;
-      });
+      if (mounted) {
+        setState(() {
+          _offer = offer;
+          _thread = thread;
+        });
+      }
     } catch (e) {
-      SellerUi.error(e);
+      if (!silent) SellerUi.error(e);
     } finally {
-      if (mounted) setState(() => _loading = false);
+      _refreshInProgress = false;
+      if (!silent && mounted) setState(() => _loading = false);
     }
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
   }
 
   /// Seller acts on its own thread when one exists, otherwise on the buyer request itself.
@@ -323,8 +342,9 @@ class _SellerBuyerOfferDetailViewState
       confirmText: "Confirm",
       color: Colors.green,
     );
-    if (remark != null)
+    if (remark != null) {
       await _act({"action": "seller_confirm", "remark": remark});
+    }
   }
 
   Future<void> _reject() async {
@@ -333,12 +353,13 @@ class _SellerBuyerOfferDetailViewState
       confirmText: "Reject",
       color: Colors.red,
     );
-    if (remark != null)
+    if (remark != null) {
       await _act({
         "action": "seller_reject",
         "seller_remark": remark,
         "remark": remark,
       });
+    }
   }
 
   @override
@@ -357,7 +378,29 @@ class _SellerBuyerOfferDetailViewState
         .toList();
 
     return Scaffold(
-      appBar: SellerUi.appBar(context, "Buyer Offer"),
+      appBar: AppBar(
+        titleSpacing: 0,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Buyer Offer',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+            Text(
+              'Live negotiation • auto-refresh',
+              style: GoogleFonts.inter(fontSize: 11, color: Colors.green),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            onPressed: _loading ? null : _load,
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Refresh negotiation',
+          ),
+        ],
+      ),
       body: _loading && offer == null
           ? const Center(
               child: CircularProgressIndicator(color: SellerUi.primary),

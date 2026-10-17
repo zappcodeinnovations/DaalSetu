@@ -83,19 +83,33 @@ class SellerCounterOfferDialog {
       textCancel: "CANCEL",
       buttonColor: Colors.amber.shade700,
       onConfirm: () {
-        if (priceCtrl.text.trim().isEmpty || qtyCtrl.text.trim().isEmpty) {
-          SellerUi.error("Please enter counter price and quantity");
+        final priceText = priceCtrl.text.trim();
+        final qtyText = qtyCtrl.text.trim();
+        final bagText = bagCtrl.text.trim();
+        final weightText = weightCtrl.text.trim();
+
+        if (priceText.isEmpty && qtyText.isEmpty && bagText.isEmpty) {
+          SellerUi.error(
+            "Please enter a Counter Price, Quantity, or Packing details.",
+          );
           return;
         }
+
+        if ((bagText.isNotEmpty && weightText.isEmpty) ||
+            (weightText.isNotEmpty && bagText.isEmpty)) {
+          SellerUi.error(
+            "Seller packing changes require both Bags and Packing Weight.",
+          );
+          return;
+        }
+
         Get.back();
         controller.sendCounterOffer(
           interestId: interest.id!,
-          counterPrice: priceCtrl.text.trim(),
-          counterQuantity: qtyCtrl.text.trim(),
-          counterBagCount: int.tryParse(bagCtrl.text.trim()),
-          counterPackingWeightKg: weightCtrl.text.trim().isNotEmpty
-              ? weightCtrl.text.trim()
-              : null,
+          counterPrice: priceText,
+          counterQuantity: qtyText,
+          counterBagCount: int.tryParse(bagText),
+          counterPackingWeightKg: weightText.isNotEmpty ? weightText : null,
         );
       },
     );

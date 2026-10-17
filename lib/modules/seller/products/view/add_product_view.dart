@@ -77,7 +77,9 @@ class _AddProductViewState extends State<AddProductView> {
                 controller.descController,
                 "Detailed Description",
                 IconlyLight.document,
+                minLines: 3,
                 maxLines: 3,
+                keyboardType: TextInputType.multiline,
               ),
 
               const SizedBox(height: 8),
@@ -434,85 +436,102 @@ class _AddProductViewState extends State<AddProductView> {
   }) {
     final bool isMultiLine =
         maxLines > 1 || (minLines != null && minLines > 1);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: TextField(
-        controller: controller,
-        minLines: minLines,
-        maxLines: maxLines,
-        textAlignVertical:
-            isMultiLine ? TextAlignVertical.top : TextAlignVertical.center,
-        keyboardType: keyboardType,
-        maxLength:
-            keyboardType == TextInputType.number ||
-                keyboardType ==
-                    const TextInputType.numberWithOptions(decimal: true)
-            ? 10
-            : null,
-        buildCounter:
-            (_, {required currentLength, required isFocused, maxLength}) =>
-                null,
-        style: const TextStyle(fontSize: 14),
-        decoration: InputDecoration(
-          isDense: true,
-          hintText: hint,
-          hintMaxLines: hintMaxLines ?? maxLines,
-          hintStyle: TextStyle(
-            fontSize: 14,
-            color: Get.theme.hintColor.withValues(alpha: 0.8),
-          ),
-          suffixIcon: suffixIcon,
-          prefixIcon: icon != null
-              ? SizedBox(
-                  width: 46,
-                  child: Align(
-                    alignment: isMultiLine
-                        ? Alignment.topCenter
-                        : Alignment.center,
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        left: 14,
-                        right: 8,
-                        top: isMultiLine ? 16 : 0,
-                      ),
-                      child: Icon(
-                        icon,
-                        size: 20,
-                        color: Get.theme.iconTheme.color?.withValues(alpha: 0.6) ??
-                            Colors.grey,
-                      ),
-                    ),
+    final effectiveKeyboardType =
+        isMultiLine && keyboardType == TextInputType.text
+        ? TextInputType.multiline
+        : keyboardType;
+    final iconColor =
+        Get.theme.iconTheme.color?.withValues(alpha: 0.6) ?? Colors.grey;
+    final field = TextField(
+      controller: controller,
+      minLines: minLines,
+      maxLines: maxLines,
+      textInputAction: isMultiLine
+          ? TextInputAction.newline
+          : TextInputAction.next,
+      textAlignVertical:
+          isMultiLine ? TextAlignVertical.top : TextAlignVertical.center,
+      keyboardType: effectiveKeyboardType,
+      maxLength:
+          keyboardType == TextInputType.number ||
+              keyboardType ==
+                  const TextInputType.numberWithOptions(decimal: true)
+          ? 10
+          : null,
+      buildCounter:
+          (_, {required currentLength, required isFocused, maxLength}) => null,
+      style: const TextStyle(fontSize: 14),
+      decoration: InputDecoration(
+        isDense: true,
+        constraints: isMultiLine
+            ? const BoxConstraints(minHeight: 96)
+            : const BoxConstraints(minHeight: 48),
+        hintText: hint,
+        hintMaxLines: hintMaxLines ?? maxLines,
+        hintStyle: TextStyle(
+          fontSize: 14,
+          color: Get.theme.hintColor.withValues(alpha: 0.8),
+        ),
+        suffixIcon: suffixIcon,
+        prefixIcon: icon != null && !isMultiLine
+            ? SizedBox(
+                width: 46,
+                child: Align(
+                  alignment: Alignment.center,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 14, right: 8),
+                    child: Icon(icon, size: 20, color: iconColor),
                   ),
-                )
-              : null,
-          prefixIconConstraints: BoxConstraints(
-            minWidth: 46,
-            maxWidth: 46,
-            minHeight: 48,
-            maxHeight: isMultiLine ? double.infinity : 48,
-          ),
-          filled: true,
-          fillColor: Get.theme.colorScheme.surface,
-          contentPadding: EdgeInsets.only(
-            left: icon != null ? 0 : 16,
-            right: 16,
-            top: isMultiLine ? 16 : 14,
-            bottom: isMultiLine ? 16 : 14,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: primaryColor, width: 1.5),
-          ),
+                ),
+              )
+            : null,
+        prefixIconConstraints: icon != null && !isMultiLine
+            ? const BoxConstraints(
+                minWidth: 46,
+                maxWidth: 46,
+                minHeight: 48,
+                maxHeight: 48,
+              )
+            : null,
+        filled: true,
+        fillColor: Get.theme.colorScheme.surface,
+        contentPadding: EdgeInsets.only(
+          left: isMultiLine && icon != null ? 46 : (icon != null ? 0 : 16),
+          right: 16,
+          top: isMultiLine ? 16 : 14,
+          bottom: isMultiLine ? 16 : 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: primaryColor, width: 1.5),
         ),
       ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: isMultiLine && icon != null
+          ? Stack(
+              children: [
+                field,
+                Positioned(
+                  left: 14,
+                  top: 14,
+                  child: IgnorePointer(
+                    child: Icon(icon, size: 20, color: iconColor),
+                  ),
+                ),
+              ],
+            )
+          : field,
     );
   }
 

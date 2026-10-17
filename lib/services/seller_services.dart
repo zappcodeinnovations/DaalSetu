@@ -523,12 +523,18 @@ class SellerServices {
     int? counterBagCount,
     String? counterPackingWeightKg,
   }) async {
+    final cleanPrice =
+        counterPrice.replaceAll('₹', '').replaceAll(',', '').trim();
+    final cleanQty = counterQuantity.replaceAll(',', '').trim();
+    final cleanWeight = counterPackingWeightKg?.trim();
+
     final body = {
-      "counter_price": counterPrice,
-      "counter_quantity": counterQuantity,
-      if (counterBagCount != null) "counter_bag_count": counterBagCount,
-      if (counterPackingWeightKg != null)
-        "counter_packing_weight_kg": counterPackingWeightKg,
+      if (cleanPrice.isNotEmpty) "counter_price": cleanPrice,
+      if (cleanQty.isNotEmpty) "counter_quantity": cleanQty,
+      if (counterBagCount != null && counterBagCount > 0)
+        "counter_bag_count": counterBagCount,
+      if (cleanWeight != null && cleanWeight.isNotEmpty)
+        "counter_packing_weight_kg": cleanWeight,
     };
 
     // The old /message/ endpoint answers with a redirect for mobile, so use the thread API.
@@ -536,9 +542,12 @@ class SellerServices {
       endpoint: ApiUrls.offerInterestThread(productId, interestId),
       body: body,
       requireAuth: true,
+      suppressErrorDialog: true,
     );
-    if (response == null || response is! Map<String, dynamic>) {
-      throw Exception("Failed to send counter offer");
+    if (response['success'] == false) {
+      throw Exception(
+        response['message'] ?? "Failed to send counter offer",
+      );
     }
     return response;
   }
