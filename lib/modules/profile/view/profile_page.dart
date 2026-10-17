@@ -137,11 +137,7 @@ class ProfileScreen extends StatelessWidget {
                           accentGreen,
                           Icons.check_circle_outline,
                         )
-                      : _buildBadge(
-                          "Not Available",
-                          textLight,
-                          Icons.remove_circle_outline,
-                        ),
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 if (_hasCompanyManagement(user.role))
@@ -455,7 +451,7 @@ class ProfileScreen extends StatelessWidget {
               child: _buildGridItem(
                 Icons.calendar_today,
                 "Date of Birth",
-                user.dob.isEmpty ? "Not Provided" : user.dob,
+                _formatDob(user.dob),
                 accentGreen,
               ),
             ),
@@ -472,6 +468,22 @@ class ProfileScreen extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  String _formatDob(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty || trimmed == 'null') return "Not Provided";
+    if (trimmed.contains('-')) {
+      final parts = trimmed.split('-');
+      if (parts.length == 3) {
+        if (parts[0].length == 4) {
+          return '${parts[2].padLeft(2, '0')}/${parts[1].padLeft(2, '0')}/${parts[0]}';
+        } else {
+          return '${parts[0].padLeft(2, '0')}/${parts[1].padLeft(2, '0')}/${parts[2]}';
+        }
+      }
+    }
+    return trimmed;
   }
 
   Widget _buildGridItem(
@@ -702,90 +714,100 @@ class ProfileScreen extends StatelessWidget {
               ],
             ),
           ),
-          InkWell(
-            onTap: () {
-              if (!hasDocument) {
-                Get.snackbar(
-                  "Document Missing",
-                  "$title has not been uploaded yet.",
-                  snackPosition: SnackPosition.BOTTOM,
-                  backgroundColor: Colors.amber.shade800,
-                  colorText: Colors.white,
-                  icon: const Icon(Icons.info_outline, color: Colors.white),
-                  duration: const Duration(seconds: 2),
-                );
-                return;
-              }
-              _openDocument(resolvedUrl, inApp: true);
-            },
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              height: 32,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                color: hasDocument
-                    ? (Get.isDarkMode
-                        ? const Color(0xFF1E293B)
-                        : const Color(0xFFF1F5F9))
-                    : cardLighter,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
+          if (hasDocument) ...[
+            InkWell(
+              onTap: () => _openDocument(resolvedUrl, inApp: true),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                height: 32,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
                   color: Get.isDarkMode
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : AppTheme.borderLight,
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Get.isDarkMode
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : AppTheme.borderLight,
+                  ),
                 ),
-              ),
-              child: Center(
-                child: Text(
-                  hasDocument ? "View" : "Missing",
-                  style: TextStyle(
-                    color: hasDocument ? accentGreen : textLight,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                child: Center(
+                  child: Text(
+                    "View",
+                    style: TextStyle(
+                      color: accentGreen,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          InkWell(
-            onTap: () {
-              if (!hasDocument) {
-                Get.snackbar(
-                  "Cannot Download",
-                  "$title has not been uploaded yet.",
-                  snackPosition: SnackPosition.BOTTOM,
-                  backgroundColor: Colors.amber.shade800,
-                  colorText: Colors.white,
-                  icon: const Icon(Icons.file_download_off_outlined,
-                      color: Colors.white),
-                  duration: const Duration(seconds: 2),
-                );
-                return;
-              }
-              _openDocument(resolvedUrl, inApp: false);
-            },
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: cardLighter,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: Get.isDarkMode
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : AppTheme.borderLight,
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () => _openDocument(resolvedUrl, inApp: false),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: cardLighter,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Get.isDarkMode
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : AppTheme.borderLight,
+                  ),
+                ),
+                child: Icon(
+                  Icons.file_download_outlined,
+                  color: textDark,
+                  size: 16,
                 ),
               ),
-              child: Icon(
-                Icons.file_download_outlined,
-                color:
-                    hasDocument ? textDark : textLight.withValues(alpha: 0.4),
-                size: 16,
+            ),
+          ] else ...[
+            InkWell(
+              onTap: () async {
+                await Get.toNamed(AppRoutes.editProfile);
+                controller.fetchProfile();
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                height: 32,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: cardLighter,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Get.isDarkMode
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : AppTheme.borderLight,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.upload_file_outlined,
+                      size: 14,
+                      color: accentGold,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      "Upload",
+                      style: TextStyle(
+                        color: accentGold,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );

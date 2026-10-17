@@ -6,10 +6,40 @@ import '../controller/buyer_branch_controller.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/app_snackbar.dart';
 
-class BuyerBranchView extends StatelessWidget {
-  BuyerBranchView({super.key});
+class BuyerBranchView extends StatefulWidget {
+  const BuyerBranchView({super.key});
 
-  final BuyerBranchController controller = Get.put(BuyerBranchController());
+  @override
+  State<BuyerBranchView> createState() => _BuyerBranchViewState();
+}
+
+class _BuyerBranchViewState extends State<BuyerBranchView> with WidgetsBindingObserver {
+  late final BuyerBranchController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    controller = Get.isRegistered<BuyerBranchController>()
+        ? Get.find<BuyerBranchController>()
+        : Get.put(BuyerBranchController());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.fetchBranches(silent: true);
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      controller.fetchBranches(silent: true);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -135,10 +165,186 @@ class BuyerBranchView extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
+
+                // Search & Filter Card matching Buyer web panel
+                GlassCard(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Search",
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
+                            ),
+                          ),
+                          if (controller.isFilterActive)
+                            GestureDetector(
+                              onTap: controller.resetFilter,
+                              child: Text(
+                                "Clear",
+                                style: GoogleFonts.inter(
+                                  color: Colors.redAccent,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: theme.cardColor,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: theme.dividerColor.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 10),
+                              child: Icon(IconlyLight.search, size: 18, color: Colors.grey),
+                            ),
+                            Expanded(
+                              child: TextField(
+                                controller: controller.searchTextController,
+                                onChanged: (val) => controller.setSearchQuery(val),
+                                onSubmitted: (_) => controller.applyFilter(),
+                                style: GoogleFonts.inter(fontSize: 13),
+                                decoration: InputDecoration(
+                                  hintText: "Branch code, location, city, area, admin, user",
+                                  hintStyle: GoogleFonts.inter(fontSize: 11.5, color: Colors.grey),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(vertical: 11),
+                                ),
+                              ),
+                            ),
+                            if (controller.searchQuery.value.isNotEmpty || controller.searchTextController.text.isNotEmpty)
+                              IconButton(
+                                icon: const Icon(Icons.clear, size: 16, color: Colors.grey),
+                                onPressed: () {
+                                  controller.searchTextController.clear();
+                                  controller.setSearchQuery('');
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                FocusScope.of(context).unfocus();
+                                controller.applyFilter();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryColor,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                elevation: 0,
+                              ),
+                              child: Text(
+                                "Apply",
+                                style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () {
+                                FocusScope.of(context).unfocus();
+                                controller.resetFilter();
+                              },
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: theme.textTheme.bodyMedium?.color,
+                                side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.4)),
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              child: Text(
+                                "Reset",
+                                style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _buildFilterChip(context, label: "All", value: "all"),
+                            const SizedBox(width: 8),
+                            _buildFilterChip(context, label: "Primary", value: "primary"),
+                            const SizedBox(width: 8),
+                            _buildFilterChip(context, label: "Additional", value: "additional"),
+                            const SizedBox(width: 8),
+                            _buildFilterChip(context, label: "Pending", value: "pending"),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Empty search result notice if active
+                if (controller.isFilterActive && !controller.hasFilteredResults) ...[
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 36.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            IconlyLight.search,
+                            size: 52,
+                            color: Colors.grey.withValues(alpha: 0.5),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            "No Branches Found",
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            controller.searchQuery.value.isNotEmpty
+                                ? "No branch matches \"${controller.searchQuery.value}\""
+                                : "No branches found for selected type filter",
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 16),
+                          OutlinedButton(
+                            onPressed: controller.resetFilter,
+                            child: const Text("Reset Filter"),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
 
                 // Primary Branch
-                if (controller.primaryBranch.value != null) ...[
+                if (controller.filteredPrimaryBranch != null) ...[
                   Text(
                     "Primary Branch",
                     style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
@@ -153,7 +359,7 @@ class BuyerBranchView extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              controller.primaryBranch.value!.locationName ?? 'Primary Branch',
+                              controller.filteredPrimaryBranch!.locationName ?? 'Primary Branch',
                               style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
                             ),
                             Container(
@@ -171,11 +377,11 @@ class BuyerBranchView extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          "Branch Code: ${controller.primaryBranch.value!.branchCode ?? 'N/A'}",
+                          "Branch Code: ${controller.filteredPrimaryBranch!.branchCode ?? 'N/A'}",
                           style: GoogleFonts.inter(color: Colors.grey, fontSize: 12),
                         ),
                         Text(
-                          "Location: ${controller.primaryBranch.value!.city ?? ''}, ${controller.primaryBranch.value!.state ?? ''}",
+                          "Location: ${controller.filteredPrimaryBranch!.city ?? ''}, ${controller.filteredPrimaryBranch!.state ?? ''}",
                           style: GoogleFonts.inter(color: Colors.grey, fontSize: 12),
                         ),
                       ],
@@ -185,7 +391,7 @@ class BuyerBranchView extends StatelessWidget {
                 ],
 
                 // Pending Requests
-                if (controller.pendingRequests.isNotEmpty) ...[
+                if (controller.filteredPendingRequests.isNotEmpty) ...[
                   Text(
                     "Pending Join Requests",
                     style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
@@ -195,10 +401,10 @@ class BuyerBranchView extends StatelessWidget {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     padding: EdgeInsets.zero,
-                    itemCount: controller.pendingRequests.length,
+                    itemCount: controller.filteredPendingRequests.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
-                      final req = controller.pendingRequests[index];
+                      final req = controller.filteredPendingRequests[index];
                       return GlassCard(
                         padding: const EdgeInsets.all(14),
                         child: Row(
@@ -245,7 +451,7 @@ class BuyerBranchView extends StatelessWidget {
                 ],
 
                 // My Branches List
-                if (controller.myBranches.isNotEmpty) ...[
+                if (controller.filteredMyBranches.isNotEmpty) ...[
                   Text(
                     "My Branches",
                     style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
@@ -255,10 +461,10 @@ class BuyerBranchView extends StatelessWidget {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     padding: EdgeInsets.zero,
-                    itemCount: controller.myBranches.length,
+                    itemCount: controller.filteredMyBranches.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
-                      final branch = controller.myBranches[index];
+                      final branch = controller.filteredMyBranches[index];
                       return GlassCard(
                         padding: const EdgeInsets.all(16),
                         child: Row(
@@ -425,6 +631,37 @@ class BuyerBranchView extends StatelessWidget {
         controller.leaveBranch(branchId, branchCode: branchCode);
       },
       textCancel: "CANCEL",
+    );
+  }
+
+  Widget _buildFilterChip(BuildContext context, {required String label, required String value}) {
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
+    final isSelected = controller.selectedTypeFilter.value == value;
+
+    return InkWell(
+      onTap: () => controller.setTypeFilter(value),
+      borderRadius: BorderRadius.circular(20),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? primaryColor.withValues(alpha: 0.15) : theme.cardColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? primaryColor : theme.dividerColor.withValues(alpha: 0.3),
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: isSelected ? primaryColor : theme.textTheme.bodyMedium?.color,
+          ),
+        ),
+      ),
     );
   }
 }

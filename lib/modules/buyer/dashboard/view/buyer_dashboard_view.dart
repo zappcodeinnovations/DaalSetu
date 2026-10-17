@@ -17,6 +17,7 @@ import '../../../seller/company/view/seller_company_view.dart';
 import '../../../seller/notifications/view/seller_notification_view.dart';
 import '../../../../services/realtime_notification_service.dart';
 import 'buyer_dashboard_analytics.dart';
+import '../../../admin_catalog/view/admin_drawer.dart';
 
 class BuyerDashboardView extends StatelessWidget {
   BuyerDashboardView({super.key});
@@ -32,6 +33,7 @@ class BuyerDashboardView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      drawer: const AdminDrawer(activeKey: 'dashboard'),
       appBar: _buildAppBar(context),
       body: Obx(() {
         if (controller.isLoading.value) {
@@ -631,7 +633,9 @@ class BuyerDashboardView extends StatelessWidget {
                 value: inTransit,
                 subtitle: "Avg ETA: $avgEta",
                 icon: Icons.local_shipping_rounded,
-                onTap: () => Get.to(() => const BuyerDeliveryChallanView()),
+                onTap: () => Get.to(
+                  () => const ContractsScreen(initialFilter: 'In Transit'),
+                ),
               ),
             ),
           ],
@@ -670,6 +674,7 @@ class BuyerDashboardView extends StatelessWidget {
                 value: topSupplier,
                 subtitle: supplierShare,
                 icon: Icons.storefront_outlined,
+                onTap: () => Get.to(() => const ContractsScreen()),
               ),
             ),
             const SizedBox(width: 14),
@@ -680,6 +685,7 @@ class BuyerDashboardView extends StatelessWidget {
                 value: averagePrice,
                 subtitle: averagePriceDelta,
                 icon: Icons.currency_rupee_rounded,
+                onTap: () => Get.to(() => const ContractsScreen()),
               ),
             ),
           ],
@@ -735,11 +741,12 @@ class BuyerDashboardView extends StatelessWidget {
                   ),
                   child: Icon(icon, color: orangeColor, size: 18),
                 ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 12,
-                  color: theme.dividerColor.withValues(alpha: 0.8),
-                ),
+                if (onTap != null)
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 12,
+                    color: theme.dividerColor.withValues(alpha: 0.8),
+                  ),
               ],
             ),
             const SizedBox(height: 12),

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../../../utils/app_preferences.dart';
 
@@ -25,7 +26,11 @@ class BottomNavController extends GetxController {
   }
 
   void changeIndex(int index) {
-    print("Changing to index: $index");
-    selectedIndex.value = index;
+    debugPrint("Changing to index: $index");
+    if (selectedIndex.value == index) {
+      selectedIndex.refresh();
+    } else {
+      selectedIndex.value = index;
+    }
   }
 }

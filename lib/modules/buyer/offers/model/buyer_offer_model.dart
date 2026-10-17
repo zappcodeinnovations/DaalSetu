@@ -241,6 +241,26 @@ class BuyerOfferModel {
       return zeroVal ?? fallback;
     }
 
+    String pickPositiveNumStr(List<dynamic> candidates, {String fallback = ''}) {
+      for (final c in candidates) {
+        if (c != null) {
+          final s = c.toString().trim();
+          if (s.isNotEmpty &&
+              s != 'null' &&
+              s != 'N/A' &&
+              s != 'na' &&
+              s != 'None') {
+            final cleaned = s.replaceAll(RegExp(r'[^\d.]'), '');
+            final numVal = num.tryParse(cleaned);
+            if (numVal != null && numVal > 0) {
+              return s;
+            }
+          }
+        }
+      }
+      return fallback;
+    }
+
     String formatDateDisplay(String? raw, {bool withTime = false}) {
       if (raw == null || raw.trim().isEmpty) return '';
       final s = raw.trim();
@@ -399,22 +419,32 @@ class BuyerOfferModel {
     ]);
 
     final rawStatus = pickStr([
-      json['stock_status'],
       json['deal_status_label'],
       json['deal_status'],
       json['status_label'],
-      json['product_status'],
+      json['interest_status'],
       json['status'],
       json['status_code'],
+      json['product_status'],
+      json['stock_status'],
       if (json['product'] is Map)
-        (json['product']['stock_status'] ?? json['product']['status']),
+        (json['product']['status'] ?? json['product']['stock_status']),
       if (json['offer'] is Map)
-        (json['offer']['stock_status'] ?? json['offer']['status']),
+        (json['offer']['status'] ?? json['offer']['stock_status']),
     ]);
     final normalizedStatus = rawStatus.trim().toLowerCase();
 
     bool boolValue(String key, {required bool fallback}) {
-      final value = json[key];
+      dynamic value = json[key];
+      if (value == null && json['product'] is Map) {
+        value = json['product'][key];
+      }
+      if (value == null && json['offer'] is Map) {
+        value = json['offer'][key];
+      }
+      if (value == null && json['rfq'] is Map) {
+        value = json['rfq'][key];
+      }
       if (value is bool) return value;
       if (value is num) return value != 0;
       if (value is String) {
@@ -446,22 +476,38 @@ class BuyerOfferModel {
 
     final rawAmountUnit = pickStr([
       json['amount_unit'],
+      json['rate_unit'],
+      json['price_unit'],
+      if (json['offer'] is Map) ...[
+        json['offer']['amount_unit'],
+        json['offer']['rate_unit'],
+        json['offer']['price_unit'],
+      ],
+      if (json['product'] is Map) ...[
+        json['product']['amount_unit'],
+        json['product']['rate_unit'],
+        json['product']['price_unit'],
+      ],
       json['quantity_unit'],
       json['unit'],
-      if (json['offer'] is Map) json['offer']['amount_unit'],
-      if (json['product'] is Map) json['product']['amount_unit'],
     ], fallback: rawUnit);
 
-    final rawAvailableQuantity = pickNumStr([
+    String rawAvailableQuantity = pickPositiveNumStr([
+      json['quantity_qtl'],
+      json['available_quantity_qtl'],
+      json['remaining_quantity_qtl'],
       json['available_quantity'],
       json['remaining_quantity'],
-      json['latest_offered_quantity'],
+      json['available_stock_qtl'],
+      json['available_stock'],
+      json['stock_qtl'],
+      json['stock'],
+      json['total_qtl'],
+      json['original_quantity_qtl'],
       json['original_quantity'],
-      json['quantity_qtl'],
+      json['latest_offered_quantity'],
       json['deal_quantity'],
       json['quantity'],
-      json['available_stock'],
-      json['stock'],
       json['total_quantity'],
       json['seller_snapshot_quantity'],
       json['buyer_required_quantity'],
@@ -471,15 +517,21 @@ class BuyerOfferModel {
       json['volume'],
       json['weight'],
       if (json['offer'] is Map) ...[
+        json['offer']['quantity_qtl'],
+        json['offer']['available_quantity_qtl'],
+        json['offer']['remaining_quantity_qtl'],
         json['offer']['available_quantity'],
         json['offer']['remaining_quantity'],
-        json['offer']['latest_offered_quantity'],
+        json['offer']['available_stock_qtl'],
+        json['offer']['available_stock'],
+        json['offer']['stock_qtl'],
+        json['offer']['stock'],
+        json['offer']['total_qtl'],
+        json['offer']['original_quantity_qtl'],
         json['offer']['original_quantity'],
-        json['offer']['quantity_qtl'],
+        json['offer']['latest_offered_quantity'],
         json['offer']['deal_quantity'],
         json['offer']['quantity'],
-        json['offer']['available_stock'],
-        json['offer']['stock'],
         json['offer']['total_quantity'],
         json['offer']['seller_snapshot_quantity'],
         json['offer']['buyer_required_quantity'],
@@ -487,15 +539,21 @@ class BuyerOfferModel {
         json['offer']['requested_quantity'],
       ],
       if (json['product'] is Map) ...[
+        json['product']['quantity_qtl'],
+        json['product']['available_quantity_qtl'],
+        json['product']['remaining_quantity_qtl'],
         json['product']['available_quantity'],
         json['product']['remaining_quantity'],
-        json['product']['latest_offered_quantity'],
+        json['product']['available_stock_qtl'],
+        json['product']['available_stock'],
+        json['product']['stock_qtl'],
+        json['product']['stock'],
+        json['product']['total_qtl'],
+        json['product']['original_quantity_qtl'],
         json['product']['original_quantity'],
-        json['product']['quantity_qtl'],
+        json['product']['latest_offered_quantity'],
         json['product']['deal_quantity'],
         json['product']['quantity'],
-        json['product']['available_stock'],
-        json['product']['stock'],
         json['product']['total_quantity'],
         json['product']['seller_snapshot_quantity'],
         json['product']['buyer_required_quantity'],
@@ -503,25 +561,25 @@ class BuyerOfferModel {
         json['product']['requested_quantity'],
       ],
       if (json['rfq'] is Map) ...[
+        json['rfq']['quantity_qtl'],
         json['rfq']['required_quantity'],
         json['rfq']['requested_quantity'],
         json['rfq']['quantity'],
-        json['rfq']['quantity_qtl'],
         json['rfq']['target_quantity'],
       ],
       if (json['deal'] is Map) ...[
-        json['deal']['deal_quantity'],
         json['deal']['quantity_qtl'],
+        json['deal']['deal_quantity'],
         json['deal']['quantity'],
       ],
       if (json['contract'] is Map) ...[
-        json['contract']['deal_quantity'],
         json['contract']['quantity_qtl'],
+        json['contract']['deal_quantity'],
         json['contract']['quantity'],
       ],
     ]);
 
-    final rawRequestedQuantity = pickNumStr([
+    final rawRequestedQuantity = pickPositiveNumStr([
       json['requested_quantity'],
       json['required_quantity'],
       json['latest_offered_quantity'],
@@ -545,7 +603,11 @@ class BuyerOfferModel {
         json['offer']['buyer_required_quantity'],
       ],
       rawAvailableQuantity,
-    ]);
+    ], fallback: pickNumStr([
+      json['requested_quantity'],
+      json['required_quantity'],
+      rawAvailableQuantity,
+    ]));
 
     final rawPrice = pickNumStr([
       json['amount'],
@@ -577,31 +639,84 @@ class BuyerOfferModel {
             json['rfq']['requested_amount']),
     ]);
 
-    final rawBags = pickNumStr([
+    final rawBags = pickPositiveNumStr([
+      json['remaining_bag_count'],
+      json['original_bag_count'],
+      json['bag_count'],
+      json['remaining_bags'],
+      json['original_bags'],
+      json['available_bags'],
+      json['bags'],
+      json['seller_snapshot_bag_count'],
+      json['buyer_required_bag_count'],
+      if (json['offer'] is Map) ...[
+        json['offer']['remaining_bag_count'],
+        json['offer']['original_bag_count'],
+        json['offer']['bag_count'],
+        json['offer']['remaining_bags'],
+        json['offer']['original_bags'],
+        json['offer']['available_bags'],
+        json['offer']['bags'],
+      ],
+      if (json['product'] is Map) ...[
+        json['product']['remaining_bag_count'],
+        json['product']['original_bag_count'],
+        json['product']['bag_count'],
+        json['product']['remaining_bags'],
+        json['product']['original_bags'],
+        json['product']['available_bags'],
+        json['product']['bags'],
+      ],
+    ], fallback: pickNumStr([
       json['remaining_bag_count'],
       json['original_bag_count'],
       json['bag_count'],
       json['bags'],
-      json['seller_snapshot_bag_count'],
-      json['buyer_required_bag_count'],
-      if (json['offer'] is Map)
-        (json['offer']['bag_count'] ?? json['offer']['bags']),
-      if (json['product'] is Map)
-        (json['product']['remaining_bag_count'] ??
-            json['product']['bag_count'] ??
-            json['product']['original_bag_count']),
-    ]);
+    ]));
 
-    final rawPacking = pickNumStr([
+    final rawPacking = pickPositiveNumStr([
       json['packing_weight_kg'],
+      json['packing_weight'],
+      json['packing_kg'],
       json['packing'],
       json['seller_snapshot_packing_weight_kg'],
       json['buyer_packing_weight_kg'],
-      if (json['offer'] is Map)
-        (json['offer']['packing_weight_kg'] ?? json['offer']['packing']),
-      if (json['product'] is Map)
-        (json['product']['packing_weight_kg'] ?? json['product']['packing']),
-    ]);
+      if (json['offer'] is Map) ...[
+        json['offer']['packing_weight_kg'],
+        json['offer']['packing_weight'],
+        json['offer']['packing_kg'],
+        json['offer']['packing'],
+      ],
+      if (json['product'] is Map) ...[
+        json['product']['packing_weight_kg'],
+        json['product']['packing_weight'],
+        json['product']['packing_kg'],
+        json['product']['packing'],
+      ],
+    ], fallback: pickNumStr([
+      json['packing_weight_kg'],
+      json['packing'],
+    ]));
+
+    // If available quantity is missing or non-positive, compute it directly from bags * packing_weight / 100
+    final num? parsedAvailNum = num.tryParse(
+      rawAvailableQuantity.replaceAll(RegExp(r'[^\d.]'), ''),
+    );
+    final num? parsedBagsNum = num.tryParse(
+      rawBags.replaceAll(RegExp(r'[^\d.]'), ''),
+    );
+    final num? parsedPackingNum = num.tryParse(
+      rawPacking.replaceAll(RegExp(r'[^\d.]'), ''),
+    );
+
+    if ((parsedAvailNum == null || parsedAvailNum <= 0) &&
+        parsedBagsNum != null &&
+        parsedBagsNum > 0 &&
+        parsedPackingNum != null &&
+        parsedPackingNum > 0) {
+      final calcQtl = (parsedBagsNum * parsedPackingNum) / 100.0;
+      rawAvailableQuantity = calcQtl.toStringAsFixed(3);
+    }
 
     // Parse loading_location e.g. "2026-10-10 -> 2026-10-31" as fallback dates
     String? fallbackFromDate;
@@ -782,22 +897,46 @@ class BuyerOfferModel {
       formattedPrice = '₹$cleanP/$unitStr';
     }
 
-    // Format display quantity e.g. "600.000 QTL"
+    // Format display quantity e.g. "20.100 QTL"
     String formattedQuantity = '';
-    final qtyVal = rawAvailableQuantity.isNotEmpty
-        ? rawAvailableQuantity
-        : rawRequestedQuantity;
-    if (qtyVal.isNotEmpty) {
+    final num? finalAvailNum = num.tryParse(
+      rawAvailableQuantity.replaceAll(RegExp(r'[^\d.]'), ''),
+    );
+    if (finalAvailNum != null && finalAvailNum > 0) {
       final unitUpper = rawUnit.toUpperCase();
-      if (qtyVal.toUpperCase().contains(unitUpper)) {
-        formattedQuantity = qtyVal;
+      formattedQuantity = '${finalAvailNum.toStringAsFixed(3)} $unitUpper';
+    } else if (rawAvailableQuantity.isNotEmpty &&
+        rawAvailableQuantity != '0' &&
+        rawAvailableQuantity != '0.0' &&
+        rawAvailableQuantity != '0.000') {
+      final unitUpper = rawUnit.toUpperCase();
+      formattedQuantity = rawAvailableQuantity.toUpperCase().contains(unitUpper)
+          ? rawAvailableQuantity
+          : '$rawAvailableQuantity $unitUpper';
+    } else if (parsedBagsNum != null &&
+        parsedBagsNum > 0 &&
+        parsedPackingNum != null &&
+        parsedPackingNum > 0) {
+      final calcQtl = (parsedBagsNum * parsedPackingNum) / 100.0;
+      formattedQuantity = '${calcQtl.toStringAsFixed(3)} QTL';
+      rawAvailableQuantity = calcQtl.toStringAsFixed(3);
+    } else if (rawRequestedQuantity.isNotEmpty) {
+      final num? reqNum = num.tryParse(
+        rawRequestedQuantity.replaceAll(RegExp(r'[^\d.]'), ''),
+      );
+      if (reqNum != null && reqNum > 0) {
+        final unitUpper = rawUnit.toUpperCase();
+        formattedQuantity = '${reqNum.toStringAsFixed(3)} $unitUpper';
       } else {
-        formattedQuantity = '$qtyVal $unitUpper';
+        formattedQuantity = rawRequestedQuantity;
       }
-    } else if (rawBags.isNotEmpty) {
-      formattedQuantity = '$rawBags Bags';
+    } else if (parsedBagsNum != null && parsedBagsNum > 0) {
+      formattedQuantity = '$parsedBagsNum Bags';
     } else {
       formattedQuantity = '0.000 QTL';
+      if (rawAvailableQuantity.isEmpty) {
+        rawAvailableQuantity = '0.000';
+      }
     }
 
     final rawExpiryStr = pickStr([
@@ -820,9 +959,104 @@ class BuyerOfferModel {
       }
     }
 
+    final statusCandidates = [
+      json['status'],
+      json['status_code'],
+      json['product_status'],
+      if (json['product'] is Map) ...[
+        json['product']['status'],
+        json['product']['status_code'],
+        json['product']['product_status'],
+      ],
+      if (json['offer'] is Map) ...[
+        json['offer']['status'],
+        json['offer']['status_code'],
+      ],
+    ];
+
+    bool statusSaysInactive = false;
+    for (final sc in statusCandidates) {
+      if (sc != null) {
+        final s = sc.toString().trim().toLowerCase();
+        if (s == 'inactive' ||
+            s == 'disabled' ||
+            s == 'hidden' ||
+            s == 'deactivated' ||
+            s == 'deactivate' ||
+            s == 'archived' ||
+            s == 'deleted') {
+          statusSaysInactive = true;
+          break;
+        }
+      }
+    }
+
+    final visibilityStr = pickStr([
+      json['visibility'],
+      if (json['product'] is Map) json['product']['visibility'],
+      if (json['offer'] is Map) json['offer']['visibility'],
+    ]).toLowerCase().trim();
+    final bool visibilityDisabled = visibilityStr == 'hidden' ||
+        visibilityStr == 'disabled' ||
+        visibilityStr == 'inactive' ||
+        visibilityStr == 'private' ||
+        visibilityStr == 'off' ||
+        visibilityStr == 'false' ||
+        visibilityStr == '0';
+
+    final bool detectedActive = !statusSaysInactive &&
+        !visibilityDisabled &&
+        boolValue('is_active', fallback: true) &&
+        boolValue('is_visible', fallback: true) &&
+        boolValue('visible', fallback: true);
+
+    final stockStatusCandidates = [
+      json['stock_status'],
+      json['product_stock_status'],
+      if (json['product'] is Map) json['product']['stock_status'],
+      if (json['offer'] is Map) json['offer']['stock_status'],
+    ];
+
+    bool detectedOutOfStock = boolValue('is_out_of_stock', fallback: false) ||
+        boolValue('out_of_stock', fallback: false) ||
+        rawStatus.toLowerCase().contains('out_of_stock') ||
+        rawStatus.toLowerCase().contains('out of stock') ||
+        rawStatus.toLowerCase().contains('sold_out') ||
+        rawStatus.toLowerCase().contains('sold out');
+
+    if (!detectedOutOfStock) {
+      for (final ssc in stockStatusCandidates) {
+        if (ssc != null) {
+          final s = ssc.toString().toLowerCase().trim();
+          if (s.contains('out_of_stock') ||
+              s.contains('out of stock') ||
+              s.contains('sold_out') ||
+              s.contains('sold out') ||
+              s.contains('no_stock')) {
+            detectedOutOfStock = true;
+            break;
+          }
+        }
+      }
+    }
+
+    if (!detectedOutOfStock && !isRfqItem) {
+      final num? parsedQty = num.tryParse(rawAvailableQuantity.replaceAll(RegExp(r'[^\d.]'), ''));
+      if (parsedQty != null && parsedQty <= 0 && rawAvailableQuantity.isNotEmpty) {
+        final num? parsedBags = num.tryParse(rawBags.replaceAll(RegExp(r'[^\d.]'), ''));
+        if (parsedBags == null || parsedBags <= 0) {
+          detectedOutOfStock = true;
+        }
+      }
+    }
+
     String formattedStatus = rawStatus.trim();
     if (detectedExpired) {
       formattedStatus = 'Deal Expired';
+    } else if (detectedOutOfStock) {
+      formattedStatus = 'OUT OF STOCK';
+    } else if (!detectedActive) {
+      formattedStatus = 'INACTIVE';
     } else if (formattedStatus.isEmpty) {
       formattedStatus = isRfqItem ? 'OPEN' : 'ACTIVE';
     } else {
@@ -855,7 +1089,11 @@ class BuyerOfferModel {
       pickupFrom: rawPickupFrom,
       pickupTo: rawPickupTo,
       expiryDate: rawExpiry,
-      status: detectedExpired ? 'deal_expired' : rawStatus,
+      status: detectedExpired
+          ? 'deal_expired'
+          : (detectedOutOfStock
+              ? 'out_of_stock'
+              : (!detectedActive ? 'inactive' : rawStatus)),
       createdAt: formatDateDisplay(
         pickStr([
           json['created_at'],
@@ -901,11 +1139,14 @@ class BuyerOfferModel {
       displayQuantity: formattedQuantity,
       displayPrice: formattedPrice,
       isRfq: isRfqItem,
-      isActive: boolValue('is_active', fallback: true) &&
-          boolValue('is_visible', fallback: true) &&
-          boolValue('visible', fallback: true),
+      isActive: detectedActive,
       isExpired: detectedExpired,
     );
+  }
+
+  bool get isInterested {
+    final s = (displayStatus ?? status ?? '').toString().toLowerCase().trim();
+    return s == 'interested' || s.contains('interest');
   }
 
   bool get isConfirmed {
@@ -925,13 +1166,40 @@ class BuyerOfferModel {
   }
 
   bool get isOutOfStock {
-    final s = (displayStatus ?? status ?? '').toString().toUpperCase();
-    return s.contains('OUT OF STOCK') ||
-        s == 'OUT_OF_STOCK' ||
-        s.contains('OUT-OF-STOCK');
+    final s = (displayStatus ?? status ?? '')
+        .toString()
+        .toUpperCase()
+        .replaceAll('_', ' ')
+        .replaceAll('-', ' ');
+    if (s.contains('OUT OF STOCK') ||
+        s.contains('SOLD OUT') ||
+        s.contains('NO STOCK')) {
+      return true;
+    }
+    final rawS = (status ?? '').toString().toUpperCase();
+    if (rawS.contains('OUT_OF_STOCK') || rawS.contains('SOLD_OUT')) {
+      return true;
+    }
+    final num? qty = num.tryParse(
+      (availableQuantity ?? '').replaceAll(RegExp(r'[^\d.]'), ''),
+    );
+    if (qty != null && qty <= 0 && !isRfq && (availableQuantity ?? '').isNotEmpty) {
+      final num? bags = num.tryParse(
+        (bagCount ?? '').replaceAll(RegExp(r'[^\d.]'), ''),
+      );
+      if (bags == null || bags <= 0) {
+        return true;
+      }
+    }
+    return false;
   }
 
-  bool get canSubmitOffer => isActive && !isOutOfStock && !isConfirmed && !isRejected && !isExpired;
+  bool get canSubmitOffer =>
+      isActive &&
+      !isOutOfStock &&
+      !isConfirmed &&
+      !isRejected &&
+      !isExpired;
 
   bool get isActionable => !isConfirmed && !isRejected;
 }

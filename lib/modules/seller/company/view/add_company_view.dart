@@ -171,7 +171,7 @@ class _AddCompanyViewState extends State<AddCompanyView> {
                 errorKey: 'year_of_establishment',
                 required: true,
               ),
-              _buildSectionHeader("PAN & GST", theme),
+              _buildSectionHeader("STATUTORY DETAILS", theme),
               _buildTextField(
                 controller.panController,
                 "PAN Number",
@@ -292,7 +292,8 @@ class _AddCompanyViewState extends State<AddCompanyView> {
           ),
           decoration: _dropdownDecoration(
             theme: theme,
-            label: "City *",
+            label: "City",
+            required: true,
             hint: "Select City",
             icon: Icons.location_city_outlined,
             errorText: errorText,
@@ -378,7 +379,8 @@ class _AddCompanyViewState extends State<AddCompanyView> {
           ),
           decoration: _dropdownDecoration(
             theme: theme,
-            label: "State *",
+            label: "State",
+            required: true,
             hint: "Select State",
             icon: Icons.map_outlined,
             errorText: errorText,
@@ -422,10 +424,26 @@ class _AddCompanyViewState extends State<AddCompanyView> {
     required String hint,
     required IconData icon,
     String? errorText,
+    bool required = false,
   }) {
     final radius = BorderRadius.circular(16);
     return InputDecoration(
-      labelText: label,
+      label: required
+          ? Text.rich(
+              TextSpan(
+                text: label,
+                children: const [
+                  TextSpan(
+                    text: ' *',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : Text(label),
       hintText: hint,
       floatingLabelBehavior: FloatingLabelBehavior.always,
       prefixIcon: Icon(icon, size: 20),
@@ -561,7 +579,22 @@ class _AddCompanyViewState extends State<AddCompanyView> {
               : null,
           textCapitalization: textCapitalization,
           decoration: InputDecoration(
-            labelText: required ? '$hint *' : hint,
+            label: required
+                ? Text.rich(
+                    TextSpan(
+                      text: hint,
+                      children: const [
+                        TextSpan(
+                          text: ' *',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Text(hint),
             hintText: effectiveHint,
             floatingLabelBehavior: FloatingLabelBehavior.always,
             counterText: "",

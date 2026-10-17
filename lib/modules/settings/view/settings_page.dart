@@ -27,7 +27,7 @@ class SettingsScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      drawer: const AdminDrawer(),
+      drawer: const AdminDrawer(activeKey: 'settings'),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),

@@ -39,6 +39,48 @@ class ProfileModel {
     required this.isActive,
   });
 
+  ProfileModel copyWith({
+    int? id,
+    String? username,
+    String? mobile,
+    String? email,
+    String? firstName,
+    String? lastName,
+    String? role,
+    String? panNumber,
+    String? gstNumber,
+    String? profileImage,
+    String? gender,
+    String? dob,
+    String? panImage,
+    String? gstImage,
+    String? aadhaarImage,
+    String? kycStatus,
+    String? accountStatus,
+    bool? isActive,
+  }) {
+    return ProfileModel(
+      id: id ?? this.id,
+      username: username ?? this.username,
+      mobile: mobile ?? this.mobile,
+      email: email ?? this.email,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      role: role ?? this.role,
+      panNumber: panNumber ?? this.panNumber,
+      gstNumber: gstNumber ?? this.gstNumber,
+      profileImage: profileImage ?? this.profileImage,
+      gender: gender ?? this.gender,
+      dob: dob ?? this.dob,
+      panImage: panImage ?? this.panImage,
+      gstImage: gstImage ?? this.gstImage,
+      aadhaarImage: aadhaarImage ?? this.aadhaarImage,
+      kycStatus: kycStatus ?? this.kycStatus,
+      accountStatus: accountStatus ?? this.accountStatus,
+      isActive: isActive ?? this.isActive,
+    );
+  }
+
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
     Map<String, dynamic> data = json;
     if (data.containsKey('body') && data['body'] is Map<String, dynamic>) {
@@ -74,19 +116,34 @@ class ProfileModel {
       return "";
     }
 
+    final rawDob = data["dob"] ?? data["date_of_birth"];
+    final String parsedDob = (rawDob == null || rawDob.toString() == 'null')
+        ? ""
+        : rawDob.toString().trim();
+
+    final rawEmail = data["email"] ?? data["user_email"];
+    final String parsedEmail = (rawEmail == null || rawEmail.toString() == 'null')
+        ? ""
+        : rawEmail.toString().trim();
+
+    final rawMobile = data["mobile"] ?? data["phone"] ?? data["phone_number"] ?? data["username"];
+    final String parsedMobile = (rawMobile == null || rawMobile.toString() == 'null')
+        ? ""
+        : rawMobile.toString().trim();
+
     return ProfileModel(
       id: parsedId,
-      username: data["username"] ?? "",
-      mobile: data["mobile"] ?? "",
-      email: data["email"] ?? "",
-      firstName: data["first_name"] ?? "",
-      lastName: data["last_name"] ?? "",
-      role: data["role"] ?? "",
-      panNumber: data["pan_number"] ?? "",
-      gstNumber: data["gst_number"] ?? "",
-      profileImage: data["profile_image"],
-      gender: data["gender"] ?? "",
-      dob: data["dob"] ?? "",
+      username: data["username"]?.toString() ?? "",
+      mobile: parsedMobile,
+      email: parsedEmail,
+      firstName: data["first_name"]?.toString() ?? "",
+      lastName: data["last_name"]?.toString() ?? "",
+      role: data["role"]?.toString() ?? "",
+      panNumber: data["pan_number"]?.toString() ?? "",
+      gstNumber: data["gst_number"]?.toString() ?? "",
+      profileImage: data["profile_image"]?.toString(),
+      gender: data["gender"]?.toString() ?? "",
+      dob: parsedDob,
       panImage: extractDoc([
         "pan_card_upload",
         "pan_image",

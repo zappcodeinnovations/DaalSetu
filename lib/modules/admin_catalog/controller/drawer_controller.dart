@@ -12,7 +12,7 @@ class DrawerController extends GetxController {
     repository = DrawerMenuRepository(DrawerMenuService());
   }
 
-  var isLoading = false.obs;
+  var isLoading = true.obs;
   var hasError = false.obs;
   var errorMessage = ''.obs;
   var menuSections = <DrawerMenuSection>[].obs;
@@ -20,7 +20,7 @@ class DrawerController extends GetxController {
   var mastersExpanded = true.obs;
   var offersExpanded = true.obs;
 
-  var userRole = 'admin'.obs;
+  var userRole = ''.obs;
 
   @override
   void onInit() {
@@ -33,11 +33,15 @@ class DrawerController extends GetxController {
       isLoading.value = true;
       hasError.value = false;
 
-      final role = await AppPreferences.getRole() ?? 'admin';
+      final role = await AppPreferences.getRole() ?? 'buyer';
       userRole.value = role.toLowerCase();
 
-      final sections = await repository.getMenu();
-      menuSections.assignAll(sections);
+      final isAdmin = const ['super_admin', 'admin', 'sub_admin']
+          .contains(userRole.value);
+      if (isAdmin) {
+        final sections = await repository.getMenu();
+        menuSections.assignAll(sections);
+      }
     } catch (e) {
       hasError.value = true;
       errorMessage.value = e.toString();

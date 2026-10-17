@@ -86,9 +86,14 @@ class BuyerOffersController extends GetxController {
       final mapped = data
           .map((e) => BuyerOfferModel.fromJson(e))
           .where((offer) {
-            // For public / active feeds ('today', 'all'), offers with visibility turned off
-            // (isActive == false) must be excluded immediately.
-            if (offerType == 'today' || offerType == 'all') {
+            // 1. When an offer's visibility is turned off from the panel or backend,
+            //    it should be immediately excluded from the public/buyer offers list ('today', 'all').
+            // 2. Under the active 'today' feed, out-of-stock and expired items are excluded
+            //    and moved exclusively to inactive/archived view ('previous').
+            if (offerType == 'today') {
+              return offer.isActive && !offer.isOutOfStock && !offer.isExpired;
+            }
+            if (offerType == 'all') {
               return offer.isActive;
             }
             return true;
@@ -189,13 +194,14 @@ class BuyerOffersController extends GetxController {
     print(
       "⭐ [BUYER SUBMIT INTEREST TRIGGERED] Product ID: $productId | Interest ID: $interestId | Amount: '$amount' | Qty: '$qty' | Date: '$deliveryDate' | To: '$loadingTo' | Condition: '$condition'",
     );
-    if (productId <= 0) {
+    if (productId <= 0 && (interestId == null || interestId <= 0)) {
       AppSnackbar.showWarning(
         title: "Notice",
-        message: "Invalid product reference",
+        message: "Invalid product or interest reference",
       );
       return false;
     }
+    final effectiveProductId = productId > 0 ? productId : (interestId ?? 0);
 
     bool dialogShown = false;
     try {
@@ -209,7 +215,7 @@ class BuyerOffersController extends GetxController {
       dialogShown = true;
 
       final res = await BuyerServices.showInterest(
-        productId,
+        effectiveProductId,
         requestedAmount: amount,
         requestedQuantity: qty,
         deliveryDate: deliveryDate,

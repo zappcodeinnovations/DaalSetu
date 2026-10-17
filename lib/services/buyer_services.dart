@@ -358,8 +358,55 @@ class BuyerServices {
     final List<dynamic> todayList = [];
     final Set<String> seenKeys = {};
 
+    bool isItemActiveAndInStock(dynamic item) {
+      if (item is! Map) return true;
+      final status = (item['status'] ?? item['product_status'] ?? '').toString().toLowerCase();
+      if (status == 'inactive' ||
+          status == 'disabled' ||
+          status == 'hidden' ||
+          status == 'deactivated' ||
+          status == 'archived' ||
+          status == 'deleted') {
+        return false;
+      }
+      if (item['is_active'] == false ||
+          item['is_visible'] == false ||
+          item['visible'] == false) {
+        return false;
+      }
+      if (item['product'] is Map) {
+        final p = item['product'];
+        if (p['is_active'] == false ||
+            p['is_visible'] == false ||
+            p['visible'] == false) {
+          return false;
+        }
+        final pStatus = (p['status'] ?? p['product_status'] ?? '').toString().toLowerCase();
+        if (pStatus == 'inactive' ||
+            pStatus == 'disabled' ||
+            pStatus == 'hidden') {
+          return false;
+        }
+      }
+      final stockStatus = (item['stock_status'] ??
+              (item['product'] is Map ? item['product']['stock_status'] : null) ??
+              '')
+          .toString()
+          .toLowerCase();
+      if (stockStatus.contains('out_of_stock') ||
+          stockStatus.contains('sold_out') ||
+          item['is_out_of_stock'] == true) {
+        return false;
+      }
+      if (status.contains('out_of_stock') || status.contains('sold_out')) {
+        return false;
+      }
+      return true;
+    }
+
     void addUnique(dynamic item) {
       if (item is Map) {
+        if (!isItemActiveAndInStock(item)) return;
         final id =
             item['id']?.toString() ??
             item['product_id']?.toString() ??
@@ -539,43 +586,23 @@ class BuyerServices {
 
         for (var item in list) {
           if (item is Map) {
-            final bool isActive =
-                (item['is_active'] == true ||
-                    item['status']?.toString().toLowerCase() == 'active' ||
-                    item['status_code']?.toString().toLowerCase() ==
-                        'active') &&
-                (item['is_active'] != false);
-            final bool isOutOfStock =
-                (item['stock_status']?.toString().toLowerCase() ==
-                    'out_of_stock') ||
-                (item['status']?.toString().toLowerCase() == 'out_of_stock') ||
-                (item['status_code']?.toString().toLowerCase() ==
-                    'out_of_stock');
             final bool isExpired = item['is_expired'] == true;
             final created =
                 item['created_at'] ?? item['updated_at'] ?? item['created'];
 
-            // Match active, in-stock, unexpired previous offers
-            if (isActive && !isOutOfStock && !isExpired && !_isToday(created)) {
+            // Match past/archived previous offers
+            if (!isExpired && !_isToday(created)) {
               addUnique(item);
             }
           }
         }
 
-        // If date filter excluded everything, include all active in-stock products
+        // If date filter excluded everything, include past products
         if (previousList.isEmpty && list.isNotEmpty) {
           for (var item in list) {
             if (item is Map) {
-              final bool isActive =
-                  (item['is_active'] == true ||
-                      item['status']?.toString().toLowerCase() == 'active') &&
-                  (item['is_active'] != false);
-              final bool isOutOfStock =
-                  (item['stock_status']?.toString().toLowerCase() ==
-                      'out_of_stock') ||
-                  (item['status']?.toString().toLowerCase() == 'out_of_stock');
               final bool isExpired = item['is_expired'] == true;
-              if (isActive && !isOutOfStock && !isExpired) {
+              if (!isExpired) {
                 addUnique(item);
               }
             }
@@ -955,7 +982,7 @@ class BuyerServices {
         ? condition.trim()
         : (remark.trim().isNotEmpty ? remark.trim() : "");
 
-    // Strictly send the exact 5 fields confirmed by senior:
+    // Strictly send the exact fields confirmed by senior:
     // buyer_offered_amount, buyer_required_quantity, loading_to, delivery_date, buyer_remark
     final body = <String, dynamic>{
       "buyer_offered_amount": cleanPrice,
@@ -963,18 +990,25 @@ class BuyerServices {
       "loading_to": effectiveLoadingTo,
       "delivery_date": effectiveDeliveryDate,
       "buyer_remark": effectiveRemark,
+      // Field aliases for compatibility
+      "offered_amount": cleanPrice,
+      "amount": cleanPrice,
+      "requested_amount": cleanPrice,
+      "target_price": cleanPrice,
+      "required_quantity": cleanQty,
+      "requested_quantity": cleanQty,
+      "target_quantity": cleanQty,
+      "remark": effectiveRemark,
     };
 
     if (interestId != null && interestId > 0) {
+      final pId = productId > 0 ? productId : interestId;
       final response = await ApiClient.post(
-        endpoint: "/api/offers/$productId/interests/$interestId/update/",
+        endpoint: ApiUrls.offerInterestUpdate(pId, interestId),
         body: body,
         requireAuth: true,
         suppressErrorDialog: true,
       );
-      if (response is! Map<String, dynamic>) {
-        throw Exception('Failed to update interest');
-      }
       if (response['success'] == false) {
         throw Exception(response['message'] ?? 'Failed to update interest');
       }

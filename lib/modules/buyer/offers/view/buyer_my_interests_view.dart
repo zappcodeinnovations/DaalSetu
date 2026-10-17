@@ -88,15 +88,33 @@ class BuyerMyInterestsView extends StatelessWidget {
             .replaceAll(RegExp(r'[^\d.]'), '')
             .trim();
 
+    final months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    String formatDisplay(DateTime dt) =>
+        "${dt.day.toString().padLeft(2, '0')}-${months[dt.month - 1]}-${dt.year}";
+
+    final loadingFromText = (offer.pickupFrom?.isNotEmpty == true)
+        ? offer.pickupFrom!
+        : (offer.location?.isNotEmpty == true
+            ? offer.location!
+            : "Shop no 12, krishna mandir, Bhopal, Bhopal, Madhya Pradesh, India");
+
+    final initialLoadingTo = (offer.pickupTo?.isNotEmpty == true)
+        ? offer.pickupTo!
+        : (offer.location?.isNotEmpty == true
+            ? offer.location!
+            : "AMR158M, Amalner, Maharashtra, India");
+
     final priceCtrl = TextEditingController(text: cleanPrice);
     final qtyCtrl = TextEditingController(text: cleanQty);
-    final locationCtrl = TextEditingController(
-      text: offer.location ?? "AMR158M, Amalner, Maharashtra, India",
-    );
+    final locationCtrl = TextEditingController(text: initialLoadingTo);
     final remarkCtrl = TextEditingController();
 
     DateTime? selectedDate;
     String? formattedDate;
+    String? displayDateText;
 
     Get.dialog(
       Dialog(
@@ -105,226 +123,310 @@ class BuyerMyInterestsView extends StatelessWidget {
         child: StatefulBuilder(
           builder: (dialogContext, setDialogState) {
             final theme = Theme.of(dialogContext);
-            return GlassCard(
-              padding: const EdgeInsets.all(20),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Edit Offer",
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      "Update your target quantity, price, and delivery details.",
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-
-                    Text(
-                      "Offer Price *",
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    GlassTextField(
-                      controller: priceCtrl,
-                      hintText: "Enter price per unit",
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    Text(
-                      "Required Quantity *",
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    GlassTextField(
-                      controller: qtyCtrl,
-                      hintText: "Enter required quantity",
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    Text(
-                      "Packing",
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.cardColor.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: theme.dividerColor.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Text(
-                        "Bags are calculated automatically for bag-tracked seller stock.",
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    Text(
-                      "Delivery Date *",
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    InkWell(
-                      onTap: () async {
-                        final picked = await showDatePicker(
-                          context: dialogContext,
-                          initialDate: selectedDate ?? DateTime.now(),
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime.now().add(
-                            const Duration(days: 365),
-                          ),
-                        );
-                        if (picked != null) {
-                          setDialogState(() {
-                            selectedDate = picked;
-                            formattedDate =
-                                "${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
-                          });
-                        }
-                      },
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
+            return Container(
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: theme.dividerColor.withValues(alpha: 0.3),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
+                      Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
+                          horizontal: 20,
+                          vertical: 16,
                         ),
-                        decoration: BoxDecoration(
-                          color: theme.cardColor,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: theme.dividerColor.withValues(alpha: 0.5),
-                          ),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFE65100),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              formattedDate ?? "dd-mm-yyyy",
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: formattedDate != null
-                                    ? null
-                                    : Colors.grey,
+                              "Edit Offer / Interest",
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 17,
+                                color: Colors.white,
                               ),
                             ),
-                            const Icon(IconlyLight.calendar, size: 18),
+                            InkWell(
+                              onTap: () => Get.back(),
+                              borderRadius: BorderRadius.circular(20),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
 
-                    Text(
-                      "Loading To (Delivery Location) *",
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    GlassTextField(
-                      controller: locationCtrl,
-                      hintText: "Enter destination address",
-                    ),
-                    const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Offered Amount (Rate)
+                            Text(
+                              "Offered Amount (Rate) (₹) *",
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            GlassTextField(
+                              controller: priceCtrl,
+                              hintText: "Enter rate per unit",
+                              keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
 
-                    Text(
-                      "Condition (Remark)",
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    GlassTextField(
-                      controller: remarkCtrl,
-                      hintText: "Add remarks or quality expectations...",
-                      maxLines: 2,
-                    ),
-                    const SizedBox(height: 20),
+                            // Required Quantity (QTL)
+                            Text(
+                              "Required Quantity (QTL) *",
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            GlassTextField(
+                              controller: qtyCtrl,
+                              hintText: "Enter required quantity",
+                              keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
 
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => Get.back(),
-                          child: const Text("Cancel"),
+                            // Loading From (Read-only matching web)
+                            Text(
+                              "Loading From",
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: theme.disabledColor.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: theme.dividerColor.withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: Text(
+                                loadingFromText,
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+
+                            // Loading To
+                            Text(
+                              "Loading To *",
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            GlassTextField(
+                              controller: locationCtrl,
+                              hintText: "Enter destination address",
+                            ),
+                            const SizedBox(height: 14),
+
+                            // Delivery Date
+                            Text(
+                              "Delivery Date *",
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            InkWell(
+                              onTap: () async {
+                                final picked = await showDatePicker(
+                                  context: dialogContext,
+                                  initialDate: selectedDate ?? DateTime.now(),
+                                  firstDate: DateTime.now(),
+                                  lastDate: DateTime.now().add(
+                                    const Duration(days: 365),
+                                  ),
+                                );
+                                if (picked != null) {
+                                  setDialogState(() {
+                                    selectedDate = picked;
+                                    formattedDate =
+                                        "${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                                    displayDateText = formatDisplay(picked);
+                                  });
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(10),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme.cardColor,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: theme.dividerColor.withValues(alpha: 0.5),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      displayDateText ?? "Select delivery date",
+                                      style: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: displayDateText != null
+                                            ? null
+                                            : Colors.grey,
+                                      ),
+                                    ),
+                                    const Icon(IconlyLight.calendar, size: 18),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+
+                            // Buyer Remark
+                            Text(
+                              "Buyer Remark",
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            GlassTextField(
+                              controller: remarkCtrl,
+                              hintText: "Add remarks or instructions...",
+                              maxLines: 3,
+                            ),
+                            const SizedBox(height: 24),
+
+                            // Actions
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                OutlinedButton(
+                                  onPressed: () => Get.back(),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: const Text("Cancel"),
+                                ),
+                                const SizedBox(width: 12),
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    if (qtyCtrl.text.trim().isEmpty ||
+                                        priceCtrl.text.trim().isEmpty) {
+                                      AppSnackbar.showWarning(
+                                        title: "Required",
+                                        message: "Please enter quantity and price",
+                                      );
+                                      return;
+                                    }
+                                    if (formattedDate == null ||
+                                        formattedDate!.isEmpty) {
+                                      AppSnackbar.showWarning(
+                                        title: "Required",
+                                        message: "Please select delivery date",
+                                      );
+                                      return;
+                                    }
+                                    final prodId = (offer.productId != null && offer.productId! > 0)
+                                        ? offer.productId!
+                                        : ((offer.id != null && offer.id != offer.interestId)
+                                            ? offer.id!
+                                            : (offer.interestId ?? 0));
+                                    final intId = (offer.interestId != null && offer.interestId! > 0)
+                                        ? offer.interestId!
+                                        : (offer.id ?? 0);
+
+                                    Get.back();
+                                    await controller.submitInterest(
+                                      prodId,
+                                      priceCtrl.text.trim(),
+                                      qtyCtrl.text.trim(),
+                                      remarkCtrl.text.trim(),
+                                      deliveryDate: formattedDate,
+                                      loadingTo: locationCtrl.text.trim(),
+                                      condition: remarkCtrl.text.trim(),
+                                      interestId: intId,
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFC0392B),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 22,
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: const Text("Save Changes"),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () async {
-                            if (qtyCtrl.text.trim().isEmpty ||
-                                priceCtrl.text.trim().isEmpty) {
-                              AppSnackbar.showWarning(
-                                title: "Required",
-                                message: "Please enter quantity and price",
-                              );
-                              return;
-                            }
-                            if (formattedDate == null ||
-                                formattedDate!.isEmpty) {
-                              AppSnackbar.showWarning(
-                                title: "Required",
-                                message: "Please select delivery date",
-                              );
-                              return;
-                            }
-                            Get.back();
-                            await controller.submitInterest(
-                              offer.productId ?? offer.id ?? 0,
-                              priceCtrl.text.trim(),
-                              qtyCtrl.text.trim(),
-                              remarkCtrl.text.trim(),
-                              deliveryDate: formattedDate,
-                              loadingTo: locationCtrl.text.trim(),
-                              condition: remarkCtrl.text.trim(),
-                              interestId: offer.interestId,
-                            );
-                          },
-                          child: const Text("Update Offer"),
-                        ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -404,6 +506,11 @@ class BuyerMyInterestsView extends StatelessWidget {
               final isConfirmed = offer.isConfirmed;
               final isRejected = offer.isRejected;
               final status = offer.displayStatus ?? 'Interested';
+              final isInterestedCard =
+                  status.trim().toLowerCase() == 'interested' ||
+                  (offer.status ?? '').trim().toLowerCase() == 'interested' ||
+                  offer.isInterested ||
+                  offer.canEditInterest;
               Color badgeColor = const Color(0xFFFFB300);
               if (isConfirmed) badgeColor = Colors.green;
               if (isRejected) badgeColor = Colors.red;
@@ -676,7 +783,7 @@ class BuyerMyInterestsView extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (offer.canEditInterest)
+                        if (isInterestedCard)
                           OutlinedButton.icon(
                             onPressed: () =>
                                 _showEditDialog(context, controller, offer),
@@ -689,7 +796,7 @@ class BuyerMyInterestsView extends StatelessWidget {
                               ),
                             ),
                           ),
-                        if (offer.canCancelInterest)
+                        if (offer.canCancelInterest && isInterestedCard)
                           OutlinedButton.icon(
                             onPressed: () =>
                                 _cancelInterest(context, controller, offer),
@@ -705,7 +812,7 @@ class BuyerMyInterestsView extends StatelessWidget {
                               ),
                             ),
                           ),
-                        if (offer.canOpenNegotiation && !offer.isConfirmed)
+                        if (!offer.isConfirmed && !isRejected)
                           ElevatedButton.icon(
                             onPressed: () => _openNegotiation(offer),
                             style: ElevatedButton.styleFrom(
