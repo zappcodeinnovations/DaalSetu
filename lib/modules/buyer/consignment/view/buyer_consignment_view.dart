@@ -28,6 +28,14 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
     'received',
   ];
 
+  static const _workflowLabels = <String, String>{
+    'all': 'All Status',
+    'pending': 'Pending',
+    'ready': 'Consignment Ready',
+    'dispatch': 'Dispatch',
+    'received': 'Consignment Received',
+  };
+
   @override
   void initState() {
     super.initState();
@@ -248,7 +256,7 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
           ),
           _line(
             Icons.currency_rupee_rounded,
-            'Trade value: ₹${item['trade_value'] ?? '-'}',
+            'Trade value: ${_formatTradeValue(item['trade_value'])}',
           ),
           if ((item['assigned_transporter'] ?? '').toString().isNotEmpty)
             _line(
@@ -279,6 +287,37 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
     );
   }
 
+  String _formatTradeValue(dynamic raw) {
+    if (raw == null) return '-';
+    final s = raw.toString().replaceAll('₹', '').trim();
+    if (s.isEmpty || s == '-') return '-';
+    final numVal = double.tryParse(s);
+    if (numVal == null) return '₹$s';
+
+    final isNegative = numVal < 0;
+    final absVal = numVal.abs();
+    final parts = absVal.toStringAsFixed(2).split('.');
+    final integerPart = parts[0];
+    final decimalPart = parts[1];
+
+    // Indian numbering format (e.g., 1,95,000.00)
+    String formattedInt = '';
+    if (integerPart.length <= 3) {
+      formattedInt = integerPart;
+    } else {
+      final lastThree = integerPart.substring(integerPart.length - 3);
+      final remaining = integerPart.substring(0, integerPart.length - 3);
+      final chunks = <String>[];
+      for (int i = remaining.length; i > 0; i -= 2) {
+        final start = (i - 2 < 0) ? 0 : i - 2;
+        chunks.insert(0, remaining.substring(start, i));
+      }
+      formattedInt = "${chunks.join(',')},$lastThree";
+    }
+
+    return '₹${isNegative ? '-' : ''}$formattedInt.$decimalPart';
+  }
+
   Widget _line(IconData icon, String text) => Padding(
     padding: const EdgeInsets.only(bottom: 6),
     child: Row(
@@ -291,12 +330,25 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
   );
 
   Widget _status(String status, ThemeData theme) {
-    final lower = status.toLowerCase();
-    final color = lower.contains('received') || lower.contains('deliver')
+    String displayStatus = status.trim();
+    final lower = displayStatus.toLowerCase();
+    if (lower == 'received' || lower == 'consignment received' || lower.contains('received')) {
+      displayStatus = 'Consignment Received';
+    } else if (lower == 'ready' || lower == 'consignment ready') {
+      displayStatus = 'Consignment Ready';
+    } else if (lower == 'dispatch' || lower == 'dispatched') {
+      displayStatus = 'Dispatch';
+    } else if (lower == 'pending') {
+      displayStatus = 'Pending';
+    }
+
+    final color = displayStatus == 'Consignment Received'
         ? Colors.green
-        : lower.contains('dispatch') || lower.contains('transit')
+        : displayStatus == 'Dispatch'
         ? Colors.blue
-        : theme.colorScheme.primary;
+        : (displayStatus == 'Consignment Ready'
+            ? const Color(0xFF2563EB)
+            : theme.colorScheme.primary);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -304,7 +356,7 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
         borderRadius: BorderRadius.circular(9),
       ),
       child: Text(
-        status,
+        displayStatus,
         style: TextStyle(
           fontSize: 10,
           color: color,
@@ -314,6 +366,5 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
     );
   }
 
-  String _label(String value) =>
-      value == 'all' ? 'All' : value[0].toUpperCase() + value.substring(1);
+  String _label(String value) => _workflowLabels[value] ?? value;
 }
