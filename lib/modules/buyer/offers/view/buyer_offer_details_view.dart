@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:iconly/iconly.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:daalsetu/utils/global_error_handler.dart';
@@ -170,7 +171,17 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
           validLoadingLocation = candidateLocation;
         }
 
-        final rawExpiry = (data['deal_expiry_datetime'] ?? data['expiry_date'] ?? data['expiry_datetime'])?.toString();
+        final rawExpiry = (data['broadcast_expiry'] ??
+                data['broadcast_expiry_datetime'] ??
+                data['expiry_datetime'] ??
+                data['deal_expiry_datetime'] ??
+                data['expiry_date'] ??
+                data['expires_at'] ??
+                (data['rfq'] is Map ? (data['rfq']['expiry_datetime'] ?? data['rfq']['broadcast_expiry']) : null) ??
+                (data['offer'] is Map ? (data['offer']['deal_expiry_datetime'] ?? data['offer']['expiry_datetime']) : null) ??
+                (data['product'] is Map ? (data['product']['deal_expiry_datetime'] ?? data['product']['expiry_datetime']) : null))
+            ?.toString();
+        final formattedExpiry = _formatExpiry(rawExpiry);
         bool isDealExpired = data['is_expired'] == true ||
             rawStatus.toLowerCase().contains('expire') ||
             (rawExpiry != null && DateTime.tryParse(rawExpiry)?.toLocal().isBefore(DateTime.now()) == true);
@@ -281,6 +292,15 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                       "Packing Weight",
                       "${data['packing_weight_kg']} kg",
                     ),
+                  if (formattedExpiry != null && formattedExpiry.isNotEmpty)
+                    _infoRow(
+                      (widget.preferBuyerOffer && data['rfq_id'] == null)
+                          ? "Deal Expiry"
+                          : "Broadcast Expiry",
+                      formattedExpiry,
+                    )
+                  else if (!widget.preferBuyerOffer || widget.preferBuyerRequirement || data['rfq_id'] != null)
+                    _infoRow("Broadcast Expiry", "N/A"),
                   if (validLoadingLocation != null &&
                       validLoadingLocation.isNotEmpty)
                     _infoRow("Loading Location", validLoadingLocation),
@@ -1577,6 +1597,36 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
     } else {
       await controller.rejectOfferInterest(productId: pId, interestId: iId);
     }
+  }
+
+  String? _formatExpiry(dynamic value) {
+    if (value == null) return null;
+    final str = value.toString().trim();
+    if (str.isEmpty || str == 'null' || str == '-') return null;
+
+    DateTime? dt = DateTime.tryParse(str);
+    if (dt == null) {
+      try {
+        dt = DateFormat('dd-MM-yyyy HH:mm').parse(str);
+      } catch (_) {
+        try {
+          dt = DateFormat('dd/MM/yyyy HH:mm').parse(str);
+        } catch (_) {
+          try {
+            dt = DateFormat('yyyy-MM-dd HH:mm:ss').parse(str);
+          } catch (_) {}
+        }
+      }
+    }
+    if (dt != null) {
+      final local = dt.toLocal();
+      final hasTime = str.contains('T') || str.contains(':') || str.contains(' ');
+      if (hasTime) {
+        return DateFormat('dd MMM yyyy, hh:mm a').format(local);
+      }
+      return DateFormat('dd MMM yyyy').format(local);
+    }
+    return str;
   }
 
   String _titleCase(String text) {

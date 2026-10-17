@@ -26,6 +26,11 @@
   - Fixed vertical empty stretch by replacing `pw.Expanded` / `pw.Spacer()` with compact `pw.Table` (flex 4, 3, 3) and top-aligned container.
   - Formatted all monetary totals, rates, and charges with consistent vector Rupee (₹) prefixes via `_currencyWidget`.
   - Resolved `color: highlightYellow` and `decoration: BoxDecoration` container assertion collision.
-- **Verification**: Created `test/buyer_challan_pdf_test.dart` and verified with passing test suite and clean `flutter analyze`.
+- **Bug 15 (Broadcast Expiry in Requirement Details)**:
+  - Added "Broadcast Expiry" field in mobile "Requirement Details" view (`buyer_offer_details_view.dart` and `seller_rfq_detail_view.dart`).
+  - Added comprehensive fallback extraction (`broadcast_expiry`, `broadcast_expiry_datetime`, `expiry_datetime`, `deal_expiry_datetime`, `expiry_date`, `expires_at`, nested RFQ/Offer/Product maps).
+  - Formatted into web panel format `dd MMM yyyy, hh:mm a` (e.g. `22 Oct 2026, 01:52 PM`) with timezone localization.
+  - Verified with unit and widget test `test/requirement_details_broadcast_expiry_test.dart` and clean `flutter analyze`.
+- **Verification**: Created `test/buyer_challan_pdf_test.dart` and `test/requirement_details_broadcast_expiry_test.dart` and verified with passing test suites and clean `flutter analyze`.
 - **Customization**: Created full persistent repository memory system under `docs/ai-context/` (9 docs) and 10 agent skills under `.agents/skills/`.
 
