@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/app_snackbar.dart';
+import '../../../../widgets/authenticated_network_image.dart';
 import '../controller/buyer_offers_controller.dart';
 import '../model/buyer_offer_model.dart';
 import '../../../products/view/product_detail.dart';
@@ -59,6 +60,13 @@ class BuyerTodayOffersView extends StatelessWidget {
                 ? const Color(0xFFF59E0B)
                 : theme.colorScheme.primary));
 
+    String displayStatus = status;
+    if (sUpper.contains('EXPIRED')) {
+      displayStatus = 'Deal Expired';
+    } else if (status.trim().toUpperCase() == 'AVAILABLE') {
+      displayStatus = 'ACTIVE';
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -67,7 +75,7 @@ class BuyerTodayOffersView extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
-        status,
+        displayStatus,
         style: GoogleFonts.inter(
           fontSize: 10,
           fontWeight: FontWeight.w600,
@@ -195,12 +203,12 @@ class BuyerTodayOffersView extends StatelessWidget {
                           child: (offer.imageUrl != null && offer.imageUrl!.isNotEmpty)
                               ? ClipRRect(
                                   borderRadius: BorderRadius.circular(10),
-                                  child: Image.network(
-                                    offer.imageUrl!,
+                                  child: AuthenticatedNetworkImage(
+                                    url: offer.imageUrl!,
                                     width: 54,
                                     height: 54,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => _buildNoMediaPlaceholder(theme),
+                                    fallback: _buildNoMediaPlaceholder(theme),
                                   ),
                                 )
                               : _buildNoMediaPlaceholder(theme),
@@ -385,14 +393,37 @@ class BuyerTodayOffersView extends StatelessWidget {
                         const SizedBox(width: 10),
                         Expanded(
                           child: ElevatedButton.icon(
-                            onPressed: () => _showInterestDialog(context, controller, offer.productId ?? offer.id ?? 0, offer),
+                            onPressed: offer.isExpired
+                                ? () {
+                                    AppSnackbar.showError(
+                                      message: "Deal has expired. You cannot show interest.",
+                                    );
+                                  }
+                                : (offer.canSubmitOffer
+                                    ? () => _showInterestDialog(context, controller, offer.productId ?? offer.id ?? 0, offer)
+                                    : null),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: theme.colorScheme.primary,
-                              foregroundColor: Colors.white,
+                              backgroundColor: offer.canSubmitOffer
+                                  ? theme.colorScheme.primary
+                                  : Colors.grey.shade300,
+                              foregroundColor: offer.canSubmitOffer
+                                  ? Colors.white
+                                  : Colors.grey.shade600,
+                              disabledBackgroundColor: Colors.grey.shade200,
+                              disabledForegroundColor: Colors.grey.shade500,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
-                            icon: const Icon(IconlyLight.send, size: 16, color: Colors.white),
-                            label: const Text("Submit Offer", style: TextStyle(fontWeight: FontWeight.bold)),
+                            icon: Icon(
+                              offer.isExpired ? Icons.timer_off_outlined : IconlyLight.send,
+                              size: 16,
+                              color: offer.canSubmitOffer ? Colors.white : Colors.grey.shade500,
+                            ),
+                            label: Text(
+                              offer.isExpired
+                                  ? "Deal Expired"
+                                  : (offer.isOutOfStock ? "Out of Stock" : "Submit Offer"),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
                           ),
                         ),
                       ],
@@ -594,7 +625,7 @@ class BuyerTodayOffersView extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              formattedDeliveryDate ?? "dd-----yyyy",
+                              formattedDeliveryDate ?? "dd-mm-yyyy",
                               style: GoogleFonts.inter(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,

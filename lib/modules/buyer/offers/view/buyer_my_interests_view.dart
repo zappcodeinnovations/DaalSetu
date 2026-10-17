@@ -10,7 +10,8 @@ import 'buyer_offer_details_view.dart';
 import 'buyer_negotiation_view.dart';
 
 class BuyerMyInterestsView extends StatelessWidget {
-  const BuyerMyInterestsView({super.key});
+  final bool showAppBar;
+  const BuyerMyInterestsView({super.key, this.showAppBar = true});
 
   void _openDetails(BuyerOfferModel offer) {
     final pId = offer.productId ?? offer.id;
@@ -236,7 +237,7 @@ class BuyerMyInterestsView extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              formattedDate ?? "dd-----yyyy",
+                              formattedDate ?? "dd-mm-yyyy",
                               style: GoogleFonts.inter(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
@@ -343,17 +344,19 @@ class BuyerMyInterestsView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          "My Interests",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
-        ),
-      ),
+      appBar: showAppBar
+          ? AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              title: Text(
+                "My Interests",
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  color: theme.textTheme.bodyLarge?.color,
+                ),
+              ),
+            )
+          : null,
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());

@@ -9,6 +9,7 @@ import '../../../category/model/category_model.dart';
 import '../../../category/view/category_page.dart';
 import '../../orders/view/buyer_orders_view.dart';
 import '../../offers/view/buyer_offers_view.dart';
+import '../../offers/view/buyer_activity_view.dart';
 import '../../delivery_challan/view/buyer_delivery_challan_view.dart';
 import '../../consignment/view/buyer_consignment_view.dart';
 import '../../../contracts/view/contract_view.dart';
@@ -109,9 +110,14 @@ class BuyerDashboardView extends StatelessWidget {
                 const SizedBox(height: 30),
                 _buildKPIGrid(context, data.kpis),
                 const SizedBox(height: 30),
-                BuyerDashboardAnalytics(
-                  charts: data.charts,
-                  transportTracking: data.transportTracking,
+                Obx(
+                  () => BuyerDashboardAnalytics(
+                    charts: data.charts,
+                    transportTracking: data.transportTracking,
+                    selectedRange: controller.selectedRange.value,
+                    isRangeLoading: controller.isRangeLoading.value,
+                    onRangeChanged: controller.setRange,
+                  ),
                 ),
                 const SizedBox(height: 30),
                 _buildSectionHeader(
@@ -119,7 +125,7 @@ class BuyerDashboardView extends StatelessWidget {
                   "Recent Requirements & Negotiations",
                   "View All",
                   onTap: () {
-                    Get.to(() => const BuyerOffersView(initialIndex: 5));
+                    Get.to(() => const BuyerActivityView(initialIndex: 1));
                   },
                 ),
                 const SizedBox(height: 16),
@@ -375,7 +381,7 @@ class BuyerDashboardView extends StatelessWidget {
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () =>
-                Get.to(() => const BuyerOffersView(initialIndex: 5)),
+                Get.to(() => const BuyerActivityView(initialIndex: 1)),
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: Colors.white,
@@ -412,14 +418,19 @@ class BuyerDashboardView extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          title,
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: theme.textTheme.bodyLarge?.color,
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.poppins(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: theme.textTheme.bodyLarge?.color,
+            ),
           ),
         ),
+        const SizedBox(width: 8),
         GestureDetector(
           onTap: onTap,
           child: Text(
@@ -541,8 +552,34 @@ class BuyerDashboardView extends StatelessWidget {
     final openTickets = kpis['open_tickets']?.toString() ?? '0';
     final topSupplier = kpis['top_supplier']?.toString() ?? '—';
     final supplierShare = kpis['top_supplier_share']?.toString() ?? '—';
-    final averagePrice = kpis['avg_price']?.toString() ?? '₹0.00';
-    final averagePriceDelta = kpis['avg_price_delta']?.toString() ?? '—';
+    final rawAvgPrice = kpis['avg_purchase_price'] ??
+        kpis['avg_price'] ??
+        kpis['average_purchase_price'] ??
+        kpis['average_price'];
+    String averagePrice = '₹0.00';
+    if (rawAvgPrice != null) {
+      final s = rawAvgPrice.toString().trim();
+      if (s.isNotEmpty && s != 'null') {
+        if (s.startsWith('₹') || s.toLowerCase().contains('/qtl')) {
+          averagePrice = s;
+        } else {
+          final numVal = double.tryParse(s.replaceAll(RegExp(r'[^\d.]'), ''));
+          if (numVal != null) {
+            averagePrice = '₹${numVal.toStringAsFixed(2)}/qtl';
+          } else {
+            averagePrice = '₹$s/qtl';
+          }
+        }
+      }
+    }
+    final rawDelta = kpis['avg_price_delta'] ??
+        kpis['avg_purchase_price_delta'] ??
+        kpis['vs_last_month'] ??
+        '—';
+    final rawDeltaStr = rawDelta.toString().trim();
+    final averagePriceDelta = rawDeltaStr.toLowerCase().startsWith('vs last month')
+        ? rawDeltaStr
+        : 'Vs last month: $rawDeltaStr';
 
     return Column(
       children: [
@@ -642,7 +679,7 @@ class BuyerDashboardView extends StatelessWidget {
                 title: "AVG PURCHASE PRICE",
                 value: averagePrice,
                 subtitle: averagePriceDelta,
-                icon: Icons.price_check_outlined,
+                icon: Icons.currency_rupee_rounded,
               ),
             ),
           ],
@@ -758,7 +795,6 @@ class BuyerDashboardView extends StatelessWidget {
         child: Text("No recent requirements or negotiations."),
       );
     }
-    final theme = Theme.of(context);
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -768,65 +804,212 @@ class BuyerDashboardView extends StatelessWidget {
         final item = requirements[index] is Map
             ? Map<String, dynamic>.from(requirements[index] as Map)
             : <String, dynamic>{};
-        final status = item['status']?.toString() ?? 'Pending';
-        final color = status.toLowerCase().contains('reject')
-            ? Colors.red
-            : status.toLowerCase().contains('confirm')
-            ? Colors.green
-            : theme.colorScheme.primary;
+
+        // Reference ID (e.g., #INT-20261017-1686, #RFQ-20261016-7770)
+        final trackingId = (item['reference_id'] ??
+                item['tracking_id'] ??
+                item['rfq_id'] ??
+                item['interest_id'] ??
+                item['code'] ??
+                item['id'] ??
+                '')
+            .toString()
+            .trim();
+        final formattedTrackingId = trackingId.isNotEmpty
+            ? (trackingId.startsWith('#') ? trackingId : '#$trackingId')
+            : '';
+
+        // Product / Item name
+        final itemTitle = (item['title'] ??
+                item['commodity'] ??
+                item['product'] ??
+                item['name'] ??
+                'Requirement')
+            .toString()
+            .trim();
+
+        // Quantity
+        final rawQty = (item['quantity'] ?? item['qty'] ?? '').toString().trim();
+        final qtyStr = rawQty.isNotEmpty
+            ? (rawQty.toLowerCase().contains('qtl') ? rawQty : '$rawQty qtl')
+            : '';
+
+        // Assemble Header: e.g. "#INT-20261017-1686 • teat • 50.000 qtl"
+        final headerParts = [
+          if (formattedTrackingId.isNotEmpty) formattedTrackingId,
+          if (itemTitle.isNotEmpty) itemTitle,
+          if (qtyStr.isNotEmpty) qtyStr,
+        ];
+        final headerTitle = headerParts.isNotEmpty
+            ? headerParts.join(' • ')
+            : itemTitle;
+
+        // Best quote
+        final rawPrice = (item['best_quote'] ??
+                item['price'] ??
+                item['rate'] ??
+                item['target_price'] ??
+                '')
+            .toString()
+            .trim();
+        String quoteStr = '';
+        if (rawPrice.isNotEmpty && rawPrice != '-' && rawPrice != '0') {
+          if (rawPrice.startsWith('₹') || rawPrice.toLowerCase().contains('/qtl')) {
+            quoteStr = rawPrice;
+          } else {
+            final numVal = double.tryParse(rawPrice.replaceAll(RegExp(r'[^\d.]'), ''));
+            if (numVal != null) {
+              quoteStr = '₹${numVal == numVal.roundToDouble() ? numVal.toInt().toString() : numVal.toStringAsFixed(1)}/qtl';
+            } else {
+              quoteStr = '₹$rawPrice/qtl';
+            }
+          }
+        }
+
+        // Seller
+        final sellerVal = (item['seller_name'] ??
+                item['seller'] ??
+                item['seller_id'] ??
+                'Broadcast')
+            .toString()
+            .trim();
+        final sellerStr = sellerVal.isNotEmpty ? sellerVal : 'Broadcast';
+
+        // Sub-details string
+        final subParts = [
+          if (quoteStr.isNotEmpty) 'Best quote: $quoteStr',
+          'Seller: $sellerStr',
+        ];
+        final subDetails = subParts.join(' • ');
+
+        // Status & badge color
+        final status = (item['status_label'] ??
+                item['status'] ??
+                'Pending')
+            .toString()
+            .trim();
+        final statusLower = status.toLowerCase();
+
+        Color statusColor = const Color(0xFFEAB308); // Yellow/Amber Negotiation
+        Color statusBg = const Color(0xFFFEF9C3);
+        if (statusLower.contains('lock') || statusLower.contains('deal locked')) {
+          statusColor = const Color(0xFF8B5CF6); // Purple Deal Locked
+          statusBg = const Color(0xFFEDE9FE);
+        } else if (statusLower.contains('confirm') ||
+            statusLower.contains('accepted') ||
+            statusLower.contains('closed')) {
+          statusColor = const Color(0xFF10B981); // Green Confirmed
+          statusBg = const Color(0xFFD1FAE5);
+        } else if (statusLower.contains('open')) {
+          statusColor = const Color(0xFF06B6D4); // Cyan/Teal Open
+          statusBg = const Color(0xFFCFFAFE);
+        } else if (statusLower.contains('reject') ||
+            statusLower.contains('cancel')) {
+          statusColor = const Color(0xFFEF4444); // Red
+          statusBg = const Color(0xFFFEE2E2);
+        }
+
+        // Timestamp with 'Updated' prefix formatted cleanly
+        final rawUpdated = (item['updated_at'] ??
+                item['updated'] ??
+                item['date'] ??
+                '')
+            .toString()
+            .trim();
+        String updatedText = '';
+        if (rawUpdated.isNotEmpty) {
+          final cleanUpdated = rawUpdated.replaceAll(RegExp(r'^Updated\s*', caseSensitive: false), '');
+          // If it is an ISO string like 2026-10-17T06:00:36.437967Z
+          final parsedDate = DateTime.tryParse(cleanUpdated);
+          if (parsedDate != null) {
+            final months = [
+              '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+              'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+            ];
+            final monthStr = months[parsedDate.month];
+            final hour = parsedDate.hour.toString().padLeft(2, '0');
+            final minute = parsedDate.minute.toString().padLeft(2, '0');
+            updatedText = 'Updated ${parsedDate.day} $monthStr, $hour:$minute';
+          } else {
+            updatedText = 'Updated $cleanUpdated';
+          }
+        }
+
         return GlassCard(
-          padding: const EdgeInsets.all(14),
-          child: Row(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(9),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: .12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(Icons.forum_outlined, color: color),
-              ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item['title']?.toString() ??
-                          item['product']?.toString() ??
-                          'Requirement',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      headerTitle,
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
+                        color: Colors.black87,
+                      ),
                     ),
-                    const SizedBox(height: 3),
+                  ),
+                  if (updatedText.isNotEmpty) ...[
+                    const SizedBox(width: 8),
                     Text(
-                      '${item['quantity'] ?? '-'} • ₹${item['price'] ?? '-'} • ${item['seller'] ?? 'Multiple sellers'}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall,
+                      updatedText,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 5),
+              Text(
+                subDetails,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: statusBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: statusColor.withValues(alpha: 0.25),
+                    width: 0.8,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      status,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: statusColor,
+                      ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    status,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: color,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    item['updated']?.toString() ?? '',
-                    style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
-                  ),
-                ],
               ),
             ],
           ),

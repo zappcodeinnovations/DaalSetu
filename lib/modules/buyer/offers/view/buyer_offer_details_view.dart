@@ -170,6 +170,11 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
           validLoadingLocation = candidateLocation;
         }
 
+        final rawExpiry = (data['deal_expiry_datetime'] ?? data['expiry_date'] ?? data['expiry_datetime'])?.toString();
+        bool isDealExpired = data['is_expired'] == true ||
+            rawStatus.toLowerCase().contains('expire') ||
+            (rawExpiry != null && DateTime.tryParse(rawExpiry)?.toLocal().isBefore(DateTime.now()) == true);
+
         return RefreshIndicator(
           onRefresh: () => controller.fetchDetails(
             widget.offerId,
@@ -184,7 +189,38 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildStatusHeader(rawStatus, displayLabel: displayStatus),
+                _buildStatusHeader(
+                  isDealExpired ? 'deal_expired' : rawStatus,
+                  displayLabel: isDealExpired ? 'Deal Expired' : displayStatus,
+                ),
+                if (isDealExpired) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFDE8E8),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFF8B4B4)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Color(0xFF9B1C1C), size: 18),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            "Deal has expired. You cannot show interest.",
+                            style: TextStyle(
+                              color: Color(0xFF9B1C1C),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 24),
 
                 _sectionTitle("Product Specifications"),
@@ -556,11 +592,17 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                     width: double.infinity,
                     height: 52,
                     child: ElevatedButton.icon(
-                      onPressed: () => _showCancelConfirm(
-                        context,
-                        widget.offerId,
-                        buyerOffer: widget.preferBuyerOffer,
-                      ),
+                      onPressed: () {
+                        final effectiveId = int.tryParse(
+                              (data['id'] ?? data['rfq_id'] ?? '').toString(),
+                            ) ??
+                            widget.offerId;
+                        _showCancelConfirm(
+                          context,
+                          effectiveId,
+                          buyerOffer: widget.preferBuyerOffer,
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
                         foregroundColor: Colors.white,
@@ -1553,43 +1595,135 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
     int id, {
     required bool buyerOffer,
   }) {
-    Get.defaultDialog(
-      title: "Cancel Requirement",
-      middleText:
-          "Are you sure you want to cancel and close this buying requirement?",
-      textConfirm: "YES, CANCEL",
-      confirmTextColor: Colors.white,
-      buttonColor: Colors.red,
-      onConfirm: () async {
-        Get.back();
-        try {
-          if (buyerOffer) {
-            await BuyerServices.buyerOfferAction(id, {
-              'action': 'buyer_cancel',
-            });
-          } else {
-            await BuyerServices.cancelOffer(id);
-          }
-          AppSnackbar.showSuccess(
-            title: 'Cancelled',
-            message: buyerOffer
-                ? 'Buyer offer cancelled successfully.'
-                : 'Requirement cancelled successfully.',
-          );
-          await controller.fetchDetails(
-            id,
-            silent: true,
-            preferBuyerOffer: buyerOffer,
-            preferBuyerRequirement: !buyerOffer,
-          );
-        } catch (error) {
-          AppSnackbar.showError(
-            title: 'Could not cancel',
-            message: error.toString().replaceFirst('Exception: ', ''),
-          );
-        }
-      },
-      textCancel: "NO",
+    final theme = Theme.of(context);
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        backgroundColor: theme.scaffoldBackgroundColor,
+        elevation: 8,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.red,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "Cancel Requirement",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: theme.textTheme.titleLarge?.color,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "Are you sure you want to cancel and close this buying requirement?",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  height: 1.4,
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.75),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        side: BorderSide(
+                          color: theme.dividerColor.withValues(alpha: 0.6),
+                          width: 1.2,
+                        ),
+                        foregroundColor: theme.textTheme.bodyLarge?.color,
+                      ),
+                      onPressed: () => Get.back(),
+                      child: Text(
+                        "No",
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red.shade600,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () async {
+                        Get.back();
+                        try {
+                          if (buyerOffer) {
+                            await BuyerServices.buyerOfferAction(id, {
+                              'action': 'buyer_cancel',
+                            });
+                          } else {
+                            await BuyerServices.cancelOffer(id);
+                          }
+                          AppSnackbar.showSuccess(
+                            title: 'Cancelled',
+                            message: buyerOffer
+                                ? 'Buyer offer cancelled successfully.'
+                                : 'Requirement cancelled successfully.',
+                          );
+                          await controller.fetchDetails(
+                            id,
+                            silent: true,
+                            preferBuyerOffer: buyerOffer,
+                            preferBuyerRequirement: !buyerOffer,
+                          );
+                        } catch (error) {
+                          AppSnackbar.showError(
+                            title: 'Could not cancel',
+                            message: error.toString().replaceFirst('Exception: ', ''),
+                          );
+                        }
+                      },
+                      child: Text(
+                        "Yes, Cancel",
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -19,6 +19,7 @@ import '../../transporter/vehicles/view/transporter_vehicles_view.dart';
 import '../../transporter/bidding/view/transporter_bidding_view.dart';
 import '../../buyer/dashboard/view/buyer_dashboard_view.dart';
 import '../../buyer/offers/view/buyer_offers_view.dart';
+import '../../buyer/offers/view/buyer_activity_view.dart';
 import '../../buyer/delivery_challan/view/buyer_delivery_challan_view.dart';
 import '../../buyer/branch/view/buyer_branch_view.dart';
 import '../../settings/view/settings_page.dart';
@@ -55,6 +56,7 @@ class MainNavigationScreen extends StatelessWidget {
       return [
             BuyerDashboardView(),
             const BuyerOffersView(),
+            const BuyerActivityView(),
             const BuyerDeliveryChallanView(),
             BuyerBranchView(),
           ] +
@@ -182,6 +184,11 @@ class _GlassNavBar extends StatelessWidget {
           icon: IconlyLight.ticket_star,
           activeIcon: IconlyBold.ticket_star,
           label: 'Offers',
+        ),
+        _NavItem(
+          icon: IconlyLight.paper,
+          activeIcon: IconlyBold.paper,
+          label: 'Activity',
         ),
         _NavItem(
           icon: IconlyLight.document,

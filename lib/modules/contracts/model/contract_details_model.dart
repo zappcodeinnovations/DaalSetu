@@ -50,6 +50,8 @@ class ContractDetailModel {
   final String? sellerEmail;
   final String? buyerCompany;
   final String? sellerCompany;
+  final String? buyerMobile;
+  final String? sellerMobile;
 
   ContractDetailModel({
     required this.id,
@@ -102,6 +104,8 @@ class ContractDetailModel {
     this.sellerEmail,
     this.buyerCompany,
     this.sellerCompany,
+    this.buyerMobile,
+    this.sellerMobile,
   });
 
   factory ContractDetailModel.fromJson(Map<String, dynamic> json) {
@@ -208,6 +212,8 @@ class ContractDetailModel {
       sellerEmail: _extractField(json, 'seller', ['email', 'email_id', 'user_email']),
       buyerCompany: _extractField(json, 'buyer', ['company', 'company_name', 'business_name', 'org_name']),
       sellerCompany: _extractField(json, 'seller', ['company', 'company_name', 'business_name', 'org_name']),
+      buyerMobile: _extractField(json, 'buyer', ['mobile', 'phone', 'contact', 'mobile_number', 'phone_number', 'username', 'login_username']),
+      sellerMobile: _extractField(json, 'seller', ['mobile', 'phone', 'contact', 'mobile_number', 'phone_number', 'username', 'login_username']),
     );
   }
 
@@ -284,6 +290,8 @@ class ContractDetailModel {
       transporterName: c.transporterName,
       transporterMobile: c.transporterMobile,
       bidAmount: c.bidAmount,
+      buyerMobile: c.buyerName,
+      sellerMobile: c.sellerName,
     );
   }
 }

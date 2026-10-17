@@ -12,6 +12,8 @@ class BuyerDashboardController extends GetxController {
   var errorMessage = ''.obs;
 
   Rx<BuyerDashboardModel?> dashboardData = Rx<BuyerDashboardModel?>(null);
+  var selectedRange = '7D'.obs;
+  var isRangeLoading = false.obs;
   var categories = <CategoryModel>[].obs;
   var isSearching = false.obs;
   var searchQuery = ''.obs;
@@ -22,14 +24,25 @@ class BuyerDashboardController extends GetxController {
     fetchDashboardData();
   }
 
-  Future<void> fetchDashboardData() async {
+  Future<void> setRange(String range) async {
+    if (selectedRange.value == range) return;
+    selectedRange.value = range;
+    await fetchDashboardData(range: range);
+  }
+
+  Future<void> fetchDashboardData({String? range}) async {
+    final effectiveRange = range ?? selectedRange.value;
     final isInitialLoad = dashboardData.value == null;
     try {
-      if (isInitialLoad) isLoading(true);
+      if (isInitialLoad) {
+        isLoading(true);
+      } else {
+        isRangeLoading(true);
+      }
       isError(false);
       errorMessage('');
 
-      final data = await BuyerServices.getDashboard();
+      final data = await BuyerServices.getDashboard(range: effectiveRange);
 
       // If the API nests it in a body key, we extract it.
       final actualData = data.containsKey('body') ? data['body'] : data;
@@ -41,10 +54,13 @@ class BuyerDashboardController extends GetxController {
         Map<String, dynamic>.from(actualData),
       );
     } catch (e) {
-      isError(true);
-      errorMessage(ApiClient.userFriendlyErrorMessage(e.toString()));
+      if (isInitialLoad) {
+        isError(true);
+        errorMessage(ApiClient.userFriendlyErrorMessage(e.toString()));
+      }
     } finally {
       isLoading(false);
+      isRangeLoading(false);
     }
 
     // Categories are independent of dashboard analytics. A dashboard API

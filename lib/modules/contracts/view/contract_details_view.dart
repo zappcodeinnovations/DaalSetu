@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:daalsetu/theme/app_theme.dart';
 import 'package:daalsetu/routes/app_routes.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../controller/contract_controller.dart';
 import 'contract_edit_view.dart';
@@ -78,64 +79,66 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
               _section('Product & deal', [
                 _item('Product', contract.productTitle),
                 _item('Category', contract.productCategory),
-                _item('Product ID', contract.productId),
-                _item('Interest ID', contract.interestId),
+                if (contract.productId != null && contract.productId != 0)
+                  _item('Product ID', contract.productId),
+                if (contract.interestId != null && contract.interestId != 0)
+                  _item('Interest ID', contract.interestId),
                 _item(
                   'Deal amount',
-                  '₹${contract.dealAmount} ${contract.amountUnit}',
+                  '₹${contract.dealAmount} ${contract.amountUnit}'.trim(),
                 ),
                 _item(
                   'Deal quantity',
-                  '${contract.dealQuantity} ${contract.quantityUnit}',
+                  '${contract.dealQuantity} ${contract.quantityUnit}'.trim(),
                 ),
-                _item('Quantity (Qtl)', contract.quantityQtl),
-                _item('Bag count', contract.bagCount),
-                _item('Bags', contract.bags),
-                _item('Packing weight', '${contract.packingWeightKg} kg'),
+                if (contract.quantityQtl.isNotEmpty && contract.quantityQtl != contract.dealQuantity)
+                  _item('Quantity (Qtl)', contract.quantityQtl),
+                if (contract.bagCount != null && contract.bagCount != 0)
+                  _item('Bag count', contract.bagCount),
+                if (contract.bags.isNotEmpty && contract.bags != contract.bagCount?.toString())
+                  _item('Bags', contract.bags),
+                if (contract.packingWeightKg.isNotEmpty)
+                  _item('Packing weight', '${contract.packingWeightKg} kg'),
               ]),
-              _section('Buyer', [
-                _item('Buyer', contract.displayBuyerId),
-                _item('Login/mobile', contract.buyerName),
-                _item('Email', contract.buyerEmail),
-                if (contract.buyerCompany != null && contract.buyerCompany!.isNotEmpty)
-                  _item('Company', contract.buyerCompany),
-                _item('Unique ID', contract.buyerUniqueId),
-                _item('Database ID', contract.buyerId),
-                _item('Remark', contract.buyerRemark),
-              ]),
-              _section('Seller', [
-                _item('Seller', contract.displaySellerId),
-                _item('Login/mobile', contract.sellerName),
-                _item('Email', contract.sellerEmail),
-                if (contract.sellerCompany != null && contract.sellerCompany!.isNotEmpty)
-                  _item('Company', contract.sellerCompany),
-                _item('Mapped ID', contract.sellerMappedId),
-                _item('Database ID', contract.sellerId),
-                _item('Remark', contract.sellerRemark),
-              ]),
-              _section('Loading & transporter', [
-                _item('Loading from', contract.loadingFrom),
-                _item('Loading to', contract.loadingTo),
-                _item(
-                  'Ready for loading at',
-                  _date(contract.readyForLoadingAt),
-                ),
-                _item('Ready by user ID', contract.readyForLoadingById),
-                _item(
-                  'Transporter visible at',
-                  _date(contract.transporterVisibleAt),
-                ),
-                _item(
-                  'Visibility reason',
-                  _label(contract.transporterVisibilityReason),
-                ),
-              ]),
-              _section('Administration', [
-                _item('Admin remark', contract.adminRemark),
-                _item('Confirmed by admin ID', contract.confirmedByAdminId),
-                _item('Confirmed branch ID', contract.confirmedBranchId),
-                _item('Created by user ID', contract.createdByUserId),
-                _item('Assigned sub-admin ID', contract.assignedSubAdminId),
+              _partySection(
+                title: 'Buyer',
+                displayPartyId: contract.displayBuyerId,
+                name: contract.buyerName,
+                mobile: contract.buyerMobile,
+                email: contract.buyerEmail,
+                company: contract.buyerCompany,
+                uniqueId: contract.buyerUniqueId,
+              ),
+              _partySection(
+                title: 'Seller',
+                displayPartyId: contract.displaySellerId,
+                name: contract.sellerName,
+                mobile: contract.sellerMobile,
+                email: contract.sellerEmail,
+                company: contract.sellerCompany,
+                mappedId: contract.sellerMappedId,
+              ),
+              if (contract.loadingFrom.isNotEmpty || contract.loadingTo.isNotEmpty)
+                _section('Logistics Route', [
+                  if (contract.loadingFrom.isNotEmpty)
+                    _item('Pickup Location', contract.loadingFrom),
+                  if (contract.loadingTo.isNotEmpty)
+                    _item('Delivery Location', contract.loadingTo),
+                  if (contract.readyForLoadingAt.isNotEmpty)
+                    _item(
+                      'Ready for loading at',
+                      _date(contract.readyForLoadingAt),
+                    ),
+                  if (contract.transporterVisibleAt.isNotEmpty)
+                    _item(
+                      'Transporter visible at',
+                      _date(contract.transporterVisibleAt),
+                    ),
+                ]),
+              _section('Transaction Notes', [
+                _item('Buyer Note', contract.buyerRemark),
+                _item('Seller Note', contract.sellerRemark),
+                _item('Admin Note', contract.adminRemark),
               ]),
               _section('Timeline', [
                 _item('Created', _date(contract.createdAt)),
@@ -205,41 +208,37 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
 
   Widget _header(ContractDetailModel contract) {
     final color = _statusColor(contract.status);
+    final contractTitle = contract.contractId.isNotEmpty
+        ? 'Contract: ${contract.contractId}'
+        : 'Contract #${contract.id}';
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
       child: Padding(
         padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    contract.contractId,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
+            Expanded(
+              child: Text(
+                contractTitle,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: .12),
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Text(
-                    _label(contract.status),
-                    style: TextStyle(color: color, fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ],
+              ),
             ),
-            const SizedBox(height: 8),
-            Text('Internal ID: ${contract.id}'),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 6,
+              ),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: .12),
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: Text(
+                _label(contract.status),
+                style: TextStyle(color: color, fontWeight: FontWeight.w700),
+              ),
+            ),
           ],
         ),
       ),
@@ -262,6 +261,153 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
             ),
             const Divider(height: 24),
             ...children,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _partySection({
+    required String title,
+    required String displayPartyId,
+    required String name,
+    String? mobile,
+    String? email,
+    String? company,
+    String? uniqueId,
+    String? mappedId,
+  }) {
+    final theme = Theme.of(context);
+    final isMobileNumeric = mobile != null && RegExp(r'^\+?[0-9]{7,15}$').hasMatch(mobile.trim());
+    final phoneToDisplay = isMobileNumeric ? mobile.trim() : (RegExp(r'^\+?[0-9]{7,15}$').hasMatch(name.trim()) ? name.trim() : null);
+
+    // If displayPartyId has "Name (ID: ...)", extract the leading name, or fallback to name
+    String headingName = name;
+    String? subtitleId = displayPartyId.isNotEmpty ? displayPartyId : (uniqueId ?? mappedId);
+    if (displayPartyId.isNotEmpty && displayPartyId.contains('(')) {
+      final parts = displayPartyId.split('(');
+      headingName = parts[0].trim();
+      subtitleId = '(${parts.sublist(1).join('(').trim()}';
+      if (subtitleId.startsWith('(') && subtitleId.endsWith(')')) {
+        subtitleId = subtitleId.substring(1, subtitleId.length - 1).trim();
+      }
+    } else if (headingName.isEmpty || RegExp(r'^\+?[0-9]{7,15}$').hasMatch(headingName)) {
+      if (displayPartyId.isNotEmpty) headingName = displayPartyId;
+    }
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.person_outline_rounded, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+            const Divider(height: 20),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: AppTheme.primaryGold.withValues(alpha: 0.15),
+                  child: const Icon(Icons.person, color: AppTheme.primaryGold),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        headingName.isNotEmpty ? headingName : '—',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+                      if (subtitleId != null && subtitleId.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          subtitleId,
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                      if (company != null && company.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          'Company: $company',
+                          style: TextStyle(
+                            color: Colors.grey.shade700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (phoneToDisplay != null && phoneToDisplay.isNotEmpty)
+              InkWell(
+                onTap: () async {
+                  final uri = Uri.parse('tel:$phoneToDisplay');
+                  if (await canLaunchUrl(uri)) await launchUrl(uri);
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.phone, size: 16, color: AppTheme.primaryGold),
+                      const SizedBox(width: 10),
+                      Text(
+                        phoneToDisplay,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            if (email != null && email.isNotEmpty)
+              InkWell(
+                onTap: () async {
+                  final uri = Uri.parse('mailto:$email');
+                  if (await canLaunchUrl(uri)) await launchUrl(uri);
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.email_outlined, size: 16, color: AppTheme.primaryGold),
+                      const SizedBox(width: 10),
+                      Text(
+                        email,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
           ],
         ),
       ),

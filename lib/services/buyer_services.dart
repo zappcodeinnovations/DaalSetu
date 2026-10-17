@@ -5,9 +5,12 @@ class BuyerServices {
   /// ============================================================
   /// GET BUYER DASHBOARD
   /// ============================================================
-  static Future<Map<String, dynamic>> getDashboard() async {
+  static Future<Map<String, dynamic>> getDashboard({String? range}) async {
+    final endpoint = range != null && range.isNotEmpty
+        ? '${ApiUrls.buyerDashboard}?range=$range'
+        : ApiUrls.buyerDashboard;
     final response = await ApiClient.get(
-      endpoint: ApiUrls.buyerDashboard,
+      endpoint: endpoint,
       requireAuth: true,
       suppressErrorDialog: true,
     );
@@ -1267,6 +1270,13 @@ class BuyerServices {
   }
 
   static Future<Map<String, dynamic>> cancelOffer(int id) async {
+    // 1. Web panel requirement close endpoint: POST /api/buyer-requirements/$id/ with {'action': 'close'}
+    try {
+      final response = await closeBuyerRequirement(id);
+      return response;
+    } catch (_) {}
+
+    // 2. Canonical RFQ close endpoint: POST /api/rfqs/$id/close/
     try {
       final response = await ApiClient.post(
         endpoint: ApiUrls.closeRfq(id),
@@ -1274,20 +1284,21 @@ class BuyerServices {
         requireAuth: true,
         suppressErrorDialog: true,
       );
-      if (response != null && response is Map<String, dynamic>) {
+      if (response is Map<String, dynamic>) {
         return response;
       }
     } catch (_) {}
 
+    // 3. Buyer offer action fallback: POST /api/buyer-offers/$id/action/
     final response = await ApiClient.post(
       endpoint: ApiUrls.buyerOfferAction(id),
-      body: {"action": "cancel"},
+      body: {"action": "buyer_cancel"},
       requireAuth: true,
     );
-    if (response == null || response is! Map<String, dynamic>) {
-      throw Exception("Invalid response format");
+    if (response is Map<String, dynamic>) {
+      return response;
     }
-    return response;
+    throw Exception("Invalid response format");
   }
 
   static Future<Map<String, dynamic>> getChallanDetails(int challanId) =>

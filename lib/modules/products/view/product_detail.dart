@@ -74,6 +74,32 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 _images(product),
                 const SizedBox(height: 14),
                 _header(product),
+                if (product.isExpired)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 14),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFDE8E8),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFF8B4B4)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Color(0xFF9B1C1C), size: 18),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            "Deal has expired. You cannot show interest.",
+                            style: TextStyle(
+                              color: Color(0xFF9B1C1C),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 if (_canManageInterests)
                   _buildDealActionButton(product, context),
                 _section('Offer information', [

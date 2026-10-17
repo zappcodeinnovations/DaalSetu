@@ -177,7 +177,11 @@ class ProductModel {
       dealExpiryDatetime: text("deal_expiry_datetime"),
       loadingLocation: text("loading_location"),
       remark: text("remark"),
-      isExpired: json["is_expired"] == true,
+      isExpired: json["is_expired"] == true ||
+          text("status").toLowerCase().contains('expire') ||
+          text("deal_status").toLowerCase().contains('expire') ||
+          (text("deal_expiry_datetime").isNotEmpty &&
+              DateTime.tryParse(text("deal_expiry_datetime"))?.toLocal().isBefore(DateTime.now()) == true),
       isActive: json["is_active"] == true,
       status: text("status"),
       dealStatus: text("deal_status"),

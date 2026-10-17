@@ -4,13 +4,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/app_snackbar.dart';
+import '../../../../widgets/authenticated_network_image.dart';
 import '../../../products/view/product_detail.dart';
 import '../controller/buyer_offers_controller.dart';
 import '../model/buyer_offer_model.dart';
 import 'add_buyer_offer_view.dart';
 import 'buyer_offer_details_view.dart';
 import 'buyer_negotiation_view.dart';
-import 'buyer_request_management_view.dart';
 
 class BuyerOffersView extends StatelessWidget {
   final int initialIndex;
@@ -21,8 +21,8 @@ class BuyerOffersView extends StatelessWidget {
     final theme = Theme.of(context);
 
     return DefaultTabController(
-      length: 7,
-      initialIndex: (initialIndex >= 0 && initialIndex < 7) ? initialIndex : 0,
+      length: 4,
+      initialIndex: (initialIndex >= 0 && initialIndex < 4) ? initialIndex : 0,
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
@@ -55,9 +55,6 @@ class BuyerOffersView extends StatelessWidget {
               Tab(text: "Today"),
               Tab(text: "Pending"),
               Tab(text: "Previous"),
-              Tab(text: "My Interests"),
-              Tab(text: "My Requirements"),
-              Tab(text: "Buyer Offers"),
             ],
           ),
         ),
@@ -86,9 +83,6 @@ class BuyerOffersView extends StatelessWidget {
             _OfferList(offerType: 'today'),
             _OfferList(offerType: 'pending'),
             _OfferList(offerType: 'previous'),
-            _OfferList(offerType: 'interests'),
-            BuyerRequestManagementView(mode: BuyerRequestMode.requirements),
-            BuyerRequestManagementView(mode: BuyerRequestMode.offers),
           ],
         ),
       ),
@@ -339,12 +333,12 @@ class _OfferList extends StatelessWidget {
                                         offer.imageUrl!.isNotEmpty)
                                     ? ClipRRect(
                                         borderRadius: BorderRadius.circular(10),
-                                        child: Image.network(
-                                          offer.imageUrl!,
+                                        child: AuthenticatedNetworkImage(
+                                          url: offer.imageUrl!,
                                           width: 54,
                                           height: 54,
                                           fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) =>
+                                          fallback:
                                               _buildNoMediaPlaceholder(theme),
                                         ),
                                       )
@@ -690,6 +684,13 @@ class _OfferList extends StatelessWidget {
                     ? const Color(0xFFF59E0B)
                     : theme.colorScheme.primary));
 
+    String displayStatus = status;
+    if (sUpper.contains('EXPIRED')) {
+      displayStatus = 'Deal Expired';
+    } else if (status.trim().toUpperCase() == 'AVAILABLE') {
+      displayStatus = 'ACTIVE';
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -698,7 +699,7 @@ class _OfferList extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
-        status,
+        displayStatus,
         style: GoogleFonts.inter(
           fontSize: 10,
           fontWeight: FontWeight.w600,
@@ -821,13 +822,32 @@ class _OfferList extends StatelessWidget {
             icon: IconlyLight.show,
             onTap: () => _openDetails(offer, type),
           ),
-          _ActionBtn(
-            label: "Submit Offer",
-            color: Theme.of(context).colorScheme.primary,
-            icon: IconlyLight.send,
-            onTap: () =>
-                _showInterestDialog(context, controller, productId, offer),
-          ),
+          if (offer.isExpired)
+            _ActionBtn(
+              label: "Deal Expired",
+              color: Colors.grey,
+              icon: Icons.timer_off_outlined,
+              onTap: () {
+                AppSnackbar.showError(
+                  message: "Deal has expired. You cannot show interest.",
+                );
+              },
+            )
+          else if (offer.canSubmitOffer)
+            _ActionBtn(
+              label: "Submit Offer",
+              color: Theme.of(context).colorScheme.primary,
+              icon: IconlyLight.send,
+              onTap: () =>
+                  _showInterestDialog(context, controller, productId, offer),
+            )
+          else if (offer.isOutOfStock)
+            _ActionBtn(
+              label: "Out of Stock",
+              color: Colors.grey,
+              icon: IconlyLight.send,
+              onTap: () {},
+            ),
         ],
       );
     }
@@ -929,13 +949,25 @@ class _OfferList extends StatelessWidget {
             icon: IconlyLight.show,
             onTap: () => _openDetails(offer, type),
           ),
-          _ActionBtn(
-            label: "Show Interest",
-            color: Theme.of(context).colorScheme.primary,
-            icon: IconlyLight.star,
-            onTap: () =>
-                _showInterestDialog(context, controller, productId, offer),
-          ),
+          if (offer.isExpired)
+            _ActionBtn(
+              label: "Deal Expired",
+              color: Colors.grey,
+              icon: Icons.timer_off_outlined,
+              onTap: () {
+                AppSnackbar.showError(
+                  message: "Deal has expired. You cannot show interest.",
+                );
+              },
+            )
+          else
+            _ActionBtn(
+              label: "Show Interest",
+              color: Theme.of(context).colorScheme.primary,
+              icon: IconlyLight.star,
+              onTap: () =>
+                  _showInterestDialog(context, controller, productId, offer),
+            ),
         ],
       );
     }
@@ -1244,7 +1276,7 @@ class _OfferList extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              formattedDeliveryDate ?? "dd-----yyyy",
+                              formattedDeliveryDate ?? "dd-mm-yyyy",
                               style: GoogleFonts.inter(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,

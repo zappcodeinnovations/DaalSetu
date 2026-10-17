@@ -1,5 +1,8 @@
 import '../model/buyer_offer_model.dart';
 import '../../../../services/buyer_services.dart';
+import '../../../../services/seller_services.dart';
+import '../../../../services/product_services.dart';
+import '../../../seller/products/model/product_media_model.dart';
 import '../../../../utils/app_snackbar.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
@@ -80,9 +83,20 @@ class BuyerOffersController extends GetxController {
       print(
         "📦 [BUYER OFFERS CONTROLLER] offerType: '$offerType' | fetched raw items count: ${data.length}",
       );
-      final mapped = data.map((e) => BuyerOfferModel.fromJson(e)).toList();
+      final mapped = data
+          .map((e) => BuyerOfferModel.fromJson(e))
+          .where((offer) {
+            // For public / active feeds ('today', 'all'), offers with visibility turned off
+            // (isActive == false) must be excluded immediately.
+            if (offerType == 'today' || offerType == 'all') {
+              return offer.isActive;
+            }
+            return true;
+          })
+          .toList();
       allOffersList.assignAll(mapped);
       _applyFilter();
+      _enrichMissingImages();
     } catch (e) {
       isError(true);
       final raw = e
@@ -96,6 +110,70 @@ class BuyerOffersController extends GetxController {
     } finally {
       isLoading(false);
     }
+  }
+
+  Future<void> _enrichMissingImages() async {
+    try {
+      final needsImage = allOffersList.where(
+        (o) => (o.imageUrl == null || o.imageUrl!.trim().isEmpty),
+      ).toList();
+      if (needsImage.isEmpty) return;
+
+      // 1. Fetch all product images from global /api/product-images/
+      final images = await SellerServices.getProductImages();
+      final Map<int, String> imageByProductId = {};
+      for (final item in images) {
+        if (item is Map) {
+          final pId = ProductImageModel.parseProductId(Map<String, dynamic>.from(item));
+          final url = item['image_url'] ?? item['image'] ?? item['file'] ?? item['download_url'];
+          if (pId != null && url != null && url.toString().trim().isNotEmpty) {
+            imageByProductId.putIfAbsent(pId, () => url.toString().trim());
+          }
+        }
+      }
+
+      bool updated = false;
+      final updatedList = allOffersList.map((offer) {
+        if (offer.imageUrl != null && offer.imageUrl!.trim().isNotEmpty) {
+          return offer;
+        }
+        final pId = offer.productId ?? offer.id;
+        if (pId != null && imageByProductId.containsKey(pId)) {
+          updated = true;
+          return offer.copyWith(imageUrl: imageByProductId[pId]);
+        }
+        return offer;
+      }).toList();
+
+      if (updated) {
+        allOffersList.assignAll(updatedList);
+        _applyFilter();
+      }
+
+      // 2. For remaining items without an image (e.g. up to first 10 items), fetch product detail
+      final remaining = allOffersList.where(
+        (o) => (o.imageUrl == null || o.imageUrl!.trim().isEmpty) && (o.productId != null || o.id != null),
+      ).take(10).toList();
+
+      for (final offer in remaining) {
+        final pId = offer.productId ?? offer.id;
+        if (pId != null && pId > 0) {
+          try {
+            final detail = await ProductService.getProductDetail(pId);
+            if (detail.images.isNotEmpty) {
+              final firstUrl = detail.images.first.imageUrl;
+              if (firstUrl.trim().isNotEmpty) {
+                final idx = allOffersList.indexWhere((o) => (o.productId ?? o.id) == pId);
+                if (idx != -1) {
+                  allOffersList[idx] = allOffersList[idx].copyWith(imageUrl: firstUrl);
+                  _applyFilter();
+                }
+              }
+            }
+          } catch (_) {}
+        }
+      }
+    } catch (_) {}
   }
 
   Future<bool> submitInterest(

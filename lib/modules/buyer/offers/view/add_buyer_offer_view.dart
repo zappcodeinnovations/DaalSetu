@@ -259,47 +259,49 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
         print("⚠️ Category brands fetch error: $e");
       }
 
-      // 2. Fetch master brands from /api/brands/ or /api/brands/dropdown/
-      try {
-        final masterBrands = await SellerServices.getBrandsList();
-        for (final item in masterBrands) {
-          if (item is Map) {
-            final status = (item['status'] ?? 'active').toString().toLowerCase();
-            final isActive = item['is_active'] != false;
-            if (isActive && status != 'inactive') {
-              addBrandIfValid(item['id'], item['brand_name'] ?? item['name']);
-            }
-          }
-        }
-      } catch (e) {
-        print("⚠️ Master brands fetch error: $e");
-      }
-
-      // 3. Harvest brands from categories tree (guarantees full catalogue parity with web portal)
-      try {
-        final catData = await SellerServices.getCategoriesTree();
-        void extractTreeBrands(dynamic node) {
-          if (node is Map) {
-            if (node['brands'] is List) {
-              for (final b in node['brands']) {
-                if (b is Map) {
-                  addBrandIfValid(b['id'], b['brand_name'] ?? b['name']);
+      // 2. If endpoint returned empty, resolve brands mapped specifically to this category in categories tree
+      if (brandMap.isEmpty) {
+        try {
+          final catData = await SellerServices.getCategoriesTree();
+          void extractCategorySpecificBrands(dynamic node) {
+            if (node is Map) {
+              final nodeId = int.tryParse(node['id']?.toString() ?? '');
+              if (nodeId == catId) {
+                if (node['brands'] is List) {
+                  for (final b in node['brands']) {
+                    if (b is Map) {
+                      addBrandIfValid(b['id'], b['brand_name'] ?? b['name']);
+                    }
+                  }
+                }
+                // Also check immediate children of this category
+                if (node['children'] is List) {
+                  for (final child in node['children']) {
+                    if (child is Map && child['brands'] is List) {
+                      for (final b in child['brands']) {
+                        if (b is Map) {
+                          addBrandIfValid(b['id'], b['brand_name'] ?? b['name']);
+                        }
+                      }
+                    }
+                  }
+                }
+                return;
+              }
+              if (node['children'] is List) {
+                for (final child in node['children']) {
+                  extractCategorySpecificBrands(child);
                 }
               }
             }
-            if (node['children'] is List) {
-              for (final child in node['children']) {
-                extractTreeBrands(child);
-              }
-            }
           }
-        }
 
-        for (final root in catData) {
-          extractTreeBrands(root);
+          for (final root in catData) {
+            extractCategorySpecificBrands(root);
+          }
+        } catch (e) {
+          print("⚠️ Category tree brands extraction error: $e");
         }
-      } catch (e) {
-        print("⚠️ Category tree brands extraction error: $e");
       }
 
       // 4. Construct brand models with "Any Brand / Loose" (id 0) at the top, followed by sorted brands

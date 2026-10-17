@@ -45,7 +45,6 @@ class _BuyerRequestManagementViewState
 
   List<String> get _statuses => _isRequirement
       ? const [
-          'all',
           'open',
           'negotiation_in_progress',
           'fulfilled',
@@ -53,7 +52,6 @@ class _BuyerRequestManagementViewState
           'expired',
         ]
       : const [
-          'all',
           'requested',
           'negotiating',
           'seller_confirmed',
@@ -226,7 +224,7 @@ class _BuyerRequestManagementViewState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Filter ${_isRequirement ? 'requirements' : 'buyer offers'}',
+                  'Filter ${_isRequirement ? 'requirements' : 'negotiations'}',
                   style: GoogleFonts.poppins(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
@@ -236,14 +234,18 @@ class _BuyerRequestManagementViewState
                 DropdownButtonFormField<String>(
                   value: selectedStatus,
                   decoration: const InputDecoration(labelText: 'Status'),
-                  items: _statuses
-                      .map(
-                        (value) => DropdownMenuItem(
-                          value: value,
-                          child: Text(_label(value)),
-                        ),
-                      )
-                      .toList(),
+                  items: [
+                    const DropdownMenuItem(
+                      value: 'all',
+                      child: Text('All'),
+                    ),
+                    ..._statuses.map(
+                      (value) => DropdownMenuItem(
+                        value: value,
+                        child: Text(_label(value)),
+                      ),
+                    ),
+                  ],
                   onChanged: (value) =>
                       setSheetState(() => selectedStatus = value ?? 'all'),
                 ),
@@ -533,7 +535,7 @@ class _BuyerRequestManagementViewState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final heading = _isRequirement ? 'My Requirements' : 'Buyer Offers';
+    final heading = _isRequirement ? 'My Requirements' : 'Negotiations';
     return Column(
       children: [
         Padding(
@@ -589,8 +591,8 @@ class _BuyerRequestManagementViewState
               return ChoiceChip(
                 label: Text(_label(status)),
                 selected: _status == status,
-                onSelected: (_) {
-                  setState(() => _status = status);
+                onSelected: (selected) {
+                  setState(() => _status = selected ? status : 'all');
                   _load();
                 },
               );
@@ -617,7 +619,7 @@ class _BuyerRequestManagementViewState
                       const SizedBox(height: 80),
                       Center(
                         child: Text(
-                          'No ${_isRequirement ? 'requirements' : 'buyer offers'} found.',
+                          'No ${_isRequirement ? 'requirements' : 'negotiations'} found.',
                         ),
                       ),
                     ],

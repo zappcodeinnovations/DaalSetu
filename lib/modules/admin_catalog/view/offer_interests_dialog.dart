@@ -39,6 +39,19 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
   String? _loadedStock;
   String? _loadedPrice;
   String? _loadedExpiry;
+  bool? _loadedIsExpired;
+
+  bool get isExpired {
+    if (_loadedIsExpired == true) return true;
+    final raw = _loadedExpiry ?? widget.dealExpiry;
+    if (raw != null && raw.trim().isNotEmpty && raw != '-') {
+      final dt = DateTime.tryParse(raw.trim())?.toLocal();
+      if (dt != null && dt.isBefore(DateTime.now())) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   bool get _isAdminRole =>
       const {'admin', 'super_admin', 'sub_admin'}.contains(_role);
@@ -133,6 +146,11 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
               _loadedExpiry =
                   map['deal_expiry_datetime']?.toString() ??
                   map['loading_to']?.toString();
+              if (map['is_expired'] == true ||
+                  (map['status']?.toString().toLowerCase().contains('expire') ?? false) ||
+                  (map['deal_status']?.toString().toLowerCase().contains('expire') ?? false)) {
+                _loadedIsExpired = true;
+              }
             }
           }
         } catch (e) {
@@ -505,6 +523,26 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
 
                 // 2. Offer Summary Section (Available, Seller Offer Amount, Deal Expiry)
                 _buildSummaryInfo(isDark),
+
+                // 2b. Expired Warning Banner (Web Parity)
+                if (isExpired)
+                  Container(
+                    margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFDE8E8),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFF8B4B4)),
+                    ),
+                    child: const Text(
+                      "Deal has expired. You cannot show interest.",
+                      style: TextStyle(
+                        color: Color(0xFF9B1C1C),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
 
                 // 3. Responsive Content: Mobile Cards or Tablet Table (Zero Render Overflow)
                 Flexible(child: _buildInterestsContent(isDark, isMobile)),

@@ -36,6 +36,7 @@ class BuyerOfferModel {
   final String? displayPrice;
   final String? location;
   final bool isRfq;
+  final bool isActive;
 
   BuyerOfferModel({
     this.id,
@@ -73,7 +74,91 @@ class BuyerOfferModel {
     this.displayPrice,
     this.location,
     this.isRfq = false,
+    this.isActive = true,
+    this.isExpired = false,
   });
+
+  final bool isExpired;
+
+  BuyerOfferModel copyWith({
+    int? id,
+    int? productId,
+    int? interestId,
+    String? transactionId,
+    String? title,
+    String? code,
+    String? brand,
+    String? category,
+    String? availableQuantity,
+    String? requestedQuantity,
+    String? quantityUnit,
+    String? requestedAmount,
+    String? amountUnit,
+    String? bagCount,
+    String? packingWeight,
+    String? pickupFrom,
+    String? pickupTo,
+    String? expiryDate,
+    String? status,
+    String? createdAt,
+    String? imageUrl,
+    String? interestCount,
+    String? sellerName,
+    bool? canEditInterest,
+    bool? canCancelInterest,
+    bool? canOpenNegotiation,
+    bool? canBuyerAccept,
+    bool? canBuyerReject,
+    bool? hasSellerProposal,
+    String? displayTitle,
+    String? displayStatus,
+    String? displayQuantity,
+    String? displayPrice,
+    String? location,
+    bool? isRfq,
+    bool? isActive,
+    bool? isExpired,
+  }) {
+    return BuyerOfferModel(
+      id: id ?? this.id,
+      productId: productId ?? this.productId,
+      interestId: interestId ?? this.interestId,
+      transactionId: transactionId ?? this.transactionId,
+      title: title ?? this.title,
+      code: code ?? this.code,
+      brand: brand ?? this.brand,
+      category: category ?? this.category,
+      availableQuantity: availableQuantity ?? this.availableQuantity,
+      requestedQuantity: requestedQuantity ?? this.requestedQuantity,
+      quantityUnit: quantityUnit ?? this.quantityUnit,
+      requestedAmount: requestedAmount ?? this.requestedAmount,
+      amountUnit: amountUnit ?? this.amountUnit,
+      bagCount: bagCount ?? this.bagCount,
+      packingWeight: packingWeight ?? this.packingWeight,
+      pickupFrom: pickupFrom ?? this.pickupFrom,
+      pickupTo: pickupTo ?? this.pickupTo,
+      expiryDate: expiryDate ?? this.expiryDate,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      imageUrl: imageUrl ?? this.imageUrl,
+      interestCount: interestCount ?? this.interestCount,
+      sellerName: sellerName ?? this.sellerName,
+      canEditInterest: canEditInterest ?? this.canEditInterest,
+      canCancelInterest: canCancelInterest ?? this.canCancelInterest,
+      canOpenNegotiation: canOpenNegotiation ?? this.canOpenNegotiation,
+      canBuyerAccept: canBuyerAccept ?? this.canBuyerAccept,
+      canBuyerReject: canBuyerReject ?? this.canBuyerReject,
+      hasSellerProposal: hasSellerProposal ?? this.hasSellerProposal,
+      displayTitle: displayTitle ?? this.displayTitle,
+      displayStatus: displayStatus ?? this.displayStatus,
+      displayQuantity: displayQuantity ?? this.displayQuantity,
+      displayPrice: displayPrice ?? this.displayPrice,
+      location: location ?? this.location,
+      isRfq: isRfq ?? this.isRfq,
+      isActive: isActive ?? this.isActive,
+      isExpired: isExpired ?? this.isExpired,
+    );
+  }
 
   factory BuyerOfferModel.fromJson(dynamic raw) {
     final Map<String, dynamic> json = (raw is Map)
@@ -159,10 +244,15 @@ class BuyerOfferModel {
     String formatDateDisplay(String? raw, {bool withTime = false}) {
       if (raw == null || raw.trim().isEmpty) return '';
       final s = raw.trim();
+      const months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      ];
       try {
         if (s.contains('T')) {
           final dt = DateTime.parse(s).toLocal();
-          final d = "${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year}";
+          final mStr = (dt.month >= 1 && dt.month <= 12) ? months[dt.month - 1] : '${dt.month}';
+          final d = "${dt.day} $mStr ${dt.year}";
           if (withTime) {
             final t = "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
             return "$d $t";
@@ -172,15 +262,26 @@ class BuyerOfferModel {
         if (RegExp(r'^\d{4}-\d{2}-\d{2}').hasMatch(s)) {
           final dt = DateTime.tryParse(s)?.toLocal();
           if (dt != null) {
-            final d = "${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year}";
+            final mStr = (dt.month >= 1 && dt.month <= 12) ? months[dt.month - 1] : '${dt.month}';
+            final d = "${dt.day} $mStr ${dt.year}";
             if (withTime) {
               final t = "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
               return "$d $t";
             }
             return d;
           }
+        }
+        if (RegExp(r'^\d{2}-\d{2}-\d{4}').hasMatch(s)) {
           final parts = s.split(' ')[0].split('-');
-          return "${parts[2]}-${parts[1]}-${parts[0]}";
+          final day = int.tryParse(parts[0]) ?? 1;
+          final month = int.tryParse(parts[1]) ?? 1;
+          final year = parts[2];
+          final mStr = (month >= 1 && month <= 12) ? months[month - 1] : '$month';
+          final d = "$day $mStr $year";
+          if (withTime && s.contains(' ')) {
+            return "$d ${s.split(' ')[1]}";
+          }
+          return d;
         }
       } catch (_) {}
       return s;
@@ -583,27 +684,61 @@ class BuyerOfferModel {
         json['loading_location'],
     ]);
 
+    String? extractFirstImageUrl(dynamic list) {
+      if (list is! List || list.isEmpty) return null;
+      for (final item in list) {
+        if (item is Map) {
+          final url = item['image_url'] ??
+              item['image'] ??
+              item['file'] ??
+              item['photo'] ??
+              item['download_url'] ??
+              item['url'];
+          if (url != null && url.toString().trim().isNotEmpty) {
+            return url.toString().trim();
+          }
+        } else if (item != null && item.toString().trim().isNotEmpty) {
+          return item.toString().trim();
+        }
+      }
+      return null;
+    }
+
     final rawImage = pickStr([
       json['primary_image_url'],
-      json['image'],
       json['image_url'],
-      if (json['images'] is List && json['images'].isNotEmpty)
-        (json['images'][0] is Map
-            ? (json['images'][0]['image'] ?? json['images'][0]['image_url'])
-            : json['images'][0]),
-      if (json['product_images'] is List && json['product_images'].isNotEmpty)
-        (json['product_images'][0] is Map
-            ? (json['product_images'][0]['image'] ??
-                  json['product_images'][0]['image_url'])
-            : json['product_images'][0]),
-      if (json['offer'] is Map)
-        (json['offer']['image'] ??
-            json['offer']['primary_image_url'] ??
-            json['offer']['image_url']),
-      if (json['product'] is Map)
-        (json['product']['image'] ??
-            json['product']['primary_image_url'] ??
-            json['product']['image_url']),
+      json['image'],
+      json['file'],
+      json['photo'],
+      json['thumbnail'],
+      json['download_url'],
+      extractFirstImageUrl(json['images']),
+      extractFirstImageUrl(json['product_images']),
+      extractFirstImageUrl(json['media']),
+      extractFirstImageUrl(json['photos']),
+      if (json['offer'] is Map) ...[
+        json['offer']['primary_image_url'],
+        json['offer']['image_url'],
+        json['offer']['image'],
+        json['offer']['file'],
+        extractFirstImageUrl(json['offer']['images']),
+        extractFirstImageUrl(json['offer']['product_images']),
+      ],
+      if (json['product'] is Map) ...[
+        json['product']['primary_image_url'],
+        json['product']['image_url'],
+        json['product']['image'],
+        json['product']['file'],
+        extractFirstImageUrl(json['product']['images']),
+        extractFirstImageUrl(json['product']['product_images']),
+      ],
+      if (json['rfq'] is Map) ...[
+        json['rfq']['primary_image_url'],
+        json['rfq']['image_url'],
+        json['rfq']['image'],
+        json['rfq']['file'],
+        extractFirstImageUrl(json['rfq']['images']),
+      ],
     ]);
 
     final rawInterests = pickNumStr([
@@ -665,11 +800,36 @@ class BuyerOfferModel {
       formattedQuantity = '0.000 QTL';
     }
 
+    final rawExpiryStr = pickStr([
+      json['deal_expiry_datetime'],
+      json['expiry_date'],
+      json['expiry_datetime'],
+      if (json['product'] is Map) json['product']['deal_expiry_datetime'],
+      if (json['offer'] is Map) json['offer']['deal_expiry_datetime'],
+    ]);
+
+    bool detectedExpired = boolValue('is_expired', fallback: false) ||
+        rawStatus.toLowerCase().contains('expire') ||
+        (json['status']?.toString().toLowerCase().contains('expire') ?? false) ||
+        (json['deal_status']?.toString().toLowerCase().contains('expire') ?? false);
+
+    if (!detectedExpired && rawExpiryStr.isNotEmpty) {
+      final parsedExp = DateTime.tryParse(rawExpiryStr)?.toLocal();
+      if (parsedExp != null && parsedExp.isBefore(DateTime.now())) {
+        detectedExpired = true;
+      }
+    }
+
     String formattedStatus = rawStatus.trim();
-    if (formattedStatus.isEmpty) {
+    if (detectedExpired) {
+      formattedStatus = 'Deal Expired';
+    } else if (formattedStatus.isEmpty) {
       formattedStatus = isRfqItem ? 'OPEN' : 'ACTIVE';
     } else {
       formattedStatus = formattedStatus.replaceAll('_', ' ').toUpperCase();
+      if (formattedStatus == 'AVAILABLE') {
+        formattedStatus = 'ACTIVE';
+      }
     }
 
     return BuyerOfferModel(
@@ -695,7 +855,7 @@ class BuyerOfferModel {
       pickupFrom: rawPickupFrom,
       pickupTo: rawPickupTo,
       expiryDate: rawExpiry,
-      status: rawStatus,
+      status: detectedExpired ? 'deal_expired' : rawStatus,
       createdAt: formatDateDisplay(
         pickStr([
           json['created_at'],
@@ -704,7 +864,7 @@ class BuyerOfferModel {
           json['created_datetime'],
           json['updated_at'],
         ]),
-        withTime: true,
+        withTime: false,
       ),
       imageUrl: rawImage,
       interestCount: rawInterests,
@@ -741,6 +901,10 @@ class BuyerOfferModel {
       displayQuantity: formattedQuantity,
       displayPrice: formattedPrice,
       isRfq: isRfqItem,
+      isActive: boolValue('is_active', fallback: true) &&
+          boolValue('is_visible', fallback: true) &&
+          boolValue('visible', fallback: true),
+      isExpired: detectedExpired,
     );
   }
 
@@ -752,12 +916,22 @@ class BuyerOfferModel {
   }
 
   bool get isRejected {
+    if (isExpired) return true;
     final s = (displayStatus ?? status ?? '').toString().toLowerCase();
     return s.contains('reject') ||
         s.contains('cancel') ||
         s.contains('closed') ||
         s.contains('expire');
   }
+
+  bool get isOutOfStock {
+    final s = (displayStatus ?? status ?? '').toString().toUpperCase();
+    return s.contains('OUT OF STOCK') ||
+        s == 'OUT_OF_STOCK' ||
+        s.contains('OUT-OF-STOCK');
+  }
+
+  bool get canSubmitOffer => isActive && !isOutOfStock && !isConfirmed && !isRejected && !isExpired;
 
   bool get isActionable => !isConfirmed && !isRejected;
 }
