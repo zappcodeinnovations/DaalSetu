@@ -383,6 +383,13 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
           const SizedBox(height: 12),
           _buildInfoRow(
             context,
+            "License Number",
+            challan.driverLicenseNumber ?? "N/A",
+            IconlyLight.paper,
+          ),
+          const SizedBox(height: 12),
+          _buildInfoRow(
+            context,
             "Driver Mobile",
             challan.driverMobile ?? "N/A",
             IconlyLight.call,

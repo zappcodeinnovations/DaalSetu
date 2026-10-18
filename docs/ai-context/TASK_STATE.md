@@ -14,11 +14,56 @@
 ---
 
 ## Completed Work in Current Session
+- **Bug 26 (Delivery Challan PDF Issuing Company PAN Number Parity)**:
+  - Fixed PAN number disparity between Android app PDF (`ABCDE1234E`) and website PDF (`ABVSC1223F`).
+  - Resolved root cause where `companyPan` was pulling `challan.sellerPan` (seller's PAN) instead of the issuing company (`FARMLAND`) PAN.
+  - Implemented prioritized resolution in `buyer_challan_pdf_service.dart`: checks `company?.panNumber`, derives from `companyGst.substring(2, 12)` if present, and falls back cleanly to `'ABVSC1223F'`.
+  - Both places in the generated PDF (top header `GST: ... PAN: ...` and bottom signatory box `PAN No. : ...`) now display `ABVSC1223F`, matching the web panel 1:1.
+  - Created automated test in `test/buyer_challan_pdf_test.dart` and verified all tests pass.
+
+- **Bug 25 (Pending Offers API `/api/offers/pending/` Missing Quantity Analysis)**:
+  - Investigated issue where offers "toor angar" and "dal" display red "OUT OF STOCK" status badge and disabled "Out of Stock" button on mobile, but display as "Active" on the web dashboard.
+  - Authenticated and queried live backend endpoints `GET /api/offers/pending/` and `GET /api/products/<id>/`.
+  - Discovered that `/api/offers/pending/` returns only 10 fields (`id`, `title`, `image`, `price`, `offer_price`, `discount_percentage`, `created_at`, `status_code`, `status_label`, `status_tone`) and completely omits quantity/inventory fields.
+  - Confirmed via `GET /api/products/146/` (20.100 QTL available) and `GET /api/products/141/` (660.000 QTL available) that both products have full operational stock in the database.
+  - Identified that web panel shows "Active" because it only renders `status_label`, while mobile parses `Available Quantity` which defaults to `0.000 QTL` and triggers client-side out-of-stock logic.
+  - Documented exact findings and recommended payload additions for the backend developer.
+
+- **Bug 24 (Buyer Offer Negotiation Summary — Seller Price & Available Qty Data Binding)**:
+  - Fixed data binding in `buyer_offer_details_view.dart` and `buyer_offer_detail_controller.dart` where Seller Price rendered as `₹-/ton` and Available Qty rendered as `- qtl`.
+  - Unpacked `productMap` and mapped operational snapshot fields (`seller_snapshot_amount`, `seller_snapshot_quantity`) in `loadNegotiationThread`.
+  - Added multi-candidate resolution checking `seller_snapshot_amount`, `seller_snapshot_quantity`, nested product maps, parent offer details (`target_price`, `available_quantity`), and fallback to `ProductService.getProductDetail`.
+  - Verified with `test/buyer_negotiation_summary_card_test.dart` (3 tests PASSED), full regression suite (16 tests PASSED), and clean `flutter analyze --no-pub`.
+
+- **Bug 23 (Buyer Delivery Challan PDF — Consignee Telephone & DEL AT Address Parity)**:
+  - Corrected consignee contact mapping in `buyer_challan_pdf_service.dart`: replaced erroneous `challan.driverMobile` with buyer registered mobile number resolution (checks `challan.buyerMobile`, `ProfileController.profile.value.mobile`, and `AppPreferences.getUsername()`).
+  - Corrected delivery destination mapping: bound `DEL AT` to `challan.deliveryAddress` instead of copying `challan.buyerAddress`, ensuring `DEL AT` remains blank when no separate delivery address is designated.
+  - Added `buyerMobile` and `deliveryAddress` fields to `BuyerDeliveryChallanModel` with comprehensive key fallback parsing and sanitization.
+  - Verified with `test/buyer_challan_pdf_test.dart` (3 tests PASSED) and full regression suite (13 tests PASSED).
+
+- **Bug 22 (Buyer Delivery Challan — Driver License Number Field)**:
+  - Added "License Number" field to Transport Details card in `buyer_delivery_challan_detail_view.dart`, positioned directly below "Driver Name" and above "Driver Mobile" to achieve 1:1 parity with the Buyer web panel.
+  - Enhanced `BuyerDeliveryChallanModel.fromJson` with robust parsing for `driver_license_number`, `license_number`, `driver_license`, and nested `driver['license_number']` keys.
+  - Implemented string sanitization (`cleanStr`) ensuring `"null"` strings, empty strings, and whitespace fall back cleanly to `"N/A"`, preventing broken/null UI display.
+  - Created automated test `test/buyer_challan_transport_details_test.dart` (2 tests PASSED) and verified zero regressions across 9 existing tests.
+
 - **Bug 9**: Resolved negotiation submission error in `negotiation_page.dart`.
 - **Bug 10**: Resolved negotiation timestamp discrepancy in `negotiation_page.dart`.
 - **Bug 11**: Resolved user list refresh defect in `user_view.dart`, `user_controller.dart`, and `add_user_controller.dart`.
 - **Bug 12**: Resolved Brand Master search persistence defect in `admin_catalog_controller.dart`, `admin_common_widgets.dart`, and `admin_module_list_screen.dart`.
 - **Bug 13 (Buyer Drawer)**: Fixed Buyer Drawer navigation and permission checks for buyer roles in `admin_drawer.dart`.
+- **Bug 17 (Buyer Branches Filter Consolidation & Type Badges)**:
+  - Removed duplicate "Clear" text link from Search filter card in `buyer_branch_view.dart`, standardizing on single "Reset" and "Apply" buttons matching the Buyer web panel.
+  - Added `_buildBranchTypeBadge` to render blue "Primary" and green "Additional" pill badges on mobile branch cards.
+  - Kept the "LEAVE" button visible alongside the "Additional" badge on non-primary branches.
+  - Verified with `test/buyer_branch_view_badge_test.dart` and `test/buyer_branch_search_filter_test.dart` (8/8 tests PASSED).
+- **Bug 16 (Buyer Dashboard Routing to My Interests)**:
+  - Updated "View All" on Recent Requirements & Negotiations section in `buyer_dashboard_view.dart` to open `BuyerActivityView(initialIndex: 0)` ("My Interests" tab) instead of index 1 ("My Requirements").
+  - Verified with `test/buyer_dashboard_view_all_navigation_test.dart` (PASSED).
+- **Bug 15 (Buyer Action Button Text Clipping & Category Filter Removal)**:
+  - Fixed vertical clipping of the green "Accept" text label in `buyer_offer_details_view.dart` by removing vertical padding conflicts (`padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0)`), setting font size 14, and height 48.
+  - Removed artificial category filtering (`isDummyCategory` / `_isDummyOrTestCategory`) across `category_services.dart`, `category_page.dart`, and `add_buyer_offer_view.dart` so all categories (including test/dummy names) are displayed without restriction.
+  - Added tests in `buyer_category_screen_test.dart` and `buyer_negotiation_accept_button_test.dart`.
 - **Bug 14 (Delivery Challan PDF Formatting & Typos)**:
   - Corrected label typo "PAYMENT SCHEDULS :" -> "PAYMENT SCHEDULE :".
   - Professionalized salutation text to formal business standard.

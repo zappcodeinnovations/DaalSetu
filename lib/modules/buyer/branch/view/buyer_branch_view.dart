@@ -173,30 +173,13 @@ class _BuyerBranchViewState extends State<BuyerBranchView> with WidgetsBindingOb
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Search",
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
-                            ),
-                          ),
-                          if (controller.isFilterActive)
-                            GestureDetector(
-                              onTap: controller.resetFilter,
-                              child: Text(
-                                "Clear",
-                                style: GoogleFonts.inter(
-                                  color: Colors.redAccent,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                        ],
+                      Text(
+                        "Search",
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Container(
@@ -362,17 +345,7 @@ class _BuyerBranchViewState extends State<BuyerBranchView> with WidgetsBindingOb
                               controller.filteredPrimaryBranch!.locationName ?? 'Primary Branch',
                               style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                "PRIMARY",
-                                style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue),
-                              ),
-                            ),
+                            _buildBranchTypeBadge(isPrimary: true),
                           ],
                         ),
                         const SizedBox(height: 6),
@@ -482,9 +455,17 @@ class _BuyerBranchViewState extends State<BuyerBranchView> with WidgetsBindingOb
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    branch.locationName ?? "Branch",
-                                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15),
+                                  Wrap(
+                                    crossAxisAlignment: WrapCrossAlignment.center,
+                                    spacing: 8,
+                                    runSpacing: 4,
+                                    children: [
+                                      Text(
+                                        branch.locationName ?? "Branch",
+                                        style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15),
+                                      ),
+                                      _buildBranchTypeBadge(isPrimary: branch.isPrimary == true),
+                                    ],
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
@@ -501,33 +482,23 @@ class _BuyerBranchViewState extends State<BuyerBranchView> with WidgetsBindingOb
                                 ],
                               ),
                             ),
-                            if (branch.id != null)
-                              (branch.isPrimary == true)
-                                  ? Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue.withValues(alpha: 0.15),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Text(
-                                        "PRIMARY",
-                                        style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue),
-                                      ),
-                                    )
-                                  : OutlinedButton(
-                                      onPressed: () => _showLeaveBranchDialog(
-                                        context,
-                                        branch.id!,
-                                        branchCode: branch.branchCode,
-                                      ),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: Colors.red,
-                                        side: const BorderSide(color: Colors.red),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                      ),
-                                      child: const Text("LEAVE", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
-                                    ),
+                            if (branch.id != null && branch.isPrimary != true) ...[
+                              const SizedBox(width: 8),
+                              OutlinedButton(
+                                onPressed: () => _showLeaveBranchDialog(
+                                  context,
+                                  branch.id!,
+                                  branchCode: branch.branchCode,
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                  side: const BorderSide(color: Colors.red),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                ),
+                                child: const Text("LEAVE", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                              ),
+                            ],
                           ],
                         ),
                       );
@@ -660,6 +631,31 @@ class _BuyerBranchViewState extends State<BuyerBranchView> with WidgetsBindingOb
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             color: isSelected ? primaryColor : theme.textTheme.bodyMedium?.color,
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBranchTypeBadge({required bool isPrimary}) {
+    final color = isPrimary ? Colors.blue : Colors.green;
+    final label = isPrimary ? "Primary" : "Additional";
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withValues(alpha: 0.35),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: color,
         ),
       ),
     );

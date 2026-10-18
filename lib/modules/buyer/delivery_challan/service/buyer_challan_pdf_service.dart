@@ -1,12 +1,15 @@
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../utils/app_preferences.dart';
+import '../../../profile/controller/profile_controller.dart';
 import '../model/buyer_delivery_challan_model.dart';
 
 class BuyerChallanPdfService {
@@ -97,7 +100,38 @@ class BuyerChallanPdfService {
     final companyName = (company?.legalName ?? challan.companyNameDisplay ?? 'FARMLAND').toUpperCase();
     final companyAddress = (company?.addressDisplay ?? challan.sellerAddress ?? 'NAGPUR, NAGPUR, Nagpur, Maharashtra, 440023, India').toUpperCase();
     final companyGst = (company?.gstNumber ?? challan.sellerGst ?? '23ABVSC1223F1Z4').toUpperCase();
-    final companyPan = (challan.sellerPan ?? 'ABVSC1223F').toUpperCase();
+    String resolvedPan = (company?.panNumber ?? '').trim();
+    if (resolvedPan.isEmpty || resolvedPan.toLowerCase() == 'null') {
+      final cleanGst = companyGst.replaceAll(RegExp(r'\s+'), '');
+      if (cleanGst.length >= 12 && RegExp(r'^\d{2}[A-Z0-9]{10}').hasMatch(cleanGst)) {
+        resolvedPan = cleanGst.substring(2, 12);
+      }
+    }
+    if (resolvedPan.isEmpty || resolvedPan.toLowerCase() == 'null') {
+      resolvedPan = 'ABVSC1223F';
+    }
+    final companyPan = resolvedPan.toUpperCase();
+
+    // Resolve buyer telephone number (consignee contact)
+    String buyerPhone = (challan.buyerMobile ?? '').trim();
+    if (buyerPhone.isEmpty || buyerPhone.toLowerCase() == 'null') {
+      try {
+        if (Get.isRegistered<ProfileController>()) {
+          final m = Get.find<ProfileController>().profile.value?.mobile;
+          if (m != null && m.trim().isNotEmpty && m.toLowerCase() != 'null') {
+            buyerPhone = m.trim();
+          }
+        }
+      } catch (_) {}
+    }
+    if (buyerPhone.isEmpty || buyerPhone.toLowerCase() == 'null') {
+      try {
+        final u = await AppPreferences.getUsername();
+        if (u != null && RegExp(r'^\d{10}$').hasMatch(u.trim())) {
+          buyerPhone = u.trim();
+        }
+      } catch (_) {}
+    }
 
     // Items calculation
     final items = challan.items ?? <DeliveryChallanItem>[];
@@ -256,7 +290,7 @@ class BuyerChallanPdfService {
                             ],
                             pw.SizedBox(height: 3),
                             pw.Text(
-                              'TEL : ${challan.driverMobile ?? '-'}',
+                              'TEL : ${buyerPhone.isNotEmpty ? buyerPhone : '-'}',
                               style: const pw.TextStyle(fontSize: 8),
                             ),
                           ],
@@ -297,7 +331,7 @@ class BuyerChallanPdfService {
                             pw.SizedBox(height: 2),
                             _metaRow('CREATED BY', ': ${challan.createdByName ?? challan.createdByDisplay?.name ?? '-'}'),
                             pw.SizedBox(height: 2),
-                            _metaRow('DEL AT', ': ${challan.buyerAddress ?? ''}'),
+                            _metaRow('DEL AT', ': ${challan.deliveryAddress ?? ''}'),
                             pw.SizedBox(height: 2),
                             _metaRow('PAYMENT SCHEDULE', ':'),
                             pw.SizedBox(height: 2),

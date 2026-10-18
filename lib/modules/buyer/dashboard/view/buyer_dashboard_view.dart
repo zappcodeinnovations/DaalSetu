@@ -127,7 +127,7 @@ class BuyerDashboardView extends StatelessWidget {
                   "Recent Requirements & Negotiations",
                   "View All",
                   onTap: () {
-                    Get.to(() => const BuyerActivityView(initialIndex: 1));
+                    Get.to(() => const BuyerActivityView(initialIndex: 0));
                   },
                 ),
                 const SizedBox(height: 16),

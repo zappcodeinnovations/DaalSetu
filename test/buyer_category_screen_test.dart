@@ -98,5 +98,27 @@ void main() {
       expect(unassigned.first.categoryName, 'Yellow Peas');
       expect(unassigned.first.id, 7);
     });
+
+    test('Categories named test, xyz, sub, or repeated letters are preserved without filtering', () {
+      final allCategories = [
+        CategoryModel(id: 1, categoryName: 'Test Category'),
+        CategoryModel(id: 2, categoryName: 'xyz'),
+        CategoryModel(id: 3, categoryName: 'sub'),
+        CategoryModel(id: 4, categoryName: 'teat sub'),
+        CategoryModel(id: 5, categoryName: 'aaa'),
+        CategoryModel(id: 6, categoryName: 'Toor Dal'),
+      ];
+
+      final filtered = allCategories.where((c) => c.categoryName.trim().isNotEmpty).toList();
+      expect(filtered.length, 6);
+      expect(filtered.map((c) => c.categoryName), containsAll([
+        'Test Category',
+        'xyz',
+        'sub',
+        'teat sub',
+        'aaa',
+        'Toor Dal',
+      ]));
+    });
   });
 }

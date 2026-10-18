@@ -112,18 +112,6 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
     }
   }
 
-  bool _isDummyOrTestCategory(String name) {
-    final trimmed = name.trim().toLowerCase();
-    if (trimmed.isEmpty) return true;
-    if (trimmed == 'xyz' ||
-        trimmed == 'sub' ||
-        trimmed == 'teat sub' ||
-        RegExp(r'^(.)\1+$').hasMatch(trimmed)) {
-      return true;
-    }
-    return false;
-  }
-
   Future<void> _loadSupportData() async {
     try {
       List<OfferOption> catOptions = [];
@@ -133,7 +121,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
         final parentCats = await ProductService.getParentCategories();
         if (parentCats.isNotEmpty) {
           catOptions = parentCats
-              .where((c) => !_isDummyOrTestCategory(c.name))
+              .where((c) => c.name.trim().isNotEmpty)
               .toList();
         }
       } catch (e) {
@@ -149,7 +137,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
               .where((c) =>
                   (c.level == 0 || c.parentId == null) &&
                   c.status.toLowerCase() == 'active' &&
-                  !_isDummyOrTestCategory(c.name))
+                  c.name.trim().isNotEmpty)
               .map((c) => OfferOption(id: c.id, name: c.name))
               .toList();
         } catch (e) {
