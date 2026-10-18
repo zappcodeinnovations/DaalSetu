@@ -43,19 +43,6 @@ class CategoryService {
             ? (data["pending_category_ids"] as List).map((e) => int.tryParse(e.toString()) ?? 0).toSet()
             : <int>{};
 
-        // Helper to check if a category is a dummy or test category
-        bool isDummyCategory(String name) {
-          final t = name.trim().toLowerCase();
-          if (t.isEmpty) return true;
-          if (t == 'xyz' ||
-              t == 'sub' ||
-              t == 'teat sub' ||
-              RegExp(r'^(.)\1+$').hasMatch(t)) {
-            return true;
-          }
-          return false;
-        }
-
         // Build a map of requested timestamps from data["requests"]
         final Map<int, String> requestedAtMap = {};
         if (data["requests"] is List) {
@@ -82,7 +69,7 @@ class CategoryService {
             if (c is Map<String, dynamic>) {
               final id = int.tryParse((c["id"] ?? 0).toString()) ?? 0;
               final name = (c["category_name"] ?? c["name"] ?? "").toString();
-              if (id > 0 && !isDummyCategory(name)) {
+              if (id > 0 && name.trim().isNotEmpty) {
                 final baseCat = CategoryModel.fromJson(c);
                 sysCats.add(baseCat);
 
@@ -124,7 +111,7 @@ class CategoryService {
             if (c is Map<String, dynamic>) {
               final id = int.tryParse((c["id"] ?? 0).toString()) ?? 0;
               final name = (c["category_name"] ?? c["name"] ?? "").toString();
-              if ((assignedIds.contains(id) || pendingIds.contains(id)) && !isDummyCategory(name)) {
+              if ((assignedIds.contains(id) || pendingIds.contains(id)) && name.trim().isNotEmpty) {
                 final status = assignedIds.contains(id) ? "Approved" : "Pending";
                 final reqCreatedAt = requestedAtMap[id] ?? c["created_at"] ?? c["requested_at"];
                 final cat = CategoryModel.fromJson({
@@ -150,7 +137,7 @@ class CategoryService {
                 if (cat is Map<String, dynamic>) {
                   final id = int.tryParse((cat["id"] ?? 0).toString()) ?? 0;
                   final name = (cat["category_name"] ?? cat["name"] ?? "").toString();
-                  if (id > 0 && !seenIds.contains(id) && !isDummyCategory(name)) {
+                  if (id > 0 && !seenIds.contains(id) && name.trim().isNotEmpty) {
                     seenIds.add(id);
                     final catModel = CategoryModel.fromJson({
                       ...cat,
@@ -169,10 +156,7 @@ class CategoryService {
         if (response is List) {
           final list = response
               .map((item) => CategoryModel.fromJson(Map<String, dynamic>.from(item)))
-              .where((c) {
-                final t = c.categoryName.trim().toLowerCase();
-                return t.isNotEmpty && t != 'xyz' && t != 'sub';
-              })
+              .where((c) => c.categoryName.trim().isNotEmpty)
               .toList();
           return BuyerCategoriesResult(buyerCategories: list, systemCategories: list);
         }

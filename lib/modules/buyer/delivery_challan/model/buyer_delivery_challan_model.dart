@@ -17,6 +17,8 @@ class BuyerDeliveryChallanModel {
   String? buyerName;
   String? buyerGst;
   String? buyerAddress;
+  String? buyerMobile;
+  String? deliveryAddress;
   // Registered-company details, same as the web challan page.
   String? sellerCompanyName;
   String? sellerPan;
@@ -102,6 +104,8 @@ class BuyerDeliveryChallanModel {
     this.buyerName,
     this.buyerGst,
     this.buyerAddress,
+    this.buyerMobile,
+    this.deliveryAddress,
     this.sellerCompanyName,
     this.sellerPan,
     this.buyerCompanyName,
@@ -131,6 +135,13 @@ class BuyerDeliveryChallanModel {
   });
 
   factory BuyerDeliveryChallanModel.fromJson(Map<String, dynamic> json) {
+    String? cleanStr(dynamic v) {
+      if (v == null) return null;
+      final s = v.toString().trim();
+      if (s.isEmpty || s.toLowerCase() == 'null') return null;
+      return s;
+    }
+
     return BuyerDeliveryChallanModel(
       id: json['id'],
       items: json['items'] != null
@@ -143,7 +154,13 @@ class BuyerDeliveryChallanModel {
       createdByName: json['created_by_name'],
       sellerNameDisplay: json['seller_name_display'],
       buyerNameDisplay: json['buyer_name_display'],
-      transporterNameDisplay: json['transporter_name_display'],
+      transporterNameDisplay: cleanStr(
+        json['transporter_name_display'] ??
+            json['transporter_name'] ??
+            (json['transporter'] is Map
+                ? (json['transporter']['name'] ?? json['transporter']['company_name'])
+                : null),
+      ),
       dispatchedByName: json['dispatched_by_name'],
       receivedByName: json['received_by_name'],
       challanNumber: json['challan_number'],
@@ -154,14 +171,72 @@ class BuyerDeliveryChallanModel {
       buyerName: json['buyer_name'],
       buyerGst: json['buyer_gst'],
       buyerAddress: json['buyer_address'],
+      buyerMobile: cleanStr(
+        json['buyer_mobile'] ??
+            json['buyer_phone'] ??
+            json['buyer_contact'] ??
+            json['buyer_telephone'] ??
+            json['buyer_tel'] ??
+            json['consignee_mobile'] ??
+            json['consignee_phone'] ??
+            (json['buyer'] is Map
+                ? (json['buyer']['mobile'] ??
+                    json['buyer']['phone'] ??
+                    json['buyer']['phone_number'] ??
+                    json['buyer']['contact'])
+                : null) ??
+            (json['buyer_display'] is Map
+                ? (json['buyer_display']['mobile'] ??
+                    json['buyer_display']['phone'] ??
+                    json['buyer_display']['phone_number'])
+                : null) ??
+            (json['buyer_details'] is Map
+                ? (json['buyer_details']['mobile'] ??
+                    json['buyer_details']['phone'])
+                : null) ??
+            (json['buyer_user'] is Map
+                ? (json['buyer_user']['mobile'] ??
+                    json['buyer_user']['phone'])
+                : null) ??
+            (json['contract'] is Map
+                ? (json['contract']['buyer_mobile'] ??
+                    json['contract']['buyer_phone'])
+                : null) ??
+            (json['buyer_company'] is Map
+                ? (json['buyer_company']['phone'] ??
+                    json['buyer_company']['mobile'])
+                : null),
+      ),
+      deliveryAddress: cleanStr(
+        json['delivery_address'] ??
+            json['del_at'] ??
+            json['delivery_at'] ??
+            json['delivery_location'] ??
+            json['destination_address'] ??
+            json['destination'],
+      ),
       sellerCompanyName: json['seller_company_name'],
       sellerPan: json['seller_pan'],
       buyerCompanyName: json['buyer_company_name'],
       buyerPan: json['buyer_pan'],
-      truckNumber: json['truck_number'],
-      driverName: json['driver_name'],
-      driverLicenseNumber: json['driver_license_number'],
-      driverMobile: json['driver_mobile'],
+      truckNumber: cleanStr(json['truck_number']),
+      driverName: cleanStr(json['driver_name']),
+      driverLicenseNumber: cleanStr(
+        json['driver_license_number'] ??
+            json['license_number'] ??
+            json['driver_license'] ??
+            json['driver_licence'] ??
+            (json['driver'] is Map
+                ? (json['driver']['license_number'] ??
+                    json['driver']['license'] ??
+                    json['driver']['driver_license_number'])
+                : null),
+      ),
+      driverMobile: cleanStr(
+        json['driver_mobile'] ??
+            json['driver_phone'] ??
+            (json['driver'] is Map ? json['driver']['mobile'] : null),
+      ),
       narration: json['narration'],
       totalAmount: json['total_amount']?.toString(),
       lorryFreightPerBag: json['lorry_freight_per_bag']?.toString(),

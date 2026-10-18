@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:iconly/iconly.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:daalsetu/utils/global_error_handler.dart';
@@ -170,7 +171,17 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
           validLoadingLocation = candidateLocation;
         }
 
-        final rawExpiry = (data['deal_expiry_datetime'] ?? data['expiry_date'] ?? data['expiry_datetime'])?.toString();
+        final rawExpiry = (data['broadcast_expiry'] ??
+                data['broadcast_expiry_datetime'] ??
+                data['expiry_datetime'] ??
+                data['deal_expiry_datetime'] ??
+                data['expiry_date'] ??
+                data['expires_at'] ??
+                (data['rfq'] is Map ? (data['rfq']['expiry_datetime'] ?? data['rfq']['broadcast_expiry']) : null) ??
+                (data['offer'] is Map ? (data['offer']['deal_expiry_datetime'] ?? data['offer']['expiry_datetime']) : null) ??
+                (data['product'] is Map ? (data['product']['deal_expiry_datetime'] ?? data['product']['expiry_datetime']) : null))
+            ?.toString();
+        final formattedExpiry = _formatExpiry(rawExpiry);
         bool isDealExpired = data['is_expired'] == true ||
             rawStatus.toLowerCase().contains('expire') ||
             (rawExpiry != null && DateTime.tryParse(rawExpiry)?.toLocal().isBefore(DateTime.now()) == true);
@@ -281,6 +292,15 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                       "Packing Weight",
                       "${data['packing_weight_kg']} kg",
                     ),
+                  if (formattedExpiry != null && formattedExpiry.isNotEmpty)
+                    _infoRow(
+                      (widget.preferBuyerOffer && data['rfq_id'] == null)
+                          ? "Deal Expiry"
+                          : "Broadcast Expiry",
+                      formattedExpiry,
+                    )
+                  else if (!widget.preferBuyerOffer || widget.preferBuyerRequirement || data['rfq_id'] != null)
+                    _infoRow("Broadcast Expiry", "N/A"),
                   if (validLoadingLocation != null &&
                       validLoadingLocation.isNotEmpty)
                     _infoRow("Loading Location", validLoadingLocation),
@@ -298,6 +318,7 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                 if (thread != null)
                   _buildNegotiationSection(
                     thread: thread,
+                    data: data,
                     theme: theme,
                     primaryColor: primaryColor,
                   ),
@@ -1185,34 +1206,124 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
 
   Widget _buildNegotiationSection({
     required Map<String, dynamic> thread,
+    Map<String, dynamic>? data,
     required ThemeData theme,
     required Color primaryColor,
   }) {
+    String? resolveVal(List<dynamic> candidates) {
+      for (final c in candidates) {
+        if (c != null) {
+          final s = c.toString().trim();
+          if (s.isNotEmpty && s != '-' && s.toLowerCase() != 'null') {
+            return s;
+          }
+        }
+      }
+      return null;
+    }
+
+    String resolveQty(List<dynamic> candidates) {
+      for (final c in candidates) {
+        if (c != null) {
+          final s = c.toString().trim();
+          if (s.isNotEmpty && s != '-' && s.toLowerCase() != 'null') {
+            final numVal = double.tryParse(s);
+            if (numVal != null && numVal > 0) {
+              return s;
+            }
+          }
+        }
+      }
+      for (final c in candidates) {
+        if (c != null) {
+          final s = c.toString().trim();
+          if (s.isNotEmpty && s != '-' && s.toLowerCase() != 'null') {
+            return s;
+          }
+        }
+      }
+      return '-';
+    }
+
     final status =
         thread['status']?.toString().replaceAll('_', ' ') ?? 'Pending';
-    final sellerPrice =
-        thread['seller_price'] ??
-        thread['seller_amount'] ??
-        thread['amount'] ??
-        thread['product_amount'] ??
-        '-';
-    final priceUnit = thread['price_unit'] ?? 'QTL';
-    final availableQty =
-        thread['available_quantity'] ??
-        thread['available_stock'] ??
-        thread['quantity'] ??
-        '-';
-    final currentOffer =
-        thread['latest_offered_amount'] ??
-        thread['offered_amount'] ??
-        thread['amount'] ??
-        '-';
-    final currentQty =
-        thread['latest_offered_quantity'] ??
-        thread['required_quantity'] ??
-        thread['quantity'] ??
-        '-';
-    final qtyUnit = thread['quantity_unit'] ?? 'QTL';
+    final sellerPrice = resolveVal([
+      thread['seller_price'],
+      thread['seller_snapshot_amount'],
+      thread['seller_amount'],
+      if (thread['product'] is Map) thread['product']['amount'],
+      if (thread['product'] is Map) thread['product']['seller_price'],
+      if (thread['product'] is Map) thread['product']['price'],
+      if (thread['offer'] is Map) thread['offer']['amount'],
+      if (thread['offer'] is Map) thread['offer']['seller_price'],
+      data?['target_price'],
+      data?['amount'],
+      data?['price'],
+      data?['seller_price'],
+      data?['seller_snapshot_amount'],
+      thread['amount'],
+      thread['product_amount'],
+    ]) ?? '-';
+
+    final priceUnit = resolveVal([
+      thread['price_unit'],
+      thread['amount_unit'],
+      if (thread['product'] is Map) thread['product']['amount_unit'],
+      if (thread['product'] is Map) thread['product']['price_unit'],
+      if (thread['offer'] is Map) thread['offer']['amount_unit'],
+      if (thread['offer'] is Map) thread['offer']['price_unit'],
+      data?['price_unit'],
+      data?['amount_unit'],
+      data?['unit'],
+    ]) ?? 'ton';
+
+    final availableQty = resolveQty([
+      thread['seller_snapshot_quantity'],
+      thread['available_quantity'],
+      thread['available_stock'],
+      thread['remaining_quantity'],
+      thread['stock_quantity'],
+      thread['seller_quantity'],
+      if (thread['product'] is Map) thread['product']['seller_snapshot_quantity'],
+      if (thread['product'] is Map) thread['product']['available_quantity'],
+      if (thread['product'] is Map) thread['product']['remaining_quantity'],
+      if (thread['product'] is Map) thread['product']['stock_quantity'],
+      if (thread['product'] is Map) thread['product']['original_quantity'],
+      if (thread['offer'] is Map) thread['offer']['seller_snapshot_quantity'],
+      if (thread['offer'] is Map) thread['offer']['available_quantity'],
+      if (thread['offer'] is Map) thread['offer']['remaining_quantity'],
+      data?['seller_snapshot_quantity'],
+      data?['available_quantity'],
+      data?['remaining_quantity'],
+      data?['original_quantity'],
+      data?['stock_quantity'],
+      thread['quantity'],
+      data?['quantity'],
+      data?['required_quantity'],
+    ]);
+
+    final qtyUnit = resolveVal([
+      thread['quantity_unit'],
+      if (thread['product'] is Map) thread['product']['quantity_unit'],
+      if (thread['offer'] is Map) thread['offer']['quantity_unit'],
+      data?['quantity_unit'],
+      data?['unit'],
+    ]) ?? 'qtl';
+
+    final currentOffer = resolveVal([
+      thread['latest_offered_amount'],
+      thread['offered_amount'],
+      thread['buyer_offered_amount'],
+      thread['amount'],
+    ]) ?? '-';
+
+    final currentQty = resolveVal([
+      thread['latest_offered_quantity'],
+      thread['required_quantity'],
+      thread['buyer_required_quantity'],
+      thread['quantity'],
+    ]) ?? '-';
+
     final buyerRemark =
         thread['buyer_remark'] ?? thread['remark'] ?? thread['initial_remark'];
 
@@ -1471,13 +1582,21 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
               if (canBuyerAccept)
                 Expanded(
                   child: SizedBox(
-                    height: 46,
+                    height: 48,
                     child: ElevatedButton.icon(
                       onPressed: () =>
                           _handleBuyerDecision(thread: thread, accept: true),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 0,
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -1485,7 +1604,10 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                       icon: const Icon(Icons.check, size: 18),
                       label: const Text(
                         "Accept",
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -1494,13 +1616,21 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
               if (canBuyerReject)
                 Expanded(
                   child: SizedBox(
-                    height: 46,
+                    height: 48,
                     child: OutlinedButton.icon(
                       onPressed: () =>
                           _handleBuyerDecision(thread: thread, accept: false),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red,
                         side: const BorderSide(color: Colors.red),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 0,
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -1508,7 +1638,10 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                       icon: const Icon(Icons.close, size: 18),
                       label: const Text(
                         "Reject",
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -1577,6 +1710,36 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
     } else {
       await controller.rejectOfferInterest(productId: pId, interestId: iId);
     }
+  }
+
+  String? _formatExpiry(dynamic value) {
+    if (value == null) return null;
+    final str = value.toString().trim();
+    if (str.isEmpty || str == 'null' || str == '-') return null;
+
+    DateTime? dt = DateTime.tryParse(str);
+    if (dt == null) {
+      try {
+        dt = DateFormat('dd-MM-yyyy HH:mm').parse(str);
+      } catch (_) {
+        try {
+          dt = DateFormat('dd/MM/yyyy HH:mm').parse(str);
+        } catch (_) {
+          try {
+            dt = DateFormat('yyyy-MM-dd HH:mm:ss').parse(str);
+          } catch (_) {}
+        }
+      }
+    }
+    if (dt != null) {
+      final local = dt.toLocal();
+      final hasTime = str.contains('T') || str.contains(':') || str.contains(' ');
+      if (hasTime) {
+        return DateFormat('dd MMM yyyy, hh:mm a').format(local);
+      }
+      return DateFormat('dd MMM yyyy').format(local);
+    }
+    return str;
   }
 
   String _titleCase(String text) {

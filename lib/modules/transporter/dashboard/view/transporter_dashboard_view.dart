@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -74,21 +75,11 @@ class TransporterDashboardView extends StatelessWidget {
               const SizedBox(height: 16),
               _buildDeliveryStatusCard(context),
               const SizedBox(height: 16),
-              _buildListCard(
-                context,
-                "Transport Types",
-                controller.transportTypes.value,
-                IconlyLight.discovery,
-                "vehicles",
-              ),
+              _buildTransportTypesCard(context),
               const SizedBox(height: 16),
-              _buildListCard(
-                context,
-                "Top Routes",
-                controller.topRoutes.value,
-                IconlyLight.location,
-                "trips",
-              ),
+              _buildTopRoutesCard(context),
+              const SizedBox(height: 16),
+              _buildSlaDriversCard(context),
             ],
           ),
         );
@@ -646,6 +637,71 @@ class TransporterDashboardView extends StatelessWidget {
     );
   }
 
+  static ({double max, double interval, int decimals}) _calculateScale(
+    double maxRaw,
+    int divisions, {
+    bool isInteger = false,
+    double fallbackMax = 1.0,
+  }) {
+    if (maxRaw <= 0) {
+      final interval = fallbackMax / divisions;
+      return (
+        max: fallbackMax,
+        interval: interval,
+        decimals: isInteger ? 0 : 2,
+      );
+    }
+
+    if (isInteger) {
+      // Clean integer shipment scales matching web panel
+      if (maxRaw <= 2.0) {
+        return (max: 2.0, interval: 0.4, decimals: 1);
+      } else if (maxRaw <= 5.0) {
+        return (max: 5.0, interval: 1.0, decimals: 0);
+      } else if (maxRaw <= 10.0) {
+        return (max: 10.0, interval: 2.0, decimals: 0);
+      }
+    }
+
+    final rawInterval = maxRaw / divisions;
+    final exponent = (log(rawInterval) / ln10).floor();
+    final fraction = rawInterval / pow(10, exponent);
+
+    double niceFraction;
+    if (fraction <= 1.0) {
+      niceFraction = 1.0;
+    } else if (fraction <= 2.0) {
+      niceFraction = 2.0;
+    } else if (fraction <= 2.5) {
+      niceFraction = 2.5;
+    } else if (fraction <= 4.0) {
+      niceFraction = 4.0;
+    } else if (fraction <= 5.0) {
+      niceFraction = 5.0;
+    } else {
+      niceFraction = 10.0;
+    }
+
+    var interval = double.parse((niceFraction * pow(10, exponent)).toStringAsFixed(4));
+    var max = double.parse(((maxRaw / interval).ceil() * interval).toStringAsFixed(4));
+    while (max < maxRaw) {
+      max = double.parse((max + interval).toStringAsFixed(4));
+    }
+
+    int decimals = 0;
+    if (interval < 1.0) {
+      if ((interval * 10).roundToDouble() == (interval * 10)) {
+        decimals = 1;
+      } else if ((interval * 100).roundToDouble() == (interval * 100)) {
+        decimals = 2;
+      } else {
+        decimals = 3;
+      }
+    }
+
+    return (max: max, interval: interval, decimals: decimals);
+  }
+
   Widget _buildCombinedChart(
     BuildContext context,
     ChartSeries earnings,
@@ -655,16 +711,31 @@ class TransporterDashboardView extends StatelessWidget {
     final labels = earnings.labels.isNotEmpty ? earnings.labels : shipments.labels;
     final int count = labels.length;
 
-    // Calculate maximum values for clean dual-axis scaling
+    // Use 6 intervals matching the Web Transporter Dashboard grid
+    const int divisions = 6;
+
     final maxEarnRaw = earnings.values.isEmpty
-        ? 0.05
+        ? 0.0
         : earnings.values.reduce((a, b) => a > b ? a : b);
-    final double maxEarn = maxEarnRaw > 0 ? (maxEarnRaw * 1.25) : 0.05;
+    final earnScale = _calculateScale(
+      maxEarnRaw,
+      divisions,
+      fallbackMax: 0.12,
+    );
 
     final maxShipRaw = shipments.values.isEmpty
-        ? 1.0
+        ? 0.0
         : shipments.values.reduce((a, b) => a > b ? a : b);
-    final double maxShip = maxShipRaw > 0 ? (maxShipRaw * 1.25).ceilToDouble() : 1.0;
+    final shipScale = _calculateScale(
+      maxShipRaw,
+      divisions,
+      isInteger: true,
+      fallbackMax: 2.0,
+    );
+
+    final double barWidth = count <= 3
+        ? 42.0
+        : (count <= 7 ? 22.0 : (count <= 12 ? 14.0 : 8.0));
 
     final axisTextStyle = TextStyle(
       fontSize: 10,
@@ -681,11 +752,11 @@ class TransporterDashboardView extends StatelessWidget {
               child: BarChart(
                 BarChartData(
                   minY: 0,
-                  maxY: maxShip,
+                  maxY: shipScale.max,
                   gridData: FlGridData(
                     show: true,
                     drawVerticalLine: false,
-                    horizontalInterval: maxShip / 4 > 0 ? maxShip / 4 : 1,
+                    horizontalInterval: shipScale.interval,
                     getDrawingHorizontalLine: (value) => FlLine(
                       color: theme.dividerColor.withValues(alpha: 0.35),
                       strokeWidth: 1,
@@ -716,8 +787,11 @@ class TransporterDashboardView extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: 36,
+                        interval: shipScale.interval,
                         getTitlesWidget: (value, meta) {
-                          if (value < 0) return const SizedBox.shrink();
+                          if (value < 0 || value > shipScale.max + 0.001) {
+                            return const SizedBox.shrink();
+                          }
                           final formatted = value == value.roundToDouble()
                               ? value.toInt().toString()
                               : value.toStringAsFixed(1);
@@ -752,8 +826,8 @@ class TransporterDashboardView extends StatelessWidget {
                         barRods: [
                           BarChartRodData(
                             toY: i < shipments.values.length ? shipments.values[i] : 0.0,
-                            color: _gold.withValues(alpha: 0.75),
-                            width: 32,
+                            color: _gold.withValues(alpha: 0.85),
+                            width: barWidth,
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(4),
                               topRight: Radius.circular(4),
@@ -771,7 +845,7 @@ class TransporterDashboardView extends StatelessWidget {
               child: LineChart(
                 LineChartData(
                   minY: 0,
-                  maxY: maxEarn,
+                  maxY: earnScale.max,
                   gridData: const FlGridData(show: false),
                   borderData: FlBorderData(show: false),
                   titlesData: FlTitlesData(
@@ -794,12 +868,18 @@ class TransporterDashboardView extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: 46,
+                        interval: earnScale.interval,
                         getTitlesWidget: (value, meta) {
-                          if (value < 0) return const SizedBox.shrink();
+                          if (value < 0 || value > earnScale.max + 0.0001) {
+                            return const SizedBox.shrink();
+                          }
+                          final formatted = value == 0
+                              ? "0"
+                              : value.toStringAsFixed(earnScale.decimals);
                           return Padding(
                             padding: const EdgeInsets.only(right: 6),
                             child: Text(
-                              value == 0 ? "0" : value.toStringAsFixed(3),
+                              formatted,
                               textAlign: TextAlign.right,
                               style: axisTextStyle,
                             ),
@@ -818,6 +898,9 @@ class TransporterDashboardView extends StatelessWidget {
                           ),
                       ],
                       isCurved: true,
+                      curveSmoothness: 0.25,
+                      preventCurveOverShooting: true,
+                      preventCurveOvershootingThreshold: 0.0,
                       color: Colors.deepOrange,
                       barWidth: 3,
                       isStrokeCapRound: true,
@@ -948,49 +1031,381 @@ class TransporterDashboardView extends StatelessWidget {
     );
   }
 
-  Widget _buildListCard(
-    BuildContext context,
-    String title,
-    ChartSeries series,
-    IconData icon,
-    String unit,
-  ) {
+
+  Widget _buildTransportTypesCard(BuildContext context) {
     final theme = Theme.of(context);
+    final series = controller.transportTypes.value;
+    final totalVehicles = series.values.fold<double>(0, (a, b) => a + b);
+
     return GlassCard(
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(IconlyLight.discovery, size: 16, color: Colors.orange),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                "Transport Types",
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: theme.textTheme.bodyLarge?.color,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           if (series.labels.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Text(
-                "No data yet",
-                style: TextStyle(color: theme.disabledColor),
+              child: Center(
+                child: Text(
+                  "No vehicle fleet data yet",
+                  style: TextStyle(color: theme.disabledColor, fontSize: 12),
+                ),
               ),
-            ),
-          for (var i = 0; i < series.labels.length; i++)
-            ListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(icon, color: _gold, size: 18),
-              title: Text(
-                series.labels[i],
-                style: const TextStyle(fontSize: 13),
+            )
+          else ...[
+            for (var i = 0; i < series.labels.length; i++) ...[
+              if (i > 0) const SizedBox(height: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        series.labels[i].capitalizeFirst ?? series.labels[i],
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: theme.textTheme.bodyLarge?.color,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: _gold.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          "${series.values.length > i ? series.values[i].toInt() : 0} vehicles",
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: theme.textTheme.bodyLarge?.color,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: totalVehicles > 0 && series.values.length > i
+                          ? (series.values[i] / totalVehicles).clamp(0.0, 1.0)
+                          : 1.0,
+                      minHeight: 6,
+                      backgroundColor: theme.dividerColor.withValues(alpha: 0.15),
+                      valueColor: const AlwaysStoppedAnimation<Color>(_gold),
+                    ),
+                  ),
+                ],
               ),
-              trailing: Text(
-                "${series.values.length > i ? series.values[i].toInt() : 0} $unit",
-                style: const TextStyle(
-                  fontSize: 12,
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopRoutesCard(BuildContext context) {
+    final theme = Theme.of(context);
+    final series = controller.topRoutes.value;
+
+    return GlassCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(IconlyLight.location, size: 16, color: Colors.blue),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                "Top Routes (Trips)",
+                style: GoogleFonts.poppins(
                   fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: theme.textTheme.bodyLarge?.color,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (series.labels.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Center(
+                child: Text(
+                  "No route trips completed yet",
+                  style: TextStyle(color: theme.disabledColor, fontSize: 12),
+                ),
+              ),
+            )
+          else ...[
+            for (var i = 0; i < series.labels.length; i++) ...[
+              if (i > 0) const Divider(height: 16),
+              Row(
+                children: [
+                  const Icon(Icons.route_outlined, size: 18, color: Colors.blue),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      series.labels[i],
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      "${series.values.length > i ? series.values[i].toInt() : 0} trips",
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue.shade700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSlaDriversCard(BuildContext context) {
+    final theme = Theme.of(context);
+    final series = controller.slaDrivers.value;
+    final k = controller.kpis;
+    final onTimeKpi = k['onTime']?.toString().trim() ?? '';
+    final hasDriverList = series.labels.isNotEmpty;
+    final hasKpi = onTimeKpi.isNotEmpty && onTimeKpi != '—' && onTimeKpi != 'Not tracked';
+
+    return GlassCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.verified_rounded,
+                        size: 16,
+                        color: Color(0xFF10B981),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "SLA: On-time % (Drivers)",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: theme.textTheme.bodyLarge?.color,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  "Target: 90%",
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF10B981),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (hasDriverList) ...[
+            for (var i = 0; i < series.labels.length; i++) ...[
+              if (i > 0) const SizedBox(height: 10),
+              Builder(builder: (context) {
+                final otd = series.values.length > i ? series.values[i] : 0.0;
+                final progress = (otd / 100.0).clamp(0.0, 1.0);
+                final slaColor = otd >= 90
+                    ? const Color(0xFF10B981)
+                    : (otd >= 70 ? Colors.orange : Colors.redAccent);
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.check_circle_rounded, size: 14, color: slaColor),
+                            const SizedBox(width: 6),
+                            Text(
+                              series.labels[i],
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: slaColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            "${otd.toStringAsFixed(0)}% On-Time",
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: slaColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 6,
+                        backgroundColor: theme.dividerColor.withValues(alpha: 0.15),
+                        valueColor: AlwaysStoppedAnimation<Color>(slaColor),
+                      ),
+                    ),
+                  ],
+                );
+              }),
+            ],
+          ] else if (hasKpi) ...[
+            Builder(builder: (context) {
+              final numericStr = onTimeKpi.replaceAll(RegExp(r'[^0-9.]'), '');
+              final double otd = double.tryParse(numericStr) ?? 100.0;
+              final progress = (otd / 100.0).clamp(0.0, 1.0);
+              final slaColor = otd >= 90
+                  ? const Color(0xFF10B981)
+                  : (otd >= 70 ? Colors.orange : Colors.redAccent);
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.check_circle_rounded, size: 14, color: slaColor),
+                          const SizedBox(width: 6),
+                          Text(
+                            "Fleet On-Time Performance",
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: slaColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          onTimeKpi.contains('%') ? onTimeKpi : "$onTimeKpi% On-Time",
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: slaColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 6,
+                      backgroundColor: theme.dividerColor.withValues(alpha: 0.15),
+                      valueColor: AlwaysStoppedAnimation<Color>(slaColor),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    "SLA target met • Deliveries running on schedule",
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      color: theme.textTheme.bodyMedium?.color,
+                    ),
+                  ),
+                ],
+              );
+            }),
+          ] else
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Center(
+                child: Text(
+                  "No driver SLA recorded yet",
+                  style: TextStyle(color: theme.disabledColor, fontSize: 12),
                 ),
               ),
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../common/seller_ui.dart';
@@ -11,6 +12,30 @@ import 'seller_negotiation_chat_view.dart';
 class SellerRfqDetailView extends StatelessWidget {
   final String rfqId;
   const SellerRfqDetailView({super.key, required this.rfqId});
+
+  static String _formatExpiry(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return '-';
+    final str = raw.trim();
+    DateTime? dt = DateTime.tryParse(str);
+    if (dt == null) {
+      try {
+        dt = DateFormat('dd-MM-yyyy HH:mm').parse(str);
+      } catch (_) {
+        try {
+          dt = DateFormat('dd/MM/yyyy HH:mm').parse(str);
+        } catch (_) {}
+      }
+    }
+    if (dt != null) {
+      final local = dt.toLocal();
+      final hasTime = str.contains('T') || str.contains(':') || str.contains(' ');
+      if (hasTime) {
+        return DateFormat('dd MMM yyyy, hh:mm a').format(local);
+      }
+      return DateFormat('dd MMM yyyy').format(local);
+    }
+    return str;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,8 +53,9 @@ class SellerRfqDetailView extends StatelessWidget {
             child: CircularProgressIndicator(color: SellerUi.primary),
           );
         }
-        if (rfq == null)
+        if (rfq == null) {
           return const Center(child: Text("Requirement not found"));
+        }
         final thread = controller.thread.value;
 
         return RefreshIndicator(
@@ -66,7 +92,7 @@ class SellerRfqDetailView extends StatelessWidget {
                 ),
                 SellerUi.infoRow("Delivery Terms", rfq.deliveryTerms),
                 SellerUi.infoRow("Branches", rfq.targetBranches.join(', ')),
-                SellerUi.infoRow("Expires", SellerUi.date(rfq.expiryDatetime)),
+                SellerUi.infoRow("Broadcast Expiry", _formatExpiry(rfq.expiryDatetime)),
                 if ((rfq.description ?? '').isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Text(

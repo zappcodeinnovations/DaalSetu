@@ -378,6 +378,7 @@ class AdminDrawer extends StatelessWidget {
                       isSubItem: true,
                       onTap: () => Get.to(() => const BuyerRequestManagementView(
                             mode: BuyerRequestMode.requirements,
+                            wrapInScaffold: true,
                           )),
                     ),
                     _customMenuItem(

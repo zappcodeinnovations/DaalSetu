@@ -16,8 +16,13 @@ enum BuyerRequestMode { requirements, offers }
 /// the buyer's own tabs and server-side filters.
 class BuyerRequestManagementView extends StatefulWidget {
   final BuyerRequestMode mode;
+  final bool? wrapInScaffold;
 
-  const BuyerRequestManagementView({super.key, required this.mode});
+  const BuyerRequestManagementView({
+    super.key,
+    required this.mode,
+    this.wrapInScaffold,
+  });
 
   @override
   State<BuyerRequestManagementView> createState() =>
@@ -536,7 +541,10 @@ class _BuyerRequestManagementViewState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final heading = _isRequirement ? 'My Requirements' : 'Negotiations';
-    return Column(
+    final hasParentScaffold = Scaffold.maybeOf(context) != null;
+    final shouldWrap = widget.wrapInScaffold ?? !hasParentScaffold;
+
+    final content = Column(
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
@@ -644,6 +652,37 @@ class _BuyerRequestManagementViewState
         ),
       ],
     );
+
+    if (shouldWrap) {
+      return Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          leading: Navigator.canPop(context)
+              ? IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_ios_new,
+                    color: theme.textTheme.bodyLarge?.color,
+                    size: 20,
+                  ),
+                  onPressed: () => Get.back(),
+                )
+              : null,
+          title: Text(
+            heading,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              color: theme.textTheme.bodyLarge?.color,
+            ),
+          ),
+        ),
+        body: SafeArea(top: false, child: content),
+      );
+    }
+
+    return content;
   }
 
   Widget _card(

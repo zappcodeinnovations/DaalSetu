@@ -973,6 +973,13 @@ class BuyerServices {
         ? deliveryDate.trim()
         : "";
 
+    String apiDeliveryDate = effectiveDeliveryDate;
+    if (RegExp(r'^\d{2}[-/]\d{2}[-/]\d{4}$').hasMatch(effectiveDeliveryDate)) {
+      final sep = effectiveDeliveryDate.contains('/') ? '/' : '-';
+      final parts = effectiveDeliveryDate.split(sep);
+      apiDeliveryDate = "${parts[2]}-${parts[1].padLeft(2, '0')}-${parts[0].padLeft(2, '0')}";
+    }
+
     final effectiveLoadingTo =
         (loadingTo != null && loadingTo.trim().isNotEmpty)
         ? loadingTo.trim()
@@ -988,7 +995,7 @@ class BuyerServices {
       "buyer_offered_amount": cleanPrice,
       "buyer_required_quantity": cleanQty,
       "loading_to": effectiveLoadingTo,
-      "delivery_date": effectiveDeliveryDate,
+      "delivery_date": apiDeliveryDate.isNotEmpty ? apiDeliveryDate : effectiveDeliveryDate,
       "buyer_remark": effectiveRemark,
       // Field aliases for compatibility
       "offered_amount": cleanPrice,

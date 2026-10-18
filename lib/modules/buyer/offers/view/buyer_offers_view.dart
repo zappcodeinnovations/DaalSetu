@@ -228,7 +228,9 @@ class _OfferList extends StatelessWidget {
                             ? "No offers match '${controller.searchQuery.value}'"
                             : (offerType == 'requirements'
                                   ? "You haven't posted any requirements yet."
-                                  : "No $offerType offers are available at the moment."),
+                                  : (offerType == 'all'
+                                      ? "No offers are available at the moment."
+                                      : "No $offerType offers are available at the moment.")),
                         textAlign: TextAlign.center,
                         style: GoogleFonts.inter(
                           fontSize: 14,
@@ -1337,7 +1339,7 @@ class _OfferList extends StatelessWidget {
                           setDialogState(() {
                             selectedDeliveryDate = picked;
                             formattedDeliveryDate =
-                                "${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                                "${picked.day.toString().padLeft(2, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.year.toString().padLeft(4, '0')}";
                           });
                         }
                       },

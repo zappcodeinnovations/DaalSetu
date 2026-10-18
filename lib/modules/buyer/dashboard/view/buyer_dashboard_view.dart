@@ -10,10 +10,10 @@ import '../../../category/view/category_page.dart';
 import '../../orders/view/buyer_orders_view.dart';
 import '../../offers/view/buyer_offers_view.dart';
 import '../../offers/view/buyer_activity_view.dart';
-import '../../delivery_challan/view/buyer_delivery_challan_view.dart';
-import '../../consignment/view/buyer_consignment_view.dart';
+// import '../../delivery_challan/view/buyer_delivery_challan_view.dart';
+// import '../../consignment/view/buyer_consignment_view.dart';
 import '../../../contracts/view/contract_view.dart';
-import '../../../seller/company/view/seller_company_view.dart';
+// import '../../../seller/company/view/seller_company_view.dart';
 import '../../../seller/notifications/view/seller_notification_view.dart';
 import '../../../../services/realtime_notification_service.dart';
 import 'buyer_dashboard_analytics.dart';
@@ -127,7 +127,7 @@ class BuyerDashboardView extends StatelessWidget {
                   "Recent Requirements & Negotiations",
                   "View All",
                   onTap: () {
-                    Get.to(() => const BuyerActivityView(initialIndex: 1));
+                    Get.to(() => const BuyerActivityView(initialIndex: 0));
                   },
                 ),
                 const SizedBox(height: 16),
@@ -209,37 +209,37 @@ class BuyerDashboardView extends StatelessWidget {
               ],
             );
           }),
-          PopupMenuButton<String>(
-            tooltip: 'Buyer menu',
-            onSelected: (value) {
-              switch (value) {
-                case 'categories':
-                  Get.to(() => const CategoryPageView());
-                  break;
-                case 'companies':
-                  Get.to(() => const SellerCompanyView());
-                  break;
-                case 'consignments':
-                  Get.to(() => const BuyerConsignmentView());
-                  break;
-                case 'challans':
-                  Get.to(() => const BuyerDeliveryChallanView());
-                  break;
-              }
-            },
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: 'categories', child: Text('My Categories')),
-              PopupMenuItem(value: 'companies', child: Text('My Companies')),
-              PopupMenuItem(
-                value: 'consignments',
-                child: Text('Consignment Management'),
-              ),
-              PopupMenuItem(
-                value: 'challans',
-                child: Text('Delivery Challans'),
-              ),
-            ],
-          ),
+          // PopupMenuButton<String>(
+          //   tooltip: 'Buyer menu',
+          //   onSelected: (value) {
+          //     switch (value) {
+          //       case 'categories':
+          //         Get.to(() => const CategoryPageView());
+          //         break;
+          //       case 'companies':
+          //         Get.to(() => const SellerCompanyView());
+          //         break;
+          //       case 'consignments':
+          //         Get.to(() => const BuyerConsignmentView());
+          //         break;
+          //       case 'challans':
+          //         Get.to(() => const BuyerDeliveryChallanView());
+          //         break;
+          //     }
+          //   },
+          //   itemBuilder: (_) => const [
+          //     PopupMenuItem(value: 'categories', child: Text('My Categories')),
+          //     PopupMenuItem(value: 'companies', child: Text('My Companies')),
+          //     PopupMenuItem(
+          //       value: 'consignments',
+          //       child: Text('Consignment Management'),
+          //     ),
+          //     PopupMenuItem(
+          //       value: 'challans',
+          //       child: Text('Delivery Challans'),
+          //     ),
+          //   ],
+          // ),
           const SizedBox(width: 8),
         ],
       ),

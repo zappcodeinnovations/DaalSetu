@@ -88,12 +88,8 @@ class BuyerMyInterestsView extends StatelessWidget {
             .replaceAll(RegExp(r'[^\d.]'), '')
             .trim();
 
-    final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
     String formatDisplay(DateTime dt) =>
-        "${dt.day.toString().padLeft(2, '0')}-${months[dt.month - 1]}-${dt.year}";
+        "${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year}";
 
     final loadingFromText = (offer.pickupFrom?.isNotEmpty == true)
         ? offer.pickupFrom!
@@ -296,7 +292,7 @@ class BuyerMyInterestsView extends StatelessWidget {
                                   setDialogState(() {
                                     selectedDate = picked;
                                     formattedDate =
-                                        "${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                                        "${picked.day.toString().padLeft(2, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.year.toString().padLeft(4, '0')}";
                                     displayDateText = formatDisplay(picked);
                                   });
                                 }
@@ -318,7 +314,7 @@ class BuyerMyInterestsView extends StatelessWidget {
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      displayDateText ?? "Select delivery date",
+                                      displayDateText ?? "dd-mm-yyyy",
                                       style: GoogleFonts.inter(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w500,
@@ -445,11 +441,22 @@ class BuyerMyInterestsView extends StatelessWidget {
     );
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: showAppBar
           ? AppBar(
-              backgroundColor: Colors.transparent,
+              backgroundColor: theme.scaffoldBackgroundColor,
+              surfaceTintColor: Colors.transparent,
               elevation: 0,
+              leading: Navigator.canPop(context)
+                  ? IconButton(
+                      icon: Icon(
+                        Icons.arrow_back_ios_new,
+                        color: theme.textTheme.bodyLarge?.color,
+                        size: 20,
+                      ),
+                      onPressed: () => Get.back(),
+                    )
+                  : null,
               title: Text(
                 "My Interests",
                 style: GoogleFonts.poppins(

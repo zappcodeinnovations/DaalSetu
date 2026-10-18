@@ -114,21 +114,6 @@ class CategoryPageView extends StatelessWidget {
     );
   }
 
-  /// ===============================
-  /// SEND FOR APPROVAL BOTTOM SHEET
-  /// ===============================
-  bool _isDummyOrTestCategory(String name) {
-    final t = name.trim().toLowerCase();
-    if (t.isEmpty) return true;
-    if (t == 'xyz' ||
-        t == 'sub' ||
-        t == 'teat sub' ||
-        RegExp(r'^(.)\1+$').hasMatch(t)) {
-      return true;
-    }
-    return false;
-  }
-
   void _showSendForApprovalBottomSheet(BuildContext context, CategoryController controller) {
     final theme = Theme.of(context);
     final customNameCtrl = TextEditingController();
@@ -148,7 +133,7 @@ class CategoryPageView extends StatelessWidget {
         .where((c) =>
             !assignedIds.contains(c.id) &&
             !assignedNames.contains(c.categoryName.trim().toLowerCase()) &&
-            !_isDummyOrTestCategory(c.categoryName))
+            c.categoryName.trim().isNotEmpty)
         .toList();
 
     Get.bottomSheet(

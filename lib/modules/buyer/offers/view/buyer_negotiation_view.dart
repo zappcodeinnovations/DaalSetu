@@ -22,6 +22,13 @@ class BuyerNegotiationView extends StatelessWidget {
       productId: productId,
       interestId: interestId,
       isBuyer: true,
+      availableStock: offer.availableQuantity,
+      sellerOfferAmount: offer.displayPrice ?? offer.requestedAmount,
+      initialRequestedQty: offer.requestedQuantity,
+      initialOfferedPrice: offer.requestedAmount,
+      initialCreatedAt: offer.createdAt,
+      priceUnit: offer.amountUnit,
+      quantityUnit: offer.quantityUnit,
     );
   }
 }
