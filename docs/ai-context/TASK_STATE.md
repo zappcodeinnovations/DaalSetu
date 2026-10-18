@@ -47,11 +47,14 @@
   - Added unit suffixes/affordances (`/$priceUnit` and `quantityUnit`) directly inside the text fields.
   - Replaced cramped circular send icon with a prominent, full-width `Submit Negotiation` button with proper 46px touch target and loading state.
   - Added helper note matching Buyer web panel specifications.
-- **Task 20 (Negotiation Submit Button Text Clipping & Dashboard 3-dots Cleanup)**:
-  - Fixed text clipping on the 'Submit Negotiation' button by increasing container height to 50 and setting explicit vertical padding (`vertical: 12`) with 15px font size, ensuring the descender of 'g' is never cut off.
-  - Commented out the obsolete 3-dots `PopupMenuButton` in `BuyerDashboardView` AppBar, as all actions (categories, companies, consignments, challans) are now fully available in the side panel drawer.
-  - Commented out now-unused imports in `buyer_dashboard_view.dart`.
-- **Verification**: Created `test/buyer_challan_pdf_test.dart`, `test/requirement_details_broadcast_expiry_test.dart`, `test/offers_and_requirements_tab_test.dart`, `test/buyer_submit_offer_date_format_test.dart`, and `test/negotiation_timestamp_test.dart`. All tests passing.
-- **Customization**: Created full persistent repository memory system under `docs/ai-context/` (9 docs) and 10 agent skills under `.agents/skills/`.
+- **Task 21 (Transporter Dashboard — 3M Trend Chart Scaling & Missing Web Analytical Charts)**:
+  - Synchronized dual-axis gridlines and scaling via `_calculateScale` algorithm with 6 equal divisions (0.02 step for Earnings up to 0.12, 0.4 step for Shipments up to 2.4).
+  - Resolved negative curve sagging below Y=0 by enabling `preventCurveOverShooting: true`, `preventCurveOvershootingThreshold: 0.0`, and `curveSmoothness: 0.25` on `LineChartBarData`.
+  - Added dynamic proportional bar width (42px on 3M) matching web styling.
+  - Added `slaDrivers` reactive series and fallback parser to `TransporterDashboardController`.
+  - Added missing `"SLA: On-time % (Drivers)"` card (`_buildSlaDriversCard`) with driver breakdown, SLA target badge (90%), progress bars, and fleet on-time fallback.
+  - Renamed "Top Routes" to `"Top Routes (Trips)"` with route corridor badge styling.
+  - Enhanced `"Transport Types"` card with proportional progress indicators.
+- **Verification**: Created `test/transporter_trend_chart_test.dart` (4 tests passing), verified `test/transporter_api_models_test.dart` (passing), and confirmed 0 issues with `flutter analyze lib/modules/transporter/dashboard/`.
 
 

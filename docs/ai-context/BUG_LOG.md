@@ -49,3 +49,26 @@
   - `lib/modules/settings/view/settings_page.dart`
   - `lib/modules/buyer/offers/view/buyer_negotiation_view.dart`
 - **Verification**: `flutter test test/negotiation_timestamp_test.dart` (PASSED), `flutter analyze` (0 errors).
+
+---
+
+## Bug 21: Transporter Dashboard — 3M Trend Chart Distorted Scaling & Missing Web Analytical Charts
+- **Symptom**:
+  1. Under the 3M filter, the "Earnings & Shipments Trend" chart displayed severe scaling distortion: Catmull-Rom spline line sagged into negative values below the baseline between Aug and Sep, left and right dual axes had mismatched tick intervals (3 vs 6 vs 4) with 3-decimal formatting (`0.050`), and the October line dot and shipment bar were misaligned.
+  2. Analytical charts present on the Transporter web panel ("Top Routes (Trips)", "Transport Types" visual distribution, and "SLA: On-time % (Drivers)") were missing or misnamed.
+- **Root Cause**:
+  1. In `TransporterDashboardView`, `LineChartBarData` omitted `preventCurveOverShooting: true` and `preventCurveOvershootingThreshold: 0.0`. Dual axis scaling used arbitrary multipliers (`* 1.25` and `.ceilToDouble()`) that inflated maxShip from 2.0 to 3.0 and maxEarn from 0.12 to 0.150, creating mismatched gridlines.
+  2. `TransporterDashboardController` never parsed `slaDrivers` from `/api/transporter/dashboard/overview/`.
+  3. `TransporterDashboardView` omitted `_buildSlaDriversCard` and titled top routes as just "Top Routes" rather than "Top Routes (Trips)".
+- **Fix**:
+  1. Added `_calculateScale` algorithm synchronizing dual-axis divisions (6 intervals: 0.02 step for Earnings up to 0.12, 0.4 step for Shipments up to 2.4).
+  2. Configured `preventCurveOverShooting: true`, `preventCurveOvershootingThreshold: 0.0`, and `curveSmoothness: 0.25` to eliminate curve sagging below Y=0.
+  3. Dynamic bar width (42px on 3M) for balanced visual weight.
+  4. Added `slaDrivers` reactive series and fallback parser in `TransporterDashboardController`.
+  5. Built `_buildSlaDriversCard`, `_buildTopRoutesCard` ("Top Routes (Trips)"), and `_buildTransportTypesCard`.
+- **Files Changed**:
+  - `lib/modules/transporter/dashboard/controller/transporter_dashboard_controller.dart`
+  - `lib/modules/transporter/dashboard/view/transporter_dashboard_view.dart`
+  - `test/transporter_trend_chart_test.dart`
+- **Verification**: `flutter test test/transporter_trend_chart_test.dart` (4 tests PASSED), `flutter test test/transporter_api_models_test.dart` (PASSED), `flutter analyze lib/modules/transporter/dashboard/` (0 issues).
+

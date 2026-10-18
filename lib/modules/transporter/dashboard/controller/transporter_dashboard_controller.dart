@@ -42,6 +42,7 @@ class TransporterDashboardController extends GetxController {
   var deliveryStatus = const ChartSeries([], []).obs;
   var transportTypes = const ChartSeries([], []).obs;
   var topRoutes = const ChartSeries([], []).obs;
+  var slaDrivers = const ChartSeries([], []).obs;
 
   @override
   void onInit() {
@@ -161,6 +162,25 @@ class TransporterDashboardController extends GetxController {
         'labels',
         'trips',
       );
+
+      final slaData = data['slaDrivers'] ??
+          data['sla_drivers'] ??
+          data['slaOnTime'] ??
+          data['sla_on_time'] ??
+          data['driverSla'] ??
+          data['driver_sla'] ??
+          data['sla'];
+      ChartSeries parsedSla = const ChartSeries([], []);
+      if (slaData is Map) {
+        for (final vKey in ['percentages', 'values', 'otd', 'rates', 'scores', 'share']) {
+          final s = ChartSeries.fromJson(slaData, 'labels', vKey);
+          if (!s.isEmpty) {
+            parsedSla = s;
+            break;
+          }
+        }
+      }
+      slaDrivers.value = parsedSla;
     } catch (e) {
       errorMessage(e.toString().replaceFirst('Exception: ', ''));
     } finally {
