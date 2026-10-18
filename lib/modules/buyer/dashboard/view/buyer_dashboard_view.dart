@@ -158,11 +158,11 @@ class BuyerDashboardView extends StatelessWidget {
       child: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Align(
-          alignment: Alignment.centerLeft,
+        title: SizedBox(
+          width: 120,
+          height: 32,
           child: Image.asset(
             'assets/images/app_name.png',
-            height: 32,
             fit: BoxFit.contain,
           ),
         ),
@@ -498,6 +498,10 @@ class BuyerDashboardView extends StatelessWidget {
     );
   }
 
+  @visibleForTesting
+  Widget buildKPIGrid(BuildContext context, Map<String, dynamic> kpis) =>
+      _buildKPIGrid(context, kpis);
+
   Widget _buildKPIGrid(BuildContext context, Map<String, dynamic> kpis) {
     // 1. SPENT (MTD)
     String spentVal =
@@ -674,7 +678,8 @@ class BuyerDashboardView extends StatelessWidget {
                 value: topSupplier,
                 subtitle: supplierShare,
                 icon: Icons.storefront_outlined,
-                onTap: () => Get.to(() => const ContractsScreen()),
+                onTap: () =>
+                    Get.to(() => const BuyerOffersView(initialIndex: 0)),
               ),
             ),
             const SizedBox(width: 14),
@@ -685,7 +690,8 @@ class BuyerDashboardView extends StatelessWidget {
                 value: averagePrice,
                 subtitle: averagePriceDelta,
                 icon: Icons.currency_rupee_rounded,
-                onTap: () => Get.to(() => const ContractsScreen()),
+                onTap: () =>
+                    Get.to(() => const BuyerOffersView(initialIndex: 0)),
               ),
             ),
           ],

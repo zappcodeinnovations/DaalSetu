@@ -34,6 +34,8 @@ class ContractModel {
   final String? transporterName;
   final String? transporterMobile;
   final String? bidAmount;
+  final int? productId;
+  final int? interestId;
 
   ContractModel({
     required this.id,
@@ -62,6 +64,8 @@ class ContractModel {
     this.transporterName,
     this.transporterMobile,
     this.bidAmount,
+    this.productId,
+    this.interestId,
   });
 
   factory ContractModel.fromJson(Map<String, dynamic> json) {
@@ -115,6 +119,8 @@ class ContractModel {
       transporterName: transName.isNotEmpty ? transName : null,
       transporterMobile: text('transporter_mobile').isNotEmpty ? text('transporter_mobile') : null,
       bidAmount: text('bid_amount').isNotEmpty ? text('bid_amount') : (text('accepted_bid_amount').isNotEmpty ? text('accepted_bid_amount') : null),
+      productId: number('product_id') ?? number('product') ?? number('offer_id') ?? number('offer'),
+      interestId: number('interest_id') ?? number('interest'),
     );
   }
 }

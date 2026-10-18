@@ -77,10 +77,22 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
             children: [
               _header(contract),
               _section('Product & deal', [
-                _item('Product', contract.productTitle),
+                _item(
+                  'Offer',
+                  () {
+                    final title = contract.productTitle.trim();
+                    final hasId = contract.productId != null && contract.productId != 0;
+                    if (title.isNotEmpty && hasId) {
+                      return '$title (ID: ${contract.productId})';
+                    } else if (title.isNotEmpty) {
+                      return title;
+                    } else if (hasId) {
+                      return 'ID: ${contract.productId}';
+                    }
+                    return '-';
+                  }(),
+                ),
                 _item('Category', contract.productCategory),
-                if (contract.productId != null && contract.productId != 0)
-                  _item('Product ID', contract.productId),
                 if (contract.interestId != null && contract.interestId != 0)
                   _item('Interest ID', contract.interestId),
                 _item(

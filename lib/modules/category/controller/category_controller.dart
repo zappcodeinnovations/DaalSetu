@@ -2,6 +2,7 @@ import '../../../services/category_services.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../model/category_model.dart';
+import '../model/category_request_model.dart';
 
 class CategoryController extends GetxController {
 
@@ -9,6 +10,7 @@ class CategoryController extends GetxController {
   var allCategories = <CategoryModel>[].obs;
   var systemCategories = <CategoryModel>[].obs;
   var categories = <CategoryModel>[].obs;
+  var recentRequests = <CategoryRequestModel>[].obs;
   var searchQuery = ''.obs;
 
   @override
@@ -22,6 +24,7 @@ class CategoryController extends GetxController {
       isLoading.value = true;
 
       final result = await CategoryService.fetchBuyerCategoryData();
+      recentRequests.assignAll(result.requests);
       if (result.buyerCategories.isNotEmpty) {
         allCategories.assignAll(result.buyerCategories);
         systemCategories.assignAll(result.systemCategories);
