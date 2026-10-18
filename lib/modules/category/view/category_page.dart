@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/category_controller.dart';
 import '../model/category_model.dart';
+import '../model/category_request_model.dart';
 
 class CategoryPageView extends StatelessWidget {
   const CategoryPageView({super.key});
@@ -12,105 +13,156 @@ class CategoryPageView extends StatelessWidget {
     final theme = Theme.of(context);
     final CategoryController controller = Get.put(CategoryController());
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-
-      /// 🔥 MODERN APP BAR
-      appBar: AppBar(
-        elevation: 0,
-        centerTitle: false,
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        leading: Navigator.canPop(context)
-            ? IconButton(
-                icon: Icon(IconlyLight.arrow_left_2, color: theme.textTheme.bodyLarge?.color),
-                onPressed: () => Get.back(),
-              )
-            : null,
-        title: Text(
-          "Categories",
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: [
-          IconButton(
-            tooltip: "Send for Approval",
-            icon: Icon(IconlyLight.send, color: theme.colorScheme.primary),
-            onPressed: () => _showSendForApprovalBottomSheet(context, controller),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
-        decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: SizedBox(
-          height: 52,
-          child: ElevatedButton.icon(
-            onPressed: () => _showSendForApprovalBottomSheet(context, controller),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: Colors.white,
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            ),
-            icon: const Icon(IconlyLight.send, color: Colors.white, size: 20),
-            label: const Text(
-              "SEND FOR APPROVAL",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 0.5),
-            ),
-          ),
-        ),
-      ),
-      body: Column(
-        children: [
-          /// 🔥 MODERN SEARCH BAR
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
-            child: _buildSearchBar(context, controller),
-          ),
 
-          Expanded(
-            child: Obx(() {
-              if (controller.isLoading.value && controller.allCategories.isEmpty) {
-                return Center(
-                  child: CircularProgressIndicator(
-                    color: theme.colorScheme.primary,
+        /// 🔥 MODERN APP BAR WITH TABS
+        appBar: AppBar(
+          elevation: 0,
+          centerTitle: false,
+          backgroundColor: theme.scaffoldBackgroundColor,
+          leading: Navigator.canPop(context)
+              ? IconButton(
+                  icon: Icon(IconlyLight.arrow_left_2, color: theme.textTheme.bodyLarge?.color),
+                  onPressed: () => Get.back(),
+                )
+              : null,
+          title: Text(
+            "Categories",
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          actions: [
+            IconButton(
+              tooltip: "Send for Approval",
+              icon: Icon(IconlyLight.send, color: theme.colorScheme.primary),
+              onPressed: () => _showSendForApprovalBottomSheet(context, controller),
+            ),
+            const SizedBox(width: 8),
+          ],
+          bottom: TabBar(
+            indicatorColor: theme.colorScheme.primary,
+            labelColor: theme.colorScheme.primary,
+            unselectedLabelColor: theme.textTheme.bodyMedium?.color?.withOpacity(0.65),
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            tabs: [
+              const Tab(text: "My Categories"),
+              Obx(() {
+                final count = controller.recentRequests.length;
+                return Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text("Recent Requests"),
+                      if (count > 0) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            "$count",
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 );
-              }
+              }),
+            ],
+          ),
+        ),
+        bottomNavigationBar: Container(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
+          decoration: BoxDecoration(
+            color: theme.scaffoldBackgroundColor,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
+          child: SizedBox(
+            height: 52,
+            child: ElevatedButton.icon(
+              onPressed: () => _showSendForApprovalBottomSheet(context, controller),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: Colors.white,
+                elevation: 2,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              icon: const Icon(IconlyLight.send, color: Colors.white, size: 20),
+              label: const Text(
+                "SEND FOR APPROVAL",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 0.5),
+              ),
+            ),
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _buildCategoriesTab(context, controller),
+            _buildRecentRequestsTab(context, controller),
+          ],
+        ),
+      ),
+    );
+  }
 
-              if (controller.categories.isEmpty) {
-                return _buildEmptyState(context, controller);
-              }
+  Widget _buildCategoriesTab(BuildContext context, CategoryController controller) {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        /// 🔥 MODERN SEARCH BAR
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
+          child: _buildSearchBar(context, controller),
+        ),
 
-              return RefreshIndicator(
-                color: theme.colorScheme.primary,
-                backgroundColor: theme.cardColor,
-                onRefresh: controller.fetchCategories,
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                  itemCount: controller.categories.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 14),
-                  itemBuilder: (context, index) {
-                    final category = controller.categories[index];
-                    return _buildCategoryCard(context, controller, category);
-                  },
+        Expanded(
+          child: Obx(() {
+            if (controller.isLoading.value && controller.allCategories.isEmpty) {
+              return Center(
+                child: CircularProgressIndicator(
+                  color: theme.colorScheme.primary,
                 ),
               );
-            }),
-          ),
-        ],
-      ),
+            }
+
+            if (controller.categories.isEmpty) {
+              return _buildEmptyState(context, controller);
+            }
+
+            return RefreshIndicator(
+              color: theme.colorScheme.primary,
+              backgroundColor: theme.cardColor,
+              onRefresh: controller.fetchCategories,
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                itemCount: controller.categories.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 14),
+                itemBuilder: (context, index) {
+                  final category = controller.categories[index];
+                  return _buildCategoryCard(context, controller, category);
+                },
+              ),
+            );
+          }),
+        ),
+      ],
     );
   }
 
@@ -469,10 +521,8 @@ class CategoryPageView extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        category.createdAt != null
-                            ? (category.status?.toLowerCase() == 'pending'
-                                ? "Requested on ${_formatDateTime(category.createdAt!)}"
-                                : "Created on ${_formatDateTime(category.createdAt!)}")
+                        (category.requestedAt ?? category.createdAt) != null
+                            ? "Requested on ${_formatDateTime((category.requestedAt ?? category.createdAt)!)}"
                             : (category.status?.toLowerCase() == 'pending'
                                 ? "Waiting for approval"
                                 : (category.status?.toLowerCase() == 'request'
@@ -496,6 +546,179 @@ class CategoryPageView extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  /// ===============================
+  /// RECENT REQUESTS TAB (APPROVAL REQUESTS)
+  /// ===============================
+  Widget _buildRecentRequestsTab(BuildContext context, CategoryController controller) {
+    final theme = Theme.of(context);
+
+    return Obx(() {
+      if (controller.isLoading.value && controller.recentRequests.isEmpty) {
+        return Center(
+          child: CircularProgressIndicator(color: theme.colorScheme.primary),
+        );
+      }
+
+      if (controller.recentRequests.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                IconlyLight.time_circle,
+                size: 70,
+                color: theme.colorScheme.primary.withOpacity(0.3),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "No Recent Requests",
+                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                "Your category approval requests will appear here",
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
+          ),
+        );
+      }
+
+      return RefreshIndicator(
+        color: theme.colorScheme.primary,
+        backgroundColor: theme.cardColor,
+        onRefresh: controller.fetchCategories,
+        child: ListView.separated(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          itemCount: controller.recentRequests.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 14),
+          itemBuilder: (context, index) {
+            final req = controller.recentRequests[index];
+            return _buildRequestCard(context, req);
+          },
+        ),
+      );
+    });
+  }
+
+  Widget _buildRequestCard(BuildContext context, CategoryRequestModel req) {
+    final theme = Theme.of(context);
+    final status = req.status.toLowerCase();
+    final isApproved = status == 'approved';
+    final isPending = status == 'pending';
+    final statusColor = isApproved
+        ? Colors.green
+        : (isPending ? Colors.orange : Colors.red);
+
+    final title = req.categoryNames.isNotEmpty
+        ? req.categoryNames.join(', ')
+        : "Category Request #${req.id}";
+
+    return Material(
+      color: theme.cardColor,
+      borderRadius: BorderRadius.circular(20),
+      elevation: 2,
+      shadowColor: Colors.black12,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    isApproved
+                        ? Icons.check_circle_outline_rounded
+                        : (isPending ? IconlyLight.time_circle : Icons.cancel_outlined),
+                    color: statusColor,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      if (req.requestedAt != null)
+                        Row(
+                          children: [
+                            Icon(IconlyLight.calendar, size: 13, color: theme.textTheme.bodySmall?.color?.withOpacity(0.7)),
+                            const SizedBox(width: 4),
+                            Text(
+                              _formatDateTime(req.requestedAt!),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.textTheme.bodySmall?.color?.withOpacity(0.75),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    req.status.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: statusColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (req.reviewedAt != null || (req.requestNote != null && req.requestNote!.isNotEmpty)) ...[
+              const SizedBox(height: 10),
+              Divider(height: 1, color: theme.dividerColor.withOpacity(0.4)),
+              const SizedBox(height: 8),
+              if (req.reviewedAt != null)
+                Text(
+                  "Reviewed on: ${_formatDateTime(req.reviewedAt!)}${req.reviewerName != null ? ' by ${req.reviewerName}' : ''}",
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontSize: 11,
+                    color: theme.textTheme.bodySmall?.color?.withOpacity(0.65),
+                  ),
+                ),
+              if (req.adminComment != null && req.adminComment!.trim().isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    "Admin note: ${req.adminComment}",
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+            ],
+          ],
         ),
       ),
     );
@@ -544,16 +767,26 @@ class CategoryPageView extends StatelessWidget {
   /// ===============================
   /// DATE & TIME FORMAT
   /// ===============================
-  String _formatDateTime(DateTime date) {
-    final day = date.day.toString().padLeft(2, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    final year = date.year.toString();
+  static const _months = [
+    'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar',
+    'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'
+  ];
 
-    final hour = date.hour > 12 ? date.hour - 12 : (date.hour == 0 ? 12 : date.hour);
-    final minute = date.minute.toString().padLeft(2, '0');
-    final amPm = date.hour >= 12 ? "PM" : "AM";
+  String _formatDateTime(DateTime date) {
+    final local = date.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    final month = months[local.month - 1];
+    final year = local.year.toString();
+
+    final hour = local.hour > 12 ? local.hour - 12 : (local.hour == 0 ? 12 : local.hour);
+    final minute = local.minute.toString().padLeft(2, '0');
+    final amPm = local.hour >= 12 ? "PM" : "AM";
     final hourFormatted = hour.toString().padLeft(2, '0');
 
-    return "$day/$month/$year, $hourFormatted:$minute $amPm";
+    return "$day $month $year, $hourFormatted:$minute $amPm";
   }
 }

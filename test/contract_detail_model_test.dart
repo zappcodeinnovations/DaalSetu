@@ -50,5 +50,9 @@ void main() {
     expect(contract.confirmedBranchId, 22);
     expect(contract.transporterVisibilityReason, 'seller_ready');
     expect(contract.assignedSubAdminId, 117);
+    expect(contract.productId, 105);
+    expect(contract.interestId, 105);
+    expect(contract.buyerId, 112);
+    expect(contract.sellerId, 111);
   });
 }

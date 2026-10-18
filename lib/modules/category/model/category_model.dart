@@ -3,6 +3,7 @@ class CategoryModel {
   final String categoryName;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final DateTime? requestedAt;
   final String? status;
   final String? description;
 
@@ -11,6 +12,7 @@ class CategoryModel {
     required this.categoryName,
     this.createdAt,
     this.updatedAt,
+    this.requestedAt,
     this.status,
     this.description,
   });
@@ -35,6 +37,9 @@ class CategoryModel {
       updatedAt: json["updated_at"] != null
           ? DateTime.tryParse(json["updated_at"].toString())
           : null,
+      requestedAt: json["requested_at"] != null
+          ? DateTime.tryParse(json["requested_at"].toString())
+          : (json["created_at"] != null ? DateTime.tryParse(json["created_at"].toString()) : null),
     );
   }
 
@@ -46,6 +51,7 @@ class CategoryModel {
       "description": description,
       "created_at": createdAt?.toIso8601String(),
       "updated_at": updatedAt?.toIso8601String(),
+      "requested_at": requestedAt?.toIso8601String(),
     };
   }
 }

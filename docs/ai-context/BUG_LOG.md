@@ -172,3 +172,56 @@
   - `lib/modules/buyer/offers/view/buyer_offer_details_view.dart`
   - `test/buyer_negotiation_summary_card_test.dart`
 - **Verification**: `flutter test --no-pub test/buyer_negotiation_summary_card_test.dart` (3 tests PASSED), full regression test suite (16 tests PASSED), `flutter analyze --no-pub` (0 issues).
+
+## Bug 25: Contract Details — Missing Offer ID (e.g., "50 (ID: 152)") in Mobile Contract Details View
+- **Symptom**: On the mobile Contract Details screen (`ContractDetailScreen`), the product item rendered only `Product: 50`, omitting the offer/product ID `(ID: 152)`, whereas the web Contract Details modal renders `Offer: 50 (ID: 152)`.
+- **Root Cause**:
+  1. `ContractDetailModel.fromJson` parsed `productId: number('product')`. The backend endpoint `/api/mobile/contracts/<id>/` returns `"product_id": 152` (and `"buyer_id"`, `"seller_id"`, `"interest_id"`), causing `productId` to evaluate to `null`.
+  2. `ContractModel` lacked `productId` and `interestId` properties and parser mappings, so `ContractDetailModel.fromContractModel` hardcoded `productId: null`.
+  3. `ContractDetailScreen` labeled the row as `'Product'` instead of `'Offer'` and only conditionally printed a separate redundant `'Product ID'` row which never rendered due to `productId == null`.
+- **Fix**:
+  1. Updated `ContractModel` to declare and parse `productId` (`product_id` ?? `product` ?? `offer_id` ?? `offer`) and `interestId` (`interest_id` ?? `interest`).
+  2. Updated `ContractDetailModel.fromJson` to check `*_id` variants first (`product_id`, `interest_id`, `buyer_id`, `seller_id`, etc.) and wired `productId` and `interestId` from `ContractModel` in `fromContractModel`.
+  3. Formatted the row in `contract_details_view.dart` as `'Offer'` displaying `${contract.productTitle} (ID: ${contract.productId})` matching 1:1 with the web panel and `seller_contract_detail_view.dart`.
+- **Files Changed**:
+  - `lib/modules/contracts/model/contract_model.dart`
+  - `lib/modules/contracts/model/contract_details_model.dart`
+  - `lib/modules/contracts/view/contract_details_view.dart`
+  - `test/contract_detail_model_test.dart`
+  - `test/buyer_contract_details_offer_id_test.dart`
+- **Verification**: `flutter test test/buyer_contract_details_offer_id_test.dart --no-pub` (3 tests PASSED), `flutter test test/contract_detail_model_test.dart --no-pub` (1 test PASSED).
+
+## Bug 26: Buyer Categories — Omitted Request Timestamps on Category Cards & Missing Approval Requests List
+- **Symptom**: On the mobile Buyer Categories screen (`CategoryPageView`), category cards labeled timestamps as "Created on" with raw UTC hours (e.g. `12:51 AM` instead of local `06:21 AM`), and the entire approval requests ("Recent Requests") section tracking timestamps and approval statuses from the Buyer web panel was completely omitted.
+- **Root Cause**:
+  1. `CategoryModel` lacked a `requestedAt` property, and `category_page.dart` called `_formatDateTime` without `.toLocal()` timezone conversion.
+  2. `CategoryService.fetchBuyerCategoryData` parsed `data["requests"]` to extract IDs into `requestedAtMap`, but never preserved the full `requests` list in `BuyerCategoriesResult` for controller/UI consumption.
+  3. `CategoryPageView` lacked a "Recent Requests" tab or section to view submitted category approval requests.
+- **Fix**:
+  1. Created `CategoryRequestModel` in `lib/modules/category/model/category_request_model.dart` parsing `id`, `status`, `categoryNames`, `requestedAt`, `reviewedAt`, `requestNote`, `adminComment`, and `reviewerName`.
+  2. Added `requestedAt` to `CategoryModel` and passed `requested_at: reqCreatedAt` in `CategoryService.fetchBuyerCategoryData()`.
+  3. Added `requests: parsedRequests` to `BuyerCategoriesResult` and exposed `recentRequests` observable in `CategoryController`.
+  4. Enhanced `CategoryPageView` with `DefaultTabController` (Tabs: "My Categories" and "Recent Requests"), showing the count badge for recent requests.
+  5. Corrected `_formatDateTime` to apply `.toLocal()` and formatted timestamps as `dd MMM yyyy, hh:mm a` (e.g., `16 Oct 2026, 06:21 AM`, `17 Oct 2026, 10:54 AM`) matching the web panel 1:1.
+  6. Built `_buildRecentRequestsTab` and `_buildRequestCard` with status badges, category names, request timestamp, review info, and admin notes.
+- **Files Changed**:
+  - `lib/modules/category/model/category_model.dart`
+  - `lib/modules/category/model/category_request_model.dart`
+  - `lib/services/category_services.dart`
+  - `lib/modules/category/controller/category_controller.dart`
+  - `lib/modules/category/view/category_page.dart`
+  - `test/buyer_category_requests_test.dart`
+- **Verification**: `flutter test test/buyer_category_requests_test.dart --no-pub` (3 tests PASSED), regression suite (11 tests PASSED).
+
+## Bug 27: Buyer Dashboard — TOP SUPPLIER (MTD) & AVG PURCHASE PRICE KPI Cards Navigated to Contracts Screen
+- **Symptom**: Tapping on either the "TOP SUPPLIER (MTD)" card or the "AVG PURCHASE PRICE" card on the Buyer Dashboard navigated to `ContractsScreen` instead of the "Offers & Requirements" screen (`BuyerOffersView`).
+- **Root Cause**: In `BuyerDashboardView._buildKPIGrid` (`lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`), `onTap` for both "TOP SUPPLIER (MTD)" and "AVG PURCHASE PRICE" was hardcoded as `Get.to(() => const ContractsScreen())`.
+- **Fix**:
+  1. Updated the `onTap` handler on the "TOP SUPPLIER (MTD)" `_buildKPICard` to `Get.to(() => const BuyerOffersView(initialIndex: 0))`.
+  2. Updated the `onTap` handler on the "AVG PURCHASE PRICE" `_buildKPICard` to `Get.to(() => const BuyerOffersView(initialIndex: 0))`.
+  3. Added `@visibleForTesting buildKPIGrid` helper to facilitate clean, isolated widget testing without unneeded tree side-effects.
+  4. Added automated widget tests in `test/buyer_dashboard_kpi_navigation_test.dart` verifying tapping each card navigates to `BuyerOffersView`.
+- **Files Changed**:
+  - `lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`
+  - `test/buyer_dashboard_kpi_navigation_test.dart`
+- **Verification**: `flutter test test/buyer_dashboard_kpi_navigation_test.dart --no-pub` (2 tests PASSED), full regression suite (11 tests PASSED).

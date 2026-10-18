@@ -14,6 +14,27 @@
 ---
 
 ## Completed Work in Current Session
+- **Bug 29 (Buyer Dashboard — TOP SUPPLIER & AVG PURCHASE PRICE Navigation Parity)**:
+  - Addressed issue where tapping on either the "TOP SUPPLIER (MTD)" card or the "AVG PURCHASE PRICE" card on the Buyer Dashboard navigated to `ContractsScreen` instead of the "Offers & Requirements" screen (`BuyerOffersView`).
+  - Updated both `onTap` handlers in `BuyerDashboardView._buildKPIGrid` (`lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`) to `Get.to(() => const BuyerOffersView(initialIndex: 0))`.
+  - Exposed `@visibleForTesting buildKPIGrid` in `BuyerDashboardView` for isolated widget testability.
+  - Added automated widget tests in `test/buyer_dashboard_kpi_navigation_test.dart` verifying tapping each card navigates to `BuyerOffersView`.
+  - Verified with `flutter test test/buyer_dashboard_kpi_navigation_test.dart --no-pub` (2 tests PASSED) and full regression suite (11 tests PASSED).
+- **Bug 28 (Buyer Categories — Request Timestamps & Recent Requests Parity)**:
+  - Addressed missing request dates/timestamps on category cards and omitted approval requests list.
+  - Confirmed `/api/buyer-categories/` already returns `data["requests"]` with `requested_at`, `status`, `categories`, `reviewed_at`, and `reviewed_by`.
+  - Added `CategoryRequestModel` parsing all request fields and preserved `requests` in `BuyerCategoriesResult` and `CategoryController.recentRequests`.
+  - Added `requestedAt` to `CategoryModel` with `requested_at` mapping from `requests`.
+  - Fixed timezone conversion in `CategoryPageView._formatDateTime` (`.toLocal()`), formatting as `dd MMM yyyy, hh:mm a` (e.g. `16 Oct 2026, 06:21 AM`, `17 Oct 2026, 10:54 AM`) matching the web panel 1:1.
+  - Added `DefaultTabController` with "My Categories" and "Recent Requests" tabs with count badge, rendering the full approval requests list matching web panel parity.
+  - Verified with `test/buyer_category_requests_test.dart` (3 tests PASSED) and full regression suite (11 tests PASSED).
+- **Bug 27 (Contract Details — Offer ID Display & Model Parsing Parity)**:
+  - Fixed missing offer/product ID on mobile Contract Details screen (`contract_details_view.dart`).
+  - Diagnosed live contract API: backend returns `"product_id": 152` while `ContractDetailModel.fromJson` parsed `number('product')`, causing `productId` to be `null`.
+  - Added `productId` and `interestId` to `ContractModel` with fallback parser (`product_id` ?? `product` ?? `offer_id` ?? `offer`).
+  - Updated `ContractDetailModel.fromJson` to prioritize `*_id` variants (`product_id`, `interest_id`, `buyer_id`, `seller_id`) and wired `c.productId` and `c.interestId` in `fromContractModel`.
+  - Formatted the row in `contract_details_view.dart` as `'Offer'` displaying `${contract.productTitle} (ID: ${contract.productId})` matching 1:1 with the web panel and seller contract view.
+  - Verified with `test/buyer_contract_details_offer_id_test.dart` (3 tests PASSED) and `test/contract_detail_model_test.dart` (1 test PASSED).
 - **Bug 26 (Delivery Challan PDF Issuing Company PAN Number Parity)**:
   - Fixed PAN number disparity between Android app PDF (`ABCDE1234E`) and website PDF (`ABVSC1223F`).
   - Resolved root cause where `companyPan` was pulling `challan.sellerPan` (seller's PAN) instead of the issuing company (`FARMLAND`) PAN.

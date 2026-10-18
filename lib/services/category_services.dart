@@ -2,14 +2,17 @@ import '../comman/api_url.dart';
 import '../modules/category/model/subcategory_model.dart';
 import '../network/api_client.dart';
 import '../modules/category/model/category_model.dart';
+import '../modules/category/model/category_request_model.dart';
 
 class BuyerCategoriesResult {
   final List<CategoryModel> buyerCategories;
   final List<CategoryModel> systemCategories;
+  final List<CategoryRequestModel> requests;
 
   const BuyerCategoriesResult({
     required this.buyerCategories,
     required this.systemCategories,
+    this.requests = const [],
   });
 }
 
@@ -45,16 +48,20 @@ class CategoryService {
 
         // Build a map of requested timestamps from data["requests"]
         final Map<int, String> requestedAtMap = {};
+        final List<CategoryRequestModel> parsedRequests = [];
         if (data["requests"] is List) {
           for (var req in (data["requests"] as List)) {
-            if (req is Map<String, dynamic> && req["categories"] is List) {
-              final reqTime = req["requested_at"]?.toString() ?? req["created_at"]?.toString();
-              if (reqTime != null && reqTime.isNotEmpty) {
-                for (var cat in (req["categories"] as List)) {
-                  if (cat is Map<String, dynamic>) {
-                    final id = int.tryParse((cat["id"] ?? 0).toString()) ?? 0;
-                    if (id > 0 && !requestedAtMap.containsKey(id)) {
-                      requestedAtMap[id] = reqTime;
+            if (req is Map<String, dynamic>) {
+              parsedRequests.add(CategoryRequestModel.fromJson(req));
+              if (req["categories"] is List) {
+                final reqTime = req["requested_at"]?.toString() ?? req["created_at"]?.toString();
+                if (reqTime != null && reqTime.isNotEmpty) {
+                  for (var cat in (req["categories"] as List)) {
+                    if (cat is Map<String, dynamic>) {
+                      final id = int.tryParse((cat["id"] ?? 0).toString()) ?? 0;
+                      if (id > 0 && !requestedAtMap.containsKey(id)) {
+                        requestedAtMap[id] = reqTime;
+                      }
                     }
                   }
                 }
@@ -100,6 +107,7 @@ class CategoryService {
                     ...c,
                     "status": status,
                     if (reqCreatedAt != null) "created_at": reqCreatedAt,
+                    if (reqCreatedAt != null) "requested_at": reqCreatedAt,
                   }));
                 }
               }
@@ -118,6 +126,7 @@ class CategoryService {
                   ...c,
                   "status": status,
                   if (reqCreatedAt != null) "created_at": reqCreatedAt,
+                  if (reqCreatedAt != null) "requested_at": reqCreatedAt,
                 });
                 buyerCats.add(cat);
                 sysCats.add(cat);
@@ -143,6 +152,7 @@ class CategoryService {
                       ...cat,
                       "status": reqStatus,
                       "created_at": reqCreatedAt,
+                      "requested_at": reqCreatedAt,
                     });
                     buyerCats.add(catModel);
                     sysCats.add(catModel);
@@ -158,10 +168,10 @@ class CategoryService {
               .map((item) => CategoryModel.fromJson(Map<String, dynamic>.from(item)))
               .where((c) => c.categoryName.trim().isNotEmpty)
               .toList();
-          return BuyerCategoriesResult(buyerCategories: list, systemCategories: list);
+          return BuyerCategoriesResult(buyerCategories: list, systemCategories: list, requests: parsedRequests);
         }
 
-        return BuyerCategoriesResult(buyerCategories: buyerCats, systemCategories: sysCats);
+        return BuyerCategoriesResult(buyerCategories: buyerCats, systemCategories: sysCats, requests: parsedRequests);
       }
     } catch (e) {
       print("⚠️ Buyer categories API failed gracefully: $e");
