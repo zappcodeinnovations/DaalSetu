@@ -1,3 +1,4 @@
+import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:daalsetu/modules/products/model/product_model.dart';
 import 'package:daalsetu/services/product_services.dart';
@@ -21,7 +22,32 @@ class AdminOffersController extends GetxController {
     try {
       isLoading(true);
       hasError(false);
-      final products = await ProductService.getProducts();
+      List<ProductModel> products = [];
+      try {
+        products = await ProductService.getProducts();
+      } catch (_) {}
+
+      if (products.isEmpty) {
+        try {
+          final response = await ApiClient.get(
+            endpoint: '/api/offers/list/',
+            requireAuth: true,
+            suppressErrorDialog: true,
+          );
+          final rawList = response is List
+              ? response
+              : (response is Map
+                  ? (response['results'] ?? response['data'] ?? response['offers'] ?? [])
+                  : []);
+          if (rawList is List && rawList.isNotEmpty) {
+            products = rawList
+                .whereType<Map>()
+                .map((m) => ProductModel.fromJson(Map<String, dynamic>.from(m)))
+                .toList();
+          }
+        } catch (_) {}
+      }
+
       offers.assignAll(products);
     } catch (e) {
       hasError(true);

@@ -5,6 +5,7 @@ import 'package:daalsetu/modules/admin_catalog/view/admin_drawer.dart';
 import 'package:daalsetu/network/api_client.dart';
 import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
@@ -98,7 +99,18 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
     super.dispose();
   }
 
-  Future<void> _loadInitial() async {
+  Future<void> _loadInitial({bool clearFilters = false}) async {
+    if (clearFilters && mounted) {
+      setState(() {
+        _search.clear();
+        _status = '';
+        _seller = '';
+        _buyer = '';
+        _billingCompany = '';
+        _billDateFrom = null;
+        _billDateTo = null;
+      });
+    }
     await Future.wait([_loadOptions(), _loadBills(reset: true)]);
   }
 
@@ -247,7 +259,7 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
       actions: [
         IconButton(
           tooltip: 'Refresh',
-          onPressed: _loading ? null : _loadInitial,
+          onPressed: _loading ? null : () => _loadInitial(clearFilters: true),
           icon: const Icon(Icons.refresh_rounded),
         ),
       ],
@@ -260,7 +272,7 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
     body: _loading && _records.isEmpty
         ? const Center(child: CircularProgressIndicator())
         : RefreshIndicator(
-            onRefresh: _loadInitial,
+            onRefresh: () => _loadInitial(clearFilters: true),
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
@@ -1046,11 +1058,63 @@ class _AdminCreateBrokerageBillScreenState
             ),
             if (selected)
               Padding(
-                padding: const EdgeInsets.only(left: 10, top: 4),
-                child: _input(
-                  rate,
-                  'Line brokerage rate (optional)',
-                  numeric: true,
+                padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Line brokerage rate (optional)',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextFormField(
+                      controller: rate,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [
+                        LengthLimitingTextInputFormatter(10),
+                        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                      ],
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      decoration: InputDecoration(
+                        hintText: 'Enter line rate',
+                        hintStyle: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade500,
+                        ),
+                        filled: true,
+                        fillColor: Theme.of(context).cardColor,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.primary,
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
           ],
@@ -1136,12 +1200,17 @@ class _AdminCreateBrokerageBillScreenState
     keyboardType: numeric
         ? const TextInputType.numberWithOptions(decimal: true)
         : TextInputType.text,
-    maxLength: numeric ? 10 : null,
-    buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
+    inputFormatters: numeric
+        ? [
+            LengthLimitingTextInputFormatter(10),
+            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+          ]
+        : null,
     decoration: InputDecoration(
       labelText: label,
       border: const OutlineInputBorder(),
       counterText: '',
+      counter: const SizedBox.shrink(),
     ),
     validator: validator,
     onChanged: onChanged,

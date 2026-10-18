@@ -14,6 +14,7 @@ import 'package:daalsetu/routes/app_routes.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../controller/contract_controller.dart';
+import 'package:daalsetu/modules/admin_catalog/view/transport_bids_sheet.dart';
 import 'contract_edit_view.dart';
 
 class ContractDetailScreen extends StatefulWidget {
@@ -130,6 +131,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                 company: contract.sellerCompany,
                 mappedId: contract.sellerMappedId,
               ),
+              _transporterSection(contract),
               if (contract.loadingFrom.isNotEmpty || contract.loadingTo.isNotEmpty)
                 _section('Logistics Route', [
                   if (contract.loadingFrom.isNotEmpty)
@@ -424,6 +426,89 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
         ),
       ),
     );
+  }
+
+  Widget _transporterSection(ContractDetailModel contract) {
+    final hasTransporter = (contract.transporterName != null && contract.transporterName!.trim().isNotEmpty) ||
+        (contract.bidAmount != null && contract.bidAmount!.trim().isNotEmpty);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.local_shipping_outlined, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Transporter Bids',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 20),
+            if (hasTransporter) ...[
+              if (contract.transporterName != null && contract.transporterName!.trim().isNotEmpty)
+                _item('Assigned Transporter', contract.transporterName!),
+              if (contract.transporterMobile != null && contract.transporterMobile!.trim().isNotEmpty)
+                _item('Transporter Mobile', contract.transporterMobile!),
+              if (contract.bidAmount != null && contract.bidAmount!.trim().isNotEmpty)
+                _item('Accepted Bid Amount', '₹${contract.bidAmount}'),
+              const SizedBox(height: 10),
+            ],
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.tonalIcon(
+                onPressed: () => _openTransportBids(contract),
+                icon: const Icon(Icons.gavel_outlined, size: 18),
+                label: const Text(
+                  'Manage Bids (Accept / Reject)',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              hasTransporter
+                  ? 'Tap above to view other bids or update transporter bid status.'
+                  : 'Tap above to view pending bids from transporters and Accept or Reject them.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.grey.shade600,
+                    fontSize: 11,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openTransportBids(ContractDetailModel contract) async {
+    final changed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => TransportBidsSheet(
+        contractId: contract.id,
+        contractNumber: contract.contractId,
+      ),
+    );
+    if (changed == true && mounted) {
+      await controller.fetchContractDetail(contract.id);
+    }
   }
 
   Widget _item(String label, Object? rawValue) {

@@ -73,6 +73,28 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
         return words.sublist(1).join(' ');
       }
     }
+
+    // Smart fallback derivation for image and media fields
+    if (keyPath.contains('image') || keyPath.contains('photo') || keyPath.contains('thumbnail')) {
+      for (final candidate in const [
+        'image_url',
+        'image',
+        'category_image',
+        'image_path',
+        'thumbnail',
+        'file',
+        'media',
+        'photo',
+        'url',
+      ]) {
+        if (data.containsKey(candidate) &&
+            data[candidate] != null &&
+            data[candidate].toString().trim().isNotEmpty &&
+            data[candidate].toString().trim().toLowerCase() != 'null') {
+          return data[candidate];
+        }
+      }
+    }
     return null;
   }
 
@@ -200,7 +222,9 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
   }
 
   Widget _buildField(AdminDetailField field, dynamic value) {
-    final bool isNullOrEmpty = value == null || value.toString().trim().isEmpty;
+    final bool isNullOrEmpty = value == null ||
+        value.toString().trim().isEmpty ||
+        value.toString().trim().toLowerCase() == 'null';
     
     Widget content;
     
@@ -279,7 +303,6 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
           );
           break;
         case AdminDetailFieldType.text:
-        default:
           content = SelectableText(
             adminDisplayValue(value),
             style: const TextStyle(fontWeight: FontWeight.w600),
@@ -520,7 +543,7 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
       final uri = Uri.parse(urlString);
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
-      } else {
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not launch $urlString')));
       }
     } catch (e) {
@@ -613,7 +636,13 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
 
   String _label(String key) => key.split('_').map((word) => word.isEmpty ? word : '${word[0].toUpperCase()}${word.substring(1)}').join(' ');
 
-  String _absoluteUrl(String url) => url.startsWith('http') ? url : '${ApiUrls.baseUrl}$url';
+  String _absoluteUrl(String url) {
+    final trimmed = url.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    return '${ApiUrls.baseUrl}${trimmed.startsWith('/') ? '' : '/'}$trimmed';
+  }
 
   bool _isImage(String key, String value) {
     final text = '$key $value'.toLowerCase();

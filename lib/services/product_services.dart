@@ -154,14 +154,21 @@ class ProductService {
         throw Exception("Invalid response from product API");
       }
 
-      if (response is! List) {
-        throw Exception("Expected List but got ${response.runtimeType}");
+      List rawList = [];
+      if (response is List) {
+        rawList = response;
+      } else if (response is Map) {
+        rawList = (response['results'] ?? response['data'] ?? response['products']) as List? ?? [];
+      } else {
+        throw Exception("Expected List or Map but got ${response.runtimeType}");
       }
 
       final List<ProductModel> products = [];
 
-      for (var item in response) {
-        products.add(ProductModel.fromJson(Map<String, dynamic>.from(item)));
+      for (var item in rawList) {
+        if (item is Map) {
+          products.add(ProductModel.fromJson(Map<String, dynamic>.from(item)));
+        }
       }
 
       return products;

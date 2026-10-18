@@ -433,13 +433,14 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
 
   Widget _buyerCard(Map<String, dynamic> buyer) {
     final theme = Theme.of(context);
-    final name = (buyer['name'] ??
-            '${buyer['first_name'] ?? ''} ${buyer['last_name'] ?? ''}'
-                .trim()
-                .isNotEmpty
-        ? '${buyer['first_name'] ?? ''} ${buyer['last_name'] ?? ''}'.trim()
-        : (buyer['username'] ?? 'Buyer'))
-        .toString();
+    final rawName = (buyer['name'] ?? '').toString().trim();
+    final firstLast = '${buyer['first_name'] ?? ''} ${buyer['last_name'] ?? ''}'.trim();
+    final username = (buyer['username'] ?? '').toString().trim();
+    final name = rawName.isNotEmpty
+        ? rawName
+        : (firstLast.isNotEmpty
+            ? firstLast
+            : (username.isNotEmpty ? username : 'Buyer'));
     final email = (buyer['email'] ?? '').toString();
     final mobile = (buyer['mobile'] ?? '').toString();
 
@@ -462,7 +463,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: theme.dividerColor.withOpacity(0.4)),
+        side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.4)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -472,7 +473,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: theme.colorScheme.primary.withOpacity(0.12),
+                  backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.12),
                   child: Text(
                     initial,
                     style: TextStyle(
@@ -584,7 +585,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
     final dynamic assigned =
         buyer['assigned_categories'] ?? buyer['categories'];
     final Set<int> selectedCategoryIds = (assigned is List ? assigned : [])
-        .map((c) => c is Map ? c['id'] : int.tryParse(c.toString()))
+        .map((c) => c is Map ? int.tryParse('${c['id']}') : int.tryParse(c.toString()))
         .whereType<int>()
         .toSet();
 

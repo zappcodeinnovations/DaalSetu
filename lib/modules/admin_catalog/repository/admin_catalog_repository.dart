@@ -72,20 +72,38 @@ class AdminCatalogRepository {
 
   /// [files] maps field keys to local file paths; when present the request is multipart.
   Future<void> create(Map<String, dynamic> body, {Map<String, String> files = const {}}) async {
+    Map<String, dynamic> response = {};
     if (files.isNotEmpty) {
-      await ApiClient.postMultipart(
+      response = await ApiClient.postMultipart(
         endpoint: config.createEndpoint!,
         fields: _formFields(body),
         files: files,
         requireAuth: true,
       );
-      return;
+    } else {
+      final res = await ApiClient.post(
+        endpoint: config.createEndpoint!,
+        body: body,
+        requireAuth: true,
+      );
+      response = res;
     }
-    await ApiClient.post(
-      endpoint: config.createEndpoint!,
-      body: body,
-      requireAuth: true,
-    );
+
+    if ((config.key == 'sub_categories' || config.key == 'categories') &&
+        (files['image']?.isNotEmpty ?? false)) {
+      final dynamic data = response['data'] is Map ? response['data'] : response;
+      final newId = data is Map ? data['id'] : null;
+      if (newId != null) {
+        try {
+          await ApiClient.postMultipart(
+            endpoint: '/api/categories/$newId/image/',
+            fields: {},
+            files: {'image': files['image']!},
+            requireAuth: true,
+          );
+        } catch (_) {}
+      }
+    }
   }
 
   Future<void> update(String id, Map<String, dynamic> body, {Map<String, String> files = const {}}) async {
@@ -98,12 +116,22 @@ class AdminCatalogRepository {
         files: files,
         requireAuth: true,
       );
-      return;
-    }
-    if (config.updateMethod == AdminRequestMethod.post) {
+    } else if (config.updateMethod == AdminRequestMethod.post) {
       await ApiClient.post(endpoint: endpoint, body: body, requireAuth: true);
     } else {
       await ApiClient.patch(endpoint: endpoint, data: body, requireAuth: true);
+    }
+
+    if ((config.key == 'sub_categories' || config.key == 'categories') &&
+        (files['image']?.isNotEmpty ?? false)) {
+      try {
+        await ApiClient.postMultipart(
+          endpoint: '/api/categories/$id/image/',
+          fields: {},
+          files: {'image': files['image']!},
+          requireAuth: true,
+        );
+      } catch (_) {}
     }
   }
 

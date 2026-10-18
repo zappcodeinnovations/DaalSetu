@@ -141,7 +141,7 @@ class KycUsersScreen extends StatelessWidget {
 
   Widget _buildSummaryCard(String title, String count, String subtitle, Color color, IconData icon) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
@@ -151,44 +151,46 @@ class KycUsersScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: color, size: 22),
+            child: Icon(icon, color: color, size: 20),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  count,
-                  style: TextStyle(
-                    color: textDark,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    count,
+                    style: TextStyle(
+                      color: textDark,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  subtitle,
-                  style: TextStyle(color: textLight, fontSize: 11),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                  Text(
+                    subtitle,
+                    style: TextStyle(color: textLight, fontSize: 10),
+                    maxLines: 1,
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -444,15 +446,18 @@ class KycUsersScreen extends StatelessWidget {
           decoration: BoxDecoration(
             border: Border(bottom: BorderSide(color: isSelected ? indicatorColor : Colors.transparent, width: 3)),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(title, style: TextStyle(color: isSelected ? indicatorColor : textLight, fontWeight: FontWeight.bold, fontSize: 13)),
-              if (count != null) ...[
-                const SizedBox(width: 4),
-                Text("($count)", style: TextStyle(color: textLight, fontSize: 11)),
-              ]
-            ],
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(title, style: TextStyle(color: isSelected ? indicatorColor : textLight, fontWeight: FontWeight.bold, fontSize: 13)),
+                if (count != null) ...[
+                  const SizedBox(width: 4),
+                  Text("($count)", style: TextStyle(color: textLight, fontSize: 11)),
+                ]
+              ],
+            ),
           ),
         ),
       ),
@@ -710,21 +715,19 @@ class KycUsersScreen extends StatelessWidget {
           
           // Action Buttons
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
               children: [
                 Expanded(child: _buildActionButton(IconlyLight.show, "View", colorTotal, () => _showViewDialog(context, user))),
-                // Same rules as the web KYC page: approve anything not yet approved,
-                // reject pending or previously rejected users.
                 if (!isApproved) ...[
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Expanded(child: _buildActionButton(IconlyLight.tick_square, "Approve", colorApproved, () => _confirmApprove(user))),
                 ],
                 if (isPending || isRejected) ...[
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Expanded(child: _buildActionButton(IconlyLight.close_square, "Reject", colorRejected, () => _showRejectDialog(context, user.id))),
                 ],
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Expanded(child: _buildActionButton(IconlyLight.time_circle, "History", colorRoleTransporter, () => _showHistoryDialog(context, user))),
               ],
             ),
@@ -739,19 +742,23 @@ class KycUsersScreen extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         decoration: BoxDecoration(
           border: Border.all(color: color.withOpacity(0.3)),
           borderRadius: BorderRadius.circular(8),
           color: color.withOpacity(0.05),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 14),
-            const SizedBox(width: 6),
-            Text(label, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
-          ],
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: color, size: 14),
+              const SizedBox(width: 4),
+              Text(label, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
+            ],
+          ),
         ),
       ),
     );

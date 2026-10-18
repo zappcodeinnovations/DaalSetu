@@ -34,22 +34,36 @@ class KycUserModel {
   });
 
   factory KycUserModel.fromJson(Map<String, dynamic> json) {
+    final userObj = json['user'] is Map ? Map<String, dynamic>.from(json['user'] as Map) : null;
+    String rawName = (json['name'] ?? '').toString().trim();
+    if (rawName.isEmpty) {
+      rawName = (json['username'] ?? userObj?['username'] ?? '').toString().trim();
+    }
+    if (rawName.isEmpty) {
+      final first = (json['first_name'] ?? userObj?['first_name'] ?? '').toString().trim();
+      final last = (json['last_name'] ?? userObj?['last_name'] ?? '').toString().trim();
+      rawName = '$first $last'.trim();
+    }
+    final mobile = (json['mobile'] ?? userObj?['mobile'] ?? '').toString().trim();
+    final email = (json['email'] ?? userObj?['email'] ?? '').toString().trim();
+    final role = (json['role'] ?? userObj?['role'] ?? '').toString().trim();
+
     return KycUserModel(
-      id: json['id'] ?? 0,
-      name: json['name'] ?? '',
-      mobile: json['mobile'] ?? '',
-      email: json['email'] ?? '',
-      role: json['role'] ?? '',
-      panNumber: json['pan_number'],
-      gstNumber: json['gst_number'],
-      kycStatus: json['kyc_status'] ?? '',
-      kycSubmittedAt: json['kyc_submitted_at'],
-      kycApprovedAt: json['kyc_approved_at'],
-      kycRejectedAt: json['kyc_rejected_at'],
-      kycRejectionReason: json['kyc_rejection_reason'],
-      accountStatus: json['account_status'] ?? '',
-      branchName: json['branch_name'],
-      companyName: json['company_name'],
+      id: json['id'] is int ? json['id'] : int.tryParse('${json['id'] ?? ''}') ?? 0,
+      name: rawName,
+      mobile: mobile,
+      email: email,
+      role: role,
+      panNumber: json['pan_number']?.toString(),
+      gstNumber: json['gst_number']?.toString(),
+      kycStatus: (json['kyc_status'] ?? '').toString().trim(),
+      kycSubmittedAt: json['kyc_submitted_at']?.toString(),
+      kycApprovedAt: json['kyc_approved_at']?.toString(),
+      kycRejectedAt: json['kyc_rejected_at']?.toString(),
+      kycRejectionReason: json['kyc_rejection_reason']?.toString(),
+      accountStatus: (json['account_status'] ?? '').toString().trim(),
+      branchName: json['branch_name']?.toString(),
+      companyName: json['company_name']?.toString(),
     );
   }
 

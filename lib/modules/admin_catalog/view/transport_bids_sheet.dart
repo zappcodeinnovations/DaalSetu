@@ -244,8 +244,9 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
   Widget _bidCard(Map<String, dynamic> bid) {
     final bidId = int.tryParse('${bid['bid_id'] ?? ''}');
     final status = '${bid['status'] ?? 'pending'}';
-    final canAccept = bid['can_accept'] == true;
-    final canReject = bid['can_reject'] == true;
+    final isPending = status.toLowerCase() == 'pending' || status.toLowerCase() == 'reserved';
+    final canAccept = bid['can_accept'] == true || (bid['can_accept'] == null && isPending);
+    final canReject = bid['can_reject'] == true || (bid['can_reject'] == null && isPending);
     final isProcessing = processingBidId == bidId;
     return Card(
       child: Padding(
@@ -289,17 +290,22 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
                     if (canAccept)
                       FilledButton.icon(
                         onPressed: () => runAction(bid, 'accept'),
-                        icon: const Icon(Icons.check_circle_outline),
-                        label: const Text('Accept'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.green.shade600,
+                          foregroundColor: Colors.white,
+                        ),
+                        icon: const Icon(Icons.check_circle_outline, size: 18),
+                        label: const Text('Accept', style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     if (canReject)
                       OutlinedButton.icon(
                         onPressed: () => runAction(bid, 'reject'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Theme.of(context).colorScheme.error,
+                          side: BorderSide(color: Theme.of(context).colorScheme.error),
                         ),
-                        icon: const Icon(Icons.cancel_outlined),
-                        label: const Text('Reject'),
+                        icon: const Icon(Icons.cancel_outlined, size: 18),
+                        label: const Text('Reject', style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                   ],
                 ),

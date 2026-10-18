@@ -301,7 +301,7 @@ class AdminDashboardScreen extends StatelessWidget {
             kpis.openComplaints.toString(),
             "Open Issues",
             IconlyLight.info_circle,
-            onTap: () => Get.toNamed(AppRoutes.notifications),
+            onTap: () => Get.to(() => AdminOverviewKpisView(kpis: kpis, initialCategory: 'Logistics')),
           ),
         ],
       ),
@@ -472,21 +472,69 @@ class AdminDashboardScreen extends StatelessWidget {
         LayoutBuilder(
           builder: (context, constraints) {
             final isNarrow = constraints.maxWidth < 360;
+            const pipelineColors = [
+              Color(0xFFF59E0B), // Amber (Negotiation)
+              Color(0xFF3B82F6), // Blue (Contract Signed)
+              Color(0xFFEF4444), // Red (Buyer Confirmed)
+              Color(0xFF8B5CF6), // Purple (Deal Confirmed)
+              Color(0xFF10B981), // Emerald
+            ];
+            const commodityColors = [
+              Color(0xFF059669), // Emerald
+              Color(0xFF0D9488), // Teal
+              Color(0xFFEA580C), // Orange
+              Color(0xFF7C3AED), // Violet
+              Color(0xFFDB2777), // Pink
+              Color(0xFF2563EB), // Royal Blue
+            ];
+
             if (isNarrow) {
               return Column(
                 children: [
-                  _buildDonutCard(context, "Pipeline by Stage", "Deals in negotiation & signed", charts.pipelineByStage.labels, charts.pipelineByStage.values),
+                  _buildDonutCard(
+                    context,
+                    "Pipeline by Stage",
+                    "Deals in negotiation & signed",
+                    charts.pipelineByStage.labels,
+                    charts.pipelineByStage.values,
+                    customColors: pipelineColors,
+                  ),
                   const SizedBox(height: 12),
-                  _buildDonutCard(context, "Commodity Mix", "Volume distribution by crop", charts.commodityMix.labels, charts.commodityMix.volumes),
+                  _buildDonutCard(
+                    context,
+                    "Commodity Mix",
+                    "Volume distribution by crop",
+                    charts.commodityMix.labels,
+                    charts.commodityMix.volumes,
+                    customColors: commodityColors,
+                  ),
                 ],
               );
             }
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: _buildDonutCard(context, "Pipeline", "By Stages", charts.pipelineByStage.labels, charts.pipelineByStage.values)),
+                Expanded(
+                  child: _buildDonutCard(
+                    context,
+                    "Pipeline",
+                    "By Stages",
+                    charts.pipelineByStage.labels,
+                    charts.pipelineByStage.values,
+                    customColors: pipelineColors,
+                  ),
+                ),
                 const SizedBox(width: 12),
-                Expanded(child: _buildDonutCard(context, "Commodity", "Volume Mix", charts.commodityMix.labels, charts.commodityMix.volumes)),
+                Expanded(
+                  child: _buildDonutCard(
+                    context,
+                    "Commodity",
+                    "Volume Mix",
+                    charts.commodityMix.labels,
+                    charts.commodityMix.volumes,
+                    customColors: commodityColors,
+                  ),
+                ),
               ],
             );
           },
@@ -1129,9 +1177,23 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDonutCard(BuildContext context, String title, String subtitle, List<String> labels, List<int> values) {
+  Widget _buildDonutCard(
+    BuildContext context,
+    String title,
+    String subtitle,
+    List<String> labels,
+    List<int> values, {
+    List<Color>? customColors,
+  }) {
     final theme = Theme.of(context);
-    final colors = [theme.colorScheme.primary, Colors.orangeAccent, Colors.redAccent, Colors.purpleAccent, Colors.blueAccent, Colors.teal];
+    final colors = customColors ?? [
+      theme.colorScheme.primary,
+      Colors.orangeAccent,
+      Colors.redAccent,
+      Colors.purpleAccent,
+      Colors.blueAccent,
+      Colors.teal,
+    ];
     
     if (labels.isEmpty || values.isEmpty) {
        return GlassCard(

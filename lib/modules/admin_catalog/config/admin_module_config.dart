@@ -433,6 +433,7 @@ class AdminModules {
       titleKeys: const ['username', 'name', 'mobile'],
       subtitleKeys: const ['role', 'kyc_status', 'mobile'],
       detailEndpoint: (id) => '/api/users/$id/',
+      searchParameter: 'search',
       filterParameter: 'kyc_status',
       filterOptions: const ['pending', 'approved', 'rejected'],
       detailSections: [
@@ -1033,7 +1034,7 @@ class AdminModules {
               type: AdminDetailFieldType.boolean,
             ),
             AdminDetailField(
-              'image_url',
+              'image_url|image|category_image|image_path',
               'Image',
               type: AdminDetailFieldType.image,
             ),
@@ -1087,7 +1088,7 @@ class AdminModules {
           title: 'Media',
           fields: [
             AdminDetailField(
-              'image_url',
+              'image_url|image|category_image|image_path',
               'Category Image',
               type: AdminDetailFieldType.image,
             ),
@@ -2084,7 +2085,7 @@ class AdminModules {
           title: 'Preview',
           fields: [
             AdminDetailField(
-              'image_url',
+              'image_url|image|file|image_path',
               'Image',
               type: AdminDetailFieldType.image,
             ),

@@ -19,11 +19,13 @@ class KycController extends GetxController {
   List<KycUserModel> get filteredUsers {
     return kycUsers.where((user) {
       // Filter by tab / status
-      if (selectedFilter.value != 'all' && user.kycStatus.toLowerCase() != selectedFilter.value.toLowerCase()) {
+      if (selectedFilter.value != 'all' &&
+          user.kycStatus.trim().toLowerCase() != selectedFilter.value.trim().toLowerCase()) {
         return false;
       }
       // Filter by role
-      if (selectedRole.value != 'all' && user.role.toLowerCase() != selectedRole.value.toLowerCase()) {
+      if (selectedRole.value != 'all' &&
+          user.role.trim().toLowerCase() != selectedRole.value.trim().toLowerCase()) {
         return false;
       }
       // Filter by search query
@@ -33,6 +35,8 @@ class KycController extends GetxController {
             user.email.toLowerCase().contains(query) ||
             user.mobile.toLowerCase().contains(query) ||
             user.role.toLowerCase().contains(query) ||
+            (user.panNumber?.toLowerCase().contains(query) ?? false) ||
+            (user.gstNumber?.toLowerCase().contains(query) ?? false) ||
             (user.companyName?.toLowerCase().contains(query) ?? false) ||
             (user.branchName?.toLowerCase().contains(query) ?? false);
         if (!matches) {

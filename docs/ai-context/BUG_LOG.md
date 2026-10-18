@@ -1,5 +1,24 @@
 # Bug Log & Historical Fixes
 
+## Bug 20: Sub-Category Master Details Image Display Failure ("Not Available")
+- **Symptom**: On the mobile app's Sub-Category Master Details screen (`ID: 117`, `Name: sub`), even though an image was uploaded during creation, the Image field displayed `"Not Available"` (in grey italics) instead of rendering the uploaded image preview and download option.
+- **Root Cause**:
+  1. During creation, multipart upload sends the file with parameter key `'image'`. The backend Django Category model saves it in field `image`, and the detail endpoint `/api/categories/$id/` returns it under key `'image'`.
+  2. In `admin_module_config.dart`, the `sub_categories` detailSection field was strictly defined as `'image_url'`. When `_resolveValue(data, 'image_url')` ran, `data['image_url']` evaluated to null.
+  3. `_resolveValue` lacked an automatic fallback for image fields (unlike `first_name` and `last_name`).
+- **Fix**:
+  1. Updated detail field key in `admin_module_config.dart` for `'sub_categories'`, `'categories'`, and `'offer_images'` to `'image_url|image|category_image|image_path'`.
+  2. Enhanced `_resolveValue` in `admin_record_detail_screen.dart` with smart fallback for image fields (`image_url`, `image`, `category_image`, `image_path`, `thumbnail`, `file`, etc.).
+  3. Refined `isNullOrEmpty` in `_buildField` to treat string `'null'` as empty, and ensured `_absoluteUrl` prepends `/` cleanly when needed.
+  4. Added `test/admin_subcategory_image_test.dart` covering field configuration and detail screen rendering for absolute URLs, relative URLs, and legitimate null states.
+- **Files Changed**:
+  - `lib/modules/admin_catalog/config/admin_module_config.dart`
+  - `lib/modules/admin_catalog/view/admin_record_detail_screen.dart`
+  - `test/admin_subcategory_image_test.dart`
+- **Verification**: `flutter test test/admin_subcategory_image_test.dart` (6/6 tests PASSED) & `flutter analyze` (No issues found).
+
+---
+
 ## Bug 19: Delivery Challan PDF Issuing Company PAN Number Disparity
 - **Symptom**: On the mobile app generated Delivery Challan PDF, the PAN number in both the header (`GST: 23ABVSC1223F1Z4 PAN: ...`) and the bottom remark/signatory box (`PAN No. : ...`) displayed `ABCDE1234E`, whereas the web panel source PDF displayed `ABVSC1223F`.
 - **Root Cause**: `BuyerChallanPdfService` evaluated `companyPan` as `(challan.sellerPan ?? 'ABVSC1223F').toUpperCase()`, erroneously pulling the seller's PAN (`ABCDE1234E`) instead of the issuing company's (`FARMLAND`) PAN (`company?.panNumber` or derived 10-char PAN from `companyGst.substring(2, 12)`: `ABVSC1223F`).
@@ -172,6 +191,52 @@
   - `lib/modules/buyer/offers/view/buyer_offer_details_view.dart`
   - `test/buyer_negotiation_summary_card_test.dart`
 - **Verification**: `flutter test --no-pub test/buyer_negotiation_summary_card_test.dart` (3 tests PASSED), full regression test suite (16 tests PASSED), `flutter analyze --no-pub` (0 issues).
+
+---
+
+## Bug 25: Create Brokerage Bill — Overlapping Floating Label & Unnecessary 1/10 Counter
+- **Symptom**: On the Create Brokerage Bill screen under "Eligible Delivery Challans", the input field for "Line brokerage rate (optional)" had an overlapping float-label artifact on the top border, an unnecessary `1/10` counter crowding the bottom inside the card, and tight asymmetric container padding.
+- **Root Cause**:
+  1. `_input` utilized `maxLength: numeric ? 10 : null`, which prompted Flutter's `TextFormField` to automatically render the `1/10` character counter.
+  2. The input field in `_challanTile` used an `OutlineInputBorder` with `labelText`, causing the floating text to collide with the outline border inside the colored card container.
+  3. Padding in `_challanTile` was `const EdgeInsets.only(left: 10, top: 4)` with no right or bottom padding, causing the field to touch the card boundaries.
+- **Fix**:
+  1. Realigned the label cleanly above the border using an explicit `Text('Line brokerage rate (optional)', ...)` widget with `hintText: 'Enter line rate'` inside `_challanTile`.
+  2. Balanced container padding to `const EdgeInsets.fromLTRB(14, 6, 14, 12)` inside the card.
+  3. Replaced `maxLength: numeric ? 10 : null` in `_input` with `inputFormatters: [LengthLimitingTextInputFormatter(10), FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))]` and `counter: const SizedBox.shrink()`, eliminating the `1/10` counter.
+- **Files Changed**:
+  - `lib/modules/admin_catalog/view/admin_brokerage_bills_screen.dart`
+  - `test/brokerage_bill_line_rate_test.dart`
+- **Verification**: `flutter test test/brokerage_bill_line_rate_test.dart` (1 test PASSED), `flutter analyze lib/modules/admin_catalog/view/admin_brokerage_bills_screen.dart` (0 issues).
+
+---
+
+## Bug 26: Admin Parity & UI Bug Fixes (Transporter Bids, Dashboard Donut Palettes, Complaints Redirect, Brokerage Filters, KYC Search)
+- **Symptom**:
+  1. Contract Details screen had no way to view, accept, or reject transporter bids (feature parity gap with Web admin modal).
+  2. Dashboard donut charts ("Pipeline by Stage" & "Commodity Mix") used identical hardcoded color palettes for completely different metrics.
+  3. Clicking "Complaints" KPI metric card on Admin Dashboard redirected to `Notifications` view instead of complaints/issues overview.
+  4. Pull-to-refresh and AppBar refresh in Brokerage Bills did not reset date or search filters.
+  6. KYC Users screen card action buttons row (`[View] [Approve] [Reject] [History]`) overflowed by 3.6px on compact devices.
+- **Root Cause & Fix**:
+  1. Added `_transporterSection` to `lib/modules/contracts/view/contract_details_view.dart` linking to `TransportBidsSheet`, and updated `TransportBidsSheet._bidCard` to permit accept/reject for all pending/reserved bids.
+  2. Extended `_buildDonutCard` in `lib/modules/dashboard/view/dashboard_page.dart` with custom color palette support; assigned distinct palettes to Pipeline (stage status) and Commodity (agro crop palette).
+  3. Re-pointed Complaints KPI card `onTap` to `AdminOverviewKpisView(initialCategory: 'Logistics')` which displays open complaints and active tickets.
+  4. Updated `_loadInitial` in `lib/modules/admin_catalog/view/admin_brokerage_bills_screen.dart` with `clearFilters: true` on refresh.
+  5. Updated `KycUserModel.fromJson` with nested and fallback resolution for name, mobile, email, and role, added PAN/GST search matching in `KycController`, and added `searchParameter: 'search'` to `'kyc'` in `admin_module_config.dart`.
+  6. Made KYC Users screen action buttons, status tabs, and summary cards responsive using `FittedBox(fit: BoxFit.scaleDown)` and adjusted spacing to completely eliminate the 3.6px overflow on all devices.
+- **Files Changed**:
+  - `lib/modules/contracts/view/contract_details_view.dart`
+  - `lib/modules/admin_catalog/view/transport_bids_sheet.dart`
+  - `lib/modules/dashboard/view/dashboard_page.dart`
+  - `lib/modules/admin_catalog/view/admin_brokerage_bills_screen.dart`
+  - `lib/modules/kyc_users/model/kyc_user_model.dart`
+  - `lib/modules/kyc_users/controller/kyc_user_controller.dart`
+  - `lib/modules/kyc_users/view/kyc_user_view.dart`
+  - `lib/modules/admin_catalog/config/admin_module_config.dart`
+  - `test/admin_feedback_fixes_test.dart`
+- **Verification**: `flutter test test/admin_feedback_fixes_test.dart` (3 tests PASSED), `flutter analyze` on all modified files (0 errors).
+
 
 ## Bug 25: Contract Details — Missing Offer ID (e.g., "50 (ID: 152)") in Mobile Contract Details View
 - **Symptom**: On the mobile Contract Details screen (`ContractDetailScreen`), the product item rendered only `Product: 50`, omitting the offer/product ID `(ID: 152)`, whereas the web Contract Details modal renders `Offer: 50 (ID: 152)`.
