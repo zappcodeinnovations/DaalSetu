@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../services/seller_services.dart';
+import '../../../../utils/app_preferences.dart';
 import '../../common/seller_ui.dart';
 
 /// Same content as the web "Contract Details" modal (summary, buyer and seller cards,
@@ -38,9 +39,37 @@ class _SellerContractDetailViewState extends State<SellerContractDetailView> {
 
   Future<void> _load() async {
     if (_contract == null && mounted) setState(() => _loading = true);
-    // Start both requests together; the screen waits for both before rendering.
-    final contractRequest = _quiet(SellerServices.getContractDetails(widget.contractId));
-    final consignmentRequest = _quiet(SellerServices.getConsignmentDetail(widget.contractId));
+    final role = (await AppPreferences.getRole() ?? '').trim().toLowerCase();
+    final status = (_contract?['status'] ?? '').toString().trim().toLowerCase();
+    final canAccessConsignments = const {
+      'seller',
+      'buyer',
+      'both_sellerandbuyer',
+      'admin',
+      'super_admin',
+      'sub_admin',
+    }.contains(role);
+    final isConsignmentStatus = status.isEmpty || const {
+      'active',
+      'received',
+    }.contains(status);
+
+    // Contract detail is optional when list/notification data already exists.
+    // Suppress global dialogs because the existing data remains usable on a
+    // permission-scoped 403/404 response.
+    final contractRequest = _quiet(
+      SellerServices.getContractDetails(widget.contractId, silent: true),
+    );
+    // Transporters do not have access to consignment-management APIs. Also do
+    // not request a consignment for statuses excluded by the backend queryset.
+    final consignmentRequest = canAccessConsignments && isConsignmentStatus
+        ? _quiet(
+            SellerServices.getConsignmentDetail(
+              widget.contractId,
+              silent: true,
+            ),
+          )
+        : Future<Map<String, dynamic>?>.value(null);
     try {
       final response = await contractRequest;
       if (response != null && response.isNotEmpty) {
@@ -101,6 +130,8 @@ class _SellerContractDetailViewState extends State<SellerContractDetailView> {
     return text.isEmpty || text == 'null' ? fallback : text;
   }
 
+  bool _has(Object? value) => _text(value, '').isNotEmpty;
+
   String _money(Object? value, {Object? unit}) {
     final text = _text(value, '');
     if (text.isEmpty) return '-';
@@ -152,14 +183,18 @@ class _SellerContractDetailViewState extends State<SellerContractDetailView> {
         SellerUi.infoRow('Bags', '${c['bag_count']} × ${_text(c['packing_weight_kg'])} kg'),
       SellerUi.infoRow('Buyer', _party(c, 'buyer')),
       SellerUi.infoRow('Seller', _party(c, 'seller')),
-      SellerUi.infoRow('Seller Quantity', _text(c['seller_quantity'])),
       const Divider(height: 22),
-      SellerUi.infoRow('Deal Date', _text(c['deal_date'], SellerUi.date(c['confirmed_at']))),
-      SellerUi.infoRow('Delivery Date', _text(c['delivery_date'])),
-      SellerUi.infoRow('Pickup From', _text(c['loading_from_date'])),
-      SellerUi.infoRow('Pickup To', _text(c['loading_to_date'])),
-      SellerUi.infoRow('Buyer Offer Amount', _money(c['buyer_offer_amount'])),
-      SellerUi.infoRow('Buyer Required Qty', _text(c['buyer_required_quantity'])),
+      if (_has(c['deal_date']) || _has(c['confirmed_at']))
+        SellerUi.infoRow('Deal Date', _text(c['deal_date'], SellerUi.date(c['confirmed_at']))),
+      if (_has(c['delivery_date']))
+        SellerUi.infoRow('Delivery Date', _text(c['delivery_date'])),
+      if (_has(c['buyer_offer_amount']))
+        SellerUi.infoRow('Buyer Offer Amount', _money(c['buyer_offer_amount'])),
+      if (_has(c['buyer_required_quantity']))
+        SellerUi.infoRow(
+          'Buyer Required Qty',
+          '${_text(c['buyer_required_quantity'])} ${_text(c['quantity_unit'], '')}'.trim(),
+        ),
       SellerUi.infoRow(
         'Deal Amount',
         _money(c['deal_amount'], unit: c['amount_unit']),
@@ -195,71 +230,47 @@ class _SellerContractDetailViewState extends State<SellerContractDetailView> {
         );
 
     return SellerUi.section(context, seller ? 'Seller Details' : 'Buyer Details', [
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            radius: 24,
-            backgroundColor: SellerUi.primary.withValues(alpha: .15),
-            child: const Icon(Icons.person, color: SellerUi.primary),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
-                if (idLine.isNotEmpty) Text(idLine, style: const TextStyle(color: Colors.brown, fontSize: 12)),
-                if (company.isNotEmpty) Text('Company: $company', style: const TextStyle(color: Colors.brown, fontSize: 12)),
-              ],
-            ),
-          ),
-        ],
-      ),
-      const SizedBox(height: 8),
+      SellerUi.infoRow('Name', name),
+      if (company.isNotEmpty) SellerUi.infoRow('Company', company),
       if (gst.isNotEmpty) SellerUi.infoRow('GST No.', gst),
-      if (mobile.isNotEmpty) contact(Icons.phone, mobile, () => _open('tel', mobile)),
-      if (email.isNotEmpty) contact(Icons.email_outlined, email, () => _open('mailto', email)),
+      if (mobile.isNotEmpty) SellerUi.infoRow('Mobile', mobile),
       if (address.isNotEmpty) SellerUi.infoRow('Address', address),
-      if (mobile.isEmpty && email.isEmpty && gst.isEmpty && address.isEmpty)
+      if (email.isNotEmpty) contact(Icons.email_outlined, email, () => _open('mailto', email)),
+      if (idLine.isNotEmpty) SellerUi.infoRow('Reference', idLine),
+      if (name == '-' && company.isEmpty && mobile.isEmpty && gst.isEmpty && address.isEmpty)
         Text('Contact details are not available.', style: theme.textTheme.bodySmall),
     ]);
   }
 
   Widget _routeSection(BuildContext context, Map<String, dynamic> c) {
-    Widget stop(IconData icon, String label, Object? value, Color color) => Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: color.withValues(alpha: .12),
-              child: Icon(icon, color: color, size: 19),
+    Widget stop(String label, Object? value, Color color) => Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: .10),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: color.withValues(alpha: .20)),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: Theme.of(context).textTheme.labelMedium),
-                  const SizedBox(height: 2),
-                  Text(_text(value), style: const TextStyle(fontWeight: FontWeight.w700)),
-                ],
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color)),
+                const SizedBox(height: 5),
+                Text(_text(value), style: const TextStyle(fontWeight: FontWeight.w700)),
+              ],
             ),
-          ],
+          ),
         );
 
     return SellerUi.section(context, 'Logistics Route', [
-      stop(Icons.radio_button_checked, 'Pickup location', c['loading_from'], Colors.green),
-      Padding(
-        padding: const EdgeInsets.only(left: 17),
-        child: Row(children: [
-          Container(width: 2, height: 30, color: Colors.grey.shade300),
-          const SizedBox(width: 20),
-          Icon(Icons.local_shipping_outlined, size: 18, color: Colors.grey.shade500),
-        ]),
-      ),
-      stop(Icons.location_on, 'Delivery location', c['loading_to'], Colors.red),
+      Row(children: [
+        stop('Pickup From', c['pickup_city'] ?? c['loading_from'], Colors.green),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8),
+          child: Icon(Icons.arrow_forward, size: 20),
+        ),
+        stop('Deliver To', c['delivery_city'] ?? c['loading_to'], Colors.red),
+      ]),
     ]);
   }
 
