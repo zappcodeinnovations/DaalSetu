@@ -5,6 +5,7 @@ import '../../../../network/api_client.dart';
 import '../model/seller_brand_model.dart';
 import '../model/seller_tag_model.dart';
 import '../../common/seller_ui.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class SellerMasterController extends GetxController {
   var isLoading = false.obs;
@@ -26,7 +27,7 @@ class SellerMasterController extends GetxController {
           SellerServices.getCategoryTree(),
           SellerServices.getTagsList(),
         ]).catchError((Object error) {
-          Get.snackbar(
+          AppSnackbar.snackbar(
             "Could not load master data",
             ApiClient.userFriendlyErrorMessage(error.toString()),
             snackPosition: SnackPosition.BOTTOM,
@@ -62,7 +63,7 @@ class SellerMasterController extends GetxController {
       );
       if (Get.isDialogOpen ?? false) Get.back();
 
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Success",
         res['message'] ?? "Brand created successfully",
         snackPosition: SnackPosition.BOTTOM,
@@ -72,7 +73,7 @@ class SellerMasterController extends GetxController {
       fetchAllMasters();
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Error",
         ApiClient.userFriendlyErrorMessage(e.toString()),
         snackPosition: SnackPosition.BOTTOM,
@@ -186,7 +187,7 @@ class SellerMasterController extends GetxController {
       final res = await SellerServices.createTag(name);
       if (Get.isDialogOpen ?? false) Get.back();
 
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Success",
         res['message'] ?? "Tag created successfully",
         snackPosition: SnackPosition.BOTTOM,
@@ -196,7 +197,7 @@ class SellerMasterController extends GetxController {
       fetchAllMasters();
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Error",
         ApiClient.userFriendlyErrorMessage(e.toString()),
         snackPosition: SnackPosition.BOTTOM,

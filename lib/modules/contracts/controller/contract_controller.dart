@@ -3,6 +3,7 @@ import '../model/contract_details_model.dart';
 import 'package:get/get.dart';
 import '../../../services/contract_services.dart';
 import '../model/contract_model.dart';
+import '../../../utils/app_snackbar.dart';
 
 class ContractController extends GetxController {
   var isLoading = false.obs;
@@ -30,7 +31,7 @@ class ContractController extends GetxController {
 
       contracts.assignAll(result);
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.snackbar("Error", e.toString());
     } finally {
       isLoading.value = false;
     }
@@ -50,7 +51,7 @@ class ContractController extends GetxController {
       debugPrint("⚠️ [ContractController] fetchContractDetail notice: $e");
       if (contractDetail.value == null) {
         Future.microtask(() {
-          Get.snackbar(
+          AppSnackbar.snackbar(
             "Notice",
             "Contract details unavailable from server.",
             snackPosition: SnackPosition.BOTTOM,
@@ -79,14 +80,14 @@ class ContractController extends GetxController {
         adminRemark: adminRemark,
       );
 
-      Get.snackbar("Success", "Contract updated successfully");
+      AppSnackbar.snackbar("Success", "Contract updated successfully");
 
       await fetchContracts();
       await fetchContractDetail(contractId);
       return true;
     } catch (e) {
       Future.microtask(() {
-        Get.snackbar("Error", e.toString());
+        AppSnackbar.snackbar("Error", e.toString());
       });
       return false;
     } finally {
@@ -103,10 +104,10 @@ class ContractController extends GetxController {
 
       final response = await ContractService.deleteContract(contractId);
       contracts.removeWhere((c) => c.id == contractId);
-      Get.snackbar("Success", response["message"] ?? "Contract deleted");
+      AppSnackbar.snackbar("Success", response["message"] ?? "Contract deleted");
     } catch (e) {
       Future.microtask(() {
-        Get.snackbar("Error", e.toString());
+        AppSnackbar.snackbar("Error", e.toString());
       });
     } finally {
       isLoading.value = false;

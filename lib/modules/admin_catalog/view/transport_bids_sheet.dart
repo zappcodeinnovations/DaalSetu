@@ -1,5 +1,6 @@
 import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
+import '../../../utils/app_snackbar.dart';
 
 Future<bool> showTransportBidsSheet(
   BuildContext context,
@@ -7,7 +8,7 @@ Future<bool> showTransportBidsSheet(
 ) async {
   final contractId = int.tryParse('${consignment['id'] ?? ''}');
   if (contractId == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
+    AppSnackbar.showSnackBar(context, 
       const SnackBar(content: Text('Invalid consignment selected.')),
     );
     return false;
@@ -127,7 +128,7 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
       );
       if (!mounted) return;
       changed = true;
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context, 
         SnackBar(
           content: Text((response['message'] ?? 'Bid updated.').toString()),
         ),
@@ -135,7 +136,7 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
       await loadBids();
     } catch (exception) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context, 
         SnackBar(
           content: Text(_message(exception)),
           backgroundColor: Theme.of(context).colorScheme.error,

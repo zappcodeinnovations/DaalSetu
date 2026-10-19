@@ -5,6 +5,7 @@ import 'package:iconly/iconly.dart';
 import '../controller/transporter_branch_controller.dart';
 import '../../../../theme/glass_widgets.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class TransporterBranchView extends StatelessWidget {
   TransporterBranchView({super.key});
@@ -235,7 +236,7 @@ class TransporterBranchView extends StatelessWidget {
                   isLoading: isSubmitting.value,
                   onPressed: () async {
                     if (codeCtrl.text.trim().isEmpty) {
-                      Get.snackbar('Required', 'Please enter a branch code', snackPosition: SnackPosition.BOTTOM);
+                      AppSnackbar.snackbar('Required', 'Please enter a branch code', snackPosition: SnackPosition.BOTTOM);
                       return;
                     }
                     isSubmitting.value = true;

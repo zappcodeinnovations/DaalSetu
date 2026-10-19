@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../controller/seller_master_controller.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class SellerAddBrandDialog extends StatefulWidget {
   const SellerAddBrandDialog({super.key});
@@ -55,7 +56,7 @@ class _SellerAddBrandDialogState extends State<SellerAddBrandDialog> {
         ElevatedButton(
           onPressed: () {
             if (_nameController.text.trim().isEmpty) {
-              Get.snackbar("Error", "Brand name is required", snackPosition: SnackPosition.BOTTOM);
+              AppSnackbar.snackbar("Error", "Brand name is required", snackPosition: SnackPosition.BOTTOM);
               return;
             }
             Get.back();

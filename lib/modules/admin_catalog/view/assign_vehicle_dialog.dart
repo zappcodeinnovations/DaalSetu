@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:get/get.dart';
 import 'package:daalsetu/network/api_client.dart';
 import 'package:daalsetu/theme/app_theme.dart';
+import '../../../utils/app_snackbar.dart';
 
 class AssignVehicleDialog extends StatefulWidget {
   final String driverId;
@@ -91,13 +90,13 @@ class _AssignVehicleDialogState extends State<AssignVehicleDialog> {
         requireAuth: true,
       );
       
-      Get.snackbar("Success", "Vehicle assigned successfully",
+      AppSnackbar.snackbar("Success", "Vehicle assigned successfully",
           backgroundColor: AppTheme.successGreen, colorText: Colors.white);
       if (mounted) {
         Navigator.pop(context, true);
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to assign vehicle: $e",
+      AppSnackbar.snackbar("Error", "Failed to assign vehicle: $e",
           backgroundColor: AppTheme.errorRed, colorText: Colors.white);
     } finally {
       if (mounted) {

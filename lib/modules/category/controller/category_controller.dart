@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../model/category_model.dart';
 import '../model/category_request_model.dart';
+import '../../../utils/app_snackbar.dart';
 
 class CategoryController extends GetxController {
 
@@ -67,7 +68,7 @@ class CategoryController extends GetxController {
       );
       if (Get.isDialogOpen ?? false) Get.back();
 
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Success",
         response['message'] ?? "Category request sent for approval successfully",
         snackPosition: SnackPosition.BOTTOM,
@@ -78,7 +79,7 @@ class CategoryController extends GetxController {
       return true;
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Error",
         e.toString().replaceAll("Exception: ", ""),
         snackPosition: SnackPosition.BOTTOM,
@@ -98,7 +99,7 @@ class CategoryController extends GetxController {
       _showBrandsBottomSheet(brands);
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
-      Get.snackbar("Error", e.toString(), snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+      AppSnackbar.snackbar("Error", e.toString(), snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
 

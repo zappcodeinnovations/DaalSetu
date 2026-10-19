@@ -8,6 +8,7 @@ import '../../../network/api_client.dart';
 import '../service/admin_dc_service.dart';
 import 'admin_dc_list_controller.dart';
 import '../../../routes/app_routes.dart';
+import '../../../utils/app_snackbar.dart';
 
 class AdminCreateDCController extends GetxController {
   final isLoadingContracts = false.obs;
@@ -104,7 +105,7 @@ class AdminCreateDCController extends GetxController {
       debugPrint("✅ [AdminCreateDCController] Successfully loaded ${contracts.length} contracts.");
     } catch (e) {
       debugPrint("❌ [AdminCreateDCController] Error fetching contracts: $e");
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Notice",
         "Could not load contracts. Please pull down to refresh.",
         snackPosition: SnackPosition.BOTTOM,
@@ -391,7 +392,7 @@ class AdminCreateDCController extends GetxController {
   Future<void> submitDeliveryChallan() async {
     // 1. Validation
     if (selectedContract.value == null) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Validation Error",
         "Please select a Confirmed Contract first.",
         snackPosition: SnackPosition.BOTTOM,
@@ -405,7 +406,7 @@ class AdminCreateDCController extends GetxController {
 
     final truckNo = truckNumberController.text.trim();
     if (truckNo.isEmpty) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Validation Error",
         "Please enter the Truck / Vehicle Number.",
         snackPosition: SnackPosition.BOTTOM,
@@ -419,7 +420,7 @@ class AdminCreateDCController extends GetxController {
 
     final driverName = driverNameController.text.trim();
     if (driverName.isEmpty) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Validation Error",
         "Please enter the Driver's Name.",
         snackPosition: SnackPosition.BOTTOM,
@@ -496,7 +497,7 @@ class AdminCreateDCController extends GetxController {
             ? "Delivery Challan #$challanNo has been created successfully as Draft."
             : (result['message'] ?? "Delivery Challan generated successfully!");
 
-        Get.snackbar(
+        AppSnackbar.snackbar(
           displayTitle,
           displayMsg,
           snackPosition: SnackPosition.BOTTOM,
@@ -508,7 +509,7 @@ class AdminCreateDCController extends GetxController {
         );
       } else {
         final errorMsg = result['message'] ?? "Failed to create Delivery Challan.";
-        Get.snackbar(
+        AppSnackbar.snackbar(
           "Cannot Create Challan",
           errorMsg,
           snackPosition: SnackPosition.BOTTOM,
@@ -521,9 +522,9 @@ class AdminCreateDCController extends GetxController {
       }
     } catch (e) {
       debugPrint("❌ [AdminCreateDCController] Submit Error: $e");
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Submission Error",
-        "An unexpected error occurred: $e",
+        "Could not submit the delivery challan: $e",
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: const Color(0xFFDC2626),
         colorText: Colors.white,

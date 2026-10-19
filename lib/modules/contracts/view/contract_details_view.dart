@@ -18,6 +18,7 @@ import '../controller/contract_controller.dart';
 import 'package:daalsetu/modules/admin_catalog/view/transport_bids_sheet.dart';
 import 'contract_edit_view.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../utils/app_snackbar.dart';
 
 class ContractDetailScreen extends StatefulWidget {
   const ContractDetailScreen({super.key});
@@ -583,7 +584,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     ContractDetailModel contract,
   ) async {
     try {
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context, 
         const SnackBar(
           content: Text('Preparing contract PDF...'),
           duration: Duration(seconds: 1),
@@ -742,7 +743,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
       );
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context, 
           const SnackBar(
             content: Text('Contract PDF downloaded successfully.'),
           ),
@@ -769,7 +770,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context, 
           SnackBar(content: Text('Could not download PDF: $e')),
         );
       }

@@ -9,6 +9,7 @@ import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:daalsetu/modules/shared/view/offer_interest_negotiation_chat_view.dart';
 import 'approve_deal_dialog.dart';
 import 'negotiation_page.dart';
+import '../../../utils/app_snackbar.dart';
 
 class OfferInterestsDialog extends StatefulWidget {
   final String offerId;
@@ -318,7 +319,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
           remark: result.remark,
           subAdminId: result.subAdminId,
         );
-        Get.snackbar(
+        AppSnackbar.snackbar(
           'Accepted',
           'Interest accepted. Waiting for buyer confirmation.',
           backgroundColor: Colors.green,
@@ -332,7 +333,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
           superadminRemark: result.remark,
           subAdminId: result.subAdminId,
         );
-        Get.snackbar(
+        AppSnackbar.snackbar(
           'Success',
           'Deal approved successfully',
           backgroundColor: Colors.green,
@@ -343,7 +344,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
     } catch (e) {
       if (mounted) setState(() => isLoading = false);
       final message = e.toString().replaceFirst('Exception: ', '');
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Error',
         message,
         backgroundColor: Colors.red,
@@ -492,7 +493,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
             superadminRemark: remark,
           );
         }
-        Get.snackbar(
+        AppSnackbar.snackbar(
           'Rejected',
           'Deal rejected successfully',
           backgroundColor: Colors.red,
@@ -501,7 +502,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
         await _loadInterests();
       } catch (e) {
         setState(() => isLoading = false);
-        Get.snackbar(
+        AppSnackbar.snackbar(
           'Error',
           e.toString(),
           backgroundColor: Colors.red,

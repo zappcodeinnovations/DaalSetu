@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../services/seller_services.dart';
 import '../model/seller_contract_model.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class SellerContractController extends GetxController {
   var isLoading = false.obs;
@@ -20,7 +20,7 @@ class SellerContractController extends GetxController {
       final data = await SellerServices.getSellerContracts();
       contractsList.value = data.map((e) => SellerContractModel.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e) {
-      Get.snackbar("Error", e.toString(), snackPosition: SnackPosition.BOTTOM);
+      AppSnackbar.snackbar("Error", e.toString(), snackPosition: SnackPosition.BOTTOM);
     } finally {
       isLoading.value = false;
     }

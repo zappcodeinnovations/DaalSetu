@@ -5,6 +5,7 @@ import '../../../services/notification_services.dart';
 import '../../admin_catalog/view/offer_interests_dialog.dart';
 import '../../kyc_users/view/kyc_user_view.dart';
 import '../model/admin_notification_model.dart';
+import '../../../utils/app_snackbar.dart';
 
 class AdminNotificationController extends GetxController {
   // ── Observables ──────────────────────────────────────────────────────────
@@ -91,7 +92,7 @@ class AdminNotificationController extends GetxController {
       debugPrint("✅ [ADMIN NOTIFICATIONS] Successfully loaded ${parsed.length} notifications. Unread: ${unreadCount.value}");
     } catch (e) {
       debugPrint("❌ [ADMIN NOTIFICATIONS] Error fetching notifications: $e");
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Notifications",
         "Failed to load notifications. Pull down to try again.",
         snackPosition: SnackPosition.BOTTOM,
@@ -182,7 +183,7 @@ class AdminNotificationController extends GetxController {
   // ── Mark All As Read ─────────────────────────────────────────────────────
   Future<void> markAllAsRead() async {
     if (notifications.isEmpty || unreadCount.value == 0) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Notice",
         "All notifications are already marked as read.",
         snackPosition: SnackPosition.BOTTOM,
@@ -207,7 +208,7 @@ class AdminNotificationController extends GetxController {
       debugPrint("🔔 [ADMIN NOTIFICATIONS] Marking all notifications as read...");
       await NotificationServices.markAllAsRead();
 
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Success",
         "All notifications marked as read.",
         snackPosition: SnackPosition.BOTTOM,
@@ -220,7 +221,7 @@ class AdminNotificationController extends GetxController {
       debugPrint("✅ [ADMIN NOTIFICATIONS] All notifications marked as read successfully.");
     } catch (e) {
       debugPrint("❌ [ADMIN NOTIFICATIONS] Error marking all as read: $e");
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Error",
         "Failed to mark all as read. Please try again.",
         snackPosition: SnackPosition.BOTTOM,

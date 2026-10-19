@@ -10,6 +10,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../services/realtime_notification_service.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../utils/app_snackbar.dart';
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -530,7 +531,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   void _message(String message, {bool error = false}) {
-    Get.snackbar(
+    AppSnackbar.snackbar(
       error ? 'Error' : 'Success',
       message,
       snackPosition: SnackPosition.BOTTOM,

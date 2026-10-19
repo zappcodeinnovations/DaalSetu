@@ -6,6 +6,7 @@ import '../../../../services/auth_services.dart';
 import '../../../../services/realtime_notification_service.dart';
 import '../../../../utils/app_preferences.dart';
 import '../../../../routes/app_routes.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class LoginController extends GetxController {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
@@ -154,7 +155,7 @@ class LoginController extends GetxController {
   }
 
   void _showMessage({required String title, required String message}) {
-    Get.snackbar(
+    AppSnackbar.snackbar(
       title,
       message,
       snackPosition: SnackPosition.BOTTOM,

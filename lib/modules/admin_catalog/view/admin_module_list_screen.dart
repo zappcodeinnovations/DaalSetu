@@ -13,6 +13,7 @@ import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../utils/app_snackbar.dart';
 
 class AdminModuleListScreen extends StatefulWidget {
   const AdminModuleListScreen({
@@ -678,7 +679,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
                           requireAuth: true,
                         );
                         if (ctx.mounted) Navigator.pop(ctx);
-                        Get.snackbar(
+                        AppSnackbar.snackbar(
                           'Success',
                           'Buyer categories updated successfully',
                           snackPosition: SnackPosition.TOP,
@@ -688,7 +689,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
                         );
                         _fetchBuyers();
                       } catch (e) {
-                        Get.snackbar('Error', e.toString(),
+                        AppSnackbar.snackbar('Error', e.toString(),
                             backgroundColor: Colors.red,
                             colorText: Colors.white);
                       }

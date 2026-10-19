@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import 'package:daalsetu/theme/app_theme.dart';
 import 'package:daalsetu/utils/tax_id_formatters.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class AppColors {
   static Color get background => Get.theme.scaffoldBackgroundColor;
@@ -586,7 +587,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   final user = await _controller.register();
                   if (user != null) {
                     if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      AppSnackbar.showSnackBar(context, 
                         const SnackBar(
                           content: Text("Registration Successful"),
                         ),
@@ -595,9 +596,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     }
                   }
                 } catch (e) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(e.toString())));
+                  AppSnackbar.showSnackBar(context, SnackBar(content: Text(e.toString())));
                 }
                 setState(() => _controller.isLoading = false);
               },

@@ -15,6 +15,7 @@ import '../../admin_catalog/view/admin_roles_screen.dart';
 import '../../seller/common/seller_ui.dart';
 import '../../../services/seller_services.dart';
 import 'package:daalsetu/theme/app_theme.dart';
+import '../../../utils/app_snackbar.dart';
 
 class SettingsScreen extends StatelessWidget {
   SettingsScreen({super.key});
@@ -648,7 +649,7 @@ class SettingsScreen extends StatelessWidget {
         await launchUrl(uri, mode: LaunchMode.platformDefault);
       }
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Error",
         "Could not open link",
         snackPosition: SnackPosition.BOTTOM,

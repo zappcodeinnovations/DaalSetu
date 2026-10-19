@@ -7,6 +7,7 @@ import '../../../../theme/glass_widgets.dart';
 import '../model/driver_model.dart';
 import './transporter_driver_form.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class TransporterDriverDetail extends StatelessWidget {
   final DriverModel driver;
@@ -40,7 +41,7 @@ class TransporterDriverDetail extends StatelessWidget {
               icon: const Icon(IconlyLight.document),
               onPressed: () async {
                 final ok = await launchUrl(Uri.parse(driver.licenseUploadUrl!), mode: LaunchMode.externalApplication);
-                if (!ok) Get.snackbar("Error", "Unable to open license document", snackPosition: SnackPosition.BOTTOM);
+                if (!ok) AppSnackbar.snackbar("Error", "Unable to open license document", snackPosition: SnackPosition.BOTTOM);
               },
             ),
           IconButton(

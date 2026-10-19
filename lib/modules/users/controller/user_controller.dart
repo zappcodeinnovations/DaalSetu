@@ -1,6 +1,7 @@
 import '../model/user_model.dart';
 import '../../../services/users_services.dart';
 import 'package:get/get.dart';
+import '../../../utils/app_snackbar.dart';
 
 class UserController extends GetxController {
   // ── State ─────────────────────────────────────────────────────────────────
@@ -56,7 +57,7 @@ class UserController extends GetxController {
       users.assignAll(data);
       _applyFilter();
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Error',
         e.toString(),
         snackPosition: SnackPosition.BOTTOM,
@@ -112,13 +113,13 @@ class UserController extends GetxController {
       await UserService.deleteUser(userId);
       users.removeWhere((u) => u.id == userId);
       _applyFilter();
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Deleted',
         'User deleted successfully',
         snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Error',
         e.toString(),
         snackPosition: SnackPosition.BOTTOM,
@@ -134,13 +135,13 @@ class UserController extends GetxController {
     try {
       await UserService.updateUserStatus(userId, status, reason);
       await fetchUsers(); // refresh list
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Updated',
         'User status updated to $status',
         snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Error',
         e.toString(),
         snackPosition: SnackPosition.BOTTOM,

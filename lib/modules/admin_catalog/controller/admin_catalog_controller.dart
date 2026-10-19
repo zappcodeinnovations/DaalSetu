@@ -1,6 +1,7 @@
 import 'package:daalsetu/modules/admin_catalog/model/admin_record.dart';
 import 'package:daalsetu/modules/admin_catalog/repository/admin_catalog_repository.dart';
 import 'package:get/get.dart';
+import '../../../utils/app_snackbar.dart';
 
 class AdminCatalogController extends GetxController {
   AdminCatalogController(this.repository);
@@ -72,7 +73,7 @@ class AdminCatalogController extends GetxController {
       _page = nextPage;
       _hasNext = result.hasNext || (result.total == null && result.records.length == _pageSize);
     } catch (exception) {
-      Get.snackbar('Error', _message(exception));
+      AppSnackbar.snackbar('Error', _message(exception));
     } finally {
       isLoadingMore.value = false;
     }
@@ -82,10 +83,10 @@ class AdminCatalogController extends GetxController {
     try {
       await repository.delete(repository.config.recordId(record));
       await load(refresh: true);
-      Get.snackbar('Success', 'Deleted successfully');
+      AppSnackbar.snackbar('Success', 'Deleted successfully');
       return true;
     } catch (exception) {
-      Get.snackbar('Error', _message(exception));
+      AppSnackbar.snackbar('Error', _message(exception));
       return false;
     }
   }

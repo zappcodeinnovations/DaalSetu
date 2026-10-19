@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../controller/add_user_controller.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../utils/app_snackbar.dart';
 
 class AddUserScreen extends StatelessWidget {
   AddUserScreen({super.key});
@@ -69,7 +70,7 @@ class AddUserScreen extends StatelessWidget {
                         final email = emailController.text.trim();
 
                         if (firstName.isEmpty) {
-                          Get.snackbar(
+                          AppSnackbar.snackbar(
                             "Required",
                             "Please enter first name",
                             snackPosition: SnackPosition.BOTTOM,
@@ -80,7 +81,7 @@ class AddUserScreen extends StatelessWidget {
                         }
 
                         if (mobile.isEmpty) {
-                          Get.snackbar(
+                          AppSnackbar.snackbar(
                             "Required",
                             "Please enter mobile number",
                             snackPosition: SnackPosition.BOTTOM,
@@ -92,7 +93,7 @@ class AddUserScreen extends StatelessWidget {
 
                         if (mobile.length != 10 ||
                             !RegExp(r'^[0-9]{10}$').hasMatch(mobile)) {
-                          Get.snackbar(
+                          AppSnackbar.snackbar(
                             "Invalid Mobile",
                             "Please enter a valid 10-digit numeric mobile number",
                             snackPosition: SnackPosition.BOTTOM,
@@ -103,7 +104,7 @@ class AddUserScreen extends StatelessWidget {
                         }
 
                         if (password.isEmpty) {
-                          Get.snackbar(
+                          AppSnackbar.snackbar(
                             "Required",
                             "Please enter password",
                             snackPosition: SnackPosition.BOTTOM,
@@ -114,7 +115,7 @@ class AddUserScreen extends StatelessWidget {
                         }
 
                         if (password.length < 4) {
-                          Get.snackbar(
+                          AppSnackbar.snackbar(
                             "Weak Password",
                             "Password must be at least 4 characters long",
                             snackPosition: SnackPosition.BOTTOM,

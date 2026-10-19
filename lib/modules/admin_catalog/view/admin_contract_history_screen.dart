@@ -2,6 +2,7 @@ import 'package:daalsetu/modules/admin_catalog/view/admin_drawer.dart';
 import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../utils/app_snackbar.dart';
 
 class AdminContractHistoryScreen extends StatefulWidget {
   const AdminContractHistoryScreen({super.key});
@@ -134,7 +135,7 @@ class _AdminContractHistoryScreenState
       if (reset) {
         setState(() => error = _message(exception));
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context, 
           SnackBar(
             content: Text(_message(exception)),
             backgroundColor: Theme.of(context).colorScheme.error,

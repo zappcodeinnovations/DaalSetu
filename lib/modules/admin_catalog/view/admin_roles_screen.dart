@@ -3,6 +3,7 @@ import 'package:daalsetu/modules/admin_catalog/view/admin_permission_toggle_pane
 import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../utils/app_snackbar.dart';
 
 class AdminRolesScreen extends StatefulWidget {
   const AdminRolesScreen({super.key, this.showAdminDrawer = true});
@@ -245,7 +246,7 @@ class _AdminRoleEditorScreenState extends State<AdminRoleEditorScreen> {
         );
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context, 
         SnackBar(content: Text(_editing ? 'Role updated.' : 'Role created.')),
       );
       Navigator.of(context).pop(true);
@@ -293,7 +294,7 @@ class _AdminRoleEditorScreenState extends State<AdminRoleEditorScreen> {
   String _message(Object error) =>
       error.toString().replaceFirst('Exception: ', '');
 
-  void _showError(String text) => ScaffoldMessenger.of(context).showSnackBar(
+  void _showError(String text) => AppSnackbar.showSnackBar(context, 
     SnackBar(content: Text(text), backgroundColor: Colors.red.shade700),
   );
 

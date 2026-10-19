@@ -2,6 +2,7 @@ import '../../../../comman/api_url.dart';
 import '../model/company_model.dart';
 import '../../../../network/api_client.dart';
 import 'package:get/get.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class TransporterCompanyController extends GetxController {
   var companies = <CompanyModel>[].obs;
@@ -36,7 +37,7 @@ class TransporterCompanyController extends GetxController {
           .map((json) => CompanyModel.fromJson(Map<String, dynamic>.from(json)))
           .toList();
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Error',
         'Failed to load companies: $e',
         snackPosition: SnackPosition.BOTTOM,
@@ -57,7 +58,7 @@ class TransporterCompanyController extends GetxController {
         return CompanyModel.fromJson(response);
       }
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Error',
         'Failed to load company details: $e',
         snackPosition: SnackPosition.BOTTOM,
@@ -75,7 +76,7 @@ class TransporterCompanyController extends GetxController {
       );
 
       if (response['id'] != null) {
-        Get.snackbar(
+        AppSnackbar.snackbar(
           'Success',
           'Company created successfully',
           snackPosition: SnackPosition.BOTTOM,
@@ -84,7 +85,7 @@ class TransporterCompanyController extends GetxController {
         return true;
       }
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Error',
         'Failed to create company: $e',
         snackPosition: SnackPosition.BOTTOM,
@@ -103,7 +104,7 @@ class TransporterCompanyController extends GetxController {
       );
 
       if (response['id'] != null) {
-        Get.snackbar(
+        AppSnackbar.snackbar(
           'Success',
           'Company updated successfully',
           snackPosition: SnackPosition.BOTTOM,
@@ -112,7 +113,7 @@ class TransporterCompanyController extends GetxController {
         return true;
       }
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Error',
         'Failed to update company: $e',
         snackPosition: SnackPosition.BOTTOM,
@@ -128,14 +129,14 @@ class TransporterCompanyController extends GetxController {
         requireAuth: true,
       );
 
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Success',
         'Company deleted successfully',
         snackPosition: SnackPosition.BOTTOM,
       );
       await fetchCompanies();
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Error',
         'Failed to delete company: $e',
         snackPosition: SnackPosition.BOTTOM,
@@ -151,14 +152,14 @@ class TransporterCompanyController extends GetxController {
         requireAuth: true,
       );
 
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Success',
         'Primary company updated',
         snackPosition: SnackPosition.BOTTOM,
       );
       await fetchCompanies();
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Error',
         'Failed to set primary company: $e',
         snackPosition: SnackPosition.BOTTOM,

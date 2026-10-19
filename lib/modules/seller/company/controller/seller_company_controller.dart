@@ -43,7 +43,7 @@ class SellerCompanyController extends GetxController {
       final data = await SellerServices.getCompanies();
       companies.assignAll(data);
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.snackbar("Error", e.toString());
     } finally {
       isLoading(false);
     }
@@ -236,10 +236,10 @@ class SellerCompanyController extends GetxController {
     try {
       isLoading(true);
       await SellerServices.setPrimaryCompany(id);
-      Get.snackbar("Success", "Company set as primary");
+      AppSnackbar.snackbar("Success", "Company set as primary");
       fetchCompanies();
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.snackbar("Error", e.toString());
     } finally {
       isLoading(false);
     }

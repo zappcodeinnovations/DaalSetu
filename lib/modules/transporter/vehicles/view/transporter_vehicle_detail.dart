@@ -9,6 +9,7 @@ import '../model/vehicle_model.dart';
 import './transporter_vehicle_form.dart';
 import './transporter_vehicles_view.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class TransporterVehicleDetail extends StatelessWidget {
   final VehicleModel vehicle;
@@ -142,7 +143,7 @@ class TransporterVehicleDetail extends StatelessWidget {
                       child: OutlinedButton.icon(
                         onPressed: () async {
                           final ok = await launchUrl(Uri.parse(vehicle.rcUploadUrl!), mode: LaunchMode.externalApplication);
-                          if (!ok) Get.snackbar("Error", "Unable to open RC document", snackPosition: SnackPosition.BOTTOM);
+                          if (!ok) AppSnackbar.snackbar("Error", "Unable to open RC document", snackPosition: SnackPosition.BOTTOM);
                         },
                         icon: const Icon(IconlyLight.document, size: 18),
                         label: const Text("View RC Document"),

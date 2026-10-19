@@ -2,6 +2,7 @@ import 'package:daalsetu/modules/admin_catalog/view/admin_drawer.dart';
 import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../utils/app_snackbar.dart';
 
 class AdminBranchSettingsScreen extends StatefulWidget {
   const AdminBranchSettingsScreen({super.key});
@@ -74,7 +75,7 @@ class _AdminBranchSettingsScreenState extends State<AdminBranchSettingsScreen> {
           transporterCrossBranchBidding = savedValue;
         }
       });
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context, 
         SnackBar(
           content: Text(
             (response['message'] ?? 'Branch setting updated.').toString(),
@@ -83,7 +84,7 @@ class _AdminBranchSettingsScreenState extends State<AdminBranchSettingsScreen> {
       );
     } catch (exception) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context, 
         SnackBar(
           content: Text(_message(exception)),
           backgroundColor: Theme.of(context).colorScheme.error,

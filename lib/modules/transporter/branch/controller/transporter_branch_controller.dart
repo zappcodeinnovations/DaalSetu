@@ -2,6 +2,7 @@ import '../../../../comman/api_url.dart';
 import '../../../../network/api_client.dart';
 import '../model/branch_model.dart';
 import 'package:get/get.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class TransporterBranchController extends GetxController {
   
@@ -35,7 +36,7 @@ class TransporterBranchController extends GetxController {
         branches.value = dataList.map((json) => BranchModel.fromJson(json)).toList();
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to load branches: $e', snackPosition: SnackPosition.BOTTOM);
+      AppSnackbar.snackbar('Error', 'Failed to load branches: $e', snackPosition: SnackPosition.BOTTOM);
     } finally {
       isLoading(false);
     }
@@ -52,12 +53,12 @@ class TransporterBranchController extends GetxController {
       );
 
       if (response != null) {
-        Get.snackbar('Success', 'Branch request sent to Super Admin!', snackPosition: SnackPosition.BOTTOM);
+        AppSnackbar.snackbar('Success', 'Branch request sent to Super Admin!', snackPosition: SnackPosition.BOTTOM);
         await fetchBranches();
         return true;
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to request branch: $e', snackPosition: SnackPosition.BOTTOM);
+      AppSnackbar.snackbar('Error', 'Failed to request branch: $e', snackPosition: SnackPosition.BOTTOM);
     }
     return false;
   }

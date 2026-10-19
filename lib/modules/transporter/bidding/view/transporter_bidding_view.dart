@@ -7,6 +7,7 @@ import '../model/transporter_bid_model.dart';
 import '../../../seller/contracts/view/seller_contract_detail_view.dart';
 import '../../../../routes/app_routes.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../../utils/app_snackbar.dart';
 
 const _gold = Color(0xFFFFB300);
 
@@ -449,7 +450,7 @@ class _OffersTab extends StatelessWidget {
                           onPressed: () {
                             final value = double.tryParse(amount.text.trim());
                             if (value == null || value <= 0) {
-                              Get.snackbar(
+                              AppSnackbar.snackbar(
                                 "Error",
                                 "Enter a valid bid amount",
                                 snackPosition: SnackPosition.BOTTOM,
@@ -873,7 +874,7 @@ class _MyDealsTab extends StatelessWidget {
 
   void _showAssignDialog(BuildContext context, MyBidModel bid) {
     if (controller.vehicles.isEmpty || controller.drivers.isEmpty) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Fleet needed",
         "Add an active vehicle and driver first.",
         snackPosition: SnackPosition.BOTTOM,
@@ -955,7 +956,7 @@ class _MyDealsTab extends StatelessWidget {
               style: ElevatedButton.styleFrom(backgroundColor: _gold),
               onPressed: () {
                 if (vehicleId == null || driverId == null) {
-                  Get.snackbar(
+                  AppSnackbar.snackbar(
                     "Error",
                     "Please select both vehicle and driver.",
                     snackPosition: SnackPosition.BOTTOM,

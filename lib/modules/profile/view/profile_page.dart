@@ -16,6 +16,7 @@ import '../../../utils/app_preferences.dart';
 import '../controller/profile_controller.dart';
 import '../model/profile_model.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../utils/app_snackbar.dart';
 
 class ProfileScreen extends StatelessWidget {
   ProfileScreen({super.key});
@@ -817,7 +818,7 @@ class ProfileScreen extends StatelessWidget {
 
   Future<void> _openDocument(String url, {required bool inApp}) async {
     if (url.trim().isEmpty) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Notice",
         "Document file URL is not available.",
         snackPosition: SnackPosition.BOTTOM,
@@ -828,13 +829,7 @@ class ProfileScreen extends StatelessWidget {
     }
 
     try {
-      Get.showSnackbar(
-        const GetSnackBar(
-          message: "Opening document...",
-          duration: Duration(seconds: 1),
-          snackPosition: SnackPosition.BOTTOM,
-        ),
-      );
+      AppSnackbar.showInfo(message: "Opening document...", duration: const Duration(seconds: 1));
 
       final uri = Uri.parse(url);
       final isS3OrPresigned = url.contains('X-Amz-') ||
@@ -885,7 +880,7 @@ class ProfileScreen extends StatelessWidget {
       if (result.type != ResultType.done) {
         final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
         if (!launched) {
-          Get.snackbar(
+          AppSnackbar.snackbar(
             'Document Downloaded',
             'Saved to ${file.path}',
             snackPosition: SnackPosition.BOTTOM,
@@ -898,7 +893,7 @@ class ProfileScreen extends StatelessWidget {
         final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
         if (!launched) rethrow;
       } catch (_) {
-        Get.snackbar(
+        AppSnackbar.snackbar(
           "Error",
           error.toString().replaceFirst('Exception: ', ''),
           snackPosition: SnackPosition.BOTTOM,
@@ -976,7 +971,7 @@ class ProfileScreen extends StatelessWidget {
                     );
                     final res = await BuyerServices.requestKycApproval();
                     if (Get.isDialogOpen ?? false) Get.back();
-                    Get.snackbar(
+                    AppSnackbar.snackbar(
                       "Success",
                       res['message'] ?? "KYC Approval Request Submitted",
                       snackPosition: SnackPosition.BOTTOM,
@@ -985,7 +980,7 @@ class ProfileScreen extends StatelessWidget {
                     );
                   } catch (e) {
                     if (Get.isDialogOpen ?? false) Get.back();
-                    Get.snackbar(
+                    AppSnackbar.snackbar(
                       "Notice",
                       "Request submitted or status updated.",
                       snackPosition: SnackPosition.BOTTOM,
