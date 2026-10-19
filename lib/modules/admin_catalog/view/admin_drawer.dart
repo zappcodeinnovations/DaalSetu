@@ -30,11 +30,6 @@ import 'package:daalsetu/modules/seller/categories/view/seller_category_view.dar
 import 'package:daalsetu/modules/seller/branches/view/seller_branches_view.dart';
 import 'package:daalsetu/modules/seller/challans/view/seller_delivery_challan_view.dart';
 import 'package:daalsetu/modules/transporter/bidding/view/transporter_bidding_view.dart';
-import 'package:daalsetu/modules/transporter/drivers/view/transporter_drivers_view.dart';
-import 'package:daalsetu/modules/transporter/vehicles/view/transporter_vehicles_view.dart';
-import 'package:daalsetu/modules/transporter/company/view/transporter_company_view.dart';
-import 'package:daalsetu/modules/transporter/branch/view/transporter_branch_view.dart';
-import 'package:daalsetu/modules/transporter/contracts/view/transporter_contracts_view.dart';
 
 class AdminDrawer extends StatelessWidget {
   const AdminDrawer({super.key, this.activeKey});
@@ -586,47 +581,51 @@ class AdminDrawer extends StatelessWidget {
             }
           },
         ),
+        // Grouped like the web transporter sidebar; these replace the dashboard shortcut cards.
+        _sectionLabel(context, 'SHIPMENT'),
         _customMenuItem(
           context: context,
-          key: 'bidding',
-          title: 'Bidding',
-          icon: Icons.gavel_rounded,
+          key: 'shipment_offers',
+          title: 'Shipment Offers',
+          icon: Icons.local_shipping_outlined,
           onTap: () => Get.to(() => const TransporterBiddingView()),
         ),
+        _customMenuItem(
+          context: context,
+          key: 'my_deals',
+          title: 'My Deals',
+          icon: Icons.assignment_turned_in_outlined,
+          onTap: () => Get.to(() => const TransporterBiddingView(initialTab: 1)),
+        ),
+        _sectionLabel(context, 'MASTERS'),
         _customMenuItem(
           context: context,
           key: 'drivers',
           title: 'Drivers',
           icon: Icons.badge_outlined,
-          onTap: () => Get.to(() => TransporterDriversView()),
+          onTap: () => Get.toNamed(AppRoutes.transporterDrivers),
         ),
         _customMenuItem(
           context: context,
           key: 'vehicles',
           title: 'Vehicles',
           icon: Icons.directions_bus_outlined,
-          onTap: () => Get.to(() => const TransporterVehiclesView()),
+          onTap: () => Get.toNamed(AppRoutes.transporterVehicles),
         ),
+        _sectionLabel(context, 'ACCOUNT'),
         _customMenuItem(
           context: context,
           key: 'company',
           title: 'Company',
           icon: Icons.business_outlined,
-          onTap: () => Get.to(() => TransporterCompanyView()),
+          onTap: () => Get.toNamed(AppRoutes.transporterCompany),
         ),
         _customMenuItem(
           context: context,
           key: 'branches',
-          title: 'Branches',
+          title: 'My Branches',
           icon: Icons.store_mall_directory_outlined,
-          onTap: () => Get.to(() => TransporterBranchView()),
-        ),
-        _customMenuItem(
-          context: context,
-          key: 'contracts',
-          title: 'Contracts',
-          icon: Icons.description_outlined,
-          onTap: () => Get.to(() => const TransporterContractsView()),
+          onTap: () => Get.to(() => const SellerBranchesView()),
         ),
         const SizedBox(height: 10),
         Padding(
@@ -656,6 +655,21 @@ class AdminDrawer extends StatelessWidget {
           onTap: _logout,
         ),
       ],
+    );
+  }
+
+  Widget _sectionLabel(BuildContext context, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, bottom: 6, top: 14),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 11,
+          letterSpacing: 1.5,
+          fontWeight: FontWeight.w800,
+          color: Theme.of(context).textTheme.bodySmall?.color,
+        ),
+      ),
     );
   }
 

@@ -9,13 +9,14 @@ import '../controller/transporter_dashboard_controller.dart';
 import '../../company/view/transporter_company_form.dart';
 import '../../company/controller/transporter_company_controller.dart';
 import '../../bidding/view/transporter_bidding_view.dart';
-import '../../../seller/branches/view/seller_branches_view.dart';
+import '../../../admin_catalog/view/admin_drawer.dart';
 import '../../../../services/notification_services.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../../routes/app_routes.dart';
 
-/// Mirrors the web transporter dashboard: KPIs, trend, delivery status, routes, and the
-/// web menu items (company, drivers, vehicles, branches, shipment offers, my deals).
+/// Mirrors the web transporter dashboard: KPIs, trend, delivery status and routes.
+/// The web menu items (shipment offers, my deals, drivers, vehicles, company,
+/// branches) live in the side drawer, like the buyer and admin panels.
 class TransporterDashboardView extends StatelessWidget {
   TransporterDashboardView({super.key});
 
@@ -34,6 +35,7 @@ class TransporterDashboardView extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: _buildAppBar(context),
+      drawer: const AdminDrawer(activeKey: 'dashboard'),
       body: Obx(() {
         if (controller.isLoading.value && controller.kpis.isEmpty) {
           return const Center(child: CircularProgressIndicator(color: _gold));
@@ -61,10 +63,6 @@ class TransporterDashboardView extends StatelessWidget {
                 _buildRegisterBanner(context),
               ],
               const SizedBox(height: 20),
-              _sectionTitle(context, "Transporter Workspace"),
-              const SizedBox(height: 12),
-              _buildQuickActions(context),
-              const SizedBox(height: 15),
               _sectionTitle(context, "Overview KPIs"),
               const SizedBox(height: 12),
               _buildKpiGrid(context),
@@ -92,6 +90,13 @@ class TransporterDashboardView extends StatelessWidget {
       backgroundColor: Colors.transparent,
       elevation: 0,
       automaticallyImplyLeading: false,
+      leading: Builder(
+        builder: (ctx) => IconButton(
+          tooltip: 'Open navigation menu',
+          icon: const Icon(IconlyLight.filter),
+          onPressed: () => Scaffold.of(ctx).openDrawer(),
+        ),
+      ),
       title: Image.asset(
         'assets/images/app_name.png',
         height: 32,
@@ -286,110 +291,6 @@ class TransporterDashboardView extends StatelessWidget {
         fontWeight: FontWeight.bold,
         color: Theme.of(context).textTheme.bodyLarge?.color,
       ),
-    );
-  }
-
-  Widget _buildQuickActions(BuildContext context) {
-    final theme = Theme.of(context);
-    final actions = <(String, String, IconData, Color, VoidCallback)>[
-      (
-        "Shipment Offers",
-        "Browse active loads",
-        IconlyBold.ticket_star,
-        Colors.orange,
-        () => Get.to(() => const TransporterBiddingView()),
-      ),
-      (
-        "My Deals",
-        "Track accepted shipments",
-        IconlyBold.document,
-        Colors.teal,
-        () => Get.to(() => const TransporterBiddingView(initialTab: 1)),
-      ),
-      (
-        "Company",
-        "Registration & profile",
-        IconlyBold.work,
-        Colors.blueGrey,
-        () => Get.toNamed(AppRoutes.transporterCompany),
-      ),
-      (
-        "Drivers",
-        "Manage registered drivers",
-        IconlyBold.user_3,
-        Colors.indigo,
-        () => Get.toNamed(AppRoutes.transporterDrivers),
-      ),
-      (
-        "Vehicles",
-        "Manage registered fleet",
-        IconlyBold.discovery,
-        Colors.deepOrange,
-        () => Get.toNamed(AppRoutes.transporterVehicles),
-      ),
-      (
-        "My Branches",
-        "View assigned branches",
-        IconlyBold.location,
-        Colors.green,
-        () => Get.to(() => const SellerBranchesView()),
-      ),
-    ];
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      padding: EdgeInsets.zero,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 1.35,
-      children: actions
-          .map(
-            (a) => GlassCard(
-              onTap: a.$5,
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: a.$4.withValues(alpha: .15),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(a.$3, color: a.$4, size: 20),
-                      ),
-                      Icon(IconlyLight.arrow_right_2, color: a.$4, size: 16),
-                    ],
-                  ),
-                  const Spacer(),
-                  Text(
-                    a.$1,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: theme.textTheme.bodyLarge?.color,
-                    ),
-                  ),
-                  Text(
-                    a.$2,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 9,
-                      color: theme.textTheme.bodyMedium?.color,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
-          .toList(),
     );
   }
 
