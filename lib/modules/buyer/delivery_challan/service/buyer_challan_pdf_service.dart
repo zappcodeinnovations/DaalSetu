@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -16,9 +17,6 @@ import '../model/buyer_delivery_challan_model.dart';
 class BuyerChallanPdfService {
   const BuyerChallanPdfService._();
 
-  static const MethodChannel _downloadsChannel = MethodChannel(
-    'com.zappcode.daalsetu/downloads',
-  );
 
   static String _formatDate(String? raw) {
     if (raw == null || raw.trim().isEmpty) return '-';
