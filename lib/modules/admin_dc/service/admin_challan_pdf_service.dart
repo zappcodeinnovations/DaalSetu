@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/services.dart';
+import 'package:daalsetu/modules/downloads/service/downloads_service.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -379,15 +380,11 @@ class AdminChallanPdfService {
 
     String? savedUri;
     // 2. On Android, also save to root public Downloads folder for permanent offline storage
-    if (Platform.isAndroid) {
-      try {
-        savedUri = await _downloadsChannel.invokeMethod<String>(
-          'savePdfToDownloads',
-          <String, dynamic>{'fileName': fileName, 'bytes': pdfBytes},
-        );
-      } catch (_) {
-        // Fallback to localFile path
-      }
+    // Same save as every other download: phone Downloads + the app's Downloads screen.
+    try {
+      savedUri = await DownloadsService.saveBytes(fileName: fileName, bytes: pdfBytes, mimeType: 'application/pdf');
+    } catch (error) {
+      debugPrint('📂 Challan PDF not saved to Downloads: $error');
     }
 
     if (openShareSheet) {

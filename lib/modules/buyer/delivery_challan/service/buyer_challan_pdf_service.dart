@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:daalsetu/modules/downloads/service/downloads_service.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
@@ -660,15 +661,11 @@ class BuyerChallanPdfService {
     final file = File('${directory.path}/$fileName');
     await file.writeAsBytes(pdfBytes, flush: true);
 
-    if (Platform.isAndroid) {
-      try {
-        await _downloadsChannel.invokeMethod<String>(
-          'savePdfToDownloads',
-          <String, dynamic>{'fileName': fileName, 'bytes': pdfBytes},
-        );
-      } catch (_) {
-        // Fall back to local file
-      }
+    // Same save as every other download: phone Downloads + the app's Downloads screen.
+    try {
+      await DownloadsService.saveBytes(fileName: fileName, bytes: pdfBytes, mimeType: 'application/pdf');
+    } catch (error) {
+      debugPrint('📂 Challan PDF not saved to Downloads: $error');
     }
 
     if (!openShareSheet) return file.path;
