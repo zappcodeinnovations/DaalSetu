@@ -7,6 +7,7 @@ import '../../../../theme/glass_widgets.dart';
 import '../../../../routes/app_routes.dart';
 import '../controller/buyer_delivery_challan_controller.dart';
 import '../model/buyer_delivery_challan_model.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class BuyerDeliveryChallanView extends StatelessWidget {
   const BuyerDeliveryChallanView({super.key});
@@ -27,12 +28,12 @@ class BuyerDeliveryChallanView extends StatelessWidget {
             backgroundColor: theme.scaffoldBackgroundColor,
             elevation: 0,
             automaticallyImplyLeading: false,
-            leading: Navigator.canPop(context)
+            leading: AppBarLeading(child: Navigator.canPop(context)
                 ? IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new, size: 20),
                     onPressed: () => Get.back(),
                   )
-                : null,
+                : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
             title: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: controller.isSearching.value

@@ -9,6 +9,7 @@ import '../controller/buyer_offers_controller.dart';
 import '../model/buyer_offer_model.dart';
 import '../../../products/view/product_detail.dart';
 import 'buyer_offer_details_view.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class BuyerTodayOffersView extends StatelessWidget {
   const BuyerTodayOffersView({super.key});
@@ -144,7 +145,7 @@ class BuyerTodayOffersView extends StatelessWidget {
         backgroundColor: theme.scaffoldBackgroundColor,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leading: Navigator.canPop(context)
+        leading: AppBarLeading(child: Navigator.canPop(context)
             ? IconButton(
                 icon: Icon(
                   Icons.arrow_back_ios_new,
@@ -153,7 +154,7 @@ class BuyerTodayOffersView extends StatelessWidget {
                 ),
                 onPressed: () => Get.back(),
               )
-            : null,
+            : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
         title: Text(
           "Today's Offers",
           style: GoogleFonts.poppins(

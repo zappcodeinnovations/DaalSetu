@@ -9,6 +9,7 @@ import '../controller/transporter_driver_controller.dart';
 import './transporter_driver_form.dart';
 import './transporter_driver_detail.dart';
 import '../model/driver_model.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 /// Web "Registered Drivers": search, status filter, register, edit, delete, assign vehicle, view license.
 class TransporterDriversView extends StatelessWidget {
@@ -26,7 +27,7 @@ class TransporterDriversView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: !inNavShell,

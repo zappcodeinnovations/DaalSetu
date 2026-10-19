@@ -20,6 +20,10 @@ class AppPreferences {
   static final FlutterSecureStorage _secureStorage =
       const FlutterSecureStorage();
 
+  /// Bumped on every login and logout, so screens that cache per-user state (the
+  /// side drawer's role menu) can tell a different session started.
+  static int sessionVersion = 0;
+
   /// ===============================
   /// ONBOARDING
   /// ===============================
@@ -45,6 +49,7 @@ class AppPreferences {
     String? activeBranchId,
     String? activeBranchCode,
   }) async {
+    sessionVersion++;
     await _secureStorage.write(key: _accessTokenKey, value: accessToken);
     await _secureStorage.write(key: _refreshTokenKey, value: refreshToken);
     await _secureStorage.write(key: _roleKey, value: role);
@@ -117,6 +122,7 @@ class AppPreferences {
   /// LOGOUT (Clear Only Auth Data)
   /// ===============================
   static Future<void> logout() async {
+    sessionVersion++;
     await _secureStorage.delete(key: _accessTokenKey);
     await _secureStorage.delete(key: _refreshTokenKey);
     await _secureStorage.delete(key: _roleKey);

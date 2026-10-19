@@ -4,6 +4,7 @@ import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 /// Web "Edit Contract" modal: deal values, locations, dates, remarks and status.
 /// Only changed fields are sent, so a closed contract can still get a status/remark update.
@@ -106,7 +107,7 @@ class _ContractEditViewState extends State<ContractEditView> {
   Widget build(BuildContext context) {
     final c = widget.contract;
     return Scaffold(
-      appBar: AppBar(title: Text('Edit ${c.contractId}')),
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), title: Text('Edit ${c.contractId}')),
       body: Form(
         key: _formKey,
         child: ListView(

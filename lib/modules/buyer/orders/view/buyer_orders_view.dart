@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../services/buyer_services.dart';
 import '../../../../services/seller_services.dart';
 import '../../../../theme/glass_widgets.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class BuyerOrdersView extends StatefulWidget {
   const BuyerOrdersView({super.key});
@@ -80,10 +81,10 @@ class _BuyerOrdersViewState extends State<BuyerOrdersView> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
+        leading: AppBarLeading(child: IconButton(
           icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color, size: 20),
           onPressed: () => Get.back(),
-        ),
+        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
         title: Text(
           "Recent Deals & Orders",
           style: GoogleFonts.poppins(

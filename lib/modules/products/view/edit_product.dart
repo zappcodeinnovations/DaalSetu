@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 /// Admin "Edit Offer": same fields as the web edit form (category, brand, price unit,
 /// loading dates, deal expiry, remark, active). Stock is changed from "Update Stock".
@@ -168,7 +169,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Offer')),
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), title: const Text('Edit Offer')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _loadError != null

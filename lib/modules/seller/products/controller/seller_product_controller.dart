@@ -1,13 +1,8 @@
-import 'dart:io';
-
-import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
-
 import '../../categories/model/seller_category_model.dart';
 import '../../company/model/seller_company_model.dart';
 import '../../branches/model/seller_branch_model.dart';
 import '../model/seller_product_model.dart';
+import '../service/seller_offer_export_service.dart';
 import '../../../../services/seller_services.dart';
 import '../../../../utils/app_preferences.dart';
 import '../../common/seller_ui.dart';
@@ -244,8 +239,8 @@ class SellerProductController extends GetxController {
     }
   }
 
-  /// Generates a portable CSV, then lets the user save or share it. This is
-  /// the mobile equivalent of the web panel's offer-list export action.
+  /// Generates a professionally formatted Excel workbook and opens the
+  /// platform share/save sheet.
   Future<void> exportProducts() async {
     if (products.isEmpty) {
       SellerUi.error('There are no offers available to export.');
@@ -253,44 +248,7 @@ class SellerProductController extends GetxController {
     }
 
     try {
-      final csv = StringBuffer()
-        ..writeln('DaalSetu Seller Offers')
-        ..writeln(
-          'Generated on,${DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now())}',
-        )
-        ..writeln()
-        ..writeln(
-          'Title,Category,Brand,Price,Price Unit,Status,Available Bags,Packing (KG),Location,Buyer Interests',
-        );
-
-      String cell(String value) => '"${value.replaceAll('"', '""')}"';
-      for (final product in products) {
-        csv.writeln(
-          [
-            cell(product.title),
-            cell(product.categoryName ?? ''),
-            cell(product.brandName ?? ''),
-            cell(product.amount),
-            cell(product.unit.toUpperCase()),
-            cell(product.status),
-            product.bagCount,
-            product.packingWeight,
-            cell(product.loadingLocation),
-            product.interestCount,
-          ].join(','),
-        );
-      }
-
-      final directory = await getTemporaryDirectory();
-      final stamp = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
-      final file = File('${directory.path}/DaalSetu_Offers_$stamp.csv');
-      await file.writeAsString(csv.toString());
-
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        subject: 'DaalSetu Seller Offers',
-        text: 'Seller offers export generated from DaalSetu.',
-      );
+      await SellerOfferExportService.exportAndShare(products: products);
     } catch (error) {
       SellerUi.error(error);
     }

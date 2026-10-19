@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../controller/add_user_controller.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class AddUserScreen extends StatelessWidget {
   AddUserScreen({super.key});
@@ -35,7 +36,7 @@ class AddUserScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         elevation: 0,
         title: const Text("Add User"),
         centerTitle: true,

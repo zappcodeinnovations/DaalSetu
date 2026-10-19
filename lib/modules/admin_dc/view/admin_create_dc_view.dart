@@ -4,6 +4,7 @@ import 'package:iconly/iconly.dart';
 import '../../../theme/app_theme.dart';
 import '../../contracts/model/contract_model.dart';
 import '../controller/admin_create_dc_controller.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class AdminCreateChallanView extends StatelessWidget {
   const AdminCreateChallanView({super.key});
@@ -23,10 +24,10 @@ class AdminCreateChallanView extends StatelessWidget {
         ),
         elevation: 0,
         backgroundColor: Colors.transparent,
-        leading: IconButton(
+        leading: AppBarLeading(child: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Get.back(),
-        ),
+        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
       ),
       bottomNavigationBar: _buildBottomSubmitBar(context, controller, isDark),
       body: LayoutBuilder(

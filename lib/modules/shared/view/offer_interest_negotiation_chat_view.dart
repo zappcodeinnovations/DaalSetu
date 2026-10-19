@@ -10,6 +10,7 @@ import '../../../services/product_services.dart';
 import '../../../services/seller_services.dart';
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/utils/global_error_handler.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 /// One live chat for a ProductInterest.  It intentionally powers both the
 /// buyer's My Interests route and the seller's Buyer Interests route so the
@@ -345,7 +346,7 @@ class _OfferInterestNegotiationChatViewState
                   status == 'interested');
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         titleSpacing: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

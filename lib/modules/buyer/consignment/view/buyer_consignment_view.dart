@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../services/buyer_services.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/app_snackbar.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class BuyerConsignmentView extends StatefulWidget {
   const BuyerConsignmentView({super.key});
@@ -132,7 +133,7 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         title: Text(
           'Consignment Management',
           style: GoogleFonts.poppins(fontWeight: FontWeight.w700),

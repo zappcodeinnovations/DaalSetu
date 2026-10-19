@@ -6,6 +6,7 @@ import '../../../theme/app_theme.dart';
 import '../controller/admin_dc_details_controller.dart';
 import '../model/admin_challan_model.dart';
 import '../service/admin_challan_pdf_service.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class AdminChallanDetailsView extends StatelessWidget {
   const AdminChallanDetailsView({super.key});
@@ -25,10 +26,10 @@ class AdminChallanDetailsView extends StatelessWidget {
         ),
         elevation: 0,
         backgroundColor: Colors.transparent,
-        leading: IconButton(
+        leading: AppBarLeading(child: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Get.back(),
-        ),
+        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
         actions: [
           Obx(() {
             final challan = controller.challan.value;

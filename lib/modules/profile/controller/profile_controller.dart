@@ -6,6 +6,7 @@ import '../model/profile_model.dart';
 class ProfileController extends GetxController {
   var isLoading = true.obs;
   var profile = Rxn<ProfileModel>();
+  var loadError = ''.obs;
   var imageRevision = DateTime.now().millisecondsSinceEpoch.obs;
 
   String profileImageUrl(String? value) {
@@ -33,15 +34,19 @@ class ProfileController extends GetxController {
 
   var isUpdating = false.obs;
 
-  Future<void> fetchProfile() async {
+  Future<void> fetchProfile({bool showError = false}) async {
     try {
       isLoading.value = true;
+      loadError.value = '';
 
-      final data = await ProfileService.getProfile();
+      final data = await ProfileService.getProfile(silent: !showError);
       profile.value = data;
       imageRevision.value = DateTime.now().millisecondsSinceEpoch;
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      loadError.value = e.toString();
+      if (showError) {
+        Get.snackbar("Unable to refresh profile", "Please try again.");
+      }
     } finally {
       isLoading.value = false;
     }

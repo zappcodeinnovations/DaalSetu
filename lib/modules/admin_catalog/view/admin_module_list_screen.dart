@@ -12,6 +12,7 @@ import 'package:daalsetu/widgets/admin_common_widgets.dart';
 import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class AdminModuleListScreen extends StatefulWidget {
   const AdminModuleListScreen({
@@ -149,7 +150,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
     drawer: widget.showAdminDrawer
         ? AdminDrawer(activeKey: widget.moduleKey)
         : null,
-    appBar: AppBar(
+    appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
       title: Text(
         widget.moduleKey == 'category_requests'
             ? 'Buyer Category Management'

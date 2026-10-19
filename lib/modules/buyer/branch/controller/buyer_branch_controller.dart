@@ -277,7 +277,7 @@ class BuyerBranchController extends GetxController with WidgetsBindingObserver {
   Future<void> fetchBranches({bool silent = false}) async {
     try {
       if (!silent) isLoading.value = true;
-      final res = await SellerServices.getSellerBranches();
+      final res = await SellerServices.getSellerBranches(silent: silent);
       if (res['data'] is Map<String, dynamic>) {
         final data = res['data'] as Map<String, dynamic>;
 

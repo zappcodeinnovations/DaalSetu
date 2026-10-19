@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
+import 'package:daalsetu/modules/downloads/service/downloads_service.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
@@ -16,6 +17,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../controller/contract_controller.dart';
 import 'package:daalsetu/modules/admin_catalog/view/transport_bids_sheet.dart';
 import 'contract_edit_view.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class ContractDetailScreen extends StatefulWidget {
   const ContractDetailScreen({super.key});
@@ -48,7 +50,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         title: const Text('Contract details'),
         actions: [
           IconButton(
@@ -732,6 +734,12 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
         );
         await file.writeAsBytes(await doc.save(), flush: true);
       }
+
+      await DownloadsService.saveBytes(
+        fileName: fileName,
+        bytes: await file.readAsBytes(),
+        mimeType: 'application/pdf',
+      );
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

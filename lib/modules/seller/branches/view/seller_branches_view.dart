@@ -5,6 +5,7 @@ import 'package:iconly/iconly.dart';
 import '../controller/seller_branch_controller.dart';
 import 'seller_join_branch_dialog.dart';
 import '../../../../services/seller_services.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class SellerBranchesView extends StatelessWidget {
   const SellerBranchesView({super.key});
@@ -82,7 +83,7 @@ class SellerBranchesView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(

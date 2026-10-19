@@ -29,6 +29,7 @@ import '../modules/buyer/orders/view/buyer_orders_view.dart';
 import '../modules/buyer/transport/view/buyer_transport_tracking_view.dart';
 import '../modules/category/view/subcategory_page.dart';
 import '../modules/dashboard/view/dashboard_page.dart';
+import '../modules/downloads/view/downloads_view.dart';
 import '../modules/nav_bar/view/nav_page.dart';
 import '../modules/onboarding/view/onboarding_screen.dart';
 import '../modules/products/view/add_product.dart';
@@ -40,7 +41,6 @@ import '../modules/seller/challans/view/seller_delivery_challan_view.dart';
 import '../modules/seller/company/view/seller_company_view.dart';
 import '../modules/seller/contracts/view/seller_contracts_view.dart';
 import '../modules/seller/dashboard/view/seller_dashboard_view.dart';
-import '../modules/seller/workspace/view/seller_workspace_view.dart';
 import '../modules/seller/masters/view/seller_master_management_view.dart';
 import '../modules/seller/notifications/view/seller_notification_view.dart';
 import '../modules/seller/products/view/seller_media_gallery_view.dart';
@@ -116,54 +116,153 @@ class AppPages {
     GetPage(name: AppRoutes.profile_page, page: () => ProfileScreen()),
     GetPage(name: AppRoutes.editProfile, page: () => const EditProfileScreen()),
     GetPage(name: AppRoutes.mainNav, page: () => MainNavigationScreen()),
+    GetPage(name: AppRoutes.downloads, page: () => const DownloadsView()),
     GetPage(name: AppRoutes.subcategory, page: () => SubCategoryScreen()),
     GetPage(name: AppRoutes.users, page: () => UserScreen()),
     GetPage(name: AppRoutes.users_details, page: () => UserDetailScreen()),
 
     // SELLER PANEL
     GetPage(name: AppRoutes.sellerDashboard, page: () => SellerDashboardView()),
-    GetPage(name: AppRoutes.sellerProducts, page: () => const SellerProductView()),
-    GetPage(name: AppRoutes.sellerCompany, page: () => const SellerCompanyView()),
-    GetPage(name: AppRoutes.sellerCategory, page: () => const SellerCategoryView()),
-    GetPage(name: AppRoutes.sellerOfferInterests, page: () => const SellerOfferInterestsView()),
-    GetPage(name: AppRoutes.sellerMediaGallery, page: () => const SellerMediaGalleryView()),
-    GetPage(name: AppRoutes.sellerNotifications, page: () => const SellerNotificationView()),
+    GetPage(
+      name: AppRoutes.sellerProducts,
+      page: () => const SellerProductView(),
+    ),
+    GetPage(
+      name: AppRoutes.sellerCompany,
+      page: () => const SellerCompanyView(),
+    ),
+    GetPage(
+      name: AppRoutes.sellerCategory,
+      page: () => const SellerCategoryView(),
+    ),
+    GetPage(
+      name: AppRoutes.sellerOfferInterests,
+      page: () => const SellerOfferInterestsView(),
+    ),
+    GetPage(
+      name: AppRoutes.sellerMediaGallery,
+      page: () => const SellerMediaGalleryView(),
+    ),
+    GetPage(
+      name: AppRoutes.sellerNotifications,
+      page: () => const SellerNotificationView(),
+    ),
     GetPage(name: AppRoutes.sellerRFQs, page: () => const SellerRfqListView()),
-    GetPage(name: AppRoutes.sellerContracts, page: () => const SellerContractsView()),
-    GetPage(name: AppRoutes.sellerDeliveryChallans, page: () => const SellerDeliveryChallanView()),
-    GetPage(name: AppRoutes.sellerBranches, page: () => const SellerBranchesView()),
-    GetPage(name: AppRoutes.sellerMasters, page: () => const SellerMasterManagementView()),
-    GetPage(name: AppRoutes.sellerWorkspace, page: () => const SellerWorkspaceView()),
+    GetPage(
+      name: AppRoutes.sellerContracts,
+      page: () => const SellerContractsView(),
+    ),
+    GetPage(
+      name: AppRoutes.sellerDeliveryChallans,
+      page: () => const SellerDeliveryChallanView(),
+    ),
+    GetPage(
+      name: AppRoutes.sellerBranches,
+      page: () => const SellerBranchesView(),
+    ),
+    GetPage(
+      name: AppRoutes.sellerMasters,
+      page: () => const SellerMasterManagementView(),
+    ),
 
     // TRANSPORTER PANEL
-    GetPage(name: AppRoutes.transporterDashboard, page: () => TransporterDashboardView()),
-    GetPage(name: AppRoutes.transporterBranch, page: () => TransporterBranchView()),
-    GetPage(name: AppRoutes.transporterBrands, page: () => TransporterBrandsView()),
-    GetPage(name: AppRoutes.transporterCategory, page: () => const TransporterCategoryView()),
-    GetPage(name: AppRoutes.transporterCompany, page: () => TransporterCompanyView()),
-    GetPage(name: AppRoutes.transporterKyc, page: () => const TransporterKycView()),
-    GetPage(name: AppRoutes.transporterContracts, page: () => const TransporterContractsView()),
-    GetPage(name: AppRoutes.transporterNotifications, page: () => const TransporterNotificationsView()),
-    GetPage(name: AppRoutes.transporterOffers, page: () => const TransporterOffersView()),
-    GetPage(name: AppRoutes.transporterProducts, page: () => const TransporterProductsView()),
-    GetPage(name: AppRoutes.transporterRfq, page: () => const TransporterRfqView()),
-    GetPage(name: AppRoutes.transporterUsers, page: () => const TransporterUsersView()),
-    GetPage(name: AppRoutes.transporterDrivers, page: () => TransporterDriversView()),
-    GetPage(name: AppRoutes.transporterVehicles, page: () => TransporterVehiclesView()),
-    GetPage(name: AppRoutes.transporterBidding, page: () => const TransporterBiddingView()),
+    GetPage(
+      name: AppRoutes.transporterDashboard,
+      page: () => TransporterDashboardView(),
+    ),
+    GetPage(
+      name: AppRoutes.transporterBranch,
+      page: () => TransporterBranchView(),
+    ),
+    GetPage(
+      name: AppRoutes.transporterBrands,
+      page: () => TransporterBrandsView(),
+    ),
+    GetPage(
+      name: AppRoutes.transporterCategory,
+      page: () => const TransporterCategoryView(),
+    ),
+    GetPage(
+      name: AppRoutes.transporterCompany,
+      page: () => TransporterCompanyView(),
+    ),
+    GetPage(
+      name: AppRoutes.transporterKyc,
+      page: () => const TransporterKycView(),
+    ),
+    GetPage(
+      name: AppRoutes.transporterContracts,
+      page: () => const TransporterContractsView(),
+    ),
+    GetPage(
+      name: AppRoutes.transporterNotifications,
+      page: () => const TransporterNotificationsView(),
+    ),
+    GetPage(
+      name: AppRoutes.transporterOffers,
+      page: () => const TransporterOffersView(),
+    ),
+    GetPage(
+      name: AppRoutes.transporterProducts,
+      page: () => const TransporterProductsView(),
+    ),
+    GetPage(
+      name: AppRoutes.transporterRfq,
+      page: () => const TransporterRfqView(),
+    ),
+    GetPage(
+      name: AppRoutes.transporterUsers,
+      page: () => const TransporterUsersView(),
+    ),
+    GetPage(
+      name: AppRoutes.transporterDrivers,
+      page: () => TransporterDriversView(),
+    ),
+    GetPage(
+      name: AppRoutes.transporterVehicles,
+      page: () => TransporterVehiclesView(),
+    ),
+    GetPage(
+      name: AppRoutes.transporterBidding,
+      page: () => const TransporterBiddingView(),
+    ),
 
     // BUYER PANEL
     GetPage(name: AppRoutes.buyerDashboard, page: () => BuyerDashboardView()),
     GetPage(name: AppRoutes.buyerOffers, page: () => const BuyerOffersView()),
-    GetPage(name: AppRoutes.buyerOffersCreate, page: () => const AddBuyerOfferScreen()),
-    GetPage(name: AppRoutes.buyerMyInterests, page: () => const BuyerMyInterestsView()),
-    GetPage(name: AppRoutes.buyerTodayOffers, page: () => const BuyerTodayOffersView()),
-    GetPage(name: AppRoutes.buyerPendingOffers, page: () => const BuyerPendingOffersView()),
-    GetPage(name: AppRoutes.buyerPreviousOffers, page: () => const BuyerPreviousOffersView()),
-    GetPage(name: AppRoutes.buyerDeliveryChallan, page: () => const BuyerDeliveryChallanView()),
-    GetPage(name: AppRoutes.buyerDeliveryChallanDetails, page: () => BuyerDeliveryChallanDetailView()),
+    GetPage(
+      name: AppRoutes.buyerOffersCreate,
+      page: () => const AddBuyerOfferScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.buyerMyInterests,
+      page: () => const BuyerMyInterestsView(),
+    ),
+    GetPage(
+      name: AppRoutes.buyerTodayOffers,
+      page: () => const BuyerTodayOffersView(),
+    ),
+    GetPage(
+      name: AppRoutes.buyerPendingOffers,
+      page: () => const BuyerPendingOffersView(),
+    ),
+    GetPage(
+      name: AppRoutes.buyerPreviousOffers,
+      page: () => const BuyerPreviousOffersView(),
+    ),
+    GetPage(
+      name: AppRoutes.buyerDeliveryChallan,
+      page: () => const BuyerDeliveryChallanView(),
+    ),
+    GetPage(
+      name: AppRoutes.buyerDeliveryChallanDetails,
+      page: () => BuyerDeliveryChallanDetailView(),
+    ),
     GetPage(name: AppRoutes.buyerOrders, page: () => const BuyerOrdersView()),
-    GetPage(name: AppRoutes.buyerTransportTracking, page: () => const BuyerTransportTrackingView()),
+    GetPage(
+      name: AppRoutes.buyerTransportTracking,
+      page: () => const BuyerTransportTrackingView(),
+    ),
 
     // ADMIN SIDEBAR MODULES
     ...AdminModules.all.keys.map(
@@ -192,10 +291,7 @@ class AppPages {
       name: AppRoutes.adminBrokerageBills,
       page: () => const AdminBrokerageBillsScreen(),
     ),
-    GetPage(
-      name: AppRoutes.adminRoles,
-      page: () => const AdminRolesScreen(),
-    ),
+    GetPage(name: AppRoutes.adminRoles, page: () => const AdminRolesScreen()),
     GetPage(
       name: AppRoutes.adminPermissionsMatrix,
       page: () => const AdminPermissionsMatrixScreen(),

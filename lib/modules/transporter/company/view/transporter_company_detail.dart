@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../model/company_model.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class TransporterCompanyDetail extends StatelessWidget {
   final CompanyModel company;
@@ -19,10 +20,10 @@ class TransporterCompanyDetail extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
+        leading: AppBarLeading(child: IconButton(
           icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
-        ),
+        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
         title: Text(
           "Company Details",
           style: GoogleFonts.poppins(

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../controller/seller_notification_controller.dart';
 import '../../../../services/realtime_notification_service.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class SellerNotificationView extends StatelessWidget {
   const SellerNotificationView({super.key});
@@ -16,7 +17,7 @@ class SellerNotificationView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text("Notifications", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),

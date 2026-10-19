@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../utils/money_format.dart';
+import '../../../widgets/app_shell.dart';
 import '../../../network/api_client.dart';
 
 /// Small shared pieces for the seller screens, matching the existing seller look.
@@ -352,6 +353,8 @@ class SellerUi {
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
+      leading: const AppBarLeading(),
+      leadingWidth: AppBarLeading.widthFor(context),
       title: Text(
         title,
         style: GoogleFonts.poppins(

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../controller/kyc_user_controller.dart';
 import '../model/kyc_user_model.dart';
 import 'package:daalsetu/theme/app_theme.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class KycUsersScreen extends StatelessWidget {
   KycUsersScreen({super.key});
@@ -33,7 +34,7 @@ class KycUsersScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: bgColor,
       drawer: const AdminDrawer(activeKey: 'kyc'),
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         backgroundColor: bgColor,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),

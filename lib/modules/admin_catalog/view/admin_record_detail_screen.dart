@@ -11,6 +11,7 @@ import 'package:daalsetu/widgets/authenticated_network_image.dart';
 import 'package:daalsetu/widgets/authenticated_video_player.dart';
 import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:flutter/material.dart';
+import 'package:daalsetu/modules/downloads/service/downloads_service.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
@@ -26,7 +27,8 @@ class AdminRecordDetailScreen extends StatefulWidget {
   final AdminRecord record;
 
   @override
-  State<AdminRecordDetailScreen> createState() => _AdminRecordDetailScreenState();
+  State<AdminRecordDetailScreen> createState() =>
+      _AdminRecordDetailScreenState();
 }
 
 class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
@@ -61,13 +63,17 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
 
     // Smart fallback derivation for user names
     if (keyPath.contains('first_name')) {
-      final fullName = (data['name'] ?? data['username'] ?? '').toString().trim();
+      final fullName = (data['name'] ?? data['username'] ?? '')
+          .toString()
+          .trim();
       if (fullName.isNotEmpty) {
         return fullName.split(' ').first;
       }
     }
     if (keyPath.contains('last_name')) {
-      final fullName = (data['name'] ?? data['username'] ?? '').toString().trim();
+      final fullName = (data['name'] ?? data['username'] ?? '')
+          .toString()
+          .trim();
       final words = fullName.split(' ');
       if (words.length > 1) {
         return words.sublist(1).join(' ');
@@ -75,7 +81,9 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
     }
 
     // Smart fallback derivation for image and media fields
-    if (keyPath.contains('image') || keyPath.contains('photo') || keyPath.contains('thumbnail')) {
+    if (keyPath.contains('image') ||
+        keyPath.contains('photo') ||
+        keyPath.contains('thumbnail')) {
       for (final candidate in const [
         'image_url',
         'image',
@@ -100,40 +108,40 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: Text('${widget.config.title} Details')),
-        body: FutureBuilder<AdminRecord>(
-          future: detail,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
-              return _buildSkeleton();
-            }
-            if (snapshot.hasError) {
-              return _buildError(snapshot.error.toString());
-            }
-            final data = snapshot.data!.data;
-            
-            // If detailSections are provided, use the new layout engine
-            if (widget.config.detailSections.isNotEmpty) {
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: widget.config.detailSections.length,
-                itemBuilder: (context, index) {
-                  return _buildSection(widget.config.detailSections[index], data);
-                },
-              );
-            }
+    appBar: AppBar(title: Text('${widget.config.title} Details')),
+    body: FutureBuilder<AdminRecord>(
+      future: detail,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return _buildSkeleton();
+        }
+        if (snapshot.hasError) {
+          return _buildError(snapshot.error.toString());
+        }
+        final data = snapshot.data!.data;
 
-            // Fallback to generic view if no detailSections are provided
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: data.entries
-                  .where((entry) => entry.value != null)
-                  .map((entry) => _fallbackValueCard(entry.key, entry.value))
-                  .toList(),
-            );
-          },
-        ),
-      );
+        // If detailSections are provided, use the new layout engine
+        if (widget.config.detailSections.isNotEmpty) {
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: widget.config.detailSections.length,
+            itemBuilder: (context, index) {
+              return _buildSection(widget.config.detailSections[index], data);
+            },
+          );
+        }
+
+        // Fallback to generic view if no detailSections are provided
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: data.entries
+              .where((entry) => entry.value != null)
+              .map((entry) => _fallbackValueCard(entry.key, entry.value))
+              .toList(),
+        );
+      },
+    ),
+  );
 
   Widget _buildSkeleton() {
     return ListView.builder(
@@ -146,11 +154,23 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(height: 20, width: 120, color: Theme.of(context).dividerColor.withValues(alpha: 0.1)),
+              Container(
+                height: 20,
+                width: 120,
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+              ),
               const SizedBox(height: 16),
-              Container(height: 16, width: double.infinity, color: Theme.of(context).dividerColor.withValues(alpha: 0.05)),
+              Container(
+                height: 16,
+                width: double.infinity,
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.05),
+              ),
               const SizedBox(height: 8),
-              Container(height: 16, width: 200, color: Theme.of(context).dividerColor.withValues(alpha: 0.05)),
+              Container(
+                height: 16,
+                width: 200,
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.05),
+              ),
             ],
           ),
         ),
@@ -165,17 +185,26 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
         children: [
           const Icon(Icons.error_outline, size: 48, color: Colors.red),
           const SizedBox(height: 16),
-          Text("Failed to load details", style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            "Failed to load details",
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Text(error, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyMedium),
+            child: Text(
+              error,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
             onPressed: () {
               setState(() {
-                detail = AdminCatalogRepository(widget.config).detail(widget.record);
+                detail = AdminCatalogRepository(
+                  widget.config,
+                ).detail(widget.record);
               });
             },
             icon: const Icon(Icons.refresh),
@@ -197,14 +226,16 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
         children: [
           Container(
             width: double.infinity,
-            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            color: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Text(
               section.title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
           ),
           Padding(
@@ -222,28 +253,39 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
   }
 
   Widget _buildField(AdminDetailField field, dynamic value) {
-    final bool isNullOrEmpty = value == null ||
+    final bool isNullOrEmpty =
+        value == null ||
         value.toString().trim().isEmpty ||
         value.toString().trim().toLowerCase() == 'null';
-    
+
     Widget content;
-    
+
     if (isNullOrEmpty && field.type != AdminDetailFieldType.boolean) {
       content = Text(
         "Not Available",
-        style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.6), fontStyle: FontStyle.italic),
+        style: TextStyle(
+          color: Theme.of(
+            context,
+          ).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+          fontStyle: FontStyle.italic,
+        ),
       );
     } else {
       switch (field.type) {
         case AdminDetailFieldType.date:
-          content = Text(_formatDate(value.toString()), style: const TextStyle(fontWeight: FontWeight.w600));
+          content = Text(
+            _formatDate(value.toString()),
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          );
           break;
         case AdminDetailFieldType.status:
           content = _buildStatusBadge(value.toString());
           break;
         case AdminDetailFieldType.boolean:
-          final boolVal = value == true || value.toString().toLowerCase() == 'true';
-          final isStatusField = field.label.toLowerCase().contains('status') ||
+          final boolVal =
+              value == true || value.toString().toLowerCase() == 'true';
+          final isStatusField =
+              field.label.toLowerCase().contains('status') ||
               field.label.toLowerCase().contains('active');
           final labelText = isStatusField
               ? (boolVal ? 'Active' : 'Inactive')
@@ -251,7 +293,10 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
           final color = boolVal ? Colors.green : Colors.red;
           content = isStatusField
               ? Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
@@ -276,7 +321,11 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
             onTap: () => _launchUrl('tel:${value.toString()}'),
             child: Text(
               value.toString(),
-              style: TextStyle(fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.primary, decoration: TextDecoration.underline),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.primary,
+                decoration: TextDecoration.underline,
+              ),
             ),
           );
           break;
@@ -285,7 +334,11 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
             onTap: () => _launchUrl('mailto:${value.toString()}'),
             child: Text(
               value.toString(),
-              style: TextStyle(fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.primary, decoration: TextDecoration.underline),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.primary,
+                decoration: TextDecoration.underline,
+              ),
             ),
           );
           break;
@@ -311,9 +364,11 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
       }
     }
 
-    final isLongText = !isNullOrEmpty &&
+    final isLongText =
+        !isNullOrEmpty &&
         field.type == AdminDetailFieldType.text &&
-        (value.toString().trim().length > 60 || value.toString().contains('\n'));
+        (value.toString().trim().length > 60 ||
+            value.toString().contains('\n'));
 
     if (isLongText) {
       return Padding(
@@ -327,9 +382,9 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
                   child: Text(
                     field.label,
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: Theme.of(context).textTheme.bodySmall?.color,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 if (field.copyable && !isNullOrEmpty)
@@ -359,7 +414,9 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.5),
+                color: Theme.of(
+                  context,
+                ).scaffoldBackgroundColor.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: content,
@@ -378,9 +435,9 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
             Text(
               field.label,
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: Theme.of(context).textTheme.bodySmall?.color,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: Theme.of(context).textTheme.bodySmall?.color,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 8),
             content,
@@ -399,8 +456,8 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
             child: Text(
               field.label,
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: Theme.of(context).textTheme.bodySmall?.color,
-                  ),
+                color: Theme.of(context).textTheme.bodySmall?.color,
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -410,20 +467,26 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: content,
-                  ),
+                  child: Align(alignment: Alignment.centerLeft, child: content),
                 ),
                 if (field.copyable && !isNullOrEmpty)
                   GestureDetector(
                     onTap: () {
                       Clipboard.setData(ClipboardData(text: value.toString()));
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Copied to clipboard'), duration: Duration(seconds: 1)));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Copied to clipboard'),
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
                     },
                     child: Padding(
                       padding: const EdgeInsets.only(left: 8.0),
-                      child: Icon(Icons.copy_rounded, size: 16, color: Theme.of(context).colorScheme.primary),
+                      child: Icon(
+                        Icons.copy_rounded,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                     ),
                   ),
               ],
@@ -437,9 +500,24 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
   String _formatDate(String isoString) {
     try {
       final date = DateTime.parse(isoString).toLocal();
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
       final month = months[date.month - 1];
-      final hour = date.hour == 0 ? 12 : (date.hour > 12 ? date.hour - 12 : date.hour);
+      final hour = date.hour == 0
+          ? 12
+          : (date.hour > 12 ? date.hour - 12 : date.hour);
       final amPm = date.hour >= 12 ? 'PM' : 'AM';
       final min = date.minute.toString().padLeft(2, '0');
       return "${date.day} $month ${date.year} \n$hour:$min $amPm";
@@ -453,13 +531,21 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
     Color color = Colors.grey;
     String prefix = '⚫';
 
-    if (lower.contains('active') || lower.contains('approved') || lower.contains('success') || lower.contains('completed')) {
+    if (lower.contains('active') ||
+        lower.contains('approved') ||
+        lower.contains('success') ||
+        lower.contains('completed')) {
       color = Colors.green;
       prefix = '🟢';
-    } else if (lower.contains('pending') || lower.contains('unassigned') || lower.contains('maintenance')) {
+    } else if (lower.contains('pending') ||
+        lower.contains('unassigned') ||
+        lower.contains('maintenance')) {
       color = Colors.orange;
       prefix = '🟠';
-    } else if (lower.contains('inactive') || lower.contains('rejected') || lower.contains('failed') || lower.contains('cancelled')) {
+    } else if (lower.contains('inactive') ||
+        lower.contains('rejected') ||
+        lower.contains('failed') ||
+        lower.contains('cancelled')) {
       color = Colors.red;
       prefix = '🔴';
     } else if (lower.contains('assigned') || lower.contains('available')) {
@@ -467,7 +553,11 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
       prefix = '🔵';
     }
 
-    final displayStatus = status.replaceAll('_', ' ').split(' ').map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}').join(' ');
+    final displayStatus = status
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}')
+        .join(' ');
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -478,7 +568,11 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
       ),
       child: Text(
         "$prefix $displayStatus",
-        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
       ),
     );
   }
@@ -494,10 +588,8 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => _FullScreenImage(
-                url: url,
-                onDownload: () => _download(url),
-              ),
+              builder: (_) =>
+                  _FullScreenImage(url: url, onDownload: () => _download(url)),
             ),
           ),
           child: Container(
@@ -527,11 +619,11 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
   Widget _buildVideoPreview(String path) {
     final url = _absoluteUrl(path);
     return Container(
-      height: 150,
       width: double.infinity,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Theme.of(context).dividerColor),
+        color: Colors.black,
       ),
       clipBehavior: Clip.antiAlias,
       child: AuthenticatedVideoPlayer(url: url),
@@ -544,7 +636,9 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
       } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not launch $urlString')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not launch $urlString')));
       }
     } catch (e) {
       debugPrint("Error launching $urlString: $e");
@@ -569,7 +663,10 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(_label(key), style: const TextStyle(fontWeight: FontWeight.w800)),
+              Text(
+                _label(key),
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
               const SizedBox(height: 10),
               GestureDetector(
                 onTap: () => Navigator.push(
@@ -584,8 +681,13 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: AuthenticatedNetworkImage(
-                    url: url, height: 220, width: double.infinity,
-                    fallback: const SizedBox(height: 100, child: Center(child: Icon(Icons.broken_image_outlined))),
+                    url: url,
+                    height: 220,
+                    width: double.infinity,
+                    fallback: const SizedBox(
+                      height: 100,
+                      child: Center(child: Icon(Icons.broken_image_outlined)),
+                    ),
                   ),
                 ),
               ),
@@ -608,7 +710,10 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(_label(key), style: const TextStyle(fontWeight: FontWeight.w800)),
+              Text(
+                _label(key),
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
               const SizedBox(height: 10),
               AuthenticatedVideoPlayer(url: url),
             ],
@@ -620,21 +725,31 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
   }
 
   Widget _fallbackTextCard(String label, String value) => Card(
-        margin: const EdgeInsets.only(bottom: 10),
-        child: Padding(
-          padding: const EdgeInsets.all(15),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: Theme.of(context).textTheme.labelMedium),
-              const SizedBox(height: 5),
-              SelectableText(value.isEmpty ? '—' : value, style: const TextStyle(fontWeight: FontWeight.w600)),
-            ],
+    margin: const EdgeInsets.only(bottom: 10),
+    child: Padding(
+      padding: const EdgeInsets.all(15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.labelMedium),
+          const SizedBox(height: 5),
+          SelectableText(
+            value.isEmpty ? '—' : value,
+            style: const TextStyle(fontWeight: FontWeight.w600),
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 
-  String _label(String key) => key.split('_').map((word) => word.isEmpty ? word : '${word[0].toUpperCase()}${word.substring(1)}').join(' ');
+  String _label(String key) => key
+      .split('_')
+      .map(
+        (word) => word.isEmpty
+            ? word
+            : '${word[0].toUpperCase()}${word.substring(1)}',
+      )
+      .join(' ');
 
   String _absoluteUrl(String url) {
     final trimmed = url.trim();
@@ -646,12 +761,19 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
 
   bool _isImage(String key, String value) {
     final text = '$key $value'.toLowerCase();
-    return text.contains('image') || text.endsWith('.jpg') || text.endsWith('.jpeg') || text.endsWith('.png') || text.endsWith('.webp');
+    return text.contains('image') ||
+        text.endsWith('.jpg') ||
+        text.endsWith('.jpeg') ||
+        text.endsWith('.png') ||
+        text.endsWith('.webp');
   }
 
   bool _isVideo(String key, String value) {
     final text = '$key $value'.toLowerCase();
-    return text.contains('video') || text.endsWith('.mp4') || text.endsWith('.mov') || text.endsWith('.webm');
+    return text.contains('video') ||
+        text.endsWith('.mp4') ||
+        text.endsWith('.mov') ||
+        text.endsWith('.webm');
   }
 
   Future<void> _download(String url) async {
@@ -659,23 +781,39 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
       final token = await AppPreferences.getAccessToken();
       final response = await http.get(
         Uri.parse(url),
-        headers: token == null || token.isEmpty ? const {} : {'Authorization': 'Bearer $token'},
+        headers: token == null || token.isEmpty
+            ? const {}
+            : {'Authorization': 'Bearer $token'},
       );
       if (response.statusCode < 200 || response.statusCode >= 300) {
         throw Exception('Download failed (${response.statusCode})');
       }
       final uri = Uri.parse(url);
-      var fileName = uri.pathSegments.isEmpty ? 'download' : uri.pathSegments.last;
+      var fileName = uri.pathSegments.isEmpty
+          ? 'download'
+          : uri.pathSegments.last;
       if (fileName.isEmpty || fileName == 'download') {
         fileName = 'download_${DateTime.now().millisecondsSinceEpoch}';
       }
       final file = File('${Directory.systemTemp.path}/$fileName');
       await file.writeAsBytes(response.bodyBytes);
+      await DownloadsService.saveBytes(
+        fileName: fileName,
+        bytes: response.bodyBytes,
+        mimeType: response.headers['content-type'],
+      );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Downloaded to ${file.path}')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Saved to Downloads.')),
+      );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString().replaceFirst('Exception: ', '')), backgroundColor: Theme.of(context).colorScheme.error));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
     }
   }
 }
@@ -687,27 +825,33 @@ class _FullScreenImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: Colors.black,
-        appBar: AppBar(
-          backgroundColor: Colors.black,
-          foregroundColor: Colors.white,
-          actions: [
-            if (onDownload != null)
-              IconButton(
-                tooltip: 'Download',
-                icon: const Icon(Icons.download_rounded),
-                onPressed: onDownload,
-              ),
-          ],
-        ),
-        body: InteractiveViewer(
-          minScale: .5, maxScale: 5,
-          child: Center(
-            child: AuthenticatedNetworkImage(
-              url: url, fit: BoxFit.contain,
-              fallback: const Icon(Icons.broken_image_outlined, color: Colors.white, size: 60),
-            ),
+    backgroundColor: Colors.black,
+    appBar: AppBar(
+      backgroundColor: Colors.black,
+      foregroundColor: Colors.white,
+      actions: [
+        if (onDownload != null)
+          IconButton(
+            tooltip: 'Download',
+            icon: const Icon(Icons.download_rounded),
+            onPressed: onDownload,
+          ),
+      ],
+    ),
+    body: InteractiveViewer(
+      minScale: .5,
+      maxScale: 5,
+      child: Center(
+        child: AuthenticatedNetworkImage(
+          url: url,
+          fit: BoxFit.contain,
+          fallback: const Icon(
+            Icons.broken_image_outlined,
+            color: Colors.white,
+            size: 60,
           ),
         ),
-      );
+      ),
+    ),
+  );
 }

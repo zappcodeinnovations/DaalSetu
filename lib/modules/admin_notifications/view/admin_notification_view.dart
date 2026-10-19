@@ -4,6 +4,7 @@ import 'package:iconly/iconly.dart';
 import '../../../theme/app_theme.dart';
 import '../controller/admin_notification_controller.dart';
 import '../model/admin_notification_model.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class AdminNotificationView extends StatelessWidget {
   const AdminNotificationView({super.key});
@@ -21,7 +22,7 @@ class AdminNotificationView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         title: Row(
           children: [
             const Text(

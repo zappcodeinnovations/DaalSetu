@@ -5,6 +5,7 @@ import 'package:iconly/iconly.dart';
 import '../../../seller/categories/controller/seller_category_controller.dart';
 import '../../../seller/categories/model/seller_category_model.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class TransporterCategoryView extends StatelessWidget {
   const TransporterCategoryView({super.key});
@@ -20,14 +21,14 @@ class TransporterCategoryView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
+        leading: AppBarLeading(child: IconButton(
           icon: Icon(
             Icons.arrow_back_ios_new,
             size: 20,
             color: theme.textTheme.bodyLarge?.color,
           ),
           onPressed: () => Get.back(),
-        ),
+        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
         title: Text(
           "Categories",
           style: GoogleFonts.poppins(

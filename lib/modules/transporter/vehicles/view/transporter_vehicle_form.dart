@@ -7,6 +7,7 @@ import '../controller/transporter_vehicle_controller.dart';
 import '../model/vehicle_model.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../nav_bar/controller/nav_controller.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 /// Same fields as the web "Register Vehicle" form. Dropdown values are the backend choices,
 /// so editing a vehicle never hits a value the dropdown does not know.
@@ -173,10 +174,10 @@ class _TransporterVehicleFormState extends State<TransporterVehicleForm> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
+        leading: AppBarLeading(child: IconButton(
           icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
-        ),
+        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
         title: Text(
           isEdit ? "Edit Vehicle" : "Register Vehicle",
           style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),

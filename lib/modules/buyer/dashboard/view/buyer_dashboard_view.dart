@@ -558,8 +558,8 @@ class BuyerDashboardView extends StatelessWidget {
     final openTickets = kpis['open_tickets']?.toString() ?? '0';
     final topSupplier = kpis['top_supplier']?.toString() ?? '—';
     final supplierShare = kpis['top_supplier_share']?.toString() ?? '—';
-    final rawAvgPrice = kpis['avg_purchase_price'] ??
-        kpis['avg_price'] ??
+    final rawAvgPrice = kpis['avg_price'] ??
+        kpis['avg_purchase_price'] ??
         kpis['average_purchase_price'] ??
         kpis['average_price'];
     String averagePrice = '₹0.00';
@@ -1047,10 +1047,13 @@ class BuyerDashboardView extends StatelessWidget {
 
         String status = order['transport_status'] ?? 'Pending';
         Color statusColor = Colors.orange;
-        if (status.toLowerCase().contains("transit")) statusColor = Colors.blue;
+        if (status.toLowerCase().contains("transit")) {
+          statusColor = Colors.blue;
+        }
         if (status.toLowerCase().contains("completed") ||
-            status.toLowerCase().contains("delivered"))
+            status.toLowerCase().contains("delivered")) {
           statusColor = Colors.green;
+        }
 
         return GlassCard(
           padding: const EdgeInsets.all(16),

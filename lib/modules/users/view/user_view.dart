@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/user_controller.dart';
 import 'package:daalsetu/theme/app_theme.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // USER MANAGEMENT SCREEN
@@ -73,10 +74,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        leading: IconButton(
+        leading: AppBarLeading(child: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () => Get.back(),
-        ),
+        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
         titleSpacing: 0,
         title: _showSearch
             ? Container(

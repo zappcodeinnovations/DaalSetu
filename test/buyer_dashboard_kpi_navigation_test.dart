@@ -117,4 +117,30 @@ void main() {
     expect(find.byType(BuyerOffersView), findsOneWidget);
     expect(find.text('Offers & Requirements'), findsOneWidget);
   });
+
+  testWidgets('AVG PURCHASE PRICE prefers the web dashboard avg_price field', (
+    tester,
+  ) async {
+    final kpis = <String, dynamic>{
+      ...sampleKpis,
+      'avg_purchase_price': '200.00',
+      'avg_price': '₹260.00/qtl',
+    };
+    await tester.pumpWidget(
+      GetMaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: Builder(
+              builder: (context) =>
+                  BuyerDashboardView().buildKPIGrid(context, kpis),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('₹260.00/qtl'), findsOneWidget);
+    expect(find.text('₹200.00/qtl'), findsNothing);
+  });
 }

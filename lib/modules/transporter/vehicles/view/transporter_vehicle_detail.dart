@@ -8,6 +8,7 @@ import '../controller/transporter_vehicle_controller.dart';
 import '../model/vehicle_model.dart';
 import './transporter_vehicle_form.dart';
 import './transporter_vehicles_view.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class TransporterVehicleDetail extends StatelessWidget {
   final VehicleModel vehicle;
@@ -23,10 +24,10 @@ class TransporterVehicleDetail extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
+        leading: AppBarLeading(child: IconButton(
           icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
-        ),
+        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
         title: Text(
           "Vehicle Details",
           style: GoogleFonts.poppins(

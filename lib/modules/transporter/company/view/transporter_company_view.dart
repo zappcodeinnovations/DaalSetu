@@ -7,6 +7,7 @@ import '../controller/transporter_company_controller.dart';
 import '../model/company_model.dart';
 import './transporter_company_form.dart';
 import './transporter_company_detail.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class TransporterCompanyView extends StatelessWidget {
   TransporterCompanyView({super.key});
@@ -24,14 +25,14 @@ class TransporterCompanyView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
+        leading: AppBarLeading(child: IconButton(
           icon: Icon(
             Icons.arrow_back_ios_new,
             size: 20,
             color: theme.textTheme.bodyLarge?.color,
           ),
           onPressed: () => Get.back(),
-        ),
+        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
         title: Text(
           "My Companies",
           style: GoogleFonts.poppins(

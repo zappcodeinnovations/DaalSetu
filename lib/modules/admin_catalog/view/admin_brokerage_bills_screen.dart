@@ -8,7 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
+import 'package:daalsetu/modules/downloads/service/downloads_service.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 const _billingEndpoint = '/api/admin/brokerage-bills/';
 
@@ -254,7 +256,7 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
     drawer: const AdminDrawer(activeKey: 'brokerage_bills'),
-    appBar: AppBar(
+    appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
       title: const Text('Brokerage Bills'),
       actions: [
         IconButton(
@@ -809,7 +811,7 @@ class _AdminCreateBrokerageBillScreenState
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Create Brokerage Bill')),
+    appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), title: const Text('Create Brokerage Bill')),
     body: _loading
         ? const Center(child: CircularProgressIndicator())
         : _error != null
@@ -1991,6 +1993,11 @@ class _AdminBrokerageBillDetailScreenState
       final fileName = '${number.isEmpty ? 'brokerage_bill_${widget.billId}' : number}.pdf';
       final file = File('${Directory.systemTemp.path}/$fileName');
       await file.writeAsBytes(response.bodyBytes, flush: true);
+      await DownloadsService.saveBytes(
+        fileName: fileName,
+        bytes: response.bodyBytes,
+        mimeType: 'application/pdf',
+      );
       if (mounted) _snack('PDF downloaded successfully.');
       try {
         final result = await OpenFilex.open(file.path, type: 'application/pdf');
@@ -2022,7 +2029,7 @@ class _AdminBrokerageBillDetailScreenState
       canPop: !_loading,
       onPopInvokedWithResult: (_, __) {},
       child: Scaffold(
-        appBar: AppBar(
+        appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
           title: Text(
             _billingText(bill?['bill_number']).isEmpty
                 ? 'Brokerage Bill'

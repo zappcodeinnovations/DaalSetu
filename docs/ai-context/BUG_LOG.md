@@ -1,5 +1,140 @@
 # Bug Log & Historical Fixes
 
+## Bug 36: Register Company GST Input Appeared Capped at 12 Characters
+- **Symptom**: Users could not finish entering a 15-character GST number; an invalid positional character after the PAN segment was silently rejected, making the field appear capped at 12 characters.
+- **Root Cause**: The GST formatter enforced every positional rule while typing instead of allowing the complete value and reporting validation feedback.
+- **Fix**: GST fields now accept and uppercase up to 15 alphanumeric characters across Seller, Transporter, and Admin company forms. The existing validator still enforces the official GST structure before submission.
+- **Files Changed**: `lib/utils/tax_id_formatters.dart`, company form views, admin record form, and `test/tax_id_formatters_test.dart`.
+- **Verification**: Formatter regression tests pass and targeted Flutter analysis reports no issues.
+
+---
+
+## Bug 35: Transporter Contract Details Missing Deal and Party Data
+- **Symptom**: Transporter My Deals could show only the logistics route while deal dates, price/quantity, buyer, and seller details remained blank.
+- **Root Cause**: `/api/transport-bids/?view=mine` returned only a partial nested contract. When optional detail enrichment was unavailable, the screen had no fallback values for the missing fields.
+- **Fix**: The backend My Deals payload now includes web-parity deal, packing, dates, remarks, buyer/seller company/contact, GST/address, product category/brand, and route data.
+- **Files Changed**: `P:/Daal_Broker/Api/web_parity_views.py`, `P:/Daal_Broker/brokers_app/test_web_parity_api.py`.
+- **Verification**: Transport bid flow and transporter contract authorization tests pass; navigation confirms the complete nested contract is supplied as initial detail data.
+
+---
+
+## Bug 34: Shared Contract Detail Called Inaccessible Consignment Endpoint
+- **Symptom**: Opening contract details could log `Consignment not found` from `/api/consignments/<id>/` followed by a permission-scoped response from `/api/mobile/contracts/<id>/`.
+- **Root Cause**: The shared Seller contract detail view always requested both APIs in parallel. Transporters cannot access consignment-management details, and the consignment API only includes active/received workflow contracts.
+- **Fix**:
+  1. Added role-aware consignment loading; transporter details no longer call the seller/buyer/admin consignment endpoint.
+  2. Skip consignment lookup for statuses excluded by the backend consignment queryset.
+  3. Made detail enrichment requests silent because list/notification data remains a valid fallback for permission-scoped 403/404 responses.
+  4. Preserved the authenticated mobile contract-detail request for transporters with a bid.
+- **Files Changed**:
+  - `lib/modules/seller/contracts/view/seller_contract_detail_view.dart`
+  - `lib/services/seller_services.dart`
+  - `test/seller_contract_detail_request_scope_test.dart`
+- **Verification**: Flutter request-scope regression test passed; targeted analyzer reports no errors. Django tests confirm bidders can view contract details and transporters without a bid remain denied.
+
+---
+
+## Bug 33: Stale Flutter Build Reported Missing Existing Members
+- **Symptom**: Flutter compilation reported missing `BuyerOfferModel.isInterested`, branch names, offer-interest update URL, and `ProfileModel.copyWith`.
+- **Root Cause**: All reported members already existed in the checked-out source and were visible to the Dart analyzer. The errors came from stale incremental Flutter artifacts rather than missing implementation.
+- **Fix**: Cleared generated Flutter artifacts and regenerated package metadata without changing the pinned dependency lockfile.
+- **Verification**: Fresh targeted analysis resolved all five reported compiler errors. Existing unrelated warnings in `buyer_services.dart` remain.
+
+---
+
+## Bug 32: Admin Offer Video Preview Clipped and Unplayable
+- **Symptom**: Offer Videos Details displayed only a cropped/blank-looking video frame; playback controls were not visible and the video could not be played from the screen.
+- **Root Cause**: The detail screen forced the complete video player column into a fixed 150px container. The video consumed that height and clipped the progress and play controls below it.
+- **Fix**:
+  1. Removed the fixed-height wrapper and render the preview in a stable 16:9 surface with `BoxFit.contain` behavior.
+  2. Added a full-surface play/pause target, visible play indicator, seekable progress bar, and fullscreen playback.
+  3. Added a user-friendly failure state with Retry and retained authenticated header/query-token media access.
+  4. Added regression coverage preventing the fixed-height clipping and checking the required playback controls.
+- **Files Changed**:
+  - `lib/modules/admin_catalog/view/admin_record_detail_screen.dart`
+  - `lib/widgets/authenticated_video_player.dart`
+  - `test/admin_offer_video_preview_test.dart`
+- **Verification**: Flutter preview regression test passed; targeted analyzer is clean. Existing Django bearer-token, query-token, and byte-range video preview tests pass.
+
+---
+
+## Bug 31: Sub Admin Email Validation Missing
+- **Symptom**: Seller Sub Admin create/edit accepted incomplete email addresses such as `rest@gmail.c`.
+- **Root Cause**:
+  1. The shared Flutter admin form only checked whether Email was present.
+  2. The backend Sub Admin flow checked required fields and uniqueness but never validated email format; Django's base email validator alone also permits one-character top-level domains.
+- **Fix**:
+  1. Added reusable client-side email validation requiring a complete domain and a 2-63 character alphabetic top-level domain.
+  2. Applied email keyboard configuration and inline validation to the shared admin form used by Sub Admin create/edit.
+  3. Added matching server-side validation before both create and update persistence, returning a user-friendly API message.
+  4. Added Flutter and Django regression coverage for invalid create, invalid update, valid email, and required email behavior.
+- **Files Changed**:
+  - `lib/utils/input_validators.dart`
+  - `lib/modules/admin_catalog/view/admin_record_form_screen.dart`
+  - `test/admin_sub_admin_email_validation_test.dart`
+  - `P:\Daal_Broker\brokers_app\permissions_views.py`
+  - `P:\Daal_Broker\brokers_app\test_web_parity_api.py`
+- **Verification**: Flutter validator tests passed (2/2); Django Sub Admin API test passed, covering client-independent create and update rejection.
+
+---
+
+## Bug 30: Seller Offers Excel Export Formatting
+- **Symptom**: Seller offer exports opened as an unformatted worksheet with cramped columns, plain title/timestamp rows, and no visual separation for table headers.
+- **Root Cause**: The mobile app exported CSV data. CSV cannot store Excel styles, merged cells, row heights, text wrapping, or column widths.
+- **Fix**:
+  1. Replaced the CSV export with a native `.xlsx` workbook using the project's existing Excel dependency.
+  2. Added merged and styled title/timestamp banners, a contrasting orange header row, readable column widths, wrapped text, numeric alignment, and alternating data-row fills.
+  3. Preserved the existing native share/save flow with the correct Excel MIME type and a descriptive filename.
+- **Files Changed**:
+  - `lib/modules/seller/products/controller/seller_product_controller.dart`
+  - `lib/modules/seller/products/service/seller_offer_export_service.dart`
+  - `test/seller_offer_excel_export_test.dart`
+- **Verification**: Focused workbook test validates sheet structure, values, widths, styles, and generated XLSX bytes.
+
+---
+
+## Bug 22: Buyer Dashboard Chart Type, Range Filtering, and KPI Data Parity
+- **Symptom**: Buyer mobile dashboard range buttons did not refresh subordinate analytics, chart visuals differed from web, some x-axis labels were omitted, and Average Purchase Price could display a stale alias value.
+- **Root Cause**:
+  1. Mobile sent `range`, but `buyer_dashboard_api` ignored it and always calculated Supplier Spend, Commodity Mix, Order Status, and Transport Status from unfiltered querysets.
+  2. The KPI mapper preferred legacy `avg_purchase_price` over the web dashboard's authoritative `avg_price` field.
+  3. Chart parity had no regression coverage, allowing incorrect chart types/orientations and skipped interval labels to return unnoticed.
+- **Fix**:
+  1. Added normalized `7D`, `1M`, `3M`, and `1Y` API range handling and range-scoped subordinate chart querysets.
+  2. Kept Spend & Orders as web-style Orders bars plus Spend line, Supplier Spend horizontal with scale, and Commodity Mix as a polar-area visualization; all x-axis intervals render.
+  3. Average Purchase Price now prioritizes `avg_price`, matching the web panel payload.
+  4. Added controller dependency injection and regression tests proving range changes reload all chart datasets.
+- **Files Changed**:
+  - `P:\Daal_Broker\Api\views.py`
+  - `P:\Daal_Broker\test_buyer_dashboard_ranges.py`
+  - `lib/modules/buyer/dashboard/controller/buyer_dashboard_controller.dart`
+  - `lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`
+  - `lib/modules/buyer/dashboard/view/buyer_dashboard_analytics.dart`
+  - `test/buyer_dashboard_analytics_parity_test.dart`
+  - `test/buyer_dashboard_kpi_navigation_test.dart`
+- **Verification**: Flutter dashboard tests passed (5/5) and Django range-contract tests passed (3/3).
+
+---
+
+## Bug 21: Background API Failures Display Intrusive Error Toasts
+- **Symptom**: Buyer screens with successfully loaded content, including Categories, could be covered by a red generic server-error toast from an unrelated background request.
+- **Root Cause**:
+  1. Buyer Dashboard initializes `ProfileController`; its non-critical profile hydration performed two GET requests without `suppressErrorDialog`, then displayed the caught raw exception through `Get.snackbar`.
+  2. Buyer branch background refresh accepted a `silent` flag, but did not forward it through `SellerServices.getSellerBranches`, allowing the API client to display global error UI.
+- **Fix**:
+  1. Profile background hydration now suppresses global network/server dialogs, retains existing profile data on failure, and records an internal load error without showing a raw toast.
+  2. Explicit profile refresh can show a short user-friendly retry message without exposing the server exception.
+  3. Buyer branch silent refresh now propagates through the service to `ApiClient.get`.
+- **Files Changed**:
+  - `lib/services/profile_services.dart`
+  - `lib/modules/profile/controller/profile_controller.dart`
+  - `lib/services/seller_services.dart`
+  - `lib/modules/buyer/branch/controller/buyer_branch_controller.dart`
+  - `test/background_api_error_policy_test.dart`
+- **Verification**: Background API error policy tests passed (2/2). Targeted analyzer reported no errors; existing warnings in `seller_services.dart` remain.
+
+---
+
 ## Bug 20: Sub-Category Master Details Image Display Failure ("Not Available")
 - **Symptom**: On the mobile app's Sub-Category Master Details screen (`ID: 117`, `Name: sub`), even though an image was uploaded during creation, the Image field displayed `"Not Available"` (in grey italics) instead of rendering the uploaded image preview and download option.
 - **Root Cause**:
@@ -37,8 +172,16 @@
   2. The underlying products in the database (`/api/products/146/` and `/api/products/141/`) are confirmed active with full stock (`20.100 QTL` and `660.000 QTL`).
   3. The web dashboard card only renders `status_label` ("Active") and does not render `available_quantity`.
   4. On mobile, the absent quantity falls back to `'0.000 QTL'`, which causes client-side stock calculation in `BuyerOfferModel.fromJson` to falsely infer `detectedOutOfStock = true`, overriding the backend's `status_label: "Active"` into `OUT OF STOCK` and disabling the CTA button.
-- **Action**: Backend developer must add `available_quantity`, `remaining_quantity`, `quantity_qtl`, `quantity_unit`, `remaining_bag_count`, and `packing_weight_kg` to `/api/offers/pending/` serializer.
-- **Verification**: Verified against live API response on `https://daalsetu.zappcode.in/api/offers/pending/` and individual product endpoints `146` and `141`.
+- **Fix**:
+  1. Updated the backend pending/today/previous offer list serializer to include `available_quantity`, `remaining_quantity`, `original_quantity`, `quantity_qtl`, quantity/amount units, bag counts, packing weight, and `is_active`.
+  2. Added a mobile compatibility fallback that hydrates active pending offers from `/api/products/<id>/` when an older list response omits stock values, while keeping the list endpoint's status and price authoritative.
+  3. Preserved a real zero `remaining_quantity` instead of incorrectly falling back to the original quantity.
+- **Files Changed**:
+  - `P:\Daal_Broker\Api\views.py`
+  - `P:\Daal_Broker\test_pending_offers.py`
+  - `lib/services/buyer_services.dart`
+  - `test/buyer_pending_offer_enrichment_test.dart`
+- **Verification**: Backend tests passed (2/2); Flutter pending-offer enrichment and quantity calculation tests passed (5/5).
 
 ---
 

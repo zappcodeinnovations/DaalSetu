@@ -8,6 +8,7 @@ import '../../../routes/app_routes.dart';
 import '../../contracts/view/contract_view.dart';
 import '../model/dashboard_model.dart';
 import '../../../utils/money_format.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class AdminOverviewKpisView extends StatefulWidget {
   final KpiModel kpis;
@@ -55,10 +56,10 @@ class _AdminOverviewKpisViewState extends State<AdminOverviewKpisView> {
         ),
         elevation: 0,
         backgroundColor: Colors.transparent,
-        leading: IconButton(
+        leading: AppBarLeading(child: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Get.back(),
-        ),
+        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

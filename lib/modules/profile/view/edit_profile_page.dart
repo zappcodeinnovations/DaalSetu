@@ -9,6 +9,7 @@ import '../../../theme/app_theme.dart';
 import '../../../theme/glass_widgets.dart';
 import '../../../utils/tax_id_formatters.dart';
 import '../controller/profile_controller.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -292,10 +293,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
+        leading: AppBarLeading(child: IconButton(
           icon: Icon(IconlyLight.arrow_left, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
-        ),
+        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
         title: Text(
           "Edit Profile",
           style: GoogleFonts.poppins(

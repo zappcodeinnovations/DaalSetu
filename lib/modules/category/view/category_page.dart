@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../controller/category_controller.dart';
 import '../model/category_model.dart';
 import '../model/category_request_model.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class CategoryPageView extends StatelessWidget {
   const CategoryPageView({super.key});
@@ -23,12 +24,12 @@ class CategoryPageView extends StatelessWidget {
           elevation: 0,
           centerTitle: false,
           backgroundColor: theme.scaffoldBackgroundColor,
-          leading: Navigator.canPop(context)
+          leading: AppBarLeading(child: Navigator.canPop(context)
               ? IconButton(
                   icon: Icon(IconlyLight.arrow_left_2, color: theme.textTheme.bodyLarge?.color),
                   onPressed: () => Get.back(),
                 )
-              : null,
+              : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
           title: Text(
             "Categories",
             style: theme.textTheme.headlineSmall?.copyWith(

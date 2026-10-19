@@ -4,6 +4,7 @@ import 'package:iconly/iconly.dart';
 import '../../../theme/app_theme.dart';
 import '../controller/admin_reports_controller.dart';
 import '../widgets/branch_report_card.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class AdminBranchReportsView extends StatelessWidget {
   const AdminBranchReportsView({super.key});
@@ -27,13 +28,13 @@ class AdminBranchReportsView extends StatelessWidget {
           resizeToAvoidBottomInset: false,
           appBar: AppBar(
             titleSpacing: 0,
-            leading: IconButton(
+            leading: AppBarLeading(child: IconButton(
               icon: const Icon(Icons.arrow_back),
               onPressed: () {
                 controller.searchFocusNode.unfocus();
                 Get.back();
               },
-            ),
+            )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
             title: Text(
               "Branch Reports",
               style: theme.textTheme.titleMedium?.copyWith(

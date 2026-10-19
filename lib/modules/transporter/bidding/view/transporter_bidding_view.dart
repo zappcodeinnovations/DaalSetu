@@ -6,6 +6,7 @@ import '../controller/transporter_bidding_controller.dart';
 import '../model/transporter_bid_model.dart';
 import '../../../seller/contracts/view/seller_contract_detail_view.dart';
 import '../../../../routes/app_routes.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 const _gold = Color(0xFFFFB300);
 
@@ -71,7 +72,7 @@ class TransporterBiddingView extends StatelessWidget {
       initialIndex: initialTab,
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: AppBar(
+        appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
           backgroundColor: Colors.transparent,
           elevation: 0,
           title: Text(

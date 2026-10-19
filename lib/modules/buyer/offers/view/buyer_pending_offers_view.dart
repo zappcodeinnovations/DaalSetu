@@ -7,6 +7,7 @@ import '../../../products/view/product_detail.dart';
 import '../controller/buyer_offers_controller.dart';
 import '../model/buyer_offer_model.dart';
 import 'buyer_offer_details_view.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class BuyerPendingOffersView extends StatelessWidget {
   const BuyerPendingOffersView({super.key});
@@ -31,7 +32,7 @@ class BuyerPendingOffersView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(

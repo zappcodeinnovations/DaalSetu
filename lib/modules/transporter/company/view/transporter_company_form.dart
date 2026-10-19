@@ -7,6 +7,7 @@ import '../../../../utils/india_location_data.dart';
 import '../controller/transporter_company_controller.dart';
 import '../model/company_model.dart';
 import '../../../../routes/app_routes.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class TransporterCompanyForm extends StatefulWidget {
   final CompanyModel? company; // Null for create, provided for edit
@@ -136,7 +137,12 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
     setState(() => _isSubmitting = false);
 
     if (success) {
-      Get.until((route) => route.settings.name == AppRoutes.transporterCompany || route.settings.name == AppRoutes.mainNav || route.isFirst);
+      Get.until(
+        (route) =>
+            route.settings.name == AppRoutes.transporterCompany ||
+            route.settings.name == AppRoutes.mainNav ||
+            route.isFirst,
+      );
     }
   }
 
@@ -150,10 +156,13 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
-          onPressed: () => Get.back(),
+        leading: AppBarLeading(
+          child: IconButton(
+            icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
+            onPressed: () => Get.back(),
+          ),
         ),
+        leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
         title: Text(
           isEdit ? "Edit Company" : "Register Company",
           style: GoogleFonts.poppins(
@@ -204,11 +213,16 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
 
                 const SizedBox(height: 16),
                 _buildSectionTitle("Tax Information"),
-                _buildTextField(label: "GST Number", controller: _gstCtrl),
+                _buildTextField(
+                  label: "GST Number",
+                  controller: _gstCtrl,
+                  validateGst: true,
+                ),
                 _buildTextField(
                   label: "PAN Number",
                   controller: _panCtrl,
                   isRequired: true,
+                  validatePan: true,
                 ),
 
                 const SizedBox(height: 16),
@@ -224,13 +238,9 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
                 _buildTextField(label: "Landmark", controller: _landmarkCtrl),
                 Row(
                   children: [
-                    Expanded(
-                      child: _buildCityDropdown(),
-                    ),
+                    Expanded(child: _buildCityDropdown()),
                     const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildStateDropdown(),
-                    ),
+                    Expanded(child: _buildStateDropdown()),
                   ],
                 ),
                 Row(
@@ -295,54 +305,53 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
     );
   }
 
-  static bool _isTaxField(String label, String key) {
-    final clean = label.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), ' ').trim();
-    final words = clean.split(RegExp(r'\s+'));
-    return words.contains(key);
-  }
-
   Widget _buildTextField({
     required String label,
     required TextEditingController controller,
     bool isRequired = false,
     bool isNumber = false,
+    bool validatePan = false,
+    bool validateGst = false,
     String? hintText,
   }) {
-    final isPan = _isTaxField(label, 'pan');
-    final isGst = _isTaxField(label, 'gst');
     final lower = label.toLowerCase();
     final isYear = lower.contains('year');
     final isEmployees = lower.contains('employee');
     final isPincode = lower.contains('pincode');
     final isCompanyType = lower.contains('company type');
 
-    final effectiveHint = hintText ??
-        (isGst
+    final effectiveHint =
+        hintText ??
+        (validateGst
             ? "e.g. 22AAAAA0000A1Z5"
-            : isPan
-                ? "e.g. ABCDE1234F"
-                : isCompanyType
-                    ? "e.g. Private Limited"
-                    : isYear
-                        ? "e.g. 2019"
-                        : isEmployees
-                            ? "e.g. 25"
-                            : isPincode
-                                ? "e.g. 400001"
-                                : null);
+            : validatePan
+            ? "e.g. ABCDE1234F"
+            : isCompanyType
+            ? "e.g. Private Limited"
+            : isYear
+            ? "e.g. 2019"
+            : isEmployees
+            ? "e.g. 25"
+            : isPincode
+            ? "e.g. 400001"
+            : null);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: controller,
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-        maxLength: isNumber ? 10 : null,
+        maxLength: validateGst
+            ? 15
+            : isNumber
+            ? 10
+            : null,
         buildCounter:
             (_, {required currentLength, required isFocused, maxLength}) =>
                 null,
-        inputFormatters: isPan
+        inputFormatters: validatePan
             ? const [TaxIdInputFormatter.pan()]
-            : isGst
+            : validateGst
             ? const [TaxIdInputFormatter.gst()]
             : null,
         decoration: InputDecoration(
@@ -375,9 +384,9 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
           ),
         ),
         validator: (value) {
-          final taxError = isPan
+          final taxError = validatePan
               ? TaxIdValidator.pan(value, required: isRequired)
-              : isGst
+              : validateGst
               ? TaxIdValidator.gst(value, required: isRequired)
               : null;
           if (taxError != null) return taxError;
@@ -393,7 +402,8 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
   Widget _buildCityDropdown() {
     final availableCities = _getAvailableCities();
     final currentCity = _cityCtrl.text.trim();
-    final selectedCity = availableCities.contains(currentCity) && currentCity.isNotEmpty
+    final selectedCity =
+        availableCities.contains(currentCity) && currentCity.isNotEmpty
         ? currentCity
         : null;
 
@@ -456,7 +466,8 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
               _cityCtrl.text = val;
               final inferredState = IndiaLocationData.getStateForCity(val);
               if (inferredState != null &&
-                  _stateCtrl.text.trim().toLowerCase() != inferredState.toLowerCase()) {
+                  _stateCtrl.text.trim().toLowerCase() !=
+                      inferredState.toLowerCase()) {
                 _stateCtrl.text = inferredState;
               }
             });
@@ -519,8 +530,12 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
               _stateCtrl.text = val;
               // If current city is not part of newly chosen state, switch to first city of that state
               final stateCities = IndiaLocationData.stateCities[val] ?? [];
-              if (!stateCities.any((c) => c.toLowerCase() == _cityCtrl.text.trim().toLowerCase())) {
-                _cityCtrl.text = stateCities.isNotEmpty ? stateCities.first : '';
+              if (!stateCities.any(
+                (c) => c.toLowerCase() == _cityCtrl.text.trim().toLowerCase(),
+              )) {
+                _cityCtrl.text = stateCities.isNotEmpty
+                    ? stateCities.first
+                    : '';
               }
             });
           }
@@ -583,10 +598,7 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text("Cancel"),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
           ElevatedButton(
             onPressed: () {
               final newCity = textController.text.trim();
@@ -605,5 +617,3 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
     );
   }
 }
-
-

@@ -5,6 +5,7 @@ import 'package:iconly/iconly.dart';
 import '../controller/seller_negotiation_controller.dart';
 import '../../common/seller_ui.dart';
 import 'seller_interest_thread_view.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class SellerOfferInterestsView extends StatelessWidget {
   const SellerOfferInterestsView({super.key});
@@ -25,7 +26,7 @@ class SellerOfferInterestsView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         backgroundColor: Colors.transparent,
         elevation: 0,
         titleSpacing: 0,

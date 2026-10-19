@@ -8,6 +8,7 @@ import '../../../../services/seller_services.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/app_snackbar.dart';
 import 'buyer_offer_details_view.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 enum BuyerRequestMode { requirements, offers }
 
@@ -660,7 +661,7 @@ class _BuyerRequestManagementViewState
           backgroundColor: theme.scaffoldBackgroundColor,
           surfaceTintColor: Colors.transparent,
           elevation: 0,
-          leading: Navigator.canPop(context)
+          leading: AppBarLeading(child: Navigator.canPop(context)
               ? IconButton(
                   icon: Icon(
                     Icons.arrow_back_ios_new,
@@ -669,7 +670,7 @@ class _BuyerRequestManagementViewState
                   ),
                   onPressed: () => Get.back(),
                 )
-              : null,
+              : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
           title: Text(
             heading,
             style: GoogleFonts.poppins(

@@ -2,6 +2,7 @@ import 'package:iconly/iconly.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/subcategory_controller.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class SubCategoryScreen extends StatelessWidget {
   SubCategoryScreen({super.key});
@@ -16,7 +17,7 @@ class SubCategoryScreen extends StatelessWidget {
       backgroundColor: theme.scaffoldBackgroundColor,
 
       /// 🔹 APP BAR
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         // elevation: 0,
         // centerTitle: true,
         // title: Obx(

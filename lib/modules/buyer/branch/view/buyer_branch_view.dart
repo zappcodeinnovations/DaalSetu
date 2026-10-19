@@ -5,6 +5,7 @@ import 'package:iconly/iconly.dart';
 import '../controller/buyer_branch_controller.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/app_snackbar.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class BuyerBranchView extends StatefulWidget {
   const BuyerBranchView({super.key});
@@ -48,7 +49,7 @@ class _BuyerBranchViewState extends State<BuyerBranchView> with WidgetsBindingOb
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         title: Text(

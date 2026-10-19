@@ -6,7 +6,19 @@ import '../../../../network/api_client.dart';
 import '../../../../services/category_services.dart';
 import '../../../category/model/category_model.dart';
 
+typedef BuyerDashboardLoader =
+    Future<Map<String, dynamic>> Function({String? range});
+typedef BuyerCategoryLoader = Future<List<CategoryModel>> Function();
+
 class BuyerDashboardController extends GetxController {
+  BuyerDashboardController({
+    BuyerDashboardLoader? dashboardLoader,
+    BuyerCategoryLoader? categoryLoader,
+  }) : _dashboardLoader = dashboardLoader ?? BuyerServices.getDashboard,
+       _categoryLoader = categoryLoader ?? CategoryService.fetchBuyerCategories;
+
+  final BuyerDashboardLoader _dashboardLoader;
+  final BuyerCategoryLoader _categoryLoader;
   var isLoading = true.obs;
   var isError = false.obs;
   var errorMessage = ''.obs;
@@ -42,7 +54,7 @@ class BuyerDashboardController extends GetxController {
       isError(false);
       errorMessage('');
 
-      final data = await BuyerServices.getDashboard(range: effectiveRange);
+      final data = await _dashboardLoader(range: effectiveRange);
 
       // If the API nests it in a body key, we extract it.
       final actualData = data.containsKey('body') ? data['body'] : data;
@@ -66,7 +78,7 @@ class BuyerDashboardController extends GetxController {
     // Categories are independent of dashboard analytics. A dashboard API
     // failure must not stop this section from refreshing.
     try {
-      final cats = await CategoryService.fetchBuyerCategories();
+      final cats = await _categoryLoader();
       categories.assignAll(cats);
     } catch (_) {
       // Keep the existing category list on a transient request failure.

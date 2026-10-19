@@ -22,6 +22,12 @@ class DrawerController extends GetxController {
 
   var userRole = ''.obs;
 
+  /// AppPreferences.sessionVersion the role/menu were loaded for; a mismatch
+  /// means someone else signed in since (show a spinner, then reload).
+  int loadedSession = -1;
+
+  bool get isStale => loadedSession != AppPreferences.sessionVersion;
+
   @override
   void onInit() {
     super.onInit();
@@ -32,6 +38,8 @@ class DrawerController extends GetxController {
     try {
       isLoading.value = true;
       hasError.value = false;
+      loadedSession = AppPreferences.sessionVersion;
+      menuSections.clear();
 
       final role = await AppPreferences.getRole() ?? 'buyer';
       userRole.value = role.toLowerCase();

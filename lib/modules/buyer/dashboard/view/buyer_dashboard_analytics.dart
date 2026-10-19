@@ -217,7 +217,7 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
                         border: Border.all(
                           color: _range == range
                               ? const Color(0xFFF59E0B)
-                              : Colors.grey.withOpacity(0.3),
+                              : Colors.grey.withValues(alpha: 0.3),
                           width: 1,
                         ),
                       ),
@@ -300,6 +300,7 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
                 children: [
                   // Layer 1: Bar chart for Orders
                   BarChart(
+                    key: const Key('buyer-spend-orders-bars'),
                     BarChartData(
                       minY: 0,
                       maxY: ordersMaxY,
@@ -309,7 +310,7 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
                         drawVerticalLine: false,
                         horizontalInterval: ordersMaxY / 6,
                         getDrawingHorizontalLine: (value) => FlLine(
-                          color: Colors.black.withOpacity(0.04),
+                          color: Colors.black.withValues(alpha: 0.04),
                           strokeWidth: 1,
                         ),
                       ),
@@ -425,6 +426,7 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
                       bottom: 26,
                     ),
                     child: LineChart(
+                      key: const Key('buyer-spend-trend-line'),
                       LineChartData(
                         minX: count == 1 ? -0.5 : 0,
                         maxX: count == 1 ? 0.5 : (count - 1).toDouble(),
@@ -470,7 +472,7 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
                             ),
                             belowBarData: BarAreaData(
                               show: count > 1,
-                              color: const Color(0xFFF59E0B).withOpacity(0.08),
+                              color: const Color(0xFFF59E0B).withValues(alpha: 0.08),
                             ),
                           ),
                         ],
@@ -480,7 +482,7 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
                   if (widget.isRangeLoading)
                     Positioned.fill(
                       child: Container(
-                        color: Colors.white.withOpacity(0.4),
+                        color: Colors.white.withValues(alpha: 0.4),
                         child: const Center(
                           child: SizedBox(
                             width: 22,
@@ -688,6 +690,7 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
                   width: 125,
                   height: 125,
                   child: CustomPaint(
+                    key: const Key('buyer-commodity-polar-chart'),
                     painter: _PolarAreaPainter(
                       values: data.values,
                       colors: colors,
@@ -902,7 +905,7 @@ class _PolarAreaPainter extends CustomPainter {
     final maxRadius = math.min(size.width, size.height) * 0.46;
 
     final ringPaint = Paint()
-      ..color = Colors.grey.withOpacity(0.2)
+      ..color = Colors.grey.withValues(alpha: 0.2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.8;
 
@@ -941,7 +944,7 @@ class _PolarAreaPainter extends CustomPainter {
       final startAngle = -math.pi / 2 + (i * sectorAngle);
 
       final sectorPaint = Paint()
-        ..color = colors[i % colors.length].withOpacity(0.78)
+        ..color = colors[i % colors.length].withValues(alpha: 0.78)
         ..style = PaintingStyle.fill;
 
       final path = Path();

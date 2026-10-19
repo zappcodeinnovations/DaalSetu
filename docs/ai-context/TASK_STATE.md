@@ -1,19 +1,26 @@
 # Current Task State
 
 ## Current Task
-- **Goal**: Initialize persistent project context and workspace skills in accordance with `/agy-customizations` and the Ultimate Google Antigravity Customization framework.
-- **Acceptance Criteria**:
-  1. Inspect workspace and available customization mechanisms.
-  2. Inspect Git status and existing uncommitted changes.
-  3. Report architecture and testing capabilities.
-  4. Create persistent context files in `docs/ai-context/`.
-  5. Create workspace skills in `.agents/skills/`.
-  6. Create workspace rule `GEMINI.md`.
-  7. Validate syntax and run verification tests.
+- **Goal**: Populate transporter Contract Details fully and allow complete 15-character GST entry in Register Company.
+- **Status**: Completed.
+- **Output**: Web-parity My Deals contract payload and 15-character GST entry with submit-time format validation.
+- **Evidence**: Django transport bid/detail tests, Flutter formatter tests, and targeted analyzer all pass.
 
 ---
 
 ## Completed Work in Current Session
+- **Bug 36 Completed (GST Entry Length)**: Seller, Transporter, and Admin company forms accept all 15 GST alphanumeric characters while preserving official-format validation on submit.
+- **Bug 35 Completed (Transporter Contract Detail Data)**: My Deals now carries complete deal, product, date, buyer/seller company/contact, GST/address, remarks, and route fields so details remain populated even when optional enrichment is unavailable.
+- **Bug 34 Completed (Contract Detail Request Scope)**: Transporter detail no longer calls inaccessible consignment management, non-consignment statuses skip the lookup, and optional detail enrichment failures remain silent while initial list data renders.
+- **Bug 33 Completed (Stale Flutter Compilation State)**: Confirmed all reported model/API members are present in tracked source, cleared generated artifacts, regenerated package metadata, and verified the missing-member errors no longer reproduce.
+- **Bug 32 Completed (Admin Offer Video Playback)**: Removed the fixed-height player clipping, added visible inline playback controls, fullscreen viewing, progress seeking, and a retry state. Backend authenticated video streaming and byte ranges were verified.
+- **Bug 31 Completed (Sub Admin Email Validation)**: Added shared Flutter form validation and matching Django validation for Sub Admin create/edit. Incomplete domains such as `rest@gmail.c` are rejected before persistence, while the API returns a clean validation message.
+- **Bug 30 Completed (Seller Offers Excel Formatting)**: Replaced the formatting-limited CSV export with a native XLSX workbook and added professional title/timestamp banners, colored headers, readable widths, wrapping, numeric alignment, zebra rows, and correct Excel sharing metadata.
+- **Bug 22 Completed (Buyer Dashboard Analytics Parity)**: `1M`, `3M`, and `1Y` now refresh all dashboard chart datasets. Spend/Orders, Supplier Spend, and Commodity Mix render with web-equivalent chart types, and Average Purchase Price uses the web-authoritative API field.
+- **Bug 21 Completed (Background API Error Toasts)**: Non-critical Buyer profile and branch synchronization failures now retain functional screen content without opening generic server-error UI. User-triggered refresh errors remain concise and actionable.
+- **Bug 18 Completed (Buyer Pending Offers False Out-of-Stock)**: Added complete inventory fields to the backend offer-list payload and mobile fallback hydration for older API responses. Active offers now retain `Active` status, real available quantity, and an enabled CTA; genuine zero-stock offers remain unavailable.
+- **Repository Sync**: Fast-forwarded `rohit` from `0add5ff` to `a5f3ae2`; preserved local documentation while resolving the `TASK_STATE.md` stash conflict.
+- **Weekly Report**: Documented mobile and web/backend delivery, QA evidence, repository status, risks, and next-week priorities in `docs/reports/WEEKLY_REPORT_2026-10-12_TO_2026-10-17.md`.
 - **Bug 29 (Buyer Dashboard — TOP SUPPLIER & AVG PURCHASE PRICE Navigation Parity)**:
   - Addressed issue where tapping on either the "TOP SUPPLIER (MTD)" card or the "AVG PURCHASE PRICE" card on the Buyer Dashboard navigated to `ContractsScreen` instead of the "Offers & Requirements" screen (`BuyerOffersView`).
   - Updated both `onTap` handlers in `BuyerDashboardView._buildKPIGrid` (`lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`) to `Get.to(() => const BuyerOffersView(initialIndex: 0))`.

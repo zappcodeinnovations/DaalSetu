@@ -777,10 +777,14 @@ class SellerServices {
     return [];
   }
 
-  static Future<Map<String, dynamic>> getContractDetails(int contractId) async {
+  static Future<Map<String, dynamic>> getContractDetails(
+    int contractId, {
+    bool silent = false,
+  }) async {
     final response = await ApiClient.get(
       endpoint: ApiUrls.mobileContractDetails(contractId),
       requireAuth: true,
+      suppressErrorDialog: silent,
     );
     if (response is Map<String, dynamic>) return response;
     return {};
@@ -804,10 +808,13 @@ class SellerServices {
   /// ============================================================
   /// SELLER COMPANY BRANCHES
   /// ============================================================
-  static Future<Map<String, dynamic>> getSellerBranches() async {
+  static Future<Map<String, dynamic>> getSellerBranches({
+    bool silent = false,
+  }) async {
     final response = await ApiClient.get(
       endpoint: ApiUrls.sellerBranches,
       requireAuth: true,
+      suppressErrorDialog: silent,
     );
     if (response is Map<String, dynamic>) return response;
     return {};
@@ -1201,10 +1208,12 @@ class SellerServices {
 
   static Future<Map<String, dynamic>> getConsignmentDetail(
     int contractId,
+    {bool silent = false}
   ) async {
     final response = await ApiClient.get(
       endpoint: ApiUrls.consignmentDetail(contractId),
       requireAuth: true,
+      suppressErrorDialog: silent,
     );
     return _asMap(response, "Failed to load consignment");
   }

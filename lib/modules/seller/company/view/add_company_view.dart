@@ -4,6 +4,7 @@ import 'package:iconly/iconly.dart';
 import 'package:daalsetu/utils/india_location_data.dart';
 import 'package:daalsetu/utils/tax_id_formatters.dart';
 import '../controller/seller_company_controller.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class AddCompanyView extends StatefulWidget {
   const AddCompanyView({super.key});
@@ -132,10 +133,13 @@ class _AddCompanyViewState extends State<AddCompanyView> {
             ),
           ),
         ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
-          onPressed: () => Get.back(),
+        leading: AppBarLeading(
+          child: IconButton(
+            icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
+            onPressed: () => Get.back(),
+          ),
         ),
+        leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -568,7 +572,11 @@ class _AddCompanyViewState extends State<AddCompanyView> {
             }
           },
           keyboardType: keyboardType,
-          maxLength: keyboardType == TextInputType.number ? 10 : null,
+          maxLength: isGst
+              ? 15
+              : keyboardType == TextInputType.number
+              ? 10
+              : null,
           buildCounter:
               (_, {required currentLength, required isFocused, maxLength}) =>
                   null,

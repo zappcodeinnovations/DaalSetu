@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
 import '../controller/seller_category_controller.dart';
 import '../model/seller_category_model.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class SellerCategoryView extends StatelessWidget {
   const SellerCategoryView({super.key});
@@ -19,7 +20,7 @@ class SellerCategoryView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(

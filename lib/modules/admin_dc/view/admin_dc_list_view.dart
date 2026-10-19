@@ -5,6 +5,7 @@ import '../../../routes/app_routes.dart';
 import '../../../theme/app_theme.dart';
 import '../controller/admin_dc_list_controller.dart';
 import '../widgets/admin_challan_card.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class AdminChallanListView extends StatelessWidget {
   const AdminChallanListView({super.key});
@@ -17,7 +18,7 @@ class AdminChallanListView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         title: Text(
           "Delivery Challans",
           style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),

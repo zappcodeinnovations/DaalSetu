@@ -10,6 +10,7 @@ import '../controller/buyer_offer_detail_controller.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/app_snackbar.dart';
 import '../../../../services/buyer_services.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class BuyerOfferDetailsView extends StatefulWidget {
   final int offerId;
@@ -95,10 +96,10 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
             ),
           ],
         ),
-        leading: IconButton(
+        leading: AppBarLeading(child: IconButton(
           icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
-        ),
+        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, size: 20),

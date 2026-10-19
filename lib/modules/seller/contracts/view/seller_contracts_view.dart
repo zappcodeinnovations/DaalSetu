@@ -5,6 +5,7 @@ import 'package:iconly/iconly.dart';
 import '../controller/seller_contract_controller.dart';
 import '../../common/seller_ui.dart';
 import 'seller_contract_detail_view.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class SellerContractsView extends StatelessWidget {
   const SellerContractsView({super.key});
@@ -17,7 +18,7 @@ class SellerContractsView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(

@@ -7,7 +7,7 @@ import '../../../theme/app_theme.dart';
 import '../../seller/dashboard/view/seller_dashboard_view.dart';
 import '../../seller/products/view/seller_product_view.dart';
 import '../../seller/contracts/view/seller_contracts_view.dart';
-import '../../seller/workspace/view/seller_workspace_view.dart';
+import '../../../widgets/app_shell.dart';
 import '../../contracts/view/contract_view.dart';
 import '../../dashboard/view/dashboard_page.dart';
 import '../../kyc_users/view/kyc_user_view.dart';
@@ -35,7 +35,8 @@ class MainNavigationScreen extends StatelessWidget {
       return [
             SellerDashboardView(),
             const SellerProductView(),
-            const SellerWorkspaceView(),
+            // "Menu" opens the side drawer (see _onTap), so this slot is never shown.
+            const SizedBox.shrink(),
             const SellerContractsView(),
           ] +
           [SettingsScreen()];
@@ -92,10 +93,23 @@ class MainNavigationScreen extends StatelessWidget {
         bottomNavigationBar: _GlassNavBar(
           currentIndex: navController.selectedIndex.value,
           role: navController.userRole.value,
-          onTap: navController.changeIndex,
+          onTap: _onTap,
         ),
       );
     });
+  }
+
+  static const _sellerMenuTab = 2;
+
+  void _onTap(int index) {
+    final role = navController.userRole.value;
+    final isSeller = role == 'seller' || role == 'both_sellerandbuyer';
+    if (isSeller && index == _sellerMenuTab) {
+      // The seller tools live in the side drawer, the same list on every page.
+      AppShell.openDrawer();
+      return;
+    }
+    navController.changeIndex(index);
   }
 }
 

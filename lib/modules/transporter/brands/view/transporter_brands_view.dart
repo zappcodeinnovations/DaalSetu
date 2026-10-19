@@ -5,6 +5,7 @@ import 'package:iconly/iconly.dart';
 import '../../../../theme/app_theme.dart';
 import '../controller/transporter_brands_controller.dart';
 import '../model/transporter_brand_model.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class TransporterBrandsView extends StatelessWidget {
   TransporterBrandsView({super.key});
@@ -22,14 +23,14 @@ class TransporterBrandsView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
+        leading: AppBarLeading(child: IconButton(
           icon: Icon(
             Icons.arrow_back_ios_new,
             size: 20,
             color: theme.textTheme.bodyLarge?.color,
           ),
           onPressed: () => Get.back(),
-        ),
+        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
         title: Text(
           "Brands",
           style: GoogleFonts.poppins(

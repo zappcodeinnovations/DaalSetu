@@ -1,6 +1,7 @@
 import 'package:daalsetu/modules/admin_catalog/view/admin_drawer.dart';
 import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class AdminContractHistoryScreen extends StatefulWidget {
   const AdminContractHistoryScreen({super.key});
@@ -190,7 +191,7 @@ class _AdminContractHistoryScreenState
   @override
   Widget build(BuildContext context) => Scaffold(
     drawer: const AdminDrawer(activeKey: 'contract_history'),
-    appBar: AppBar(
+    appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
       title: const Text(
         'Contract History',
         style: TextStyle(fontWeight: FontWeight.w800),

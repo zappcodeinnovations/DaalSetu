@@ -3,6 +3,7 @@ import '../../../../utils/money_format.dart';
 import 'package:get/get.dart';
 
 import '../controller/seller_delivery_controller.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 /// Full seller-facing delivery challan. The API returns the same snapshot-rich
 /// document used by the web panel, so every available party, transport, charge
@@ -109,7 +110,7 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
+    appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
       title: const Text('Challan Details'),
       actions: [
         IconButton(

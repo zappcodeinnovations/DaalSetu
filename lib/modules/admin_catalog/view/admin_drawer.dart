@@ -24,9 +24,13 @@ import 'package:daalsetu/utils/app_preferences.dart';
 
 // Seller & Transporter views
 import 'package:daalsetu/modules/seller/products/view/seller_product_view.dart';
-import 'package:daalsetu/modules/seller/workspace/view/seller_workspace_view.dart';
+import 'package:daalsetu/modules/seller/products/controller/seller_product_controller.dart';
+import 'package:daalsetu/modules/seller/products/view/add_product_view.dart';
+import 'package:daalsetu/modules/seller/rfq/view/seller_rfq_list_view.dart';
+import 'package:daalsetu/modules/seller/buyer_offers/view/seller_buyer_offers_view.dart';
+import 'package:daalsetu/modules/seller/masters/view/seller_master_management_view.dart';
+import 'package:daalsetu/modules/seller/consignments/view/seller_consignments_view.dart';
 import 'package:daalsetu/modules/seller/contracts/view/seller_contracts_view.dart';
-import 'package:daalsetu/modules/seller/categories/view/seller_category_view.dart';
 import 'package:daalsetu/modules/seller/branches/view/seller_branches_view.dart';
 import 'package:daalsetu/modules/seller/challans/view/seller_delivery_challan_view.dart';
 import 'package:daalsetu/modules/transporter/bidding/view/transporter_bidding_view.dart';
@@ -35,15 +39,22 @@ class AdminDrawer extends StatelessWidget {
   const AdminDrawer({super.key, this.activeKey});
   final String? activeKey;
 
+  static double widthFor(BuildContext context) =>
+      MediaQuery.sizeOf(context).width >= 700 ? 340 : 306;
+
   @override
   Widget build(BuildContext context) {
     // Inject Controller
     final controller = Get.put(admin.DrawerController());
+    if (controller.isStale) {
+      // Another user signed in since this menu was loaded: reload after this frame.
+      WidgetsBinding.instance.addPostFrameCallback((_) => controller.refreshMenu());
+    }
     final theme = Theme.of(context);
 
     return Drawer(
       backgroundColor: theme.scaffoldBackgroundColor,
-      width: MediaQuery.sizeOf(context).width >= 700 ? 340 : 306,
+      width: widthFor(context),
       child: SafeArea(
         child: Column(
           children: [
@@ -81,7 +92,9 @@ class AdminDrawer extends StatelessWidget {
                           final role = controller.userRole.value.toLowerCase();
                           final isAdmin = const ['super_admin', 'admin', 'sub_admin']
                               .contains(role);
-                          final subtitle = isAdmin
+                          final subtitle = controller.isLoading.value || controller.isStale
+                              ? ''
+                              : isAdmin
                               ? 'ADMIN PANEL'
                               : (role == 'seller'
                                   ? 'SELLER PANEL'
@@ -105,7 +118,7 @@ class AdminDrawer extends StatelessWidget {
                       if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
                         Scaffold.of(context).closeDrawer();
                       } else {
-                        Navigator.of(context).maybePop();
+                        Navigator.maybeOf(context)?.maybePop();
                       }
                     },
                     icon: const Icon(Icons.close_rounded),
@@ -118,7 +131,7 @@ class AdminDrawer extends StatelessWidget {
             // ── Nav List ─────────────────────────────────────────────────────
             Expanded(
               child: Obx(() {
-                if (controller.isLoading.value) {
+                if (controller.isLoading.value || controller.isStale) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
@@ -171,8 +184,17 @@ class AdminDrawer extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(12, 14, 12, 24),
       children: [
+        _customMenuItem(
+          context: context,
+          key: 'dashboard',
+          title: 'Dashboard',
+          icon: Icons.dashboard_outlined,
+          onTap: _goToDashboard,
+        ),
         for (var section in controller.menuSections)
           _buildSection(context, section, controller),
+        _sectionLabel(context, 'FILES'),
+        _downloadsMenuItem(context),
       ],
     );
   }
@@ -274,7 +296,7 @@ class AdminDrawer extends StatelessWidget {
               )
             : null,
         onTap: () {
-          Navigator.pop(context); // close drawer first
+          _closeDrawer(context);
           controller.handleNavigation(item.route);
         },
       ),
@@ -292,15 +314,7 @@ class AdminDrawer extends StatelessWidget {
           key: 'dashboard',
           title: 'Dashboard',
           icon: Icons.dashboard_outlined,
-          onTap: () {
-            if (Get.isRegistered<BottomNavController>()) {
-              Get.find<BottomNavController>().changeIndex(0);
-              Get.until((route) =>
-                  route.settings.name == AppRoutes.mainNav || route.isFirst);
-            } else {
-              Get.offAllNamed(AppRoutes.mainNav);
-            }
-          },
+          onTap: _goToDashboard,
         ),
         _customMenuItem(
           context: context,
@@ -420,6 +434,8 @@ class AdminDrawer extends StatelessWidget {
           icon: Icons.inventory_2_outlined,
           onTap: () => Get.to(() => const BuyerConsignmentView()),
         ),
+        _sectionLabel(context, 'FILES'),
+        _downloadsMenuItem(context),
         const SizedBox(height: 10),
         Padding(
           padding: const EdgeInsets.only(left: 16, bottom: 6, top: 4),
@@ -462,6 +478,8 @@ class AdminDrawer extends StatelessWidget {
   // ── SELLER MENU ────────────────────────────────────────────────────────────
   Widget _buildSellerMenu(
       BuildContext context, admin.DrawerController controller) {
+    // The one place for seller tools: replaces the old Seller Workspace page and
+    // the dashboard shortcut cards (same groups and screens).
     return ListView(
       padding: const EdgeInsets.fromLTRB(12, 14, 12, 24),
       children: [
@@ -470,30 +488,72 @@ class AdminDrawer extends StatelessWidget {
           key: 'dashboard',
           title: 'Dashboard',
           icon: Icons.dashboard_outlined,
+          onTap: _goToDashboard,
+        ),
+        _sectionLabel(context, 'OFFERS'),
+        _customMenuItem(
+          context: context,
+          key: 'create_offer',
+          title: 'Create Offer',
+          icon: Icons.add_box_outlined,
           onTap: () {
-            if (Get.isRegistered<BottomNavController>()) {
-              Get.find<BottomNavController>().changeIndex(0);
-              Get.until((route) =>
-                  route.settings.name == AppRoutes.mainNav || route.isFirst);
-            } else {
-              Get.offAllNamed(AppRoutes.mainNav);
+            if (!Get.isRegistered<SellerProductController>()) {
+              Get.put(SellerProductController());
             }
+            Get.to(() => const AddProductView());
           },
         ),
         _customMenuItem(
           context: context,
           key: 'products',
-          title: 'Products',
+          title: 'My Offers',
           icon: Icons.inventory_2_outlined,
           onTap: () => Get.to(() => const SellerProductView()),
         ),
         _customMenuItem(
           context: context,
-          key: 'workspace',
-          title: 'Workspace',
-          icon: Icons.workspaces_outline,
-          onTap: () => Get.to(() => const SellerWorkspaceView()),
+          key: 'buyer_requirements',
+          title: 'Buyer Requirements',
+          icon: Icons.request_quote_outlined,
+          onTap: () => Get.to(() => const SellerRfqListView()),
         ),
+        _customMenuItem(
+          context: context,
+          key: 'buyer_offers',
+          title: 'Buyer Offers',
+          icon: Icons.local_offer_outlined,
+          onTap: () => Get.to(() => const SellerBuyerOffersView()),
+        ),
+        _sectionLabel(context, 'MASTERS & BUSINESS'),
+        _customMenuItem(
+          context: context,
+          key: 'categories',
+          title: 'Category Master',
+          icon: Icons.category_outlined,
+          onTap: () => Get.toNamed(AppRoutes.sellerCategory),
+        ),
+        _customMenuItem(
+          context: context,
+          key: 'masters',
+          title: 'Brand & Tag Master',
+          icon: Icons.bookmarks_outlined,
+          onTap: () => Get.to(() => const SellerMasterManagementView()),
+        ),
+        _customMenuItem(
+          context: context,
+          key: 'company',
+          title: 'Companies',
+          icon: Icons.business_outlined,
+          onTap: () => Get.to(() => const SellerCompanyView()),
+        ),
+        _customMenuItem(
+          context: context,
+          key: 'branches',
+          title: 'My Branches',
+          icon: Icons.store_mall_directory_outlined,
+          onTap: () => Get.to(() => const SellerBranchesView()),
+        ),
+        _sectionLabel(context, 'DEALS & DISPATCH'),
         _customMenuItem(
           context: context,
           key: 'contracts',
@@ -503,24 +563,10 @@ class AdminDrawer extends StatelessWidget {
         ),
         _customMenuItem(
           context: context,
-          key: 'company',
-          title: 'Company Profile',
-          icon: Icons.business_outlined,
-          onTap: () => Get.to(() => const SellerCompanyView()),
-        ),
-        _customMenuItem(
-          context: context,
-          key: 'categories',
-          title: 'Categories',
-          icon: Icons.category_outlined,
-          onTap: () => Get.to(() => const SellerCategoryView()),
-        ),
-        _customMenuItem(
-          context: context,
-          key: 'branches',
-          title: 'Branches',
-          icon: Icons.store_mall_directory_outlined,
-          onTap: () => Get.to(() => const SellerBranchesView()),
+          key: 'consignments',
+          title: 'Consignments',
+          icon: Icons.inventory_outlined,
+          onTap: () => Get.to(() => const SellerConsignmentsView()),
         ),
         _customMenuItem(
           context: context,
@@ -529,19 +575,9 @@ class AdminDrawer extends StatelessWidget {
           icon: Icons.local_shipping_outlined,
           onTap: () => Get.to(() => const SellerDeliveryChallanView()),
         ),
-        const SizedBox(height: 10),
-        Padding(
-          padding: const EdgeInsets.only(left: 16, bottom: 6, top: 4),
-          child: Text(
-            'SETTINGS',
-            style: TextStyle(
-              fontSize: 11,
-              letterSpacing: 1.5,
-              fontWeight: FontWeight.w800,
-              color: Theme.of(context).textTheme.bodySmall?.color,
-            ),
-          ),
-        ),
+        _sectionLabel(context, 'FILES'),
+        _downloadsMenuItem(context),
+        _sectionLabel(context, 'SETTINGS'),
         _customMenuItem(
           context: context,
           key: 'settings',
@@ -571,15 +607,7 @@ class AdminDrawer extends StatelessWidget {
           key: 'dashboard',
           title: 'Dashboard',
           icon: Icons.dashboard_outlined,
-          onTap: () {
-            if (Get.isRegistered<BottomNavController>()) {
-              Get.find<BottomNavController>().changeIndex(0);
-              Get.until((route) =>
-                  route.settings.name == AppRoutes.mainNav || route.isFirst);
-            } else {
-              Get.offAllNamed(AppRoutes.mainNav);
-            }
-          },
+          onTap: _goToDashboard,
         ),
         // Grouped like the web transporter sidebar; these replace the dashboard shortcut cards.
         _sectionLabel(context, 'SHIPMENT'),
@@ -627,6 +655,8 @@ class AdminDrawer extends StatelessWidget {
           icon: Icons.store_mall_directory_outlined,
           onTap: () => Get.to(() => const SellerBranchesView()),
         ),
+        _sectionLabel(context, 'FILES'),
+        _downloadsMenuItem(context),
         const SizedBox(height: 10),
         Padding(
           padding: const EdgeInsets.only(left: 16, bottom: 6, top: 4),
@@ -658,6 +688,27 @@ class AdminDrawer extends StatelessWidget {
     );
   }
 
+  /// Back to the role's dashboard tab from anywhere in the app.
+  static void _goToDashboard() {
+    if (Get.isRegistered<BottomNavController>()) {
+      Get.find<BottomNavController>().changeIndex(0);
+      Get.until((route) => route.settings.name == AppRoutes.mainNav || route.isFirst);
+    } else {
+      Get.offAllNamed(AppRoutes.mainNav);
+    }
+  }
+
+  /// Closes a page's own Scaffold drawer, or pops the app-wide drawer route
+  /// (AppShell.openDrawer).
+  static void _closeDrawer(BuildContext context) {
+    final scaffold = Scaffold.maybeOf(context);
+    if (scaffold != null && scaffold.isDrawerOpen) {
+      scaffold.closeDrawer();
+    } else {
+      Navigator.maybeOf(context)?.maybePop();
+    }
+  }
+
   Widget _sectionLabel(BuildContext context, String text) {
     return Padding(
       padding: const EdgeInsets.only(left: 16, bottom: 6, top: 14),
@@ -672,6 +723,14 @@ class AdminDrawer extends StatelessWidget {
       ),
     );
   }
+
+  Widget _downloadsMenuItem(BuildContext context) => _customMenuItem(
+        context: context,
+        key: 'downloads',
+        title: 'Downloads',
+        icon: Icons.folder_open_outlined,
+        onTap: () => Get.toNamed(AppRoutes.downloads),
+      );
 
   // ── CUSTOM MENU ITEM HELPER ────────────────────────────────────────────────
   Widget _customMenuItem({
@@ -720,7 +779,7 @@ class AdminDrawer extends StatelessWidget {
               )
             : null,
         onTap: () {
-          Navigator.pop(context); // close drawer first
+          _closeDrawer(context);
           onTap();
         },
       ),

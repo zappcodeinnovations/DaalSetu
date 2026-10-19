@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../buyer/offers/controller/buyer_offers_controller.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class TransporterOffersView extends StatelessWidget {
   const TransporterOffersView({super.key});
@@ -20,14 +21,14 @@ class TransporterOffersView extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          leading: IconButton(
+          leading: AppBarLeading(child: IconButton(
             icon: Icon(
               Icons.arrow_back_ios_new,
               size: 20,
               color: theme.textTheme.bodyLarge?.color,
             ),
             onPressed: () => Get.back(),
-          ),
+          )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
           title: Text(
             "Pulse Offers",
             style: GoogleFonts.poppins(

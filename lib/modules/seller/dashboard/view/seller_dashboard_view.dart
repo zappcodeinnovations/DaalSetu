@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
@@ -7,16 +8,8 @@ import '../controller/seller_dashboard_controller.dart';
 import '../model/seller_dashboard_model.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../products/view/seller_product_view.dart';
-import '../../products/view/add_product_view.dart';
-import '../../products/controller/seller_product_controller.dart';
-import '../../rfq/view/seller_rfq_list_view.dart';
 import '../../contracts/view/seller_contracts_view.dart';
-import '../../challans/view/seller_delivery_challan_view.dart';
-import '../../branches/view/seller_branches_view.dart';
-import '../../masters/view/seller_master_management_view.dart';
-import '../../consignments/view/seller_consignments_view.dart';
 import '../../buyer_offers/view/seller_buyer_offers_view.dart';
-import '../../workspace/view/seller_workspace_view.dart';
 import '../../../../services/notification_services.dart';
 import '../../../../routes/app_routes.dart';
 
@@ -59,89 +52,6 @@ class SellerDashboardView extends StatelessWidget {
               children: [
                 _buildHeroSection(context, data.header),
                 const SizedBox(height: 16),
-                _buildSectionHeader(
-                  context,
-                  "Seller Workspace",
-                  trailingText: "View All",
-                  onTrailingTap: () =>
-                      Get.to(() => const SellerWorkspaceView()),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildSimpleQuickCard(
-                        context,
-                        title: "Create Offer",
-                        subtitle: "Publish a new listing",
-                        icon: IconlyBold.plus,
-                        color: Colors.orange,
-                        onTap: _openCreateOffer,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildSimpleQuickCard(
-                        context,
-                        title: "All Seller Tools",
-                        subtitle: "Masters, deals & dispatch",
-                        icon: IconlyBold.category,
-                        color: Colors.blueGrey,
-                        onTap: () => Get.to(() => const SellerWorkspaceView()),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _buildMyProductsQuickCard(context),
-                const SizedBox(height: 12),
-                _buildBuyerRfqQuickCard(context),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(child: _buildContractsQuickCard(context)),
-                    const SizedBox(width: 12),
-                    Expanded(child: _buildChallansQuickCard(context)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(child: _buildBranchesQuickCard(context)),
-                    const SizedBox(width: 12),
-                    Expanded(child: _buildMastersQuickCard(context)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildSimpleQuickCard(
-                        context,
-                        title: "Consignments",
-                        subtitle: "Ready for loading & dispatch",
-                        icon: IconlyBold.buy,
-                        color: Colors.teal,
-                        onTap: () =>
-                            Get.to(() => const SellerConsignmentsView()),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildSimpleQuickCard(
-                        context,
-                        title: "Buyer Offers",
-                        subtitle: "Respond to buyer requests",
-                        icon: IconlyBold.ticket,
-                        color: Colors.indigo,
-                        onTap: () =>
-                            Get.to(() => const SellerBuyerOffersView()),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
                 _buildSectionHeader(
                   context,
                   "Overview KPIs",
@@ -193,22 +103,12 @@ class SellerDashboardView extends StatelessWidget {
     );
   }
 
-  void _openCreateOffer() {
-    if (!Get.isRegistered<SellerProductController>()) {
-      Get.put(SellerProductController());
-    }
-    Get.to(() => const AddProductView());
-  }
-
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      leading: IconButton(
-        tooltip: 'Seller workspace',
-        icon: const Icon(IconlyLight.category),
-        onPressed: () => Get.to(() => const SellerWorkspaceView()),
-      ),
+      leading: const AppBarLeading(showBack: false),
+      leadingWidth: AppBarLeading.widthFor(context, showBack: false),
       title: Image.asset(
         'assets/images/app_name.png',
         height: 32,
@@ -338,380 +238,6 @@ class SellerDashboardView extends StatelessWidget {
     );
   }
 
-  Widget _buildMyProductsQuickCard(BuildContext context) {
-    final theme = Theme.of(context);
-    const primaryColor = Color(0xFFFFB300);
-
-    return GestureDetector(
-      onTap: () => Get.to(() => const SellerProductView()),
-      child: GlassCard(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: primaryColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(IconlyBold.bag, color: primaryColor, size: 28),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "My Products & Offers",
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: theme.textTheme.bodyLarge?.color,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "Manage offer stock, buyer negotiations & media",
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: theme.textTheme.bodyMedium?.color,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(IconlyLight.arrow_right_2, color: primaryColor),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBuyerRfqQuickCard(BuildContext context) {
-    final theme = Theme.of(context);
-    const accentColor = Color(0xFF2196F3);
-
-    return GestureDetector(
-      onTap: () => Get.to(() => const SellerRfqListView()),
-      child: GlassCard(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(
-                IconlyBold.document,
-                color: accentColor,
-                size: 28,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Buyer Requirements",
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: theme.textTheme.bodyLarge?.color,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "View buyer demands & submit seller quotes",
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: theme.textTheme.bodyMedium?.color,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(IconlyLight.arrow_right_2, color: accentColor),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContractsQuickCard(BuildContext context) {
-    final theme = Theme.of(context);
-    const greenColor = Colors.green;
-
-    return GestureDetector(
-      onTap: () => Get.to(() => const SellerContractsView()),
-      child: GlassCard(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: greenColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    IconlyBold.document,
-                    color: greenColor,
-                    size: 20,
-                  ),
-                ),
-                const Icon(
-                  IconlyLight.arrow_right_2,
-                  color: greenColor,
-                  size: 16,
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              "Contracts",
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: theme.textTheme.bodyLarge?.color,
-              ),
-            ),
-            Text(
-              "Signed deal agreements",
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                color: theme.textTheme.bodyMedium?.color,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildChallansQuickCard(BuildContext context) {
-    final theme = Theme.of(context);
-    const purpleColor = Colors.purple;
-
-    return GestureDetector(
-      onTap: () => Get.to(() => const SellerDeliveryChallanView()),
-      child: GlassCard(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: purpleColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    IconlyBold.work,
-                    color: purpleColor,
-                    size: 20,
-                  ),
-                ),
-                const Icon(
-                  IconlyLight.arrow_right_2,
-                  color: purpleColor,
-                  size: 16,
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              "Challans",
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: theme.textTheme.bodyLarge?.color,
-              ),
-            ),
-            Text(
-              "Dispatch & shipment",
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                color: theme.textTheme.bodyMedium?.color,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBranchesQuickCard(BuildContext context) {
-    final theme = Theme.of(context);
-    const blueColor = Colors.blue;
-
-    return GestureDetector(
-      onTap: () => Get.to(() => const SellerBranchesView()),
-      child: GlassCard(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: blueColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    IconlyBold.work,
-                    color: blueColor,
-                    size: 20,
-                  ),
-                ),
-                const Icon(
-                  IconlyLight.arrow_right_2,
-                  color: blueColor,
-                  size: 16,
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              "Branches",
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: theme.textTheme.bodyLarge?.color,
-              ),
-            ),
-            Text(
-              "Warehouse network",
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                color: theme.textTheme.bodyMedium?.color,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMastersQuickCard(BuildContext context) {
-    final theme = Theme.of(context);
-    const orangeColor = Colors.orange;
-
-    return GestureDetector(
-      onTap: () => Get.to(() => const SellerMasterManagementView()),
-      child: GlassCard(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: orangeColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    IconlyBold.discount,
-                    color: orangeColor,
-                    size: 20,
-                  ),
-                ),
-                const Icon(
-                  IconlyLight.arrow_right_2,
-                  color: orangeColor,
-                  size: 16,
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              "Brands, Tags",
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: theme.textTheme.bodyLarge?.color,
-              ),
-            ),
-            Text(
-              "Your brand & tag detaile",
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                color: theme.textTheme.bodyMedium?.color,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSimpleQuickCard(
-    BuildContext context, {
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    final theme = Theme.of(context);
-    return GestureDetector(
-      onTap: onTap,
-      child: GlassCard(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, color: color, size: 20),
-                ),
-                Icon(IconlyLight.arrow_right_2, color: color, size: 16),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              title,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: theme.textTheme.bodyLarge?.color,
-              ),
-            ),
-            Text(
-              subtitle,
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                color: theme.textTheme.bodyMedium?.color,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildSectionHeader(
     BuildContext context,
     String title, {
@@ -758,21 +284,24 @@ class SellerDashboardView extends StatelessWidget {
   Widget _buildTodaysOverview(BuildContext context, List<SellerKpi> kpis) {
     if (kpis.isEmpty) return const SizedBox();
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      clipBehavior: Clip.none,
-      child: Row(
-        children: kpis.map((kpi) {
-          IconData icon = IconlyLight.document;
-          if (kpi.type == 'currency') icon = IconlyLight.wallet;
-          if (kpi.type == 'number') icon = IconlyLight.graph;
-
-          return Padding(
-            padding: const EdgeInsets.only(right: 12.0),
-            child: _buildDynamicMetricCard(context, kpi, icon),
-          );
-        }).toList(),
-      ),
+    // All KPIs visible at once in a two-column grid (no sideways scrolling).
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardWidth = (constraints.maxWidth - 12) / 2;
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: kpis.map((kpi) {
+            IconData icon = IconlyLight.document;
+            if (kpi.type == 'currency') icon = IconlyLight.wallet;
+            if (kpi.type == 'number') icon = IconlyLight.graph;
+            return SizedBox(
+              width: cardWidth,
+              child: _buildDynamicMetricCard(context, kpi, icon),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 
@@ -787,7 +316,7 @@ class SellerDashboardView extends StatelessWidget {
       child: GlassCard(
         padding: const EdgeInsets.all(12),
         child: SizedBox(
-          width: 120,
+          width: double.infinity,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -814,6 +343,8 @@ class SellerDashboardView extends StatelessWidget {
                 metric.type == 'currency'
                     ? "₹${metric.value}"
                     : metric.value.toString(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

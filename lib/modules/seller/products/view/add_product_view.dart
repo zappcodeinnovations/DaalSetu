@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
 import '../../common/seller_ui.dart';
 import '../controller/seller_product_controller.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class AddProductView extends StatefulWidget {
   const AddProductView({super.key});
@@ -38,10 +39,10 @@ class _AddProductViewState extends State<AddProductView> {
           "Create Offer",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        leading: IconButton(
+        leading: AppBarLeading(child: IconButton(
           icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
-        ),
+        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh_rounded, color: theme.iconTheme.color),

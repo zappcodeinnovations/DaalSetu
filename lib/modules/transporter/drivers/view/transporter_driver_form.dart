@@ -8,6 +8,7 @@ import '../controller/transporter_driver_controller.dart';
 import '../model/driver_model.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../nav_bar/controller/nav_controller.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 /// Same fields as the web "Register Driver" form, including the license upload.
 class TransporterDriverForm extends StatefulWidget {
@@ -114,10 +115,10 @@ class _TransporterDriverFormState extends State<TransporterDriverForm> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
+        leading: AppBarLeading(child: IconButton(
           icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
-        ),
+        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
         title: Text(
           isEdit ? "Edit Driver" : "Register Driver",
           style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),

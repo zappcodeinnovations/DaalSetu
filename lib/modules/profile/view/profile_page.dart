@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:daalsetu/modules/downloads/service/downloads_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../routes/app_routes.dart';
@@ -14,6 +15,7 @@ import '../../../services/buyer_services.dart';
 import '../../../utils/app_preferences.dart';
 import '../controller/profile_controller.dart';
 import '../model/profile_model.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class ProfileScreen extends StatelessWidget {
   ProfileScreen({super.key});
@@ -42,10 +44,10 @@ class ProfileScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: bgColor,
         elevation: 0,
-        leading: IconButton(
+        leading: AppBarLeading(child: IconButton(
           icon: Icon(IconlyLight.arrow_left, color: Get.theme.iconTheme.color),
           onPressed: () => Get.back(),
-        ),
+        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
         title: Obx(
           () => Text(
             "${_roleLabel(controller.profile.value?.role ?? '')} Profile",
@@ -873,6 +875,11 @@ class ProfileScreen extends StatelessWidget {
       final directory = await getTemporaryDirectory();
       final file = File('${directory.path}/$fileName');
       await file.writeAsBytes(response.bodyBytes, flush: true);
+      await DownloadsService.saveBytes(
+        fileName: fileName,
+        bytes: response.bodyBytes,
+        mimeType: response.headers['content-type'],
+      );
 
       final result = await OpenFilex.open(file.path);
       if (result.type != ResultType.done) {

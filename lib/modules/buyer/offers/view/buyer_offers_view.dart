@@ -11,6 +11,7 @@ import '../model/buyer_offer_model.dart';
 import 'add_buyer_offer_view.dart';
 import 'buyer_offer_details_view.dart';
 import 'buyer_negotiation_view.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class BuyerOffersView extends StatelessWidget {
   final int initialIndex;
@@ -28,7 +29,7 @@ class BuyerOffersView extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: theme.scaffoldBackgroundColor,
           elevation: 0,
-          leading: Navigator.canPop(context)
+          leading: AppBarLeading(child: Navigator.canPop(context)
               ? IconButton(
                   icon: Icon(
                     IconlyLight.arrow_left_2,
@@ -36,7 +37,7 @@ class BuyerOffersView extends StatelessWidget {
                   ),
                   onPressed: () => Get.back(),
                 )
-              : null,
+              : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
           title: Text(
             "Offers & Requirements",
             style: GoogleFonts.poppins(

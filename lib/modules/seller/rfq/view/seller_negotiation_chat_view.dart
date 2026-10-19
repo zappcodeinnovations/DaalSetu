@@ -6,6 +6,7 @@ import 'package:iconly/iconly.dart';
 import '../../common/seller_ui.dart';
 import '../controller/seller_rfq_controller.dart';
 import '../model/seller_rfq_model.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class SellerNegotiationChatView extends StatefulWidget {
   final String rfqId;
@@ -87,7 +88,7 @@ class _SellerNegotiationChatViewState extends State<SellerNegotiationChatView> {
       final rfq = controller.rfq.value;
       final quotation = controller.thread.value;
       return Scaffold(
-        appBar: AppBar(
+        appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
           titleSpacing: 0,
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

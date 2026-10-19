@@ -4,7 +4,7 @@ import '../modules/profile/model/profile_model.dart';
 import '../network/api_client.dart';
 
 class ProfileService {
-  static Future<ProfileModel> getProfile() async {
+  static Future<ProfileModel> getProfile({bool silent = true}) async {
     final Map<String, dynamic> combined = {};
 
     // 1. Query base user endpoint (/api/user/)
@@ -12,6 +12,7 @@ class ProfileService {
       final userResponse = await ApiClient.get(
         endpoint: ApiUrls.profile,
         requireAuth: true,
+        suppressErrorDialog: silent,
       );
       if (userResponse is Map<String, dynamic>) {
         if (userResponse['body'] is Map<String, dynamic>) {
@@ -29,6 +30,7 @@ class ProfileService {
       final profileResponse = await ApiClient.get(
         endpoint: ApiUrls.profileUpdate,
         requireAuth: true,
+        suppressErrorDialog: silent,
       );
       if (profileResponse is Map<String, dynamic>) {
         Map<String, dynamic> pData = profileResponse;

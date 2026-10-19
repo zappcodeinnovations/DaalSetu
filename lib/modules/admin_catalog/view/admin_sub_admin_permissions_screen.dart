@@ -2,6 +2,7 @@ import 'package:daalsetu/modules/admin_catalog/view/admin_drawer.dart';
 import 'package:daalsetu/modules/admin_catalog/view/admin_permission_toggle_panel.dart';
 import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class AdminSubAdminPermissionsScreen extends StatefulWidget {
   const AdminSubAdminPermissionsScreen({
@@ -109,7 +110,7 @@ class _AdminSubAdminPermissionsScreenState
   @override
   Widget build(BuildContext context) => Scaffold(
     drawer: const AdminDrawer(activeKey: 'sub_admins'),
-    appBar: AppBar(title: const Text('Sub Admin Permissions')),
+    appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), title: const Text('Sub Admin Permissions')),
     body: _loading
         ? const Center(child: CircularProgressIndicator())
         : _error != null

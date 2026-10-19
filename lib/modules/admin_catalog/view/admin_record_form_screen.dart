@@ -8,6 +8,7 @@ import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:daalsetu/utils/input_validators.dart';
 import 'package:daalsetu/utils/tax_id_formatters.dart';
 
 class AdminRecordFormScreen extends StatefulWidget {
@@ -344,6 +345,7 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
     } else {
       final isPhoneField =
           field.key.contains('phone') || field.key.contains('mobile');
+      final isEmailField = field.key == 'email' || field.key.endsWith('_email');
       final taxFormatter = field.key == 'pan_number'
           ? const TaxIdInputFormatter.pan()
           : field.key == 'gst_number'
@@ -352,19 +354,29 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
       child = TextFormField(
         controller: controllers[field.key],
         maxLines: field.multiline ? 4 : 1,
-        keyboardType: field.numeric ? TextInputType.number : TextInputType.text,
+        keyboardType: field.numeric
+            ? TextInputType.number
+            : isEmailField
+            ? TextInputType.emailAddress
+            : TextInputType.text,
+        autocorrect: !isEmailField,
         inputFormatters: taxFormatter != null
             ? [taxFormatter]
             : field.numeric
             ? [FilteringTextInputFormatter.digitsOnly]
             : null,
-        maxLength: isPhoneField ? 10 : null,
-        buildCounter: (
-          context, {
-          required currentLength,
-          required isFocused,
-          maxLength,
-        }) => null,
+        maxLength: field.key == 'gst_number'
+            ? 15
+            : isPhoneField
+            ? 10
+            : null,
+        buildCounter:
+            (
+              context, {
+              required currentLength,
+              required isFocused,
+              maxLength,
+            }) => null,
         decoration: InputDecoration(
           labelText: _label(field),
           alignLabelWithHint: field.multiline,
@@ -390,12 +402,16 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
               return 'Please enter a valid number';
             }
           }
+          final emailError = isEmailField
+              ? InputValidators.email(value, required: field.required)
+              : null;
           final taxError = field.key == 'pan_number'
               ? TaxIdValidator.pan(value, required: field.required)
               : field.key == 'gst_number'
               ? TaxIdValidator.gst(value, required: field.required)
               : null;
-          return taxError ??
+          return emailError ??
+              taxError ??
               (field.required && (value == null || value.trim().isEmpty)
                   ? '${field.label} is required'
                   : null);

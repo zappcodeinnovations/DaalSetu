@@ -4,10 +4,11 @@ import 'package:flutter/services.dart';
 /// Values are uppercase, have no separators, and reject a character at an
 /// invalid position while the user types.
 class TaxIdInputFormatter extends TextInputFormatter {
-  const TaxIdInputFormatter._(this._pattern);
-
   const TaxIdInputFormatter.pan() : _pattern = 'LLLLLDDDDL';
-  const TaxIdInputFormatter.gst() : _pattern = 'DDLLLLLDDDDLDZA';
+  // Let users enter all 15 GST alphanumeric characters. The validator below
+  // reports positional format errors instead of silently blocking input after
+  // the first invalid position (which made the field appear capped at 12).
+  const TaxIdInputFormatter.gst() : _pattern = 'AAAAAAAAAAAAAAA';
 
   final String _pattern;
 

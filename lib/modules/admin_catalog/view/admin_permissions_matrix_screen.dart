@@ -1,6 +1,7 @@
 import 'package:daalsetu/modules/admin_catalog/view/admin_drawer.dart';
 import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 const _matrixRoles = <String>[
   'admin',
@@ -152,7 +153,7 @@ class _AdminPermissionsMatrixScreenState
   @override
   Widget build(BuildContext context) => Scaffold(
     drawer: const AdminDrawer(activeKey: 'permissions_matrix'),
-    appBar: AppBar(title: const Text('Permissions Matrix')),
+    appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), title: const Text('Permissions Matrix')),
     body: _loading
         ? const Center(child: CircularProgressIndicator())
         : _error != null

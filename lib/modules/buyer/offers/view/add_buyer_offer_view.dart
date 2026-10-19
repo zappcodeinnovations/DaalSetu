@@ -11,6 +11,7 @@ import '../../../seller/categories/model/seller_category_model.dart';
 import '../controller/buyer_offers_controller.dart';
 import '../../dashboard/controller/buyer_dashboard_controller.dart';
 import '../../../../services/realtime_notification_service.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class AddBuyerOfferScreen extends StatefulWidget {
   const AddBuyerOfferScreen({super.key});
@@ -414,7 +415,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text("Post Requirement", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),

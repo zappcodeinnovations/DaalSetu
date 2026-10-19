@@ -5,6 +5,7 @@ import 'package:iconly/iconly.dart';
 import '../controller/seller_master_controller.dart';
 import 'seller_add_brand_dialog.dart';
 import 'seller_add_tag_dialog.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class SellerMasterManagementView extends StatelessWidget {
   const SellerMasterManagementView({super.key});
@@ -19,7 +20,7 @@ class SellerMasterManagementView extends StatelessWidget {
       length: 2,
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: AppBar(
+        appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
           backgroundColor: Colors.transparent,
           elevation: 0,
           title: Text(

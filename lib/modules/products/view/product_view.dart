@@ -13,6 +13,7 @@ import '../model/product_model.dart';
 import './add_product.dart';
 import './edit_product.dart';
 import './product_detail.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class ProductScreen extends StatelessWidget {
   ProductScreen({super.key});
@@ -26,7 +27,7 @@ class ProductScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       drawer: const AdminDrawer(activeKey: 'offers'),
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         title: Text(
           "Products",
           style: GoogleFonts.poppins(fontWeight: FontWeight.w600),

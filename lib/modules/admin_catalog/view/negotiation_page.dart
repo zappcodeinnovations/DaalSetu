@@ -10,6 +10,7 @@ import 'package:daalsetu/theme/app_theme.dart';
 import 'package:daalsetu/utils/global_error_handler.dart';
 
 import 'approve_deal_dialog.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class NegotiationPage extends StatefulWidget {
   final String offerId;
@@ -352,7 +353,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         titleSpacing: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

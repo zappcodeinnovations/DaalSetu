@@ -7,6 +7,7 @@ import 'package:daalsetu/modules/admin_catalog/view/stock_history_dialog.dart';
 import 'package:daalsetu/widgets/authenticated_network_image.dart';
 import 'package:daalsetu/theme/app_theme.dart';
 import 'package:daalsetu/modules/products/view/edit_product.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class AdminOffersListScreen extends StatefulWidget {
   const AdminOffersListScreen({super.key});
@@ -31,7 +32,7 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         title: Text(
           'Admin Offers',
           style: TextStyle(

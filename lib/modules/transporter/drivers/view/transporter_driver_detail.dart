@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../model/driver_model.dart';
 import './transporter_driver_form.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class TransporterDriverDetail extends StatelessWidget {
   final DriverModel driver;
@@ -21,10 +22,10 @@ class TransporterDriverDetail extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
+        leading: AppBarLeading(child: IconButton(
           icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
-        ),
+        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
         title: Text(
           "Driver Details",
           style: GoogleFonts.poppins(

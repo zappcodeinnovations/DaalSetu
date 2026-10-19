@@ -1,5 +1,6 @@
 import '../network/api_client.dart';
 import '../comman/api_url.dart';
+import 'package:flutter/foundation.dart';
 
 class BuyerServices {
   /// ============================================================
@@ -351,6 +352,81 @@ class BuyerServices {
     return [];
   }
 
+  static bool _hasPositiveStockValue(Map<String, dynamic> item) {
+    for (final key in const [
+      'available_quantity',
+      'remaining_quantity',
+      'quantity_qtl',
+      'original_quantity',
+    ]) {
+      final value = num.tryParse(
+        (item[key] ?? '').toString().replaceAll(RegExp(r'[^\d.]'), ''),
+      );
+      if (value != null && value > 0) return true;
+    }
+    return false;
+  }
+
+  @visibleForTesting
+  static Map<String, dynamic> mergePendingOfferProductDetail(
+    Map<String, dynamic> summary,
+    Map<String, dynamic> detail,
+  ) {
+    // Detail supplies inventory fields omitted by older pending-offer APIs;
+    // summary remains authoritative for tab-specific status and pricing.
+    return <String, dynamic>{...detail, ...summary};
+  }
+
+  static Future<List<dynamic>> _hydratePendingOfferStock(
+    List<dynamic> offers,
+  ) async {
+    return Future.wait(
+      offers.map((raw) async {
+        if (raw is! Map) return raw;
+        final summary = Map<String, dynamic>.from(raw);
+        final status =
+            (summary['status_code'] ??
+                    summary['status_label'] ??
+                    summary['status'] ??
+                    '')
+                .toString()
+                .toLowerCase();
+        final explicitlyUnavailable =
+            status.contains('out_of_stock') ||
+            status.contains('out of stock') ||
+            status == 'sold';
+        if (explicitlyUnavailable || _hasPositiveStockValue(summary)) {
+          return summary;
+        }
+
+        final productId = int.tryParse(
+          (summary['product_id'] ?? summary['id'] ?? '').toString(),
+        );
+        if (productId == null || productId <= 0) return summary;
+
+        try {
+          final response = await ApiClient.get(
+            endpoint: '${ApiUrls.products}$productId/',
+            requireAuth: true,
+            suppressErrorDialog: true,
+          );
+          final rawDetail = response is Map && response['data'] is Map
+              ? response['data']
+              : response;
+          if (rawDetail is Map) {
+            return mergePendingOfferProductDetail(
+              summary,
+              Map<String, dynamic>.from(rawDetail),
+            );
+          }
+        } catch (_) {
+          // Preserve the list response if a detail request is unavailable.
+        }
+        return summary;
+      }),
+    );
+  }
+
   /// ============================================================
   /// GET TODAY'S OFFERS
   /// ============================================================
@@ -525,7 +601,7 @@ class BuyerServices {
       } catch (_) {}
     }
 
-    return pendingList;
+    return _hydratePendingOfferStock(pendingList);
   }
 
   /// ============================================================

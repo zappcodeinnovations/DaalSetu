@@ -8,6 +8,7 @@ import '../../../../services/seller_services.dart';
 import '../../../../utils/app_preferences.dart';
 import '../../../../utils/global_error_handler.dart';
 import '../../common/seller_ui.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 /// Buyer offer requests a seller can respond to (web: "Buyer Offers").
 class SellerBuyerOffersController extends GetxController {
@@ -378,7 +379,7 @@ class _SellerBuyerOfferDetailViewState
         .toList();
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         titleSpacing: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

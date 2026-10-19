@@ -8,6 +8,7 @@ import '../../../../utils/app_snackbar.dart';
 import '../controller/buyer_delivery_challan_controller.dart';
 import '../model/buyer_delivery_challan_model.dart';
 import '../service/buyer_challan_pdf_service.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class BuyerDeliveryChallanDetailView extends StatelessWidget {
   BuyerDeliveryChallanDetailView({super.key});
@@ -30,10 +31,10 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
+        leading: AppBarLeading(child: IconButton(
           icon: const Icon(IconlyLight.arrow_left_2),
           onPressed: () => Get.back(),
-        ),
+        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
         title: Text(
           "Challan Details",
           style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18),

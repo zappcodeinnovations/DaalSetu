@@ -37,6 +37,7 @@ abstract class AppRoutes {
   static const search = '/search';
   static const subscription = '/subscription';
   static const documents = '/documents';
+  static const downloads = '/downloads';
   static const settings = '/settings';
   static const support = '/support';
   static const about = '/about';
@@ -55,7 +56,6 @@ abstract class AppRoutes {
   static const sellerRFQs = '/seller/rfqs';
   static const sellerDeliveryChallans = '/seller/delivery-challans';
   static const sellerMasters = '/seller/masters';
-  static const sellerWorkspace = '/seller/workspace';
 
   // TRANSPORTER PANEL
   static const transporterDashboard = '/transporter/dashboard';

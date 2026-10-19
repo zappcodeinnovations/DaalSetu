@@ -8,6 +8,7 @@ import '../controller/buyer_offers_controller.dart';
 import '../model/buyer_offer_model.dart';
 import 'buyer_offer_details_view.dart';
 import 'buyer_negotiation_view.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class BuyerMyInterestsView extends StatelessWidget {
   final bool showAppBar;
@@ -447,7 +448,7 @@ class BuyerMyInterestsView extends StatelessWidget {
               backgroundColor: theme.scaffoldBackgroundColor,
               surfaceTintColor: Colors.transparent,
               elevation: 0,
-              leading: Navigator.canPop(context)
+              leading: AppBarLeading(child: Navigator.canPop(context)
                   ? IconButton(
                       icon: Icon(
                         Icons.arrow_back_ios_new,
@@ -456,7 +457,7 @@ class BuyerMyInterestsView extends StatelessWidget {
                       ),
                       onPressed: () => Get.back(),
                     )
-                  : null,
+                  : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
               title: Text(
                 "My Interests",
                 style: GoogleFonts.poppins(

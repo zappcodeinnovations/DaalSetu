@@ -27,10 +27,19 @@ void main() {
       expect(TaxIdValidator.gst(value.text), isNull);
       expect(TaxIdValidator.gst('27ABCDE1234FAZ5'), isNotNull);
       expect(TaxIdValidator.gstMatchesPan('ABCDE1234F', value.text), isNull);
-      expect(
-        TaxIdValidator.gstMatchesPan('ABCDE1234X', value.text),
-        isNotNull,
+      expect(TaxIdValidator.gstMatchesPan('ABCDE1234X', value.text), isNotNull);
+    });
+
+    test('allows all 15 GST characters before showing a format error', () {
+      const formatter = TaxIdInputFormatter.gst();
+      final value = formatter.formatEditUpdate(
+        TextEditingValue.empty,
+        const TextEditingValue(text: 'abcdefghijklmnop'),
       );
+
+      expect(value.text, 'ABCDEFGHIJKLMNO');
+      expect(value.text.length, 15);
+      expect(TaxIdValidator.gst(value.text), isNotNull);
     });
   });
 }

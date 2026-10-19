@@ -6,6 +6,7 @@ import 'package:iconly/iconly.dart';
 import 'buyer_my_interests_view.dart';
 import 'buyer_request_management_view.dart';
 import 'add_buyer_offer_view.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class BuyerActivityView extends StatelessWidget {
   final int initialIndex;
@@ -27,7 +28,7 @@ class BuyerActivityView extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: theme.scaffoldBackgroundColor,
           elevation: 0,
-          leading: Navigator.canPop(context)
+          leading: AppBarLeading(child: Navigator.canPop(context)
               ? IconButton(
                   icon: Icon(
                     IconlyLight.arrow_left_2,
@@ -35,7 +36,7 @@ class BuyerActivityView extends StatelessWidget {
                   ),
                   onPressed: () => Get.back(),
                 )
-              : null,
+              : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
           title: Text(
             "My Activity",
             style: GoogleFonts.poppins(

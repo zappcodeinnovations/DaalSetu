@@ -10,6 +10,7 @@ import '../../../../comman/api_url.dart';
 import '../../../../widgets/authenticated_network_image.dart';
 import '../../../../widgets/media_url.dart';
 import '../../../../utils/app_preferences.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class SellerMediaGalleryView extends StatefulWidget {
   final int? productId;
@@ -143,7 +144,7 @@ class _SellerMediaGalleryViewState extends State<SellerMediaGalleryView> {
       length: 2,
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: AppBar(
+        appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
           backgroundColor: Colors.transparent,
           elevation: 0,
           title: Text(

@@ -11,6 +11,7 @@ import 'edit_offer_view.dart';
 import 'offer_stock_history_view.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../../widgets/authenticated_network_image.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class SellerProductView extends StatelessWidget {
   const SellerProductView({super.key});
@@ -24,7 +25,7 @@ class SellerProductView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(

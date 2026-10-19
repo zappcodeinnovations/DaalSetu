@@ -9,6 +9,7 @@ import '../controller/transporter_vehicle_controller.dart';
 import './transporter_vehicle_form.dart';
 import './transporter_vehicle_detail.dart';
 import '../model/vehicle_model.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 /// Web "Registered Vehicles": search, status filter, view, edit, delete, change status, assign driver.
 class TransporterVehiclesView extends StatelessWidget {
@@ -45,7 +46,7 @@ class TransporterVehiclesView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: !inNavShell,

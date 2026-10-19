@@ -6,6 +6,7 @@ import '../../../../theme/app_theme.dart';
 import '../controller/seller_company_controller.dart';
 import '../model/seller_company_model.dart';
 import 'add_company_view.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class SellerCompanyView extends StatelessWidget {
   const SellerCompanyView({super.key});
@@ -19,7 +20,7 @@ class SellerCompanyView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(

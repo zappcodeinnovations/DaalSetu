@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../model/user_model.dart';
 import '../../../services/users_services.dart';
 import '../../../comman/api_url.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class UserDetailScreen extends StatefulWidget {
   const UserDetailScreen({super.key});
@@ -66,7 +67,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         elevation: 0,
         title: const Text("User Details"),
         centerTitle: true,

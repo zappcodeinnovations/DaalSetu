@@ -1,6 +1,7 @@
 import 'package:daalsetu/modules/admin_catalog/view/admin_drawer.dart';
 import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class AdminBranchSettingsScreen extends StatefulWidget {
   const AdminBranchSettingsScreen({super.key});
@@ -96,7 +97,7 @@ class _AdminBranchSettingsScreenState extends State<AdminBranchSettingsScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
     drawer: const AdminDrawer(activeKey: 'branch_settings'),
-    appBar: AppBar(
+    appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
       title: const Text(
         'Branch Settings',
         style: TextStyle(fontWeight: FontWeight.w800),

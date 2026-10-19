@@ -7,6 +7,7 @@ import '../controller/seller_challan_controller.dart';
 import '../../common/seller_ui.dart';
 import '../../delivery/controller/seller_delivery_controller.dart';
 import '../../delivery/view/seller_challan_details_view.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class SellerDeliveryChallanView extends StatelessWidget {
   const SellerDeliveryChallanView({super.key});
@@ -19,7 +20,7 @@ class SellerDeliveryChallanView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(

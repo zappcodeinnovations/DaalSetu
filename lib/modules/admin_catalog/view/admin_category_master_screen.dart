@@ -4,6 +4,7 @@ import 'package:daalsetu/widgets/authenticated_network_image.dart';
 import '../controller/admin_category_master_controller.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:daalsetu/theme/app_theme.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class AdminCategoryMasterScreen extends StatefulWidget {
   const AdminCategoryMasterScreen({super.key});
@@ -26,7 +27,7 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: colorBg,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         backgroundColor: colorSurface,
         elevation: 0,
         iconTheme: IconThemeData(color: colorTextDark),
