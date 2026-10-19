@@ -166,14 +166,8 @@ class _DownloadsViewState extends State<DownloadsView> {
 
   Widget _body() {
     if (_loading) return const AdminLoadingWidget();
-    if (_error != null) {
-      return AdminErrorWidget(message: _error!, onRetry: _load);
-    }
-    if (_visibleFiles.isEmpty) {
-      return AdminEmptyWidget(
-        title: _query.isEmpty ? 'downloads' : 'matching downloads',
-      );
-    }
+    // A failed lookup reads the same as an empty folder (the reason is logged).
+    if (_error != null || _visibleFiles.isEmpty) return _emptyState();
 
     return RefreshIndicator(
       onRefresh: _load,
@@ -182,6 +176,35 @@ class _DownloadsViewState extends State<DownloadsView> {
         itemCount: _visibleFiles.length,
         separatorBuilder: (_, _) => const SizedBox(height: 10),
         itemBuilder: (context, index) => _fileCard(_visibleFiles[index]),
+      ),
+    );
+  }
+
+  Widget _emptyState() {
+    final theme = Theme.of(context);
+    final searching = _query.isNotEmpty && _files.isNotEmpty;
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(32, 96, 32, 24),
+        children: [
+          Icon(Icons.folder_open_outlined, size: 56, color: theme.colorScheme.primary),
+          const SizedBox(height: 14),
+          Text(
+            searching ? 'No matching files' : 'No downloaded files right now',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            searching
+                ? 'Try a different name.'
+                : 'PDFs and Excel files you download in the app will appear here.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall,
+          ),
+        ],
       ),
     );
   }

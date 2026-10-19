@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
@@ -13,22 +14,35 @@ class DownloadsService {
   );
 
   static Future<List<DownloadedFile>> listFiles() async {
+    final files = <DownloadedFile>[];
     if (Platform.isAndroid) {
-      final raw = await _channel.invokeMethod<List<dynamic>>('listDownloads');
-      return (raw ?? const <dynamic>[])
-          .whereType<Map<dynamic, dynamic>>()
-          .map(DownloadedFile.fromMap)
-          .where((file) => file.target.isNotEmpty)
-          .toList();
+      try {
+        final raw = await _channel.invokeMethod<List<dynamic>>('listDownloads');
+        files.addAll(
+          (raw ?? const <dynamic>[])
+              .whereType<Map<dynamic, dynamic>>()
+              .map(DownloadedFile.fromMap)
+              .where((file) => file.target.isNotEmpty),
+        );
+      } on MissingPluginException catch (error) {
+        // An APK built before the Downloads feature: show what the app saved itself.
+        debugPrint('📂 Native downloads list unavailable ($error); showing app files.');
+      }
     }
+    // Files saved inside the app (iOS, and the Android fallback in saveBytes).
+    files.addAll(await _appFiles());
+    files.sort((a, b) => b.modifiedAt.compareTo(a.modifiedAt));
+    return files;
+  }
 
+  static Future<List<DownloadedFile>> _appFiles() async {
     final directory = await getApplicationDocumentsDirectory();
     final entries = await directory
         .list()
         .where((entry) => entry is File)
         .toList();
     final files = <DownloadedFile>[];
-    for (final entry in entries.whereType<File>()) {
+    for (final entry in entries.whereType<File>().where((f) => _isDocument(f.path))) {
       final stat = await entry.stat();
       files.add(
         DownloadedFile(
@@ -40,9 +54,12 @@ class DownloadsService {
         ),
       );
     }
-    files.sort((a, b) => b.modifiedAt.compareTo(a.modifiedAt));
     return files;
   }
+
+  /// The documents folder also holds plugin/cache files; list only real downloads.
+  static bool _isDocument(String path) =>
+      mimeTypeFor(path) != 'application/octet-stream';
 
   static Future<String> saveBytes({
     required String fileName,
@@ -52,15 +69,24 @@ class DownloadsService {
     final safeName = fileName.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
     final type = mimeType ?? mimeTypeFor(safeName);
     if (Platform.isAndroid) {
-      return await _channel.invokeMethod<String>(
-            'saveFileToDownloads',
-            <String, dynamic>{
-              'fileName': safeName,
-              'bytes': Uint8List.fromList(bytes),
-              'mimeType': type,
-            },
-          ) ??
-          '';
+      final args = <String, dynamic>{
+        'fileName': safeName,
+        'bytes': Uint8List.fromList(bytes),
+        'mimeType': type,
+      };
+      try {
+        // Phone's Downloads folder (and so the app's Downloads screen).
+        return await _channel.invokeMethod<String>('saveFileToDownloads', args) ?? '';
+      } on MissingPluginException {
+        // Older APK: its PDF-only save, else keep the file inside the app.
+        if (type == 'application/pdf') {
+          try {
+            return await _channel.invokeMethod<String>('savePdfToDownloads', args) ?? '';
+          } on MissingPluginException {
+            // fall through
+          }
+        }
+      }
     }
 
     final directory = await getApplicationDocumentsDirectory();
@@ -82,7 +108,7 @@ class DownloadsService {
   }
 
   static Future<bool> delete(DownloadedFile file) async {
-    if (Platform.isAndroid) {
+    if (Platform.isAndroid && file.target.startsWith('content://')) {
       return await _channel.invokeMethod<bool>(
             'deleteDownload',
             <String, dynamic>{'target': file.target},
