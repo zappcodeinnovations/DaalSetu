@@ -303,6 +303,55 @@ class SellerOfferInterestsView extends StatelessWidget {
                             ),
                           ],
                         ),
+                      ] else if (item.stockBlocked) ...[
+                        // Stock is held by another accepted offer: closed for accept/negotiation.
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.orange.shade200),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.lock_outline, size: 16, color: Colors.orange.shade800),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  (item.blockedReason ?? '').isNotEmpty
+                                      ? item.blockedReason!
+                                      : 'Stock is reserved for another accepted offer.',
+                                  style: TextStyle(fontSize: 12, color: Colors.orange.shade900),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (item.canSellerReject && item.id != null) ...[
+                          const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () => controller.rejectInterest(item.id!),
+                            icon: const Icon(Icons.close, size: 16),
+                            label: const Text(
+                              'REJECT',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.red,
+                              side: const BorderSide(color: Colors.red),
+                              minimumSize: const Size(0, 42),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                        ],
                       ] else if (status == 'seller_confirmed' ||
                           status == 'buyer_confirmed')
                         Text(
@@ -320,7 +369,7 @@ class SellerOfferInterestsView extends StatelessWidget {
                             'rejected',
                             'cancelled',
                           }.contains(status)) ...[
-                        if (item.canSellerAction) const SizedBox(height: 10),
+                        if (item.canSellerAction || item.stockBlocked) const SizedBox(height: 10),
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton.icon(

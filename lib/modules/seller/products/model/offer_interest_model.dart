@@ -17,6 +17,11 @@ class OfferInterestModel {
   final String? transactionId;
   final bool canSellerAction;
   final bool canOpenNegotiation;
+  /// Another accepted offer already holds the stock this one needs: no accept or
+  /// negotiation, only reject (the final deal confirmation rejects it anyway).
+  final bool stockBlocked;
+  final String? blockedReason;
+  final bool canSellerReject;
 
   OfferInterestModel({
     this.id,
@@ -36,6 +41,9 @@ class OfferInterestModel {
     this.transactionId,
     this.canSellerAction = false,
     this.canOpenNegotiation = false,
+    this.stockBlocked = false,
+    this.blockedReason,
+    this.canSellerReject = false,
   });
 
   factory OfferInterestModel.fromJson(Map<String, dynamic> json) {
@@ -81,6 +89,15 @@ class OfferInterestModel {
       canSellerAction: flag(
         'can_seller_action',
         fallback: json['status']?.toString().toLowerCase() == 'interested',
+      ),
+      stockBlocked: flag('stock_blocked'),
+      blockedReason: json['blocked_reason']?.toString(),
+      canSellerReject: flag(
+        'can_seller_reject',
+        fallback: flag(
+          'can_seller_action',
+          fallback: json['status']?.toString().toLowerCase() == 'interested',
+        ),
       ),
       canOpenNegotiation: flag(
         'can_open_negotiation',
