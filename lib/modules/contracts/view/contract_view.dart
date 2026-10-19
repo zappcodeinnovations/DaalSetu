@@ -7,6 +7,7 @@ import '../../admin_catalog/view/admin_drawer.dart';
 import '../controller/contract_controller.dart';
 import '../model/contract_model.dart';
 import './contract_details_view.dart';
+import '../../admin_catalog/view/transport_bids_sheet.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 
 class ContractsScreen extends StatefulWidget {
@@ -306,16 +307,41 @@ class _ContractsScreenState extends State<ContractsScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  'Tap to view complete details  ›',
-                  style: TextStyle(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      visualDensity: VisualDensity.compact,
+                      side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    icon: Icon(Icons.local_shipping_outlined, size: 14, color: theme.colorScheme.primary),
+                    label: Text(
+                      'Transporter Bids',
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 11,
+                      ),
+                    ),
+                    onPressed: () {
+                      showTransportBidsSheet(context, {
+                        'id': contract.id,
+                        'contract_id': contract.contractId,
+                      });
+                    },
                   ),
-                ),
+                  Text(
+                    'Tap to view complete details  ›',
+                    style: TextStyle(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

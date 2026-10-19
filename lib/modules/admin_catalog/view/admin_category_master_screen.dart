@@ -126,9 +126,9 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
 
   Widget _buildSummaryCards() {
     return Container(
-      height: 90,
+      height: 98,
       color: colorSurface,
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8),
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -147,26 +147,30 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
     return Container(
       width: 110,
       margin: const EdgeInsets.symmetric(horizontal: 4),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withOpacity(0.2)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 16, color: color),
-              const SizedBox(width: 6),
-              Text(title, style: TextStyle(color: colorTextDark, fontSize: 12, fontWeight: FontWeight.w600)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(value, style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.bold)),
-        ],
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 16, color: color),
+                const SizedBox(width: 6),
+                Text(title, style: TextStyle(color: colorTextDark, fontSize: 12, fontWeight: FontWeight.w600)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(value, style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
       ),
     );
   }
@@ -230,7 +234,11 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
                 children: [
                   _badge('L${node.level}', AppTheme.textMuted),
                   _badge(isActive ? 'Active' : node.status.capitalizeFirst!, isActive ? AppTheme.successGreen : AppTheme.secondaryOrange),
-                  if (node.brands.isNotEmpty) _badge('${node.brands.length} Brands', AppTheme.primaryGold),
+                  if (node.brands.isNotEmpty)
+                    GestureDetector(
+                      onTap: () => _showCategoryBrandsSheet(context, node),
+                      child: _badge('${node.brands.length} Brands', AppTheme.primaryGold),
+                    ),
                   if (hasChildren) _badge('${node.children.length} Sub', colorPrimary),
                 ],
               ),
@@ -245,9 +253,12 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
                   _showDeleteDialog(context, node);
                 } else if (value == 'add_child') {
                   _showFormSheet(context, defaultParentId: node.id);
+                } else if (value == 'view_brands') {
+                  _showCategoryBrandsSheet(context, node);
                 }
               },
               itemBuilder: (context) => [
+                const PopupMenuItem(value: 'view_brands', child: Row(children: [Icon(Icons.branding_watermark_outlined, size: 20), SizedBox(width: 12), Text('View Brands')])),
                 const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit, size: 20), SizedBox(width: 12), Text('Edit')])),
                 const PopupMenuItem(value: 'add_child', child: Row(children: [Icon(Icons.add, size: 20), SizedBox(width: 12), Text('Add Sub Category')])),
                 PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete, size: 20, color: AppTheme.errorRed), SizedBox(width: 12), Text('Delete', style: TextStyle(color: AppTheme.errorRed))])),
@@ -283,6 +294,83 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
         border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Text(text, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  void _showCategoryBrandsSheet(BuildContext context, CategoryTreeModel node) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.branding_watermark_outlined, color: AppTheme.primaryGold),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${node.name} — Brands (${node.brands.length})',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
+            const Divider(height: 24),
+            if (node.brands.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: Text(
+                    'No brands mapped to this category yet.',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+              )
+            else
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: node.brands.map((b) {
+                  final brandName = b is Map
+                      ? (b['brand_name'] ?? b['name'] ?? '').toString()
+                      : b.toString();
+                  return Chip(
+                    backgroundColor: AppTheme.primaryGold.withValues(alpha: 0.12),
+                    side: BorderSide(color: AppTheme.primaryGold.withValues(alpha: 0.3)),
+                    label: Text(
+                      brandName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(ctx).textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _showFormSheet(context, category: node);
+                },
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                label: const Text('Edit / Map Brands'),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

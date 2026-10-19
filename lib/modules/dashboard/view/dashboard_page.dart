@@ -302,7 +302,7 @@ class AdminDashboardScreen extends StatelessWidget {
             kpis.openComplaints.toString(),
             "Open Issues",
             IconlyLight.info_circle,
-            onTap: () => Get.to(() => AdminOverviewKpisView(kpis: kpis, initialCategory: 'Logistics')),
+            onTap: () => Get.toNamed(AppRoutes.adminComplaints),
           ),
         ],
       ),

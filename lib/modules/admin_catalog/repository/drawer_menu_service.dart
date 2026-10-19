@@ -19,6 +19,12 @@ class DrawerMenuService {
             route: AppRoutes.notifications,
           ),
           DrawerMenuItem(
+            key: 'complaints',
+            title: 'Complaints & Issues',
+            icon: Icons.report_problem_outlined,
+            route: AppRoutes.adminComplaints,
+          ),
+          DrawerMenuItem(
             key: 'registered_company',
             title: 'Registered Company',
             icon: Icons.apartment_rounded,
@@ -117,6 +123,12 @@ class DrawerMenuService {
       DrawerMenuSection(
         sectionTitle: 'DEALS',
         items: [
+          DrawerMenuItem(
+            key: 'contracts',
+            title: 'Contracts',
+            icon: Icons.description_outlined,
+            route: AppRoutes.adminContracts,
+          ),
           DrawerMenuItem(
             key: 'consignments',
             title: AdminModules.byKey('consignments').title,

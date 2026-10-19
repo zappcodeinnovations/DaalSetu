@@ -12,6 +12,8 @@ import '../modules/admin_catalog/view/admin_category_master_screen.dart';
 import '../modules/admin_catalog/view/admin_branch_settings_screen.dart';
 import '../modules/admin_catalog/view/admin_brokerage_bills_screen.dart';
 import '../modules/admin_catalog/view/admin_contract_history_screen.dart';
+import '../modules/admin_catalog/view/admin_complaints_view.dart';
+import '../modules/contracts/view/contract_view.dart';
 import '../modules/admin_catalog/view/admin_module_list_screen.dart';
 import '../modules/admin_catalog/view/admin_offers_list_screen.dart';
 import '../modules/admin_catalog/view/admin_permissions_matrix_screen.dart';
@@ -286,6 +288,14 @@ class AppPages {
     GetPage(
       name: AppRoutes.adminContractHistory,
       page: () => const AdminContractHistoryScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.adminContracts,
+      page: () => const ContractsScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.adminComplaints,
+      page: () => const AdminComplaintsView(),
     ),
     GetPage(
       name: AppRoutes.adminBrokerageBills,

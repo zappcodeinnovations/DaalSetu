@@ -2134,7 +2134,7 @@ class AdminModules {
           title: 'Preview',
           fields: [
             AdminDetailField(
-              'video_url',
+              'video_url|video|file|download_url',
               'Video',
               type: AdminDetailFieldType.video,
             ),

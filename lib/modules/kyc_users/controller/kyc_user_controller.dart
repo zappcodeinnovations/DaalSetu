@@ -24,9 +24,12 @@ class KycController extends GetxController {
         return false;
       }
       // Filter by role
-      if (selectedRole.value != 'all' &&
-          user.role.trim().toLowerCase() != selectedRole.value.trim().toLowerCase()) {
-        return false;
+      if (selectedRole.value != 'all') {
+        final selRole = selectedRole.value.trim().toLowerCase().replaceAll('_', '');
+        final userRole = user.role.trim().toLowerCase().replaceAll('_', '');
+        if (userRole.isNotEmpty && !userRole.contains(selRole)) {
+          return false;
+        }
       }
       // Filter by search query
       if (searchQuery.value.trim().isNotEmpty) {
@@ -61,30 +64,41 @@ class KycController extends GetxController {
 
   void changeFilter(String filter) {
     selectedFilter.value = filter;
+    fetchUsers(status: filter);
   }
 
   void setRoleFilter(String role) {
     selectedRole.value = role;
+    fetchUsers(role: role);
   }
 
   void clearSearch() {
     searchController.clear();
     searchQuery.value = '';
+    fetchUsers(search: '');
   }
 
   void resetFilters() {
     selectedRole.value = 'all';
     selectedFilter.value = 'all';
-    clearSearch();
+    searchController.clear();
+    searchQuery.value = '';
+    fetchUsers(search: '', role: 'all', status: 'all');
   }
 
-  Future<void> fetchUsers() async {
+  Future<void> fetchUsers({String? search, String? role, String? status}) async {
     try {
       isLoading.value = true;
-      final data = await KycService.fetchKycUsers();
+      final data = await KycService.fetchKycUsers(
+        search: search ?? searchQuery.value,
+        role: role ?? selectedRole.value,
+        status: status ?? selectedFilter.value,
+      );
       kycUsers.value = data;
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      if (Get.context != null) {
+        Get.snackbar("Error", e.toString());
+      }
     } finally {
       isLoading.value = false;
     }

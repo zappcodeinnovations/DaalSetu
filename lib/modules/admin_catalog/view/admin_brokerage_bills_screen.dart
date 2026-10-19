@@ -253,8 +253,41 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
     });
   }
 
+  List<Map<String, dynamic>> get _visibleRecords {
+    if (_billingCompany.isEmpty) return _records;
+    final selectedOption = _companies.firstWhere(
+      (opt) => _billingText(opt['value'] ?? opt['id']) == _billingCompany,
+      orElse: () => <String, dynamic>{},
+    );
+    final selectedLabel = _billingText(selectedOption['label'] ?? selectedOption['name'] ?? selectedOption['company_name']).trim().toLowerCase();
+    final cleanId = _billingCompany.replaceAll(RegExp(r'[^0-9]'), '');
+
+    return _records.where((bill) {
+      final billCompName = _billingText(bill['billing_company_name']).trim().toLowerCase();
+      final billCompId = _billingText(bill['billing_company_id'] ?? bill['billing_company']).trim();
+      final cleanBillCompId = billCompId.replaceAll(RegExp(r'[^0-9]'), '');
+
+      if (billCompName.isEmpty && billCompId.isEmpty) return false;
+
+      if (selectedLabel.isNotEmpty && billCompName.isNotEmpty) {
+        if (billCompName == selectedLabel || billCompName.contains(selectedLabel) || selectedLabel.contains(billCompName)) {
+          return true;
+        }
+      }
+      if (cleanId.isNotEmpty && cleanBillCompId.isNotEmpty && cleanId == cleanBillCompId) {
+        return true;
+      }
+      if (_billingCompany.isNotEmpty && billCompName == _billingCompany.toLowerCase()) {
+        return true;
+      }
+      return false;
+    }).toList();
+  }
+
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) {
+    final visible = _visibleRecords;
+    return Scaffold(
     drawer: const AdminDrawer(activeKey: 'brokerage_bills'),
     appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
       title: const Text('Brokerage Bills'),
@@ -271,7 +304,7 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
       icon: const Icon(Icons.add_rounded),
       label: const Text('Create Bill'),
     ),
-    body: _loading && _records.isEmpty
+    body: _loading && visible.isEmpty
         ? const Center(child: CircularProgressIndicator())
         : RefreshIndicator(
             onRefresh: () => _loadInitial(clearFilters: true),
@@ -305,13 +338,14 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
                 ),
                 const SizedBox(height: 8),
                 if (_error != null) _errorCard(),
-                if (_error == null && _records.isEmpty) _emptyCard(),
-                ..._records.map(_billCard),
+                if (_error == null && visible.isEmpty) _emptyCard(),
+                ...visible.map(_billCard),
                 if (_hasNext) _loadMoreButton(),
               ],
             ),
           ),
   );
+  }
 
   Widget _filters() => Card(
     child: ExpansionTile(

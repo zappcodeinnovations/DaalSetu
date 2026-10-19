@@ -713,8 +713,15 @@ class _ManageStockRowState extends State<_ManageStockRow> {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.file_download_outlined, color: AppTheme.primaryGold, size: 18),
-                          onPressed: () {}, // Sync or download action
+                          tooltip: 'Recalculate Bags & Qty',
+                          icon: const Icon(Icons.sync_rounded, color: AppTheme.primaryGold, size: 18),
+                          onPressed: () {
+                            if (_quantityCtrl.text.isNotEmpty) {
+                              _syncBagsFromQuantity(_quantityCtrl.text);
+                            } else if (_bagsCtrl.text.isNotEmpty) {
+                              _syncQuantityFromBags(_bagsCtrl.text);
+                            }
+                          },
                         ),
                       ),
                     ],

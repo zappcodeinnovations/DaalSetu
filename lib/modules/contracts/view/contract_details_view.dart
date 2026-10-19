@@ -117,6 +117,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                 if (contract.packingWeightKg.isNotEmpty)
                   _item('Packing weight', '${contract.packingWeightKg} kg'),
               ]),
+              _transporterSection(contract),
               _partySection(
                 title: 'Buyer',
                 displayPartyId: contract.displayBuyerId,
@@ -135,7 +136,6 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                 company: contract.sellerCompany,
                 mappedId: contract.sellerMappedId,
               ),
-              _transporterSection(contract),
               if (contract.loadingFrom.isNotEmpty || contract.loadingTo.isNotEmpty)
                 _section('Logistics Route', [
                   if (contract.loadingFrom.isNotEmpty)
