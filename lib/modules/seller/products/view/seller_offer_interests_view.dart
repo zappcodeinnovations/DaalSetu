@@ -7,20 +7,28 @@ import '../../common/seller_ui.dart';
 import 'seller_interest_thread_view.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 
-class SellerOfferInterestsView extends StatelessWidget {
+class SellerOfferInterestsView extends StatefulWidget {
   const SellerOfferInterestsView({super.key});
 
   @override
+  State<SellerOfferInterestsView> createState() => _SellerOfferInterestsViewState();
+}
+
+class _SellerOfferInterestsViewState extends State<SellerOfferInterestsView> {
+  /// Read once when the page opens: Get.arguments belongs to whichever route is
+  /// on top, so reading it in build (side menu or a dialog open) gave product 0.
+  late final int productId = int.tryParse(
+        Get.parameters['productId'] ?? (Get.arguments?.toString() ?? '0'),
+      ) ??
+      0;
+
+  late final SellerNegotiationController controller = Get.put(
+    SellerNegotiationController(productId: productId),
+    tag: 'seller_negotiation_$productId',
+  );
+
+  @override
   Widget build(BuildContext context) {
-    final productIdStr =
-        Get.parameters['productId'] ?? (Get.arguments?.toString() ?? '0');
-    final productId = int.tryParse(productIdStr) ?? 0;
-
-    final controller = Get.put(
-      SellerNegotiationController(productId: productId),
-      tag: 'seller_negotiation_$productId',
-    );
-
     final theme = Theme.of(context);
     const primaryColor = Color(0xFFFFB300);
 

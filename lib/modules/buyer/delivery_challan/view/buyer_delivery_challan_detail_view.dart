@@ -16,14 +16,27 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
   final BuyerDeliveryChallanController controller =
       Get.find<BuyerDeliveryChallanController>();
 
+  /// Read once when the page opens: Get.arguments belongs to whichever route is
+  /// on top, so reading it in build (e.g. while the side menu or a dialog is
+  /// open) gave null and requested /api/buyer/delivery-challans/0/.
+  final int challanId = _idFrom(Get.arguments);
+
+  /// Set after the first fetch of this page, so rebuilds do not refetch.
+  final _fetched = <bool>[false];
+
+  static int _idFrom(dynamic argument) =>
+      argument is int ? argument : int.tryParse('${argument ?? ''}') ?? 0;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final int challanId = Get.arguments ?? 0;
 
-    // Fetch details when screen loads
+    // Load once each time the page opens; rebuilds must not refetch.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.fetchChallanDetails(challanId);
+      if (challanId > 0 && !_fetched.first) {
+        _fetched[0] = true;
+        controller.fetchChallanDetails(challanId);
+      }
     });
 
     return Scaffold(
