@@ -3,6 +3,7 @@ import 'package:daalsetu/modules/admin_catalog/view/admin_permission_toggle_pane
 import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../utils/app_snackbar.dart';
 
 class AdminSubAdminPermissionsScreen extends StatefulWidget {
   const AdminSubAdminPermissionsScreen({
@@ -80,7 +81,7 @@ class _AdminSubAdminPermissionsScreenState
         requireAuth: true,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context, 
         const SnackBar(content: Text('Sub Admin permissions updated.')),
       );
       Navigator.of(context).pop(true);
@@ -103,7 +104,7 @@ class _AdminSubAdminPermissionsScreenState
   String _message(Object error) =>
       error.toString().replaceFirst('Exception: ', '');
 
-  void _showError(String message) => ScaffoldMessenger.of(context).showSnackBar(
+  void _showError(String message) => AppSnackbar.showSnackBar(context, 
     SnackBar(content: Text(message), backgroundColor: Colors.red.shade700),
   );
 

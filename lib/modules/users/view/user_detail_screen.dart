@@ -5,6 +5,7 @@ import '../model/user_model.dart';
 import '../../../services/users_services.dart';
 import '../../../comman/api_url.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../utils/app_snackbar.dart';
 
 class UserDetailScreen extends StatefulWidget {
   const UserDetailScreen({super.key});
@@ -390,7 +391,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                       InkWell(
                         onTap: () {
                           Clipboard.setData(ClipboardData(text: password));
-                          Get.snackbar(
+                          AppSnackbar.snackbar(
                             "Copied",
                             "Password copied to clipboard",
                             snackPosition: SnackPosition.BOTTOM,

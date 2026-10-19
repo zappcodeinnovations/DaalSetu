@@ -10,6 +10,7 @@ import '../../../theme/glass_widgets.dart';
 import '../../../utils/tax_id_formatters.dart';
 import '../controller/profile_controller.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../utils/app_snackbar.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -180,7 +181,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _gstController.text,
     );
     if (gstPanError != null) {
-      Get.snackbar('Invalid GST number', gstPanError);
+      AppSnackbar.snackbar('Invalid GST number', gstPanError);
       return;
     }
 

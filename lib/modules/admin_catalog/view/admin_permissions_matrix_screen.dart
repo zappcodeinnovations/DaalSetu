@@ -2,6 +2,7 @@ import 'package:daalsetu/modules/admin_catalog/view/admin_drawer.dart';
 import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../utils/app_snackbar.dart';
 
 const _matrixRoles = <String>[
   'admin',
@@ -120,7 +121,7 @@ class _AdminPermissionsMatrixScreenState
       );
       if (!mounted) return;
       setState(() => _rules[key] = isAllowed);
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context, 
         SnackBar(
           content: Text(
             '${_pretty(action)} ${isAllowed ? 'allowed' : 'denied'} for ${_pretty(_role)}.',
@@ -129,7 +130,7 @@ class _AdminPermissionsMatrixScreenState
       );
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context, 
           SnackBar(
             content: Text(_message(error)),
             backgroundColor: Colors.red.shade700,

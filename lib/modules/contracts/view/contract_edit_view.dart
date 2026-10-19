@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../utils/app_snackbar.dart';
 
 /// Web "Edit Contract" modal: deal values, locations, dates, remarks and status.
 /// Only changed fields are sent, so a closed contract can still get a status/remark update.
@@ -76,7 +77,7 @@ class _ContractEditViewState extends State<ContractEditView> {
     });
     if (_status != widget.contract.status.toLowerCase()) body['status'] = _status;
     if (body.isEmpty) {
-      Get.snackbar('No changes', 'Nothing was changed.', snackPosition: SnackPosition.BOTTOM);
+      AppSnackbar.snackbar('No changes', 'Nothing was changed.', snackPosition: SnackPosition.BOTTOM);
       return;
     }
 
@@ -92,11 +93,11 @@ class _ContractEditViewState extends State<ContractEditView> {
           : Get.put(ContractController());
       await controller.fetchContractDetail(widget.contract.id);
       controller.fetchContracts();
-      Get.snackbar('Contract updated', (response['message'] ?? 'Contract updated successfully.').toString(),
+      AppSnackbar.snackbar('Contract updated', (response['message'] ?? 'Contract updated successfully.').toString(),
           snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green.shade700, colorText: Colors.white);
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
-      Get.snackbar('Update failed', e.toString().replaceFirst('Exception: ', ''),
+      AppSnackbar.snackbar('Update failed', e.toString().replaceFirst('Exception: ', ''),
           snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red.shade700, colorText: Colors.white);
     } finally {
       if (mounted) setState(() => _saving = false);

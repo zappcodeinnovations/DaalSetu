@@ -5,6 +5,7 @@ import '../../../../network/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class SellerCategoryController extends GetxController {
   var isLoading = true.obs;
@@ -35,7 +36,7 @@ class SellerCategoryController extends GetxController {
         await search(searchController.text);
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.snackbar("Error", e.toString());
     } finally {
       isLoading(false);
     }
@@ -47,7 +48,7 @@ class SellerCategoryController extends GetxController {
       final data = await SellerServices.getBrandsDropdown();
       brandsList.assignAll(data.map((e) => BrandModel.fromJson(e)).toList());
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Could not load brands",
         ApiClient.userFriendlyErrorMessage(e.toString()),
         snackPosition: SnackPosition.BOTTOM,
@@ -173,9 +174,9 @@ class SellerCategoryController extends GetxController {
       selectedBrandIds.clear();
       await fetchAllData();
       Get.back();
-      Get.snackbar("Success", _savedMessage(result, "Category"));
+      AppSnackbar.snackbar("Success", _savedMessage(result, "Category"));
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.snackbar("Error", e.toString());
     } finally {
       isLoading(false);
     }
@@ -192,9 +193,9 @@ class SellerCategoryController extends GetxController {
       categoryNameController.clear();
       await fetchAllData();
       Get.back();
-      Get.snackbar("Success", _savedMessage(result, "Sub-category"));
+      AppSnackbar.snackbar("Success", _savedMessage(result, "Sub-category"));
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.snackbar("Error", e.toString());
     } finally {
       isLoading(false);
     }
@@ -211,9 +212,9 @@ class SellerCategoryController extends GetxController {
       categoryNameController.clear();
       await fetchAllData();
       Get.back();
-      Get.snackbar("Success", "Category updated successfully");
+      AppSnackbar.snackbar("Success", "Category updated successfully");
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.snackbar("Error", e.toString());
     } finally {
       isLoading(false);
     }
@@ -223,14 +224,14 @@ class SellerCategoryController extends GetxController {
     try {
       isLoading(true);
       await SellerServices.deleteCategory(id, deleteSubcategories: force);
-      Get.snackbar("Success", "Category deleted successfully");
+      AppSnackbar.snackbar("Success", "Category deleted successfully");
       fetchAllData();
     } catch (e) {
       String errorMsg = e.toString();
       if (errorMsg.contains("has subcategories")) {
         _showForceDeleteConfirm(id);
       } else {
-        Get.snackbar("Error", errorMsg.replaceAll("Exception: ", ""));
+        AppSnackbar.snackbar("Error", errorMsg.replaceAll("Exception: ", ""));
       }
     } finally {
       isLoading(false);
@@ -261,10 +262,10 @@ class SellerCategoryController extends GetxController {
       try {
         isLoading(true);
         await SellerServices.uploadCategoryImage(id, image.path);
-        Get.snackbar("Success", "Image uploaded successfully");
+        AppSnackbar.snackbar("Success", "Image uploaded successfully");
         fetchAllData();
       } catch (e) {
-        Get.snackbar("Error", e.toString());
+        AppSnackbar.snackbar("Error", e.toString());
       } finally {
         isLoading(false);
       }

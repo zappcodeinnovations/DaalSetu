@@ -11,6 +11,7 @@ import 'package:daalsetu/utils/global_error_handler.dart';
 
 import 'approve_deal_dialog.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../utils/app_snackbar.dart';
 
 class NegotiationPage extends StatefulWidget {
   final String offerId;
@@ -107,7 +108,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
           superadminRemark: result.remark,
           subAdminId: result.subAdminId,
         );
-        Get.snackbar(
+        AppSnackbar.snackbar(
           'Success',
           'Deal approved successfully',
           backgroundColor: Colors.green,
@@ -117,7 +118,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
       } catch (e) {
         setState(() => _isLoading = false);
         final message = e.toString().replaceFirst('Exception: ', '');
-        Get.snackbar(
+        AppSnackbar.snackbar(
           'Error',
           message,
           backgroundColor: Colors.red,
@@ -264,7 +265,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
           decision: "reject",
           superadminRemark: '$selectedReason. ${remarkCtrl.text}'.trim(),
         );
-        Get.snackbar(
+        AppSnackbar.snackbar(
           'Rejected',
           'Deal rejected successfully',
           backgroundColor: Colors.red,
@@ -273,7 +274,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
         Get.back(result: true); // Pop back to close negotiation screen
       } catch (e) {
         setState(() => _isLoading = false);
-        Get.snackbar(
+        AppSnackbar.snackbar(
           'Error',
           e.toString(),
           backgroundColor: Colors.red,
@@ -289,7 +290,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
     final weightText = _negWeightCtrl.text.trim();
 
     if (priceText.isEmpty && bagsText.isEmpty && weightText.isEmpty) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Required Fields',
         'Please enter a Counter Price or Packing details.',
         backgroundColor: Colors.orange.shade800,
@@ -300,7 +301,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
 
     if ((bagsText.isNotEmpty && weightText.isEmpty) ||
         (weightText.isNotEmpty && bagsText.isEmpty)) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Incomplete Packing Details',
         'Seller packing changes require both Bags and Packing Weight.',
         backgroundColor: Colors.orange.shade800,
@@ -324,7 +325,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
         throw Exception(res['message'] ?? 'Failed to submit counter proposal');
       }
 
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Success',
         res['message']?.toString() ?? 'Counter proposal submitted successfully',
         backgroundColor: Colors.green,
@@ -338,7 +339,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
       await _loadThread();
     } catch (e) {
       final msg = e.toString().replaceFirst('Exception: ', '');
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Error',
         'Failed to submit: $msg',
         backgroundColor: Colors.red,

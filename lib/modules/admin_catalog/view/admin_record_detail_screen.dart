@@ -15,6 +15,7 @@ import 'package:daalsetu/modules/downloads/service/downloads_service.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
+import '../../../utils/app_snackbar.dart';
 
 class AdminRecordDetailScreen extends StatefulWidget {
   const AdminRecordDetailScreen({
@@ -391,7 +392,7 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
                   GestureDetector(
                     onTap: () {
                       Clipboard.setData(ClipboardData(text: value.toString()));
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      AppSnackbar.showSnackBar(context, 
                         const SnackBar(
                           content: Text('Copied to clipboard'),
                           duration: Duration(seconds: 1),
@@ -473,7 +474,7 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
                   GestureDetector(
                     onTap: () {
                       Clipboard.setData(ClipboardData(text: value.toString()));
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      AppSnackbar.showSnackBar(context, 
                         const SnackBar(
                           content: Text('Copied to clipboard'),
                           duration: Duration(seconds: 1),
@@ -636,9 +637,7 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
       } else if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Could not launch $urlString')));
+        AppSnackbar.showSnackBar(context, SnackBar(content: Text('Could not launch $urlString')));
       }
     } catch (e) {
       debugPrint("Error launching $urlString: $e");
@@ -803,12 +802,12 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
         mimeType: response.headers['content-type'],
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context, 
         const SnackBar(content: Text('Saved to Downloads.')),
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context, 
         SnackBar(
           content: Text(error.toString().replaceFirst('Exception: ', '')),
           backgroundColor: Theme.of(context).colorScheme.error,

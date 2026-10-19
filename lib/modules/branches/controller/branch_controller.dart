@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:daalsetu/network/api_client.dart';
+import '../../../utils/app_snackbar.dart';
 
 class BranchModel {
   final int id;
@@ -60,7 +61,7 @@ class BranchController extends GetxController {
         }
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to load branches');
+      AppSnackbar.snackbar('Error', 'Failed to load branches');
     } finally {
       isLoading(false);
     }

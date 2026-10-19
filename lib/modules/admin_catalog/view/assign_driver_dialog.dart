@@ -1,5 +1,6 @@
 import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
+import '../../../utils/app_snackbar.dart';
 
 /// Lets an admin select an active, unassigned driver for a vehicle.
 ///
@@ -112,7 +113,7 @@ class _AssignDriverDialogState extends State<AssignDriverDialog> {
         requireAuth: true,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context, 
         SnackBar(
           content: Text(
             driverId == null
@@ -124,7 +125,7 @@ class _AssignDriverDialogState extends State<AssignDriverDialog> {
       Navigator.pop(context, true);
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context, 
         SnackBar(content: Text('Could not update driver: $error')),
       );
       setState(() => _saving = false);

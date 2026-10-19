@@ -5,6 +5,7 @@ import 'package:iconly/iconly.dart';
 import '../../../utils/money_format.dart';
 import '../../../widgets/app_shell.dart';
 import '../../../network/api_client.dart';
+import '../../../utils/app_snackbar.dart';
 
 /// Small shared pieces for the seller screens, matching the existing seller look.
 class SellerUi {
@@ -14,7 +15,7 @@ class SellerUi {
       ApiClient.userFriendlyErrorMessage(error.toString());
 
   static void success(String message) {
-    Get.snackbar(
+    AppSnackbar.snackbar(
       '',
       '',
       titleText: Text(
@@ -59,7 +60,7 @@ class SellerUi {
   }
 
   static void error(Object error) {
-    Get.snackbar(
+    AppSnackbar.snackbar(
       '',
       '',
       titleText: Text(

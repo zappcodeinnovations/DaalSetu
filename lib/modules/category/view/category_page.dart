@@ -5,6 +5,7 @@ import '../controller/category_controller.dart';
 import '../model/category_model.dart';
 import '../model/category_request_model.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../utils/app_snackbar.dart';
 
 class CategoryPageView extends StatelessWidget {
   const CategoryPageView({super.key});
@@ -344,7 +345,7 @@ class CategoryPageView extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () async {
                         if (selectedCategoryIds.isEmpty && customNameCtrl.text.trim().isEmpty) {
-                          Get.snackbar("Notice", "Please select at least one category or enter a custom category name",
+                          AppSnackbar.snackbar("Notice", "Please select at least one category or enter a custom category name",
                               snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.orange, colorText: Colors.white);
                           return;
                         }

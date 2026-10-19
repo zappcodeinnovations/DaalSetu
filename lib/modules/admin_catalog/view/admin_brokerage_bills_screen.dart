@@ -11,6 +11,7 @@ import 'package:open_filex/open_filex.dart';
 import 'package:daalsetu/modules/downloads/service/downloads_service.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../utils/app_snackbar.dart';
 
 const _billingEndpoint = '/api/admin/brokerage-bills/';
 
@@ -835,7 +836,7 @@ class _AdminCreateBrokerageBillScreenState
   }
 
   void _showMessage(String message, {bool error = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
+    AppSnackbar.showSnackBar(context, 
       SnackBar(
         content: Text(message),
         backgroundColor: error ? Theme.of(context).colorScheme.error : null,
@@ -1308,7 +1309,7 @@ class _AdminBrokerageBillDetailScreenState
   }
 
   void _snack(String message, {bool error = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
+    AppSnackbar.showSnackBar(context, 
       SnackBar(
         content: Text(message),
         backgroundColor: error ? Theme.of(context).colorScheme.error : null,

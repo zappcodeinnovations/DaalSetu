@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:daalsetu/network/api_client.dart';
+import '../../../utils/app_snackbar.dart';
 
 class CategoryTreeModel {
   final int id;
@@ -84,7 +85,7 @@ class AdminCategoryMasterController extends GetxController {
         _fetchBrands(),
       ]);
     } catch (e) {
-      Get.snackbar('Error', 'Failed to load data: $e', 
+      AppSnackbar.snackbar('Error', 'Failed to load data: $e', 
         backgroundColor: Colors.red.shade100, colorText: Colors.red.shade900);
     } finally {
       isLoading(false);
@@ -261,17 +262,17 @@ class AdminCategoryMasterController extends GetxController {
         requireAuth: true,
       );
       if (response['success'] == true) {
-        Get.snackbar('Success', 'Category deleted successfully.', backgroundColor: Colors.green.shade100);
+        AppSnackbar.snackbar('Success', 'Category deleted successfully.', backgroundColor: Colors.green.shade100);
         await _fetchCategoriesTree();
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to delete category: $e', backgroundColor: Colors.red.shade100);
+      AppSnackbar.snackbar('Error', 'Failed to delete category: $e', backgroundColor: Colors.red.shade100);
     }
   }
 
   Future<void> submitCategory() async {
     if (nameCtrl.text.trim().isEmpty) {
-      Get.snackbar('Validation', 'Category Name is required.', backgroundColor: Colors.orange.shade100);
+      AppSnackbar.snackbar('Validation', 'Category Name is required.', backgroundColor: Colors.orange.shade100);
       return;
     }
 
@@ -319,7 +320,7 @@ class AdminCategoryMasterController extends GetxController {
             requireAuth: true,
           );
         } catch (imgErr) {
-          Get.snackbar(
+          AppSnackbar.snackbar(
             'Warning',
             'Category saved but image upload failed: $imgErr',
             backgroundColor: Colors.orange.shade100,
@@ -331,7 +332,7 @@ class AdminCategoryMasterController extends GetxController {
       await _fetchCategoriesTree();
       Get.back(); // Close form bottom sheet first
 
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Success',
         isEditing
             ? 'Category updated successfully.'
@@ -345,7 +346,7 @@ class AdminCategoryMasterController extends GetxController {
         icon: const Icon(Icons.check_circle_outline, color: Colors.white),
       );
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Error',
         'Failed to save category: $e',
         backgroundColor: Colors.red.shade100,

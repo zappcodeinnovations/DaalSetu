@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:daalsetu/utils/input_validators.dart';
 import 'package:daalsetu/utils/tax_id_formatters.dart';
+import '../../../utils/app_snackbar.dart';
 
 class AdminRecordFormScreen extends StatefulWidget {
   const AdminRecordFormScreen({super.key, required this.config, this.record});
@@ -159,7 +160,7 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
         await repository.create(body, files: filePaths);
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      AppSnackbar.showSnackBar(context, 
         SnackBar(
           content: Text(
             editing ? 'Updated successfully' : 'Created successfully',
@@ -192,7 +193,7 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
 
   void _showError(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    AppSnackbar.showSnackBar(context, 
       SnackBar(
         content: Text(message),
         backgroundColor: Theme.of(context).colorScheme.error,
@@ -271,7 +272,7 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
       );
       if (created == true && mounted) {
         _reloadOptions(field);
-        ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackbar.showSnackBar(context, 
           const SnackBar(
             content: Text('Role created. Select it below for this Sub Admin.'),
           ),

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../../comman/api_url.dart';
 import '../../../../network/api_client.dart';
 import '../model/transporter_bid_model.dart';
+import '../../../../utils/app_snackbar.dart';
 
 /// Web "Active Shipment Offer's" + "My Deals" over the single API /api/transport-bids/.
 class TransporterBiddingController extends GetxController {
@@ -119,6 +120,6 @@ class TransporterBiddingController extends GetxController {
   }
 
   void _snack(String title, String message, Color color) {
-    Get.snackbar(title, message, snackPosition: SnackPosition.BOTTOM, backgroundColor: color, colorText: Colors.white);
+    AppSnackbar.snackbar(title, message, snackPosition: SnackPosition.BOTTOM, backgroundColor: color, colorText: Colors.white);
   }
 }

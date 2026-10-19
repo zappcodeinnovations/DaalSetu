@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../../../services/product_services.dart';
 import '../model/product_model.dart';
+import '../../../utils/app_snackbar.dart';
 
 class ProductController extends GetxController {
   /// ===============================
@@ -51,7 +52,7 @@ class ProductController extends GetxController {
 
       errorMessage.value = e.toString();
 
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Error",
         "Failed to load products",
         snackPosition: SnackPosition.BOTTOM,
@@ -92,7 +93,7 @@ class ProductController extends GetxController {
     } catch (e) {
       debugPrint("❌ REFRESH ERROR: $e");
 
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Error",
         "Failed to refresh products",
         snackPosition: SnackPosition.BOTTOM,
@@ -135,13 +136,13 @@ class ProductController extends GetxController {
         );
       }
 
-      Get.snackbar("Success", "Product created");
+      AppSnackbar.snackbar("Success", "Product created");
 
       await fetchProducts();
 
       Get.back();
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.snackbar("Error", e.toString());
     } finally {
       isLoading.value = false;
     }
@@ -166,7 +167,7 @@ class ProductController extends GetxController {
       );
       final index = products.indexWhere((item) => item.id == product.id);
       if (index >= 0) products[index] = updated;
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Product updated",
         "$title was updated successfully.",
         snackPosition: SnackPosition.BOTTOM,
@@ -175,7 +176,7 @@ class ProductController extends GetxController {
       );
       return true;
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Update failed",
         "Could not update this product. Please try again.",
         snackPosition: SnackPosition.BOTTOM,
@@ -193,7 +194,7 @@ class ProductController extends GetxController {
       processingProductId.value = product.id;
       await ProductService.deleteProduct(product.id);
       products.removeWhere((item) => item.id == product.id);
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Product deleted",
         "${product.title} was removed.",
         snackPosition: SnackPosition.BOTTOM,
@@ -202,7 +203,7 @@ class ProductController extends GetxController {
       );
       return true;
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Delete failed",
         "Could not delete this product. Please try again.",
         snackPosition: SnackPosition.BOTTOM,

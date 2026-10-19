@@ -2,6 +2,7 @@ import 'package:daalsetu/modules/admin_catalog/config/admin_module_config.dart';
 import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../utils/app_snackbar.dart';
 
 /// A choice for a dropdown field: what is sent ([value]) and what is shown ([label]).
 class AdminOption {
@@ -85,7 +86,7 @@ String? formatAdminDateValue(String text, {String? key}) {
 }
 
 void _showAdminToast(String title, String message, {bool isError = false}) {
-  Get.snackbar(
+  AppSnackbar.snackbar(
     title,
     message,
     snackPosition: SnackPosition.TOP,

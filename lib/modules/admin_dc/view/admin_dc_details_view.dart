@@ -7,6 +7,7 @@ import '../controller/admin_dc_details_controller.dart';
 import '../model/admin_challan_model.dart';
 import '../service/admin_challan_pdf_service.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../utils/app_snackbar.dart';
 
 class AdminChallanDetailsView extends StatelessWidget {
   const AdminChallanDetailsView({super.key});
@@ -901,89 +902,21 @@ class AdminChallanDetailsView extends StatelessWidget {
 
   Future<void> _downloadPdf(BuildContext context, AdminChallanModel challan) async {
     try {
-      // 1. Phone Top Bar download indicator with animated progress
-      Get.showSnackbar(
-        GetSnackBar(
-          titleText: const Text(
-            "Downloading Delivery Challan",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-          ),
-          messageText: const Row(
-            children: [
-              SizedBox(
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryGold),
-              ),
-              SizedBox(width: 10),
-              Text(
-                "Saving PDF to Downloads folder...",
-                style: TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-            ],
-          ),
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: const Color(0xFF1E293B),
-          borderRadius: 12,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          duration: const Duration(seconds: 2),
-          icon: const Icon(Icons.downloading_rounded, color: AppTheme.primaryGold, size: 24),
-        ),
-      );
+      AppSnackbar.showInfo(message: "Saving delivery challan PDF to Downloads...", duration: const Duration(seconds: 2));
 
       final result = await AdminChallanPdfService.download(challan);
 
       // 2. WhatsApp-like behavior: Automatically open the document immediately in PDF reader!
       await AdminChallanPdfService.openPdf(result.filePath, uri: result.downloadsUri);
 
-      // 3. Top Bar success notification banner with direct [OPEN] action button
-      Get.showSnackbar(
-        GetSnackBar(
-          titleText: const Text(
-            "Delivery Challan Downloaded",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-          ),
-          messageText: const Text(
-            "Saved in Downloads • Tap OPEN to view anytime",
-            style: TextStyle(color: Colors.white70, fontSize: 12),
-          ),
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: const Color(0xFF0F172A),
-          borderRadius: 12,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          duration: const Duration(seconds: 6),
-          icon: const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 24),
-          mainButton: TextButton.icon(
-            icon: const Icon(Icons.open_in_new_rounded, color: AppTheme.primaryGold, size: 16),
-            label: const Text(
-              "OPEN",
-              style: TextStyle(color: AppTheme.primaryGold, fontWeight: FontWeight.bold),
-            ),
-            onPressed: () {
-              AdminChallanPdfService.openPdf(result.filePath, uri: result.downloadsUri);
-            },
-          ),
-        ),
+      AppSnackbar.showInfo(
+        message: "Delivery challan saved in Downloads.",
+        duration: const Duration(seconds: 6),
+        actionLabel: "OPEN",
+        onAction: () => AdminChallanPdfService.openPdf(result.filePath, uri: result.downloadsUri),
       );
     } catch (e) {
-      Get.showSnackbar(
-        GetSnackBar(
-          titleText: const Text(
-            "PDF Download Failed",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-          ),
-          messageText: Text(
-            e.toString(),
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
-          ),
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: const Color(0xFFDC2626),
-          borderRadius: 12,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          duration: const Duration(seconds: 4),
-          icon: const Icon(Icons.error_outline_rounded, color: Colors.white, size: 24),
-        ),
-      );
+      AppSnackbar.showError(message: "Could not download the PDF. Please try again.");
     }
   }
 
@@ -991,23 +924,7 @@ class AdminChallanDetailsView extends StatelessWidget {
     try {
       await AdminChallanPdfService.share(challan);
     } catch (e) {
-      Get.showSnackbar(
-        GetSnackBar(
-          titleText: const Text(
-            "PDF Share Failed",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-          ),
-          messageText: Text(
-            e.toString(),
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
-          ),
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: const Color(0xFFDC2626),
-          borderRadius: 12,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          duration: const Duration(seconds: 4),
-        ),
-      );
+      AppSnackbar.showError(message: "Could not share the PDF. Please try again.");
     }
   }
 

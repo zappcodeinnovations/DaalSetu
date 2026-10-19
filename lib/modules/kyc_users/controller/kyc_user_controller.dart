@@ -2,6 +2,7 @@ import '../../../services/kyc_users_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../model/kyc_user_model.dart';
+import '../../../utils/app_snackbar.dart';
 
 class KycController extends GetxController {
   final isLoading = false.obs;
@@ -97,7 +98,7 @@ class KycController extends GetxController {
       kycUsers.value = data;
     } catch (e) {
       if (Get.context != null) {
-        Get.snackbar("Error", e.toString());
+        AppSnackbar.snackbar("Error", e.toString());
       }
     } finally {
       isLoading.value = false;
@@ -108,9 +109,9 @@ class KycController extends GetxController {
     try {
       await KycService.approveKyc(id);
       await fetchUsers();
-      Get.snackbar("Success", "KYC Approved");
+      AppSnackbar.snackbar("Success", "KYC Approved");
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.snackbar("Error", e.toString());
     }
   }
 
@@ -120,7 +121,7 @@ class KycController extends GetxController {
 
       await KycService.rejectKyc(userId, reason);
 
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Success",
         "KYC rejected successfully",
         backgroundColor: Colors.red,
@@ -129,7 +130,7 @@ class KycController extends GetxController {
 
       fetchUsers(); // refresh list
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Error",
         e.toString(),
         backgroundColor: Colors.red,

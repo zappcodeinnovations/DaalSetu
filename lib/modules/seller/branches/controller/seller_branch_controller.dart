@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../../network/api_client.dart';
 import '../../../../services/seller_services.dart';
 import '../model/seller_branch_model.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class SellerBranchController extends GetxController {
   var isLoading = false.obs;
@@ -50,7 +51,7 @@ class SellerBranchController extends GetxController {
         _showError('Notice', res['message'] ?? 'Could not submit request');
         return;
       }
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Success",
         res['message'] ?? "Branch request submitted successfully",
         snackPosition: SnackPosition.BOTTOM,
@@ -79,7 +80,7 @@ class SellerBranchController extends GetxController {
       }
       pendingRequests.removeWhere((item) => item.branchId == branchId);
       await fetchBranches();
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Success",
         res['message'] ?? "Request cancelled successfully",
         snackPosition: SnackPosition.BOTTOM,
@@ -113,7 +114,7 @@ class SellerBranchController extends GetxController {
         (item) => item.id == branchId || item.branchId == branchId,
       );
       await fetchBranches();
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Success",
         message.isEmpty ? "Left branch successfully" : message,
         snackPosition: SnackPosition.BOTTOM,
@@ -139,7 +140,7 @@ class SellerBranchController extends GetxController {
       message.toLowerCase().contains('not added to this branch');
 
   void _showNotice(String message) {
-    Get.snackbar(
+    AppSnackbar.snackbar(
       "Notice",
       message,
       snackPosition: SnackPosition.BOTTOM,
@@ -172,7 +173,7 @@ class SellerBranchController extends GetxController {
         _showError('Notice', res['message'] ?? 'Could not create branch');
         return;
       }
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Success",
         res['message'] ?? "Branch created successfully",
         snackPosition: SnackPosition.BOTTOM,
@@ -187,7 +188,7 @@ class SellerBranchController extends GetxController {
   }
 
   void _showError(String title, Object error) {
-    Get.snackbar(
+    AppSnackbar.snackbar(
       title,
       ApiClient.userFriendlyErrorMessage(error.toString()),
       snackPosition: SnackPosition.BOTTOM,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../controller/seller_branch_controller.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class SellerCreateBranchDialog extends StatefulWidget {
   const SellerCreateBranchDialog({super.key});
@@ -64,7 +65,7 @@ class _SellerCreateBranchDialogState extends State<SellerCreateBranchDialog> {
         ElevatedButton(
           onPressed: () {
             if (_nameController.text.trim().isEmpty || _cityController.text.trim().isEmpty) {
-              Get.snackbar("Error", "Branch name and city are required", snackPosition: SnackPosition.BOTTOM);
+              AppSnackbar.snackbar("Error", "Branch name and city are required", snackPosition: SnackPosition.BOTTOM);
               return;
             }
             Get.back();

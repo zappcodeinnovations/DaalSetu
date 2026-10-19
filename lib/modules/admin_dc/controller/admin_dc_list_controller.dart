@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../model/admin_challan_model.dart';
 import '../service/admin_dc_service.dart';
+import '../../../utils/app_snackbar.dart';
 
 class AdminDCListController extends GetxController {
   final isLoading = false.obs;
@@ -66,7 +67,7 @@ class AdminDCListController extends GetxController {
     } catch (e) {
       debugPrint("❌ [AdminDCListController] Error loading challans: $e");
       errorMessage.value = "Failed to load Delivery Challans: $e";
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Notice",
         "Could not load Delivery Challans. Please pull down to refresh.",
         snackPosition: SnackPosition.BOTTOM,

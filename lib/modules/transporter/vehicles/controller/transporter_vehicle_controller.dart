@@ -6,6 +6,7 @@ import '../../drivers/controller/transporter_driver_controller.dart';
 import '../../../../network/api_client.dart';
 import '../../../../utils/app_preferences.dart';
 import 'package:get/get.dart';
+import '../../../../utils/app_snackbar.dart';
 
 /// Vehicles of the logged-in transporter (same actions as the web "Registered Vehicles" page).
 class TransporterVehicleController extends GetxController {
@@ -52,7 +53,7 @@ class TransporterVehicleController extends GetxController {
   String _message(Object e) => e.toString().replaceFirst('Exception: ', '');
 
   void _snack(String title, String message, Color color) {
-    Get.snackbar(
+    AppSnackbar.snackbar(
       title,
       message,
       snackPosition: SnackPosition.BOTTOM,

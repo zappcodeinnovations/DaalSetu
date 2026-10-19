@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../model/admin_challan_model.dart';
 import '../service/admin_dc_service.dart';
 import 'admin_dc_list_controller.dart';
+import '../../../utils/app_snackbar.dart';
 
 class AdminDCDetailsController extends GetxController {
   final isLoading = true.obs;
@@ -47,7 +48,7 @@ class AdminDCDetailsController extends GetxController {
       }
     } catch (e) {
       debugPrint("❌ [AdminDCDetailsController] Error fetching challan details: $e");
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Notice",
         "Could not load latest challan details. Pull down to refresh.",
         snackPosition: SnackPosition.BOTTOM,
@@ -72,7 +73,7 @@ class AdminDCDetailsController extends GetxController {
       final result = await AdminDCService.dispatchChallan(id);
 
       if (result['success'] == true) {
-        Get.snackbar(
+        AppSnackbar.snackbar(
           "Shipment Dispatched",
           result['message'] ?? "Shipment marked as Dispatched successfully!",
           snackPosition: SnackPosition.BOTTOM,
@@ -87,7 +88,7 @@ class AdminDCDetailsController extends GetxController {
         await fetchDetails(id, isRefresh: true);
         _refreshList();
       } else {
-        Get.snackbar(
+        AppSnackbar.snackbar(
           "Cannot Dispatch",
           result['message'] ?? "Could not dispatch delivery challan.",
           snackPosition: SnackPosition.BOTTOM,
@@ -100,9 +101,9 @@ class AdminDCDetailsController extends GetxController {
       }
     } catch (e) {
       debugPrint("❌ [AdminDCDetailsController] Dispatch Error: $e");
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Dispatch Error",
-        "An unexpected error occurred: $e",
+        "Could not dispatch the delivery challan: $e",
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: const Color(0xFFDC2626),
         colorText: Colors.white,
@@ -118,7 +119,7 @@ class AdminDCDetailsController extends GetxController {
   // ── Manage actions (same rules as the web: only drafts can be edited, cancelled or deleted) ──
   final isWorking = false.obs;
 
-  void _toast(String title, String message, {bool ok = true}) => Get.snackbar(
+  void _toast(String title, String message, {bool ok = true}) => AppSnackbar.snackbar(
         title,
         message,
         snackPosition: SnackPosition.BOTTOM,

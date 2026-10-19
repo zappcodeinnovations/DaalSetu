@@ -4,6 +4,7 @@ import 'package:daalsetu/modules/products/model/product_model.dart';
 import 'package:daalsetu/services/product_services.dart';
 import 'package:daalsetu/services/seller_services.dart';
 import 'package:get/get.dart';
+import '../../../utils/app_snackbar.dart';
 
 class AdminOffersController extends GetxController {
   var isLoading = true.obs;
@@ -68,7 +69,7 @@ class AdminOffersController extends GetxController {
         await SellerServices.toggleOfferStatus(productId, !currentValue);
       } catch (e) {
         offers[index] = old;
-        Get.snackbar("Error", e.toString().replaceFirst('Exception: ', ''));
+        AppSnackbar.snackbar("Error", e.toString().replaceFirst('Exception: ', ''));
       }
     }
   }
@@ -77,9 +78,9 @@ class AdminOffersController extends GetxController {
     try {
       await ProductService.deleteProduct(productId);
       offers.removeWhere((o) => o.id == productId);
-      Get.snackbar("Success", "Offer deleted successfully");
+      AppSnackbar.snackbar("Success", "Offer deleted successfully");
     } catch (e) {
-      Get.snackbar("Error", "Failed to delete offer");
+      AppSnackbar.snackbar("Error", "Failed to delete offer");
     }
   }
 
@@ -92,7 +93,7 @@ class AdminOffersController extends GetxController {
   }) async {
     // Validate: quantity ya bags mein se ek hona chahiye
     if (quantity.trim().isEmpty && bags.trim().isEmpty) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Validation Error',
         'Please enter Quantity or Bags to update stock.',
         backgroundColor: Colors.red.shade100,
@@ -111,7 +112,7 @@ class AdminOffersController extends GetxController {
         packingKg: packingKg.trim(),
       );
 
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Stock Updated ✅',
         'Stock $action action applied successfully.',
         backgroundColor: Colors.green.shade100,
@@ -122,7 +123,7 @@ class AdminOffersController extends GetxController {
       // Refresh list to show updated stock
       await fetchOffers();
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         'Error ❌',
         'Failed to update stock: ${e.toString()}',
         backgroundColor: Colors.red.shade100,

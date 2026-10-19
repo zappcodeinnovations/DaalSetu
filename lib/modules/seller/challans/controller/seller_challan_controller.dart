@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../services/seller_services.dart';
 import '../model/seller_challan_model.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class SellerChallanController extends GetxController {
   var isLoading = false.obs;
@@ -19,7 +20,7 @@ class SellerChallanController extends GetxController {
       final data = await SellerServices.getDeliveryChallans();
       challansList.value = data.map((e) => SellerChallanModel.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e) {
-      Get.snackbar("Error", e.toString(), snackPosition: SnackPosition.BOTTOM);
+      AppSnackbar.snackbar("Error", e.toString(), snackPosition: SnackPosition.BOTTOM);
     } finally {
       isLoading.value = false;
     }
@@ -31,11 +32,11 @@ class SellerChallanController extends GetxController {
       final res = await SellerServices.dispatchDeliveryChallan(challanId);
       if (Get.isDialogOpen ?? false) Get.back();
 
-      Get.snackbar("Success", res['message'] ?? "Challan dispatched successfully", snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+      AppSnackbar.snackbar("Success", res['message'] ?? "Challan dispatched successfully", snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
       fetchChallans();
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
-      Get.snackbar("Error", e.toString(), snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+      AppSnackbar.snackbar("Error", e.toString(), snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
 }

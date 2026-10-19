@@ -7,6 +7,7 @@ import '../../../widgets/app_shell.dart';
 import '../../admin_catalog/view/admin_drawer.dart';
 import '../model/downloaded_file.dart';
 import '../service/downloads_service.dart';
+import '../../../utils/app_snackbar.dart';
 
 class DownloadsView extends StatefulWidget {
   const DownloadsView({super.key});
@@ -121,7 +122,7 @@ class _DownloadsViewState extends State<DownloadsView> {
   }
 
   void _showMessage(String message, {bool error = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
+    AppSnackbar.showSnackBar(context, 
       SnackBar(
         content: Text(message),
         backgroundColor: error ? Theme.of(context).colorScheme.error : null,

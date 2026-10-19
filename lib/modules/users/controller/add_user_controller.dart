@@ -5,6 +5,7 @@ import '../../../services/tag_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import './user_controller.dart';
+import '../../../utils/app_snackbar.dart';
 
 class AddUserController extends GetxController {
   var isLoading = false.obs;
@@ -80,7 +81,7 @@ class AddUserController extends GetxController {
           Get.find<UserController>().fetchUsers();
         }
 
-        Get.snackbar(
+        AppSnackbar.snackbar(
           "Success",
           response["message"] ?? "User created successfully",
           snackPosition: SnackPosition.BOTTOM,
@@ -95,7 +96,7 @@ class AddUserController extends GetxController {
           Get.back(result: true);
         });
       } else {
-        Get.snackbar(
+        AppSnackbar.snackbar(
           "Error",
           response["message"] ?? "Something went wrong",
           backgroundColor: Colors.red,
@@ -103,7 +104,7 @@ class AddUserController extends GetxController {
         );
       }
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Error",
         e.toString(),
         backgroundColor: Colors.red,

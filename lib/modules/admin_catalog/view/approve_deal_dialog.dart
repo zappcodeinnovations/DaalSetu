@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:daalsetu/modules/admin_catalog/config/admin_actions.dart';
 import 'package:daalsetu/network/api_client.dart';
 import 'package:daalsetu/theme/app_theme.dart';
+import '../../../utils/app_snackbar.dart';
 
 class ApproveDealResult {
   final String remark;
@@ -269,7 +270,7 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
             if (!_formKey.currentState!.validate()) return;
             final subAdminId = int.tryParse(_selectedSubAdminValue ?? '');
             if (subAdminId == null) {
-              Get.snackbar(
+              AppSnackbar.snackbar(
                 'Sub Admin Required',
                 'Please select a Sub Admin before approval.',
                 backgroundColor: Colors.red,

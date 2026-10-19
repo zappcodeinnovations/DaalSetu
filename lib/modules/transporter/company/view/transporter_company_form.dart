@@ -8,6 +8,7 @@ import '../controller/transporter_company_controller.dart';
 import '../model/company_model.dart';
 import '../../../../routes/app_routes.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class TransporterCompanyForm extends StatefulWidget {
   final CompanyModel? company; // Null for create, provided for edit
@@ -105,7 +106,7 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
       _gstCtrl.text,
     );
     if (gstPanError != null) {
-      Get.snackbar('Validation error', gstPanError);
+      AppSnackbar.snackbar('Validation error', gstPanError);
       return;
     }
 

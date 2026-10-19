@@ -10,6 +10,7 @@ import './transporter_driver_form.dart';
 import './transporter_driver_detail.dart';
 import '../model/driver_model.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../../utils/app_snackbar.dart';
 
 /// Web "Registered Drivers": search, status filter, register, edit, delete, assign vehicle, view license.
 class TransporterDriversView extends StatelessWidget {
@@ -381,7 +382,7 @@ class TransporterDriversView extends StatelessWidget {
               mode: LaunchMode.externalApplication,
             );
             if (!ok) {
-              Get.snackbar(
+              AppSnackbar.snackbar(
                 "Error",
                 "Unable to open license document",
                 snackPosition: SnackPosition.BOTTOM,

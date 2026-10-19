@@ -2,6 +2,7 @@ import '../../../services/profile_services.dart';
 import '../../../comman/api_url.dart';
 import 'package:get/get.dart';
 import '../model/profile_model.dart';
+import '../../../utils/app_snackbar.dart';
 
 class ProfileController extends GetxController {
   var isLoading = true.obs;
@@ -45,7 +46,7 @@ class ProfileController extends GetxController {
     } catch (e) {
       loadError.value = e.toString();
       if (showError) {
-        Get.snackbar("Unable to refresh profile", "Please try again.");
+        AppSnackbar.snackbar("Unable to refresh profile", "Please try again.");
       }
     } finally {
       isLoading.value = false;
@@ -58,10 +59,10 @@ class ProfileController extends GetxController {
       final updatedData = await ProfileService.updateProfile(data);
       profile.value = updatedData;
       imageRevision.value = DateTime.now().millisecondsSinceEpoch;
-      Get.snackbar("Success", "Profile updated successfully");
+      AppSnackbar.snackbar("Success", "Profile updated successfully");
       return true;
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.snackbar("Error", e.toString());
       return false;
     } finally {
       isUpdating.value = false;
@@ -79,10 +80,10 @@ class ProfileController extends GetxController {
         files: files,
       );
       imageRevision.value = DateTime.now().millisecondsSinceEpoch;
-      Get.snackbar("Success", "Profile updated successfully");
+      AppSnackbar.snackbar("Success", "Profile updated successfully");
       return true;
     } catch (e) {
-      Get.snackbar("Error", e.toString().replaceFirst('Exception: ', ''));
+      AppSnackbar.snackbar("Error", e.toString().replaceFirst('Exception: ', ''));
       return false;
     } finally {
       isUpdating.value = false;

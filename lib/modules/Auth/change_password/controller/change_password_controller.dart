@@ -1,6 +1,7 @@
 import '../../../../services/auth_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class ChangePasswordController extends GetxController {
   final oldPasswordController = TextEditingController();
@@ -37,7 +38,7 @@ class ChangePasswordController extends GetxController {
     if (oldPassword.isEmpty ||
         newPassword.isEmpty ||
         confirmPassword.isEmpty) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Error",
         "All fields are required",
         snackPosition: SnackPosition.TOP,
@@ -46,7 +47,7 @@ class ChangePasswordController extends GetxController {
     }
 
     if (newPassword.length < 8) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Error",
         "Password must be at least 8 characters long",
         snackPosition: SnackPosition.TOP,
@@ -59,7 +60,7 @@ class ChangePasswordController extends GetxController {
     final hasSymbolMatch = RegExp(r'[^a-zA-Z0-9]').hasMatch(newPassword);
 
     if (!hasLetterMatch || !hasNumberMatch || !hasSymbolMatch) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Error",
         "Password must contain letters, numbers, and symbols",
         snackPosition: SnackPosition.TOP,
@@ -68,7 +69,7 @@ class ChangePasswordController extends GetxController {
     }
 
     if (newPassword == oldPassword) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Error",
         "New password cannot be the same as old password",
         snackPosition: SnackPosition.TOP,
@@ -77,7 +78,7 @@ class ChangePasswordController extends GetxController {
     }
 
     if (newPassword != confirmPassword) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Error",
         "New password and confirm password do not match",
         snackPosition: SnackPosition.TOP,
@@ -94,7 +95,7 @@ class ChangePasswordController extends GetxController {
         confirmPassword: confirmPassword,
       );
 
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Success",
         message,
         snackPosition: SnackPosition.TOP,
@@ -104,7 +105,7 @@ class ChangePasswordController extends GetxController {
       newPasswordController.clear();
       confirmPasswordController.clear();
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Error",
         e.toString().replaceAll("Exception: ", ""),
         snackPosition: SnackPosition.TOP,

@@ -7,6 +7,7 @@ import '../controller/kyc_user_controller.dart';
 import '../model/kyc_user_model.dart';
 import 'package:daalsetu/theme/app_theme.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../utils/app_snackbar.dart';
 
 class KycUsersScreen extends StatelessWidget {
   KycUsersScreen({super.key});
@@ -932,7 +933,7 @@ class KycUsersScreen extends StatelessWidget {
             onPressed: () {
               final reason = reasonController.text.trim();
               if (reason.isEmpty) {
-                Get.snackbar("Error", "Please enter rejection reason", backgroundColor: colorRejected, colorText: Colors.white);
+                AppSnackbar.snackbar("Error", "Please enter rejection reason", backgroundColor: colorRejected, colorText: Colors.white);
                 return;
               }
               Get.back(); // close dialog

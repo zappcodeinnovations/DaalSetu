@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../controller/seller_branch_controller.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class SellerJoinBranchDialog extends StatefulWidget {
   const SellerJoinBranchDialog({super.key});
@@ -49,7 +50,7 @@ class _SellerJoinBranchDialogState extends State<SellerJoinBranchDialog> {
         ElevatedButton(
           onPressed: () {
             if (_codeController.text.trim().isEmpty) {
-              Get.snackbar("Error", "Please enter a valid branch code", snackPosition: SnackPosition.BOTTOM);
+              AppSnackbar.snackbar("Error", "Please enter a valid branch code", snackPosition: SnackPosition.BOTTOM);
               return;
             }
             Get.back();

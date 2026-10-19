@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../model/branch_report_model.dart';
 import '../service/admin_reports_service.dart';
 import '../service/report_export_service.dart';
+import '../../../utils/app_snackbar.dart';
 
 class AdminReportsController extends GetxController {
   final isLoading = false.obs;
@@ -79,7 +80,7 @@ class AdminReportsController extends GetxController {
       debugPrint("✅ [AdminReportsController] Loaded ${reports.length} branch reports for $activeRange.");
     } catch (e) {
       debugPrint("❌ [AdminReportsController] Error loading reports: $e");
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Notice",
         "Could not refresh branch reports. Please try again.",
         snackPosition: SnackPosition.BOTTOM,
@@ -145,7 +146,7 @@ class AdminReportsController extends GetxController {
   // ── Export Actions ───────────────────────────────────────────────────────
   Future<void> exportCsv() async {
     if (filteredReports.isEmpty) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Export Notice",
         "No data available to export.",
         snackPosition: SnackPosition.BOTTOM,
@@ -165,7 +166,7 @@ class AdminReportsController extends GetxController {
       );
 
       if (filePath != null) {
-        Get.snackbar(
+        AppSnackbar.snackbar(
           "Success",
           "Report exported and ready to share!",
           snackPosition: SnackPosition.BOTTOM,
@@ -176,7 +177,7 @@ class AdminReportsController extends GetxController {
         );
       }
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Export Error",
         "Failed to generate export file: $e",
         snackPosition: SnackPosition.BOTTOM,

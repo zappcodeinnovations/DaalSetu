@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../utils/app_snackbar.dart';
 
 /// Admin "Edit Offer": same fields as the web edit form (category, brand, price unit,
 /// loading dates, deal expiry, remark, active). Stock is changed from "Update Stock".
@@ -152,7 +153,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
     try {
       final result = await SellerServices.updateOffer(widget.product.id, body);
       if (Get.isRegistered<ProductController>()) await Get.find<ProductController>().fetchProducts();
-      Get.snackbar('Offer updated', (result['message'] ?? '${_title.text.trim()} was updated.').toString(),
+      AppSnackbar.snackbar('Offer updated', (result['message'] ?? '${_title.text.trim()} was updated.').toString(),
           snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green.shade700, colorText: Colors.white);
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
@@ -162,7 +163,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
     }
   }
 
-  void _error(String message) => Get.snackbar('Update failed', message,
+  void _error(String message) => AppSnackbar.snackbar('Update failed', message,
       snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red.shade700, colorText: Colors.white);
 
   @override

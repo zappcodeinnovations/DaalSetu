@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../../../services/dashboard_service.dart';
 import 'package:get/get.dart';
 import '../model/dashboard_model.dart';
+import '../../../utils/app_snackbar.dart';
 
 class DashboardController extends GetxController {
   final isLoading = false.obs;
@@ -67,7 +68,7 @@ class DashboardController extends GetxController {
         debugPrint("StackTrace: $stackTrace");
       }
 
-      Get.snackbar("Error", "Failed to load dashboard");
+      AppSnackbar.snackbar("Error", "Failed to load dashboard");
     } finally {
       isLoading.value = false;
     }
