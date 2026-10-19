@@ -108,13 +108,33 @@ class SellerOfferInterestsView extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
+                          // A buyer can have several offers on one product, so lead
+                          // with the offer's own id; the buyer id alone looked duplicated.
                           Expanded(
-                            child: Text(
-                              item.buyerName ?? "Buyer #${item.id}",
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  (item.transactionId ?? '').isNotEmpty
+                                      ? item.transactionId!
+                                      : "Offer #${item.id}",
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  [
+                                    "Buyer: ${item.buyerName ?? '-'}",
+                                    if ((item.createdAt ?? '').isNotEmpty) item.createdAt!,
+                                  ].join(' • '),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           SellerUi.statusChip(status),

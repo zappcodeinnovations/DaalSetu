@@ -13,6 +13,8 @@ class OfferInterestModel {
   final String? counterPackingWeightKg;
   final String? status;
   final String? createdAt;
+  /// Per-offer id (INT-…): one buyer can send a new offer after an earlier one moves on.
+  final String? transactionId;
   final bool canSellerAction;
   final bool canOpenNegotiation;
 
@@ -31,6 +33,7 @@ class OfferInterestModel {
     this.counterPackingWeightKg,
     this.status,
     this.createdAt,
+    this.transactionId,
     this.canSellerAction = false,
     this.canOpenNegotiation = false,
   });
@@ -74,6 +77,7 @@ class OfferInterestModel {
       counterPackingWeightKg: json['counter_packing_weight_kg']?.toString(),
       status: json['status']?.toString() ?? json['deal_status']?.toString(),
       createdAt: json['created_at']?.toString(),
+      transactionId: json['transaction_id']?.toString(),
       canSellerAction: flag(
         'can_seller_action',
         fallback: json['status']?.toString().toLowerCase() == 'interested',
