@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../controller/seller_contract_controller.dart';
+import '../../common/seller_ui.dart';
 import 'seller_contract_detail_view.dart';
 
 class SellerContractsView extends StatelessWidget {
@@ -180,7 +181,7 @@ class SellerContractsView extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              "Date: ${item.createdAt ?? 'N/A'}",
+                              "Date: ${SellerUi.date(item.createdAt)}",
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey,

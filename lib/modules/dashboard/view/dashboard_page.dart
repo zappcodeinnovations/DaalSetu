@@ -15,6 +15,7 @@ import '../../admin_notifications/controller/admin_notification_controller.dart'
 import '../../admin_notifications/view/admin_notification_view.dart';
 import '../../contracts/view/contract_view.dart';
 import 'admin_overview_kpis_view.dart';
+import '../../../utils/money_format.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   AdminDashboardScreen({super.key});
@@ -262,7 +263,7 @@ class AdminDashboardScreen extends StatelessWidget {
           _buildDynamicMetricCard(
             context,
             "GTV MTD",
-            "₹${kpis.gtvMtd}",
+            formatInr(kpis.gtvMtd),
             "Total Value",
             IconlyLight.graph,
             onTap: () => Get.toNamed(AppRoutes.adminBranchReports),
@@ -271,7 +272,7 @@ class AdminDashboardScreen extends StatelessWidget {
           _buildDynamicMetricCard(
             context,
             "Brokerage",
-            "₹${kpis.brokerageEarnedMtd}",
+            formatInr(kpis.brokerageEarnedMtd),
             "Earned MTD",
             IconlyLight.wallet,
             onTap: () => Get.toNamed(AppRoutes.adminBrokerageBills),
@@ -1498,14 +1499,9 @@ class AdminDashboardScreen extends StatelessWidget {
                   interval: maxY / 4 > 0 ? maxY / 4 : 10,
                   getTitlesWidget: (value, meta) {
                     if (value == 0) return const Text('');
-                    if (value >= 100000) {
-                      return Text(
-                        "${(value / 100000).toStringAsFixed(1)}L",
-                        style: TextStyle(fontSize: 8, color: theme.textTheme.bodyMedium?.color),
-                      );
-                    }
+                    // Small values used to all read "0k".
                     return Text(
-                      "${(value / 1000).toInt()}k",
+                      compactInr(value),
                       style: TextStyle(fontSize: 8, color: theme.textTheme.bodyMedium?.color),
                     );
                   },
@@ -1585,7 +1581,7 @@ class AdminDashboardScreen extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text("₹${branch.gtvMtd}", style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+                  Text(formatInr(branch.gtvMtd), style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
                   const SizedBox(height: 6),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),

@@ -38,11 +38,12 @@ class _SellerContractDetailViewState extends State<SellerContractDetailView> {
 
   Future<void> _load() async {
     if (_contract == null && mounted) setState(() => _loading = true);
+    // Start both requests together; the screen waits for both before rendering.
+    final contractRequest = _quiet(SellerServices.getContractDetails(widget.contractId));
+    final consignmentRequest = _quiet(SellerServices.getConsignmentDetail(widget.contractId));
     try {
-      final response = await SellerServices.getContractDetails(
-        widget.contractId,
-      );
-      if (response.isNotEmpty) {
+      final response = await contractRequest;
+      if (response != null && response.isNotEmpty) {
         final parsed = response['data'] is Map
             ? Map<String, dynamic>.from(response['data'] as Map)
             : Map<String, dynamic>.from(response);
@@ -54,10 +55,8 @@ class _SellerContractDetailViewState extends State<SellerContractDetailView> {
       // Fall back to the consignment row below or initialData when the contract call fails (e.g. 403/404).
     }
     try {
-      final response = await SellerServices.getConsignmentDetail(
-        widget.contractId,
-      );
-      if (response.isNotEmpty) {
+      final response = await consignmentRequest;
+      if (response != null && response.isNotEmpty) {
         final parsed = response['data'] is Map
             ? Map<String, dynamic>.from(response['data'] as Map)
             : null;
@@ -70,6 +69,15 @@ class _SellerContractDetailViewState extends State<SellerContractDetailView> {
     }
     if (_contract == null && _consignment != null) _contract = _consignment;
     if (mounted) setState(() => _loading = false);
+  }
+
+  /// Null instead of an error (e.g. 403/404), caught as soon as the request starts.
+  Future<Map<String, dynamic>?> _quiet(Future<Map<String, dynamic>> request) async {
+    try {
+      return await request;
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> _markReady() async {

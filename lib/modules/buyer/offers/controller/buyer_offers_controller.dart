@@ -1,8 +1,6 @@
 import '../model/buyer_offer_model.dart';
 import '../../../../services/buyer_services.dart';
-import '../../../../services/seller_services.dart';
 import '../../../../services/product_services.dart';
-import '../../../seller/products/model/product_media_model.dart';
 import '../../../../utils/app_snackbar.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
@@ -124,51 +122,23 @@ class BuyerOffersController extends GetxController {
       ).toList();
       if (needsImage.isEmpty) return;
 
-      // 1. Fetch all product images from global /api/product-images/
-      final images = await SellerServices.getProductImages();
-      final Map<int, String> imageByProductId = {};
-      for (final item in images) {
-        if (item is Map) {
-          final pId = ProductImageModel.parseProductId(Map<String, dynamic>.from(item));
-          final url = item['image_url'] ?? item['image'] ?? item['file'] ?? item['download_url'];
-          if (pId != null && url != null && url.toString().trim().isNotEmpty) {
-            imageByProductId.putIfAbsent(pId, () => url.toString().trim());
-          }
-        }
-      }
-
-      bool updated = false;
-      final updatedList = allOffersList.map((offer) {
-        if (offer.imageUrl != null && offer.imageUrl!.trim().isNotEmpty) {
-          return offer;
-        }
-        final pId = offer.productId ?? offer.id;
-        if (pId != null && imageByProductId.containsKey(pId)) {
-          updated = true;
-          return offer.copyWith(imageUrl: imageByProductId[pId]);
-        }
-        return offer;
-      }).toList();
-
-      if (updated) {
-        allOffersList.assignAll(updatedList);
-        _applyFilter();
-      }
-
-      // 2. For remaining items without an image (e.g. up to first 10 items), fetch product detail
+      // /api/product-images/ is seller/admin only (403 for buyers, which used to
+      // abort this whole enrichment), so read images from each product's detail.
+      // Only real seller offers: buyer requirements (RFQs) and interest rows have
+      // ids that are not product ids (/api/products/<id>/ "No Product matches").
       final remaining = allOffersList.where(
-        (o) => (o.imageUrl == null || o.imageUrl!.trim().isEmpty) && (o.productId != null || o.id != null),
+        (o) => (o.imageUrl == null || o.imageUrl!.trim().isEmpty) && !o.isRfq && o.productId != null,
       ).take(10).toList();
 
       for (final offer in remaining) {
-        final pId = offer.productId ?? offer.id;
+        final pId = offer.productId;
         if (pId != null && pId > 0) {
           try {
-            final detail = await ProductService.getProductDetail(pId);
+            final detail = await ProductService.getProductDetail(pId, silent: true);
             if (detail.images.isNotEmpty) {
               final firstUrl = detail.images.first.imageUrl;
               if (firstUrl.trim().isNotEmpty) {
-                final idx = allOffersList.indexWhere((o) => (o.productId ?? o.id) == pId);
+                final idx = allOffersList.indexWhere((o) => !o.isRfq && o.productId == pId);
                 if (idx != -1) {
                   allOffersList[idx] = allOffersList[idx].copyWith(imageUrl: firstUrl);
                   _applyFilter();

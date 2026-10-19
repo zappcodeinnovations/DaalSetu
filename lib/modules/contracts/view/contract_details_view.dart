@@ -98,7 +98,9 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                   _item('Interest ID', contract.interestId),
                 _item(
                   'Deal amount',
-                  '₹${contract.dealAmount} ${contract.amountUnit}'.trim(),
+                  contract.amountUnit.isEmpty
+                      ? '₹${contract.dealAmount}'
+                      : '₹${contract.dealAmount}/${contract.amountUnit}',
                 ),
                 _item(
                   'Deal quantity',

@@ -292,8 +292,8 @@ class _ContractsScreenState extends State<ContractsScreen> {
                 children: [
                   _metric(
                     'Deal amount',
-                    '₹ ${_text(contract.dealAmount)}'
-                        '${contract.amountUnit.isEmpty ? '' : ' ${contract.amountUnit}'}',
+                    '₹${_text(contract.dealAmount)}'
+                        '${contract.amountUnit.isEmpty ? '' : '/${contract.amountUnit}'}',
                     theme.colorScheme.primary,
                   ),
                   _metric(

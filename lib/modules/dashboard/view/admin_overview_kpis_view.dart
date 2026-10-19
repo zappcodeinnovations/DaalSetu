@@ -7,6 +7,7 @@ import '../../../theme/app_theme.dart';
 import '../../../routes/app_routes.dart';
 import '../../contracts/view/contract_view.dart';
 import '../model/dashboard_model.dart';
+import '../../../utils/money_format.dart';
 
 class AdminOverviewKpisView extends StatefulWidget {
   final KpiModel kpis;
@@ -107,7 +108,7 @@ class _AdminOverviewKpisViewState extends State<AdminOverviewKpisView> {
               _buildDetailedKpiCard(
                 context,
                 title: "Gross Trade Value (GTV MTD)",
-                value: "₹${k.gtvMtd}",
+                value: formatInr(k.gtvMtd),
                 subtitle: "Total turnover across executed deals this month",
                 icon: IconlyLight.graph,
                 accentColor: const Color(0xFF2563EB),
@@ -119,7 +120,7 @@ class _AdminOverviewKpisViewState extends State<AdminOverviewKpisView> {
               _buildDetailedKpiCard(
                 context,
                 title: "Brokerage Earned (MTD)",
-                value: "₹${k.brokerageEarnedMtd}",
+                value: formatInr(k.brokerageEarnedMtd),
                 subtitle: "Platform brokerage revenue earned MTD",
                 icon: IconlyLight.wallet,
                 accentColor: const Color(0xFF059669),
@@ -151,7 +152,7 @@ class _AdminOverviewKpisViewState extends State<AdminOverviewKpisView> {
               _buildDetailedKpiCard(
                 context,
                 title: "At-Risk Financial Volume",
-                value: "₹${k.atRiskAmount}",
+                value: formatInr(k.atRiskAmount),
                 subtitle: "Total deal value currently flag-marked for delayed payment",
                 icon: IconlyLight.shield_fail,
                 accentColor: const Color(0xFFE11D48),

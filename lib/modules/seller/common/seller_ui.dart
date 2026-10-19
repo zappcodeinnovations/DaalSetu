@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
+import '../../../utils/money_format.dart';
 import '../../../network/api_client.dart';
 
 /// Small shared pieces for the seller screens, matching the existing seller look.
@@ -361,6 +362,9 @@ class SellerUi {
       actions: actions,
     );
   }
+
+  /// "4950.00000" -> "₹4,950.00"; anything unparsable is shown as-is.
+  static String money(dynamic value) => formatInr(value);
 
   /// "2026-10-05T19:23:00+05:30" -> "05-10-2026 07:23 PM"; anything unparsable is shown as-is.
   static String date(dynamic value) {

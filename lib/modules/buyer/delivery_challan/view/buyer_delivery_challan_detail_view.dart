@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../utils/money_format.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
@@ -474,7 +475,7 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        "₹${item.amount}",
+                        formatInr(item.amount),
                         style: GoogleFonts.inter(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -506,7 +507,7 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
                 ),
               ),
               Text(
-                "₹${totalAmount ?? '0.00'}",
+                formatInr(totalAmount ?? 0),
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

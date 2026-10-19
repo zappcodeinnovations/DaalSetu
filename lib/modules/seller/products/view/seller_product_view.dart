@@ -10,6 +10,7 @@ import 'seller_media_gallery_view.dart';
 import 'edit_offer_view.dart';
 import 'offer_stock_history_view.dart';
 import '../../../../routes/app_routes.dart';
+import '../../../../widgets/authenticated_network_image.dart';
 
 class SellerProductView extends StatelessWidget {
   const SellerProductView({super.key});
@@ -143,11 +144,11 @@ class SellerProductView extends StatelessWidget {
                       child: product.imageUrls.isNotEmpty
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(15),
-                              child: Image.network(
-                                product.imageUrls.first,
+                              // Offer media previews need the JWT; a plain Image.network got 403.
+                              child: AuthenticatedNetworkImage(
+                                url: product.imageUrls.first,
                                 fit: BoxFit.contain,
-                                errorBuilder: (c, e, s) =>
-                                    product.videoUrls.isNotEmpty
+                                fallback: product.videoUrls.isNotEmpty
                                     ? const Icon(
                                         IconlyLight.video,
                                         color: primaryColor,

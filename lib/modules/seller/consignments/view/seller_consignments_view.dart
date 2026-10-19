@@ -160,7 +160,7 @@ class SellerConsignmentsView extends StatelessWidget {
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
               const Divider(height: 20),
               SellerUi.infoRow("Quantity", "${row['deal_quantity'] ?? '-'} ${row['quantity_unit'] ?? ''}"),
-              SellerUi.infoRow("Trade Value", "₹${row['trade_value'] ?? '-'}"),
+              SellerUi.infoRow("Trade Value", SellerUi.money(row['trade_value'])),
               SellerUi.infoRow("Route", "${row['loading_from'] ?? '-'} → ${row['loading_to'] ?? '-'}"),
               SellerUi.infoRow("Transporter", row['assigned_transporter']?.toString()),
               if (row['can_mark_ready'] == true) ...[

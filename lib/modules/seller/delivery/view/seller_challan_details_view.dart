@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../utils/money_format.dart';
 import 'package:get/get.dart';
 
 import '../controller/seller_delivery_controller.dart';
@@ -69,7 +70,7 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
 
   String _money(Object? value) {
     final text = _text(value);
-    return text.isEmpty || text == 'null' ? '—' : '₹$text';
+    return text.isEmpty || text == 'null' ? '—' : formatInr(text);
   }
 
   String _formatDate(Object? value) {

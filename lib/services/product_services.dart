@@ -5,10 +5,12 @@ import '../modules/products/model/product_model.dart';
 import '../network/api_client.dart';
 
 class ProductService {
-  static Future<ProductModel> getProductDetail(int productId) async {
+  /// [silent] keeps background lookups from opening the error popup.
+  static Future<ProductModel> getProductDetail(int productId, {bool silent = false}) async {
     final response = await ApiClient.get(
       endpoint: "${ApiUrls.products}$productId/",
       requireAuth: true,
+      suppressErrorDialog: silent,
     );
     if (response is! Map<String, dynamic>) {
       throw Exception("Invalid product detail response");

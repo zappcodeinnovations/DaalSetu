@@ -101,14 +101,16 @@ class DrawerMenuService {
             title: AdminModules.byKey('branches').title,
             icon: AdminModules.byKey('branches').icon,
             route: AppRoutes.adminModule('branches'),
-            requiredRoles: const ['super_admin', 'admin', 'sub_admin'],
+            // Backend allows Branch Master and branch settings changes for super admin only (403 otherwise).
+            requiredRoles: const ['super_admin'],
           ),
           DrawerMenuItem(
             key: 'branch_settings',
             title: 'Branch Settings',
             icon: Icons.tune_rounded,
             route: AppRoutes.adminBranchSettings,
-            requiredRoles: const ['super_admin', 'admin', 'sub_admin'],
+            // Backend allows Branch Master and branch settings changes for super admin only (403 otherwise).
+            requiredRoles: const ['super_admin'],
           ),
         ],
       ),

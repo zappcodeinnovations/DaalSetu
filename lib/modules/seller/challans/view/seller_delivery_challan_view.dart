@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../utils/money_format.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
@@ -138,7 +139,7 @@ class SellerDeliveryChallanView extends StatelessWidget {
                         children: [
                           _infoChip(Icons.inventory_2_outlined, '${item.items.length} item${item.items.length == 1 ? '' : 's'}'),
                           if (item.totalBags > 0) _infoChip(Icons.shopping_bag_outlined, '${item.totalBags} bags'),
-                          if ((item.totalAmount ?? '').isNotEmpty) _infoChip(Icons.currency_rupee_rounded, '₹${item.totalAmount}'),
+                          if ((item.totalAmount ?? '').isNotEmpty) _infoChip(Icons.currency_rupee_rounded, formatInr(item.totalAmount)),
                           if ((item.companyName ?? '').isNotEmpty) _infoChip(Icons.apartment_outlined, item.companyName!),
                         ],
                       ),
