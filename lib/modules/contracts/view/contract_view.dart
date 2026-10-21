@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
 
 import '../../../theme/app_theme.dart';
-import '../../admin_catalog/view/admin_drawer.dart';
 import '../controller/contract_controller.dart';
 import '../model/contract_model.dart';
 import './contract_details_view.dart';
@@ -83,7 +82,6 @@ class _ContractsScreenState extends State<ContractsScreen> {
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        drawer: const AdminDrawer(activeKey: 'deals'),
         appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
           title: Obx(
             () => Text(

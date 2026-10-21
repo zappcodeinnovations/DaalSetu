@@ -1,5 +1,28 @@
 # Bug Log & Historical Fixes
 
+## Bug 37: Buyer Dashboard Active Requirements Missing Data & Multi-Offer Carousel Parity
+- **Symptom**: Buyer Dashboard's "Active Requirement" banner was missing/hidden whenever a buyer had no open RFQs, did not display available active marketplace offers, did not filter out out-of-stock or expired deals, and only rendered a single static card instead of a carousel slider.
+- **Root Cause**:
+  1. `_buildBannerSlider` strictly pulled from `data.recentRfqs` (the buyer's personal negotiations/RFQs) and returned `const SizedBox()` if no item had `status == 'open'`.
+  2. `BuyerDashboardController` had no active offers loader or reactive list for marketplace products.
+  3. No stock or expiry filter was applied to the banner item.
+  4. No slider/PageView was implemented for multiple offers.
+- **Fix**:
+  1. Added `BuyerOffersLoader` and `activeOffers` reactive list to `BuyerDashboardController`, loading from `BuyerServices.getAllOffers()`, `BuyerServices.getTodayOffers()`, and `recentRfqs`.
+  2. Implemented `BuyerDashboardController.filterValidOffers` excluding out-of-stock, expired, inactive, and closed/rejected items.
+  3. Replaced static card with `BuyerOffersCarouselSlider`:
+     - Built with Flutter native `PageView.builder` and smooth animated page indicator dots.
+     - Single-card display when only 1 valid offer exists.
+     - Elegant empty-state CTA card when 0 offers exist, inviting buyers to post requirements or browse catalog.
+     - Preserved clean typography, badges ("ACTIVE REQUIREMENT" vs "ACTIVE OFFER"), price/quantity display, and navigation.
+- **Files Changed**:
+  - `lib/modules/buyer/dashboard/controller/buyer_dashboard_controller.dart`
+  - `lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`
+  - `test/buyer_dashboard_offers_slider_test.dart`
+- **Verification**: 10 tests in `test/buyer_dashboard_offers_slider_test.dart` passed; regression tests in `test/buyer_dashboard_kpi_navigation_test.dart` and `test/buyer_dashboard_view_all_navigation_test.dart` passed; static analysis in `lib/modules/buyer/dashboard/` is 100% clean.
+
+---
+
 ## Bug 36: Register Company GST Input Appeared Capped at 12 Characters
 - **Symptom**: Users could not finish entering a 15-character GST number; an invalid positional character after the PAN segment was silently rejected, making the field appear capped at 12 characters.
 - **Root Cause**: The GST formatter enforced every positional rule while typing instead of allowing the complete value and reporting validation feedback.

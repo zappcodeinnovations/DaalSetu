@@ -9,13 +9,13 @@ import '../../../theme/glass_widgets.dart';
 import '../../../theme/theme_controller.dart';
 import '../../../utils/app_preferences.dart';
 import '../../../services/realtime_notification_service.dart';
-import '../../admin_catalog/view/admin_drawer.dart';
 import '../../admin_catalog/view/admin_module_list_screen.dart';
 import '../../admin_catalog/view/admin_roles_screen.dart';
 import '../../seller/common/seller_ui.dart';
 import '../../../services/seller_services.dart';
 import 'package:daalsetu/theme/app_theme.dart';
 import '../../../utils/app_snackbar.dart';
+import '../../../widgets/app_shell.dart';
 
 class SettingsScreen extends StatelessWidget {
   SettingsScreen({super.key});
@@ -28,7 +28,6 @@ class SettingsScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      drawer: const AdminDrawer(activeKey: 'settings'),
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
         surfaceTintColor: Colors.transparent,
@@ -48,7 +47,7 @@ class SettingsScreen extends StatelessWidget {
                     Icons.menu_rounded,
                     color: theme.textTheme.bodyLarge?.color,
                   ),
-                  onPressed: () => Scaffold.of(ctx).openDrawer(),
+                  onPressed: () => AppShell.openDrawer(activeKey: 'settings'),
                 ),
               ),
       ),

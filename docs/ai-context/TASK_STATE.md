@@ -1,14 +1,24 @@
 # Current Task State
 
 ## Current Task
-- **Goal**: Populate transporter Contract Details fully and allow complete 15-character GST entry in Register Company.
+- **Goal**: Display valid active marketplace offers on Buyer Dashboard "Active Requirements" banner, excluding out-of-stock and expired deals, with a multi-offer carousel slider.
 - **Status**: Completed.
-- **Output**: Web-parity My Deals contract payload and 15-character GST entry with submit-time format validation.
-- **Evidence**: Django transport bid/detail tests, Flutter formatter tests, and targeted analyzer all pass.
+- **Output**: Reactive `BuyerDashboardController.activeOffers` with strict out-of-stock and expiry filtering, plus `BuyerOffersCarouselSlider` widget with PageView and indicator dots.
+- **Evidence**: 10 tests in `test/buyer_dashboard_offers_slider_test.dart` passing, all regression tests passing, and 0 issues in `flutter analyze`.
 
 ---
 
 ## Completed Work in Current Session
+- **Bug 37 Completed (Buyer Dashboard Active Requirements & Offers Carousel Slider)**:
+  - Addressed missing data in Buyer Dashboard "Active Requirement" banner when buyers had no open RFQs.
+  - Integrated active marketplace offers loader in `BuyerDashboardController` with automatic fallback to active dashboard items.
+  - Implemented strict filtering (`BuyerDashboardController.filterValidOffers`) excluding out-of-stock, expired, inactive, and closed/rejected deals.
+  - Replaced single static card with `BuyerOffersCarouselSlider`:
+    - Multi-offer carousel with smooth horizontal swipe `PageView` and animated dot indicators.
+    - Single offer card display without superfluous indicators.
+    - Friendly empty-state CTA card ("Looking for Bulk Commodities?") with direct actions to post requirement or browse offers.
+    - Clean typography, currency/quantity formatting, and one-tap navigation to `ProductDetailScreen` or `BuyerOfferDetailsView`.
+  - Added automated test suite `test/buyer_dashboard_offers_slider_test.dart` (10 tests passing).
 - **Bug 36 Completed (GST Entry Length)**: Seller, Transporter, and Admin company forms accept all 15 GST alphanumeric characters while preserving official-format validation on submit.
 - **Bug 35 Completed (Transporter Contract Detail Data)**: My Deals now carries complete deal, product, date, buyer/seller company/contact, GST/address, remarks, and route fields so details remain populated even when optional enrichment is unavailable.
 - **Bug 34 Completed (Contract Detail Request Scope)**: Transporter detail no longer calls inaccessible consignment management, non-consignment statuses skip the lookup, and optional detail enrichment failures remain silent while initial list data renders.

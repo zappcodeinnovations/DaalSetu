@@ -1,6 +1,5 @@
 import 'package:iconly/iconly.dart';
 import 'package:flutter/material.dart';
-import '../../admin_catalog/view/admin_drawer.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../controller/kyc_user_controller.dart';
@@ -34,7 +33,6 @@ class KycUsersScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bgColor,
-      drawer: const AdminDrawer(activeKey: 'kyc'),
       appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         backgroundColor: bgColor,
         elevation: 0,

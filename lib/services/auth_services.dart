@@ -1,7 +1,6 @@
 import '../comman/api_url.dart';
 import '../modules/Auth/forgot_password/model/forgot_password_model.dart';
 import '../modules/Auth/login/model/login_model.dart';
-import '../modules/Auth/register/model/register_model.dart';
 import '../network/api_client.dart';
 import '../utils/app_preferences.dart';
 
@@ -11,7 +10,7 @@ class AuthService {
   /// ============================================================
   static Future<String> register({
     required Map<String, String> fields,
-    required Map<String, String> files,
+    Map<String, String>? files,
   }) async {
     final response = await ApiClient.postMultipart(
       endpoint: ApiUrls.register,

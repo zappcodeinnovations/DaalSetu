@@ -10,12 +10,12 @@ import '../model/dashboard_model.dart';
 import '../../profile/controller/profile_controller.dart';
 import '../../../theme/glass_widgets.dart';
 import '../../../routes/app_routes.dart';
-import '../../admin_catalog/view/admin_drawer.dart';
 import '../../admin_notifications/controller/admin_notification_controller.dart';
 import '../../admin_notifications/view/admin_notification_view.dart';
 import '../../contracts/view/contract_view.dart';
 import 'admin_overview_kpis_view.dart';
 import '../../../utils/money_format.dart';
+import '../../../widgets/app_shell.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   AdminDashboardScreen({super.key});
@@ -28,7 +28,6 @@ class AdminDashboardScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       resizeToAvoidBottomInset: false,
-      drawer: const AdminDrawer(),
       appBar: _buildAppBar(context),
       body: Obx(() {
         if (controller.isLoading.value) {
@@ -122,7 +121,7 @@ class AdminDashboardScreen extends StatelessWidget {
       leading: Builder(
         builder: (ctx) => IconButton(
           icon: const Icon(IconlyLight.filter),
-          onPressed: () => Scaffold.of(ctx).openDrawer(),
+          onPressed: () => AppShell.openDrawer(activeKey: 'dashboard'),
         ),
       ),
       title: Image.asset(

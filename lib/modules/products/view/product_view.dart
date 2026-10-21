@@ -6,7 +6,6 @@ import 'package:iconly/iconly.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/glass_widgets.dart';
 import '../../../widgets/authenticated_network_image.dart';
-import '../../admin_catalog/view/admin_drawer.dart';
 import '../../admin_catalog/view/offer_interests_dialog.dart';
 import '../controller/product_controller.dart';
 import '../model/product_model.dart';
@@ -26,7 +25,6 @@ class ProductScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      drawer: const AdminDrawer(activeKey: 'offers'),
       appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         title: Text(
           "Products",

@@ -9,10 +9,10 @@ import '../controller/transporter_dashboard_controller.dart';
 import '../../company/view/transporter_company_form.dart';
 import '../../company/controller/transporter_company_controller.dart';
 import '../../bidding/view/transporter_bidding_view.dart';
-import '../../../admin_catalog/view/admin_drawer.dart';
 import '../../../../services/notification_services.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../../routes/app_routes.dart';
+import '../../../../widgets/app_shell.dart';
 
 /// Mirrors the web transporter dashboard: KPIs, trend, delivery status and routes.
 /// The web menu items (shipment offers, my deals, drivers, vehicles, company,
@@ -35,7 +35,6 @@ class TransporterDashboardView extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: _buildAppBar(context),
-      drawer: const AdminDrawer(activeKey: 'dashboard'),
       body: Obx(() {
         if (controller.isLoading.value && controller.kpis.isEmpty) {
           return const Center(child: CircularProgressIndicator(color: _gold));
@@ -94,7 +93,7 @@ class TransporterDashboardView extends StatelessWidget {
         builder: (ctx) => IconButton(
           tooltip: 'Open navigation menu',
           icon: const Icon(IconlyLight.filter),
-          onPressed: () => Scaffold.of(ctx).openDrawer(),
+          onPressed: () => AppShell.openDrawer(activeKey: 'dashboard'),
         ),
       ),
       title: Image.asset(
