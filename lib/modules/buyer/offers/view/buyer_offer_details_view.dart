@@ -1328,10 +1328,10 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
     final buyerRemark =
         thread['buyer_remark'] ?? thread['remark'] ?? thread['initial_remark'];
 
-    final canBuyerAccept =
-        thread['can_buyer_accept'] == true ||
-        thread['can_accept'] == true ||
-        thread['status']?.toString().toLowerCase() == 'seller_confirmed';
+    final canBuyerAccept = thread['deal_expired'] != true &&
+        (thread['can_buyer_accept'] == true ||
+            thread['can_accept'] == true ||
+            thread['status']?.toString().toLowerCase() == 'seller_confirmed');
     final canBuyerReject =
         thread['can_buyer_reject'] == true ||
         thread['can_reject'] == true ||

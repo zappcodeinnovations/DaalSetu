@@ -331,7 +331,7 @@ class TransporterDashboardView extends StatelessWidget {
         IconlyLight.tick_square,
         () => Get.to(
           () =>
-              const TransporterBiddingView(initialTab: 1, initialStatus: 'all'),
+              const TransporterBiddingView(myBidsOnly: true, initialStatus: 'all'),
         ),
       ),
       (
@@ -353,7 +353,7 @@ class TransporterDashboardView extends StatelessWidget {
         IconlyLight.danger,
         () => Get.to(
           () =>
-              const TransporterBiddingView(initialTab: 1, initialStatus: 'all'),
+              const TransporterBiddingView(myBidsOnly: true, initialStatus: 'all'),
         ),
       ),
       (
@@ -361,7 +361,7 @@ class TransporterDashboardView extends StatelessWidget {
         v('costKm'),
         "Fuel variance: ${v('fuelVar')}",
         Icons.local_gas_station_outlined,
-        () => Get.to(() => const TransporterBiddingView(initialTab: 1)),
+        () => Get.to(() => const TransporterBiddingView(myBidsOnly: true)),
       ),
       (
         "Fleet Utilization",
@@ -375,7 +375,7 @@ class TransporterDashboardView extends StatelessWidget {
         v('avgTime'),
         "SLA breach rate: ${v('breach')}",
         IconlyLight.time_circle,
-        () => Get.to(() => const TransporterBiddingView(initialTab: 1)),
+        () => Get.to(() => const TransporterBiddingView(myBidsOnly: true)),
       ),
     ];
     return SingleChildScrollView(
@@ -494,7 +494,9 @@ class TransporterDashboardView extends StatelessWidget {
                 .toList(),
           ),
           const SizedBox(height: 12),
-          if (earnings.isEmpty && shipments.isEmpty)
+          // An all-zero period still shows the chart (zero line, 0-1.0 axes) like the web;
+          // the message is only for a period with no buckets at all.
+          if (earnings.labels.isEmpty && shipments.labels.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 30),
               child: Center(
@@ -567,12 +569,8 @@ class TransporterDashboardView extends StatelessWidget {
     double fallbackMax = 1.0,
   }) {
     if (maxRaw <= 0) {
-      final interval = fallbackMax / divisions;
-      return (
-        max: fallbackMax,
-        interval: interval,
-        decimals: isInteger ? 0 : 2,
-      );
+      // Empty period: 0, 0.2 ... 1.0 on both axes, as on the web chart.
+      return (max: 1.0, interval: 0.2, decimals: 1);
     }
 
     if (isInteger) {
@@ -676,6 +674,8 @@ class TransporterDashboardView extends StatelessWidget {
             Positioned.fill(
               child: BarChart(
                 BarChartData(
+                  // Bar centres at (i + 0.5) / count, matching the line's x range below.
+                  alignment: BarChartAlignment.spaceAround,
                   minY: 0,
                   maxY: shipScale.max,
                   gridData: FlGridData(
@@ -774,6 +774,10 @@ class TransporterDashboardView extends StatelessWidget {
             Positioned.fill(
               child: LineChart(
                 LineChartData(
+                  // -0.5 .. count-0.5 puts each point over its bar (it used to run
+                  // edge to edge, so points and bars did not line up).
+                  minX: -0.5,
+                  maxX: count - 0.5,
                   minY: 0,
                   maxY: earnScale.max,
                   gridData: const FlGridData(show: false),

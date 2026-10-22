@@ -57,7 +57,16 @@ Widget _row(String label, String value) => Padding(
 class TransporterBiddingView extends StatelessWidget {
   final int initialTab;
   final String? initialStatus;
-  const TransporterBiddingView({super.key, this.initialTab = 0, this.initialStatus});
+
+  /// The web's "My Contract Bids" page: only the transporter's bids, no offers tab
+  /// (opened from the dashboard KPI cards).
+  final bool myBidsOnly;
+  const TransporterBiddingView({
+    super.key,
+    this.initialTab = 0,
+    this.initialStatus,
+    this.myBidsOnly = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +77,25 @@ class TransporterBiddingView extends StatelessWidget {
       });
     }
     final theme = Theme.of(context);
+    if (myBidsOnly) {
+      return Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          leading: const AppBarLeading(),
+          leadingWidth: AppBarLeading.widthFor(context),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: Text(
+            "My Contract Bids",
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              color: theme.textTheme.bodyLarge?.color,
+            ),
+          ),
+        ),
+        body: _MyDealsTab(controller),
+      );
+    }
     return DefaultTabController(
       length: 2,
       initialIndex: initialTab,
@@ -810,6 +838,9 @@ class _MyDealsTab extends StatelessWidget {
             const SizedBox(height: 14),
             Row(
               children: [
+                // Buyer/seller details only for won (accepted) bids, as on the web;
+                // pending and rejected bids have no deal to show.
+                if (bid.status.toLowerCase() == 'accepted')
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: bid.contractPk > 0

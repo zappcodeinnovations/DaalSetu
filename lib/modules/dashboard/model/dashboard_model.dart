@@ -1,6 +1,7 @@
 int _parseInt(dynamic value) {
   if (value is num) return value.toInt();
-  if (value is String) return int.tryParse(value) ?? (double.tryParse(value)?.toInt() ?? 0);
+  if (value is String)
+    return int.tryParse(value) ?? (double.tryParse(value)?.toInt() ?? 0);
   return 0;
 }
 
@@ -31,7 +32,11 @@ class DashboardModel {
       kpis: KpiModel.fromJson(json['kpis'] as Map<String, dynamic>?),
       charts: ChartsModel.fromJson(json['charts'] as Map<String, dynamic>?),
       branchPerformance: (json['branch_performance'] as List? ?? [])
-          .map((e) => BranchPerformanceModel.fromJson(e as Map<String, dynamic>? ?? {}))
+          .map(
+            (e) => BranchPerformanceModel.fromJson(
+              e as Map<String, dynamic>? ?? {},
+            ),
+          )
           .toList(),
       recentActivities: (json['recent_activities'] as List? ?? [])
           .map((e) => ActivityModel.fromJson(e as Map<String, dynamic>? ?? {}))
@@ -178,6 +183,8 @@ class ContractModel {
   final String seller;
   final String buyer;
   final String commodity;
+  final String bagCount;
+  final String packingWeightKg;
   final String quantity;
   final String rate;
   final String value;
@@ -192,6 +199,8 @@ class ContractModel {
     required this.seller,
     required this.buyer,
     required this.commodity,
+    required this.bagCount,
+    required this.packingWeightKg,
     required this.quantity,
     required this.rate,
     required this.value,
@@ -209,6 +218,8 @@ class ContractModel {
       seller: json['seller']?.toString() ?? '',
       buyer: json['buyer']?.toString() ?? '',
       commodity: json['commodity']?.toString() ?? '',
+      bagCount: json['bag_count']?.toString() ?? '',
+      packingWeightKg: json['packing_weight_kg']?.toString() ?? '',
       quantity: json['quantity']?.toString() ?? '',
       rate: json['rate']?.toString() ?? '',
       value: json['value']?.toString() ?? '',
@@ -244,13 +255,27 @@ class ChartsModel {
     json ??= {};
 
     return ChartsModel(
-      gtvDeals: GtvDealsChart.fromJson(json['gtv_deals'] as Map<String, dynamic>?),
-      pipelineByStage: PipelineChart.fromJson(json['pipeline_by_stage'] as Map<String, dynamic>?),
-      commodityMix: CommodityMixChart.fromJson(json['commodity_mix'] as Map<String, dynamic>?),
-      topBuyers: TopBuyersChart.fromJson(json['top_buyers'] as Map<String, dynamic>?),
-      transporterSla: TransporterSlaChart.fromJson(json['transporter_sla'] as Map<String, dynamic>?),
-      paymentsReceivables: PaymentsReceivablesChart.fromJson(json['payments_receivables'] as Map<String, dynamic>?),
-      userDistribution: UserDistributionChart.fromJson(json['user_distribution'] as Map<String, dynamic>?),
+      gtvDeals: GtvDealsChart.fromJson(
+        json['gtv_deals'] as Map<String, dynamic>?,
+      ),
+      pipelineByStage: PipelineChart.fromJson(
+        json['pipeline_by_stage'] as Map<String, dynamic>?,
+      ),
+      commodityMix: CommodityMixChart.fromJson(
+        json['commodity_mix'] as Map<String, dynamic>?,
+      ),
+      topBuyers: TopBuyersChart.fromJson(
+        json['top_buyers'] as Map<String, dynamic>?,
+      ),
+      transporterSla: TransporterSlaChart.fromJson(
+        json['transporter_sla'] as Map<String, dynamic>?,
+      ),
+      paymentsReceivables: PaymentsReceivablesChart.fromJson(
+        json['payments_receivables'] as Map<String, dynamic>?,
+      ),
+      userDistribution: UserDistributionChart.fromJson(
+        json['user_distribution'] as Map<String, dynamic>?,
+      ),
     );
   }
 }
@@ -370,9 +395,7 @@ class PipelineChart {
     json ??= {};
     return PipelineChart(
       labels: (json['labels'] as List? ?? []).map((e) => e.toString()).toList(),
-      values: (json['values'] as List? ?? [])
-          .map((e) => _parseInt(e))
-          .toList(),
+      values: (json['values'] as List? ?? []).map((e) => _parseInt(e)).toList(),
     );
   }
 }
@@ -387,9 +410,7 @@ class UserDistributionChart {
     json ??= {};
     return UserDistributionChart(
       labels: (json['labels'] as List? ?? []).map((e) => e.toString()).toList(),
-      counts: (json['counts'] as List? ?? [])
-          .map((e) => _parseInt(e))
-          .toList(),
+      counts: (json['counts'] as List? ?? []).map((e) => _parseInt(e)).toList(),
     );
   }
 }

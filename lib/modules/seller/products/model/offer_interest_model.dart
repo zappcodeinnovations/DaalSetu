@@ -90,7 +90,8 @@ class OfferInterestModel {
         'can_seller_action',
         fallback: json['status']?.toString().toLowerCase() == 'interested',
       ),
-      stockBlocked: flag('stock_blocked'),
+      // An expired deal is closed the same way: reason + Reject only.
+      stockBlocked: flag('stock_blocked') || flag('deal_expired'),
       blockedReason: json['blocked_reason']?.toString(),
       canSellerReject: flag(
         'can_seller_reject',

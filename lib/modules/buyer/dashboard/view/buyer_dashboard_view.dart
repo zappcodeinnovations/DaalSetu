@@ -1454,8 +1454,10 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
           const SizedBox(height: 8),
           ElevatedButton(
             onPressed: () {
-              if (isRfq && offer.id != null) {
-                Get.to(() => BuyerOfferDetailsView(offerId: offer.id!));
+              if (isRfq) {
+                // The banner shows the buyer's live requirement/interest: open My
+                // Activity on "My Interests" (QA), not "My Requirements".
+                Get.to(() => const BuyerActivityView(initialIndex: 0));
               } else {
                 final pId = offer.productId ?? offer.id;
                 if (pId != null) {

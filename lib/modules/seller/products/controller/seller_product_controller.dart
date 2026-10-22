@@ -248,7 +248,8 @@ class SellerProductController extends GetxController {
     }
 
     try {
-      await SellerOfferExportService.exportAndShare(products: products);
+      await SellerOfferExportService.exportToDownloads(products: products);
+      SellerUi.success('Offers Excel saved to Downloads.');
     } catch (error) {
       SellerUi.error(error);
     }

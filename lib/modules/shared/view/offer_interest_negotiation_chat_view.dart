@@ -403,9 +403,12 @@ class _OfferInterestNegotiationChatViewState
                     ),
                   ),
                 ),
+                if (thread?['deal_expired'] == true)
+                  _waitingBar(thread?['blocked_reason']?.toString()),
                 if (canAccept || canReject) _decisionBar(canAccept, canReject),
                 if (canReply) _composer(context),
-                if (!isReadOnly && !canAccept && !canReject && !canReply)
+                if (!isReadOnly && !canAccept && !canReject && !canReply &&
+                    thread?['deal_expired'] != true)
                   _waitingBar(),
               ],
             ),
@@ -707,6 +710,16 @@ class _OfferInterestNegotiationChatViewState
                 color: Theme.of(context).textTheme.bodyMedium?.color,
               ),
             ),
+            if (_packingLine(thread).isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                _packingLine(thread),
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                ),
+              ),
+            ],
             if (timestamp.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
@@ -786,10 +799,22 @@ class _OfferInterestNegotiationChatViewState
     }
 
     if (dt != null) {
-      return DateFormat('dd/MM/yyyy hh:mm a').format(dt.toLocal());
+      // Same as the web negotiation log: "18 Oct 16:24" in local time.
+      return DateFormat('dd MMM HH:mm').format(dt.toLocal());
     }
 
     return trimmed;
+  }
+
+  /// "Bags: 1,800 × 25 kg" from the thread's requested bags and packing weight.
+  static String _packingLine(Map<String, dynamic> thread) {
+    final bags = int.tryParse('${thread['required_bag_count'] ?? ''}');
+    final packing = double.tryParse('${thread['packing_weight_kg'] ?? ''}');
+    if (bags == null || bags <= 0) return '';
+    final bagsText = NumberFormat('#,##0', 'en_IN').format(bags);
+    if (packing == null || packing <= 0) return 'Bags: $bagsText';
+    final kg = packing == packing.roundToDouble() ? packing.toStringAsFixed(0) : packing.toString();
+    return 'Bags: $bagsText × $kg kg';
   }
 
   Widget _bubble(BuildContext context, Map<String, dynamic> message) {
@@ -974,7 +999,7 @@ class _OfferInterestNegotiationChatViewState
     );
   }
 
-  Widget _waitingBar() {
+  Widget _waitingBar([String? message]) {
     return SafeArea(
       top: false,
       child: Container(
@@ -986,10 +1011,10 @@ class _OfferInterestNegotiationChatViewState
             top: BorderSide(color: Theme.of(context).dividerColor),
           ),
         ),
-        child: const Text(
-          'Waiting for the other party to respond.',
+        child: Text(
+          (message ?? '').isNotEmpty ? message! : 'Waiting for the other party to respond.',
           textAlign: TextAlign.center,
-          style: TextStyle(fontWeight: FontWeight.w600),
+          style: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
     );
