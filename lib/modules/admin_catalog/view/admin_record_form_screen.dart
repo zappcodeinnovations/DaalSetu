@@ -83,6 +83,23 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
     super.dispose();
   }
 
+  /// Wipes all form fields clean so fresh empty placeholders are ready for the next entry.
+  void resetForm() {
+    formKey.currentState?.reset();
+    for (final field in visibleFields) {
+      if (field.multiSelect) {
+        multiValues[field.key]?.clear();
+      } else if (!field.isFile) {
+        final ctrl = controllers[field.key];
+        if (ctrl != null) {
+          ctrl.text = (field.defaultValue ?? '').toString();
+        }
+      }
+    }
+    filePaths.clear();
+    serverErrors.clear();
+  }
+
   Future<void> save() async {
     if (!formKey.currentState!.validate()) return;
     for (final field in visibleFields) {
@@ -158,6 +175,7 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
         );
       } else {
         await repository.create(body, files: filePaths);
+        resetForm();
       }
       if (!mounted) return;
       AppSnackbar.showSnackBar(context, 

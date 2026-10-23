@@ -403,12 +403,12 @@ class _OfferInterestNegotiationChatViewState
                     ),
                   ),
                 ),
-                if (thread?['deal_expired'] == true)
-                  _waitingBar(thread?['blocked_reason']?.toString()),
+                if (thread['deal_expired'] == true)
+                  _waitingBar(thread['blocked_reason']?.toString()),
                 if (canAccept || canReject) _decisionBar(canAccept, canReject),
                 if (canReply) _composer(context),
                 if (!isReadOnly && !canAccept && !canReject && !canReply &&
-                    thread?['deal_expired'] != true)
+                    thread['deal_expired'] != true)
                   _waitingBar(),
               ],
             ),
@@ -936,27 +936,39 @@ class _OfferInterestNegotiationChatViewState
             Expanded(
               child: SizedBox(
                 height: 48,
-                child: ElevatedButton.icon(
+                child: ElevatedButton(
                   onPressed: _sending ? null : () => _decide(accept: true),
-                  icon: const Icon(Icons.check, size: 18, color: Colors.white),
-                  label: Text(
-                    widget.isAdmin
-                        ? 'Approve Deal'
-                        : widget.isBuyer
-                        ? 'Accept'
-                        : 'Accept Interest',
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2E7D32),
                     foregroundColor: Colors.white,
                     elevation: 1,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.check, size: 18),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          widget.isAdmin
+                              ? 'Approve Deal'
+                              : widget.isBuyer
+                              ? 'Accept'
+                              : 'Accept Interest',
+                          maxLines: 1,
+                          softWrap: false,
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

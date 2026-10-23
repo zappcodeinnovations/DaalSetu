@@ -377,19 +377,29 @@ class _SellerNegotiationChatViewState extends State<SellerNegotiationChatView> {
             Expanded(
               child: SizedBox(
                 height: 48,
-                child: ElevatedButton.icon(
+                child: ElevatedButton(
                   onPressed: controller.accept,
-                  icon: const Icon(Icons.check, size: 18),
-                  label: Text(
-                    'Accept',
-                    style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2E7D32),
                     foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.check, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Accept',
+                        maxLines: 1,
+                        softWrap: false,
+                        style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
                 ),
               ),

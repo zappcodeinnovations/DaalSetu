@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
 import 'package:daalsetu/utils/india_location_data.dart';
 import 'package:daalsetu/utils/tax_id_formatters.dart';
+import 'package:daalsetu/widgets/searchable_selection_sheet.dart';
 import '../controller/seller_company_controller.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 
@@ -275,80 +276,41 @@ class _AddCompanyViewState extends State<AddCompanyView> {
 
     return Obx(() {
       final errorText = controller.errors['city'];
-
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 20),
-        child: DropdownButtonFormField<String>(
-          key: ValueKey(
-            "city_${controller.stateController.text}_$selectedCity",
-          ),
-          initialValue: selectedCity,
-          isExpanded: true,
-          menuMaxHeight: 320,
-          borderRadius: BorderRadius.circular(16),
-          dropdownColor: theme.colorScheme.surface,
-          icon: Icon(
-            Icons.keyboard_arrow_down_rounded,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface,
-          ),
-          decoration: _dropdownDecoration(
-            theme: theme,
-            label: "City",
-            required: true,
-            hint: "Select City",
-            icon: Icons.location_city_outlined,
-            errorText: errorText,
-          ),
-          items: [
-            ...availableCities.map((city) {
-              return DropdownMenuItem<String>(
-                value: city,
-                child: Text(
-                  city,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 14),
-                ),
-              );
-            }),
-            const DropdownMenuItem<String>(
-              value: "__custom__",
-              child: Row(
-                children: [
-                  Icon(Icons.edit_note_rounded, size: 18, color: Colors.amber),
-                  SizedBox(width: 8),
-                  Text(
-                    "Other (Custom City)",
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontStyle: FontStyle.italic,
-                      color: Colors.amber,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          onChanged: (val) {
-            controller.clearError('city');
-            if (val == "__custom__") {
-              _showCustomCityDialog();
-            } else if (val != null) {
-              setState(() {
-                controller.cityController.text = val;
-                final inferredState = IndiaLocationData.getStateForCity(val);
-                if (inferredState != null &&
-                    controller.stateController.text.trim().toLowerCase() !=
-                        inferredState.toLowerCase()) {
-                  controller.stateController.text = inferredState;
-                  controller.clearError('state');
-                }
-              });
+      return _selectionField(
+        theme: theme,
+        label: 'City',
+        hint: 'Select City',
+        value: selectedCity,
+        icon: Icons.location_city_outlined,
+        errorText: errorText,
+        onTap: () async {
+          final selected = await showSearchableSelectionSheet<String>(
+            context: context,
+            title: 'Select City',
+            searchHint: 'Search city...',
+            options: [...availableCities, '__custom__'],
+            selectedValue: selectedCity,
+            labelBuilder: (value) => value == '__custom__'
+                ? 'Other (Custom City)'
+                : value,
+          );
+          if (!mounted || selected == null) return;
+          controller.clearError('city');
+          if (selected == '__custom__') {
+            _showCustomCityDialog();
+            return;
+          }
+          setState(() {
+            controller.cityController.text = selected;
+            final inferredState = IndiaLocationData.getStateForCity(selected);
+            if (inferredState != null &&
+                controller.stateController.text.trim().toLowerCase() !=
+                    inferredState.toLowerCase()) {
+              controller.stateController.text = inferredState;
+              controller.clearError('state');
             }
-          },
-        ),
+          });
+        },
       );
     });
   }
@@ -364,62 +326,92 @@ class _AddCompanyViewState extends State<AddCompanyView> {
 
     return Obx(() {
       final errorText = controller.errors['state'];
-
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 20),
-        child: DropdownButtonFormField<String>(
-          key: ValueKey("state_$matchedState"),
-          initialValue: matchedState,
-          isExpanded: true,
-          menuMaxHeight: 320,
-          borderRadius: BorderRadius.circular(16),
-          dropdownColor: theme.colorScheme.surface,
-          icon: Icon(
-            Icons.keyboard_arrow_down_rounded,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface,
-          ),
-          decoration: _dropdownDecoration(
-            theme: theme,
-            label: "State",
-            required: true,
-            hint: "Select State",
-            icon: Icons.map_outlined,
-            errorText: errorText,
-          ),
-          items: states.map((state) {
-            return DropdownMenuItem<String>(
-              value: state,
-              child: Text(
-                state,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 14),
-              ),
-            );
-          }).toList(),
-          onChanged: (val) {
-            controller.clearError('state');
-            if (val != null) {
-              setState(() {
-                controller.stateController.text = val;
-                final stateCities = IndiaLocationData.stateCities[val] ?? [];
-                if (!stateCities.any(
-                  (c) =>
-                      c.toLowerCase() ==
-                      controller.cityController.text.trim().toLowerCase(),
-                )) {
-                  controller.cityController.text = stateCities.isNotEmpty
-                      ? stateCities.first
-                      : '';
-                }
-              });
+      return _selectionField(
+        theme: theme,
+        label: 'State',
+        hint: 'Select State',
+        value: matchedState,
+        icon: Icons.map_outlined,
+        errorText: errorText,
+        onTap: () async {
+          final selected = await showSearchableSelectionSheet<String>(
+            context: context,
+            title: 'Select State',
+            searchHint: 'Search state...',
+            options: states,
+            selectedValue: matchedState,
+            labelBuilder: (value) => value,
+          );
+          if (!mounted || selected == null) return;
+          controller.clearError('state');
+          setState(() {
+            controller.stateController.text = selected;
+            final stateCities = IndiaLocationData.stateCities[selected] ?? [];
+            if (!stateCities.any(
+              (city) =>
+                  city.toLowerCase() ==
+                  controller.cityController.text.trim().toLowerCase(),
+            )) {
+              controller.cityController.text = stateCities.isNotEmpty
+                  ? stateCities.first
+                  : '';
             }
-          },
-        ),
+          });
+        },
       );
     });
+  }
+
+  Widget _selectionField({
+    required ThemeData theme,
+    required String label,
+    required String hint,
+    required String? value,
+    required IconData icon,
+    required VoidCallback onTap,
+    String? errorText,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Semantics(
+        button: true,
+        label: '$label selection',
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: InputDecorator(
+            decoration: _dropdownDecoration(
+              theme: theme,
+              label: label,
+              required: true,
+              hint: hint,
+              icon: icon,
+              errorText: errorText,
+            ),
+            isEmpty: value == null || value.isEmpty,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    value ?? hint,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: value == null
+                          ? theme.hintColor
+                          : theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   InputDecoration _dropdownDecoration({

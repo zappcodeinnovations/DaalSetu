@@ -1,5 +1,45 @@
 # Bug Log & Historical Fixes
 
+## Bug 39: Admin User Creation Form Stale Data Retention After Submission
+- **Symptom**: In Admin User Management, after submitting and successfully creating a new user, the input form/modal retained previously entered details instead of clearing fields. Reopening the form to create another user displayed stale data from the previous entry.
+- **Root Cause**:
+  1. `AddUserScreen` was implemented as a `StatelessWidget` with `TextEditingController`s and `Rx` variables held as instance fields without lifecycle disposal or reset.
+  2. `AddUserController.createUser` did not clear or reset form controllers or its reactive state (`selectedTagId`) upon successful creation.
+  3. `AddUserScreen` lacked the "Branch Code" field supported by the backend and Admin catalog.
+  4. `AdminRecordFormScreen` did not call an explicit form reset upon successful creation before route popping.
+- **Fix**:
+  1. Converted `AddUserScreen` to `StatefulWidget` with clean controller initialization, reset, and disposal in `dispose()`.
+  2. Added `branchController` for "Branch Code (Optional)" in `AddUserScreen` and forwarded `branchCode` through `AddUserController.createUser` and `AddUserServices.addUser`.
+  3. Implemented `resetForm()` on `AddUserScreenState` to wipe clean all text fields (`firstName`, `lastName`, `mobile`, `email`, `branch`, `password`, `pan`, `gst`), reset role/gender selections, clear picked images, and invoke `controller.reset()`.
+  4. Bound `resetForm()` as an immediate `onSuccess` callback upon successful user creation and called it in `initState`.
+  5. Implemented `resetForm()` on `_AdminRecordFormScreenState` to clear all controllers and multi-select sets on successful record creation.
+- **Files Changed**:
+  - `lib/services/add_user_services.dart`
+  - `lib/modules/users/controller/add_user_controller.dart`
+  - `lib/modules/users/view/add_user_screen.dart`
+  - `lib/modules/admin_catalog/view/admin_record_form_screen.dart`
+  - `test/admin_user_form_reset_test.dart`
+- **Verification**: `test/admin_user_form_reset_test.dart` passed (3/3); `test/user_list_refresh_test.dart` passed (9/9); `flutter analyze` reported 0 errors and 0 warnings.
+
+---
+
+## Bug 38: Shipments Screen Place Bid Modal Inconsistent Color Theme
+- **Symptom**: On the Shipments screen, when opening the Place Bid / Update Bid modal dialog, the button and accent colors used a dark navy header (`Color(0xFF131D2E)`) and teal/dark green accents (submit button and input focused border `Color(0xFF0F766E)`), conflicting with the app's primary orange/yellow branding theme.
+- **Root Cause**: The modal dialog was ported directly from web styling with legacy hardcoded dark navy and teal colors instead of adopting the app's established design tokens (`_gold` / `AppTheme.primaryGold` / `secondaryOrange`).
+- **Fix**:
+  1. Updated header background container to use a warm brand gradient: `LinearGradient(colors: [_gold, Color(0xFFF57C00)], begin: Alignment.centerLeft, end: Alignment.centerRight)`.
+  2. Updated the close button icon color to `Colors.white` for optimal contrast against the gradient.
+  3. Added `cursorColor: _gold` and updated `focusedBorder` to `_gold` (`Color(0xFFFFB300)` with 1.8 width).
+  4. Updated "Submit" button background from `Color(0xFF0F766E)` to `_gold` (`Color(0xFFFFB300)`).
+  5. Harmonized text and border colors for both light and dark themes.
+  6. Added testable static entry point `TransporterBiddingView.showBidDialog(...)` while keeping `_showBidDialog` backward compatible.
+- **Files Changed**:
+  - `lib/modules/transporter/bidding/view/transporter_bidding_view.dart`
+  - `test/transporter_place_bid_theming_test.dart`
+- **Verification**: `test/transporter_place_bid_theming_test.dart` passed (1/1); `test/transporter_api_models_test.dart` passed (3/3); `flutter analyze lib/modules/transporter/bidding/view/transporter_bidding_view.dart` reported 0 issues.
+
+---
+
 ## Bug 37: Buyer Dashboard Active Requirements Missing Data & Multi-Offer Carousel Parity
 - **Symptom**: Buyer Dashboard's "Active Requirement" banner was missing/hidden whenever a buyer had no open RFQs, did not display available active marketplace offers, did not filter out out-of-stock or expired deals, and only rendered a single static card instead of a carousel slider.
 - **Root Cause**:

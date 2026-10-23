@@ -1,14 +1,30 @@
 # Current Task State
 
 ## Current Task
-- **Goal**: Display valid active marketplace offers on Buyer Dashboard "Active Requirements" banner, excluding out-of-stock and expired deals, with a multi-offer carousel slider.
+- **Goal**: Auto-reset input form state upon user creation in Admin User Management so fields open clean and fresh for subsequent entries.
 - **Status**: Completed.
-- **Output**: Reactive `BuyerDashboardController.activeOffers` with strict out-of-stock and expiry filtering, plus `BuyerOffersCarouselSlider` widget with PageView and indicator dots.
-- **Evidence**: 10 tests in `test/buyer_dashboard_offers_slider_test.dart` passing, all regression tests passing, and 0 issues in `flutter analyze`.
+- **Output**: Converted `AddUserScreen` to lifecycle-managed `StatefulWidget`, added `branchController` ("Branch Code"), implemented and bound `resetForm()` on `AddUserScreenState` and `AdminRecordFormScreenState`, added `AddUserController.reset()`, and added `branchCode` parameter to `AddUserServices.addUser`.
+- **Evidence**: `test/admin_user_form_reset_test.dart` passing (3/3), `test/user_list_refresh_test.dart` passing (9/9), and 0 issues in `flutter analyze`.
 
 ---
 
 ## Completed Work in Current Session
+- **Bug 39 Completed (Admin User Creation Form Auto-Reset Parity)**:
+  - Addressed form state retention where user creation inputs (Name, Mobile, Email, Branch, Role, Password, PAN, GST, Images, Tag) persisted across submissions.
+  - Converted `AddUserScreen` to `StatefulWidget` with clean controller initialization, reset, and disposal lifecycles.
+  - Added `branchController` ("Branch Code (Optional)") and passed it through to `AddUserController.createUser` and `AddUserServices.addUser`.
+  - Implemented `resetForm()` in `AddUserScreenState` to wipe all controllers, dropdowns, and Rx variables clean upon successful user creation and upon opening.
+  - Added `AddUserController.reset()` to reset `selectedTagId` and `isLoading`.
+  - Implemented `resetForm()` in `AdminRecordFormScreenState` on successful record creation.
+  - Added automated test suite `test/admin_user_form_reset_test.dart` (3/3 passing).
+- **Bug 38 Completed (Place Bid Modal - Primary Orange/Yellow Theming Parity)**:
+  - Addressed inconsistent legacy teal (`Color(0xFF0F766E)`) and dark navy (`Color(0xFF131D2E)`) styling on Shipments Place Bid / Update Bid modal.
+  - Updated header background to brand linear gradient using primary amber/gold (`_gold = Color(0xFFFFB300)`) and secondary orange (`Color(0xFFF57C00)`).
+  - Updated close icon to solid `Colors.white` for high contrast against the header gradient.
+  - Updated TextField focused border and cursor color to `_gold`.
+  - Updated Submit button to `ElevatedButton` with `backgroundColor: _gold` and white typography, matching the offer card's "PLACE BID" button and app theme.
+  - Adapted text styles to support dark and light theme brightness cleanly.
+  - Added automated widget test `test/transporter_place_bid_theming_test.dart`.
 - **Bug 37 Completed (Buyer Dashboard Active Requirements & Offers Carousel Slider)**:
   - Addressed missing data in Buyer Dashboard "Active Requirement" banner when buyers had no open RFQs.
   - Integrated active marketplace offers loader in `BuyerDashboardController` with automatic fallback to active dashboard items.

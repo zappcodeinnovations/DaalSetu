@@ -372,6 +372,9 @@ class SellerProductController extends GetxController {
     if (loadingTo.value!.isBefore(loadingFrom.value!))
       return "Loading to cannot be before loading from.";
     if (dealExpiry.value == null) return "Deal expiry is required.";
+    if (!dealExpiry.value!.isAfter(DateTime.now())) {
+      return "Deal expiry time must be in the future.";
+    }
     if (branches.isNotEmpty && selectedBranchIds.isEmpty)
       return "Select at least one branch.";
     return null;

@@ -8,6 +8,7 @@ import '../modules/buyer/offers/view/buyer_offers_view.dart';
 import '../modules/buyer/branch/view/buyer_branch_view.dart';
 import '../modules/buyer/delivery_challan/view/buyer_delivery_challan_view.dart';
 import '../modules/seller/products/view/seller_product_view.dart';
+import '../modules/seller/products/view/seller_offer_interests_view.dart';
 import '../modules/seller/branches/view/seller_branches_view.dart';
 import '../modules/seller/challans/view/seller_delivery_challan_view.dart';
 import '../modules/seller/notifications/view/seller_notification_view.dart';
@@ -376,6 +377,28 @@ class RealtimeNotificationService extends GetxService {
         if (match != null) {
           productId = int.tryParse(match.group(1)!);
         }
+      }
+
+      // Interest notifications reference the ProductInterest record, while
+      // related_product (or manage_product in the URL) identifies the offer.
+      final isInterest = type.contains('interest') ||
+          title.contains('interest') ||
+          message.contains('interest');
+      if (isInterest && role == 'seller') {
+        int? offerId = notification.relatedProduct;
+        if (offerId == null && url.isNotEmpty) {
+          final match = RegExp(r'[?&]manage_product=(\d+)').firstMatch(url);
+          if (match != null) {
+            offerId = int.tryParse(match.group(1)!);
+          }
+        }
+
+        if (offerId != null && offerId > 0) {
+          Get.to(() => const SellerOfferInterestsView(), arguments: offerId);
+        } else {
+          Get.to(() => const SellerProductView());
+        }
+        return;
       }
 
       // Is Product / Offer related?

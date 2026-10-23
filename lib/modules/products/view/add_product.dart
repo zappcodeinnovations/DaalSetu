@@ -134,8 +134,45 @@ class _AddProductScreenState extends State<AddProductScreen> {
     setState(() {
       if (type == 'from') loadingFrom = value;
       if (type == 'to') loadingTo = value;
-      if (type == 'expiry') expiry = value;
     });
+  }
+
+  Future<void> _pickExpiry() async {
+    final now = DateTime.now();
+    final date = await showDatePicker(
+      context: context,
+      firstDate: DateTime(now.year, now.month, now.day),
+      lastDate: now.add(const Duration(days: 730)),
+      initialDate: expiry != null && expiry!.isAfter(now)
+          ? expiry!
+          : now,
+    );
+    if (date == null || !mounted) return;
+    final minimumExpiry = now.add(const Duration(minutes: 2));
+    final initialDateTime = expiry != null &&
+            DateUtils.isSameDay(expiry, date) &&
+            expiry!.isAfter(now)
+        ? expiry!
+        : DateUtils.isSameDay(date, now)
+            ? minimumExpiry
+            : DateTime(date.year, date.month, date.day, 18);
+    final selectedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initialDateTime),
+    );
+    if (selectedTime == null) return;
+    final selectedExpiry = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      selectedTime.hour,
+      selectedTime.minute,
+    );
+    if (!selectedExpiry.isAfter(DateTime.now())) {
+      _message('Deal expiry time must be in the future.', error: true);
+      return;
+    }
+    setState(() => expiry = selectedExpiry);
   }
 
   Future<void> _submit() async {
@@ -150,6 +187,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
     if (loadingTo!.isBefore(loadingFrom!)) {
       _message('Loading To date cannot be before Loading From.', error: true);
+      return;
+    }
+    if (!expiry!.isAfter(DateTime.now())) {
+      _message('Deal expiry time must be in the future.', error: true);
       return;
     }
     if (branches.isNotEmpty && selectedBranchIds.isEmpty) {
@@ -178,7 +219,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         'quantity_unit': quantityUnit,
         'loading_from': _apiDate(loadingFrom!),
         'loading_to': _apiDate(loadingTo!),
-        'deal_expiry_datetime': _apiDate(expiry!),
+        'deal_expiry_datetime': _apiDateTime(expiry!),
         'loading_location': _location.text.trim(),
         'remark': _remark.text.trim(),
         'status': 'available',
@@ -299,7 +340,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 () => _pickDate('from'),
               ),
               _dateTile('Loading to date', loadingTo, () => _pickDate('to')),
-              _dateTile('Deal expiry date', expiry, () => _pickDate('expiry')),
+              _dateTile(
+                'Deal expiry date & time',
+                expiry,
+                _pickExpiry,
+                showTime: true,
+              ),
               Row(
                 children: [
                   Expanded(
@@ -492,11 +538,22 @@ class _AddProductScreenState extends State<AddProductScreen> {
     );
   }
 
-  Widget _dateTile(String label, DateTime? date, VoidCallback onTap) =>
+  Widget _dateTile(
+    String label,
+    DateTime? date,
+    VoidCallback onTap, {
+    bool showTime = false,
+  }) =>
       ListTile(
         contentPadding: EdgeInsets.zero,
         title: Text(label),
-        subtitle: Text(date == null ? 'Select date' : _apiDate(date)),
+        subtitle: Text(
+          date == null
+              ? 'Select date${showTime ? ' and time' : ''}'
+              : showTime
+                  ? _apiDateTime(date).replaceFirst('T', ' ')
+                  : _apiDate(date),
+        ),
         trailing: const Icon(Icons.calendar_month_outlined),
         onTap: onTap,
       );
@@ -521,6 +578,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   String _apiDate(DateTime value) =>
       '${value.year}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
+
+  String _apiDateTime(DateTime value) =>
+      '${_apiDate(value)}T${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
 
   String _friendlyError(Object error) {
     final text = error.toString();
