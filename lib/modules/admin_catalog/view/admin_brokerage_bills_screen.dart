@@ -58,6 +58,28 @@ String _billingMessage(Object error) =>
 String _dateValue(DateTime value) =>
     '${value.year}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
 
+String _formatDateDisplay(DateTime? value) {
+  if (value == null) return '';
+  return '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}';
+}
+
+DateTime? _tryParseAnyDate(String? text) {
+  if (text == null || text.trim().isEmpty) return null;
+  final trimmed = text.trim();
+  final iso = DateTime.tryParse(trimmed);
+  if (iso != null) return iso;
+  final parts = trimmed.split('/');
+  if (parts.length == 3) {
+    final day = int.tryParse(parts[0]);
+    final month = int.tryParse(parts[1]);
+    final year = int.tryParse(parts[2]);
+    if (day != null && month != null && year != null) {
+      return DateTime(year, month, day);
+    }
+  }
+  return null;
+}
+
 String _money(Object? value) {
   final text = _billingText(value);
   return text.isEmpty ? '—' : '₹$text';
@@ -395,16 +417,46 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
           onChanged: (value) => setState(() => _billingCompany = value),
         ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _dateButton('Bill date from', _billDateFrom, () => _pickBillDate(true)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _dateButton('Bill date to', _billDateTo, () => _pickBillDate(false)),
-            ),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isVerySmall = constraints.maxWidth < 280;
+            if (isVerySmall) {
+              return Column(
+                children: [
+                  _dateButton(
+                    'Bill date from',
+                    _billDateFrom,
+                    () => _pickBillDate(true),
+                  ),
+                  const SizedBox(height: 8),
+                  _dateButton(
+                    'Bill date to',
+                    _billDateTo,
+                    () => _pickBillDate(false),
+                  ),
+                ],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(
+                  child: _dateButton(
+                    'Bill date from',
+                    _billDateFrom,
+                    () => _pickBillDate(true),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _dateButton(
+                    'Bill date to',
+                    _billDateTo,
+                    () => _pickBillDate(false),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 8),
         Row(
@@ -492,22 +544,59 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
     ),
   );
 
-  Widget _dateButton(String label, DateTime? value, VoidCallback onPressed) =>
-      OutlinedButton.icon(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          minimumSize: const Size(0, 42),
-          alignment: Alignment.centerLeft,
+  Widget _dateButton(String label, DateTime? value, VoidCallback onPressed) {
+    final hasValue = value != null;
+    final theme = Theme.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          height: 46,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: hasValue
+                  ? theme.colorScheme.primary.withValues(alpha: 0.6)
+                  : theme.colorScheme.outlineVariant,
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.calendar_today_outlined,
+                size: 16,
+                color: hasValue
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  hasValue ? _formatDateDisplay(value) : label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: hasValue ? FontWeight.w600 : FontWeight.w400,
+                    color: hasValue
+                        ? theme.colorScheme.onSurface
+                        : theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        icon: const Icon(Icons.calendar_today_outlined, size: 16),
-        label: Text(
-          value == null ? label : _dateValue(value),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 12),
-        ),
-      );
+      ),
+    );
+  }
 
   Widget _loadMoreButton() => Padding(
         padding: const EdgeInsets.only(top: 4),
@@ -636,7 +725,10 @@ class _AdminCreateBrokerageBillScreenState
     extends State<AdminCreateBrokerageBillScreen> {
   final _formKey = GlobalKey<FormState>();
   final _rate = TextEditingController(text: '0');
-  final _billDate = TextEditingController(text: _dateValue(DateTime.now()));
+  DateTime? _billDateVal = DateTime.now();
+  DateTime? _periodFromVal;
+  DateTime? _periodToVal;
+  final _billDate = TextEditingController(text: _formatDateDisplay(DateTime.now()));
   final _periodFrom = TextEditingController();
   final _periodTo = TextEditingController();
   final _remarks = TextEditingController();
@@ -766,15 +858,22 @@ class _AdminCreateBrokerageBillScreenState
     }
   }
 
-  Future<void> _pickDate(TextEditingController controller) async {
-    final parsed = DateTime.tryParse(controller.text.trim());
+  Future<void> _pickDate(
+    TextEditingController controller, {
+    required DateTime? currentValue,
+    required ValueChanged<DateTime?> onSelected,
+  }) async {
+    final parsed = currentValue ?? _tryParseAnyDate(controller.text.trim());
     final selected = await showDatePicker(
       context: context,
       initialDate: parsed ?? DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime(DateTime.now().year + 5),
     );
-    if (selected != null) controller.text = _dateValue(selected);
+    if (selected != null) {
+      onSelected(selected);
+      controller.text = _formatDateDisplay(selected);
+    }
   }
 
   Future<void> _create() async {
@@ -809,12 +908,26 @@ class _AdminCreateBrokerageBillScreenState
           'billing_company': _company,
           'delivery_challan_ids': _selectedChallans.toList(),
           if (_subAdmin.isNotEmpty) 'assigned_sub_admin': _subAdmin,
-          if (_billDate.text.trim().isNotEmpty)
-            'bill_date': _billDate.text.trim(),
-          if (_periodFrom.text.trim().isNotEmpty)
-            'period_from': _periodFrom.text.trim(),
-          if (_periodTo.text.trim().isNotEmpty)
-            'period_to': _periodTo.text.trim(),
+          if (_billDateVal != null)
+            'bill_date': _dateValue(_billDateVal!)
+          else if (_billDate.text.trim().isNotEmpty)
+            'bill_date': _dateValue(
+              _tryParseAnyDate(_billDate.text.trim()) ?? DateTime.now(),
+            ),
+          if (_periodFromVal != null)
+            'period_from': _dateValue(_periodFromVal!)
+          else if (_periodFrom.text.trim().isNotEmpty &&
+              _tryParseAnyDate(_periodFrom.text.trim()) != null)
+            'period_from': _dateValue(
+              _tryParseAnyDate(_periodFrom.text.trim())!,
+            ),
+          if (_periodToVal != null)
+            'period_to': _dateValue(_periodToVal!)
+          else if (_periodTo.text.trim().isNotEmpty &&
+              _tryParseAnyDate(_periodTo.text.trim()) != null)
+            'period_to': _dateValue(
+              _tryParseAnyDate(_periodTo.text.trim())!,
+            ),
           'remarks': _remarks.text.trim(),
           'commission_type': _commissionType,
           'default_brokerage_rate': _rate.text.trim(),
@@ -850,37 +963,41 @@ class _AdminCreateBrokerageBillScreenState
     body: _loading
         ? const Center(child: CircularProgressIndicator())
         : _error != null
-        ? _loadError()
-        : Form(
-            key: _formKey,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
-              children: [
-                _basisSection(),
-                const SizedBox(height: 12),
-                _billDetailsSection(),
-                const SizedBox(height: 12),
-                _challanSection(),
-              ],
-            ),
-          ),
-    bottomNavigationBar: _loading || _error != null
-        ? null
-        : SafeArea(
-            minimum: const EdgeInsets.all(16),
-            child: FilledButton.icon(
-              onPressed: _saving ? null : _create,
-              icon: _saving
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.save_outlined),
-              label: Text(_saving ? 'Creating…' : 'Create Draft Bill'),
-            ),
-          ),
-  );
+            ? _loadError()
+            : Form(
+                key: _formKey,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
+                  children: [
+                    _basisSection(),
+                    const SizedBox(height: 12),
+                    _billDetailsSection(),
+                    const SizedBox(height: 12),
+                    _challanSection(),
+                  ],
+                ),
+              ),
+        bottomNavigationBar: _loading || _error != null
+            ? null
+            : SafeArea(
+                minimum: const EdgeInsets.all(16),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: FilledButton.icon(
+                    onPressed: _saving ? null : _create,
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.save_outlined),
+                    label: Text(_saving ? 'Creating…' : 'Create Draft Bill'),
+                  ),
+                ),
+              ),
+      );
 
   Widget _loadError() => Center(
     child: Padding(
@@ -999,14 +1116,61 @@ class _AdminCreateBrokerageBillScreenState
           onChanged: (_) {},
         ),
         const SizedBox(height: 12),
-        _dateInput(_billDate, 'Bill date *'),
+        _dateInput(
+          controller: _billDate,
+          label: 'Bill date *',
+          value: _billDateVal,
+          onSelected: (dt) => setState(() => _billDateVal = dt),
+        ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(child: _dateInput(_periodFrom, 'Period from (optional)')),
-            const SizedBox(width: 12),
-            Expanded(child: _dateInput(_periodTo, 'Period to (optional)')),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isSmall = constraints.maxWidth < 320;
+            if (isSmall) {
+              return Column(
+                children: [
+                  _dateInput(
+                    controller: _periodFrom,
+                    label: 'Period From',
+                    value: _periodFromVal,
+                    onSelected: (dt) => setState(() => _periodFromVal = dt),
+                    canClear: true,
+                  ),
+                  const SizedBox(height: 12),
+                  _dateInput(
+                    controller: _periodTo,
+                    label: 'Period To',
+                    value: _periodToVal,
+                    onSelected: (dt) => setState(() => _periodToVal = dt),
+                    canClear: true,
+                  ),
+                ],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(
+                  child: _dateInput(
+                    controller: _periodFrom,
+                    label: 'Period From',
+                    value: _periodFromVal,
+                    onSelected: (dt) => setState(() => _periodFromVal = dt),
+                    canClear: true,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _dateInput(
+                    controller: _periodTo,
+                    label: 'Period To',
+                    value: _periodToVal,
+                    onSelected: (dt) => setState(() => _periodToVal = dt),
+                    canClear: true,
+                  ),
+                ),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 12),
         _input(_remarks, 'Remarks (optional)', lines: 3),
@@ -1253,15 +1417,44 @@ class _AdminCreateBrokerageBillScreenState
     onChanged: onChanged,
   );
 
-  Widget _dateInput(TextEditingController controller, String label) =>
+  Widget _dateInput({
+    required TextEditingController controller,
+    required String label,
+    required DateTime? value,
+    required ValueChanged<DateTime?> onSelected,
+    bool canClear = false,
+  }) =>
       TextFormField(
         controller: controller,
         readOnly: true,
-        onTap: () => _pickDate(controller),
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+        onTap: () => _pickDate(
+          controller,
+          currentValue: value,
+          onSelected: onSelected,
+        ),
         decoration: InputDecoration(
+          isDense: true,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
           labelText: label,
+          labelStyle: const TextStyle(fontSize: 13),
           border: const OutlineInputBorder(),
-          suffixIcon: const Icon(Icons.calendar_today_outlined),
+          suffixIconConstraints:
+              const BoxConstraints(minWidth: 32, minHeight: 32),
+          suffixIcon: Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: canClear && controller.text.isNotEmpty
+                ? InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () {
+                      onSelected(null);
+                      controller.clear();
+                    },
+                    child: const Icon(Icons.close_rounded, size: 18),
+                  )
+                : const Icon(Icons.calendar_today_outlined, size: 18),
+          ),
         ),
       );
 }

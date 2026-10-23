@@ -70,4 +70,50 @@ void main() {
     expect(find.text('Rejection Reason'), findsOneWidget);
     expect(find.text('Remarks'), findsOneWidget);
   });
+
+  testWidgets('Name field displays synthesized full name rather than phone number username', (tester) async {
+    final baseConfig = AdminModules.byKey('kyc');
+    final testConfig = AdminModuleConfig(
+      key: baseConfig.key,
+      title: baseConfig.title,
+      icon: baseConfig.icon,
+      listEndpoint: baseConfig.listEndpoint,
+      titleKeys: baseConfig.titleKeys,
+      detailSections: baseConfig.detailSections,
+    );
+
+    // Simulated payload where name is missing or numeric phone, but first/last name exist
+    const record = AdminRecord({
+      'id': 138,
+      'username': '1234567892',
+      'name': '', // name is empty
+      'first_name': 'Transporter',
+      'last_name': 'Test',
+      'mobile': '1234567892',
+      'email': 'traspoter@gmail.com',
+      'role': 'transporter',
+      'is_active': true,
+      'account_status': 'active',
+      'date_joined': '2026-10-10T12:00:00Z',
+      'kyc_status': 'approved',
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AdminRecordDetailScreen(
+          config: testConfig,
+          record: record,
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // Name must be 'Transporter Test', not the phone number
+    expect(find.text('Transporter Test'), findsOneWidget);
+    expect(find.text('Transporter'), findsOneWidget);
+    expect(find.text('Test'), findsOneWidget);
+  });
 }
+

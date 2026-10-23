@@ -769,24 +769,111 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
         expand: false,
         builder: (context, scrollController) => Column(
           children: [
+            // Top Drag Handle Bar
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(top: 10, bottom: 4),
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colorTextLight.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Select Brands', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorTextDark)),
-                  Row(
-                    children: [
-                      TextButton(
-                        onPressed: () => controller.selectAllBrands(),
-                        child: Text('All', style: TextStyle(color: colorPrimary)),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Select Brands',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: colorTextDark,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Obx(() => Text(
+                          "${controller.selectedBrandIds.length} of ${controller.allBrands.length} selected",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colorTextLight,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        )),
+                      ],
+                    ),
+                  ),
+                  // Styled "All" Pill Action Button
+                  InkWell(
+                    onTap: () => controller.selectAllBrands(),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: colorPrimary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: colorPrimary.withValues(alpha: 0.35)),
                       ),
-                      TextButton(
-                        onPressed: () => controller.deselectAllBrands(),
-                        child: Text('None', style: TextStyle(color: colorPrimary)),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.select_all_rounded, size: 14, color: colorPrimary),
+                          const SizedBox(width: 4),
+                          Text(
+                            'All',
+                            style: TextStyle(
+                              color: colorPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  )
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Styled "None" Pill Action Button
+                  InkWell(
+                    onTap: () => controller.deselectAllBrands(),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: colorTextLight.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: colorBorder),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.deselect_rounded, size: 14, color: colorTextLight),
+                          const SizedBox(width: 4),
+                          Text(
+                            'None',
+                            style: TextStyle(
+                              color: colorTextDark,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  // Header Close Button
+                  IconButton(
+                    icon: Icon(Icons.close_rounded, size: 20, color: colorTextLight),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    onPressed: () => Navigator.pop(context),
+                  ),
                 ],
               ),
             ),

@@ -201,7 +201,7 @@ class AdminModules {
       title: 'Account Information',
       fields: [
         AdminDetailField('id', 'User ID', copyable: true),
-        AdminDetailField('username', 'Name'),
+        AdminDetailField('name|full_name|username', 'Name'),
         AdminDetailField(
           'mobile',
           'Mobile Number',
@@ -440,28 +440,28 @@ class AdminModules {
         const AdminDetailSection(
           title: 'User Information',
           fields: [
-            AdminDetailField('id', 'User ID', copyable: true),
-            AdminDetailField('name|username', 'Name'),
-            AdminDetailField('first_name', 'First Name'),
-            AdminDetailField('last_name', 'Last Name'),
+            AdminDetailField('id|user.id', 'User ID', copyable: true),
+            AdminDetailField('name|full_name|username|user.name|user.full_name|user.username', 'Name'),
+            AdminDetailField('first_name|user.first_name', 'First Name'),
+            AdminDetailField('last_name|user.last_name', 'Last Name'),
             AdminDetailField(
-              'mobile',
+              'mobile|user.mobile',
               'Mobile Number',
               type: AdminDetailFieldType.phone,
             ),
             AdminDetailField(
-              'email',
+              'email|user.email',
               'Email',
               type: AdminDetailFieldType.email,
             ),
-            AdminDetailField('role', 'Role'),
+            AdminDetailField('role|user.role', 'Role'),
             AdminDetailField(
-              'account_status|is_active',
+              'account_status|is_active|status|user.account_status|user.is_active|user.status',
               'Account Status',
               type: AdminDetailFieldType.status,
             ),
             AdminDetailField(
-              'date_joined|created_at',
+              'date_joined|created_at|user.date_joined|user.created_at',
               'Date Joined',
               type: AdminDetailFieldType.date,
             ),
@@ -471,17 +471,17 @@ class AdminModules {
           title: 'KYC Details',
           fields: [
             AdminDetailField(
-              'kyc_status',
+              'kyc_status|status',
               'KYC Status',
               type: AdminDetailFieldType.status,
             ),
             AdminDetailField(
-              'kyc_submitted_at|submitted_at',
+              'kyc_submitted_at|submitted_at|created_at',
               'Submitted At',
               type: AdminDetailFieldType.date,
             ),
             AdminDetailField(
-              'kyc_approved_at|approved_at',
+              'kyc_approved_at|approved_at|action_time',
               'Approved At',
               type: AdminDetailFieldType.date,
             ),
@@ -491,7 +491,7 @@ class AdminModules {
               type: AdminDetailFieldType.date,
             ),
             AdminDetailField(
-              'kyc_rejection_reason|rejection_reason',
+              'kyc_rejection_reason|rejection_reason|reason',
               'Rejection Reason',
             ),
             AdminDetailField('remarks', 'Remarks'),
@@ -502,23 +502,23 @@ class AdminModules {
           fields: [
             AdminDetailField('pan_number', 'PAN Number', copyable: true),
             AdminDetailField(
-              'pan_card_upload',
+              'pan_card_upload|pan_image|pan_card',
               'PAN Card',
               type: AdminDetailFieldType.image,
             ),
             AdminDetailField('gst_number', 'GST Number', copyable: true),
             AdminDetailField(
-              'gst_certificate_upload',
+              'gst_certificate_upload|gst_image|gst_certificate',
               'GST Certificate',
               type: AdminDetailFieldType.image,
             ),
             AdminDetailField(
-              'adhar_front_upload',
+              'adhar_front_upload|adharcard_image|aadhar_card_upload|adhar_card',
               'Aadhar Front',
               type: AdminDetailFieldType.image,
             ),
             AdminDetailField(
-              'adhar_back_upload',
+              'adhar_back_upload|adharcard_back_image|aadhar_back_upload',
               'Aadhar Back',
               type: AdminDetailFieldType.image,
             ),

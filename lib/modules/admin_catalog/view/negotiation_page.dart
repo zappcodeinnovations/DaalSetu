@@ -976,6 +976,11 @@ class _NegotiationPageState extends State<NegotiationPage> {
         : textVal(msg['timestamp']);
     final formattedTime = _formatTimestamp(timeRaw);
 
+    final bool isProposal = price.isNotEmpty || quantity.isNotEmpty || bags.isNotEmpty;
+    if (!isProposal) {
+      return _buildStatusBanner(msg, status: status, action: action, time: formattedTime);
+    }
+
     final cardBg = isAdminOrSeller
         ? (isDark ? const Color(0xFF2C1E14) : const Color(0xFFFFF7ED))
         : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC));
@@ -1105,6 +1110,97 @@ class _NegotiationPageState extends State<NegotiationPage> {
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildStatusBanner(
+    Map<String, dynamic> msg, {
+    required String status,
+    required String action,
+    required String time,
+  }) {
+    final cleanStatus = status.isNotEmpty ? status : action;
+    final lower = cleanStatus.toLowerCase();
+    final role = (msg['actor_role'] ?? '').toString().toLowerCase();
+
+    Color bannerColor = const Color(0xFF64748B);
+    IconData bannerIcon = Icons.info_outline_rounded;
+    String displayTitle = '';
+
+    if (lower.contains('confirm') ||
+        lower.contains('approv') ||
+        lower.contains('accept') ||
+        lower.contains('won')) {
+      bannerColor = const Color(0xFF10B981);
+      bannerIcon = Icons.check_circle_outline_rounded;
+      if (lower.contains('buyer') || role == 'buyer') {
+        displayTitle = 'Buyer Confirmed the Deal';
+      } else if (lower.contains('seller') || role == 'seller') {
+        displayTitle = 'Seller Confirmed the Deal';
+      } else {
+        displayTitle = 'Deal Confirmed';
+      }
+    } else if (lower.contains('reject') ||
+        lower.contains('cancel') ||
+        lower.contains('lost')) {
+      bannerColor = const Color(0xFFEF4444);
+      bannerIcon = Icons.cancel_outlined;
+      if (lower.contains('buyer') || role == 'buyer') {
+        displayTitle = 'Buyer Rejected Negotiation';
+      } else if (lower.contains('seller') || role == 'seller') {
+        displayTitle = 'Seller Rejected Negotiation';
+      } else {
+        displayTitle = 'Negotiation Closed';
+      }
+    } else {
+      bannerColor = const Color(0xFFF59E0B);
+      bannerIcon = Icons.sync_rounded;
+      displayTitle = cleanStatus.isNotEmpty
+          ? (cleanStatus[0].toUpperCase() + cleanStatus.substring(1))
+          : 'Status Updated';
+    }
+
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: bannerColor.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: bannerColor.withValues(alpha: 0.25)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(bannerIcon, size: 15, color: bannerColor),
+                const SizedBox(width: 6),
+                Text(
+                  displayTitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: bannerColor,
+                  ),
+                ),
+              ],
+            ),
+            if (time.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                time,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: textLight,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

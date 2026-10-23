@@ -387,9 +387,7 @@ class _OfferInterestNegotiationChatViewState
                       padding: const EdgeInsets.fromLTRB(14, 16, 14, 20),
                       children: [
                         _initialInterest(context, thread),
-                        ..._messages.map(
-                          (message) => _bubble(context, message),
-                        ),
+                        ..._buildMessageWidgets(context),
                         if (_messages.isEmpty)
                           Padding(
                             padding: const EdgeInsets.all(24),
@@ -792,6 +790,172 @@ class _OfferInterestNegotiationChatViewState
     return trimmed;
   }
 
+  List<Widget> _buildMessageWidgets(BuildContext context) {
+    final widgets = <Widget>[];
+    String? lastStatusKey;
+
+    for (int i = 0; i < _messages.length; i++) {
+      final msg = _messages[i];
+      String text(dynamic value) =>
+          value == null || value.toString().trim().isEmpty || value == 'null'
+              ? ''
+              : value.toString().trim();
+
+      final price = text(msg['counter_price']);
+      final quantity = text(msg['counter_quantity']);
+      final bags = text(msg['counter_bag_count']);
+      final remark = text(msg['remark'] ?? msg['comment'] ?? msg['message']);
+      final action = text(msg['action']).replaceAll('_', ' ');
+      final status = text(msg['to_status']).replaceAll('_', ' ');
+      final role = (msg['actor_role'] ?? msg['sender_role'])
+              ?.toString()
+              .toLowerCase() ??
+          '';
+
+      final isProposal = price.isNotEmpty ||
+          quantity.isNotEmpty ||
+          bags.isNotEmpty ||
+          (remark.isNotEmpty && !remark.toLowerCase().startsWith('status'));
+
+      if (isProposal) {
+        lastStatusKey = null; // reset status dedup on new proposal
+        widgets.add(_bubble(context, msg));
+      } else {
+        // Pure status event or notification log
+        final timeRaw = text(msg['timestamp'] != null && msg['timestamp'].toString().isNotEmpty
+            ? msg['timestamp']
+            : msg['created_at']);
+        final statusDesc = status.isNotEmpty ? status : action;
+        final currentKey = "${statusDesc.toLowerCase()}_$timeRaw";
+
+        // Deduplicate consecutive identical status updates at the same timestamp
+        if (currentKey == lastStatusKey && statusDesc.isNotEmpty) {
+          continue;
+        }
+        lastStatusKey = currentKey;
+
+        widgets.add(_statusEventBanner(
+          context,
+          role: role,
+          status: status,
+          action: action,
+          time: timeRaw,
+        ));
+      }
+    }
+
+    return widgets;
+  }
+
+  Widget _statusEventBanner(
+    BuildContext context, {
+    required String role,
+    required String status,
+    required String action,
+    required String? time,
+  }) {
+    final cleanStatus = status.isNotEmpty ? status : action;
+    final lower = cleanStatus.toLowerCase();
+    final formattedTime = _formatNegotiationDateTime(time);
+
+    // Determine semantic status color, icon & readable label
+    Color bannerColor = const Color(0xFF64748B); // Slate neutral
+    IconData bannerIcon = Icons.info_outline_rounded;
+    String displayTitle = '';
+
+    if (lower.contains('confirm') ||
+        lower.contains('approv') ||
+        lower.contains('accept') ||
+        lower.contains('won')) {
+      bannerColor = const Color(0xFF10B981); // Emerald green
+      bannerIcon = Icons.check_circle_outline_rounded;
+      if (lower.contains('buyer') || role == 'buyer') {
+        displayTitle = 'Buyer Confirmed the Deal';
+      } else if (lower.contains('seller') || role == 'seller') {
+        displayTitle = 'Seller Confirmed the Deal';
+      } else {
+        displayTitle = 'Deal Confirmed';
+      }
+    } else if (lower.contains('reject') ||
+        lower.contains('cancel') ||
+        lower.contains('lost')) {
+      bannerColor = const Color(0xFFEF4444); // Red
+      bannerIcon = Icons.cancel_outlined;
+      if (lower.contains('buyer') || role == 'buyer') {
+        displayTitle = 'Buyer Rejected Negotiation';
+      } else if (lower.contains('seller') || role == 'seller') {
+        displayTitle = 'Seller Rejected Negotiation';
+      } else {
+        displayTitle = 'Negotiation Closed';
+      }
+    } else if (lower.contains('negotiat') ||
+        lower.contains('counter') ||
+        lower.contains('pend')) {
+      bannerColor = const Color(0xFFF59E0B); // Amber
+      bannerIcon = Icons.sync_rounded;
+      displayTitle = 'Negotiation In Progress';
+    } else {
+      bannerColor = const Color(0xFF3B82F6); // Blue
+      bannerIcon = Icons.notifications_none_rounded;
+      displayTitle = cleanStatus.isNotEmpty
+          ? (cleanStatus[0].toUpperCase() + cleanStatus.substring(1))
+          : 'System Notification';
+    }
+
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.88,
+        ),
+        decoration: BoxDecoration(
+          color: bannerColor.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: bannerColor.withValues(alpha: 0.25),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(bannerIcon, size: 15, color: bannerColor),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    displayTitle,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: bannerColor,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+            if (formattedTime.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                formattedTime,
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _bubble(BuildContext context, Map<String, dynamic> message) {
     final role =
         (message['actor_role'] ?? message['sender_role'])
@@ -811,6 +975,7 @@ class _OfferInterestNegotiationChatViewState
     final quantity = text(message['counter_quantity']);
     final bags = text(message['counter_bag_count']);
     final packing = text(message['counter_packing_weight_kg']);
+    final remark = text(message['remark'] ?? message['comment'] ?? message['message']);
     final action = text(message['action']).replaceAll('_', ' ');
     final status = text(message['to_status']).replaceAll('_', ' ');
     final body = <String>[
@@ -818,7 +983,8 @@ class _OfferInterestNegotiationChatViewState
       if (quantity.isNotEmpty)
         'Quantity: $quantity ${message['quantity_unit'] ?? ''}',
       if (bags.isNotEmpty) 'Bags: $bags × $packing kg',
-      if (status.isNotEmpty) 'Status: $status',
+      if (remark.isNotEmpty) remark,
+      if (status.isNotEmpty && (price.isNotEmpty || quantity.isNotEmpty)) 'Status: $status',
     ].join('\n');
     return Align(
       alignment: mine ? Alignment.centerRight : Alignment.centerLeft,

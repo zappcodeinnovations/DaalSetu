@@ -58,26 +58,58 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
         if (altKey == 'is_active' && current is bool) {
           return current ? 'active' : 'inactive';
         }
+        // If this is a name field, but the value is pure digits (e.g. phone number like "1234567892")
+        // and first_name / last_name exist, prioritize full name over phone digits!
+        final strVal = current.toString().trim();
+        final isDigits = RegExp(r'^\d+$').hasMatch(strVal);
+        final isNameField = (altKey == 'name' || altKey == 'username' || altKey == 'full_name') &&
+            (keyPath.startsWith('name') || keyPath == 'username' || keyPath == 'full_name');
+        if (isNameField && isDigits) {
+          final first = (data['first_name'] ?? (data['user'] is Map ? data['user']['first_name'] : null) ?? '').toString().trim();
+          final last = (data['last_name'] ?? (data['user'] is Map ? data['user']['last_name'] : null) ?? '').toString().trim();
+          final combined = '$first $last'.trim();
+          if (combined.isNotEmpty) {
+            return combined;
+          }
+        }
         return current;
       }
     }
 
     // Smart fallback derivation for user names
     if (keyPath.contains('first_name')) {
+      final nestedFirst = data['user'] is Map ? data['user']['first_name'] : null;
+      if (nestedFirst != null && nestedFirst.toString().trim().isNotEmpty) {
+        return nestedFirst.toString().trim();
+      }
       final fullName = (data['name'] ?? data['username'] ?? '')
           .toString()
           .trim();
-      if (fullName.isNotEmpty) {
+      if (fullName.isNotEmpty && !RegExp(r'^\d+$').hasMatch(fullName)) {
         return fullName.split(' ').first;
       }
     }
     if (keyPath.contains('last_name')) {
+      final nestedLast = data['user'] is Map ? data['user']['last_name'] : null;
+      if (nestedLast != null && nestedLast.toString().trim().isNotEmpty) {
+        return nestedLast.toString().trim();
+      }
       final fullName = (data['name'] ?? data['username'] ?? '')
           .toString()
           .trim();
-      final words = fullName.split(' ');
-      if (words.length > 1) {
-        return words.sublist(1).join(' ');
+      if (fullName.isNotEmpty && !RegExp(r'^\d+$').hasMatch(fullName)) {
+        final words = fullName.split(' ');
+        if (words.length > 1) {
+          return words.sublist(1).join(' ');
+        }
+      }
+    }
+    if (keyPath == 'name' || keyPath == 'full_name' || keyPath.startsWith('name|')) {
+      final first = (data['first_name'] ?? (data['user'] is Map ? data['user']['first_name'] : null) ?? '').toString().trim();
+      final last = (data['last_name'] ?? (data['user'] is Map ? data['user']['last_name'] : null) ?? '').toString().trim();
+      final combined = '$first $last'.trim();
+      if (combined.isNotEmpty) {
+        return combined;
       }
     }
 

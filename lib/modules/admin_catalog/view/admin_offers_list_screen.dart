@@ -269,7 +269,14 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
           // Manage Stock Section
           _ManageStockRow(
             offerId: offer.id,
-            initialPackingKg: double.tryParse(offer.packingWeightKg) ?? 0,
+            initialPackingKg: (double.tryParse(offer.packingWeightKg) ?? 0) > 0
+                ? (double.tryParse(offer.packingWeightKg) ?? 0)
+                : ((offer.originalBagCount != null &&
+                        offer.originalBagCount! > 0 &&
+                        (double.tryParse(offer.availableQuantity) ?? 0) > 0)
+                    ? ((double.tryParse(offer.availableQuantity) ?? 0) * 100) /
+                        offer.originalBagCount!
+                    : 50.0),
             onSave: (action, qty, bags, packingKg) {
               controller.manageStock(
                 offer.id,
@@ -570,7 +577,12 @@ class _ManageStockRowState extends State<_ManageStockRow> {
 
   void _syncBagsFromQuantity(String val) {
     final qty = double.tryParse(val) ?? 0;
-    final pKg = double.tryParse(_packingKgCtrl.text) ?? 0;
+    var pKg = double.tryParse(_packingKgCtrl.text) ?? 0;
+    if (pKg <= 0) {
+      final defaultKg = widget.initialPackingKg > 0 ? widget.initialPackingKg : 50.0;
+      _packingKgCtrl.text = defaultKg == defaultKg.toInt() ? defaultKg.toInt().toString() : defaultKg.toString();
+      pKg = defaultKg;
+    }
     if (qty > 0 && pKg > 0) {
       final totalKg = qty * 100;
       final bags = (totalKg / pKg).round();
@@ -582,13 +594,40 @@ class _ManageStockRowState extends State<_ManageStockRow> {
 
   void _syncQuantityFromBags(String val) {
     final bags = double.tryParse(val) ?? 0;
-    final pKg = double.tryParse(_packingKgCtrl.text) ?? 0;
+    var pKg = double.tryParse(_packingKgCtrl.text) ?? 0;
+    if (pKg <= 0) {
+      final defaultKg = widget.initialPackingKg > 0 ? widget.initialPackingKg : 50.0;
+      _packingKgCtrl.text = defaultKg == defaultKg.toInt() ? defaultKg.toInt().toString() : defaultKg.toString();
+      pKg = defaultKg;
+    }
     if (bags > 0 && pKg > 0) {
       final totalKg = bags * pKg;
       final qty = totalKg / 100;
       _quantityCtrl.text = qty.toStringAsFixed(3);
     } else {
       _quantityCtrl.clear();
+    }
+  }
+
+  void _onRefreshOrRecalculate() {
+    var pKg = double.tryParse(_packingKgCtrl.text.trim()) ?? 0;
+    if (pKg <= 0) {
+      final defaultKg = widget.initialPackingKg > 0 ? widget.initialPackingKg : 50.0;
+      _packingKgCtrl.text = defaultKg == defaultKg.toInt()
+          ? defaultKg.toInt().toString()
+          : defaultKg.toString();
+      pKg = defaultKg;
+    }
+
+    if (_quantityCtrl.text.trim().isNotEmpty) {
+      _syncBagsFromQuantity(_quantityCtrl.text.trim());
+    } else if (_bagsCtrl.text.trim().isNotEmpty) {
+      _syncQuantityFromBags(_bagsCtrl.text.trim());
+    } else {
+      final defaultKg = widget.initialPackingKg > 0 ? widget.initialPackingKg : 50.0;
+      _packingKgCtrl.text = defaultKg == defaultKg.toInt()
+          ? defaultKg.toInt().toString()
+          : defaultKg.toString();
     }
   }
 
@@ -715,13 +754,7 @@ class _ManageStockRowState extends State<_ManageStockRow> {
                         child: IconButton(
                           tooltip: 'Recalculate Bags & Qty',
                           icon: const Icon(Icons.sync_rounded, color: AppTheme.primaryGold, size: 18),
-                          onPressed: () {
-                            if (_quantityCtrl.text.isNotEmpty) {
-                              _syncBagsFromQuantity(_quantityCtrl.text);
-                            } else if (_bagsCtrl.text.isNotEmpty) {
-                              _syncQuantityFromBags(_bagsCtrl.text);
-                            }
-                          },
+                          onPressed: _onRefreshOrRecalculate,
                         ),
                       ),
                     ],

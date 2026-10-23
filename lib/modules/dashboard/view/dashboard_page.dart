@@ -469,25 +469,10 @@ class AdminDashboardScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 1 & 2: Pipeline by Stage & Commodity Mix (Responsive row / column for small screens)
+        // 1 & 2: Pipeline by Stage & Commodity Mix (Responsive column for phone, row for tablet/desktop)
         LayoutBuilder(
           builder: (context, constraints) {
-            final isNarrow = constraints.maxWidth < 360;
-            const pipelineColors = [
-              Color(0xFFF59E0B), // Amber (Negotiation)
-              Color(0xFF3B82F6), // Blue (Contract Signed)
-              Color(0xFFEF4444), // Red (Buyer Confirmed)
-              Color(0xFF8B5CF6), // Purple (Deal Confirmed)
-              Color(0xFF10B981), // Emerald
-            ];
-            const commodityColors = [
-              Color(0xFF059669), // Emerald
-              Color(0xFF0D9488), // Teal
-              Color(0xFFEA580C), // Orange
-              Color(0xFF7C3AED), // Violet
-              Color(0xFFDB2777), // Pink
-              Color(0xFF2563EB), // Royal Blue
-            ];
+            final isNarrow = constraints.maxWidth < 600;
 
             if (isNarrow) {
               return Column(
@@ -498,7 +483,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     "Deals in negotiation & signed",
                     charts.pipelineByStage.labels,
                     charts.pipelineByStage.values,
-                    customColors: pipelineColors,
+                    colorResolver: resolvePipelineStageColor,
                   ),
                   const SizedBox(height: 12),
                   _buildDonutCard(
@@ -507,7 +492,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     "Volume distribution by crop",
                     charts.commodityMix.labels,
                     charts.commodityMix.volumes,
-                    customColors: commodityColors,
+                    colorResolver: resolveCommodityColor,
                   ),
                 ],
               );
@@ -518,22 +503,22 @@ class AdminDashboardScreen extends StatelessWidget {
                 Expanded(
                   child: _buildDonutCard(
                     context,
-                    "Pipeline",
-                    "By Stages",
+                    "Pipeline by Stage",
+                    "Deals in negotiation & signed",
                     charts.pipelineByStage.labels,
                     charts.pipelineByStage.values,
-                    customColors: pipelineColors,
+                    colorResolver: resolvePipelineStageColor,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildDonutCard(
                     context,
-                    "Commodity",
-                    "Volume Mix",
+                    "Commodity Mix",
+                    "Volume distribution by crop",
                     charts.commodityMix.labels,
                     charts.commodityMix.volumes,
-                    customColors: commodityColors,
+                    colorResolver: resolveCommodityColor,
                   ),
                 ),
               ],
@@ -1178,6 +1163,66 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
+  static Color resolvePipelineStageColor(String label, int index) {
+    final lower = label.toLowerCase().trim();
+    if (lower.contains('negotiat')) {
+      return const Color(0xFFF59E0B); // Warm Amber Gold
+    } else if (lower.contains('sign') || lower.contains('contract')) {
+      return const Color(0xFF2563EB); // Royal Blue
+    } else if (lower.contains('buyer') || lower.contains('pending')) {
+      return const Color(0xFF6366F1); // Indigo
+    } else if (lower.contains('deal') || lower.contains('confirm') || lower.contains('won') || lower.contains('close')) {
+      return const Color(0xFF10B981); // Emerald Green (Success)
+    } else if (lower.contains('dispatch') || lower.contains('transit')) {
+      return const Color(0xFF06B6D4); // Cyan
+    } else if (lower.contains('cancel') || lower.contains('lost') || lower.contains('reject')) {
+      return const Color(0xFFEF4444); // Crimson Red
+    }
+    const fallbackPipelineColors = [
+      Color(0xFFF59E0B), // Amber
+      Color(0xFF2563EB), // Royal Blue
+      Color(0xFF10B981), // Emerald Green
+      Color(0xFF6366F1), // Indigo
+      Color(0xFF06B6D4), // Cyan
+      Color(0xFF8B5CF6), // Violet
+    ];
+    return fallbackPipelineColors[index % fallbackPipelineColors.length];
+  }
+
+  static Color resolveCommodityColor(String label, int index) {
+    final lower = label.toLowerCase().trim();
+    if (lower.contains('split') || lower.contains('yellow') || lower.contains('chana')) {
+      return const Color(0xFFCA8A04); // Golden Mustard
+    } else if (lower.contains('chilka') || lower.contains('moong')) {
+      return const Color(0xFF0F766E); // Deep Teal / Sea Green
+    } else if (lower.contains('organic')) {
+      return const Color(0xFFC2410C); // Terracotta Rust
+    } else if (lower.contains('polish')) {
+      return const Color(0xFF7E22CE); // Deep Amethyst Purple
+    } else if (lower.contains('toor') || lower.contains('arhar')) {
+      return const Color(0xFFE11D48); // Rose Crimson
+    } else if (lower.contains('urad') || lower.contains('black')) {
+      return const Color(0xFF334155); // Slate Charcoal
+    } else if (lower.contains('masoor') || lower.contains('red')) {
+      return const Color(0xFFEA580C); // Warm Orange
+    }
+    // Dedicated commodity palette - distinct from pipeline stages
+    const fallbackCommodityColors = [
+      Color(0xFF0F766E), // Deep Teal
+      Color(0xFF7E22CE), // Purple
+      Color(0xFFCA8A04), // Mustard
+      Color(0xFFC2410C), // Terracotta
+      Color(0xFFE11D48), // Rose
+      Color(0xFF334155), // Slate Charcoal
+      Color(0xFF059669), // Emerald
+      Color(0xFFD97706), // Amber
+      Color(0xFF9333EA), // Violet
+      Color(0xFF0284C7), // Sky Blue
+      Color(0xFF475569), // Cool Grey
+    ];
+    return fallbackCommodityColors[index % fallbackCommodityColors.length];
+  }
+
   Widget _buildDonutCard(
     BuildContext context,
     String title,
@@ -1185,16 +1230,24 @@ class AdminDashboardScreen extends StatelessWidget {
     List<String> labels,
     List<int> values, {
     List<Color>? customColors,
+    Color Function(String label, int index)? colorResolver,
   }) {
     final theme = Theme.of(context);
-    final colors = customColors ?? [
+    final fallbackColors = customColors ?? [
       theme.colorScheme.primary,
       Colors.orangeAccent,
-      Colors.redAccent,
-      Colors.purpleAccent,
       Colors.blueAccent,
+      Colors.purpleAccent,
       Colors.teal,
+      Colors.indigo,
     ];
+
+    Color getColor(int index) {
+      if (colorResolver != null && index < labels.length) {
+        return colorResolver(labels[index], index);
+      }
+      return fallbackColors[index % fallbackColors.length];
+    }
     
     if (labels.isEmpty || values.isEmpty) {
        return GlassCard(
@@ -1210,51 +1263,64 @@ class AdminDashboardScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
-          Text(subtitle, style: GoogleFonts.inter(fontSize: 9, color: theme.textTheme.bodyMedium?.color)),
+          Text(title, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+          Text(subtitle, style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color)),
           const SizedBox(height: 12),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(
-                height: 70,
-                width: 70,
+                height: 80,
+                width: 80,
                 child: PieChart(
                   PieChartData(
-                    sectionsSpace: 0,
-                    centerSpaceRadius: 20,
+                    sectionsSpace: 2,
+                    centerSpaceRadius: 24,
                     sections: List.generate(labels.length, (index) {
                       return PieChartSectionData(
                         value: values[index].toDouble(),
-                        color: colors[index % colors.length],
-                        radius: 12,
+                        color: getColor(index),
+                        radius: 14,
                         showTitle: false,
                       );
                     }),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: List.generate(math.min(labels.length, 4), (index) {
+                  children: List.generate(labels.length, (index) {
                     final percent = total == 0 ? 0 : (values[index] / total) * 100;
+                    final itemColor = getColor(index);
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 4.0),
+                      padding: const EdgeInsets.only(bottom: 6.0),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
+                          Container(width: 8, height: 8, decoration: BoxDecoration(color: itemColor, shape: BoxShape.circle)),
+                          const SizedBox(width: 6),
                           Expanded(
-                            child: Row(
-                              children: [
-                                Container(width: 6, height: 6, decoration: BoxDecoration(color: colors[index % colors.length], shape: BoxShape.circle)),
-                                const SizedBox(width: 4),
-                                Expanded(child: Text(labels[index], style: GoogleFonts.inter(fontSize: 8, color: theme.textTheme.bodyLarge?.color), overflow: TextOverflow.ellipsis)),
-                              ],
+                            child: Text(
+                              labels[index],
+                              maxLines: 2,
+                              softWrap: true,
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: theme.textTheme.bodyLarge?.color,
+                                height: 1.2,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          Text("${percent.toInt()}%", style: GoogleFonts.inter(fontSize: 8, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+                          const SizedBox(width: 8),
+                          Text(
+                            "${percent.toStringAsFixed(0)}%",
+                            style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: itemColor),
+                          ),
                         ],
                       ),
                     );

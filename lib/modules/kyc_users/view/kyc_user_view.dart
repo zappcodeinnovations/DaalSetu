@@ -767,21 +767,45 @@ class KycUsersScreen extends StatelessWidget {
   }
 
   void _showViewDialog(BuildContext context, KycUserModel user) {
+    String formatTimestamp(String? iso) {
+      if (iso == null || iso.trim().isEmpty) return "N/A";
+      try {
+        return DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.parse(iso).toLocal());
+      } catch (_) {
+        return iso;
+      }
+    }
+
     Get.dialog(
       AlertDialog(
         backgroundColor: cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text("User Details", style: TextStyle(color: textDark)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _detailRow("Name", user.name),
-            _detailRow("Email", user.email),
-            _detailRow("Mobile", user.mobile),
-            _detailRow("PAN Number", user.panNumber ?? "N/A"),
-            _detailRow("GST Number", user.gstNumber ?? "N/A"),
-          ],
+        title: Text("User Details", style: TextStyle(color: textDark, fontWeight: FontWeight.bold)),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _detailRow("Name", user.name),
+                _detailRow("Email", user.email.isNotEmpty ? user.email : "N/A"),
+                _detailRow("Mobile", user.mobile.isNotEmpty ? user.mobile : "N/A"),
+                _detailRow("Role", user.role.isNotEmpty ? user.role : "N/A"),
+                _detailRow("First Name", (user.firstName != null && user.firstName!.isNotEmpty) ? user.firstName! : "N/A"),
+                _detailRow("Last Name", (user.lastName != null && user.lastName!.isNotEmpty) ? user.lastName! : "N/A"),
+                _detailRow("PAN Number", user.panNumber != null && user.panNumber!.isNotEmpty ? user.panNumber! : "N/A"),
+                _detailRow("GST Number", user.gstNumber != null && user.gstNumber!.isNotEmpty ? user.gstNumber! : "N/A"),
+                _detailRow("Account Status", user.accountStatus.isNotEmpty ? user.accountStatus : "active"),
+                _detailRow("KYC Status", user.kycStatus.isNotEmpty ? user.kycStatus : "pending"),
+                _detailRow("Submitted At", formatTimestamp(user.kycSubmittedAt)),
+                _detailRow("Approved At", formatTimestamp(user.kycApprovedAt)),
+                _detailRow("Rejected At", formatTimestamp(user.kycRejectedAt)),
+                _detailRow("Rejection Reason", (user.kycRejectionReason != null && user.kycRejectionReason!.isNotEmpty) ? user.kycRejectionReason! : "N/A"),
+                _detailRow("Date Joined", formatTimestamp(user.dateJoined)),
+              ],
+            ),
+          ),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         actions: [
