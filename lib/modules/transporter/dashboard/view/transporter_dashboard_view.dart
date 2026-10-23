@@ -305,11 +305,10 @@ class TransporterDashboardView extends StatelessWidget {
         v('earn', '₹0.00'),
         v('earnDelta', ''),
         Icons.currency_rupee,
+        // Same targets as the web dashboard KPIs (My Contract Bids page).
         () => Get.to(
-          () => const TransporterBiddingView(
-            initialTab: 1,
-            initialStatus: 'accepted',
-          ),
+          () =>
+              const TransporterBiddingView(myBidsOnly: true, initialStatus: 'all'),
         ),
       ),
       (
@@ -319,7 +318,7 @@ class TransporterDashboardView extends StatelessWidget {
         IconlyLight.bag,
         () => Get.to(
           () => const TransporterBiddingView(
-            initialTab: 1,
+            myBidsOnly: true,
             initialStatus: 'accepted',
           ),
         ),
@@ -340,10 +339,8 @@ class TransporterDashboardView extends StatelessWidget {
         "Avg ETA: ${v('avgETA')}",
         Icons.local_shipping_outlined,
         () => Get.to(
-          () => const TransporterBiddingView(
-            initialTab: 1,
-            initialStatus: 'accepted',
-          ),
+          () =>
+              const TransporterBiddingView(myBidsOnly: true, initialStatus: 'all'),
         ),
       ),
       (

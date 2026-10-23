@@ -58,6 +58,13 @@ class SellerProductModel {
     return '$base$path';
   }
 
+  /// The stored is_expired flag is set by a background job, so a deal whose
+  /// expiry time has passed can still read false: check the time as well.
+  static bool _expiryPassed(dynamic raw) {
+    final expiry = DateTime.tryParse(raw?.toString() ?? '');
+    return expiry != null && !expiry.isAfter(DateTime.now());
+  }
+
   factory SellerProductModel.fromJson(Map<String, dynamic> json) {
     final category = json['category'];
     final brand = json['brand'];
@@ -143,7 +150,7 @@ class SellerProductModel {
       isActive: json['is_active'] is bool
           ? json['is_active'] as bool
           : (json['status'] ?? "active") == "active",
-      isExpired: json['is_expired'] == true,
+      isExpired: json['is_expired'] == true || _expiryPassed(json['deal_expiry_datetime']),
       interestCount:
           int.tryParse(
             '${json['interested_count'] ?? json['interest_count'] ?? 0}',

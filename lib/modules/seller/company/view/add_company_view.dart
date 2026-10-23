@@ -384,7 +384,6 @@ class _AddCompanyViewState extends State<AddCompanyView> {
               theme: theme,
               label: label,
               required: true,
-              hint: hint,
               icon: icon,
               errorText: errorText,
             ),
@@ -417,7 +416,6 @@ class _AddCompanyViewState extends State<AddCompanyView> {
   InputDecoration _dropdownDecoration({
     required ThemeData theme,
     required String label,
-    required String hint,
     required IconData icon,
     String? errorText,
     bool required = false,
@@ -440,7 +438,6 @@ class _AddCompanyViewState extends State<AddCompanyView> {
               ),
             )
           : Text(label),
-      hintText: hint,
       floatingLabelBehavior: FloatingLabelBehavior.always,
       prefixIcon: Icon(icon, size: 20),
       filled: true,

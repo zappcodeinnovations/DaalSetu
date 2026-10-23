@@ -236,10 +236,31 @@ class SellerBranchesView extends StatelessWidget {
                         child: ListTile(
                           title: Text(b.locationName ?? "Warehouse Branch", style: const TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: Text("Code: ${b.branchCode ?? 'N/A'} • ${b.city ?? ''}, ${b.state ?? ''}"),
-                          trailing: IconButton(
-                            icon: const Icon(IconlyLight.logout, color: Colors.red, size: 20),
-                            onPressed: () => controller.leaveBranch(b.id!),
-                            tooltip: "Leave Branch",
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (b.isPrimary != true)
+                                IconButton(
+                                  icon: Icon(IconlyLight.star, color: Colors.amber.shade800, size: 20),
+                                  onPressed: () => Get.defaultDialog(
+                                    title: "Make Primary",
+                                    middleText: "Make ${b.branchCode ?? 'this branch'} your primary branch?",
+                                    textConfirm: "YES",
+                                    textCancel: "CANCEL",
+                                    confirmTextColor: Colors.white,
+                                    onConfirm: () {
+                                      Get.back();
+                                      controller.makePrimaryBranch(b.branchId ?? b.id!);
+                                    },
+                                  ),
+                                  tooltip: "Make Primary",
+                                ),
+                              IconButton(
+                                icon: const Icon(IconlyLight.logout, color: Colors.red, size: 20),
+                                onPressed: () => controller.leaveBranch(b.id!),
+                                tooltip: "Leave Branch",
+                              ),
+                            ],
                           ),
                         ),
                       );

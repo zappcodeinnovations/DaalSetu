@@ -220,7 +220,8 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
           // Status & Visibility
           Row(
             children: [
-              _buildStatusBadge(offer.stockStatus),
+              // An expired deal reads "Expired", not its last stock status.
+              _buildStatusBadge(offer.isExpired ? 'expired' : offer.stockStatus),
               const Spacer(),
               Text('Visible', style: TextStyle(color: textSecondary, fontSize: 13)),
               const SizedBox(width: 4),
@@ -440,7 +441,9 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
 
   Widget _buildStatusBadge(String status) {
     Color color = AppTheme.successGreen;
-    if (status.toLowerCase().contains('out_of_stock')) {
+    if (status.toLowerCase() == 'expired') {
+      color = Colors.deepOrange;
+    } else if (status.toLowerCase().contains('out_of_stock')) {
       color = Colors.grey;
     } else if (status.toLowerCase().contains('active') || status.toLowerCase().contains('available')) {
       color = AppTheme.successGreen; // Bright green

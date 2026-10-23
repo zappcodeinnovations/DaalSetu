@@ -28,6 +28,9 @@ class DashboardController extends GetxController {
 
   Future<void> updateGtvPeriod(String period) async {
     selectedGtvPeriod.value = period;
+    // Every range already came with the dashboard; no refetch needed.
+    final ranges = dashboardData.value?.charts.gtvDealsRanges ?? const {};
+    if (ranges.keys.any(period.toUpperCase().startsWith)) return;
     isUpdatingTrend.value = true;
     try {
       final data = await DashboardService.fetchDashboard(period: period);

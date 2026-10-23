@@ -34,6 +34,9 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
 
   bool get editing => widget.record != null;
 
+  bool _isRequired(AdminFieldConfig field) =>
+      field.required && (!editing || field.requiredOnEdit);
+
   Iterable<AdminFieldConfig> get visibleFields => widget.config.fields.where(
     (field) => field.hiddenValue == null && !(editing && field.createOnly),
   );
@@ -105,11 +108,11 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
     for (final field in visibleFields) {
       final missingList =
           field.multiSelect &&
-          field.required &&
+          _isRequired(field) &&
           (multiValues[field.key] ?? {}).isEmpty;
       final missingFile =
           field.isFile &&
-          field.required &&
+          _isRequired(field) &&
           !editing &&
           !filePaths.containsKey(field.key);
       if (missingList || missingFile) {
@@ -256,7 +259,7 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
   );
 
   String _label(AdminFieldConfig field) =>
-      '${field.label}${field.required ? ' *' : ''}';
+      '${field.label}${_isRequired(field) ? ' *' : ''}';
 
   bool _canCreateRole(AdminFieldConfig field) =>
       widget.config.key == 'salesman' && field.key == 'access_role_ids';
@@ -422,16 +425,20 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
             }
           }
           final emailError = isEmailField
-              ? InputValidators.email(value, required: field.required)
+              ? InputValidators.email(value, required: _isRequired(field))
               : null;
           final taxError = field.key == 'pan_number'
-              ? TaxIdValidator.pan(value, required: field.required)
+              ? TaxIdValidator.pan(value, required: _isRequired(field))
               : field.key == 'gst_number'
-              ? TaxIdValidator.gst(value, required: field.required)
+              ? TaxIdValidator.gst(value, required: _isRequired(field))
+              : null;
+          final nameError = field.key == 'first_name' || field.key == 'last_name'
+              ? InputValidators.personName(value, label: field.label)
               : null;
           return emailError ??
               taxError ??
-              (field.required && (value == null || value.trim().isEmpty)
+              nameError ??
+              (_isRequired(field) && (value == null || value.trim().isEmpty)
                   ? '${field.label} is required'
                   : null);
         },
@@ -469,7 +476,7 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
         if (serverErrors[field.key] != null) {
           return serverErrors[field.key];
         }
-        return field.required && (value == null || value.isEmpty)
+        return _isRequired(field) && (value == null || value.isEmpty)
             ? '${field.label} is required'
             : null;
       },
@@ -598,7 +605,7 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
         labelText: _label(field),
         hintText: 'Select date',
         errorText: serverErrors[field.key],
-        suffixIcon: controller.text.isEmpty || field.required
+        suffixIcon: controller.text.isEmpty || _isRequired(field)
             ? const Icon(Icons.calendar_month)
             : IconButton(
                 tooltip: 'Clear',
@@ -615,7 +622,7 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
         if (serverErrors[field.key] != null) {
           return serverErrors[field.key];
         }
-        return field.required && (value == null || value.trim().isEmpty)
+        return _isRequired(field) && (value == null || value.trim().isEmpty)
             ? '${field.label} is required'
             : null;
       },

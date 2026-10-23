@@ -45,9 +45,14 @@ class AdminFieldConfig {
     this.createOnly = false,
     this.singleSelectAsList = false,
     this.sendAsBoolean = false,
+    this.requiredOnEdit = true,
   });
 
   final String key;
+
+  /// False when the field may stay empty on edit (the server keeps its value),
+  /// e.g. a branch's admin when only the status changes.
+  final bool requiredOnEdit;
   final String label;
   final bool required;
   final bool numeric;
@@ -664,6 +669,7 @@ class AdminModules {
           'assigned_admin_ids',
           'Assigned admin',
           required: true,
+          requiredOnEdit: false,
           optionsLoader: loadAdminOptions,
           initialValue: assignedAdminIdOf,
           singleSelectAsList: true,

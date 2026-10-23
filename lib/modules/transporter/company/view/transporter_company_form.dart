@@ -518,7 +518,6 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
             child: InputDecorator(
               decoration: InputDecoration(
                 labelText: label,
-                hintText: hint,
                 errorText: field.errorText,
                 floatingLabelBehavior: FloatingLabelBehavior.always,
                 prefixIcon: Icon(icon),

@@ -159,9 +159,23 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                 _item('Seller Note', contract.sellerRemark),
                 _item('Admin Note', contract.adminRemark),
               ]),
+              // Sent to admins only, same card as the web Contract Details.
+              if (contract.confirmedByAdminId != null ||
+                  contract.createdByUserId != null ||
+                  contract.assignedSubAdminId != null ||
+                  contract.confirmedBranchId != null)
+                _section('Administration', [
+                  _item('Admin Remark', contract.adminRemark),
+                  _item('Confirmed By Admin', _withId(contract.confirmedByAdminName, contract.confirmedByAdminId)),
+                  _item('Branch', _withId(contract.confirmedBranchName, contract.confirmedBranchId)),
+                  _item('Created By', _withId(contract.createdByUserName, contract.createdByUserId)),
+                  _item('Assigned Sub Admin', _withId(contract.assignedSubAdminName, contract.assignedSubAdminId)),
+                ]),
               _section('Timeline', [
                 _item('Created', _date(contract.createdAt)),
                 _item('Confirmed', _date(contract.confirmedAt)),
+                if (contract.readyForLoadingAt.isNotEmpty)
+                  _item('Ready For Loading', _date(contract.readyForLoadingAt)),
                 _item('Updated', _date(contract.updatedAt)),
               ]),
             ],
@@ -514,6 +528,11 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     if (changed == true && mounted) {
       await controller.fetchContractDetail(contract.id);
     }
+  }
+
+  String _withId(String name, int? id) {
+    if (id == null) return '-';
+    return name.isEmpty ? 'ID: $id' : '$name (ID: $id)';
   }
 
   Widget _item(String label, Object? rawValue) {

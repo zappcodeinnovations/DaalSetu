@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../controller/add_user_controller.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/utils/input_validators.dart';
 
 class AddUserScreen extends StatefulWidget {
   const AddUserScreen({super.key});
@@ -124,6 +125,25 @@ class AddUserScreenState extends State<AddUserScreen> {
                           AppSnackbar.snackbar(
                             "Required",
                             "Please enter first name",
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Colors.red,
+                            colorText: Colors.white,
+                          );
+                          return;
+                        }
+
+                        final nameError = InputValidators.personName(
+                              firstName,
+                              label: 'First name',
+                            ) ??
+                            InputValidators.personName(
+                              lastNameController.text,
+                              label: 'Last name',
+                            );
+                        if (nameError != null) {
+                          AppSnackbar.snackbar(
+                            "Invalid Name",
+                            nameError,
                             snackPosition: SnackPosition.BOTTOM,
                             backgroundColor: Colors.red,
                             colorText: Colors.white,

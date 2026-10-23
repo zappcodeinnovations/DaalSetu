@@ -419,6 +419,27 @@ class BuyerBranchController extends GetxController with WidgetsBindingObserver {
     }
   }
 
+  Future<void> makePrimaryBranch(int branchId) async {
+    try {
+      final res = await SellerServices.makePrimaryBranch(branchId);
+      await fetchBranches();
+      if (res['success'] == false) {
+        AppSnackbar.showError(
+          title: "Error",
+          message: res['message']?.toString() ?? "Could not change primary branch",
+        );
+        return;
+      }
+      AppSnackbar.showSuccess(
+        title: "Success",
+        message: res['message']?.toString() ?? "Primary branch updated",
+      );
+    } catch (e) {
+      await fetchBranches();
+      AppSnackbar.showError(title: "Error", message: e.toString());
+    }
+  }
+
   Future<void> leaveBranch(int branchId, {String? branchCode}) async {
     try {
       _leftBranchIds.add(branchId);

@@ -11,6 +11,7 @@ import '../../../utils/tax_id_formatters.dart';
 import '../controller/profile_controller.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/utils/input_validators.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -452,7 +453,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     controller: _firstNameController,
                     hintText: "Enter first name",
                     prefixIcon: IconlyLight.profile,
-                    validator: (v) => v!.isEmpty ? "Required" : null,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? "Required"
+                        : InputValidators.personName(v, label: 'First name'),
                   ),
                   const SizedBox(height: 20),
 
@@ -461,6 +464,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     controller: _lastNameController,
                     hintText: "Enter last name",
                     prefixIcon: IconlyLight.profile,
+                    validator: (v) => InputValidators.personName(v, label: 'Last name'),
                   ),
                   const SizedBox(height: 20),
 

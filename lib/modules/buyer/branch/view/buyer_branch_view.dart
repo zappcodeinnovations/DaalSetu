@@ -485,19 +485,39 @@ class _BuyerBranchViewState extends State<BuyerBranchView> with WidgetsBindingOb
                             ),
                             if (branch.id != null && branch.isPrimary != true) ...[
                               const SizedBox(width: 8),
-                              OutlinedButton(
-                                onPressed: () => _showLeaveBranchDialog(
-                                  context,
-                                  branch.id!,
-                                  branchCode: branch.branchCode,
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.red,
-                                  side: const BorderSide(color: Colors.red),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                ),
-                                child: const Text("LEAVE", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  OutlinedButton(
+                                    onPressed: () => _showMakePrimaryDialog(
+                                      branch.id!,
+                                      branchCode: branch.branchCode,
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: primaryColor,
+                                      side: BorderSide(color: primaryColor),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    ),
+                                    child: const Text("MAKE PRIMARY", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  OutlinedButton(
+                                    onPressed: () => _showLeaveBranchDialog(
+                                      context,
+                                      branch.id!,
+                                      branchCode: branch.branchCode,
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.red,
+                                      side: const BorderSide(color: Colors.red),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    ),
+                                    child: const Text("LEAVE", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                                  ),
+                                ],
                               ),
                             ],
                           ],
@@ -588,6 +608,20 @@ class _BuyerBranchViewState extends State<BuyerBranchView> with WidgetsBindingOb
           ),
         );
       },
+    );
+  }
+
+  void _showMakePrimaryDialog(int branchId, {String? branchCode}) {
+    Get.defaultDialog(
+      title: "Make Primary",
+      middleText: "Make ${branchCode ?? 'this branch'} your primary branch?",
+      textConfirm: "YES",
+      confirmTextColor: Colors.white,
+      onConfirm: () {
+        Get.back();
+        controller.makePrimaryBranch(branchId);
+      },
+      textCancel: "CANCEL",
     );
   }
 

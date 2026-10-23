@@ -57,6 +57,13 @@ class _AssignVehicleDialogState extends State<AssignVehicleDialog> {
     }
   }
 
+  // Solid brand colour: the tonal button read as ghost text (QA).
+  static final ButtonStyle _primaryAction = FilledButton.styleFrom(
+    backgroundColor: const Color(0xFFF05A28),
+    foregroundColor: Colors.white,
+    textStyle: const TextStyle(fontWeight: FontWeight.w700),
+  );
+
   Future<void> _assignVehicle(Map<String, dynamic> vehicle) async {
     final vehicleId = vehicle['id'];
     
@@ -73,6 +80,7 @@ class _AssignVehicleDialogState extends State<AssignVehicleDialog> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
+            style: _primaryAction,
             child: const Text("Assign"),
           ),
         ],
@@ -175,8 +183,9 @@ class _AssignVehicleDialogState extends State<AssignVehicleDialog> {
                                         height: 20,
                                         child: CircularProgressIndicator(strokeWidth: 2),
                                       )
-                                    : FilledButton.tonal(
+                                    : FilledButton(
                                         onPressed: _isAssigning ? null : () => _assignVehicle(v),
+                                        style: _primaryAction,
                                         child: const Text("Select"),
                                       ),
                               );

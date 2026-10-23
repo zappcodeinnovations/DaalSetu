@@ -129,6 +129,33 @@ class SellerBranchController extends GetxController {
     }
   }
 
+  Future<void> makePrimaryBranch(int branchId) async {
+    try {
+      Get.dialog(
+        const Center(child: CircularProgressIndicator()),
+        barrierDismissible: false,
+      );
+      final res = await SellerServices.makePrimaryBranch(branchId);
+      if (Get.isDialogOpen ?? false) Get.back();
+      await fetchBranches();
+      if (res['success'] == false) {
+        _showNotice(res['message']?.toString() ?? "Could not change primary branch");
+        return;
+      }
+      AppSnackbar.snackbar(
+        "Success",
+        res['message']?.toString() ?? "Primary branch updated",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      if (Get.isDialogOpen ?? false) Get.back();
+      await fetchBranches();
+      _showNotice(ApiClient.userFriendlyErrorMessage(e.toString()));
+    }
+  }
+
   static List<SellerBranchModel> _branches(dynamic raw) => raw is List
       ? raw
             .whereType<Map<String, dynamic>>()

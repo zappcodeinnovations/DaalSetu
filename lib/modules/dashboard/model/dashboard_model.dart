@@ -234,6 +234,9 @@ class ContractModel {
 
 class ChartsModel {
   final GtvDealsChart gtvDeals;
+
+  /// GTV & deals per filter button (7D / 1M / 3M / 1Y), same as the web chart.
+  final Map<String, GtvDealsChart> gtvDealsRanges;
   final PipelineChart pipelineByStage;
   final CommodityMixChart commodityMix;
   final TopBuyersChart topBuyers;
@@ -243,6 +246,7 @@ class ChartsModel {
 
   ChartsModel({
     required this.gtvDeals,
+    this.gtvDealsRanges = const {},
     required this.pipelineByStage,
     required this.commodityMix,
     required this.topBuyers,
@@ -276,6 +280,12 @@ class ChartsModel {
       userDistribution: UserDistributionChart.fromJson(
         json['user_distribution'] as Map<String, dynamic>?,
       ),
+      gtvDealsRanges: {
+        if (json['gtv_deals_ranges'] is Map)
+          for (final entry in (json['gtv_deals_ranges'] as Map).entries)
+            if (entry.value is Map<String, dynamic>)
+              entry.key.toString(): GtvDealsChart.fromJson(entry.value as Map<String, dynamic>),
+      },
     );
   }
 }

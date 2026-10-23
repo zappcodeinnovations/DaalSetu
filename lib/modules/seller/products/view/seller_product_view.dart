@@ -41,7 +41,12 @@ class SellerProductView extends StatelessWidget {
             icon: Icon(IconlyLight.notification, color: theme.iconTheme.color),
           ),
           IconButton(
-            tooltip: 'Export offers',
+            tooltip: 'Share offers',
+            onPressed: controller.shareProducts,
+            icon: Icon(Icons.share_outlined, color: theme.iconTheme.color),
+          ),
+          IconButton(
+            tooltip: 'Download offers',
             onPressed: controller.exportProducts,
             icon: Icon(IconlyLight.download, color: theme.iconTheme.color),
           ),

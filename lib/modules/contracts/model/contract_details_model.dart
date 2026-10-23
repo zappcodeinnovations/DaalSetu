@@ -46,6 +46,12 @@ class ContractDetailModel {
   final String? transporterName;
   final String? transporterMobile;
   final String? bidAmount;
+
+  /// Administration names (admin-only keys of the contract detail API).
+  final String confirmedByAdminName;
+  final String confirmedBranchName;
+  final String createdByUserName;
+  final String assignedSubAdminName;
   final String? buyerEmail;
   final String? sellerEmail;
   final String? buyerCompany;
@@ -100,6 +106,10 @@ class ContractDetailModel {
     this.transporterName,
     this.transporterMobile,
     this.bidAmount,
+    this.confirmedByAdminName = '',
+    this.confirmedBranchName = '',
+    this.createdByUserName = '',
+    this.assignedSubAdminName = '',
     this.buyerEmail,
     this.sellerEmail,
     this.buyerCompany,
@@ -165,7 +175,9 @@ class ContractDetailModel {
       id: number('id') ?? 0,
       contractId: text('contract_id'),
       productTitle: text('product_title'),
-      productCategory: text('product_category_name'),
+      productCategory: text('product_category_path').isNotEmpty
+          ? text('product_category_path')
+          : text('product_category_name'),
       buyerName: text('buyer_name'),
       buyerUniqueId: text('buyer_unique_id'),
       sellerName: text('seller_name'),
@@ -208,6 +220,10 @@ class ContractDetailModel {
       transporterName: transName.isNotEmpty ? transName : null,
       transporterMobile: text('transporter_mobile').isNotEmpty ? text('transporter_mobile') : null,
       bidAmount: bidAmt,
+      confirmedByAdminName: text('confirmed_by_admin_name'),
+      confirmedBranchName: text('confirmed_branch_name'),
+      createdByUserName: text('created_by_user_name'),
+      assignedSubAdminName: text('assigned_sub_admin_name'),
       buyerEmail: _extractField(json, 'buyer', ['email', 'email_id', 'user_email']),
       sellerEmail: _extractField(json, 'seller', ['email', 'email_id', 'user_email']),
       buyerCompany: _extractField(json, 'buyer', ['company', 'company_name', 'business_name', 'org_name']),

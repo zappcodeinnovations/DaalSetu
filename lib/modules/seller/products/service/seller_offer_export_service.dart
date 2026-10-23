@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:daalsetu/modules/downloads/service/downloads_service.dart';
 
 import 'package:excel/excel.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../model/seller_product_model.dart';
 
@@ -123,7 +127,7 @@ class SellerOfferExportService {
         TextCellValue(product.brandName ?? ''),
         price == null ? TextCellValue(product.amount) : DoubleCellValue(price),
         TextCellValue(product.unit.toUpperCase()),
-        TextCellValue(_displayStatus(product.status)),
+        TextCellValue(product.isExpired ? 'Expired' : _displayStatus(product.status)),
         IntCellValue(product.bagCount),
         DoubleCellValue(product.packingWeight),
         TextCellValue(product.loadingLocation),
@@ -165,6 +169,33 @@ class SellerOfferExportService {
       fileName: 'DaalSetu_Seller_Offers_$stamp.xlsx',
       bytes: bytes,
       mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+  }
+
+  /// Same workbook, handed to the system share sheet (WhatsApp, mail, ...).
+  static Future<void> share({
+    required List<SellerProductModel> products,
+  }) async {
+    final generatedAt = DateTime.now();
+    final bytes = buildWorkbook(products: products, generatedAt: generatedAt).save();
+    if (bytes == null) {
+      throw StateError('Unable to generate the Excel file.');
+    }
+    final stamp = DateFormat('yyyyMMdd_HHmm').format(generatedAt);
+    final directory = await getTemporaryDirectory();
+    final file = File('${directory.path}/DaalSetu_Seller_Offers_$stamp.xlsx');
+    await file.writeAsBytes(bytes, flush: true);
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [
+          XFile(
+            file.path,
+            mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          ),
+        ],
+        subject: 'DaalSetu offers',
+        text: 'My offers list from DaalSetu.',
+      ),
     );
   }
 

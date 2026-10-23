@@ -255,6 +255,19 @@ class SellerProductController extends GetxController {
     }
   }
 
+  Future<void> shareProducts() async {
+    if (products.isEmpty) {
+      SellerUi.error('There are no offers available to share.');
+      return;
+    }
+
+    try {
+      await SellerOfferExportService.share(products: products);
+    } catch (error) {
+      SellerUi.error(error);
+    }
+  }
+
   Future<void> fetchSupportData() async {
     sellerName.value = await AppPreferences.getUsername() ?? 'Seller';
     try {

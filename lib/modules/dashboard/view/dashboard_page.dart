@@ -674,7 +674,6 @@ class AdminDashboardScreen extends StatelessWidget {
         LayoutBuilder(
           builder: (context, constraints) {
             final isNarrow = constraints.maxWidth < 600;
-
             if (isNarrow) {
               return Column(
                 children: [
@@ -2176,8 +2175,13 @@ child: Text(
           ),
         );
       }
-      final trend =
-          controller.dashboardData.value?.charts.gtvDeals ?? data.charts.gtvDeals;
+      final charts = controller.dashboardData.value?.charts ?? data.charts;
+      // The selected filter's series; older servers only send the monthly one.
+      final period = controller.selectedGtvPeriod.value.toUpperCase();
+      final rangeKey = charts.gtvDealsRanges.keys
+          .where(period.startsWith)
+          .firstOrNull;
+      final trend = rangeKey != null ? charts.gtvDealsRanges[rangeKey]! : charts.gtvDeals;
       return _buildWebGtvDealsChart(context, trend, controller);
     });
   }

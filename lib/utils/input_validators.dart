@@ -26,4 +26,21 @@ class InputValidators {
     }
     return null;
   }
+
+  static final RegExp _namePattern = RegExp(r"^[\p{L}\p{M}\p{N} .'-]+$", unicode: true);
+  static final RegExp _letterPattern = RegExp(r'\p{L}', unicode: true);
+
+  /// Same rule as the backend: letters and numbers are fine, but a name made
+  /// only of numbers/symbols is rejected.
+  static String? personName(String? value, {String label = 'Name'}) {
+    final name = value?.trim() ?? '';
+    if (name.isEmpty) return null;
+    if (!_namePattern.hasMatch(name)) {
+      return "$label can contain only letters, numbers, spaces, dots, apostrophes and hyphens";
+    }
+    if (!_letterPattern.hasMatch(name)) {
+      return '$label must contain letters; it cannot be only numbers';
+    }
+    return null;
+  }
 }

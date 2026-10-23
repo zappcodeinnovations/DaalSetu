@@ -928,33 +928,16 @@ class _PolarAreaPainter extends CustomPainter {
     // Scale from the data (e.g. 500 ... 3,000) with radius linear in value, like
     // Chart.js polarArea; a fixed 0-180 scale clamped every large slice to full size.
     final maxValue = values.isEmpty ? 0.0 : values.reduce(math.max);
-    final ringStep = maxValue > 0 ? _niceStep(maxValue / 6) : 20.0;
+    // About four rings: six left their labels stacked on top of each other.
+    final ringStep = maxValue > 0 ? _niceStep(maxValue / 4) : 20.0;
     final maxScale = maxValue > 0 ? (maxValue / ringStep).ceil() * ringStep : 180.0;
     final rings = [
       for (var r = ringStep; r <= maxScale + ringStep / 2; r += ringStep) r,
     ];
 
-    // Draw concentric scale rings & labels
-    final textPainter = TextPainter(textDirection: TextDirection.ltr);
+    // Concentric scale rings (labels are drawn after the sectors, on top).
     for (final ring in rings) {
-      final r = (ring / maxScale) * maxRadius;
-      canvas.drawCircle(center, r, ringPaint);
-
-      textPainter.text = TextSpan(
-        text: ring == ring.roundToDouble()
-            ? NumberFormatShort.format(ring)
-            : ring.toStringAsFixed(1),
-        style: TextStyle(
-          fontSize: 6.5,
-          color: Colors.grey.shade600,
-          fontWeight: FontWeight.w500,
-        ),
-      );
-      textPainter.layout();
-      textPainter.paint(
-        canvas,
-        Offset(center.dx - (textPainter.width / 2), center.dy - r - 1),
-      );
+      canvas.drawCircle(center, (ring / maxScale) * maxRadius, ringPaint);
     }
 
     if (values.isEmpty) return;
@@ -989,6 +972,38 @@ class _PolarAreaPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.0;
       canvas.drawPath(path, borderPaint);
+    }
+
+    // Ring labels above the sectors on a light pill, skipping any that would
+    // touch the previous one, so the numbers never overlap or hide.
+    final textPainter = TextPainter(textDirection: TextDirection.ltr);
+    final pillPaint = Paint()..color = Colors.white.withValues(alpha: 0.85);
+    double? lastTop;
+    for (final ring in rings.reversed) {
+      final r = (ring / maxScale) * maxRadius;
+      textPainter.text = TextSpan(
+        text: ring == ring.roundToDouble()
+            ? NumberFormatShort.format(ring)
+            : ring.toStringAsFixed(1),
+        style: TextStyle(
+          fontSize: 7,
+          color: Colors.grey.shade800,
+          fontWeight: FontWeight.w600,
+        ),
+      );
+      textPainter.layout();
+      final top = center.dy - r - textPainter.height / 2;
+      if (lastTop != null && top < lastTop + textPainter.height + 2) continue;
+      final offset = Offset(center.dx - textPainter.width / 2, top);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(offset.dx - 2, offset.dy, textPainter.width + 4, textPainter.height),
+          const Radius.circular(3),
+        ),
+        pillPaint,
+      );
+      textPainter.paint(canvas, offset);
+      lastTop = top;
     }
   }
 

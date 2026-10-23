@@ -107,6 +107,8 @@ class ApiUrls {
   static String cancelBranchRequest(int id) =>
       "/api/seller/branches/$id/cancel-request/";
   static String leaveBranch(int id) => "/api/seller/branches/$id/leave/";
+  static String makePrimaryBranch(int id) =>
+      "/api/seller/branches/$id/make-primary/";
   static String challanDetails(int id) => "/api/seller/delivery-challans/$id/";
   static String buyerChallanDetails(int id) =>
       "/api/buyer/delivery-challans/$id/";

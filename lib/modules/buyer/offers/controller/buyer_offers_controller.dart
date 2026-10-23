@@ -9,6 +9,7 @@ class BuyerOffersController extends GetxController {
   var isLoading = true.obs;
   var isError = false.obs;
   var errorMessage = ''.obs;
+  bool _isSubmittingInterest = false;
 
   var offersList = <BuyerOfferModel>[].obs;
   var allOffersList = <BuyerOfferModel>[].obs;
@@ -161,6 +162,7 @@ class BuyerOffersController extends GetxController {
     String? condition,
     int? interestId,
   }) async {
+    if (_isSubmittingInterest) return false;
     print(
       "⭐ [BUYER SUBMIT INTEREST TRIGGERED] Product ID: $productId | Interest ID: $interestId | Amount: '$amount' | Qty: '$qty' | Date: '$deliveryDate' | To: '$loadingTo' | Condition: '$condition'",
     );
@@ -172,6 +174,7 @@ class BuyerOffersController extends GetxController {
       return false;
     }
     final effectiveProductId = productId > 0 ? productId : (interestId ?? 0);
+    _isSubmittingInterest = true;
 
     bool dialogShown = false;
     try {
@@ -219,6 +222,7 @@ class BuyerOffersController extends GetxController {
       AppSnackbar.showError(title: "Error", message: msg.isNotEmpty ? msg : "Failed to submit interest.");
       return false;
     } finally {
+      _isSubmittingInterest = false;
       if (dialogShown) {
         dialogShown = false;
         if (Get.isDialogOpen ?? false) {

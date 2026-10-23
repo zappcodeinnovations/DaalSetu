@@ -867,6 +867,15 @@ class SellerServices {
     return {"success": true, "message": "Left branch successfully"};
   }
 
+  /// Switches the user's primary branch to one they already belong to.
+  static Future<Map<String, dynamic>> makePrimaryBranch(int branchId) {
+    return ApiClient.post(
+      endpoint: ApiUrls.makePrimaryBranch(branchId),
+      body: {},
+      requireAuth: true,
+    );
+  }
+
   static Future<Map<String, dynamic>> createBranch(
     Map<String, dynamic> body,
   ) async {

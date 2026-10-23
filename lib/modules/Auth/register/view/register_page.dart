@@ -192,7 +192,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         textCapitalization: TextCapitalization.words,
                         textInputAction: TextInputAction.next,
                         autofillHints: const [AutofillHints.givenName],
-                        validator: (value) => _required(value, 'First name'),
+                        validator: (value) =>
+                            _required(value, 'First name') ??
+                            InputValidators.personName(value, label: 'First name'),
                       ),
                     ),
                   ),
@@ -208,7 +210,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         textCapitalization: TextCapitalization.words,
                         textInputAction: TextInputAction.next,
                         autofillHints: const [AutofillHints.familyName],
-                        validator: (value) => _required(value, 'Last name'),
+                        validator: (value) =>
+                            _required(value, 'Last name') ??
+                            InputValidators.personName(value, label: 'Last name'),
                       ),
                     ),
                   ),
