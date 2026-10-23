@@ -565,6 +565,13 @@ class _NegotiationPageState extends State<NegotiationPage> {
                     fontSize: 13,
                   ),
                 ),
+                if (_dealExpired) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    _expiredReason,
+                    style: TextStyle(color: Colors.orange.shade800, fontSize: 12),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -582,7 +589,8 @@ class _NegotiationPageState extends State<NegotiationPage> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        onPressed: _approveDeal,
+                        // Expired offers cannot be accepted until reactivated.
+                        onPressed: _dealExpired ? null : _approveDeal,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -642,7 +650,9 @@ class _NegotiationPageState extends State<NegotiationPage> {
   }
 
   String get _displayBuyerCode {
+    // The web log names the buyer by its display id (e.g. BUY-20261010-SKGT).
     final fromThread =
+        _thread?['buyer_display_id'] ??
         _thread?['buyer_company_name'] ??
         _thread?['buyer_company'] ??
         _thread?['company_name'] ??
@@ -755,7 +765,8 @@ class _NegotiationPageState extends State<NegotiationPage> {
     }
 
     if (dt != null) {
-      return DateFormat('dd/MM/yyyy hh:mm a').format(dt.toLocal());
+      // Same as the web negotiation log: "18 Oct 16:24" in local time.
+      return DateFormat('dd MMM HH:mm').format(dt.toLocal());
     }
 
     return trimmed;
@@ -941,6 +952,13 @@ class _NegotiationPageState extends State<NegotiationPage> {
               ),
             ),
           ],
+          if (_requestedPacking().isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              _requestedPacking(),
+              style: TextStyle(color: textLight, fontSize: 12),
+            ),
+          ],
           if (widget.interest.condition != null &&
               widget.interest.condition!.isNotEmpty) ...[
             const SizedBox(height: 4),
@@ -956,6 +974,17 @@ class _NegotiationPageState extends State<NegotiationPage> {
         ],
       ),
     );
+  }
+
+  /// "Bags: 1,800 × 25 kg" from the thread's requested bags and packing weight.
+  String _requestedPacking() {
+    final bags = int.tryParse('${_thread?['required_bag_count'] ?? ''}');
+    final packing = double.tryParse('${_thread?['packing_weight_kg'] ?? ''}');
+    if (bags == null || bags <= 0) return '';
+    final bagsText = NumberFormat('#,##0', 'en_IN').format(bags);
+    if (packing == null || packing <= 0) return 'Bags: $bagsText';
+    final kg = packing == packing.roundToDouble() ? packing.toStringAsFixed(0) : packing.toString();
+    return 'Bags: $bagsText × $kg kg';
   }
 
   Widget _buildProposalCard(Map<String, dynamic> msg) {
@@ -1205,7 +1234,32 @@ class _NegotiationPageState extends State<NegotiationPage> {
     );
   }
 
+  bool get _dealExpired => _thread?['deal_expired'] == true;
+
+  String get _expiredReason {
+    final reason = _thread?['blocked_reason']?.toString() ?? '';
+    return reason.isNotEmpty
+        ? reason
+        : 'Deal has expired. Negotiation and accept stay closed until the offer is reactivated.';
+  }
+
   Widget _buildBottomForm() {
+    if (_dealExpired) {
+      // No negotiation on an expired offer (either side) until it is reactivated.
+      return SafeArea(
+        top: false,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          color: Colors.orange.withValues(alpha: 0.08),
+          child: Text(
+            _expiredReason,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.orange.shade900, fontWeight: FontWeight.w600),
+          ),
+        ),
+      );
+    }
     final priceUnit = _thread?['price_unit']?.toString().toUpperCase() ?? 'QTL';
     return Container(
       decoration: BoxDecoration(

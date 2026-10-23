@@ -1,5 +1,68 @@
 # Bug Log & Historical Fixes
 
+## Bug 39: Admin User Creation Form Stale Data Retention After Submission
+- **Symptom**: In Admin User Management, after submitting and successfully creating a new user, the input form/modal retained previously entered details instead of clearing fields. Reopening the form to create another user displayed stale data from the previous entry.
+- **Root Cause**:
+  1. `AddUserScreen` was implemented as a `StatelessWidget` with `TextEditingController`s and `Rx` variables held as instance fields without lifecycle disposal or reset.
+  2. `AddUserController.createUser` did not clear or reset form controllers or its reactive state (`selectedTagId`) upon successful creation.
+  3. `AddUserScreen` lacked the "Branch Code" field supported by the backend and Admin catalog.
+  4. `AdminRecordFormScreen` did not call an explicit form reset upon successful creation before route popping.
+- **Fix**:
+  1. Converted `AddUserScreen` to `StatefulWidget` with clean controller initialization, reset, and disposal in `dispose()`.
+  2. Added `branchController` for "Branch Code (Optional)" in `AddUserScreen` and forwarded `branchCode` through `AddUserController.createUser` and `AddUserServices.addUser`.
+  3. Implemented `resetForm()` on `AddUserScreenState` to wipe clean all text fields (`firstName`, `lastName`, `mobile`, `email`, `branch`, `password`, `pan`, `gst`), reset role/gender selections, clear picked images, and invoke `controller.reset()`.
+  4. Bound `resetForm()` as an immediate `onSuccess` callback upon successful user creation and called it in `initState`.
+  5. Implemented `resetForm()` on `_AdminRecordFormScreenState` to clear all controllers and multi-select sets on successful record creation.
+- **Files Changed**:
+  - `lib/services/add_user_services.dart`
+  - `lib/modules/users/controller/add_user_controller.dart`
+  - `lib/modules/users/view/add_user_screen.dart`
+  - `lib/modules/admin_catalog/view/admin_record_form_screen.dart`
+  - `test/admin_user_form_reset_test.dart`
+- **Verification**: `test/admin_user_form_reset_test.dart` passed (3/3); `test/user_list_refresh_test.dart` passed (9/9); `flutter analyze` reported 0 errors and 0 warnings.
+
+---
+
+## Bug 38: Shipments Screen Place Bid Modal Inconsistent Color Theme
+- **Symptom**: On the Shipments screen, when opening the Place Bid / Update Bid modal dialog, the button and accent colors used a dark navy header (`Color(0xFF131D2E)`) and teal/dark green accents (submit button and input focused border `Color(0xFF0F766E)`), conflicting with the app's primary orange/yellow branding theme.
+- **Root Cause**: The modal dialog was ported directly from web styling with legacy hardcoded dark navy and teal colors instead of adopting the app's established design tokens (`_gold` / `AppTheme.primaryGold` / `secondaryOrange`).
+- **Fix**:
+  1. Updated header background container to use a warm brand gradient: `LinearGradient(colors: [_gold, Color(0xFFF57C00)], begin: Alignment.centerLeft, end: Alignment.centerRight)`.
+  2. Updated the close button icon color to `Colors.white` for optimal contrast against the gradient.
+  3. Added `cursorColor: _gold` and updated `focusedBorder` to `_gold` (`Color(0xFFFFB300)` with 1.8 width).
+  4. Updated "Submit" button background from `Color(0xFF0F766E)` to `_gold` (`Color(0xFFFFB300)`).
+  5. Harmonized text and border colors for both light and dark themes.
+  6. Added testable static entry point `TransporterBiddingView.showBidDialog(...)` while keeping `_showBidDialog` backward compatible.
+- **Files Changed**:
+  - `lib/modules/transporter/bidding/view/transporter_bidding_view.dart`
+  - `test/transporter_place_bid_theming_test.dart`
+- **Verification**: `test/transporter_place_bid_theming_test.dart` passed (1/1); `test/transporter_api_models_test.dart` passed (3/3); `flutter analyze lib/modules/transporter/bidding/view/transporter_bidding_view.dart` reported 0 issues.
+
+---
+
+## Bug 37: Buyer Dashboard Active Requirements Missing Data & Multi-Offer Carousel Parity
+- **Symptom**: Buyer Dashboard's "Active Requirement" banner was missing/hidden whenever a buyer had no open RFQs, did not display available active marketplace offers, did not filter out out-of-stock or expired deals, and only rendered a single static card instead of a carousel slider.
+- **Root Cause**:
+  1. `_buildBannerSlider` strictly pulled from `data.recentRfqs` (the buyer's personal negotiations/RFQs) and returned `const SizedBox()` if no item had `status == 'open'`.
+  2. `BuyerDashboardController` had no active offers loader or reactive list for marketplace products.
+  3. No stock or expiry filter was applied to the banner item.
+  4. No slider/PageView was implemented for multiple offers.
+- **Fix**:
+  1. Added `BuyerOffersLoader` and `activeOffers` reactive list to `BuyerDashboardController`, loading from `BuyerServices.getAllOffers()`, `BuyerServices.getTodayOffers()`, and `recentRfqs`.
+  2. Implemented `BuyerDashboardController.filterValidOffers` excluding out-of-stock, expired, inactive, and closed/rejected items.
+  3. Replaced static card with `BuyerOffersCarouselSlider`:
+     - Built with Flutter native `PageView.builder` and smooth animated page indicator dots.
+     - Single-card display when only 1 valid offer exists.
+     - Elegant empty-state CTA card when 0 offers exist, inviting buyers to post requirements or browse catalog.
+     - Preserved clean typography, badges ("ACTIVE REQUIREMENT" vs "ACTIVE OFFER"), price/quantity display, and navigation.
+- **Files Changed**:
+  - `lib/modules/buyer/dashboard/controller/buyer_dashboard_controller.dart`
+  - `lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`
+  - `test/buyer_dashboard_offers_slider_test.dart`
+- **Verification**: 10 tests in `test/buyer_dashboard_offers_slider_test.dart` passed; regression tests in `test/buyer_dashboard_kpi_navigation_test.dart` and `test/buyer_dashboard_view_all_navigation_test.dart` passed; static analysis in `lib/modules/buyer/dashboard/` is 100% clean.
+
+---
+
 ## Bug 36: Register Company GST Input Appeared Capped at 12 Characters
 - **Symptom**: Users could not finish entering a 15-character GST number; an invalid positional character after the PAN segment was silently rejected, making the field appear capped at 12 characters.
 - **Root Cause**: The GST formatter enforced every positional rule while typing instead of allowing the complete value and reporting validation feedback.

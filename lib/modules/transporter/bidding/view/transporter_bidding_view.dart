@@ -57,7 +57,16 @@ Widget _row(String label, String value) => Padding(
 class TransporterBiddingView extends StatelessWidget {
   final int initialTab;
   final String? initialStatus;
-  const TransporterBiddingView({super.key, this.initialTab = 0, this.initialStatus});
+
+  /// The web's "My Contract Bids" page: only the transporter's bids, no offers tab
+  /// (opened from the dashboard KPI cards).
+  final bool myBidsOnly;
+  const TransporterBiddingView({
+    super.key,
+    this.initialTab = 0,
+    this.initialStatus,
+    this.myBidsOnly = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +77,25 @@ class TransporterBiddingView extends StatelessWidget {
       });
     }
     final theme = Theme.of(context);
+    if (myBidsOnly) {
+      return Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          leading: const AppBarLeading(),
+          leadingWidth: AppBarLeading.widthFor(context),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: Text(
+            "My Contract Bids",
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              color: theme.textTheme.bodyLarge?.color,
+            ),
+          ),
+        ),
+        body: _MyDealsTab(controller),
+      );
+    }
     return DefaultTabController(
       length: 2,
       initialIndex: initialTab,
@@ -106,6 +134,221 @@ class TransporterBiddingView extends StatelessWidget {
         ),
         body: TabBarView(
           children: [_OffersTab(controller), _MyDealsTab(controller)],
+        ),
+      ),
+    );
+  }
+
+  /// Displays the Place/Update Bid dialog styled with DaalSetu's primary orange/yellow theme.
+  static void showBidDialog(
+    BuildContext context,
+    ShipmentOfferModel offer, {
+    TransporterBiddingController? controller,
+  }) {
+    final TransporterBiddingController biddingController = controller ??
+        (Get.isRegistered<TransporterBiddingController>()
+            ? Get.find<TransporterBiddingController>()
+            : Get.put(TransporterBiddingController()));
+    final amount = TextEditingController(text: offer.myBid ?? '');
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        clipBehavior: Clip.antiAlias,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(maxWidth: 420),
+          color: theme.cardColor,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Header bar styled with primary orange/yellow brand theme
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [_gold, Color(0xFFF57C00)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        offer.myBid != null ? "Update Bid" : "Place Bid",
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white, size: 20),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      splashRadius: 18,
+                      onPressed: () => Get.back(),
+                    ),
+                  ],
+                ),
+              ),
+              // Body
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Contract ID
+                    Text(
+                      "Contract ID: ${offer.contractId}",
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.white70 : Colors.grey.shade700,
+                      ),
+                    ),
+                    if (offer.currentLowestBid != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        "Current lowest bid: ₹${offer.currentLowestBid}",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? Colors.white60 : Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    // Field label: "Bid Amount"
+                    Text(
+                      "Bid Amount",
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : Colors.grey.shade800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Input field matching primary theme accents
+                    TextField(
+                      controller: amount,
+                      cursorColor: _gold,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: "Enter bid amount",
+                        hintStyle: TextStyle(
+                          fontSize: 13,
+                          color: isDark ? Colors.white38 : Colors.grey.shade400,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: isDark ? Colors.white24 : Colors.grey.shade300,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: isDark ? Colors.white24 : Colors.grey.shade300,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                            color: _gold,
+                            width: 1.8,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // Action Buttons (Cancel and Submit matching app branding)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(
+                          onPressed: () => Get.back(),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor:
+                                isDark ? Colors.white70 : Colors.grey.shade700,
+                            side: BorderSide(
+                              color: isDark ? Colors.white24 : Colors.grey.shade300,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 10,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          child: const Text(
+                            "Cancel",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _gold,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 10,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          onPressed: () {
+                            final value = double.tryParse(amount.text.trim());
+                            if (value == null || value <= 0) {
+                              AppSnackbar.snackbar(
+                                "Error",
+                                "Enter a valid bid amount",
+                                snackPosition: SnackPosition.BOTTOM,
+                              );
+                              return;
+                            }
+                            Get.back();
+                            biddingController.placeBid(offer, amount.text.trim());
+                          },
+                          child: const Text(
+                            "Submit",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -297,188 +540,8 @@ class _OffersTab extends StatelessWidget {
     );
   }
 
-  void _showBidDialog(BuildContext context, ShipmentOfferModel offer) {
-    final amount = TextEditingController(text: offer.myBid ?? '');
-    Get.dialog(
-      Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        clipBehavior: Clip.antiAlias,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-        child: Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(maxWidth: 420),
-          color: Theme.of(context).cardColor,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Dark header bar like web: "Place Bid" with close 'x' icon
-              Container(
-                color: const Color(0xFF131D2E), // Dark navy header as on web
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        offer.myBid != null ? "Update Bid" : "Place Bid",
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white70, size: 20),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      splashRadius: 18,
-                      onPressed: () => Get.back(),
-                    ),
-                  ],
-                ),
-              ),
-              // Body
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Contract ID
-                    Text(
-                      "Contract ID: ${offer.contractId}",
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey.shade700,
-                      ),
-                    ),
-                    if (offer.currentLowestBid != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        "Current lowest bid: ₹${offer.currentLowestBid}",
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    // Field label matching web: "Bid Amount"
-                    Text(
-                      "Bid Amount",
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade800,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    // Input field matching web: rounded outline, "Enter bid amount" placeholder, no counter
-                    TextField(
-                      controller: amount,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      style: const TextStyle(fontSize: 14),
-                      decoration: InputDecoration(
-                        hintText: "Enter bid amount",
-                        hintStyle: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey.shade400,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF0F766E),
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    // Action Buttons (Cancel and Submit matching web layout and colors)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        OutlinedButton(
-                          onPressed: () => Get.back(),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.grey.shade700,
-                            side: BorderSide(color: Colors.grey.shade300),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 10,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                          child: const Text(
-                            "Cancel",
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0F766E), // Green button from web
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 10,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                          onPressed: () {
-                            final value = double.tryParse(amount.text.trim());
-                            if (value == null || value <= 0) {
-                              AppSnackbar.snackbar(
-                                "Error",
-                                "Enter a valid bid amount",
-                                snackPosition: SnackPosition.BOTTOM,
-                              );
-                              return;
-                            }
-                            Get.back();
-                            controller.placeBid(offer, amount.text.trim());
-                          },
-                          child: const Text(
-                            "Submit",
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  void _showBidDialog(BuildContext context, ShipmentOfferModel offer) =>
+      TransporterBiddingView.showBidDialog(context, offer, controller: controller);
 
   Future<void> _showCompetingBids(
     BuildContext context,
@@ -810,6 +873,9 @@ class _MyDealsTab extends StatelessWidget {
             const SizedBox(height: 14),
             Row(
               children: [
+                // Buyer/seller details only for won (accepted) bids, as on the web;
+                // pending and rejected bids have no deal to show.
+                if (bid.status.toLowerCase() == 'accepted')
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: bid.contractPk > 0

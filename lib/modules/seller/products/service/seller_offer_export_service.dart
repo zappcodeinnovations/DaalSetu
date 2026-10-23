@@ -1,9 +1,7 @@
-import 'dart:io';
+import 'package:daalsetu/modules/downloads/service/downloads_service.dart';
 
 import 'package:excel/excel.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../model/seller_product_model.dart';
 
@@ -147,7 +145,9 @@ class SellerOfferExportService {
     return workbook;
   }
 
-  static Future<String> exportAndShare({
+  /// Builds the offers workbook and saves it straight to Downloads (the header
+  /// icon is a download, not a share). Returns where it was saved.
+  static Future<String> exportToDownloads({
     required List<SellerProductModel> products,
   }) async {
     final generatedAt = DateTime.now();
@@ -160,25 +160,12 @@ class SellerOfferExportService {
       throw StateError('Unable to generate the Excel file.');
     }
 
-    final directory = await getTemporaryDirectory();
     final stamp = DateFormat('yyyyMMdd_HHmm').format(generatedAt);
-    final path = '${directory.path}/DaalSetu_Seller_Offers_$stamp.xlsx';
-    await File(path).writeAsBytes(bytes, flush: true);
-
-    await SharePlus.instance.share(
-      ShareParams(
-        files: [
-          XFile(
-            path,
-            mimeType:
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          ),
-        ],
-        subject: 'DaalSetu Seller Offers',
-        text: 'Seller offers Excel export generated from DaalSetu.',
-      ),
+    return DownloadsService.saveBytes(
+      fileName: 'DaalSetu_Seller_Offers_$stamp.xlsx',
+      bytes: bytes,
+      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     );
-    return path;
   }
 
   static String _displayStatus(String value) {

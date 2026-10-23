@@ -1,150 +1,61 @@
-import '../../../../services/auth_services.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:daalsetu/utils/tax_id_formatters.dart';
+
+import '../../../../services/auth_services.dart';
 
 class RegisterController {
-  /// FORM KEY
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
-  /// TEXT CONTROLLERS
-  final TextEditingController mobileController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController firstNameController = TextEditingController();
-  final TextEditingController lastNameController = TextEditingController();
-  final TextEditingController panController = TextEditingController();
-  final TextEditingController gstController = TextEditingController();
-  final TextEditingController dobController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
+  final mobileController = TextEditingController();
+  final emailController = TextEditingController();
+  final firstNameController = TextEditingController();
+  final lastNameController = TextEditingController();
+  final companyNameController = TextEditingController();
+  final branchCodeController = TextEditingController();
+  final passwordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
 
-  /// Self sign-up roles (admins are created by admins, never from this screen).
+  /// Public self-registration roles match the web registration form.
   static const Map<String, String> roles = {
     'buyer': 'Buyer',
     'seller': 'Seller',
     'transporter': 'Transporter',
-    'both_sellerandbuyer': 'Seller + Buyer',
   };
-  String? selectedRole;
 
-  /// ============================
-  /// OTHER FIELDS
-  /// ============================
+  String selectedRole = 'buyer';
   String? selectedGender;
-
-  String? panImagePath;
-  String? gstImagePath;
-
   bool isLoading = false;
 
-  final ImagePicker _picker = ImagePicker();
+  Map<String, String> buildFields() => {
+    'mobile': mobileController.text.trim(),
+    'email': emailController.text.trim(),
+    'first_name': firstNameController.text.trim(),
+    'last_name': lastNameController.text.trim(),
+    'company_name': companyNameController.text.trim(),
+    'role': selectedRole,
+    'branch_code': branchCodeController.text.trim().toUpperCase(),
+    'gender': selectedGender ?? '',
+    'password': passwordController.text,
+    'confirm_password': confirmPasswordController.text,
+  };
 
-  /// ============================
-  /// PICK IMAGE
-  /// ============================
-  Future<void> pickImage(bool isPan) async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      if (isPan) {
-        panImagePath = pickedFile.path;
-      } else {
-        gstImagePath = pickedFile.path;
-      }
-    }
-  }
-
-  /// ============================
-  /// REGISTER USER
-  /// ============================
   Future<String?> register() async {
-    if (!formKey.currentState!.validate()) {
-      return null;
-    }
+    if (isLoading || !(formKey.currentState?.validate() ?? false)) return null;
 
-    final gstPanError = TaxIdValidator.gstMatchesPan(
-      panController.text,
-      gstController.text,
-    );
-    if (gstPanError != null) throw Exception(gstPanError);
-
-    if (selectedRole == null) {
-      throw Exception("Please select user type");
-    }
-
-    if (passwordController.text.length < 8) {
-      throw Exception("Password must be at least 8 characters");
-    }
-
-    if (passwordController.text != confirmPasswordController.text) {
-      throw Exception("Passwords do not match");
-    }
-
-    if (selectedGender == null) {
-      throw Exception("Please select gender");
-    }
-
-    if (panImagePath == null) {
-      throw Exception("Please upload PAN image");
-    }
-
-    if (gstImagePath == null) {
-      throw Exception("Please upload GST image");
-    }
-
+    isLoading = true;
     try {
-      isLoading = true;
-
-      final message = await AuthService.register(
-        fields: {
-          "mobile": mobileController.text.trim(),
-          "email": emailController.text.trim(),
-          "first_name": firstNameController.text.trim(),
-          "last_name": lastNameController.text.trim(),
-          "role": selectedRole!,
-          "password": passwordController.text,
-          "confirm_password": confirmPasswordController.text,
-          "pan_number": panController.text.trim().toUpperCase(),
-          "gst_number": gstController.text.trim().toUpperCase(),
-          "gender": selectedGender!,
-          "dob": _formatDobForApi(dobController.text.trim()),
-        },
-        files: {"pan_image": panImagePath!, "gst_image": gstImagePath!},
-      );
-
-      return message;
-    } catch (e) {
-      rethrow;
+      return await AuthService.register(fields: buildFields());
     } finally {
       isLoading = false;
     }
   }
 
-  String _formatDobForApi(String raw) {
-    if (raw.contains('/')) {
-      final parts = raw.split('/');
-      if (parts.length == 3) {
-        final day = parts[0].padLeft(2, '0');
-        final month = parts[1].padLeft(2, '0');
-        final year = parts[2];
-        return '$year-$month-$day';
-      }
-    }
-    return raw;
-  }
-
-  /// ============================
-  /// DISPOSE CONTROLLERS
-  /// ============================
   void dispose() {
     mobileController.dispose();
     emailController.dispose();
     firstNameController.dispose();
     lastNameController.dispose();
-    panController.dispose();
-    gstController.dispose();
-    dobController.dispose();
+    companyNameController.dispose();
+    branchCodeController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
   }

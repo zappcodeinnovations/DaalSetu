@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
 import '../controller/seller_product_controller.dart';
 import '../model/seller_product_model.dart';
+import '../../../products/view/product_detail.dart';
 import 'add_product_view.dart';
 import 'seller_stock_update_dialog.dart';
 import 'seller_offer_interests_view.dart';
@@ -300,6 +301,28 @@ class SellerProductView extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => Get.to(
+                () => ProductDetailScreen(productId: product.id),
+              ),
+              icon: const Icon(IconlyLight.show, size: 16),
+              label: const Text(
+                'View Details',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: theme.colorScheme.primary,
+                side: BorderSide(color: theme.colorScheme.primary),
+                minimumSize: const Size.fromHeight(44),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(

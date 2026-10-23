@@ -428,12 +428,20 @@ class BuyerTodayOffersView extends StatelessWidget {
                           child: OutlinedButton.icon(
                             onPressed: () => _openDetails(offer),
                             icon: const Icon(IconlyLight.show, size: 16),
-                            label: const Text("View Details"),
+                            label: const Text(
+                              "View Details",
+                              maxLines: 1,
+                              softWrap: false,
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(48),
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: ElevatedButton.icon(
+                          child: ElevatedButton(
                             onPressed: offer.isExpired
                                 ? () {
                                     AppSnackbar.showError(
@@ -474,29 +482,40 @@ class BuyerTodayOffersView extends StatelessWidget {
                               disabledForegroundColor: Colors.grey.shade500,
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12)),
+                              minimumSize: const Size.fromHeight(48),
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
                             ),
-                            icon: Icon(
-                              offer.isExpired
-                                  ? Icons.timer_off_outlined
-                                  : (offer.isOutOfStock
-                                      ? Icons.remove_shopping_cart_outlined
-                                      : (!offer.isActive
-                                          ? Icons.block
-                                          : IconlyLight.send)),
-                              size: 16,
-                              color: offer.canSubmitOffer
-                                  ? Colors.white
-                                  : Colors.grey.shade500,
-                            ),
-                            label: Text(
-                              offer.isExpired
-                                  ? "Deal Expired"
-                                  : (offer.isOutOfStock
-                                      ? "Out of Stock"
-                                      : (!offer.isActive
-                                          ? "Unavailable"
-                                          : "Submit Offer")),
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  offer.isExpired
+                                      ? Icons.timer_off_outlined
+                                      : (offer.isOutOfStock
+                                          ? Icons.remove_shopping_cart_outlined
+                                          : (!offer.isActive
+                                              ? Icons.block
+                                              : IconlyLight.send)),
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    offer.isExpired
+                                        ? "Deal Expired"
+                                        : (offer.isOutOfStock
+                                            ? "Out of Stock"
+                                            : (!offer.isActive
+                                                ? "Unavailable"
+                                                : "Submit Offer")),
+                                    maxLines: 1,
+                                    softWrap: false,
+                                    overflow: TextOverflow.fade,
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),

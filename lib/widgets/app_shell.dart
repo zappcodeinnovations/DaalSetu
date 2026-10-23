@@ -24,7 +24,8 @@ class AppShell {
   static bool get isSignedInPage =>
       !_publicRoutes.contains(Get.currentRoute) && Get.currentRoute.isNotEmpty;
 
-  static void openDrawer() {
+  /// [activeKey] highlights the current page's item in the menu.
+  static void openDrawer({String? activeKey}) {
     final context = Get.overlayContext;
     if (context == null) return;
     showGeneralDialog(
@@ -33,9 +34,9 @@ class AppShell {
       barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
       barrierColor: Colors.black54,
       transitionDuration: const Duration(milliseconds: 250),
-      pageBuilder: (_, _, _) => const Align(
+      pageBuilder: (_, _, _) => Align(
         alignment: Alignment.centerLeft,
-        child: AdminDrawer(),
+        child: AdminDrawer(activeKey: activeKey),
       ),
       transitionBuilder: (_, animation, _, child) => SlideTransition(
         position: Tween(begin: const Offset(-1, 0), end: Offset.zero).animate(
@@ -47,8 +48,8 @@ class AppShell {
   }
 }
 
-/// Left side of a page's AppBar: its back button (or the page's own leading
-/// widget) followed by the side-menu button, so the drawer opens from the same
+/// Left side of a page's AppBar: the side-menu button followed by its back
+/// button (or the page's own leading widget), so the drawer opens from the same
 /// side on every signed-in page. Pair it with [widthFor] as `leadingWidth`.
 class AppBarLeading extends StatelessWidget {
   const AppBarLeading({super.key, this.child, this.showBack = true});
@@ -71,13 +72,10 @@ class AppBarLeading extends StatelessWidget {
   }
 
   void _openMenu(BuildContext context) {
-    // A page with its own drawer opens that one; every other page the app-wide one.
-    final page = Scaffold.maybeOf(context);
-    if (page != null && page.hasDrawer) {
-      page.openDrawer();
-    } else {
-      AppShell.openDrawer();
-    }
+    // Always the app-wide drawer: it opens full screen, over the bottom nav bar.
+    // A page that declares its own AdminDrawer keeps its highlighted item.
+    final pageDrawer = Scaffold.maybeOf(context)?.widget.drawer;
+    AppShell.openDrawer(activeKey: pageDrawer is AdminDrawer ? pageDrawer.activeKey : null);
   }
 
   @override
@@ -101,7 +99,6 @@ class AppBarLeading extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (back != null) back,
           if (AppShell.isSignedInPage)
             // Fixed 40px slots: an IconButton alone keeps a 48px tap target and overflows.
             SizedBox.square(
@@ -113,6 +110,7 @@ class AppBarLeading extends StatelessWidget {
                 onPressed: () => _openMenu(context),
               ),
             ),
+          if (back != null) back,
         ],
       ),
     );

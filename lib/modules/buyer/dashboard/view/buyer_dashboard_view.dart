@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,7 +19,11 @@ import '../../../contracts/view/contract_view.dart';
 import '../../../seller/notifications/view/seller_notification_view.dart';
 import '../../../../services/realtime_notification_service.dart';
 import 'buyer_dashboard_analytics.dart';
-import '../../../admin_catalog/view/admin_drawer.dart';
+import '../../../../widgets/app_shell.dart';
+import '../../offers/model/buyer_offer_model.dart';
+import '../../offers/view/add_buyer_offer_view.dart';
+import '../../offers/view/buyer_offer_details_view.dart';
+import '../../../products/view/product_detail.dart';
 
 class BuyerDashboardView extends StatelessWidget {
   BuyerDashboardView({super.key});
@@ -33,7 +39,6 @@ class BuyerDashboardView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      drawer: const AdminDrawer(activeKey: 'dashboard'),
       appBar: _buildAppBar(context),
       body: Obx(() {
         if (controller.isLoading.value) {
@@ -158,6 +163,9 @@ class BuyerDashboardView extends StatelessWidget {
       child: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        // Same app-wide menu as every other page: opens full screen, over the bottom nav.
+        leading: const AppBarLeading(),
+        leadingWidth: AppBarLeading.widthFor(context),
         title: SizedBox(
           width: 120,
           height: 32,
@@ -292,122 +300,26 @@ class BuyerDashboardView extends StatelessWidget {
     });
   }
 
+  @visibleForTesting
+  Widget buildBannerSlider(BuildContext context, List<dynamic> rfqs) =>
+      _buildBannerSlider(context, rfqs);
+
   Widget _buildBannerSlider(BuildContext context, List<dynamic> rfqs) {
-    final theme = Theme.of(context);
+    return Obx(() {
+      // Re-check expiry on every build: a deal can expire while the dashboard is open.
+      final activeList = (controller.activeOffers.isNotEmpty
+              ? controller.activeOffers.toList()
+              : BuyerDashboardController.filterValidOffers(rfqs))
+          .where((offer) => !offer.hasExpired)
+          .toList();
 
-    // Find the first open RFQ to feature
-    var featuredRfq = rfqs.firstWhere(
-      (rfq) => rfq['status']?.toString().toLowerCase() == 'open',
-      orElse: () => rfqs.isNotEmpty ? rfqs.first : null,
-    );
-
-    if (featuredRfq == null) {
-      return const SizedBox(); // Hide banner if no data
-    }
-
-    String title = featuredRfq['title']?.toString() ?? "Special Deal";
-    // Clean up title if it contains API-DOC prefixes
-    if (title.contains("API-DOC")) {
-      title = title.split(" ").skip(1).join(" ");
-    }
-    String price = featuredRfq['price']?.toString() ?? "";
-    String qty = featuredRfq['quantity']?.toString() ?? "";
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primary.withValues(alpha: 0.1),
-            theme.colorScheme.primary.withValues(alpha: 0.3),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                IconlyBold.discount,
-                size: 14,
-                color: theme.colorScheme.primary,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                "ACTIVE REQUIREMENT",
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
-                  letterSpacing: 1.0,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: theme.textTheme.bodyLarge?.color,
-              height: 1.2,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 8),
-          if (price.isNotEmpty)
-            Text(
-              "₹$price",
-              style: GoogleFonts.poppins(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-          const SizedBox(height: 4),
-          if (qty.isNotEmpty)
-            Text(
-              "Quantity Needed: $qty",
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                color: theme.textTheme.bodyMedium?.color,
-              ),
-            ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () =>
-                Get.to(() => const BuyerActivityView(initialIndex: 1)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  "View Details",
-                  style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(width: 8),
-                const Icon(IconlyLight.arrow_right_2, size: 16),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+      return BuyerOffersCarouselSlider(
+        offers: activeList,
+        onPostRequirementTap: () => Get.to(() => const AddBuyerOfferScreen()),
+        onViewAllOffersTap: () =>
+            Get.to(() => const BuyerOffersView(initialIndex: 0)),
+      );
+    });
   }
 
   Widget _buildSectionHeader(
@@ -1175,6 +1087,414 @@ class BuyerDashboardView extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class BuyerOffersCarouselSlider extends StatefulWidget {
+  final List<BuyerOfferModel> offers;
+  final VoidCallback? onPostRequirementTap;
+  final VoidCallback? onViewAllOffersTap;
+
+  const BuyerOffersCarouselSlider({
+    super.key,
+    required this.offers,
+    this.onPostRequirementTap,
+    this.onViewAllOffersTap,
+  });
+
+  @override
+  State<BuyerOffersCarouselSlider> createState() =>
+      _BuyerOffersCarouselSliderState();
+}
+
+class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
+  static const _autoSlideInterval = Duration(seconds: 4);
+
+  late final PageController _pageController;
+  int _currentPage = 0;
+  Timer? _autoSlideTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    _startAutoSlide();
+  }
+
+  @override
+  void didUpdateWidget(covariant BuyerOffersCarouselSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.offers.length != widget.offers.length) {
+      // A refresh can shrink the list; never point past the last slide.
+      if (_currentPage >= widget.offers.length) {
+        _currentPage = 0;
+        if (_pageController.hasClients) _pageController.jumpToPage(0);
+      }
+      _startAutoSlide();
+    }
+  }
+
+  @override
+  void dispose() {
+    _autoSlideTimer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _startAutoSlide() {
+    _autoSlideTimer?.cancel();
+    if (widget.offers.length < 2) return;
+    _autoSlideTimer = Timer.periodic(_autoSlideInterval, (_) {
+      if (!mounted || !_pageController.hasClients) return;
+      if (MediaQuery.of(context).disableAnimations) return;
+      final next = (_currentPage + 1) % widget.offers.length;
+      _pageController.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (widget.offers.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.primary.withValues(alpha: 0.08),
+              theme.colorScheme.primary.withValues(alpha: 0.18),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: theme.colorScheme.primary.withValues(alpha: 0.2),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  IconlyBold.discount,
+                  size: 14,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  "ACTIVE REQUIREMENTS & DEALS",
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "Looking for Bulk Commodities?",
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: theme.textTheme.bodyLarge?.color,
+                height: 1.2,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              "Explore live offers or post your requirement to get quotes from verified sellers instantly.",
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: theme.textTheme.bodyMedium?.color,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: widget.onPostRequirementTap ??
+                      () => Get.to(() => const AddBuyerOfferScreen()),
+                  icon: const Icon(IconlyLight.plus, size: 16),
+                  label: Text(
+                    "Post Requirement",
+                    style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 10,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                OutlinedButton(
+                  onPressed: widget.onViewAllOffersTap ??
+                      () =>
+                          Get.to(() => const BuyerOffersView(initialIndex: 0)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: theme.colorScheme.primary,
+                    side: BorderSide(color: theme.colorScheme.primary),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                  ),
+                  child: Text(
+                    "Browse Offers",
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (widget.offers.length == 1) {
+      return _buildOfferCard(context, widget.offers.first, 0, 1);
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: 180,
+          // Pause auto-slide while the user is touching the carousel.
+          child: Listener(
+            onPointerDown: (_) => _autoSlideTimer?.cancel(),
+            onPointerUp: (_) => _startAutoSlide(),
+            onPointerCancel: (_) => _startAutoSlide(),
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: widget.offers.length,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentPage = index;
+                });
+              },
+              itemBuilder: (context, index) {
+                return _buildOfferCard(
+                  context,
+                  widget.offers[index],
+                  index,
+                  widget.offers.length,
+                );
+              },
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(widget.offers.length, (index) {
+            final isCurrent = index == _currentPage;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              width: isCurrent ? 20 : 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: isCurrent
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.primary.withValues(alpha: 0.25),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOfferCard(
+    BuildContext context,
+    BuyerOfferModel offer,
+    int index,
+    int totalCount,
+  ) {
+    final theme = Theme.of(context);
+    String title = offer.displayTitle ?? offer.title ?? "Special Deal";
+    if (title.contains("API-DOC")) {
+      title = title.split(" ").skip(1).join(" ");
+    }
+    final price = (offer.displayPrice ?? offer.requestedAmount ?? '').trim();
+    final qty = (offer.displayQuantity ?? offer.availableQuantity ?? '').trim();
+    final isRfq = offer.isRfq;
+    final badgeLabel = isRfq ? "ACTIVE REQUIREMENT" : "ACTIVE OFFER";
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            theme.colorScheme.primary.withValues(alpha: 0.1),
+            theme.colorScheme.primary.withValues(alpha: 0.25),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.15),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isRfq ? IconlyBold.document : IconlyBold.discount,
+                    size: 14,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    badgeLabel,
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ],
+              ),
+              if (totalCount > 1)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    "${index + 1} / $totalCount",
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: theme.textTheme.bodyLarge?.color,
+              height: 1.2,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              if (price.isNotEmpty)
+                Text(
+                  price.startsWith('₹') ? price : '₹$price',
+                  style: GoogleFonts.poppins(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              if (qty.isNotEmpty) ...[
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    isRfq ? "Needed: $qty" : "Available: $qty",
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: theme.textTheme.bodyMedium?.color,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 8),
+          ElevatedButton(
+            onPressed: () {
+              if (isRfq) {
+                // The banner shows the buyer's live requirement/interest: open My
+                // Activity on "My Interests" (QA), not "My Requirements".
+                Get.to(() => const BuyerActivityView(initialIndex: 0));
+              } else {
+                final pId = offer.productId ?? offer.id;
+                if (pId != null) {
+                  Get.to(() => ProductDetailScreen(productId: pId));
+                } else if (offer.id != null) {
+                  Get.to(() => BuyerOfferDetailsView(offerId: offer.id!));
+                } else {
+                  Get.to(() => const BuyerOffersView(initialIndex: 0));
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "View Details",
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Icon(IconlyLight.arrow_right_2, size: 14),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

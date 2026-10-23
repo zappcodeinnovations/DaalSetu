@@ -367,6 +367,20 @@ class _AddProductViewState extends State<AddProductView> {
                       label: Text(b.locationName ?? b.branchCode ?? 'Branch'),
                       selected: selected,
                       selectedColor: primaryColor.withValues(alpha: 0.25),
+                      checkmarkColor: const Color(0xFF172033),
+                      labelStyle: TextStyle(
+                        color: selected
+                            ? const Color(0xFF172033)
+                            : theme.colorScheme.onSurface,
+                        fontWeight: selected
+                            ? FontWeight.w600
+                            : FontWeight.w500,
+                      ),
+                      side: BorderSide(
+                        color: selected
+                            ? primaryColor
+                            : theme.colorScheme.outlineVariant,
+                      ),
                       onSelected: (on) => on
                           ? controller.selectedBranchIds.add(b.id!)
                           : controller.selectedBranchIds.remove(b.id),
@@ -649,9 +663,18 @@ class _AddProductViewState extends State<AddProductView> {
           lastDate: now.add(const Duration(days: 365)),
         );
         if (date == null || !context.mounted) return;
+        final isToday = DateUtils.isSameDay(date, now);
+        final minimumExpiry = now.add(const Duration(minutes: 2));
+        final initialDateTime = value != null &&
+                DateUtils.isSameDay(value, date) &&
+                value.isAfter(now)
+            ? value
+            : isToday
+                ? minimumExpiry
+                : DateTime(date.year, date.month, date.day, 18);
         final time = await showTimePicker(
           context: context,
-          initialTime: const TimeOfDay(hour: 18, minute: 0),
+          initialTime: TimeOfDay.fromDateTime(initialDateTime),
           builder: (context, child) {
             return MediaQuery(
               data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
@@ -660,13 +683,18 @@ class _AddProductViewState extends State<AddProductView> {
           },
         );
         if (time == null) return;
-        controller.dealExpiry.value = DateTime(
+        final selectedExpiry = DateTime(
           date.year,
           date.month,
           date.day,
           time.hour,
           time.minute,
         );
+        if (!selectedExpiry.isAfter(DateTime.now())) {
+          SellerUi.error('Deal expiry time must be in the future.');
+          return;
+        }
+        controller.dealExpiry.value = selectedExpiry;
       },
     );
   }

@@ -9,7 +9,7 @@ class DashboardController extends GetxController {
   final dashboardData = Rxn<DashboardModel>();
   final isPaymentsExpanded = false.obs;
   final isKpiExpanded = false.obs;
-  final selectedGtvPeriod = '1M (This Month)'.obs;
+  final selectedGtvPeriod = '7D'.obs;
   final isUpdatingTrend = false.obs;
 
   @override

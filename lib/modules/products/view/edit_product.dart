@@ -107,11 +107,27 @@ class _EditProductScreenState extends State<EditProductScreen> {
   }
 
   Future<void> _pickExpiry() async {
-    final date = await _pickDate(_dealExpiry);
+    final now = DateTime.now();
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _dealExpiry != null && _dealExpiry!.isAfter(now)
+          ? _dealExpiry!
+          : now,
+      firstDate: DateTime(now.year, now.month, now.day),
+      lastDate: DateTime(now.year + 2),
+    );
     if (date == null || !mounted) return;
+    final minimumExpiry = now.add(const Duration(minutes: 2));
+    final initialDateTime = _dealExpiry != null &&
+            DateUtils.isSameDay(_dealExpiry, date) &&
+            _dealExpiry!.isAfter(now)
+        ? _dealExpiry!
+        : DateUtils.isSameDay(date, now)
+            ? minimumExpiry
+            : DateTime(date.year, date.month, date.day, 18);
     final time = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(_dealExpiry ?? DateTime.now()),
+      initialTime: TimeOfDay.fromDateTime(initialDateTime),
       builder: (context, child) {
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
@@ -120,7 +136,18 @@ class _EditProductScreenState extends State<EditProductScreen> {
       },
     );
     if (time == null) return;
-    setState(() => _dealExpiry = DateTime(date.year, date.month, date.day, time.hour, time.minute));
+    final selectedExpiry = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
+    if (!selectedExpiry.isAfter(DateTime.now())) {
+      _error('Deal expiry time must be in the future.');
+      return;
+    }
+    setState(() => _dealExpiry = selectedExpiry);
   }
 
   Future<void> _save() async {
@@ -131,6 +158,10 @@ class _EditProductScreenState extends State<EditProductScreen> {
     }
     if (_loadingTo != null && _loadingTo!.isBefore(_loadingFrom!)) {
       _error('Loading to cannot be before loading from.');
+      return;
+    }
+    if (_dealExpiry == null || !_dealExpiry!.isAfter(DateTime.now())) {
+      _error('Deal expiry time must be in the future.');
       return;
     }
     setState(() => _saving = true);

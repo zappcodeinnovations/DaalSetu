@@ -25,6 +25,10 @@ class _LoginScreenState extends State<LoginScreen> {
     controller = Get.isRegistered<LoginController>()
         ? Get.find<LoginController>()
         : Get.put(LoginController());
+    final arguments = Get.arguments;
+    if (arguments is Map && arguments['mobile'] != null) {
+      controller.usernameController.text = arguments['mobile'].toString();
+    }
   }
 
   @override
@@ -32,15 +36,15 @@ class _LoginScreenState extends State<LoginScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.textPrimary : AppTheme.textPrimaryLight;
-    final subtextColor = isDark ? AppTheme.textSecondary : AppTheme.textSecondaryLight;
+    final subtextColor = isDark
+        ? AppTheme.textSecondary
+        : AppTheme.textSecondaryLight;
     final mutedColor = isDark ? AppTheme.textMuted : AppTheme.textMutedLight;
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: Container(
-        decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor,
-        ),
+        decoration: BoxDecoration(color: theme.scaffoldBackgroundColor),
         child: Stack(
           children: [
             Positioned(
@@ -123,9 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     if (mobile.isEmpty) {
                                       return 'Enter your mobile number';
                                     }
-                                    if (!RegExp(
-                                      r'^\d{10}$',
-                                    ).hasMatch(mobile)) {
+                                    if (!RegExp(r'^\d{10}$').hasMatch(mobile)) {
                                       return 'Enter a valid 10-digit mobile number';
                                     }
                                     return null;
@@ -153,7 +155,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                       _showPassword
                                           ? Icons.visibility_off_outlined
                                           : Icons.visibility_outlined,
-                                      color: isDark ? null : AppTheme.textMutedLight,
+                                      color: isDark
+                                          ? null
+                                          : AppTheme.textMutedLight,
                                     ),
                                   ),
                                   validator: (value) => (value?.isEmpty ?? true)
@@ -164,9 +168,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Align(
                                   alignment: Alignment.centerRight,
                                   child: TextButton(
-                                    onPressed: () => Get.toNamed(
-                                      AppRoutes.forgot_password,
-                                    ),
+                                    onPressed: () =>
+                                        Get.toNamed(AppRoutes.forgot_password),
                                     style: TextButton.styleFrom(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 4,
@@ -212,6 +215,33 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ],
                             ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'New to DaalSetu? ',
+                                style: TextStyle(
+                                  color: mutedColor,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Get.toNamed(AppRoutes.register),
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                    vertical: 2,
+                                  ),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: const Text('Create account'),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 20),
                           Row(
@@ -268,10 +298,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 offset: const Offset(0, 2),
               ),
             ],
-            border: Border.all(
-              color: Colors.white,
-              width: 2,
-            ),
+            border: Border.all(color: Colors.white, width: 2),
           ),
           child: ClipOval(
             child: Padding(
@@ -296,10 +323,7 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(height: 5),
         Text(
           'Operations control centre',
-          style: TextStyle(
-            color: subtextColor,
-            fontSize: 14,
-          ),
+          style: TextStyle(color: subtextColor, fontSize: 14),
         ),
       ],
     );
@@ -312,11 +336,7 @@ class _LoginScreenState extends State<LoginScreen> {
 }
 
 class _Glow extends StatelessWidget {
-  const _Glow({
-    required this.size,
-    required this.color,
-    this.isDark = true,
-  });
+  const _Glow({required this.size, required this.color, this.isDark = true});
 
   final double size;
   final Color color;

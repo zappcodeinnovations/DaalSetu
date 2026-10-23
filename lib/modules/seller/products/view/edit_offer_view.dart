@@ -81,11 +81,27 @@ class _EditOfferViewState extends State<EditOfferView> {
   }
 
   Future<void> _pickExpiry() async {
-    await _pickDate(_dealExpiry, (date) => _dealExpiry = date);
-    if (!mounted || _dealExpiry == null) return;
+    final now = DateTime.now();
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _dealExpiry != null && _dealExpiry!.isAfter(now)
+          ? _dealExpiry!
+          : now,
+      firstDate: DateTime(now.year, now.month, now.day),
+      lastDate: now.add(const Duration(days: 365)),
+    );
+    if (date == null || !mounted) return;
+    final minimumExpiry = now.add(const Duration(minutes: 2));
+    final initialDateTime = _dealExpiry != null &&
+            DateUtils.isSameDay(_dealExpiry, date) &&
+            _dealExpiry!.isAfter(now)
+        ? _dealExpiry!
+        : DateUtils.isSameDay(date, now)
+            ? minimumExpiry
+            : DateTime(date.year, date.month, date.day, 18);
     final time = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(_dealExpiry!),
+      initialTime: TimeOfDay.fromDateTime(initialDateTime),
       builder: (context, child) {
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
@@ -94,13 +110,28 @@ class _EditOfferViewState extends State<EditOfferView> {
       },
     );
     if (time != null) {
-      setState(() => _dealExpiry = DateTime(_dealExpiry!.year, _dealExpiry!.month, _dealExpiry!.day, time.hour, time.minute));
+      final selectedExpiry = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+      if (!selectedExpiry.isAfter(DateTime.now())) {
+        SellerUi.error('Deal expiry time must be in the future.');
+        return;
+      }
+      setState(() => _dealExpiry = selectedExpiry);
     }
   }
 
   Future<void> _save() async {
     if (_title.text.trim().isEmpty || _amount.text.trim().isEmpty || _loadingFrom == null) {
       SellerUi.error("Title, price and loading from date are required.");
+      return;
+    }
+    if (_dealExpiry == null || !_dealExpiry!.isAfter(DateTime.now())) {
+      SellerUi.error("Deal expiry time must be in the future.");
       return;
     }
     final offer = _offer!;

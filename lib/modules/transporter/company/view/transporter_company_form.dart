@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/tax_id_formatters.dart';
 import '../../../../utils/india_location_data.dart';
+import '../../../../widgets/searchable_selection_sheet.dart';
 import '../controller/transporter_company_controller.dart';
 import '../model/company_model.dart';
 import '../../../../routes/app_routes.dart';
@@ -408,79 +409,42 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
         ? currentCity
         : null;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: DropdownButtonFormField<String>(
-        key: ValueKey("city_${_stateCtrl.text}_$selectedCity"),
-        initialValue: selectedCity,
-        isExpanded: true,
-        menuMaxHeight: 320,
-        icon: const Icon(Icons.keyboard_arrow_down_rounded),
-        decoration: InputDecoration(
-          labelText: "City",
-          hintText: "Select City",
-          floatingLabelBehavior: FloatingLabelBehavior.always,
-          counterText: "",
-          filled: true,
-          fillColor: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.black.withValues(alpha: 0.05),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-        ),
-        items: [
-          ...availableCities.map((city) {
-            return DropdownMenuItem<String>(
-              value: city,
-              child: Text(
-                city,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 14),
-              ),
-            );
-          }),
-          const DropdownMenuItem<String>(
-            value: "__custom__",
-            child: Row(
-              children: [
-                Icon(Icons.edit_note_rounded, size: 18, color: Colors.amber),
-                SizedBox(width: 8),
-                Text(
-                  "Other (Enter Custom City)",
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontStyle: FontStyle.italic,
-                    color: Colors.amber,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-        onChanged: (val) {
-          if (val == "__custom__") {
-            _showCustomCityDialog();
-          } else if (val != null) {
-            setState(() {
-              _cityCtrl.text = val;
-              final inferredState = IndiaLocationData.getStateForCity(val);
-              if (inferredState != null &&
-                  _stateCtrl.text.trim().toLowerCase() !=
-                      inferredState.toLowerCase()) {
-                _stateCtrl.text = inferredState;
-              }
-            });
+    return _selectionFormField(
+      key: ValueKey("city_${_stateCtrl.text}_$selectedCity"),
+      label: 'City',
+      hint: 'Select City',
+      value: selectedCity,
+      icon: Icons.location_city_outlined,
+      validator: (_) => _cityCtrl.text.trim().isEmpty
+          ? 'City is required'
+          : null,
+      onTap: (field) async {
+        final selected = await showSearchableSelectionSheet<String>(
+          context: context,
+          title: 'Select City',
+          searchHint: 'Search city...',
+          options: [...availableCities, '__custom__'],
+          selectedValue: selectedCity,
+          labelBuilder: (value) => value == '__custom__'
+              ? 'Other (Enter Custom City)'
+              : value,
+        );
+        if (!mounted || selected == null) return;
+        if (selected == '__custom__') {
+          _showCustomCityDialog();
+          return;
+        }
+        setState(() {
+          _cityCtrl.text = selected;
+          final inferredState = IndiaLocationData.getStateForCity(selected);
+          if (inferredState != null &&
+              _stateCtrl.text.trim().toLowerCase() !=
+                  inferredState.toLowerCase()) {
+            _stateCtrl.text = inferredState;
           }
-        },
-        validator: (value) {
-          if (_cityCtrl.text.trim().isEmpty) {
-            return "City is required";
-          }
-          return null;
-        },
-      ),
+        });
+        field.didChange(selected);
+      },
     );
   }
 
@@ -493,60 +457,100 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
     );
     final matchedState = matched.isNotEmpty ? matched : null;
 
+    return _selectionFormField(
+      key: ValueKey("state_$matchedState"),
+      label: 'State',
+      hint: 'Select State',
+      value: matchedState,
+      icon: Icons.map_outlined,
+      validator: (_) => _stateCtrl.text.trim().isEmpty
+          ? 'State is required'
+          : null,
+      onTap: (field) async {
+        final selected = await showSearchableSelectionSheet<String>(
+          context: context,
+          title: 'Select State',
+          searchHint: 'Search state...',
+          options: states,
+          selectedValue: matchedState,
+          labelBuilder: (value) => value,
+        );
+        if (!mounted || selected == null) return;
+        setState(() {
+          _stateCtrl.text = selected;
+          final stateCities = IndiaLocationData.stateCities[selected] ?? [];
+          if (!stateCities.any(
+            (city) =>
+                city.toLowerCase() == _cityCtrl.text.trim().toLowerCase(),
+          )) {
+            _cityCtrl.text = stateCities.isNotEmpty
+                ? stateCities.first
+                : '';
+          }
+        });
+        field.didChange(selected);
+      },
+    );
+  }
+
+  Widget _selectionFormField({
+    required Key key,
+    required String label,
+    required String hint,
+    required String? value,
+    required IconData icon,
+    required FormFieldValidator<String> validator,
+    required Future<void> Function(FormFieldState<String> field) onTap,
+  }) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: DropdownButtonFormField<String>(
-        key: ValueKey("state_$matchedState"),
-        initialValue: matchedState,
-        isExpanded: true,
-        menuMaxHeight: 320,
-        icon: const Icon(Icons.keyboard_arrow_down_rounded),
-        decoration: InputDecoration(
-          labelText: "State",
-          hintText: "Select State",
-          floatingLabelBehavior: FloatingLabelBehavior.always,
-          counterText: "",
-          filled: true,
-          fillColor: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.black.withValues(alpha: 0.05),
-          border: OutlineInputBorder(
+      child: FormField<String>(
+        key: key,
+        initialValue: value,
+        validator: validator,
+        builder: (field) => Semantics(
+          button: true,
+          label: '$label selection',
+          child: InkWell(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+            onTap: () => onTap(field),
+            child: InputDecorator(
+              decoration: InputDecoration(
+                labelText: label,
+                hintText: hint,
+                errorText: field.errorText,
+                floatingLabelBehavior: FloatingLabelBehavior.always,
+                prefixIcon: Icon(icon),
+                filled: true,
+                fillColor: theme.brightness == Brightness.dark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.black.withValues(alpha: 0.05),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              isEmpty: value == null || value.isEmpty,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      value ?? hint,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: value == null
+                            ? theme.hintColor
+                            : theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                  const Icon(Icons.keyboard_arrow_down_rounded),
+                ],
+              ),
+            ),
           ),
         ),
-        items: states.map((state) {
-          return DropdownMenuItem<String>(
-            value: state,
-            child: Text(
-              state,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 14),
-            ),
-          );
-        }).toList(),
-        onChanged: (val) {
-          if (val != null) {
-            setState(() {
-              _stateCtrl.text = val;
-              // If current city is not part of newly chosen state, switch to first city of that state
-              final stateCities = IndiaLocationData.stateCities[val] ?? [];
-              if (!stateCities.any(
-                (c) => c.toLowerCase() == _cityCtrl.text.trim().toLowerCase(),
-              )) {
-                _cityCtrl.text = stateCities.isNotEmpty
-                    ? stateCities.first
-                    : '';
-              }
-            });
-          }
-        },
-        validator: (value) {
-          if (_stateCtrl.text.trim().isEmpty) {
-            return "State is required";
-          }
-          return null;
-        },
       ),
     );
   }

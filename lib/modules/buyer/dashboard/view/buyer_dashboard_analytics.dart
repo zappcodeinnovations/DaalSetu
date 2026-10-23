@@ -112,16 +112,17 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
                 'Commodity Mix (Volume)',
                 commodities,
               ),
+              // Same colours, in the same label order, as the buyer web panel.
               _donutCard(context, 'Order Status', orderStatus, const [
-                Color(0xFFEAB308),
-                Color(0xFF22C55E),
-                Color(0xFF3B82F6),
+                Color(0xFF3BAA4A),
+                Color(0xFFFFC107),
+                Color(0xFFF4B400),
                 Color(0xFFEF4444),
               ]),
               _donutCard(context, 'Transport Status', transportStatus, const [
-                Color(0xFF22C55E),
-                Color(0xFF3B82F6),
-                Color(0xFFEAB308),
+                Color(0xFFFFC107),
+                Color(0xFFF4B400),
+                Color(0xFF3BAA4A),
                 Color(0xFFEF4444),
               ]),
             ];
@@ -179,8 +180,14 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
     if (maxOrder <= 0) maxOrder = 3.0;
 
     // Ceil / round nicely
-    final spendMaxY = (maxSpend <= 2.0 ? 2.0 : (maxSpend * 1.15));
-    final ordersMaxY = (maxOrder <= 3.0 ? 3.0 : (maxOrder * 1.15));
+    // Round axes like the web chart: Spend 0..12 step 2, Orders 0..4 step 1
+    // (x1.15 gave labels such as 8.2 / 13.7 and 0.8 / 2.3).
+    final spendStep = _niceStep(maxSpend / 6);
+    final spendMaxY = (maxSpend / spendStep).ceil() * spendStep;
+    final ordersStep = _niceStep(maxOrder / 4);
+    final ordersMaxY = (maxOrder / ordersStep).ceil() * ordersStep;
+    // The Spend axis is drawn on the bar chart's Orders scale: one Spend step there.
+    final spendStepOnBars = ordersMaxY * spendStep / spendMaxY;
 
     return GlassCard(
       padding: const EdgeInsets.all(14),
@@ -308,7 +315,7 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
                       gridData: FlGridData(
                         show: true,
                         drawVerticalLine: false,
-                        horizontalInterval: ordersMaxY / 6,
+                        horizontalInterval: spendStepOnBars,
                         getDrawingHorizontalLine: (value) => FlLine(
                           color: Colors.black.withValues(alpha: 0.04),
                           strokeWidth: 1,
@@ -331,12 +338,16 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
                           sideTitles: SideTitles(
                             showTitles: true,
                             reservedSize: 28,
-                            interval: spendMaxY / 5,
+                            interval: spendStepOnBars,
                             getTitlesWidget: (value, _) {
-                              // Display Spend scale on left axis corresponding to normalized height
-                              final spendEquiv = (value / ordersMaxY) * spendMaxY;
+                              // Spend value at this height of the Orders-scaled bar chart.
+                              final spendEquiv = double.parse(
+                                ((value / ordersMaxY) * spendMaxY).toStringAsFixed(2),
+                              );
                               return Text(
-                                spendEquiv.toStringAsFixed(1),
+                                spendEquiv == spendEquiv.roundToDouble()
+                                    ? spendEquiv.toInt().toString()
+                                    : spendEquiv.toStringAsFixed(1),
                                 style: const TextStyle(
                                   fontSize: 9,
                                   color: Colors.grey,
@@ -357,7 +368,7 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
                           sideTitles: SideTitles(
                             showTitles: true,
                             reservedSize: 24,
-                            interval: ordersMaxY / 6,
+                            interval: ordersStep,
                             getTitlesWidget: (value, _) => Text(
                               value == value.roundToDouble()
                                   ? value.toInt().toString()
@@ -428,8 +439,10 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
                     child: LineChart(
                       key: const Key('buyer-spend-trend-line'),
                       LineChartData(
-                        minX: count == 1 ? -0.5 : 0,
-                        maxX: count == 1 ? 0.5 : (count - 1).toDouble(),
+                        // Bars use spaceAround (centres at (i + 0.5) / count), so the line
+                        // spans -0.5..count-0.5 to put each point over its bar.
+                        minX: -0.5,
+                        maxX: count - 0.5,
                         minY: 0,
                         maxY: spendMaxY,
                         gridData: const FlGridData(show: false),
@@ -457,6 +470,8 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
                                 FlSpot(index.toDouble(), spend.values[index]),
                             ],
                             isCurved: count > 2,
+                            // Never dip below 0 between points (the web line stays at 0).
+                            preventCurveOverShooting: true,
                             color: const Color(0xFFF59E0B),
                             barWidth: 2.8,
                             isStrokeCapRound: true,
@@ -536,14 +551,13 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
                   0,
                   (max, v) => v > max ? v : max,
                 );
-                final axisMax = maxVal > 2.5 ? (maxVal * 1.15) : 2.5;
-                final ticks = [0.0, 0.5, 1.0, 1.5, 2.0, 2.5];
-                if (axisMax > 2.5) {
-                  ticks.clear();
-                  for (var i = 0; i <= 5; i++) {
-                    ticks.add(double.parse((axisMax * i / 5).toStringAsFixed(1)));
-                  }
-                }
+                // Round steps like the web chart (0, 2, 4 ... 14), not 0, 2.9, 5.9 ...
+                // About 4 steps like the web (0, 5, 10, 15 for a max of ~12).
+                final step = maxVal > 2.5 ? _niceStep(maxVal / 4) : 0.5;
+                final axisMax = maxVal > 2.5 ? (maxVal / step).ceil() * step : 2.5;
+                final ticks = [
+                  for (var t = 0.0; t <= axisMax + step / 2; t += step) double.parse(t.toStringAsFixed(2)),
+                ];
 
                 return Column(
                   children: [
@@ -660,12 +674,14 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
     _ChartData data,
   ) {
     final hasData = data.values.any((value) => value > 0);
+    // Same order as the web polar-area chart.
     final colors = const [
-      Color(0xFFFBBF24),
-      Color(0xFF34D399),
-      Color(0xFFA855F7),
-      Color(0xFF38BDF8),
-      Color(0xFFF87171),
+      Color(0xFFF4B400),
+      Color(0xFF10B981),
+      Color(0xFFF59E0B),
+      Color(0xFF8B5CF6),
+      Color(0xFF06B6D4),
+      Color(0xFF64748B),
     ];
 
     return GlassCard(
@@ -909,8 +925,14 @@ class _PolarAreaPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.8;
 
-    final rings = [20, 40, 60, 80, 100, 120, 140, 160, 180];
-    const maxScale = 180.0;
+    // Scale from the data (e.g. 500 ... 3,000) with radius linear in value, like
+    // Chart.js polarArea; a fixed 0-180 scale clamped every large slice to full size.
+    final maxValue = values.isEmpty ? 0.0 : values.reduce(math.max);
+    final ringStep = maxValue > 0 ? _niceStep(maxValue / 6) : 20.0;
+    final maxScale = maxValue > 0 ? (maxValue / ringStep).ceil() * ringStep : 180.0;
+    final rings = [
+      for (var r = ringStep; r <= maxScale + ringStep / 2; r += ringStep) r,
+    ];
 
     // Draw concentric scale rings & labels
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
@@ -919,7 +941,9 @@ class _PolarAreaPainter extends CustomPainter {
       canvas.drawCircle(center, r, ringPaint);
 
       textPainter.text = TextSpan(
-        text: '$ring',
+        text: ring == ring.roundToDouble()
+            ? NumberFormatShort.format(ring)
+            : ring.toStringAsFixed(1),
         style: TextStyle(
           fontSize: 6.5,
           color: Colors.grey.shade600,
@@ -940,7 +964,7 @@ class _PolarAreaPainter extends CustomPainter {
     for (var i = 0; i < values.length; i++) {
       final val = values[i];
       if (val <= 0) continue;
-      final radius = ((val / maxScale).clamp(0.05, 1.0)) * maxRadius;
+      final radius = ((val / maxScale).clamp(0.02, 1.0)) * maxRadius;
       final startAngle = -math.pi / 2 + (i * sectorAngle);
 
       final sectorPaint = Paint()
@@ -973,3 +997,25 @@ class _PolarAreaPainter extends CustomPainter {
       oldDelegate.values != values;
 }
 
+/// 1, 2, 2.5 or 5 x 10^n just above [raw]: axis steps like Chart.js picks.
+double _niceStep(double raw) {
+  if (raw <= 0) return 1;
+  final magnitude = math.pow(10, (math.log(raw) / math.ln10).floor()).toDouble();
+  for (final m in const [1.0, 2.0, 2.5, 5.0, 10.0]) {
+    if (raw <= m * magnitude) return m * magnitude;
+  }
+  return 10 * magnitude;
+}
+
+/// Ring labels: "500", "1,000", "2,500".
+class NumberFormatShort {
+  static String format(double value) {
+    final digits = value.toInt().toString();
+    final out = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) out.write(',');
+      out.write(digits[i]);
+    }
+    return out.toString();
+  }
+}

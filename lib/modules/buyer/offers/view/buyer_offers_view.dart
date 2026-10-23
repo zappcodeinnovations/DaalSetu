@@ -59,25 +59,7 @@ class BuyerOffersView extends StatelessWidget {
             ],
           ),
         ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-        floatingActionButton: Padding(
-          padding: const EdgeInsets.only(bottom: 76.0),
-          child: FloatingActionButton.extended(
-            heroTag: 'buyer_post_requirement_fab',
-            onPressed: () => Get.to(() => const AddBuyerOfferScreen()),
-            icon: const Icon(IconlyLight.plus, color: Colors.white),
-            label: Text(
-              "Post Requirement",
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-                fontSize: 14,
-              ),
-            ),
-            backgroundColor: theme.colorScheme.primary,
-            elevation: 4,
-          ),
-        ),
+        // "Post Requirement" lives only on the Activity tab.
         body: const TabBarView(
           children: [
             _OfferList(offerType: 'all'),

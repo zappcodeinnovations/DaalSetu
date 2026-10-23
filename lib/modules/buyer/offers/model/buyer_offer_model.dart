@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 class BuyerOfferModel {
   final int? id;
   final int? productId;
@@ -76,9 +78,76 @@ class BuyerOfferModel {
     this.isRfq = false,
     this.isActive = true,
     this.isExpired = false,
+    this.expiresAt,
   });
 
   final bool isExpired;
+
+  /// Earliest expiry the API sent for this offer/requirement, if any.
+  final DateTime? expiresAt;
+
+  /// Expired now, including deals whose expiry passed after they were loaded.
+  bool get hasExpired =>
+      isExpired || (expiresAt != null && expiresAt!.isBefore(DateTime.now()));
+
+  /// Every field the API uses for an offer/requirement expiry.
+  static List<dynamic> expiryCandidates(Map<String, dynamic> json) {
+    final nested = [
+      for (final key in const ['product', 'offer', 'rfq'])
+        if (json[key] is Map) json[key] as Map,
+    ];
+    return [
+      for (final source in [json, ...nested])
+        for (final key in const [
+          'deal_expiry_datetime',
+          'expiry_datetime',
+          'expiry_date',
+          'broadcast_expiry',
+          'broadcast_expiry_datetime',
+          'expires_at',
+        ])
+          source[key],
+    ];
+  }
+
+  static final List<DateFormat> _expiryDateTimeFormats = [
+    DateFormat('dd-MM-yyyy HH:mm'),
+    DateFormat('dd/MM/yyyy HH:mm'),
+    DateFormat('dd-MM-yyyy hh:mm a'),
+    DateFormat('dd/MM/yyyy hh:mm a'),
+    DateFormat('dd MMM yyyy, hh:mm a'),
+    DateFormat('dd MMM yyyy hh:mm a'),
+  ];
+
+  static final List<DateFormat> _expiryDateFormats = [
+    DateFormat('dd-MM-yyyy'),
+    DateFormat('dd/MM/yyyy'),
+    DateFormat('dd MMM yyyy'),
+  ];
+
+  /// Parses an expiry value; a date without a time expires at the end of that day.
+  static DateTime? parseExpiry(dynamic raw) {
+    final text = raw?.toString().trim() ?? '';
+    if (text.isEmpty || text == 'null') return null;
+
+    DateTime endOfDay(DateTime d) => DateTime(d.year, d.month, d.day, 23, 59, 59);
+
+    final iso = DateTime.tryParse(text);
+    if (iso != null) {
+      return RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(text) ? endOfDay(iso) : iso.toLocal();
+    }
+    for (final format in _expiryDateTimeFormats) {
+      try {
+        return format.parseStrict(text);
+      } catch (_) {}
+    }
+    for (final format in _expiryDateFormats) {
+      try {
+        return endOfDay(format.parseStrict(text));
+      } catch (_) {}
+    }
+    return null;
+  }
 
   BuyerOfferModel copyWith({
     int? id,
@@ -118,6 +187,7 @@ class BuyerOfferModel {
     bool? isRfq,
     bool? isActive,
     bool? isExpired,
+    DateTime? expiresAt,
   }) {
     return BuyerOfferModel(
       id: id ?? this.id,
@@ -157,6 +227,7 @@ class BuyerOfferModel {
       isRfq: isRfq ?? this.isRfq,
       isActive: isActive ?? this.isActive,
       isExpired: isExpired ?? this.isExpired,
+      expiresAt: expiresAt ?? this.expiresAt,
     );
   }
 
@@ -771,14 +842,7 @@ class BuyerOfferModel {
       ]),
     );
 
-    final rawExpiry = formatDateDisplay(
-      pickStr([
-        json['deal_expiry_datetime'],
-        json['expiry_date'],
-        json['expiry_datetime'],
-        if (json['product'] is Map) json['product']['deal_expiry_datetime'],
-      ]),
-    );
+    final rawExpiry = formatDateDisplay(pickStr(expiryCandidates(json)));
 
     String rawLocationCandidate = pickStr([
       json['visible_branch_labels'],
@@ -939,24 +1003,22 @@ class BuyerOfferModel {
       }
     }
 
-    final rawExpiryStr = pickStr([
-      json['deal_expiry_datetime'],
-      json['expiry_date'],
-      json['expiry_datetime'],
-      if (json['product'] is Map) json['product']['deal_expiry_datetime'],
-      if (json['offer'] is Map) json['offer']['deal_expiry_datetime'],
-    ]);
+    // Earliest expiry wins: once any of the offer's deadlines has passed it is no longer live.
+    DateTime? parsedExpiry;
+    for (final candidate in expiryCandidates(json)) {
+      final parsed = parseExpiry(candidate);
+      if (parsed != null && (parsedExpiry == null || parsed.isBefore(parsedExpiry))) {
+        parsedExpiry = parsed;
+      }
+    }
 
     bool detectedExpired = boolValue('is_expired', fallback: false) ||
         rawStatus.toLowerCase().contains('expire') ||
         (json['status']?.toString().toLowerCase().contains('expire') ?? false) ||
         (json['deal_status']?.toString().toLowerCase().contains('expire') ?? false);
 
-    if (!detectedExpired && rawExpiryStr.isNotEmpty) {
-      final parsedExp = DateTime.tryParse(rawExpiryStr)?.toLocal();
-      if (parsedExp != null && parsedExp.isBefore(DateTime.now())) {
-        detectedExpired = true;
-      }
+    if (parsedExpiry != null && parsedExpiry.isBefore(DateTime.now())) {
+      detectedExpired = true;
     }
 
     final statusCandidates = [
@@ -1141,6 +1203,7 @@ class BuyerOfferModel {
       isRfq: isRfqItem,
       isActive: detectedActive,
       isExpired: detectedExpired,
+      expiresAt: parsedExpiry,
     );
   }
 

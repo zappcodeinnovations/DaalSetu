@@ -8,21 +8,27 @@ import '../controller/add_user_controller.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../utils/app_snackbar.dart';
 
-class AddUserScreen extends StatelessWidget {
-  AddUserScreen({super.key});
+class AddUserScreen extends StatefulWidget {
+  const AddUserScreen({super.key});
 
-  final controller = Get.put(AddUserController());
+  @override
+  State<AddUserScreen> createState() => AddUserScreenState();
+}
+
+class AddUserScreenState extends State<AddUserScreen> {
+  late final AddUserController controller;
 
   final mobileController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
+  final branchController = TextEditingController();
   final panController = TextEditingController();
   final gstController = TextEditingController();
 
-  final roles = ["buyer", "seller", "transporter", "admin", "salesman"];
-  final genders = ["male", "female", "other"];
+  final roles = const ["buyer", "seller", "transporter", "admin", "salesman"];
+  final genders = const ["male", "female", "other"];
 
   final selectedRole = "buyer".obs;
   final selectedGender = "".obs;
@@ -32,12 +38,57 @@ class AddUserScreen extends StatelessWidget {
   final gstImage = Rx<File?>(null);
 
   @override
+  void initState() {
+    super.initState();
+    controller = Get.isRegistered<AddUserController>()
+        ? Get.find<AddUserController>()
+        : Get.put(AddUserController());
+    resetForm();
+  }
+
+  @override
+  void dispose() {
+    mobileController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    firstNameController.dispose();
+    lastNameController.dispose();
+    branchController.dispose();
+    panController.dispose();
+    gstController.dispose();
+    super.dispose();
+  }
+
+  /// Wipes all form fields clean so fresh empty placeholders are ready for the next entry.
+  void resetForm() {
+    mobileController.clear();
+    emailController.clear();
+    passwordController.clear();
+    firstNameController.clear();
+    lastNameController.clear();
+    branchController.clear();
+    panController.clear();
+    gstController.clear();
+
+    selectedRole.value = "buyer";
+    selectedGender.value = "";
+    obscurePassword.value = true;
+
+    panImage.value = null;
+    gstImage.value = null;
+
+    controller.reset();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
+      appBar: AppBar(
+        leading: const AppBarLeading(),
+        leadingWidth: AppBarLeading.widthFor(context),
         elevation: 0,
         title: const Text("Add User"),
         centerTitle: true,
@@ -132,11 +183,13 @@ class AddUserScreen extends StatelessWidget {
                           firstName: firstName,
                           lastName: lastNameController.text.trim(),
                           role: selectedRole.value,
+                          branchCode: branchController.text.trim(),
                           panNumber: panController.text.trim(),
                           gstNumber: gstController.text.trim(),
                           gender: selectedGender.value,
                           panImage: panImage.value,
                           gstImage: gstImage.value,
+                          onSuccess: resetForm,
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -173,8 +226,8 @@ class AddUserScreen extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: theme.brightness == Brightness.dark
-                ? Colors.black.withOpacity(0.4)
-                : Colors.grey.withOpacity(0.08),
+                ? Colors.black.withValues(alpha: 0.4)
+                : Colors.grey.withValues(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -259,6 +312,7 @@ class AddUserScreen extends StatelessWidget {
           ),
           _dropdown("Role *", roles, selectedRole),
           const SizedBox(height: 16),
+          _textField("Branch Code (Optional)", branchController),
           _tagDropdown(context),
           const SizedBox(height: 16),
           _dropdown("Gender (Optional)", genders, selectedGender),
@@ -297,7 +351,6 @@ class AddUserScreen extends StatelessWidget {
           _textField("GST Number (Optional)", gstController),
 
           const SizedBox(height: 20),
-
           _imagePicker(context, "PAN Image", panImage),
           const SizedBox(height: 16),
           _imagePicker(context, "GST Image", gstImage),
@@ -309,7 +362,7 @@ class AddUserScreen extends StatelessWidget {
   Widget _tagDropdown(BuildContext context) {
     return Obx(
       () => DropdownButtonFormField<int>(
-        value: controller.selectedTagId.value,
+        initialValue: controller.selectedTagId.value,
         items: controller.tags.map((tag) {
           return DropdownMenuItem<int>(
             value: tag.id,
@@ -356,7 +409,7 @@ class AddUserScreen extends StatelessWidget {
   Widget _dropdown(String label, List<String> items, RxString selected) {
     return Obx(
       () => DropdownButtonFormField<String>(
-        value: selected.value.isEmpty ? null : selected.value,
+        initialValue: selected.value.isEmpty ? null : selected.value,
         items: items
             .map(
               (e) => DropdownMenuItem(value: e, child: Text(e.toUpperCase())),

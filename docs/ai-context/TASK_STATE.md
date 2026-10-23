@@ -1,14 +1,40 @@
 # Current Task State
 
 ## Current Task
-- **Goal**: Populate transporter Contract Details fully and allow complete 15-character GST entry in Register Company.
+- **Goal**: Auto-reset input form state upon user creation in Admin User Management so fields open clean and fresh for subsequent entries.
 - **Status**: Completed.
-- **Output**: Web-parity My Deals contract payload and 15-character GST entry with submit-time format validation.
-- **Evidence**: Django transport bid/detail tests, Flutter formatter tests, and targeted analyzer all pass.
+- **Output**: Converted `AddUserScreen` to lifecycle-managed `StatefulWidget`, added `branchController` ("Branch Code"), implemented and bound `resetForm()` on `AddUserScreenState` and `AdminRecordFormScreenState`, added `AddUserController.reset()`, and added `branchCode` parameter to `AddUserServices.addUser`.
+- **Evidence**: `test/admin_user_form_reset_test.dart` passing (3/3), `test/user_list_refresh_test.dart` passing (9/9), and 0 issues in `flutter analyze`.
 
 ---
 
 ## Completed Work in Current Session
+- **Bug 39 Completed (Admin User Creation Form Auto-Reset Parity)**:
+  - Addressed form state retention where user creation inputs (Name, Mobile, Email, Branch, Role, Password, PAN, GST, Images, Tag) persisted across submissions.
+  - Converted `AddUserScreen` to `StatefulWidget` with clean controller initialization, reset, and disposal lifecycles.
+  - Added `branchController` ("Branch Code (Optional)") and passed it through to `AddUserController.createUser` and `AddUserServices.addUser`.
+  - Implemented `resetForm()` in `AddUserScreenState` to wipe all controllers, dropdowns, and Rx variables clean upon successful user creation and upon opening.
+  - Added `AddUserController.reset()` to reset `selectedTagId` and `isLoading`.
+  - Implemented `resetForm()` in `AdminRecordFormScreenState` on successful record creation.
+  - Added automated test suite `test/admin_user_form_reset_test.dart` (3/3 passing).
+- **Bug 38 Completed (Place Bid Modal - Primary Orange/Yellow Theming Parity)**:
+  - Addressed inconsistent legacy teal (`Color(0xFF0F766E)`) and dark navy (`Color(0xFF131D2E)`) styling on Shipments Place Bid / Update Bid modal.
+  - Updated header background to brand linear gradient using primary amber/gold (`_gold = Color(0xFFFFB300)`) and secondary orange (`Color(0xFFF57C00)`).
+  - Updated close icon to solid `Colors.white` for high contrast against the header gradient.
+  - Updated TextField focused border and cursor color to `_gold`.
+  - Updated Submit button to `ElevatedButton` with `backgroundColor: _gold` and white typography, matching the offer card's "PLACE BID" button and app theme.
+  - Adapted text styles to support dark and light theme brightness cleanly.
+  - Added automated widget test `test/transporter_place_bid_theming_test.dart`.
+- **Bug 37 Completed (Buyer Dashboard Active Requirements & Offers Carousel Slider)**:
+  - Addressed missing data in Buyer Dashboard "Active Requirement" banner when buyers had no open RFQs.
+  - Integrated active marketplace offers loader in `BuyerDashboardController` with automatic fallback to active dashboard items.
+  - Implemented strict filtering (`BuyerDashboardController.filterValidOffers`) excluding out-of-stock, expired, inactive, and closed/rejected deals.
+  - Replaced single static card with `BuyerOffersCarouselSlider`:
+    - Multi-offer carousel with smooth horizontal swipe `PageView` and animated dot indicators.
+    - Single offer card display without superfluous indicators.
+    - Friendly empty-state CTA card ("Looking for Bulk Commodities?") with direct actions to post requirement or browse offers.
+    - Clean typography, currency/quantity formatting, and one-tap navigation to `ProductDetailScreen` or `BuyerOfferDetailsView`.
+  - Added automated test suite `test/buyer_dashboard_offers_slider_test.dart` (10 tests passing).
 - **Bug 36 Completed (GST Entry Length)**: Seller, Transporter, and Admin company forms accept all 15 GST alphanumeric characters while preserving official-format validation on submit.
 - **Bug 35 Completed (Transporter Contract Detail Data)**: My Deals now carries complete deal, product, date, buyer/seller company/contact, GST/address, remarks, and route fields so details remain populated even when optional enrichment is unavailable.
 - **Bug 34 Completed (Contract Detail Request Scope)**: Transporter detail no longer calls inaccessible consignment management, non-consignment statuses skip the lookup, and optional detail enrichment failures remain silent while initial list data renders.
