@@ -26,7 +26,7 @@ class AdminChallanPdfService {
   const AdminChallanPdfService._();
 
   static const MethodChannel _downloadsChannel = MethodChannel(
-    'com.zappcode.daalsetu/downloads',
+    'com.zappkode.daalsetu/downloads',
   );
 
   /// Saves the generated admin Delivery Challan PDF directly to Downloads folder

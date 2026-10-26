@@ -1,4 +1,4 @@
-package com.zappcode.daalsetu
+package com.zappkode.daalsetu
 
 import android.content.ContentValues
 import android.content.Intent
@@ -14,7 +14,7 @@ import java.io.File
 import java.io.FileOutputStream
 
 class MainActivity : FlutterActivity() {
-    private val downloadsChannel = "com.zappcode.daalsetu/downloads"
+    private val downloadsChannel = "com.zappkode.daalsetu/downloads"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)

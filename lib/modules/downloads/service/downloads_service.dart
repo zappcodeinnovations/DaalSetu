@@ -10,7 +10,7 @@ class DownloadsService {
   DownloadsService._();
 
   static const MethodChannel _channel = MethodChannel(
-    'com.zappcode.daalsetu/downloads',
+    'com.zappkode.daalsetu/downloads',
   );
 
   static Future<List<DownloadedFile>> listFiles() async {
