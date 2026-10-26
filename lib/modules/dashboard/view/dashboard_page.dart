@@ -745,7 +745,8 @@ class AdminDashboardScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final count = math.min(topBuyers.labels.length, topBuyers.gtvValues.length);
     final values = topBuyers.gtvValues.take(count).map((v) => v / 100000).toList();
-    final axisMax = (maxValue * 1.2).ceilToDouble();
+    final maxValue = values.isEmpty ? 1.0 : values.reduce(math.max);
+    final axisMax = math.max(1.0, (maxValue * 1.2).ceilToDouble());
 
     return GlassCard(
       padding: const EdgeInsets.all(16),
