@@ -29,8 +29,11 @@ class RealtimeNotificationService extends GetxService {
 
   Timer? _pollingTimer;
   final Set<int> _knownNotificationIds = {};
+  final Set<int> _dismissedNotificationIds = {};
   bool _isFirstCheck = true;
   bool _storageLoaded = false;
+  int _pollingGeneration = 0;
+  String? _storageUserId;
 
   final RxInt unreadCount = 0.obs;
   final RxList<AppNotificationModel> latestNotifications = <AppNotificationModel>[].obs;
@@ -41,6 +44,8 @@ class RealtimeNotificationService extends GetxService {
   final List<AppNotificationModel> _bannerQueue = [];
 
   static const String _seenIdsPrefKey = "seen_realtime_notification_ids";
+  static const String _dismissedIdsPrefKey =
+      "dismissed_realtime_notification_ids";
 
   @override
   void onInit() {
@@ -55,6 +60,9 @@ class RealtimeNotificationService extends GetxService {
   }
 
   Future<void> _initService() async {
+    // Signed out (login screen): nothing to poll; login starts polling.
+    final token = await AppPreferences.getAccessToken();
+    if (token == null || token.isEmpty) return;
     await _loadSeenIdsFromStorage();
     startPolling();
   }
@@ -74,6 +82,7 @@ class RealtimeNotificationService extends GetxService {
 
   /// Stop polling
   void stopPolling() {
+    _pollingGeneration++;
     _pollingTimer?.cancel();
     _pollingTimer = null;
     isPolling.value = false;
@@ -90,8 +99,10 @@ class RealtimeNotificationService extends GetxService {
     activeBannerNotification.value = null;
     _bannerQueue.clear();
     _knownNotificationIds.clear();
+    _dismissedNotificationIds.clear();
     _isFirstCheck = true;
     _storageLoaded = false;
+    _storageUserId = null;
     unreadCount.value = 0;
     latestNotifications.clear();
   }
@@ -99,9 +110,22 @@ class RealtimeNotificationService extends GetxService {
   /// Load persisted seen notification IDs from SharedPreferences
   Future<void> _loadSeenIdsFromStorage() async {
     try {
+      final userId = await AppPreferences.getUserId();
+      if (userId == null || userId.isEmpty) {
+        _storageLoaded = true;
+        return;
+      }
       final prefs = await SharedPreferences.getInstance();
-      final list = prefs.getStringList(_seenIdsPrefKey) ?? [];
+      final list = prefs.getStringList('${_seenIdsPrefKey}_$userId') ?? [];
+      final dismissed =
+          prefs.getStringList('${_dismissedIdsPrefKey}_$userId') ?? [];
+      _knownNotificationIds.clear();
+      _dismissedNotificationIds.clear();
       _knownNotificationIds.addAll(list.map((e) => int.tryParse(e)).whereType<int>());
+      _dismissedNotificationIds.addAll(
+        dismissed.map((e) => int.tryParse(e)).whereType<int>(),
+      );
+      _storageUserId = userId;
       _storageLoaded = true;
     } catch (_) {
       _storageLoaded = true;
@@ -111,30 +135,68 @@ class RealtimeNotificationService extends GetxService {
   /// Save known notification IDs to SharedPreferences
   Future<void> _saveSeenIdsToStorage() async {
     try {
+      final userId = _storageUserId ?? await AppPreferences.getUserId();
+      if (userId == null || userId.isEmpty) return;
       final prefs = await SharedPreferences.getInstance();
       final idsToSave = _knownNotificationIds.toList();
       if (idsToSave.length > 250) {
         idsToSave.removeRange(0, idsToSave.length - 250);
       }
-      await prefs.setStringList(_seenIdsPrefKey, idsToSave.map((e) => e.toString()).toList());
+      await prefs.setStringList(
+        '${_seenIdsPrefKey}_$userId',
+        idsToSave.map((e) => e.toString()).toList(),
+      );
     } catch (_) {}
   }
+
+  Future<void> _saveDismissedIdsToStorage() async {
+    try {
+      final userId = _storageUserId ?? await AppPreferences.getUserId();
+      if (userId == null || userId.isEmpty) return;
+      final prefs = await SharedPreferences.getInstance();
+      final idsToSave = _dismissedNotificationIds.toList();
+      if (idsToSave.length > 250) {
+        idsToSave.removeRange(0, idsToSave.length - 250);
+      }
+      await prefs.setStringList(
+        '${_dismissedIdsPrefKey}_$userId',
+        idsToSave.map((e) => e.toString()).toList(),
+      );
+    } catch (_) {}
+  }
+
+  bool _isCurrentPoll(int generation, int sessionVersion) =>
+      isPolling.value &&
+      generation == _pollingGeneration &&
+      sessionVersion == AppPreferences.sessionVersion;
 
   /// Check notifications from API
   Future<void> _checkNotifications() async {
     try {
+      if (!isPolling.value) return;
+      final generation = _pollingGeneration;
+      final sessionVersion = AppPreferences.sessionVersion;
       final token = await AppPreferences.getAccessToken();
       if (token == null || token.isEmpty) {
         return;
+      }
+
+      final userId = await AppPreferences.getUserId();
+      if (!_isCurrentPoll(generation, sessionVersion)) return;
+      if (_storageUserId != userId) {
+        _storageLoaded = false;
+        _isFirstCheck = true;
       }
 
       // Ensure storage was loaded before checking
       if (!_storageLoaded) {
         await _loadSeenIdsFromStorage();
       }
+      if (!_isCurrentPoll(generation, sessionVersion)) return;
 
       // 1. Fetch latest notifications
       final res = await NotificationServices.getNotifications(page: 1, pageSize: 10, silent: true);
+      if (!_isCurrentPoll(generation, sessionVersion)) return;
       final rawList = (res['results'] is List)
           ? res['results'] as List
           : ((res['data'] is List)
@@ -150,6 +212,7 @@ class RealtimeNotificationService extends GetxService {
       // 2. Fetch unread count from API and cross-check
       try {
         final count = await NotificationServices.getUnreadCount(silent: true);
+        if (!_isCurrentPoll(generation, sessionVersion)) return;
         unreadCount.value = count;
       } catch (_) {
         unreadCount.value = items.where((n) => n.isRead == false).length;
@@ -164,7 +227,8 @@ class RealtimeNotificationService extends GetxService {
       if (_isFirstCheck) {
         _isFirstCheck = false;
         final prefs = await SharedPreferences.getInstance();
-        final hadPriorHistory = prefs.containsKey(_seenIdsPrefKey);
+        final hadPriorHistory = userId != null &&
+            prefs.containsKey('${_seenIdsPrefKey}_$userId');
 
         if (!hadPriorHistory) {
           // Cold fresh install: Seed all existing items so user isn't flooded with old history
@@ -245,6 +309,12 @@ class RealtimeNotificationService extends GetxService {
 
   /// Enqueue notification banner for display
   void enqueueBanner(AppNotificationModel notification) {
+    // Ignore late API/controller events after logout stopped polling.
+    if (!isPolling.value) return;
+    if (notification.id != null &&
+        _dismissedNotificationIds.contains(notification.id)) {
+      return;
+    }
     if (isBranchNotification(notification)) {
       notifyBranchControllers(notification);
     }
@@ -262,6 +332,14 @@ class RealtimeNotificationService extends GetxService {
 
   /// Dismiss current banner and show next in queue if available
   void dismissCurrentBanner() {
+    final dismissedId = activeBannerNotification.value?.id;
+    if (dismissedId != null) {
+      _knownNotificationIds.add(dismissedId);
+      _dismissedNotificationIds.add(dismissedId);
+      _bannerQueue.removeWhere((item) => item.id == dismissedId);
+      unawaited(_saveSeenIdsToStorage());
+      unawaited(_saveDismissedIdsToStorage());
+    }
     if (_bannerQueue.isNotEmpty) {
       activeBannerNotification.value = _bannerQueue.removeAt(0);
     } else {

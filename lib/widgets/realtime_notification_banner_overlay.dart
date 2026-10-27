@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -28,6 +29,10 @@ class _RealtimeNotificationBannerOverlayState
   Timer? _autoDismissTimer;
   AppNotificationModel? _currentNotification;
   bool _isDismissing = false;
+
+  // How far the banner has been dragged; it follows the finger.
+  double _dragDx = 0;
+  double _dragDy = 0;
 
   @override
   void initState() {
@@ -95,16 +100,38 @@ class _RealtimeNotificationBannerOverlayState
     setState(() {
       _currentNotification = notif;
       _isDismissing = false;
+      _dragDx = 0;
+      _dragDy = 0;
     });
 
     _animController.forward(from: 0.0);
+    _startAutoDismissTimer();
+  }
 
-    // Auto-dismiss after 5.5 seconds
+  // Auto-dismiss after 5.5 seconds
+  void _startAutoDismissTimer() {
+    _autoDismissTimer?.cancel();
     _autoDismissTimer = Timer(const Duration(milliseconds: 5500), () {
       if (mounted) {
         _dismiss();
       }
     });
+  }
+
+  void _onDragStart(DragStartDetails _) => _autoDismissTimer?.cancel();
+
+  // A swipe dismisses once it is dragged far enough or flung; otherwise the
+  // banner springs back and its auto-hide timer restarts.
+  void _onDragEnd({required bool passed}) {
+    if (passed) {
+      _dismiss();
+      return;
+    }
+    setState(() {
+      _dragDx = 0;
+      _dragDy = 0;
+    });
+    _startAutoDismissTimer();
   }
 
   Future<void> _dismiss() async {
@@ -120,6 +147,8 @@ class _RealtimeNotificationBannerOverlayState
       setState(() {
         _currentNotification = null;
         _isDismissing = false;
+        _dragDx = 0;
+        _dragDy = 0;
       });
     }
 
@@ -203,14 +232,23 @@ class _RealtimeNotificationBannerOverlayState
             opacity: _fadeAnimation,
             child: GestureDetector(
               onTap: _handleTap,
-              onVerticalDragEnd: (details) {
-                // Swipe up to dismiss instantly
-                if ((details.primaryVelocity ?? 0) < -120) {
-                  _dismiss();
-                }
-              },
+              // Swipe up, left or right: the banner is silenced for good
+              // (the service remembers its id and never shows it again).
+              onVerticalDragStart: _onDragStart,
+              onVerticalDragUpdate: (details) =>
+                  setState(() => _dragDy = math.min(0, _dragDy + details.delta.dy)),
+              onVerticalDragEnd: (details) => _onDragEnd(
+                passed: (details.primaryVelocity ?? 0) < -120 || _dragDy < -30,
+              ),
+              onHorizontalDragStart: _onDragStart,
+              onHorizontalDragUpdate: (details) =>
+                  setState(() => _dragDx += details.delta.dx),
+              onHorizontalDragEnd: (details) => _onDragEnd(
+                passed: (details.primaryVelocity ?? 0).abs() > 120 || _dragDx.abs() > 60,
+              ),
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                transform: Matrix4.translationValues(_dragDx, _dragDy, 0),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: isDark

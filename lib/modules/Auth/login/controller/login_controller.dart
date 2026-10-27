@@ -35,6 +35,9 @@ class LoginController extends GetxController {
 
       if (accountStatus != "active" || status != "active") {
         await AppPreferences.logout();
+        if (Get.isRegistered<RealtimeNotificationService>()) {
+          RealtimeNotificationService.to.clearOnLogout();
+        }
 
         Get.defaultDialog(
           title: "Account Inactive",
@@ -58,6 +61,9 @@ class LoginController extends GetxController {
       ];
       if (!allowedRoles.contains(role)) {
         await AppPreferences.logout();
+        if (Get.isRegistered<RealtimeNotificationService>()) {
+          RealtimeNotificationService.to.clearOnLogout();
+        }
 
         Get.dialog(
           Dialog(

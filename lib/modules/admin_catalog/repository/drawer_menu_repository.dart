@@ -2,6 +2,7 @@ import 'package:daalsetu/modules/admin_catalog/model/drawer_menu_model.dart';
 import 'package:daalsetu/routes/app_routes.dart';
 import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:get/get.dart';
+import 'package:daalsetu/services/realtime_notification_service.dart';
 
 import 'drawer_menu_service.dart';
 
@@ -30,6 +31,9 @@ class DrawerMenuRepository {
     } catch (e) {
       if (e.toString().contains("401") || e.toString().contains("403")) {
         await AppPreferences.logout();
+        if (Get.isRegistered<RealtimeNotificationService>()) {
+          RealtimeNotificationService.to.clearOnLogout();
+        }
         Get.offAllNamed(AppRoutes.login);
       }
       rethrow;

@@ -3,6 +3,8 @@ import '../modules/Auth/forgot_password/model/forgot_password_model.dart';
 import '../modules/Auth/login/model/login_model.dart';
 import '../network/api_client.dart';
 import '../utils/app_preferences.dart';
+import 'package:get/get.dart';
+import 'realtime_notification_service.dart';
 
 class AuthService {
   /// ============================================================
@@ -168,5 +170,8 @@ class AuthService {
   /// ============================================================
   static Future<void> logout() async {
     await AppPreferences.logout();
+    if (Get.isRegistered<RealtimeNotificationService>()) {
+      RealtimeNotificationService.to.clearOnLogout();
+    }
   }
 }
