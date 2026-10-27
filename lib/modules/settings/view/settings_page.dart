@@ -409,109 +409,11 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Future<void> _showDeleteAccountDialog(BuildContext context) async {
-    final passwordController = TextEditingController();
-    var isDeleting = false;
-    var obscurePassword = true;
-
-    await Get.dialog<void>(
-      StatefulBuilder(
-        builder: (dialogContext, setDialogState) {
-          final theme = Theme.of(dialogContext);
-          return AlertDialog(
-            title: Text(
-              "Delete account?",
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Your account will be deactivated and you will be signed out. Existing business records will be preserved for audit purposes.",
-                  style: GoogleFonts.inter(height: 1.4),
-                ),
-                const SizedBox(height: 18),
-                TextField(
-                  controller: passwordController,
-                  obscureText: obscurePassword,
-                  enabled: !isDeleting,
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    labelText: "Current password",
-                    prefixIcon: const Icon(Icons.lock_outline_rounded),
-                    suffixIcon: IconButton(
-                      onPressed: () => setDialogState(
-                        () => obscurePassword = !obscurePassword,
-                      ),
-                      icon: Icon(
-                        obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: isDeleting ? null : () => Get.back(),
-                child: const Text("Cancel"),
-              ),
-              FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: theme.colorScheme.error,
-                  foregroundColor: theme.colorScheme.onError,
-                ),
-                onPressed: isDeleting
-                    ? null
-                    : () async {
-                        final password = passwordController.text;
-                        if (password.isEmpty) {
-                          AppSnackbar.showError(
-                            message: "Please enter your current password.",
-                          );
-                          return;
-                        }
-                        setDialogState(() => isDeleting = true);
-                        try {
-                          final message = await AuthService.deleteAccount(
-                            currentPassword: password,
-                          );
-                          Get.back();
-                          await AppPreferences.logout();
-                          if (Get.isRegistered<RealtimeNotificationService>()) {
-                            RealtimeNotificationService.to.clearOnLogout();
-                          }
-                          Get.offAllNamed(AppRoutes.login);
-                          AppSnackbar.showSuccess(message: message);
-                        } catch (error) {
-                          if (Get.isDialogOpen == true) {
-                            setDialogState(() => isDeleting = false);
-                          }
-                          AppSnackbar.showError(message: error.toString());
-                        }
-                      },
-                icon: isDeleting
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.delete_outline_rounded, size: 18),
-                label: Text(isDeleting ? "Deleting..." : "Delete Account"),
-              ),
-            ],
-          );
-        },
-      ),
+    await showDialog<void>(
+      context: context,
       barrierDismissible: false,
+      builder: (_) => const _DeleteAccountDialog(),
     );
-
-    passwordController.dispose();
   }
 
   Widget _buildSwitchTile(
@@ -771,5 +673,128 @@ class SettingsScreen extends StatelessWidget {
         snackPosition: SnackPosition.BOTTOM,
       );
     }
+  }
+}
+
+class _DeleteAccountDialog extends StatefulWidget {
+  const _DeleteAccountDialog();
+
+  @override
+  State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
+  late final TextEditingController _passwordController;
+  bool _isDeleting = false;
+  bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return AlertDialog(
+      title: Text(
+        "Delete account?",
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Your account will be deactivated and you will be signed out. Existing business records will be preserved for audit purposes.",
+              style: GoogleFonts.inter(height: 1.4),
+            ),
+            const SizedBox(height: 18),
+            TextField(
+              controller: _passwordController,
+              obscureText: _obscurePassword,
+              enabled: !_isDeleting,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: "Current password",
+                prefixIcon: const Icon(Icons.lock_outline_rounded),
+                suffixIcon: IconButton(
+                  onPressed: () => setState(
+                    () => _obscurePassword = !_obscurePassword,
+                  ),
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isDeleting ? null : () => Navigator.of(context).pop(),
+          child: const Text("Cancel"),
+        ),
+        FilledButton.icon(
+          style: FilledButton.styleFrom(
+            backgroundColor: theme.colorScheme.error,
+            foregroundColor: theme.colorScheme.onError,
+          ),
+          onPressed: _isDeleting
+              ? null
+              : () async {
+                  final password = _passwordController.text;
+                  if (password.isEmpty) {
+                    AppSnackbar.showError(
+                      message: "Please enter your current password.",
+                    );
+                    return;
+                  }
+                  setState(() => _isDeleting = true);
+                  try {
+                    final message = await AuthService.deleteAccount(
+                      currentPassword: password,
+                    );
+                    if (!mounted) return;
+                    Navigator.of(context).pop();
+                    await AppPreferences.logout();
+                    if (Get.isRegistered<RealtimeNotificationService>()) {
+                      RealtimeNotificationService.to.clearOnLogout();
+                    }
+                    Get.offAllNamed(AppRoutes.login);
+                    AppSnackbar.showSuccess(message: message);
+                  } catch (error) {
+                    if (mounted) {
+                      setState(() => _isDeleting = false);
+                    }
+                    AppSnackbar.showError(message: error.toString());
+                  }
+                },
+          icon: _isDeleting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Icon(Icons.delete_outline_rounded, size: 18),
+          label: Text(_isDeleting ? "Deleting..." : "Delete Account"),
+        ),
+      ],
+    );
   }
 }
