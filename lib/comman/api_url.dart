@@ -9,6 +9,7 @@ class ApiUrls {
   static const String verifyOtp =
       "/api/auth/login/"; // Old OTP endpoint removed, mapped to login as a safe fallback
   static const String changePassword = "/api/auth/change-password/";
+  static const String deleteAccount = "/api/auth/delete-account/";
   static const String forgotPassword = "/api/auth/forgot-password/";
 
   //Dashboard

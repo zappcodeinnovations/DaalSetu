@@ -9,6 +9,7 @@ import '../../../theme/glass_widgets.dart';
 import '../../../theme/theme_controller.dart';
 import '../../../utils/app_preferences.dart';
 import '../../../services/realtime_notification_service.dart';
+import '../../../services/auth_services.dart';
 import '../../admin_catalog/view/admin_module_list_screen.dart';
 import '../../admin_catalog/view/admin_roles_screen.dart';
 import '../../seller/common/seller_ui.dart';
@@ -188,6 +189,15 @@ class SettingsScreen extends StatelessWidget {
                       );
                     },
                   ),
+                  _glassDivider(context),
+                  _buildTile(
+                    context,
+                    icon: Icons.delete_outline_rounded,
+                    title: "Delete Account",
+                    subtitle: "Deactivate your account and sign out",
+                    foregroundColor: theme.colorScheme.error,
+                    onTap: () => _showDeleteAccountDialog(context),
+                  ),
                 ],
               ),
             ),
@@ -345,6 +355,7 @@ class SettingsScreen extends StatelessWidget {
     required String title,
     String? subtitle,
     required VoidCallback onTap,
+    Color? foregroundColor,
   }) {
     final theme = Theme.of(context);
 
@@ -356,7 +367,7 @@ class SettingsScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              GlassIconBox(icon: icon),
+              GlassIconBox(icon: icon, color: foregroundColor),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -368,7 +379,7 @@ class SettingsScreen extends StatelessWidget {
                       style: GoogleFonts.inter(
                         fontWeight: FontWeight.w500,
                         fontSize: 15,
-                        color: theme.textTheme.bodyLarge?.color,
+                        color: foregroundColor ?? theme.textTheme.bodyLarge?.color,
                       ),
                     ),
                     if (subtitle != null) ...[
@@ -388,13 +399,119 @@ class SettingsScreen extends StatelessWidget {
               Icon(
                 IconlyLight.arrow_right_2,
                 size: 16,
-                color: theme.iconTheme.color,
+                color: foregroundColor ?? theme.iconTheme.color,
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _showDeleteAccountDialog(BuildContext context) async {
+    final passwordController = TextEditingController();
+    var isDeleting = false;
+    var obscurePassword = true;
+
+    await Get.dialog<void>(
+      StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          final theme = Theme.of(dialogContext);
+          return AlertDialog(
+            title: Text(
+              "Delete account?",
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Your account will be deactivated and you will be signed out. Existing business records will be preserved for audit purposes.",
+                  style: GoogleFonts.inter(height: 1.4),
+                ),
+                const SizedBox(height: 18),
+                TextField(
+                  controller: passwordController,
+                  obscureText: obscurePassword,
+                  enabled: !isDeleting,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: "Current password",
+                    prefixIcon: const Icon(Icons.lock_outline_rounded),
+                    suffixIcon: IconButton(
+                      onPressed: () => setDialogState(
+                        () => obscurePassword = !obscurePassword,
+                      ),
+                      icon: Icon(
+                        obscurePassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: isDeleting ? null : () => Get.back(),
+                child: const Text("Cancel"),
+              ),
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: theme.colorScheme.error,
+                  foregroundColor: theme.colorScheme.onError,
+                ),
+                onPressed: isDeleting
+                    ? null
+                    : () async {
+                        final password = passwordController.text;
+                        if (password.isEmpty) {
+                          AppSnackbar.showError(
+                            message: "Please enter your current password.",
+                          );
+                          return;
+                        }
+                        setDialogState(() => isDeleting = true);
+                        try {
+                          final message = await AuthService.deleteAccount(
+                            currentPassword: password,
+                          );
+                          Get.back();
+                          await AppPreferences.logout();
+                          if (Get.isRegistered<RealtimeNotificationService>()) {
+                            RealtimeNotificationService.to.clearOnLogout();
+                          }
+                          Get.offAllNamed(AppRoutes.login);
+                          AppSnackbar.showSuccess(message: message);
+                        } catch (error) {
+                          if (Get.isDialogOpen == true) {
+                            setDialogState(() => isDeleting = false);
+                          }
+                          AppSnackbar.showError(message: error.toString());
+                        }
+                      },
+                icon: isDeleting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.delete_outline_rounded, size: 18),
+                label: Text(isDeleting ? "Deleting..." : "Delete Account"),
+              ),
+            ],
+          );
+        },
+      ),
+      barrierDismissible: false,
+    );
+
+    passwordController.dispose();
   }
 
   Widget _buildSwitchTile(

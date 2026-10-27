@@ -75,6 +75,23 @@ class AuthService {
     }
   }
 
+  /// Soft deletes the currently authenticated account on the server.
+  static Future<String> deleteAccount({required String currentPassword}) async {
+    final refreshToken = await AppPreferences.getRefreshToken();
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.deleteAccount,
+      body: {
+        "current_password": currentPassword,
+        if (refreshToken != null && refreshToken.isNotEmpty)
+          "refresh": refreshToken,
+      },
+      requireAuth: true,
+      suppressErrorDialog: true,
+    );
+
+    return response["message"] ?? "Your account has been deleted successfully.";
+  }
+
   /// ============================================================
   /// FORGOT PASSWORD
   /// ============================================================
