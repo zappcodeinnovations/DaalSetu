@@ -767,7 +767,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
                     final message = await AuthService.deleteAccount(
                       currentPassword: password,
                     );
-                    if (!mounted) return;
+                    if (!context.mounted) return;
                     Navigator.of(context).pop();
                     await AppPreferences.logout();
                     if (Get.isRegistered<RealtimeNotificationService>()) {

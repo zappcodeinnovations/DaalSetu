@@ -1,5 +1,25 @@
 # Bug Log & Historical Fixes
 
+## Bug 40: Settings Screen Delete Account Dialog Red Assertion Screen On Cancel (`_dependents.isEmpty: is not true`)
+- **Symptom**: On the Settings Screen (`SettingsScreen`), when tapping the "Delete Account" button and then clicking "Cancel" in the confirmation dialog, the app crashed with a red screen of death asserting: `'package:flutter/src/widgets/framework.dart': Failed assertion: line 6281 pos 12: '_dependents.isEmpty': is not true.` instead of safely returning to the current Settings screen.
+- **Root Cause**:
+  1. `_showDeleteAccountDialog` in `lib/modules/settings/view/settings_page.dart` created a local `TextEditingController` and called `passwordController.dispose()` immediately following `await Get.dialog<void>(...)`.
+  2. When the user tapped "Cancel", `Get.back()` resolved the `Get.dialog` Future, immediately triggering `passwordController.dispose()`.
+  3. However, the modal route was still executing its ~200ms exit transition animation. The `TextField` remaining in the route tree attempted to rebuild/update/unfocus and accessed the already disposed `TextEditingController`, throwing `A TextEditingController was used after being disposed`.
+  4. This unhandled exception broke the element deactivation cycle in the `Overlay`. Because child elements were interrupted before detaching from `InheritedElement._dependents`, `InheritedElement.debugDeactivated()` on `Directionality`/`Theme` failed assertion `assert(_dependents.isEmpty)`.
+  5. Furthermore, `Get.dialog` / `Get.back()` in nested navigation contexts could interfere with route stacks, and `AlertDialog`'s column lacked `SingleChildScrollView` protection against keyboard layout overflow.
+- **Fix**:
+  1. Extracted the delete account confirmation dialog into a dedicated `_DeleteAccountDialog` `StatefulWidget`.
+  2. Managed `_passwordController` lifecycle properly inside `_DeleteAccountDialogState.initState` and `dispose()`, ensuring the controller is only disposed after the dialog element has completely unmounted.
+  3. Switched dialog presentation to standard `showDialog(context: context)` and scoped route popping to `Navigator.of(context).pop()`.
+  4. Wrapped dialog content in `SingleChildScrollView` to prevent keyboard overflow.
+- **Files Changed**:
+  - `lib/modules/settings/view/settings_page.dart`
+  - `test/delete_account_dialog_test.dart`
+- **Verification**: `test/delete_account_dialog_test.dart` passed (1/1); `test/seller_confirm_dialog_test.dart` passed (1/1); static analysis verified.
+
+---
+
 ## Bug 39: Admin User Creation Form Stale Data Retention After Submission
 - **Symptom**: In Admin User Management, after submitting and successfully creating a new user, the input form/modal retained previously entered details instead of clearing fields. Reopening the form to create another user displayed stale data from the previous entry.
 - **Root Cause**:

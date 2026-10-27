@@ -1,7 +1,7 @@
 # Current Task State
 
 ## Current Task
-- **Goal**: Rename Android application package and namespace from `com.zappcode.daalsetu` to `com.zappkode.daalsetu`, synchronize MethodChannels, verify signing config, and prepare for Google Play Store registration.
+- **Goal**: Fix Delete Account confirmation dialog assertion error (`_dependents.isEmpty: is not true`) when tapping Cancel on Settings screen.
 - **Status**: Completed & Verified.
 - **Output**:
   - Updated `namespace` and `applicationId` to `"com.zappkode.daalsetu"` in [build.gradle.kts](file:///d:/Flutter_project/DaalSetu/android/app/build.gradle.kts).
@@ -18,6 +18,10 @@
 ---
 
 ## Completed Work in Current Session
+- **Bug 40 Completed (Delete Account Dialog Assertion Error on Cancel)**:
+  - Fixed red error screen displaying `Failed assertion: line 6281 pos 12: '_dependents.isEmpty': is not true.` when cancelling the Delete Account dialog.
+  - Converted dialog to dedicated `_DeleteAccountDialog` `StatefulWidget` to safely handle `TextEditingController` disposal in `dispose()` and scoped `Navigator.of(context).pop()`.
+  - Added regression test `test/delete_account_dialog_test.dart` (verified passing).
 - **Bug 39 Completed (Admin User Creation Form Auto-Reset Parity)**:
   - Addressed form state retention where user creation inputs (Name, Mobile, Email, Branch, Role, Password, PAN, GST, Images, Tag) persisted across submissions.
   - Converted `AddUserScreen` to `StatefulWidget` with clean controller initialization, reset, and disposal lifecycles.
