@@ -59,7 +59,12 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     }
   }
 
-  bool get _isSuperAdmin => _userRole == 'super_admin';
+  bool get _isSuperAdmin {
+    final role = _userRole.isNotEmpty
+        ? _userRole
+        : controller.userRole.value.trim().toLowerCase();
+    return role == 'super_admin' || role == 'admin';
+  }
 
   @override
   Widget build(BuildContext context) {
