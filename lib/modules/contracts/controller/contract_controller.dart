@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../services/contract_services.dart';
 import '../model/contract_model.dart';
 import '../../../utils/app_snackbar.dart';
+import '../../../utils/app_preferences.dart';
 
 class ContractController extends GetxController {
   var isLoading = false.obs;
@@ -15,10 +16,25 @@ class ContractController extends GetxController {
   /// CONTRACT DETAIL
   Rxn<ContractDetailModel> contractDetail = Rxn<ContractDetailModel>();
 
+  /// DELIVERY CHALLAN STATUS FOR DETAIL VIEW
+  final hasDeliveryChallan = false.obs;
+  final deliveryChallanId = Rxn<int>();
+  final deliveryChallanNumber = ''.obs;
+  final isCheckingChallan = false.obs;
+  final userRole = ''.obs;
+
   @override
   void onInit() {
+    _loadUserRole();
     fetchContracts();
     super.onInit();
+  }
+
+  Future<void> _loadUserRole() async {
+    try {
+      final role = await AppPreferences.getRole();
+      userRole.value = role?.trim().toLowerCase() ?? '';
+    } catch (_) {}
   }
 
   /// ===============================
@@ -48,9 +64,13 @@ class ContractController extends GetxController {
     try {
       if (contractDetail.value == null || contractDetail.value!.id != contractId) {
         isLoading.value = true;
+        hasDeliveryChallan.value = false;
+        deliveryChallanId.value = null;
+        deliveryChallanNumber.value = '';
       }
       final result = await ContractService.getContractDetail(contractId);
       contractDetail.value = result;
+      await checkDeliveryChallanStatus(result);
     } catch (e) {
       debugPrint("⚠️ [ContractController] fetchContractDetail notice: $e");
       if (contractDetail.value == null) {
@@ -64,6 +84,53 @@ class ContractController extends GetxController {
       }
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  /// ===============================
+  /// CHECK DELIVERY CHALLAN STATUS
+  /// ===============================
+  Future<void> checkDeliveryChallanStatus(ContractDetailModel contract) async {
+    if (contract.hasDeliveryChallan) {
+      hasDeliveryChallan.value = true;
+      deliveryChallanId.value = contract.deliveryChallanId;
+      deliveryChallanNumber.value = contract.deliveryChallanNumber ?? '';
+      return;
+    }
+
+    if (userRole.value.isEmpty) {
+      await _loadUserRole();
+    }
+
+    final role = userRole.value;
+    final isAdmin = role.isEmpty || const {'admin', 'super_admin', 'sub_admin'}.contains(role);
+    if (!isAdmin) {
+      hasDeliveryChallan.value = false;
+      return;
+    }
+
+    try {
+      isCheckingChallan.value = true;
+      final challan = await ContractService.checkDeliveryChallanExists(
+        contractId: contract.id,
+        contractCode: contract.contractId,
+        interestId: contract.interestId,
+      );
+      if (challan != null) {
+        hasDeliveryChallan.value = true;
+        deliveryChallanId.value = challan['id'] is int
+            ? challan['id'] as int
+            : int.tryParse(challan['id']?.toString() ?? '');
+        deliveryChallanNumber.value = (challan['challan_number'] ?? '').toString();
+      } else {
+        hasDeliveryChallan.value = false;
+        deliveryChallanId.value = null;
+        deliveryChallanNumber.value = '';
+      }
+    } catch (e) {
+      debugPrint("⚠️ [ContractController] checkDeliveryChallanStatus error: $e");
+    } finally {
+      isCheckingChallan.value = false;
     }
   }
 

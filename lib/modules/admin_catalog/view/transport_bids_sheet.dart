@@ -101,10 +101,6 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
               : 'The transporter will be notified that this bid was rejected.',
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
           FilledButton(
             style: isAccept
                 ? null
@@ -113,6 +109,10 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
                   ),
             onPressed: () => Navigator.pop(dialogContext, true),
             child: Text(isAccept ? 'Accept' : 'Reject'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
           ),
         ],
       ),

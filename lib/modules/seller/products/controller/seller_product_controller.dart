@@ -224,7 +224,10 @@ class SellerProductController extends GetxController {
       final data = await SellerServices.getProducts(silent: silent);
       if (isClosed) return;
       products.assignAll(
-        data.map((e) => SellerProductModel.fromJson(e)).toList(),
+        data
+            .map((e) => SellerProductModel.fromJson(e))
+            .where((p) => !p.isBuyerOffer)
+            .toList(),
       );
     } catch (e) {
       if (!silent) SellerUi.error(e);
@@ -506,7 +509,35 @@ class SellerProductController extends GetxController {
     final result = await SellerUi.run(
       () => SellerServices.toggleOfferStatus(product.id, activate),
     );
-    if (result != null) fetchProducts();
+    if (result != null) {
+      // Optimistically update the item in the reactive list for instant UI feedback
+      final index = products.indexWhere((p) => p.id == product.id);
+      if (index != -1) {
+        final current = products[index];
+        products[index] = SellerProductModel(
+          id: current.id,
+          title: current.title,
+          description: current.description,
+          categoryId: current.categoryId,
+          categoryName: current.categoryName,
+          brandName: current.brandName,
+          amount: current.amount,
+          unit: current.unit,
+          status: activate ? 'active' : 'inactive',
+          isActive: activate,
+          isExpired: current.isExpired,
+          interestCount: current.interestCount,
+          bagCount: current.bagCount,
+          packingWeight: current.packingWeight,
+          loadingLocation: current.loadingLocation,
+          imageUrls: current.imageUrls,
+          videoUrls: current.videoUrls,
+          createdAt: current.createdAt,
+          isBuyerOffer: current.isBuyerOffer,
+        );
+      }
+      fetchProducts();
+    }
   }
 
   Future<void> deleteOffer(SellerProductModel product) async {

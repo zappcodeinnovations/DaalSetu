@@ -19,6 +19,7 @@ class SellerProductModel {
   final List<String> imageUrls;
   final List<String> videoUrls;
   final DateTime createdAt;
+  final bool isBuyerOffer;
 
   SellerProductModel({
     required this.id,
@@ -39,6 +40,7 @@ class SellerProductModel {
     required this.imageUrls,
     this.videoUrls = const [],
     required this.createdAt,
+    this.isBuyerOffer = false,
   });
 
   String? get primaryImageUrl => imageUrls.isNotEmpty ? imageUrls.first : null;
@@ -119,6 +121,14 @@ class SellerProductModel {
         }
       }
     }
+    final desc = (json['description'] ?? '').toString();
+    final lowerDesc = desc.toLowerCase();
+    final isBuyerOfferFlag = json['is_buyer_offer'] == true ||
+        json['is_buyer_requirement'] == true ||
+        json['offer_type']?.toString().toLowerCase() == 'buyer' ||
+        lowerDesc.startsWith('created from buyer request') ||
+        lowerDesc.contains('buyer request final confirmation');
+
     final primaryVid = _resolveUrl(
       json['primary_video_url']?.toString() ?? json['video_url']?.toString(),
     );
@@ -149,7 +159,11 @@ class SellerProductModel {
       status: json['status'] ?? "active",
       isActive: json['is_active'] is bool
           ? json['is_active'] as bool
-          : (json['status'] ?? "active") == "active",
+          : (json['is_active'] == 1 ||
+             json['is_active'] == '1' ||
+             json['is_active'] == 'true' ||
+             json['is_active'] == true ||
+             ((json['is_active'] == null) && (json['status'] ?? 'active') == 'active')),
       isExpired: json['is_expired'] == true || _expiryPassed(json['deal_expiry_datetime']),
       interestCount:
           int.tryParse(
@@ -169,6 +183,7 @@ class SellerProductModel {
       createdAt:
           DateTime.tryParse(json['created_at']?.toString() ?? '') ??
           DateTime.now(),
+      isBuyerOffer: isBuyerOfferFlag,
     );
   }
 

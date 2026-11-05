@@ -320,12 +320,14 @@ class ProductService {
   /// OFFER INTERESTS & APPROVAL
   /// ===============================
   static Future<List<OfferInterestModel>> getOfferInterests(
-    int productId,
-  ) async {
+    int productId, {
+    bool silent = false,
+  }) async {
     try {
       final response = await ApiClient.get(
         endpoint: "/api/offers/$productId/interests/",
         requireAuth: true,
+        suppressErrorDialog: silent,
       );
 
       List<dynamic> data;
@@ -380,12 +382,15 @@ class ProductService {
       },
     };
     try {
-      await ApiClient.post(
+      final response = await ApiClient.post(
         endpoint: ApiUrls.offerConfirmDeal(productId),
         requireAuth: true,
         body: body,
         suppressErrorDialog: true,
       );
+      if (response['success'] != true) {
+        throw Exception(response['message'] ?? 'Could not complete the deal decision.');
+      }
     } catch (e) {
       print("❌ confirmOfferDeal Error: $e");
       rethrow;

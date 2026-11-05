@@ -182,60 +182,74 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
           ),
         );
       }),
-      bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      final contract = controller.contractDetail.value;
-                      if (contract != null) _downloadContractPdf(context, contract);
-                    },
-                    icon: const Icon(Icons.picture_as_pdf_outlined, color: AppTheme.primaryGold),
-                    label: const Text(
-                      'Download PDF',
-                      style: TextStyle(color: AppTheme.primaryGold, fontWeight: FontWeight.bold),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppTheme.primaryGold, width: 1.5),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      bottomNavigationBar: Obx(() {
+        final contract = controller.contractDetail.value;
+        final role = controller.userRole.value;
+        final bool isAdmin = role.isEmpty || const {'admin', 'super_admin', 'sub_admin'}.contains(role);
+        final bool showCreateDC = isAdmin &&
+            contract != null &&
+            contract.status.toLowerCase() == 'active' &&
+            !controller.hasDeliveryChallan.value &&
+            !controller.isCheckingChallan.value;
+
+        return SafeArea(
+          minimum: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        if (contract != null) _downloadContractPdf(context, contract);
+                      },
+                      icon: const Icon(Icons.picture_as_pdf_outlined, color: AppTheme.primaryGold),
+                      label: const Text(
+                        'Download PDF',
+                        style: TextStyle(color: AppTheme.primaryGold, fontWeight: FontWeight.bold),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppTheme.primaryGold, width: 1.5),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: () {
-                      final contract = controller.contractDetail.value;
-                      if (contract != null) Get.to(() => ContractEditView(contract: contract));
-                    },
-                    icon: const Icon(Icons.edit_note_rounded),
-                    label: const Text('Edit contract'),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        if (contract != null) Get.to(() => ContractEditView(contract: contract));
+                      },
+                      icon: const Icon(Icons.edit_note_rounded),
+                      label: const Text('Edit contract'),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
                     ),
+                  ),
+                ],
+              ),
+              if (showCreateDC) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.tonalIcon(
+                    onPressed: () async {
+                      await Get.toNamed(AppRoutes.adminCreateDC, arguments: contractId);
+                      await controller.fetchContractDetail(contractId);
+                    },
+                    icon: const Icon(Icons.local_shipping_outlined),
+                    label: const Text('Create Delivery Challan'),
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.tonalIcon(
-                onPressed: () => Get.toNamed(AppRoutes.adminCreateDC, arguments: contractId),
-                icon: const Icon(Icons.local_shipping_outlined),
-                label: const Text('Create Delivery Challan'),
-              ),
-            ),
-          ],
-        ),
-      ),
+            ],
+          ),
+        );
+      }),
     );
   }
 

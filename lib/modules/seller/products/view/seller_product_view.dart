@@ -204,12 +204,82 @@ class SellerProductView extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 16),
-              // Product Info
+              const SizedBox(width: 14),
+              // Product Details & Actions
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: status.color.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              status.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: status.color,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+                        PopupMenuButton<String>(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: Icon(Icons.more_vert, color: theme.iconTheme.color),
+                          onSelected: (value) async {
+                            switch (value) {
+                              case 'edit':
+                                final updated = await Get.to(
+                                  () => EditOfferView(productId: product.id),
+                                );
+                                if (updated == true) controller.fetchProducts();
+                                break;
+                              case 'toggle':
+                                controller.toggleOffer(product);
+                                break;
+                              case 'history':
+                                Get.to(
+                                  () => OfferStockHistoryView(
+                                    productId: product.id,
+                                    title: product.title,
+                                  ),
+                                );
+                                break;
+                              case 'delete':
+                                controller.deleteOffer(product);
+                                break;
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(value: 'edit', child: Text("Edit Offer")),
+                            PopupMenuItem(
+                              value: 'toggle',
+                              child: Text(product.isActive ? "Deactivate" : "Activate"),
+                            ),
+                            const PopupMenuItem(
+                              value: 'history',
+                              child: Text("Stock History"),
+                            ),
+                            const PopupMenuItem(
+                              value: 'delete',
+                              child: Text("Delete", style: TextStyle(color: Colors.red)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
                     Text(
                       product.title,
                       style: theme.textTheme.titleMedium?.copyWith(
@@ -224,6 +294,8 @@ class SellerProductView extends StatelessWidget {
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: primaryColor,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -236,73 +308,31 @@ class SellerProductView extends StatelessWidget {
                   ],
                 ),
               ),
-              // Status Badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: status.color.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  status.label,
-                  style: TextStyle(
-                    color: status.color,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              PopupMenuButton<String>(
-                icon: Icon(Icons.more_vert, color: theme.iconTheme.color),
-                onSelected: (value) async {
-                  switch (value) {
-                    case 'edit':
-                      final updated = await Get.to(
-                        () => EditOfferView(productId: product.id),
-                      );
-                      if (updated == true) controller.fetchProducts();
-                      break;
-                    case 'toggle':
-                      controller.toggleOffer(product);
-                      break;
-                    case 'history':
-                      Get.to(
-                        () => OfferStockHistoryView(
-                          productId: product.id,
-                          title: product.title,
-                        ),
-                      );
-                      break;
-                    case 'delete':
-                      controller.deleteOffer(product);
-                      break;
-                  }
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'edit', child: Text("Edit Offer")),
-                  PopupMenuItem(
-                    value: 'toggle',
-                    child: Text(product.isActive ? "Deactivate" : "Activate"),
-                  ),
-                  const PopupMenuItem(
-                    value: 'history',
-                    child: Text("Stock History"),
-                  ),
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Text("Delete", style: TextStyle(color: Colors.red)),
-                  ),
-                ],
-              ),
             ],
           ),
           const Divider(height: 24),
+          if (product.loadingLocation.isNotEmpty) ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(IconlyLight.location, size: 14, color: theme.disabledColor),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    product.loadingLocation,
+                    style: theme.textTheme.bodySmall,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
           Wrap(
             spacing: 12,
             runSpacing: 8,
             children: [
-              if (product.loadingLocation.isNotEmpty)
-                _infoItem(IconlyLight.location, product.loadingLocation, theme),
               _infoItem(IconlyLight.work, "${product.bagCount} Bags", theme),
               _infoItem(
                 IconlyLight.info_square,
@@ -426,6 +456,9 @@ class SellerProductView extends StatelessWidget {
   }
 
   _ProductStatusPresentation _statusPresentation(SellerProductModel product) {
+    if (!product.isActive) {
+      return const _ProductStatusPresentation('INACTIVE', Colors.blueGrey);
+    }
     final normalized = product.status.trim().toLowerCase();
     if (product.isExpired || normalized.contains('expired')) {
       return const _ProductStatusPresentation(
@@ -439,11 +472,17 @@ class SellerProductView extends StatelessWidget {
     if (normalized == 'active' || normalized == 'available') {
       return const _ProductStatusPresentation('AVAILABLE', Colors.green);
     }
-    if (!product.isActive || normalized == 'inactive') {
+    if (normalized == 'sold') {
+      return const _ProductStatusPresentation('SOLD', Colors.redAccent);
+    }
+    if (normalized == 'sold_pending_confirmation' || normalized.contains('pending')) {
+      return const _ProductStatusPresentation('PENDING CONFIRMATION', Colors.orange);
+    }
+    if (normalized == 'inactive') {
       return const _ProductStatusPresentation('INACTIVE', Colors.blueGrey);
     }
     return _ProductStatusPresentation(
-      normalized.isEmpty ? 'STATUS UNKNOWN' : normalized.toUpperCase(),
+      normalized.isEmpty ? 'STATUS UNKNOWN' : normalized.replaceAll('_', ' ').toUpperCase(),
       Colors.orange,
     );
   }

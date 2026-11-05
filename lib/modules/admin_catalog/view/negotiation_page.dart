@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:daalsetu/modules/products/model/offer_interest_model.dart';
 import 'package:daalsetu/services/buyer_services.dart';
 import 'package:daalsetu/services/product_services.dart';
+import 'package:daalsetu/services/seller_services.dart';
 import 'package:daalsetu/theme/app_theme.dart';
 import 'package:daalsetu/utils/global_error_handler.dart';
 
@@ -42,6 +43,10 @@ class _NegotiationPageState extends State<NegotiationPage> {
   bool _threadRefreshInProgress = false;
   Map<String, dynamic>? _thread;
   Timer? _refreshTimer;
+  OfferInterestModel get _liveInterest =>
+      _thread == null ? widget.interest : OfferInterestModel.fromJson(_thread!);
+  bool get _canApprove => _liveInterest.canAcceptForRole(isAdmin: true);
+  bool get _canReject => _liveInterest.canRejectForRole(isAdmin: true);
 
   Color get bgColor => Get.theme.scaffoldBackgroundColor;
   Color get cardColor => Get.theme.cardColor;
@@ -90,6 +95,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
   }
 
   Future<void> _approveDeal() async {
+    if (_isLoading || !_canApprove) return;
     final result = await showDialog<ApproveDealResult>(
       context: context,
       builder: (ctx) => ApproveDealDialog(
@@ -101,20 +107,33 @@ class _NegotiationPageState extends State<NegotiationPage> {
     if (result != null && mounted) {
       setState(() => _isLoading = true);
       try {
-        await ProductService.confirmOfferDeal(
-          productId: int.parse(widget.offerId),
-          interestId: widget.interest.interestId,
-          decision: "approve",
-          superadminRemark: result.remark,
-          subAdminId: result.subAdminId,
-        );
+        if (_liveInterest.status == 'interested') {
+          final response = await SellerServices.approveBuyerInterest(
+            int.parse(widget.offerId),
+            widget.interest.interestId,
+            remark: result.remark,
+            subAdminId: result.subAdminId,
+          );
+          if (response['success'] != true)
+            throw Exception(
+              response['message'] ?? 'Could not accept interest.',
+            );
+        } else {
+          await ProductService.confirmOfferDeal(
+            productId: int.parse(widget.offerId),
+            interestId: widget.interest.interestId,
+            decision: "approve",
+            superadminRemark: result.remark,
+            subAdminId: result.subAdminId,
+          );
+        }
         AppSnackbar.snackbar(
           'Success',
           'Deal approved successfully',
           backgroundColor: Colors.green,
           colorText: Colors.white,
         );
-        Get.back(result: true); // Pop back to close negotiation screen
+        if (mounted) Navigator.of(context).pop(true);
       } catch (e) {
         setState(() => _isLoading = false);
         final message = e.toString().replaceFirst('Exception: ', '');
@@ -129,6 +148,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
   }
 
   Future<void> _rejectDeal() async {
+    if (_isLoading || !_canReject) return;
     final remarkCtrl = TextEditingController();
     String selectedReason = 'Price too low';
     final reasons = [
@@ -259,19 +279,31 @@ class _NegotiationPageState extends State<NegotiationPage> {
     if (result == true && mounted) {
       setState(() => _isLoading = true);
       try {
-        await ProductService.confirmOfferDeal(
-          productId: int.parse(widget.offerId),
-          interestId: widget.interest.interestId,
-          decision: "reject",
-          superadminRemark: '$selectedReason. ${remarkCtrl.text}'.trim(),
-        );
+        if (_liveInterest.status == 'interested') {
+          final response = await SellerServices.rejectBuyerInterest(
+            int.parse(widget.offerId),
+            widget.interest.interestId,
+            remark: '$selectedReason. ${remarkCtrl.text}'.trim(),
+          );
+          if (response['success'] != true)
+            throw Exception(
+              response['message'] ?? 'Could not reject interest.',
+            );
+        } else {
+          await ProductService.confirmOfferDeal(
+            productId: int.parse(widget.offerId),
+            interestId: widget.interest.interestId,
+            decision: "reject",
+            superadminRemark: '$selectedReason. ${remarkCtrl.text}'.trim(),
+          );
+        }
         AppSnackbar.snackbar(
           'Rejected',
           'Deal rejected successfully',
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
-        Get.back(result: true); // Pop back to close negotiation screen
+        if (mounted) Navigator.of(context).pop(true);
       } catch (e) {
         setState(() => _isLoading = false);
         AppSnackbar.snackbar(
@@ -354,7 +386,9 @@ class _NegotiationPageState extends State<NegotiationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
+      appBar: AppBar(
+        leading: const AppBarLeading(),
+        leadingWidth: AppBarLeading.widthFor(context),
         titleSpacing: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -403,7 +437,10 @@ class _NegotiationPageState extends State<NegotiationPage> {
             ),
           ),
         ),
-        _buildBottomForm(),
+        if (!_liveInterest.isFinal &&
+            (_thread?['can_reply'] == true ||
+                (_thread == null && widget.interest.canSellerAction)))
+          _buildBottomForm(),
       ],
     );
   }
@@ -552,74 +589,80 @@ class _NegotiationPageState extends State<NegotiationPage> {
             ),
           ),
           Divider(height: 1, color: textLight.withValues(alpha: 0.15)),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Seller Action",
-                  style: TextStyle(
-                    color: textDark.withValues(alpha: 0.85),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-                if (_dealExpired) ...[
-                  const SizedBox(height: 8),
+          if (_canApprove || _canReject)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    _expiredReason,
-                    style: TextStyle(color: Colors.orange.shade800, fontSize: 12),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: FilledButton.icon(
-                        icon: const Icon(Icons.check, size: 16),
-                        label: const Text(
-                          "Accept",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppTheme.successGreen,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        // Expired offers cannot be accepted until reactivated.
-                        onPressed: _dealExpired ? null : _approveDeal,
-                      ),
+                    "Seller Action",
+                    style: TextStyle(
+                      color: textDark.withValues(alpha: 0.85),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.close, size: 16),
-                        label: const Text(
-                          "Reject",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppTheme.errorRed,
-                          side: const BorderSide(
-                            color: AppTheme.errorRed,
-                            width: 1.5,
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onPressed: _rejectDeal,
+                  ),
+                  if (_dealExpired) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      _expiredReason,
+                      style: TextStyle(
+                        color: Colors.orange.shade800,
+                        fontSize: 12,
                       ),
                     ),
                   ],
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      if (_canApprove)
+                        Expanded(
+                          child: FilledButton.icon(
+                            icon: const Icon(Icons.check, size: 16),
+                            label: const Text(
+                              "Accept",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppTheme.successGreen,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            // Expired offers cannot be accepted until reactivated.
+                            onPressed: _dealExpired ? null : _approveDeal,
+                          ),
+                        ),
+                      if (_canApprove && _canReject) const SizedBox(width: 12),
+                      if (_canReject)
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.close, size: 16),
+                            label: const Text(
+                              "Reject",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppTheme.errorRed,
+                              side: const BorderSide(
+                                color: AppTheme.errorRed,
+                                width: 1.5,
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            onPressed: _rejectDeal,
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -983,7 +1026,9 @@ class _NegotiationPageState extends State<NegotiationPage> {
     if (bags == null || bags <= 0) return '';
     final bagsText = NumberFormat('#,##0', 'en_IN').format(bags);
     if (packing == null || packing <= 0) return 'Bags: $bagsText';
-    final kg = packing == packing.roundToDouble() ? packing.toStringAsFixed(0) : packing.toString();
+    final kg = packing == packing.roundToDouble()
+        ? packing.toStringAsFixed(0)
+        : packing.toString();
     return 'Bags: $bagsText × $kg kg';
   }
 
@@ -1005,9 +1050,15 @@ class _NegotiationPageState extends State<NegotiationPage> {
         : textVal(msg['timestamp']);
     final formattedTime = _formatTimestamp(timeRaw);
 
-    final bool isProposal = price.isNotEmpty || quantity.isNotEmpty || bags.isNotEmpty;
+    final bool isProposal =
+        price.isNotEmpty || quantity.isNotEmpty || bags.isNotEmpty;
     if (!isProposal) {
-      return _buildStatusBanner(msg, status: status, action: action, time: formattedTime);
+      return _buildStatusBanner(
+        msg,
+        status: status,
+        action: action,
+        time: formattedTime,
+      );
     }
 
     final cardBg = isAdminOrSeller
@@ -1255,7 +1306,10 @@ class _NegotiationPageState extends State<NegotiationPage> {
           child: Text(
             _expiredReason,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.orange.shade900, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              color: Colors.orange.shade900,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       );

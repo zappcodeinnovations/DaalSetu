@@ -611,7 +611,7 @@ class SellerServices {
     bool isActive,
   ) async {
     final response = await ApiClient.patch(
-      endpoint: ApiUrls.offerToggle(productId),
+      endpoint: "${ApiUrls.offerToggle(productId)}?is_active=$isActive",
       data: {"is_active": isActive},
       requireAuth: true,
     );

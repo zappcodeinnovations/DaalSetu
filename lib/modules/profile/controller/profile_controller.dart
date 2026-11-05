@@ -1,4 +1,5 @@
 import '../../../services/profile_services.dart';
+import '../../../services/buyer_services.dart';
 import '../../../comman/api_url.dart';
 import 'package:get/get.dart';
 import '../model/profile_model.dart';
@@ -35,9 +36,29 @@ class ProfileController extends GetxController {
   }
 
   var isUpdating = false.obs;
+  final isSubmittingKycApproval = false.obs;
+
+  Future<bool> requestKycApproval() async {
+    final user = profile.value;
+    if (user == null || !user.canRequestKycApproval || isSubmittingKycApproval.value) return false;
+    isSubmittingKycApproval.value = true;
+    try {
+      final response = await BuyerServices.requestKycApproval();
+      if (response['success'] != true) {
+        throw Exception(response['message'] ?? 'Unable to submit KYC for approval.');
+      }
+      if (!isClosed && profile.value?.id == user.id) {
+        profile.value = profile.value!.copyWith(hasPendingKycRequest: true);
+        return true;
+      }
+      return false;
+    } finally {
+      if (!isClosed) isSubmittingKycApproval.value = false;
+    }
+  }
 
   Future<void> fetchProfile({bool showError = false, bool silent = false}) async {
-    if (_fetchingProfile || isUpdating.value || isClosed) return;
+    if (_fetchingProfile || isUpdating.value || isSubmittingKycApproval.value || isClosed) return;
     _fetchingProfile = true;
     try {
       if (!silent) isLoading.value = true;

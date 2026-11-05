@@ -1,5 +1,28 @@
 # Bug Log & Historical Fixes
 
+## Bug 41: Seller Products UI Overflow by 154px & Buyer Offer Bridge Items Appearing in "My Products"
+- **Symptom**:
+  1. On the Seller "My Products" screen (`SellerProductView`), product cards with long route or location text (e.g., `nagpur, Nagpur, Maharashtra, India -> test address, Nagpur`) crashed with Flutter's yellow/black stripe warning: `RIGHT OVERFLOWED BY 154 PIXELS`.
+  2. Finalized buyer offers (bridge products automatically generated when a buyer's offer was accepted) were appearing in the seller's catalog list under "My Products".
+- **Root Cause**:
+  1. In `lib/modules/seller/products/view/seller_product_view.dart`, the `Wrap` widget contained `_infoItem(IconlyLight.location, product.loadingLocation, theme)`, which rendered an unconstrained `Row(mainAxisSize: MainAxisSize.min)`. Because `Wrap` does not constrain a single child row along the main axis, long addresses pushed the width beyond the mobile viewport, overflowing by 154px.
+  2. When a buyer offer was finalized, `_create_buyer_offer_contract_bridge` created a bridge `Product` with `seller=seller` and `description='Created from buyer request final confirmation.'`. `SellerProductController` called `/api/products/` without excluding these bridge items, causing them to be mixed into the seller's active product catalog.
+- **Fix**:
+  1. Extracted `loadingLocation` into its own dedicated `Row` with `Expanded(child: Text(..., maxLines: 2, overflow: TextOverflow.ellipsis))` directly above the `Wrap` containing bag count and packing weight.
+  2. Added `final bool isBuyerOffer;` to `SellerProductModel` with detection in `fromJson` (checking `is_buyer_offer`, `is_buyer_requirement`, or description containing `buyer request`).
+  3. Updated `SellerProductController.fetchProducts` to filter out `isBuyerOffer` items before assigning them to `products`.
+  4. Updated backend `ProductViewSet.get_queryset()` in `P:/Daal_Broker/Api/views.py` to exclude `description__startswith='Created from buyer request'` for sellers, and updated `ProductSerializer.to_representation()` in `P:/Daal_Broker/Api/serializers.py` to include `is_buyer_offer`.
+- **Files Changed**:
+  - `lib/modules/seller/products/view/seller_product_view.dart`
+  - `lib/modules/seller/products/model/seller_product_model.dart`
+  - `lib/modules/seller/products/controller/seller_product_controller.dart`
+  - `P:/Daal_Broker/Api/views.py`
+  - `P:/Daal_Broker/Api/serializers.py`
+  - `test/seller_offer_card_layout_and_status_test.dart`
+- **Verification**: `test/seller_offer_card_layout_and_status_test.dart` passed (5/5 tests passing); `test/buyer_contract_details_offer_id_test.dart` passed (3/3); `test/seller_confirm_dialog_test.dart` passed (1/1).
+
+---
+
 ## Bug 40: Settings Screen Delete Account Dialog Red Assertion Screen On Cancel (`_dependents.isEmpty: is not true`)
 - **Symptom**: On the Settings Screen (`SettingsScreen`), when tapping the "Delete Account" button and then clicking "Cancel" in the confirmation dialog, the app crashed with a red screen of death asserting: `'package:flutter/src/widgets/framework.dart': Failed assertion: line 6281 pos 12: '_dependents.isEmpty': is not true.` instead of safely returning to the current Settings screen.
 - **Root Cause**:

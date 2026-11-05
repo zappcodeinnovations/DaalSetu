@@ -13,7 +13,7 @@ class MockContractController extends ContractController {
   }
 
   @override
-  Future<void> fetchContracts() async {}
+  Future<void> fetchContracts({bool silent = false}) async {}
 
   @override
   Future<void> fetchContractDetail(int contractId) async {}

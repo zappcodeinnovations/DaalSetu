@@ -1,23 +1,24 @@
 # Current Task State
 
 ## Current Task
-- **Goal**: Fix Delete Account confirmation dialog assertion error (`_dependents.isEmpty: is not true`) when tapping Cancel on Settings screen.
+- **Goal**: Fix Seller Product Card 154px horizontal overflow on long location strings and exclude Buyer Offers from "My Products".
 - **Status**: Completed & Verified.
 - **Output**:
-  - Updated `namespace` and `applicationId` to `"com.zappkode.daalsetu"` in [build.gradle.kts](file:///d:/Flutter_project/DaalSetu/android/app/build.gradle.kts).
-  - Relocated [MainActivity.kt](file:///d:/Flutter_project/DaalSetu/android/app/src/main/kotlin/com/zappkode/daalsetu/MainActivity.kt) to `com/zappkode/daalsetu/` and updated package declaration and downloads MethodChannel.
-  - Removed obsolete `android/app/src/main/kotlin/com/zappcode/` folder.
-  - Synchronized Dart MethodChannel to `'com.zappkode.daalsetu/downloads'` in [downloads_service.dart](file:///d:/Flutter_project/DaalSetu/lib/modules/downloads/service/downloads_service.dart) and [admin_challan_pdf_service.dart](file:///d:/Flutter_project/DaalSetu/lib/modules/admin_dc/service/admin_challan_pdf_service.dart).
-  - Validated static analysis (`flutter analyze` passed with 0 issues).
-  - Verified automated regression suite (`flutter test test/downloads_feature_test.dart test/buyer_challan_pdf_test.dart` passed 6/6 tests).
-  - Generated fresh, production-ready `upload-keystore.jks` in `android/app/upload-keystore.jks` using 2048-bit RSA with 10,000 days validity matching `key.properties`.
-  - Verified keystore via `keytool -list` (Owner: `CN=DaalSetu, OU=DaalSetu, O=ZappKode, L=Mumbai, ST=Maharashtra, C=IN`, Alias: `upload`).
-  - Confirmed `.gitignore` keeps `upload-keystore.jks` and `key.properties` protected from git commits.
-- **Evidence**: `keytool -list` confirmed alias `upload` with SHA-1/SHA-256 fingerprints, `flutter analyze` 0 issues, `flutter test` 6/6 tests passed.
+  - Extracted `loadingLocation` into its own row with `Expanded` and `TextOverflow.ellipsis` in `SellerProductView` to eliminate horizontal overflow.
+  - Added `isBuyerOffer` detection in `SellerProductModel` to identify bridge products generated from buyer requests.
+  - Filtered out `isBuyerOffer` items in `SellerProductController.fetchProducts()`.
+  - Excluded buyer request bridge products for sellers in backend `ProductViewSet.get_queryset()` in `P:/Daal_Broker/Api/views.py`.
+  - Added `is_buyer_offer` serialization flag in `P:/Daal_Broker/Api/serializers.py`.
+  - Added automated tests in `test/seller_offer_card_layout_and_status_test.dart` (5/5 passed).
+- **Evidence**: All 5 tests passed in `test/seller_offer_card_layout_and_status_test.dart`, regression tests passed in `test/buyer_contract_details_offer_id_test.dart` and `test/seller_confirm_dialog_test.dart`.
 
 ---
 
 ## Completed Work in Current Session
+- **Bug 41 Completed (Seller Products 154px Overflow & Buyer Offer Mixing)**:
+  - Fixed `RIGHT OVERFLOWED BY 154 PIXELS` on product cards by decoupling location into an `Expanded` row with 2-line ellipsis.
+  - Excluded buyer request bridge products from the Seller's "My Products" screen on both frontend and backend.
+  - Verified with 5 automated widget and model unit tests.
 - **Bug 40 Completed (Delete Account Dialog Assertion Error on Cancel)**:
   - Fixed red error screen displaying `Failed assertion: line 6281 pos 12: '_dependents.isEmpty': is not true.` when cancelling the Delete Account dialog.
   - Converted dialog to dedicated `_DeleteAccountDialog` `StatefulWidget` to safely handle `TextEditingController` disposal in `dispose()` and scoped `Navigator.of(context).pop()`.

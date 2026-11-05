@@ -483,20 +483,22 @@ class _DynamicVideoPreviewDialogState extends State<DynamicVideoPreviewDialog> {
       content = Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: calculatedWidth,
-            height: calculatedHeight,
-            decoration: BoxDecoration(
-              color: Colors.black,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: FittedBox(
-              fit: BoxFit.contain,
-              child: SizedBox(
-                width: videoSize.width > 0 ? videoSize.width : 16,
-                height: videoSize.height > 0 ? videoSize.height : 9,
-                child: VideoPlayer(controller),
+          Flexible(
+            child: Container(
+              width: calculatedWidth,
+              height: calculatedHeight,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: FittedBox(
+                fit: BoxFit.contain,
+                child: SizedBox(
+                  width: videoSize.width > 0 ? videoSize.width : 16,
+                  height: videoSize.height > 0 ? videoSize.height : 9,
+                  child: VideoPlayer(controller),
+                ),
               ),
             ),
           ),
@@ -567,7 +569,7 @@ class _DynamicVideoPreviewDialogState extends State<DynamicVideoPreviewDialog> {
               ],
             ),
             const SizedBox(height: 12),
-            content,
+            Flexible(child: content),
             const SizedBox(height: 8),
             Align(
               alignment: Alignment.centerRight,

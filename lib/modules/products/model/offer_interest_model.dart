@@ -10,6 +10,7 @@ class OfferInterestModel {
   final String? status;
   final String? createdAt;
   final bool canSellerAction;
+  final bool canSellerReject;
   final bool canOpenNegotiation;
   final bool canAdminFinalAction;
   final bool isReadOnly;
@@ -34,11 +35,45 @@ class OfferInterestModel {
     this.status,
     this.createdAt,
     this.canSellerAction = false,
+    this.canSellerReject = false,
     this.canOpenNegotiation = false,
     this.canAdminFinalAction = false,
     this.isReadOnly = false,
     String? transactionId,
   }) : _transactionId = transactionId;
+
+  static bool isFinalStatus(String? status) => const {
+    'deal_confirmed',
+    'confirmed',
+    'approved',
+    'completed',
+    'rejected',
+    'cancelled',
+  }.contains(status?.trim().toLowerCase());
+
+  bool get isFinal => isFinalStatus(status);
+
+  bool canAcceptForRole({required bool isAdmin}) =>
+      !isFinal && (canSellerAction || (isAdmin && canAdminFinalAction));
+
+  bool canRejectForRole({required bool isAdmin}) =>
+      !isFinal &&
+      (canSellerReject || canSellerAction || (isAdmin && canAdminFinalAction));
+
+  OfferInterestModel withStatus(String value) => OfferInterestModel(
+    id: id,
+    buyerName: buyerName,
+    buyerMobile: buyerMobile,
+    offerPrice: offerPrice,
+    requiredQuantity: requiredQuantity,
+    deliveryDate: deliveryDate,
+    loadingTo: loadingTo,
+    condition: condition,
+    status: value,
+    createdAt: createdAt,
+    transactionId: transactionId,
+    isReadOnly: true,
+  );
 
   factory OfferInterestModel.fromJson(Map<String, dynamic> json) {
     bool flag(String key, {bool fallback = false}) {
@@ -99,6 +134,7 @@ class OfferInterestModel {
         }.contains(json['status']?.toString().toLowerCase()),
       ),
       canAdminFinalAction: flag('can_admin_final_action'),
+      canSellerReject: flag('can_seller_reject'),
       isReadOnly: flag(
         'is_read_only',
         fallback: const {

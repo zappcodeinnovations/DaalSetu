@@ -137,6 +137,7 @@ class SellerUi {
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
         elevation: 0,
+        minimumSize: const Size(96, 44),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
@@ -151,7 +152,15 @@ class SellerUi {
       ),
     );
 
-    final cancelButton = TextButton(
+    final cancelButton = OutlinedButton(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Get.theme.colorScheme.onSurface,
+        side: BorderSide(color: Get.theme.colorScheme.outline),
+        minimumSize: const Size(96, 44),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
       onPressed: () => Get.back(result: false),
       child: Text(cancelText),
     );
@@ -166,6 +175,7 @@ class SellerUi {
           style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         content: Text(message),
+        actionsOverflowDirection: VerticalDirection.down,
         actions: primaryFirst
             ? [confirmButton, cancelButton]
             : [cancelButton, confirmButton],

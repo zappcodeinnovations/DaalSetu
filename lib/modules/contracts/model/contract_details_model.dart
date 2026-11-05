@@ -58,6 +58,9 @@ class ContractDetailModel {
   final String? sellerCompany;
   final String? buyerMobile;
   final String? sellerMobile;
+  final bool hasDeliveryChallan;
+  final int? deliveryChallanId;
+  final String? deliveryChallanNumber;
 
   ContractDetailModel({
     required this.id,
@@ -116,6 +119,9 @@ class ContractDetailModel {
     this.sellerCompany,
     this.buyerMobile,
     this.sellerMobile,
+    this.hasDeliveryChallan = false,
+    this.deliveryChallanId,
+    this.deliveryChallanNumber,
   });
 
   factory ContractDetailModel.fromJson(Map<String, dynamic> json) {
@@ -230,6 +236,22 @@ class ContractDetailModel {
       sellerCompany: _extractField(json, 'seller', ['company', 'company_name', 'business_name', 'org_name']),
       buyerMobile: _extractField(json, 'buyer', ['mobile', 'phone', 'contact', 'mobile_number', 'phone_number', 'username', 'login_username']),
       sellerMobile: _extractField(json, 'seller', ['mobile', 'phone', 'contact', 'mobile_number', 'phone_number', 'username', 'login_username']),
+      hasDeliveryChallan: json['has_delivery_challan'] == true ||
+          json['has_challan'] == true ||
+          number('delivery_challan_id') != null ||
+          number('challan_id') != null ||
+          (json['delivery_challan'] is Map && json['delivery_challan']['id'] != null) ||
+          text('delivery_challan_number').isNotEmpty ||
+          text('challan_number').isNotEmpty ||
+          (json['delivery_challan'] is Map && (json['delivery_challan']['challan_number']?.toString().isNotEmpty ?? false)),
+      deliveryChallanId: number('delivery_challan_id') ??
+          number('challan_id') ??
+          (json['delivery_challan'] is Map ? int.tryParse(json['delivery_challan']['id']?.toString() ?? '') : null),
+      deliveryChallanNumber: text('delivery_challan_number').isNotEmpty
+          ? text('delivery_challan_number')
+          : (text('challan_number').isNotEmpty
+              ? text('challan_number')
+              : (json['delivery_challan'] is Map ? json['delivery_challan']['challan_number']?.toString() : null)),
     );
   }
 
@@ -308,6 +330,9 @@ class ContractDetailModel {
       bidAmount: c.bidAmount,
       buyerMobile: c.buyerName,
       sellerMobile: c.sellerName,
+      hasDeliveryChallan: false,
+      deliveryChallanId: null,
+      deliveryChallanNumber: null,
     );
   }
 }

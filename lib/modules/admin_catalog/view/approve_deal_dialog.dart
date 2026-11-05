@@ -261,10 +261,6 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
       ),
       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, null),
-          child: Text("Cancel", style: TextStyle(color: textLight)),
-        ),
         FilledButton(
           onPressed: () {
             if (!_formKey.currentState!.validate()) return;
@@ -290,6 +286,10 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
           ),
           child: const Text("Accept Interest", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, null),
+          child: Text("Cancel", style: TextStyle(color: textLight)),
         ),
       ],
     );
