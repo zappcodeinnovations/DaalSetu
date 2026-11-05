@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -45,6 +46,8 @@ class _BuyerRequestManagementViewState
   String _error = '';
   String _status = 'all';
   String _branch = 'all';
+  bool _autoRefreshing = false;
+  int _loadRevision = 0;
   DateTimeRange? _dateRange;
 
   bool get _isRequirement => widget.mode == BuyerRequestMode.requirements;
@@ -120,6 +123,7 @@ class _BuyerRequestManagementViewState
 
   Future<void> _load({bool reset = true}) async {
     if (!reset && (!_isRequirement || _loadingMore || !_hasNextPage)) return;
+    _loadRevision++;
     final requestedPage = reset ? 1 : _currentPage + 1;
     setState(() {
       if (reset) {
@@ -197,6 +201,61 @@ class _BuyerRequestManagementViewState
           _loadingMore = false;
         });
       }
+    }
+  }
+
+  Future<void> _refreshVisibleRows() async {
+    if (_loading || _loadingMore || _autoRefreshing || !mounted) return;
+    _autoRefreshing = true;
+    final revision = _loadRevision;
+    final search = _searchController.text;
+    final status = _status;
+    final branch = _branch;
+    final dateRange = _dateRange;
+    final pages = _isRequirement ? _currentPage : 1;
+    final refreshed = <Map<String, dynamic>>[];
+    final seen = <String>{};
+    var hasNext = false;
+    var lastPage = 1;
+    try {
+      for (var page = 1; page <= pages; page++) {
+        final response = _isRequirement
+            ? await BuyerServices.getBuyerRequirements(
+                tab: 'my', status: status, search: search, page: page,
+                silent: true,
+              )
+            : await BuyerServices.getBuyerOfferRequests(
+                tab: 'my', status: status, search: search, branch: branch,
+                dateFrom: dateRange == null ? '' : _dateFormat.format(dateRange.start),
+                dateTo: dateRange == null ? '' : _dateFormat.format(dateRange.end),
+                silent: true,
+              );
+        if (!mounted || revision != _loadRevision) return;
+        final raw = response[_isRequirement ? 'results' : 'buyer_offers'];
+        if (raw is List) {
+          for (final row in raw.whereType<Map>()) {
+            if (seen.add((row['id'] ?? row['rfq_id']).toString())) {
+              refreshed.add(Map<String, dynamic>.from(row));
+            }
+          }
+        }
+        final pagination = response['pagination'];
+        hasNext = _isRequirement && pagination is Map && pagination['has_next'] == true;
+        lastPage = page;
+        if (!hasNext) break;
+      }
+      if (mounted && revision == _loadRevision &&
+          search == _searchController.text && status == _status &&
+          branch == _branch && dateRange == _dateRange) {
+        setState(() {
+          _rows..clear()..addAll(refreshed);
+          _error = '';
+          _currentPage = lastPage;
+          _hasNextPage = hasNext;
+        });
+      }
+    } finally {
+      _autoRefreshing = false;
     }
   }
 
@@ -540,6 +599,14 @@ class _BuyerRequestManagementViewState
 
   @override
   Widget build(BuildContext context) {
+    return PageAutoRefresh(
+      onRefresh: _refreshVisibleRows,
+      tabIndex: widget.wrapInScaffold == false && _isRequirement ? 1 : null,
+      child: _buildPageContent(context),
+    );
+  }
+
+  Widget _buildPageContent(BuildContext context) {
     final theme = Theme.of(context);
     final heading = _isRequirement ? 'My Requirements' : 'Negotiations';
     final hasParentScaffold = Scaffold.maybeOf(context) != null;

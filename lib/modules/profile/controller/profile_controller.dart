@@ -9,6 +9,7 @@ class ProfileController extends GetxController {
   var profile = Rxn<ProfileModel>();
   var loadError = ''.obs;
   var imageRevision = DateTime.now().millisecondsSinceEpoch.obs;
+  bool _fetchingProfile = false;
 
   String profileImageUrl(String? value) {
     final raw = (value ?? '').trim();
@@ -35,21 +36,26 @@ class ProfileController extends GetxController {
 
   var isUpdating = false.obs;
 
-  Future<void> fetchProfile({bool showError = false}) async {
+  Future<void> fetchProfile({bool showError = false, bool silent = false}) async {
+    if (_fetchingProfile || isUpdating.value || isClosed) return;
+    _fetchingProfile = true;
     try {
-      isLoading.value = true;
-      loadError.value = '';
+      if (!silent) isLoading.value = true;
 
       final data = await ProfileService.getProfile(silent: !showError);
+      if (isClosed) return;
       profile.value = data;
-      imageRevision.value = DateTime.now().millisecondsSinceEpoch;
+      loadError.value = '';
+      if (!silent) imageRevision.value = DateTime.now().millisecondsSinceEpoch;
     } catch (e) {
+      if (silent || isClosed) return;
       loadError.value = e.toString();
       if (showError) {
         AppSnackbar.snackbar("Unable to refresh profile", "Please try again.");
       }
     } finally {
-      isLoading.value = false;
+      _fetchingProfile = false;
+      if (!isClosed && !silent) isLoading.value = false;
     }
   }
 

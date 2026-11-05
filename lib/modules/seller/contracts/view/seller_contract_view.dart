@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
@@ -11,7 +12,12 @@ class SellerContractView extends StatelessWidget {
   static const Color primaryColor = Color(0xFFFFB300);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PageAutoRefresh(
+    onRefresh: () => Get.find<SellerContractController>().fetchContracts(silent: true),
+    child: _buildPageContent(context),
+  );
+
+  Widget _buildPageContent(BuildContext context) {
     final controller = Get.put(SellerContractController());
     final theme = Theme.of(context);
 

@@ -6,6 +6,7 @@ import 'services/realtime_notification_service.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 import 'widgets/realtime_notification_banner_overlay.dart';
+import 'widgets/page_auto_refresh.dart';
 
 class AgroBrokerApp extends StatelessWidget {
   const AgroBrokerApp({super.key});
@@ -27,6 +28,7 @@ class AgroBrokerApp extends StatelessWidget {
 
         initialRoute: AppRoutes.splash,
         getPages: AppPages.routes,
+        navigatorObservers: [pageRefreshRouteObserver],
       builder: (context, child) {
         final theme = Theme.of(context);
         final isDark = theme.brightness == Brightness.dark;

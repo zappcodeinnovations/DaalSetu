@@ -143,11 +143,12 @@ class ProductService {
   /// ===============================
   /// GET PRODUCTS
   /// ===============================
-  static Future<List<ProductModel>> getProducts() async {
+  static Future<List<ProductModel>> getProducts({bool silent = false}) async {
     try {
       final dynamic response = await ApiClient.get(
         endpoint: ApiUrls.products,
         requireAuth: true,
+        suppressErrorDialog: silent,
       );
 
       print("📥 PRODUCT API RESPONSE: $response");

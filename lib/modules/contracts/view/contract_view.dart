@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
@@ -71,7 +72,12 @@ class _ContractsScreenState extends State<ContractsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PageAutoRefresh(
+    onRefresh: () => controller.fetchContracts(silent: true),
+    child: _buildPageContent(context),
+  );
+
+  Widget _buildPageContent(BuildContext context) {
     return PopScope(
       canPop: !isSelectionMode.value,
       onPopInvokedWithResult: (didPop, _) {

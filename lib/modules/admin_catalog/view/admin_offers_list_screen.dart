@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:daalsetu/modules/products/model/product_model.dart';
@@ -29,7 +30,12 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
   Color get textMuted => isDark ? AppTheme.textMuted : AppTheme.textMutedLight;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PageAutoRefresh(
+    onRefresh: () => controller.fetchOffers(silent: true),
+    child: _buildPageContent(context),
+  );
+
+  Widget _buildPageContent(BuildContext context) {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 

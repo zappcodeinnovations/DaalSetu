@@ -9,10 +9,11 @@ class ContractService {
   /// ===============================
   /// FETCH CONTRACT LIST
   /// ===============================
-  static Future<List<ContractModel>> fetchContracts() async {
+  static Future<List<ContractModel>> fetchContracts({bool silent = false}) async {
     final response = await ApiClient.get(
       endpoint: ApiUrls.contracts,
       requireAuth: true,
+      suppressErrorDialog: silent,
     );
 
     debugPrint("=== CONTRACT API RESPONSE ===");

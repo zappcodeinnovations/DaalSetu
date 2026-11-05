@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -434,7 +435,13 @@ class BuyerMyInterestsView extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PageAutoRefresh(
+    onRefresh: () => Get.find<BuyerOffersController>(tag: 'interests').fetchOffers(silent: true),
+    tabIndex: showAppBar ? null : 0,
+    child: _buildPageContent(context),
+  );
+
+  Widget _buildPageContent(BuildContext context) {
     final theme = Theme.of(context);
     final controller = Get.put(
       BuyerOffersController(offerType: 'interests'),

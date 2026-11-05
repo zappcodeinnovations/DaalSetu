@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'dart:io';
 
 import 'package:iconly/iconly.dart';
@@ -39,7 +40,12 @@ class ProfileScreen extends StatelessWidget {
   Color get accentBlue => AppTheme.secondaryOrange;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PageAutoRefresh(
+    onRefresh: () => controller.fetchProfile(silent: true),
+    child: _buildPageContent(context),
+  );
+
+  Widget _buildPageContent(BuildContext context) {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(

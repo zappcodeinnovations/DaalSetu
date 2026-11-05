@@ -7,6 +7,7 @@ import '../../../utils/app_snackbar.dart';
 
 class ContractController extends GetxController {
   var isLoading = false.obs;
+  bool _fetchingContracts = false;
 
   /// CONTRACT LIST
   var contracts = <ContractModel>[].obs;
@@ -23,17 +24,20 @@ class ContractController extends GetxController {
   /// ===============================
   /// FETCH CONTRACT LIST
   /// ===============================
-  Future<void> fetchContracts() async {
+  Future<void> fetchContracts({bool silent = false}) async {
+    if (_fetchingContracts || isClosed || (silent && isLoading.value)) return;
+    _fetchingContracts = true;
     try {
-      isLoading.value = true;
+      if (!silent) isLoading.value = true;
 
-      final result = await ContractService.fetchContracts();
+      final result = await ContractService.fetchContracts(silent: silent);
 
-      contracts.assignAll(result);
+      if (!isClosed) contracts.assignAll(result);
     } catch (e) {
-      AppSnackbar.snackbar("Error", e.toString());
+      if (!silent && !isClosed) AppSnackbar.snackbar("Error", e.toString());
     } finally {
-      isLoading.value = false;
+      _fetchingContracts = false;
+      if (!isClosed && !silent) isLoading.value = false;
     }
   }
 

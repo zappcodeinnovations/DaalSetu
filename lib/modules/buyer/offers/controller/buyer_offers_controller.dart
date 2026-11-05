@@ -10,6 +10,7 @@ class BuyerOffersController extends GetxController {
   var isError = false.obs;
   var errorMessage = ''.obs;
   bool _isSubmittingInterest = false;
+  bool _fetchingOffers = false;
 
   var offersList = <BuyerOfferModel>[].obs;
   var allOffersList = <BuyerOfferModel>[].obs;
@@ -50,32 +51,36 @@ class BuyerOffersController extends GetxController {
     }
   }
 
-  Future<void> fetchOffers() async {
+  Future<void> fetchOffers({bool silent = false}) async {
+    if (_fetchingOffers || isClosed) return;
+    _fetchingOffers = true;
     try {
-      isLoading(true);
-      isError(false);
+      if (!silent) {
+        isLoading(true);
+        isError(false);
+      }
 
       List<dynamic> data;
 
       switch (offerType) {
         case 'today':
-          data = await BuyerServices.getTodayOffers();
+          data = await BuyerServices.getTodayOffers(silent: silent);
           break;
         case 'pending':
-          data = await BuyerServices.getPendingOffers();
+          data = await BuyerServices.getPendingOffers(silent: silent);
           break;
         case 'previous':
-          data = await BuyerServices.getPreviousOffers();
+          data = await BuyerServices.getPreviousOffers(silent: silent);
           break;
         case 'interests':
-          data = await BuyerServices.getMyInterests();
+          data = await BuyerServices.getMyInterests(silent: silent);
           break;
         case 'requirements':
-          data = await BuyerServices.getOffers();
+          data = await BuyerServices.getOffers(silent: silent);
           break;
         case 'all':
         default:
-          data = await BuyerServices.getAllOffers();
+          data = await BuyerServices.getAllOffers(silent: silent);
           break;
       }
 
@@ -98,10 +103,13 @@ class BuyerOffersController extends GetxController {
             return true;
           })
           .toList();
+      if (isClosed) return;
+      isError(false);
       allOffersList.assignAll(mapped);
       _applyFilter();
       _enrichMissingImages();
     } catch (e) {
+      if (silent || isClosed) return;
       isError(true);
       final raw = e
           .toString()
@@ -112,7 +120,8 @@ class BuyerOffersController extends GetxController {
         raw.isNotEmpty ? raw : "Unable to load offers. Please try again.",
       );
     } finally {
-      isLoading(false);
+      _fetchingOffers = false;
+      if (!isClosed && !silent) isLoading(false);
     }
   }
 
@@ -132,10 +141,12 @@ class BuyerOffersController extends GetxController {
       ).take(10).toList();
 
       for (final offer in remaining) {
+        if (isClosed) return;
         final pId = offer.productId;
         if (pId != null && pId > 0) {
           try {
             final detail = await ProductService.getProductDetail(pId, silent: true);
+            if (isClosed) return;
             if (detail.images.isNotEmpty) {
               final firstUrl = detail.images.first.imageUrl;
               if (firstUrl.trim().isNotEmpty) {

@@ -9,17 +9,14 @@ import '../../common/seller_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:async';
 import '../../../../routes/app_routes.dart';
 import '../../../../services/realtime_notification_service.dart';
 import '../../../nav_bar/controller/nav_controller.dart';
-import 'package:daalsetu/utils/global_error_handler.dart';
 
 class SellerProductController extends GetxController {
   var isLoading = true.obs;
   var isSaving = false.obs;
   var products = <SellerProductModel>[].obs;
-  Timer? _refreshTimer;
 
   // For Add Product (same fields as the web "Create Offer" form)
   var categories = <CategoryTreeModel>[].obs;
@@ -214,20 +211,18 @@ class SellerProductController extends GetxController {
 
     fetchProducts();
     fetchSupportData();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (_) {
-      if (AppForeground.isActive) fetchProducts(silent: true);
-    });
   }
 
   bool _fetchInProgress = false;
 
   Future<void> fetchProducts({bool silent = false}) async {
     // Background refresh runs every 10s; skip it while a request is still open.
-    if (silent && _fetchInProgress) return;
+    if (_fetchInProgress || isClosed || (silent && isSaving.value)) return;
     _fetchInProgress = true;
     try {
       if (!silent) isLoading(true);
       final data = await SellerServices.getProducts(silent: silent);
+      if (isClosed) return;
       products.assignAll(
         data.map((e) => SellerProductModel.fromJson(e)).toList(),
       );
@@ -560,7 +555,6 @@ class SellerProductController extends GetxController {
 
   @override
   void onClose() {
-    _refreshTimer?.cancel();
     for (final c in [
       titleController,
       descController,

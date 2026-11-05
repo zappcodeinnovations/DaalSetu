@@ -764,10 +764,11 @@ class SellerServices {
   /// ============================================================
   /// CONTRACTS & DELIVERY CHALLANS
   /// ============================================================
-  static Future<List<dynamic>> getSellerContracts() async {
+  static Future<List<dynamic>> getSellerContracts({bool silent = false}) async {
     final response = await ApiClient.get(
       endpoint: ApiUrls.mobileContracts,
       requireAuth: true,
+      suppressErrorDialog: silent,
     );
     if (response is List) return response;
     if (response is Map<String, dynamic> && response["results"] is List)

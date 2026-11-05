@@ -12,6 +12,7 @@ class AdminOffersController extends GetxController {
   var errorMessage = ''.obs;
 
   var offers = <ProductModel>[].obs;
+  bool _fetchingOffers = false;
 
   @override
   void onInit() {
@@ -19,14 +20,17 @@ class AdminOffersController extends GetxController {
     fetchOffers();
   }
 
-  Future<void> fetchOffers() async {
+  Future<void> fetchOffers({bool silent = false}) async {
+    if (_fetchingOffers || isClosed) return;
+    _fetchingOffers = true;
     try {
-      isLoading(true);
-      hasError(false);
+      if (!silent) isLoading(true);
       List<ProductModel> products = [];
       try {
-        products = await ProductService.getProducts();
-      } catch (_) {}
+        products = await ProductService.getProducts(silent: silent);
+      } catch (_) {
+        if (silent) rethrow;
+      }
 
       if (products.isEmpty) {
         try {
@@ -46,15 +50,21 @@ class AdminOffersController extends GetxController {
                 .map((m) => ProductModel.fromJson(Map<String, dynamic>.from(m)))
                 .toList();
           }
-        } catch (_) {}
+        } catch (_) {
+          if (silent) rethrow;
+        }
       }
 
+      if (isClosed) return;
+      hasError(false);
       offers.assignAll(products);
     } catch (e) {
+      if (silent || isClosed) return;
       hasError(true);
       errorMessage(e.toString());
     } finally {
-      isLoading(false);
+      _fetchingOffers = false;
+      if (!silent && !isClosed) isLoading(false);
     }
   }
 

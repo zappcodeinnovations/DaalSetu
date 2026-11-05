@@ -26,6 +26,7 @@ class BuyerServices {
   /// Buyer requirement (RFQ) list with the same server-side filters used by
   /// the web panel. The API enforces which tabs a role may access.
   static Future<Map<String, dynamic>> getBuyerRequirements({
+    bool silent = false,
     String tab = 'my',
     String status = 'all',
     String search = '',
@@ -41,6 +42,7 @@ class BuyerServices {
       endpoint:
           '${ApiUrls.buyerRequirements}?${Uri(queryParameters: query).query}',
       requireAuth: true,
+      suppressErrorDialog: silent,
     );
     if (response is! Map<String, dynamic>) {
       throw Exception('Invalid buyer requirements response');
@@ -81,6 +83,7 @@ class BuyerServices {
   /// Direct buyer-offer request list. This is intentionally separate from
   /// product offers/RFQs so the web panel's request history is not mixed in.
   static Future<Map<String, dynamic>> getBuyerOfferRequests({
+    bool silent = false,
     String tab = 'my',
     String status = 'all',
     String search = '',
@@ -99,6 +102,7 @@ class BuyerServices {
     final response = await ApiClient.get(
       endpoint: '${ApiUrls.buyerOffers}?${Uri(queryParameters: query).query}',
       requireAuth: true,
+      suppressErrorDialog: silent,
     );
     if (response is! Map<String, dynamic>) {
       throw Exception('Invalid buyer offers response');
@@ -189,7 +193,7 @@ class BuyerServices {
   /// ============================================================
   /// GET BUYER OFFERS / RFQS
   /// ============================================================
-  static Future<List<dynamic>> getOffers({String query = ""}) async {
+  static Future<List<dynamic>> getOffers({String query = "", bool silent = false}) async {
     // 1. Try canonical /api/rfqs/ endpoint
     try {
       String endpoint = ApiUrls.sellerRFQs;
@@ -200,6 +204,7 @@ class BuyerServices {
       final response = await ApiClient.get(
         endpoint: endpoint,
         requireAuth: true,
+        suppressErrorDialog: silent,
       );
 
       if (response != null) {
@@ -225,6 +230,7 @@ class BuyerServices {
       final response = await ApiClient.get(
         endpoint: endpoint,
         requireAuth: true,
+        suppressErrorDialog: silent,
       );
 
       if (response != null) {
@@ -236,6 +242,7 @@ class BuyerServices {
         }
       }
     } catch (e) {
+      if (silent) rethrow;
       print("⚠️ /api/buyer-offers/ fallback fetch error: $e");
     }
 
@@ -245,7 +252,7 @@ class BuyerServices {
   /// ============================================================
   /// GET ALL OFFERS & REQUIREMENTS
   /// ============================================================
-  static Future<List<dynamic>> getAllOffers({String query = ""}) async {
+  static Future<List<dynamic>> getAllOffers({String query = "", bool silent = false}) async {
     final List<dynamic> allList = [];
     final Set<String> seenKeys = {};
 
@@ -283,12 +290,13 @@ class BuyerServices {
         addUnique(item, 'product');
       }
     } catch (e) {
+      if (silent) rethrow;
       print("⚠️ Products error in getAllOffers: $e");
     }
 
     // 2. Fetch all Buyer Requirements (RFQs)
     try {
-      final rfqs = await getOffers(query: query);
+      final rfqs = await getOffers(query: query, silent: silent);
       for (var item in rfqs) {
         addUnique(item, 'rfq');
       }
@@ -430,7 +438,7 @@ class BuyerServices {
   /// ============================================================
   /// GET TODAY'S OFFERS
   /// ============================================================
-  static Future<List<dynamic>> getTodayOffers() async {
+  static Future<List<dynamic>> getTodayOffers({bool silent = false}) async {
     final List<dynamic> todayList = [];
     final Set<String> seenKeys = {};
 
@@ -513,6 +521,7 @@ class BuyerServices {
         addUnique(item);
       }
     } catch (e) {
+      if (silent) rethrow;
       print("⚠️ /api/offers/today/ fetch error: $e");
     }
 
@@ -534,7 +543,9 @@ class BuyerServices {
             }
           }
         }
-      } catch (_) {}
+      } catch (_) {
+        if (silent) rethrow;
+      }
     }
 
     return todayList;
@@ -543,7 +554,7 @@ class BuyerServices {
   /// ============================================================
   /// GET PENDING OFFERS
   /// ============================================================
-  static Future<List<dynamic>> getPendingOffers() async {
+  static Future<List<dynamic>> getPendingOffers({bool silent = false}) async {
     final List<dynamic> pendingList = [];
     final Set<String> seenKeys = {};
 
@@ -583,6 +594,7 @@ class BuyerServices {
         "📦 [PENDING OFFERS] fetched ${pendingList.length} offers from ${ApiUrls.buyerPendingOffers}",
       );
     } catch (e) {
+      if (silent) rethrow;
       print("⚠️ Pending offers fetch error: $e");
     }
 
@@ -598,7 +610,9 @@ class BuyerServices {
         for (var item in list) {
           addUnique(item);
         }
-      } catch (_) {}
+      } catch (_) {
+        if (silent) rethrow;
+      }
     }
 
     return _hydratePendingOfferStock(pendingList);
@@ -607,7 +621,7 @@ class BuyerServices {
   /// ============================================================
   /// GET PREVIOUS OFFERS
   /// ============================================================
-  static Future<List<dynamic>> getPreviousOffers() async {
+  static Future<List<dynamic>> getPreviousOffers({bool silent = false}) async {
     final List<dynamic> previousList = [];
     final Set<String> seenKeys = {};
 
@@ -647,6 +661,7 @@ class BuyerServices {
         "📦 [PREVIOUS OFFERS] fetched ${previousList.length} offers from ${ApiUrls.buyerPreviousOffers}",
       );
     } catch (e) {
+      if (silent) rethrow;
       print("⚠️ Previous offers fetch error: $e");
     }
 
@@ -685,6 +700,7 @@ class BuyerServices {
           }
         }
       } catch (e) {
+        if (silent) rethrow;
         print("⚠️ Previous offers fallback error: $e");
       }
     }
@@ -695,7 +711,7 @@ class BuyerServices {
   /// ============================================================
   /// GET MY INTERESTS
   /// ============================================================
-  static Future<List<dynamic>> getMyInterests() async {
+  static Future<List<dynamic>> getMyInterests({bool silent = false}) async {
     try {
       final response = await ApiClient.get(
         endpoint: ApiUrls.buyerMyInterests,
@@ -704,6 +720,7 @@ class BuyerServices {
       );
       return _extractList(response);
     } catch (e) {
+      if (silent) rethrow;
       print("⚠️ /api/offers/my-interests/list/ fetch error: $e");
       return [];
     }

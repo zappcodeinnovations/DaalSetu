@@ -77,7 +77,7 @@ class BuyerActivityView extends StatelessWidget {
         body: const TabBarView(
           children: [
             BuyerMyInterestsView(showAppBar: false),
-            BuyerRequestManagementView(mode: BuyerRequestMode.requirements),
+            BuyerRequestManagementView(mode: BuyerRequestMode.requirements, wrapInScaffold: false),
           ],
         ),
       ),

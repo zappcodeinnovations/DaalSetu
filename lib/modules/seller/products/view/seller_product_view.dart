@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
@@ -20,7 +21,12 @@ class SellerProductView extends StatelessWidget {
   static const Color primaryColor = Color(0xFFFFB300);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PageAutoRefresh(
+    onRefresh: () => Get.find<SellerProductController>().fetchProducts(silent: true),
+    child: _buildPageContent(context),
+  );
+
+  Widget _buildPageContent(BuildContext context) {
     final controller = Get.put(SellerProductController());
     final theme = Theme.of(context);
 

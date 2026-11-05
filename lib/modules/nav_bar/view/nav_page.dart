@@ -87,7 +87,14 @@ class MainNavigationScreen extends StatelessWidget {
           color: Theme.of(context).scaffoldBackgroundColor,
           child: IndexedStack(
             index: navController.selectedIndex.value,
-            children: _getPages(navController.userRole.value),
+            children: _getPages(navController.userRole.value)
+                .asMap()
+                .entries
+                .map((entry) => TickerMode(
+                      enabled: entry.key == navController.selectedIndex.value,
+                      child: entry.value,
+                    ))
+                .toList(),
           ),
         ),
         bottomNavigationBar: _GlassNavBar(
