@@ -702,7 +702,7 @@ class _BuyerRequestManagementViewState
                   )
                 : ListView.separated(
                     controller: _scrollController,
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 104),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 200),
                     itemCount:
                         _rows.length + (_isRequirement && _loadingMore ? 1 : 0),
                     separatorBuilder: (_, __) => const SizedBox(height: 10),

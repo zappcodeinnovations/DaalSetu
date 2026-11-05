@@ -28,7 +28,7 @@ void main() {
       );
 
       // Verify the screen title
-      expect(find.text("Offers & Requirements"), findsOneWidget);
+      expect(find.descendant(of: find.byType(AppBar), matching: find.text("Offers")), findsNWidgets(2));
 
       // Verify the tab names
       expect(find.widgetWithText(Tab, "Offers"), findsOneWidget);

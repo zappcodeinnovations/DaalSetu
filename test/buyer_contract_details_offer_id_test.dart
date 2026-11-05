@@ -13,7 +13,7 @@ class MockContractController extends ContractController {
   }
 
   @override
-  Future<void> fetchContracts() async {}
+  Future<void> fetchContracts({bool silent = false}) async {}
 
   @override
   Future<void> fetchContractDetail(int contractId) async {}
@@ -137,6 +137,57 @@ void main() {
       expect(find.text('50 (ID: 152)'), findsOneWidget);
       expect(find.text('Category'), findsOneWidget);
       expect(find.text('Polished'), findsOneWidget);
+    });
+
+    testWidgets('hides Transporter Bids and Create Delivery Challan for buyer', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final controller = MockContractController();
+      Get.put<ContractController>(controller);
+
+      final detail = ContractDetailModel.fromJson({
+        'id': 84,
+        'contract_id': 'JBC2610173027',
+        'product_id': 152,
+        'product_title': '50',
+        'product_category_name': 'Polished',
+        'buyer_id': 137,
+        'seller_id': 136,
+        'deal_amount': '500.00',
+        'deal_quantity': '3.900',
+        'amount_unit': 'kg',
+        'quantity_unit': 'qtl',
+        'loading_from': 'Shop no 12',
+        'loading_to': 'Amalner',
+        'status': 'active',
+        'created_at': '2026-10-17 04:47:00',
+      });
+      controller.contractDetail.value = detail;
+
+      await tester.pumpWidget(
+        GetMaterialApp(
+          home: const Scaffold(body: SizedBox()),
+          getPages: [
+            GetPage(
+              name: '/contract',
+              page: () => const ContractDetailScreen(),
+            ),
+          ],
+        ),
+      );
+      Get.toNamed('/contract', arguments: 84);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.text('Transporter Bids'), findsNothing);
+      expect(find.text('Manage Bids (Accept / Reject)'), findsNothing);
+      expect(find.text('Create Delivery Challan'), findsNothing);
+      expect(find.text('Edit contract'), findsNothing);
     });
   });
 }

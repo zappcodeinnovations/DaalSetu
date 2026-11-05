@@ -1,5 +1,15 @@
 # Bug Log & Historical Fixes
 
+## Bug 41: Buyer Branch Card Layout Constraints (Vertical Text Squishing)
+- **Symptom**: In BuyerBranchView under 'My Branches', branch title text (e.g., 'Test Branch') was squeezed vertically with one character per line instead of rendering horizontally.
+- **Root Cause**: The action button Column inside the Card Row used 'crossAxisAlignment: CrossAxisAlignment.stretch'. In an unbounded horizontal flex container (Row), this generated invalid infinite-width layout constraints, collapsing the neighboring Expanded title text Column.
+- **Fix**: Replaced 'CrossAxisAlignment.stretch' with 'CrossAxisAlignment.end' in the button Column.
+- **Files Changed**:
+  - lib/modules/buyer/branch/view/buyer_branch_view.dart
+- **Verification**: Widget tests in test/buyer_branch_view_badge_test.dart passed; static analysis passed with zero issues.
+
+---
+
 ## Bug 40: Settings Screen Delete Account Dialog Red Assertion Screen On Cancel (`_dependents.isEmpty: is not true`)
 - **Symptom**: On the Settings Screen (`SettingsScreen`), when tapping the "Delete Account" button and then clicking "Cancel" in the confirmation dialog, the app crashed with a red screen of death asserting: `'package:flutter/src/widgets/framework.dart': Failed assertion: line 6281 pos 12: '_dependents.isEmpty': is not true.` instead of safely returning to the current Settings screen.
 - **Root Cause**:
