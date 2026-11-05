@@ -1,3 +1,4 @@
+import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -26,12 +27,25 @@ class _ContractsScreenState extends State<ContractsScreen> {
   final isSelectionMode = false.obs;
   // Backend contract statuses: active, in_transit, received, completed, cancelled.
   final filters = const ['All', 'Active', 'In Transit', 'Received', 'Completed', 'Cancelled'];
+  String _userRole = '';
 
   @override
   void initState() {
     super.initState();
     selectedFilter = (widget.initialFilter ?? 'All').obs;
+    _loadRole();
   }
+
+  Future<void> _loadRole() async {
+    final role = await AppPreferences.getRole();
+    if (mounted) {
+      setState(() {
+        _userRole = (role ?? '').trim().toLowerCase();
+      });
+    }
+  }
+
+  bool get _isSuperAdmin => _userRole == 'super_admin';
 
   List<ContractModel> get filteredContracts {
     var contracts = controller.contracts.toList();
@@ -314,35 +328,41 @@ class _ContractsScreenState extends State<ContractsScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      visualDensity: VisualDensity.compact,
-                      side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  if (_isSuperAdmin) ...[
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        visualDensity: VisualDensity.compact,
+                        side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      icon: Icon(Icons.local_shipping_outlined, size: 14, color: theme.colorScheme.primary),
+                      label: Text(
+                        'Transporter Bids',
+                        style: TextStyle(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                        ),
+                      ),
+                      onPressed: () {
+                        showTransportBidsSheet(context, {
+                          'id': contract.id,
+                          'contract_id': contract.contractId,
+                        });
+                      },
                     ),
-                    icon: Icon(Icons.local_shipping_outlined, size: 14, color: theme.colorScheme.primary),
-                    label: Text(
-                      'Transporter Bids',
+                    const SizedBox(width: 8),
+                  ],
+                  Expanded(
+                    child: Text(
+                      'Tap to view complete details  ›',
+                      textAlign: _isSuperAdmin ? TextAlign.end : TextAlign.start,
                       style: TextStyle(
                         color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
                       ),
-                    ),
-                    onPressed: () {
-                      showTransportBidsSheet(context, {
-                        'id': contract.id,
-                        'contract_id': contract.contractId,
-                      });
-                    },
-                  ),
-                  Text(
-                    'Tap to view complete details  ›',
-                    style: TextStyle(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
                     ),
                   ),
                 ],

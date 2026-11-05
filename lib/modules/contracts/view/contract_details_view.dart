@@ -30,6 +30,7 @@ class ContractDetailScreen extends StatefulWidget {
 class _ContractDetailScreenState extends State<ContractDetailScreen> {
   late final ContractController controller;
   late final int contractId;
+  String _userRole = '';
 
   @override
   void initState() {
@@ -45,8 +46,20 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     if (existing != null) {
       controller.contractDetail.value = ContractDetailModel.fromContractModel(existing);
     }
+    _loadRole();
     Future.microtask(() => controller.fetchContractDetail(contractId));
   }
+
+  Future<void> _loadRole() async {
+    final role = await AppPreferences.getRole();
+    if (mounted) {
+      setState(() {
+        _userRole = (role ?? '').trim().toLowerCase();
+      });
+    }
+  }
+
+  bool get _isSuperAdmin => _userRole == 'super_admin';
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +131,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                 if (contract.packingWeightKg.isNotEmpty)
                   _item('Packing weight', '${contract.packingWeightKg} kg'),
               ]),
-              _transporterSection(contract),
+              if (_isSuperAdmin) _transporterSection(contract),
               _partySection(
                 title: 'Buyer',
                 displayPartyId: contract.displayBuyerId,
@@ -184,9 +197,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
       }),
       bottomNavigationBar: Obx(() {
         final contract = controller.contractDetail.value;
-        final role = controller.userRole.value;
-        final bool isAdmin = role.isEmpty || const {'admin', 'super_admin', 'sub_admin'}.contains(role);
-        final bool showCreateDC = isAdmin &&
+        final bool showCreateDC = _isSuperAdmin &&
             contract != null &&
             contract.status.toLowerCase() == 'active' &&
             !controller.hasDeliveryChallan.value &&
@@ -216,20 +227,23 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: () {
-                        if (contract != null) Get.to(() => ContractEditView(contract: contract));
-                      },
-                      icon: const Icon(Icons.edit_note_rounded),
-                      label: const Text('Edit contract'),
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  if (_isSuperAdmin) ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: () {
+                          final contract = controller.contractDetail.value;
+                          if (contract != null) Get.to(() => ContractEditView(contract: contract));
+                        },
+                        icon: const Icon(Icons.edit_note_rounded),
+                        label: const Text('Edit contract'),
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
               ),
               if (showCreateDC) ...[

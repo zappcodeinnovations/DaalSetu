@@ -513,7 +513,7 @@ class BuyerMyInterestsView extends StatelessWidget {
         return RefreshIndicator(
           onRefresh: () => controller.fetchOffers(),
           child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 200),
             itemCount: offers.length,
             separatorBuilder: (_, __) => const SizedBox(height: 14),
             itemBuilder: (context, index) {

@@ -389,6 +389,20 @@ class RealtimeNotificationService extends GetxService {
       final url = notification.redirectUrl ?? "";
       final role = (await AppPreferences.getRole() ?? "").trim().toLowerCase();
 
+      // Do not redirect for deal confirmed or accepted buyer offer notifications (backend does not support direct offer detail view)
+      final isConcludedDealOrOffer = title.contains('deal confirmed') ||
+          title.contains('deal_confirmed') ||
+          message.contains('deal confirmed') ||
+          type.contains('deal_confirmed') ||
+          type.contains('deal') ||
+          title.contains('offer accepted') ||
+          message.contains('accepted seller response') ||
+          type.contains('offer_accepted') ||
+          type.contains('buyer_offer_accepted');
+      if (isConcludedDealOrOffer) {
+        return;
+      }
+
       // 1. Try to extract contract ID first if notification relates to contract or deal
       final isContractOrDeal = type.contains('contract') ||
           type.contains('deal') ||

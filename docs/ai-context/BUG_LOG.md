@@ -1,6 +1,6 @@
 # Bug Log & Historical Fixes
 
-## Bug 41: Seller Products UI Overflow by 154px & Buyer Offer Bridge Items Appearing in "My Products"
+## Bug 42: Seller Products UI Overflow by 154px & Buyer Offer Bridge Items Appearing in "My Products"
 - **Symptom**:
   1. On the Seller "My Products" screen (`SellerProductView`), product cards with long route or location text (e.g., `nagpur, Nagpur, Maharashtra, India -> test address, Nagpur`) crashed with Flutter's yellow/black stripe warning: `RIGHT OVERFLOWED BY 154 PIXELS`.
   2. Finalized buyer offers (bridge products automatically generated when a buyer's offer was accepted) were appearing in the seller's catalog list under "My Products".
@@ -20,6 +20,16 @@
   - `P:/Daal_Broker/Api/serializers.py`
   - `test/seller_offer_card_layout_and_status_test.dart`
 - **Verification**: `test/seller_offer_card_layout_and_status_test.dart` passed (5/5 tests passing); `test/buyer_contract_details_offer_id_test.dart` passed (3/3); `test/seller_confirm_dialog_test.dart` passed (1/1).
+
+---
+
+## Bug 41: Buyer Branch Card Layout Constraints (Vertical Text Squishing)
+- **Symptom**: In BuyerBranchView under 'My Branches', branch title text (e.g., 'Test Branch') was squeezed vertically with one character per line instead of rendering horizontally.
+- **Root Cause**: The action button Column inside the Card Row used 'crossAxisAlignment: CrossAxisAlignment.stretch'. In an unbounded horizontal flex container (Row), this generated invalid infinite-width layout constraints, collapsing the neighboring Expanded title text Column.
+- **Fix**: Replaced 'CrossAxisAlignment.stretch' with 'CrossAxisAlignment.end' in the button Column.
+- **Files Changed**:
+  - lib/modules/buyer/branch/view/buyer_branch_view.dart
+- **Verification**: Widget tests in test/buyer_branch_view_badge_test.dart passed; static analysis passed with zero issues.
 
 ---
 

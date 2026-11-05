@@ -476,7 +476,7 @@ class _BuyerBranchViewState extends State<BuyerBranchView> {
                               const SizedBox(width: 8),
                               Column(
                                 mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   OutlinedButton(
                                     onPressed: () => _showMakePrimaryDialog(

@@ -40,7 +40,7 @@ class BuyerOffersView extends StatelessWidget {
                 )
               : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
           title: Text(
-            "Offers & Requirements",
+            "Offers",
             style: GoogleFonts.poppins(
               fontWeight: FontWeight.bold,
               color: theme.textTheme.bodyLarge?.color,
@@ -250,7 +250,7 @@ class _OfferList extends StatelessWidget {
             return RefreshIndicator(
               onRefresh: () => controller.fetchOffers(),
               child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 150),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 200),
                 itemCount: offers.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
