@@ -1,20 +1,26 @@
 # Current Task State
 
 ## Current Task
-- **Goal**: Fix Seller Product Card 154px horizontal overflow on long location strings and exclude Buyer Offers from "My Products".
+- **Goal**: Fix System Navigation Bar overlap with floating bottom navigation bar on devices with 3-button or gesture insets.
 - **Status**: Completed & Verified.
 - **Output**:
-  - Extracted `loadingLocation` into its own row with `Expanded` and `TextOverflow.ellipsis` in `SellerProductView` to eliminate horizontal overflow.
-  - Added `isBuyerOffer` detection in `SellerProductModel` to identify bridge products generated from buyer requests.
-  - Filtered out `isBuyerOffer` items in `SellerProductController.fetchProducts()`.
-  - Excluded buyer request bridge products for sellers in backend `ProductViewSet.get_queryset()` in `P:/Daal_Broker/Api/views.py`.
-  - Added `is_buyer_offer` serialization flag in `P:/Daal_Broker/Api/serializers.py`.
-  - Added automated tests in `test/seller_offer_card_layout_and_status_test.dart` (5/5 passed).
-- **Evidence**: All 5 tests passed in `test/seller_offer_card_layout_and_status_test.dart`, regression tests passed in `test/buyer_contract_details_offer_id_test.dart` and `test/seller_confirm_dialog_test.dart`.
+  - Dynamically calculated system insets using `MediaQuery.of(context).padding.bottom` with keyboard state guarding.
+  - Automatically adjusted floating navbar bottom margin across 3-button navigation (64px), gesture navigation (32px), and desktop/web (16px).
+  - Added automated test suite `test/bottom_nav_bar_insets_test.dart` (4/4 passed).
+- **Evidence**: `test/bottom_nav_bar_insets_test.dart` (4/4 passed), regression test `test/login_password_eye_icon_test.dart` (2/2 passed).
 
 ---
 
 ## Completed Work in Current Session
+- **Bug 44 Completed (System Navigation Bar Overlap with Floating Glass Bottom Bar)**:
+  - Fixed bottom navigation bar cutoff and overlap on Android 3-button navigation devices by integrating dynamic safe area insets into `GlassNavBar`.
+  - Guarded against keyboard jitter using `isKeyboardOpen` detection.
+  - Verified across 4 test scenarios in `test/bottom_nav_bar_insets_test.dart`.
+- **Bug 43 Completed (Login Screen Password Eye Icon Toggle Unresponsiveness & Cursor Loss)**:
+  - Fixed second-tap unresponsiveness by removing gesture-intercepting tooltips and configuring non-stealing focus node.
+  - Preserved cursor selection offset on visibility change.
+  - Switched to reactive GetX `isPasswordVisible` and added theme-aware contrast colors.
+  - Verified with 2 new widget tests and regression test suite.
 - **Bug 41 Completed (Seller Products 154px Overflow & Buyer Offer Mixing)**:
   - Fixed `RIGHT OVERFLOWED BY 154 PIXELS` on product cards by decoupling location into an `Expanded` row with 2-line ellipsis.
   - Excluded buyer request bridge products from the Seller's "My Products" screen on both frontend and backend.

@@ -15,6 +15,19 @@ class LoginController extends GetxController {
   final TextEditingController passwordController = TextEditingController();
 
   var isLoading = false.obs;
+  final RxBool isPasswordVisible = false.obs;
+
+  void togglePasswordVisibility() {
+    isPasswordVisible.toggle();
+    final text = passwordController.text;
+    final currentOffset = passwordController.selection.baseOffset;
+    final targetOffset = (currentOffset >= 0 && currentOffset <= text.length)
+        ? currentOffset
+        : text.length;
+    passwordController.selection = TextSelection.fromPosition(
+      TextPosition(offset: targetOffset),
+    );
+  }
 
   Future<void> login() async {
     final form = formKey.currentState;

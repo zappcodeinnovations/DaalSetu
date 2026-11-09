@@ -97,7 +97,7 @@ class MainNavigationScreen extends StatelessWidget {
                 .toList(),
           ),
         ),
-        bottomNavigationBar: _GlassNavBar(
+        bottomNavigationBar: GlassNavBar(
           currentIndex: navController.selectedIndex.value,
           role: navController.userRole.value,
           onTap: _onTap,
@@ -121,12 +121,13 @@ class MainNavigationScreen extends StatelessWidget {
 }
 
 /// ─── FLOATING GLASS BOTTOM NAV BAR ────────────────────────────────────────
-class _GlassNavBar extends StatelessWidget {
+class GlassNavBar extends StatelessWidget {
   final int currentIndex;
   final String role;
   final ValueChanged<int> onTap;
 
-  const _GlassNavBar({
+  const GlassNavBar({
+    super.key,
     required this.currentIndex,
     required this.role,
     required this.onTap,
@@ -262,8 +263,14 @@ class _GlassNavBar extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    final mediaQuery = MediaQuery.of(context);
+    final isKeyboardOpen = mediaQuery.viewInsets.bottom > 0;
+    final systemBottom = isKeyboardOpen ? 0.0 : mediaQuery.padding.bottom;
+    final bottomMargin = systemBottom > 0 ? 16.0 + systemBottom : 16.0;
+
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      key: const Key('floating_glass_nav_bar_container'),
+      margin: EdgeInsets.fromLTRB(16, 0, 16, bottomMargin),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: BackdropFilter(

@@ -1,5 +1,41 @@
 # Bug Log & Historical Fixes
 
+## Bug 44: System Navigation Bar Overlap with Floating Bottom Navigation Bar on 3-Button & Gesture Devices
+- **Symptom**: On mobile devices with default Android 3-Button Navigation (Back ◀, Home ●, Recent ■) or persistent gesture navigation insets, the application's floating bottom navigation bar was overlapped and cut off by the system navigation bar, causing user taps on navigation items to inadvertently trigger system navigation actions instead.
+- **Root Cause**: In `lib/modules/nav_bar/view/nav_page.dart`, `_GlassNavBar` had a hardcoded margin `EdgeInsets.fromLTRB(16, 0, 16, 16)`. Combined with `Scaffold.extendBody = true`, the floating bar did not respect `MediaQuery.of(context).padding.bottom`, resulting in the 72px navbar sitting directly behind the 48px system navigation bar.
+- **Fix**:
+  1. Updated `_GlassNavBar` (now `GlassNavBar`) in `lib/modules/nav_bar/view/nav_page.dart` to dynamically calculate `systemBottom = isKeyboardOpen ? 0.0 : mediaQuery.padding.bottom`.
+  2. Applied dynamic bottom margin `bottomMargin = systemBottom > 0 ? 16.0 + systemBottom : 16.0`, ensuring the bar floats cleanly above Android 3-button bars (64px margin), gesture indicators (32px margin), and desktop/web viewports (16px standard margin).
+  3. Added `isKeyboardOpen` guard to prevent the navbar from jumping up when a soft keyboard is active.
+- **Files Changed**:
+  - `lib/modules/nav_bar/view/nav_page.dart`
+  - `test/bottom_nav_bar_insets_test.dart`
+- **Verification**: `test/bottom_nav_bar_insets_test.dart` passed (4/4 tests: 3-button nav, gesture nav, web/desktop, active keyboard); `test/login_password_eye_icon_test.dart` passed (2/2 regression tests).
+
+---
+
+## Bug 43: Login Screen Password Eye Icon Toggle Unresponsiveness, Cursor Offset Loss & Focus Interception
+- **Symptom**: On the Login screen (`LoginScreen`), after tapping the password visibility eye icon to reveal the password, tapping a second time failed to hide it (unresponsive / stuck in visible mode). Additionally, tapping the icon caused the soft keyboard to abruptly dismiss, the cursor position jumped to offset 0, and in Dark Mode the icon lacked contrast against the dark background.
+- **Root Cause**:
+  1. `IconButton(tooltip: ...)` in `suffixIcon` registered an active Flutter `Tooltip` gesture recognizer that captured pointer events on consecutive taps on mobile touch screens, intercepting subsequent taps before reaching `onPressed`.
+  2. `IconButton` took keyboard focus by default, causing the `TextFormField` to lose focus and the keyboard to collapse.
+  3. Visibility state was managed via `setState` in `_LoginScreenState` rather than reactive GetX state, triggering redundant whole-screen rebuilds.
+  4. `obscureText` toggle in Flutter's `RenderEditable` reset text selection offset unless explicitly restored.
+  5. In Dark Mode, `color: isDark ? null : AppTheme.textMutedLight` left the icon with low or un-themed contrast.
+- **Fix**:
+  1. Added `final RxBool isPasswordVisible = false.obs;` and `togglePasswordVisibility()` with cursor position preservation (`passwordController.selection = TextSelection.fromPosition(...)`) in `LoginController`.
+  2. Wrapped password `GlassTextField` in `Obx`.
+  3. Added `focusNode: FocusNode(skipTraversal: true)` to prevent focus stealing from the text input.
+  4. Removed `tooltip` property to prevent gesture interception on consecutive taps.
+  5. Applied high-contrast theme colors (`isDark ? AppTheme.primaryGold : AppTheme.secondaryOrange`).
+- **Files Changed**:
+  - `lib/modules/Auth/login/controller/login_controller.dart`
+  - `lib/modules/Auth/login/view/login_screen.dart`
+  - `test/login_password_eye_icon_test.dart`
+- **Verification**: `test/login_password_eye_icon_test.dart` passed (2/2 tests: consecutive toggles and cursor preservation); `test/login_screen_test.dart` passed (1/1 regression test).
+
+---
+
 ## Bug 42: Seller Products UI Overflow by 154px & Buyer Offer Bridge Items Appearing in "My Products"
 - **Symptom**:
   1. On the Seller "My Products" screen (`SellerProductView`), product cards with long route or location text (e.g., `nagpur, Nagpur, Maharashtra, India -> test address, Nagpur`) crashed with Flutter's yellow/black stripe warning: `RIGHT OVERFLOWED BY 154 PIXELS`.
