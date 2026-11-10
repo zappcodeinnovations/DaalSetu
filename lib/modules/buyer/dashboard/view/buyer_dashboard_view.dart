@@ -1342,25 +1342,51 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
     final qty = (offer.displayQuantity ?? offer.availableQuantity ?? '').trim();
     final isRfq = offer.isRfq;
     final badgeLabel = isRfq ? "ACTIVE REQUIREMENT" : "ACTIVE OFFER";
+    final cardRadius = BorderRadius.circular(24);
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primary.withValues(alpha: 0.1),
-            theme.colorScheme.primary.withValues(alpha: 0.25),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.15),
-        ),
-      ),
-      child: Column(
+    void navigateToDetails() {
+      if (isRfq) {
+        // The banner shows the buyer's live requirement/interest: open My
+        // Activity on "My Interests" (QA), not "My Requirements".
+        Get.to(() => const BuyerActivityView(initialIndex: 0));
+      } else {
+        final pId = offer.productId ?? offer.id;
+        if (pId != null) {
+          Get.to(() => ProductDetailScreen(productId: pId));
+        } else if (offer.id != null) {
+          Get.to(() => BuyerOfferDetailsView(offerId: offer.id!));
+        } else {
+          Get.to(() => const BuyerOffersView(initialIndex: 0));
+        }
+      }
+    }
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: cardRadius,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        key: Key('buyer_dashboard_offer_card_${offer.id ?? index}'),
+        borderRadius: cardRadius,
+        onTap: navigateToDetails,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                theme.colorScheme.primary.withValues(alpha: 0.1),
+                theme.colorScheme.primary.withValues(alpha: 0.25),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: cardRadius,
+            border: Border.all(
+              color: theme.colorScheme.primary.withValues(alpha: 0.15),
+            ),
+          ),
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -1453,22 +1479,7 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
           ),
           const SizedBox(height: 8),
           ElevatedButton(
-            onPressed: () {
-              if (isRfq) {
-                // The banner shows the buyer's live requirement/interest: open My
-                // Activity on "My Interests" (QA), not "My Requirements".
-                Get.to(() => const BuyerActivityView(initialIndex: 0));
-              } else {
-                final pId = offer.productId ?? offer.id;
-                if (pId != null) {
-                  Get.to(() => ProductDetailScreen(productId: pId));
-                } else if (offer.id != null) {
-                  Get.to(() => BuyerOfferDetailsView(offerId: offer.id!));
-                } else {
-                  Get.to(() => const BuyerOffersView(initialIndex: 0));
-                }
-              }
-            },
+            onPressed: navigateToDetails,
             style: ElevatedButton.styleFrom(
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: Colors.white,
@@ -1495,6 +1506,8 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
           ),
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 }

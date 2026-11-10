@@ -1,5 +1,35 @@
 # Bug Log & Historical Fixes
 
+## Bug 46: Card-Wide Clickability on Buyer Dashboard Carousel & Admin Offers Catalog
+- **Symptom**: On the Buyer Dashboard carousel (`BuyerDashboardView`) and Admin Offers catalog (`AdminOffersListScreen`), tapping on the card body, commodity image, title, badge, or price produced no action. Users were constrained to clicking only a tiny "View Details" button or had no direct way to open product details by tapping the card.
+- **Root Cause**: `_buildOfferCard` in both `BuyerDashboardView` and `AdminOffersListScreen` returned static `Container` elements without interactive gesture recognizers.
+- **Fix**:
+  1. Wrapped `BuyerDashboardView._buildOfferCard` in `Material(color: Colors.transparent, borderRadius: cardRadius, clipBehavior: Clip.antiAlias)` with `InkWell(borderRadius: cardRadius, onTap: navigateToDetails)`, allowing users to tap anywhere on the 180px gradient card while retaining the explicit "View Details" button.
+  2. Wrapped `AdminOffersListScreen._buildOfferCard` in `Material(color: cardColor, borderRadius: cardRadius, clipBehavior: Clip.antiAlias)` with `InkWell(borderRadius: cardRadius, onTap: () => Get.to(() => ProductDetailScreen(productId: offer.id)))`.
+  3. Preserved independent pointer consumption for child interactive elements (Admin Switch, Interests Heart button, Stock update row, and Action buttons).
+- **Files Changed**:
+  - `lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`
+  - `lib/modules/admin_catalog/view/admin_offers_list_screen.dart`
+  - `test/buyer_dashboard_offers_slider_test.dart`
+  - `test/admin_offer_card_tap_test.dart`
+- **Verification**: `test/buyer_dashboard_offers_slider_test.dart` passed (13/13 tests, including card-wide tap navigation); `test/admin_offer_card_tap_test.dart` passed (1/1 test); regression tests across modules passed (12/12 tests).
+
+---
+
+## Bug 45: Seller Product Card Clickability Restricted to View Details Button Only
+- **Symptom**: On the Seller "My Products" screen (`SellerProductView`), users were unable to open product offer details by tapping on the product card (image, title, brand, price, or location). The entire card container was unresponsive to taps, forcing users to hit the narrow "View Details" button at the bottom of each card.
+- **Root Cause**: In `lib/modules/seller/products/view/seller_product_view.dart:120`, `_buildProductCard` returned a static `Container` with no gesture recognition. Navigation to `ProductDetailScreen` was strictly confined to the child `OutlinedButton.icon` at the bottom of the card.
+- **Fix**:
+  1. Wrapped `_buildProductCard` in `Material(color: theme.cardColor, borderRadius: cardRadius, clipBehavior: Clip.antiAlias)` with an outer `InkWell(borderRadius: cardRadius, onTap: () => Get.to(() => ProductDetailScreen(productId: product.id)))`.
+  2. Preserved independent pointer consumption for child action buttons (3-dots `PopupMenuButton`, `Interests`, `Stock Update`, `Media Gallery`, and the existing `View Details` button) so secondary actions function without triggering unintended card navigation.
+  3. Added `Key('seller_product_card_${product.id}')` for widget testing and accessibility.
+- **Files Changed**:
+  - `lib/modules/seller/products/view/seller_product_view.dart`
+  - `test/seller_offer_card_layout_and_status_test.dart`
+- **Verification**: `test/seller_offer_card_layout_and_status_test.dart` passed (6/6 tests passing, including card-wide tap navigation); `test/bottom_nav_bar_insets_test.dart` passed (4/4 regression tests).
+
+---
+
 ## Bug 44: System Navigation Bar Overlap with Floating Bottom Navigation Bar on 3-Button & Gesture Devices
 - **Symptom**: On mobile devices with default Android 3-Button Navigation (Back ◀, Home ●, Recent ■) or persistent gesture navigation insets, the application's floating bottom navigation bar was overlapped and cut off by the system navigation bar, causing user taps on navigation items to inadvertently trigger system navigation actions instead.
 - **Root Cause**: In `lib/modules/nav_bar/view/nav_page.dart`, `_GlassNavBar` had a hardcoded margin `EdgeInsets.fromLTRB(16, 0, 16, 16)`. Combined with `Scaffold.extendBody = true`, the floating bar did not respect `MediaQuery.of(context).padding.bottom`, resulting in the 72px navbar sitting directly behind the 48px system navigation bar.

@@ -1,3 +1,4 @@
+import 'package:daalsetu/modules/products/view/product_detail.dart';
 import 'package:daalsetu/modules/seller/products/controller/seller_product_controller.dart';
 import 'package:daalsetu/modules/seller/products/model/seller_product_model.dart';
 import 'package:daalsetu/modules/seller/products/view/seller_product_view.dart';
@@ -196,6 +197,54 @@ void main() {
       expect(find.text('nagpur, Nagpur, Maharashtra, India -> test address, Nagpur'), findsOneWidget);
       expect(find.text('0 Bags'), findsOneWidget);
       expect(find.text('50.0kg'), findsOneWidget);
+    });
+
+    testWidgets('Tapping anywhere on the product card triggers ProductDetailScreen navigation',
+        (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final controller = MockSellerProductController();
+      Get.put<SellerProductController>(controller);
+
+      final product = SellerProductModel.fromJson({
+        'id': 199,
+        'title': 'CHANA DAL PREMIUM',
+        'category_name': 'Chana Dal',
+        'brand_name': 'Tata Sampann',
+        'amount': '75.00',
+        'is_active': true,
+        'status': 'available',
+        'bag_count': 50,
+        'packing_weight_kg': '30',
+        'loading_location': 'Indore, MP',
+      });
+
+      controller.products.assignAll([product]);
+      controller.isLoading.value = false;
+
+      await tester.pumpWidget(
+        const GetMaterialApp(
+          home: SellerProductView(),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final cardFinder = find.byKey(const Key('seller_product_card_199'));
+      expect(cardFinder, findsOneWidget);
+
+      // Tap anywhere on the card title
+      await tester.tap(find.text('CHANA DAL PREMIUM'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // Verify ProductDetailScreen is pushed
+      expect(find.byType(ProductDetailScreen), findsOneWidget);
     });
   });
 

@@ -1,17 +1,24 @@
 # Current Task State
 
 ## Current Task
-- **Goal**: Fix System Navigation Bar overlap with floating bottom navigation bar on devices with 3-button or gesture insets.
+- **Goal**: Enable card-wide clickability on Buyer Dashboard Carousel and Admin Offers Catalog while preserving child interactive controls.
 - **Status**: Completed & Verified.
 - **Output**:
-  - Dynamically calculated system insets using `MediaQuery.of(context).padding.bottom` with keyboard state guarding.
-  - Automatically adjusted floating navbar bottom margin across 3-button navigation (64px), gesture navigation (32px), and desktop/web (16px).
-  - Added automated test suite `test/bottom_nav_bar_insets_test.dart` (4/4 passed).
-- **Evidence**: `test/bottom_nav_bar_insets_test.dart` (4/4 passed), regression test `test/login_password_eye_icon_test.dart` (2/2 passed).
+  - Wrapped `BuyerDashboardView._buildOfferCard` in `Material` + `InkWell` routing to `navigateToDetails()`.
+  - Wrapped `AdminOffersListScreen._buildOfferCard` in `Material` + `InkWell` routing to `ProductDetailScreen(productId: offer.id)`.
+  - Isolated pointer handling for child buttons (Admin Switch, Heart/Interests, Stock, Edit/Delete).
+  - Added automated tests in `test/buyer_dashboard_offers_slider_test.dart` (13/13 passed) and `test/admin_offer_card_tap_test.dart` (1/1 passed).
+- **Evidence**: `test/buyer_dashboard_offers_slider_test.dart` (13/13 passed), `test/admin_offer_card_tap_test.dart` (1/1 passed), full regression suite (12/12 passed).
 
 ---
 
 ## Completed Work in Current Session
+- **Bug 46 Completed (Card-Wide Clickability on Buyer Dashboard & Admin Offers)**:
+  - Enabled card-wide tap gestures on Buyer Dashboard carousel and Admin Offers screen with zero child button collision.
+  - Verified with 2 test suites.
+- **Bug 45 Completed (Seller Product Card Full Clickability)**:
+  - Enabled card-wide clickability on Seller's "My Products" screen so tapping on image, title, price, or body opens `ProductDetailScreen`.
+  - Verified no conflict with inner action buttons.
 - **Bug 44 Completed (System Navigation Bar Overlap with Floating Glass Bottom Bar)**:
   - Fixed bottom navigation bar cutoff and overlap on Android 3-button navigation devices by integrating dynamic safe area insets into `GlassNavBar`.
   - Guarded against keyboard jitter using `isKeyboardOpen` detection.

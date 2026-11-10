@@ -8,6 +8,7 @@ import 'package:daalsetu/modules/admin_catalog/view/stock_history_dialog.dart';
 import 'package:daalsetu/widgets/authenticated_network_image.dart';
 import 'package:daalsetu/theme/app_theme.dart';
 import 'package:daalsetu/modules/products/view/edit_product.dart';
+import 'package:daalsetu/modules/products/view/product_detail.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 
 class AdminOffersListScreen extends StatefulWidget {
@@ -97,23 +98,32 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
   }
 
   Widget _buildOfferCard(ProductModel offer) {
-    return Container(
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
-        boxShadow: isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
+    final cardRadius = BorderRadius.circular(16);
+
+    return Material(
+      color: cardColor,
+      borderRadius: cardRadius,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        key: Key('admin_offer_card_${offer.id}'),
+        borderRadius: cardRadius,
+        onTap: () => Get.to(() => ProductDetailScreen(productId: offer.id)),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: cardRadius,
+            border: Border.all(color: borderColor),
+            boxShadow: isDark
+                ? null
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header: Title, Subtitle, Image
@@ -351,7 +361,9 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
           ),
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildAttributeRow(IconData icon, String label, String value) {
