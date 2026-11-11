@@ -194,7 +194,7 @@ class SellerOfferExportService {
           ),
         ],
         subject: 'DaalSetu offers',
-        text: 'My offers list from DaalSetu.',
+        text: 'My products list from DaalSetu.',
       ),
     );
   }

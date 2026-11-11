@@ -144,7 +144,7 @@ class GlassNavBar extends StatelessWidget {
         _NavItem(
           icon: IconlyLight.bag,
           activeIcon: IconlyBold.bag,
-          label: 'Offers',
+          label: 'Products',
         ),
         _NavItem(
           icon: IconlyLight.category,
@@ -205,7 +205,7 @@ class GlassNavBar extends StatelessWidget {
         _NavItem(
           icon: IconlyLight.ticket_star,
           activeIcon: IconlyBold.ticket_star,
-          label: 'Offers',
+          label: 'Products',
         ),
         _NavItem(
           icon: IconlyLight.paper,

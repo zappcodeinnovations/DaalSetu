@@ -35,6 +35,30 @@ class TransportBidsSheet extends StatefulWidget {
   final int contractId;
   final String contractNumber;
 
+  /// TSK-036: Automatically elevate remaining active bids to top in contract section
+  static List<Map<String, dynamic>> sortBids(List<Map<String, dynamic>> list) {
+    final sorted = List<Map<String, dynamic>>.from(list);
+    sorted.sort((a, b) {
+      final statusA = '${a['status'] ?? 'pending'}'.toLowerCase();
+      final statusB = '${b['status'] ?? 'pending'}'.toLowerCase();
+      final isPendingA = statusA == 'pending' || statusA == 'active' || statusA == 'reserved';
+      final isPendingB = statusB == 'pending' || statusB == 'active' || statusB == 'reserved';
+
+      // 1. Prioritize active/pending bids over concluded/rejected ones
+      if (isPendingA && !isPendingB) return -1;
+      if (!isPendingA && isPendingB) return 1;
+
+      // 2. Secondary sort: latest created_at first
+      final dateA = DateTime.tryParse('${a['created_at'] ?? ''}');
+      final dateB = DateTime.tryParse('${b['created_at'] ?? ''}');
+      if (dateA != null && dateB != null) {
+        return dateB.compareTo(dateA);
+      }
+      return 0;
+    });
+    return sorted;
+  }
+
   @override
   State<TransportBidsSheet> createState() => _TransportBidsSheetState();
 }
@@ -72,10 +96,11 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
         contract = response is Map && response['contract'] is Map
             ? Map<String, dynamic>.from(response['contract'] as Map)
             : const {};
-        bids = (rawBids is List ? rawBids : const [])
+        final parsedList = (rawBids is List ? rawBids : const [])
             .whereType<Map>()
             .map(Map<String, dynamic>.from)
             .toList();
+        bids = TransportBidsSheet.sortBids(parsedList);
       });
     } catch (exception) {
       if (!mounted) return;

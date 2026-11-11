@@ -85,6 +85,11 @@ class MyBidModel {
   final bool canAssignDriver;
   final Map<String, dynamic> contractData;
 
+  bool get isPending {
+    final s = status.toLowerCase().trim();
+    return s == 'pending' || s == 'active' || s == 'reserved';
+  }
+
   MyBidModel({
     required this.bidId,
     required this.status,

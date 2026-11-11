@@ -1,18 +1,26 @@
 # Current Task State
 
 ## Current Task
-- **Goal**: Enable card-wide clickability on Buyer Dashboard Carousel and Admin Offers Catalog while preserving child interactive controls.
+- **Goal**: TSK-035 — Contract Screen: Display Brand Name and Offer Name clearly on cards and detail views.
 - **Status**: Completed & Verified.
 - **Output**:
-  - Wrapped `BuyerDashboardView._buildOfferCard` in `Material` + `InkWell` routing to `navigateToDetails()`.
-  - Wrapped `AdminOffersListScreen._buildOfferCard` in `Material` + `InkWell` routing to `ProductDetailScreen(productId: offer.id)`.
-  - Isolated pointer handling for child buttons (Admin Switch, Heart/Interests, Stock, Edit/Delete).
-  - Added automated tests in `test/buyer_dashboard_offers_slider_test.dart` (13/13 passed) and `test/admin_offer_card_tap_test.dart` (1/1 passed).
-- **Evidence**: `test/buyer_dashboard_offers_slider_test.dart` (13/13 passed), `test/admin_offer_card_tap_test.dart` (1/1 passed), full regression suite (12/12 passed).
+  - `lib/modules/seller/contracts/model/seller_contract_model.dart`: Added `productTitle` and `offerName` getter, parsed `product_brand_name` and `product_title` from Contract API JSON.
+  - `lib/modules/seller/contracts/view/seller_contracts_view.dart`: Displayed Offer Name with icon and verified Brand Name chip directly on "My Deal Contracts" cards.
+  - `lib/modules/contracts/model/contract_model.dart`: Added `productBrand` field and parsing from `product_brand_name`.
+  - `lib/modules/contracts/model/contract_details_model.dart`: Added `productBrand` mapping and `fromContractModel` bridge.
+  - `lib/modules/contracts/view/contract_view.dart`: Added Brand display on contract cards.
+  - `lib/modules/contracts/view/contract_details_view.dart`: Added Brand row in 'Product & deal' section.
+  - Added unit test suite `test/seller_contract_brand_offer_test.dart` (2/2 passed).
+- **Evidence**: `test/seller_contract_brand_offer_test.dart` (2/2 passed), full regression test suite (36/36 passed), static analysis clean (0 issues).
 
 ---
 
 ## Completed Work in Current Session
+- **Bug 47 Completed (Notifications Not Opening & 2nd Tap Not Redirecting)**:
+  - Eliminated silent suppression on deal/contract notifications.
+  - Resolved GetX duplicate route suppression on consecutive notification taps.
+  - Eliminated UI spinner flickering during `markAsRead` in Seller notifications.
+  - Verified with 4 automated tests in `test/notification_reclick_navigation_test.dart`.
 - **Bug 46 Completed (Card-Wide Clickability on Buyer Dashboard & Admin Offers)**:
   - Enabled card-wide tap gestures on Buyer Dashboard carousel and Admin Offers screen with zero child button collision.
   - Verified with 2 test suites.

@@ -12,6 +12,7 @@ import '../modules/seller/products/view/seller_offer_interests_view.dart';
 import '../modules/seller/branches/view/seller_branches_view.dart';
 import '../modules/seller/challans/view/seller_delivery_challan_view.dart';
 import '../modules/seller/notifications/view/seller_notification_view.dart';
+import '../modules/admin_notifications/view/admin_notification_view.dart';
 import '../modules/contracts/view/contract_view.dart';
 import '../modules/contracts/view/contract_details_view.dart';
 import '../modules/seller/contracts/view/seller_contract_detail_view.dart';
@@ -380,8 +381,14 @@ class RealtimeNotificationService extends GetxService {
     enqueueBanner(notif);
   }
 
+  static bool _isNavigating = false;
+
   /// Deep link and redirect the user to the relevant screen based on notification content
   static Future<void> navigateToTarget(AppNotificationModel notification) async {
+    if (_isNavigating) return;
+    _isNavigating = true;
+    Future.delayed(const Duration(milliseconds: 500), () => _isNavigating = false);
+
     try {
       final title = (notification.title ?? "").toLowerCase();
       final message = (notification.message ?? "").toLowerCase();
@@ -389,64 +396,55 @@ class RealtimeNotificationService extends GetxService {
       final url = notification.redirectUrl ?? "";
       final role = (await AppPreferences.getRole() ?? "").trim().toLowerCase();
 
-      // Do not redirect for deal confirmed or accepted buyer offer notifications (backend does not support direct offer detail view)
-      final isConcludedDealOrOffer = title.contains('deal confirmed') ||
-          title.contains('deal_confirmed') ||
-          message.contains('deal confirmed') ||
-          type.contains('deal_confirmed') ||
-          type.contains('deal') ||
-          title.contains('offer accepted') ||
-          message.contains('accepted seller response') ||
-          type.contains('offer_accepted') ||
-          type.contains('buyer_offer_accepted');
-      if (isConcludedDealOrOffer) {
-        return;
-      }
-
-      // 1. Try to extract contract ID first if notification relates to contract or deal
+      // 1. Try to extract contract or deal ID first if notification relates to contract, deal, or accepted offer
       final isContractOrDeal = type.contains('contract') ||
           type.contains('deal') ||
           title.contains('contract') ||
           title.contains('deal') ||
           message.contains('contract') ||
-          message.contains('deal');
+          message.contains('deal') ||
+          type.contains('offer_accepted') ||
+          type.contains('buyer_offer_accepted') ||
+          title.contains('offer accepted') ||
+          message.contains('offer accepted') ||
+          message.contains('accepted seller response');
 
       int? contractId;
       if (isContractOrDeal) {
         contractId = notification.referenceId;
-        // Check url for contract ID (e.g. /contracts/12/ or /api/mobile/contracts/12/)
+        // Check url for contract or deal ID (e.g. /contracts/12/ or /mobile/contracts/12/ or /deals/12/)
         if (contractId == null && url.isNotEmpty) {
-          final contractMatch = RegExp(r'/(?:contracts|mobile/contracts)/(\d+)').firstMatch(url);
+          final contractMatch = RegExp(r'/(?:contracts|mobile/contracts|deals)/(\d+)').firstMatch(url);
           if (contractMatch != null) {
             contractId = int.tryParse(contractMatch.group(1)!);
           }
         }
-        // Check message for contract ID (e.g. Contract #12 or Contract ID: 12)
+        // Check message for contract or deal ID (e.g. Contract #12, Deal #12, Contract ID: 12)
         if (contractId == null && notification.message != null) {
           final contractMatch = RegExp(r'(?:contract[:\s#]+|deal[:\s#]+)(\d+)', caseSensitive: false).firstMatch(notification.message!);
           if (contractMatch != null) {
             contractId = int.tryParse(contractMatch.group(1)!);
           }
         }
-        // Fallback to relatedProduct or generic ID if referenceId wasn't set but type is explicitly contract
-        if (contractId == null && (type.contains('contract') || title.contains('contract'))) {
+        // Fallback to relatedProduct or generic ID if referenceId wasn't set but type is explicitly contract/deal
+        if (contractId == null && (type.contains('contract') || title.contains('contract') || type.contains('deal') || title.contains('deal'))) {
           contractId = notification.relatedProduct;
         }
 
         // Redirect directly to the Contract Details page
         if (role == 'seller') {
           if (contractId != null && contractId > 0) {
-            Get.to(() => SellerContractDetailView(contractId: contractId!));
+            Get.to(() => SellerContractDetailView(contractId: contractId!), preventDuplicates: false);
           } else {
-            Get.to(() => const SellerContractsView());
+            Get.to(() => const SellerContractsView(), preventDuplicates: false);
           }
           return;
         } else {
-          // Buyer / general user
+          // Buyer / Admin / general user
           if (contractId != null && contractId > 0) {
-            Get.to(() => const ContractDetailScreen(), arguments: contractId);
+            Get.to(() => const ContractDetailScreen(), arguments: contractId, preventDuplicates: false);
           } else {
-            Get.to(() => const ContractsScreen());
+            Get.to(() => const ContractsScreen(), preventDuplicates: false);
           }
           return;
         }
@@ -486,9 +484,9 @@ class RealtimeNotificationService extends GetxService {
         }
 
         if (offerId != null && offerId > 0) {
-          Get.to(() => const SellerOfferInterestsView(), arguments: offerId);
+          Get.to(() => const SellerOfferInterestsView(), arguments: offerId, preventDuplicates: false);
         } else {
-          Get.to(() => const SellerProductView());
+          Get.to(() => const SellerProductView(), preventDuplicates: false);
         }
         return;
       }
@@ -503,7 +501,7 @@ class RealtimeNotificationService extends GetxService {
 
       if (isProductOrOffer) {
         if (productId != null && productId > 0) {
-          Get.to(() => ProductDetailScreen(productId: productId!));
+          Get.to(() => ProductDetailScreen(productId: productId!), preventDuplicates: false);
           return;
         }
 
@@ -527,7 +525,7 @@ class RealtimeNotificationService extends GetxService {
                   candidateTitle.contains(pTitle);
             });
             if (match != null) {
-              Get.to(() => ProductDetailScreen(productId: match.id));
+              Get.to(() => ProductDetailScreen(productId: match.id), preventDuplicates: false);
               return;
             }
           } catch (_) {}
@@ -535,9 +533,9 @@ class RealtimeNotificationService extends GetxService {
 
         // Role-based Fallback for Products / Offers
         if (role == 'seller') {
-          Get.to(() => const SellerProductView());
+          Get.to(() => const SellerProductView(), preventDuplicates: false);
         } else {
-          Get.to(() => const BuyerOffersView());
+          Get.to(() => const BuyerOffersView(), preventDuplicates: false);
         }
         return;
       }
@@ -546,9 +544,9 @@ class RealtimeNotificationService extends GetxService {
       if (type.contains('branch') || title.contains('branch') || message.contains('branch')) {
         notifyBranchControllers(notification);
         if (role == 'seller') {
-          Get.to(() => const SellerBranchesView());
+          Get.to(() => const SellerBranchesView(), preventDuplicates: false);
         } else {
-          Get.to(() => const BuyerBranchView());
+          Get.to(() => const BuyerBranchView(), preventDuplicates: false);
         }
         return;
       }
@@ -561,19 +559,30 @@ class RealtimeNotificationService extends GetxService {
           message.contains('challan') ||
           message.contains('dispatch')) {
         if (role == 'seller') {
-          Get.to(() => const SellerDeliveryChallanView());
+          Get.to(() => const SellerDeliveryChallanView(), preventDuplicates: false);
         } else {
-          Get.to(() => const BuyerDeliveryChallanView());
+          Get.to(() => const BuyerDeliveryChallanView(), preventDuplicates: false);
         }
         return;
       }
 
-      // Default Fallback: Open Notifications View
-      Get.to(() => const SellerNotificationView());
+      // Default Fallback: Open Notifications View if not already on it
+      final currentRoute = Get.currentRoute.toLowerCase();
+      final isAlreadyOnNotif = currentRoute.contains('notification');
+      if (!isAlreadyOnNotif) {
+        if (role == 'admin') {
+          Get.to(() => const AdminNotificationView(), preventDuplicates: false);
+        } else {
+          Get.to(() => const SellerNotificationView(), preventDuplicates: false);
+        }
+      }
     } catch (_) {
-      // In case of any navigation error, fall back safely to notification view
+      // In case of any navigation error, fall back safely to notification view if not already on it
       try {
-        Get.to(() => const SellerNotificationView());
+        final currentRoute = Get.currentRoute.toLowerCase();
+        if (!currentRoute.contains('notification')) {
+          Get.to(() => const SellerNotificationView(), preventDuplicates: false);
+        }
       } catch (_) {}
     }
   }

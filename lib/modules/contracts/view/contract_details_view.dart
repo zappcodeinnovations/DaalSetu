@@ -103,19 +103,13 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                   'Offer',
                   () {
                     final title = contract.productTitle.trim();
-                    final hasId = contract.productId != null && contract.productId != 0;
-                    if (title.isNotEmpty && hasId) {
-                      return '$title (ID: ${contract.productId})';
-                    } else if (title.isNotEmpty) {
-                      return title;
-                    } else if (hasId) {
-                      return 'ID: ${contract.productId}';
-                    }
-                    return '-';
+                    return title.isNotEmpty ? title : '-';
                   }(),
                 ),
+                if (contract.productBrand.isNotEmpty)
+                  _item('Brand', contract.productBrand),
                 _item('Category', contract.productCategory),
-                if (contract.interestId != null && contract.interestId != 0)
+                if (_isSuperAdmin && contract.interestId != null && contract.interestId != 0)
                   _item('Interest ID', contract.interestId),
                 _item(
                   'Deal amount',
@@ -399,7 +393,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                           fontSize: 15,
                         ),
                       ),
-                      if (subtitleId != null && subtitleId.isNotEmpty) ...[
+                      if (_isSuperAdmin && subtitleId != null && subtitleId.isNotEmpty) ...[
                         const SizedBox(height: 3),
                         Text(
                           subtitleId,

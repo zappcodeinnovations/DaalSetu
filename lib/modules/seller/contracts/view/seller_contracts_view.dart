@@ -120,6 +120,74 @@ class SellerContractsView extends StatelessWidget {
                             ),
                           ],
                         ),
+                        if ((item.productTitle != null && item.productTitle!.trim().isNotEmpty) ||
+                            (item.brandName != null && item.brandName!.trim().isNotEmpty)) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              if (item.productTitle != null && item.productTitle!.trim().isNotEmpty)
+                                Expanded(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        IconlyLight.bag,
+                                        size: 14,
+                                        color: primaryColor,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Flexible(
+                                        child: Text(
+                                          item.productTitle!.trim(),
+                                          style: GoogleFonts.inter(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              if (item.brandName != null && item.brandName!.trim().isNotEmpty) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: primaryColor.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: primaryColor.withValues(alpha: 0.35)),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.verified_rounded,
+                                        size: 11,
+                                        color: primaryColor,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      ConstrainedBox(
+                                        constraints: const BoxConstraints(maxWidth: 130),
+                                        child: Text(
+                                          item.brandName!.trim(),
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: primaryColor,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
                         const SizedBox(height: 4),
                         Text(
                           "Buyer: ${item.buyerCompany ?? 'Buyer'}",

@@ -61,7 +61,14 @@ class TransporterBiddingController extends GetxController {
         requireAuth: true,
       );
       final data = response is Map ? response : const {};
-      myBids.value = (data['results'] as List? ?? []).whereType<Map<String, dynamic>>().map(MyBidModel.fromJson).toList();
+      final parsedBids = (data['results'] as List? ?? []).whereType<Map<String, dynamic>>().map(MyBidModel.fromJson).toList();
+      // Auto-elevate active/pending bids to the top
+      parsedBids.sort((a, b) {
+        if (a.isPending && !b.isPending) return -1;
+        if (!a.isPending && b.isPending) return 1;
+        return 0;
+      });
+      myBids.value = parsedBids;
       vehicles.value = (data['vehicles'] as List? ?? [])
           .whereType<Map>()
           .map((v) => FleetOption(v['id'] as int, "${v['vehicle_number']} (${v['vehicle_status'] ?? ''})"))
@@ -97,7 +104,18 @@ class TransporterBiddingController extends GetxController {
     try {
       final response = await ApiClient.get(endpoint: "${ApiUrls.transportBids}?contract_id=$contractPk", requireAuth: true);
       final list = response is Map ? response['bids'] : null;
-      return (list is List ? list : const []).whereType<Map<String, dynamic>>().toList();
+      final rawList = (list is List ? list : const []).whereType<Map<String, dynamic>>().toList();
+      // Auto-elevate active/pending bids to the top
+      rawList.sort((a, b) {
+        final statusA = '${a['status'] ?? 'pending'}'.toLowerCase();
+        final statusB = '${b['status'] ?? 'pending'}'.toLowerCase();
+        final isPendingA = statusA == 'pending' || statusA == 'active' || statusA == 'reserved';
+        final isPendingB = statusB == 'pending' || statusB == 'active' || statusB == 'reserved';
+        if (isPendingA && !isPendingB) return -1;
+        if (!isPendingA && isPendingB) return 1;
+        return 0;
+      });
+      return rawList;
     } catch (e) {
       _snack("Error", _message(e), Colors.red);
       return [];

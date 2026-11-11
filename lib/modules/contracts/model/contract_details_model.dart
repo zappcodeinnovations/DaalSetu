@@ -3,6 +3,7 @@ class ContractDetailModel {
   final String contractId;
   final String productTitle;
   final String productCategory;
+  final String productBrand;
   final String buyerName;
   final String buyerUniqueId;
   final String sellerName;
@@ -67,6 +68,7 @@ class ContractDetailModel {
     required this.contractId,
     required this.productTitle,
     required this.productCategory,
+    this.productBrand = '',
     required this.buyerName,
     required this.buyerUniqueId,
     required this.sellerName,
@@ -184,6 +186,9 @@ class ContractDetailModel {
       productCategory: text('product_category_path').isNotEmpty
           ? text('product_category_path')
           : text('product_category_name'),
+      productBrand: text('product_brand_name').isNotEmpty
+          ? text('product_brand_name')
+          : text('brand_name'),
       buyerName: text('buyer_name'),
       buyerUniqueId: text('buyer_unique_id'),
       sellerName: text('seller_name'),
@@ -286,6 +291,7 @@ class ContractDetailModel {
       contractId: c.contractId,
       productTitle: c.productTitle,
       productCategory: c.productCategory,
+      productBrand: (c.productBrand ?? '').toString(),
       buyerName: c.buyerName,
       buyerUniqueId: '',
       sellerName: c.sellerName,

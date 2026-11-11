@@ -36,6 +36,7 @@ class ContractModel {
   final String? bidAmount;
   final int? productId;
   final int? interestId;
+  final String productBrand;
 
   ContractModel({
     required this.id,
@@ -66,6 +67,7 @@ class ContractModel {
     this.bidAmount,
     this.productId,
     this.interestId,
+    this.productBrand = '',
   });
 
   factory ContractModel.fromJson(Map<String, dynamic> json) {
@@ -121,6 +123,7 @@ class ContractModel {
       bidAmount: text('bid_amount').isNotEmpty ? text('bid_amount') : (text('accepted_bid_amount').isNotEmpty ? text('accepted_bid_amount') : null),
       productId: number('product_id') ?? number('product') ?? number('offer_id') ?? number('offer'),
       interestId: number('interest_id') ?? number('interest'),
+      productBrand: text('product_brand_name'),
     );
   }
 }

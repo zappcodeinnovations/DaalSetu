@@ -145,9 +145,9 @@ class _SellerContractDetailViewState extends State<SellerContractDetailView> {
     return '$qty ${_text(c['quantity_unit'], '')}'.trim();
   }
 
-  /// e.g. "Buyer2 tester (ID:113 | BUY817A619C67)" exactly as the web shows it.
+  /// Returns buyer/seller display name without internal IDs.
   String _party(Map<String, dynamic> c, String prefix) =>
-      _text(c['display_${prefix}_id'], _text(c['${prefix}_name']));
+      _text(c['${prefix}_name'], _text(c['${prefix}_username']));
 
   Future<void> _open(String scheme, String value) async {
     final uri = Uri(scheme: scheme, path: value);
@@ -156,10 +156,7 @@ class _SellerContractDetailViewState extends State<SellerContractDetailView> {
 
   Widget _summaryCard(BuildContext context, Map<String, dynamic> c) {
     final theme = Theme.of(context);
-    final offerId = _text(c['product_id'], '');
-    final offer = offerId.isEmpty
-        ? _text(c['product_title'])
-        : '${_text(c['product_title'])} (ID: $offerId)';
+    final offer = _text(c['product_title']);
     return SellerUi.section(context, 'Contract ${_text(c['contract_id'], '#${c['id']}')}', [
       Row(
         children: [
@@ -207,9 +204,7 @@ class _SellerContractDetailViewState extends State<SellerContractDetailView> {
     final theme = Theme.of(context);
     final prefix = seller ? 'seller' : 'buyer';
     final name = _text(c['${prefix}_name'], _text(c['${prefix}_username']));
-    final realId = _text(c['${prefix}_real_id'] ?? c['${prefix}_id'], '');
-    final mapId = _text(c['${prefix}_map_id'] ?? (seller ? c['seller_mapped_id'] : c['buyer_unique_id']), '');
-    final idLine = [if (realId.isNotEmpty) 'ID: $realId', if (mapId.isNotEmpty) mapId].join(' | ');
+    // IDs intentionally hidden from user-facing view (TSK-008/TSK-037)
     final company = _text(c['${prefix}_company_name'] ?? c['${prefix}_company'], '');
     final mobile = _text(c['${prefix}_mobile'] ?? c['${prefix}_phone'] ?? c['${prefix}_contact'], '');
     final email = _text(c['${prefix}_email'], '');
@@ -236,7 +231,7 @@ class _SellerContractDetailViewState extends State<SellerContractDetailView> {
       if (mobile.isNotEmpty) SellerUi.infoRow('Mobile', mobile),
       if (address.isNotEmpty) SellerUi.infoRow('Address', address),
       if (email.isNotEmpty) contact(Icons.email_outlined, email, () => _open('mailto', email)),
-      if (idLine.isNotEmpty) SellerUi.infoRow('Reference', idLine),
+      // idLine hidden: internal IDs not shown to users
       if (name == '-' && company.isEmpty && mobile.isEmpty && gst.isEmpty && address.isEmpty)
         Text('Contact details are not available.', style: theme.textTheme.bodySmall),
     ]);

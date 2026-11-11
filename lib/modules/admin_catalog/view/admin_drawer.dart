@@ -506,7 +506,7 @@ class AdminDrawer extends StatelessWidget {
         _customMenuItem(
           context: context,
           key: 'products',
-          title: 'My Offers',
+          title: 'My Products',
           icon: Icons.inventory_2_outlined,
           onTap: () => Get.to(() => const SellerProductView()),
         ),

@@ -1,5 +1,62 @@
 # Bug Log & Historical Fixes
 
+## Bug 50: TSK-035 — Brand Name & Offer Name Display on Contract Screens
+- **Symptom**: On "My Deal Contracts" cards and general contract views, only "Commodity" was shown; the specific Offer Name (e.g. "mix daal") and Brand Name (e.g. "Natureland Organics") were missing.
+- **Root Cause**:
+  1. `SellerContractModel`: `productTitle` field was absent, and `brandName` only looked up `brand_name` instead of `product_brand_name`.
+  2. `seller_contracts_view.dart`: Card layout had no UI components for rendering offer title or brand chip.
+  3. `ContractModel` & `ContractDetailModel`: Did not map `product_brand_name`.
+- **Fix**:
+  1. Updated `SellerContractModel`: added `productTitle` and `offerName` getter; mapped `product_brand_name` and `product_title`.
+  2. Updated `seller_contracts_view.dart`: added clean responsive row with `IconlyLight.bag` + Offer Name and verified Brand Name chip with `TextOverflow.ellipsis`.
+  3. Updated `ContractModel` and `ContractDetailModel`: added `productBrand` mapping.
+  4. Updated `contract_view.dart` & `contract_details_view.dart`: displayed Brand on card and detail views.
+  5. Created unit tests in `test/seller_contract_brand_offer_test.dart`.
+- **Files Changed**:
+  - `lib/modules/seller/contracts/model/seller_contract_model.dart`
+  - `lib/modules/seller/contracts/view/seller_contracts_view.dart`
+  - `lib/modules/contracts/model/contract_model.dart`
+  - `lib/modules/contracts/model/contract_details_model.dart`
+  - `lib/modules/contracts/view/contract_view.dart`
+  - `lib/modules/contracts/view/contract_details_view.dart`
+  - `test/seller_contract_brand_offer_test.dart`
+- **Verification**: `test/seller_contract_brand_offer_test.dart` (2/2 passed); full regression test suite (36/36 passed); `flutter analyze` 0 issues found.
+
+---
+
+## Bug 49: TSK-014 — "My Offers" Rename to "My Products" in Seller Nav
+- **Symptom**: Seller bottom nav tab label and drawer menu item showed "Offers" instead of "Products"; share sheet text said "My offers list".
+- **Root Cause**: Three hardcoded strings across nav_page, admin_drawer, and seller_offer_export_service.
+- **Fix**:
+  1. `lib/modules/nav_bar/view/nav_page.dart` line 147: `label: 'Offers'` → `label: 'Products'`
+  2. `lib/modules/admin_catalog/view/admin_drawer.dart` line 509: `title: 'My Offers'` → `title: 'My Products'`
+  3. `lib/modules/seller/products/service/seller_offer_export_service.dart` line 197: share text → `'My products list from DaalSetu.'`
+- **Files Changed**: 3 files above.
+- **Verification**: Static analysis clean (0 issues); regression suite 34/34 PASSED.
+
+---
+
+## Bug 48: TSK-008/TSK-037 — Internal IDs Visible on Contract Detail Screens
+- **Symptom**: Contract details screen showed raw internal IDs like `"rajesh kumar (ID:166 | BUY9CED677AB6)"` in the Buyer/Seller rows and `"mix daal (ID: 186)"` in the Offer row. These expose database IDs to end users.
+- **Root Cause**:
+  1. `seller_contract_detail_view.dart`: `_party()` function returned `c['display_${prefix}_id']` (the ID-containing display string); `_summaryCard()` Offer row appended `(ID: $offerId)`; `_partyCard()` showed a `Reference` row with `idLine` containing real and mapped IDs.
+  2. `contract_details_view.dart`: Offer row built `'$title (ID: ${contract.productId})'`; Interest ID row unconditionally shown; `_partySection` showed `subtitleId` (the gray ID string) for all users.
+- **Fix**:
+  - `seller_contract_detail_view.dart`:
+    1. `_party()` → now reads `c['${prefix}_name']` (plain name, no ID string)
+    2. Offer row → `final offer = _text(c['product_title'])` (no ID suffix)
+    3. `_partyCard()` → removed `if (idLine.isNotEmpty) SellerUi.infoRow('Reference', idLine)` (replaced with comment)
+  - `contract_details_view.dart`:
+    1. Offer row → returns plain `title` without `(ID: ...)` suffix
+    2. Interest ID row → guarded with `if (_isSuperAdmin && ...)` (admin-only)
+    3. `subtitleId` block in `_partySection` → guarded with `if (_isSuperAdmin && ...)`
+- **Files Changed**:
+  - `lib/modules/seller/contracts/view/seller_contract_detail_view.dart`
+  - `lib/modules/contracts/view/contract_details_view.dart`
+- **Verification**: Static analysis clean (0 issues); regression suite 34/34 PASSED.
+
+---
+
 ## Bug 46: Card-Wide Clickability on Buyer Dashboard Carousel & Admin Offers Catalog
 - **Symptom**: On the Buyer Dashboard carousel (`BuyerDashboardView`) and Admin Offers catalog (`AdminOffersListScreen`), tapping on the card body, commodity image, title, badge, or price produced no action. Users were constrained to clicking only a tiny "View Details" button or had no direct way to open product details by tapping the card.
 - **Root Cause**: `_buildOfferCard` in both `BuyerDashboardView` and `AdminOffersListScreen` returned static `Container` elements without interactive gesture recognizers.
@@ -615,3 +672,25 @@
   - `lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`
   - `test/buyer_dashboard_kpi_navigation_test.dart`
 - **Verification**: `flutter test test/buyer_dashboard_kpi_navigation_test.dart --no-pub` (2 tests PASSED), full regression suite (11 tests PASSED).
+
+## Bug 47: Notifications Not Opening & 2nd Tap Not Redirecting
+- **Symptom**:
+  1. Tapping on notifications related to deals or concluded offers ("Deal Confirmed", "Offer Accepted", etc.) frequently failed to open or redirect to any screen.
+  2. Clicking on the same notification a 2nd time after navigating back failed to redirect.
+  3. Clicking on an unread notification caused the entire notifications list to flicker and collapse into a loading spinner.
+- **Root Cause**:
+  1. `RealtimeNotificationService.navigateToTarget` had an explicit hardcoded suppression block `final isConcludedDealOrOffer = ...; if (isConcludedDealOrOffer) return;` that silently swallowed clicks for all deal/offer concluded notifications before they reached contract extraction logic.
+  2. GetX's default `preventDuplicates: true` suppressed subsequent `Get.to` pushes when navigating to the same destination after returning from a popped route.
+  3. `SellerNotificationController.markAsRead` triggered `fetchNotifications()`, which executed `isLoading(true)`, destroying the ListView and re-mounting a `CircularProgressIndicator`.
+  4. Fallback route unconditionally pushed `SellerNotificationView` even if the user was already on it, resulting in a dead end.
+- **Fix**:
+  1. Removed `isConcludedDealOrOffer` suppression in `RealtimeNotificationService.navigateToTarget` and routed concluded deals/accepted offers to `SellerContractDetailView` / `ContractDetailScreen` (or `SellerContractsView` / `ContractsScreen` if no specific contract ID is extractable).
+  2. Added a 500ms `_isNavigating` debounce lock to prevent accidental double-tap pushes while enabling smooth re-navigation on subsequent taps.
+  3. Added `preventDuplicates: false` to all `Get.to` calls in `RealtimeNotificationService`.
+  4. Updated `SellerNotificationController.markAsRead` to perform an optimistic in-place update of `isRead` and `unreadCount` without resetting `isLoading(true)`.
+  5. Guarded fallback navigation to prevent duplicate route pushes when already on a notifications view.
+- **Files Changed**:
+  - `lib/services/realtime_notification_service.dart`
+  - `lib/modules/seller/notifications/controller/seller_notification_controller.dart`
+  - `test/notification_reclick_navigation_test.dart`
+- **Verification**: `flutter test test/notification_reclick_navigation_test.dart` (4 tests PASSED), full regression test suite (26 tests PASSED).

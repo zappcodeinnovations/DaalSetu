@@ -273,6 +273,16 @@ class _ContractsScreenState extends State<ContractsScreen> {
                           _text(contract.productCategory),
                           style: theme.textTheme.bodySmall,
                         ),
+                        if (contract.productBrand.isNotEmpty) ...[
+                          const SizedBox(height: 3),
+                          Text(
+                            'Brand: ${contract.productBrand}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
