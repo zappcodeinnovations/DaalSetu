@@ -1,145 +1,48 @@
 import '../../../../comman/api_url.dart';
 import '../../../../network/api_client.dart';
+import '../../../../services/seller_services.dart';
 import '../../../../utils/app_preferences.dart';
 import 'package:get/get.dart';
 
-// --- Hardcoded Data Models ---
-class MetricCard {
-  final String title;
-  final String value;
-  final String change;
-  final bool isPositive;
-  MetricCard({required this.title, required this.value, required this.change, required this.isPositive});
-}
-
-class KpiItem {
-  final String title;
-  final dynamic value;
-  final String subtitle;
-  final String type;
-  final String redirectTo;
-  final String screen;
-
-  KpiItem({
-    required this.title,
-    required this.value,
-    required this.subtitle,
-    required this.type,
-    required this.redirectTo,
-    required this.screen,
-  });
-
-  factory KpiItem.fromJson(Map<String, dynamic> json) {
-    return KpiItem(
-      title: json['title'] ?? '',
-      value: json['value'] ?? 0,
-      subtitle: json['subtitle'] ?? '',
-      type: json['type'] ?? '',
-      redirectTo: json['redirect_to'] ?? '',
-      screen: json['screen'] ?? '',
-    );
-  }
-}
-
-class ChartData {
+/// One labelled series for the dashboard charts.
+class ChartSeries {
   final List<String> labels;
   final List<double> values;
-  ChartData({required this.labels, required this.values});
+  const ChartSeries(this.labels, this.values);
+
+  static ChartSeries fromJson(
+    dynamic json,
+    String labelsKey,
+    String valuesKey,
+  ) {
+    final map = json is Map ? json : const {};
+    final labels = (map[labelsKey] as List? ?? []).map((e) => '$e').toList();
+    final values = (map[valuesKey] as List? ?? [])
+        .map((e) => double.tryParse('$e') ?? 0)
+        .toList();
+    return ChartSeries(labels, values);
+  }
+
+  bool get isEmpty => labels.isEmpty || values.every((v) => v == 0);
 }
 
-class DonutItem {
-  final String label;
-  final double percentage;
-  DonutItem({required this.label, required this.percentage});
-}
-
-class BarItem {
-  final String label;
-  final double value;
-  BarItem({required this.label, required this.value});
-}
-
-class ActivityItem {
-  final String type; // 'trip', 'driver', 'branch'
-  final String title;
-  final String subtitle;
-  final String time;
-  final String status;
-  ActivityItem({required this.type, required this.title, required this.subtitle, required this.time, required this.status});
-}
-
+/// Same data as the web transporter dashboard (GET /api/transporter/dashboard/overview/).
 class TransporterDashboardController extends GetxController {
   var isLoading = false.obs;
-  var isExpanded = false.obs;
-  
+  var errorMessage = ''.obs;
+
   var username = ''.obs;
-  var branchName = 'Mumbai Central Branch'.obs;
-  var dateStr = '22 May, 2025'.obs;
+  var branchCodes = <String>[].obs;
+  var kycStatus = ''.obs;
+  var kpis = <String, dynamic>{}.obs;
 
-  // Overview metrics
-  var dynamicKpis = <KpiItem>[].obs;
-
-  // Analytics Trends
-  var earningsTrend = ChartData(
-    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    values: [8, 10, 11, 10, 14, 16, 20],
-  ).obs;
-
-  var deliveryStatus = [
-    DonutItem(label: 'Delivered', percentage: 68),
-    DonutItem(label: 'In Transit', percentage: 24),
-    DonutItem(label: 'Pending', percentage: 8),
-  ].obs;
-
-  var transportTypes = [
-    DonutItem(label: 'FTL', percentage: 52),
-    DonutItem(label: 'PTL', percentage: 28),
-    DonutItem(label: 'Express', percentage: 20),
-  ].obs;
-
-  var topRoutes = [
-    BarItem(label: 'Mumbai - Delhi', value: 512),
-    BarItem(label: 'Mumbai - Pune', value: 423),
-    BarItem(label: 'Delhi - Bengaluru', value: 312),
-    BarItem(label: 'Chennai - Hyderabad', value: 198),
-  ].obs;
-
-  // Performance Insights
-  var avgDeliveryTime = MetricCard(title: "Avg. Delivery Time", value: "2.6 Days", change: "- 0.8 Days", isPositive: true).obs;
-  var onTimeDelivery = MetricCard(title: "On-Time Delivery", value: "92.5%", change: "+ 4.2%", isPositive: true).obs;
-  var fuelEfficiency = MetricCard(title: "Fuel Efficiency", value: "6.8 km/l", change: "+ 0.6 km/l", isPositive: true).obs;
-  var customerRating = MetricCard(title: "Customer Rating", value: "4.6/5", change: "+ 0.3", isPositive: true).obs;
-
-  // Monthly Revenue
-  var monthlyRevenue = ChartData(
-    labels: ['Jan', 'Feb', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-    values: [12, 14, 15, 20, 42, 14, 15, 12, 14, 13, 14],
-  ).obs;
-
-  // Recent Activity
-  var activities = [
-    ActivityItem(
-      type: 'trip', 
-      title: 'Trip #TRP-4872 Completed', 
-      subtitle: 'Mumbai to Delhi', 
-      time: 'Today, 10:30 AM', 
-      status: 'Completed'
-    ),
-    ActivityItem(
-      type: 'driver', 
-      title: 'Driver Amit Singh Assigned', 
-      subtitle: 'Vehicle MH-12-AB-1234', 
-      time: 'Today, 09:15 AM', 
-      status: 'Assigned'
-    ),
-    ActivityItem(
-      type: 'branch', 
-      title: 'Branch Access Approved', 
-      subtitle: 'Bengaluru Hub', 
-      time: 'Today, 08:45 AM', 
-      status: 'Approved'
-    ),
-  ].obs;
+  /// "7D" | "1M" | "3M" | "1Y"
+  var selectedRange = '7D'.obs;
+  var ranges = <String, Map<String, ChartSeries>>{}.obs;
+  var deliveryStatus = const ChartSeries([], []).obs;
+  var transportTypes = const ChartSeries([], []).obs;
+  var topRoutes = const ChartSeries([], []).obs;
+  var slaDrivers = const ChartSeries([], []).obs;
 
   @override
   void onInit() {
@@ -149,24 +52,137 @@ class TransporterDashboardController extends GetxController {
   }
 
   Future<void> _loadUserInfo() async {
-    final storedName = await AppPreferences.getUsername();
-    username.value = (storedName != null && storedName.isNotEmpty) ? storedName : 'Rahul';
+    username.value = await AppPreferences.getUsername() ?? '';
   }
+
+  Map<String, ChartSeries> get currentRange =>
+      ranges[selectedRange.value] ?? const {};
 
   Future<void> fetchDashboardOverview() async {
     try {
       isLoading(true);
-      
-      final response = await ApiClient.get(endpoint: ApiUrls.transporterDashboard, requireAuth: true);
-      
-      if (response != null && response['success'] == true) {
-        final kpisJson = response['data']?['kpis'] as List?;
-        if (kpisJson != null) {
-          dynamicKpis.value = kpisJson.map((e) => KpiItem.fromJson(e)).toList();
+      errorMessage('');
+      final response = await ApiClient.get(
+        endpoint: ApiUrls.transporterDashboardOverview,
+        requireAuth: true,
+      );
+      final data = response is Map && response['data'] is Map
+          ? response['data'] as Map
+          : const {};
+
+      final profile = data['profile'] is Map
+          ? data['profile'] as Map
+          : const {};
+      if ('${profile['name'] ?? ''}'.isNotEmpty) {
+        username.value = '${profile['name']}';
+      }
+      kycStatus.value = '${profile['kyc_status'] ?? ''}';
+
+      final Set<String> codes = {};
+      void addCodes(dynamic val) {
+        if (val is List) {
+          for (final item in val) {
+            if (item is Map) {
+              final c = item['branch_code'] ?? item['code'] ?? item['name'];
+              if (c != null && '$c'.trim().isNotEmpty) codes.add('$c'.trim());
+            } else if (item != null && '$item'.trim().isNotEmpty) {
+              codes.add('$item'.trim());
+            }
+          }
+        } else if (val is String && val.trim().isNotEmpty) {
+          for (final part in val.split(RegExp(r'[\s,\-]+'))) {
+            if (part.trim().isNotEmpty) codes.add(part.trim());
+          }
         }
       }
+
+      addCodes(profile['branch_codes']);
+      addCodes(profile['assigned_branch_codes']);
+      addCodes(profile['branches']);
+      addCodes(profile['branch_code']);
+      addCodes(data['branch_codes']);
+      addCodes(data['branches']);
+
+      // Also fetch from getSellerBranches to guarantee full parity with web branches network
+      try {
+        final branchRes = await SellerServices.getSellerBranches();
+        if (branchRes['data'] is Map<String, dynamic>) {
+          final bData = branchRes['data'] as Map<String, dynamic>;
+          if (bData['primary_branch'] is Map) {
+            final pCode = bData['primary_branch']['branch_code'] ?? bData['primary_branch']['code'];
+            if (pCode != null && '$pCode'.trim().isNotEmpty) codes.add('$pCode'.trim());
+          }
+          if (bData['my_branches'] is List) {
+            for (final b in bData['my_branches']) {
+              if (b is Map) {
+                final bCode = b['branch_code'] ?? b['code'];
+                if (bCode != null && '$bCode'.trim().isNotEmpty) codes.add('$bCode'.trim());
+              }
+            }
+          }
+        }
+      } catch (_) {}
+
+      branchCodes.value = codes.toList();
+
+      kpis.value = data['kpis'] is Map
+          ? Map<String, dynamic>.from(data['kpis'] as Map)
+          : {};
+
+      final rawRanges = data['ranges'] is Map
+          ? data['ranges'] as Map
+          : const {};
+      ranges.value = {
+        for (final entry in rawRanges.entries)
+          '${entry.key}': {
+            'earnings': ChartSeries.fromJson(
+              entry.value,
+              'labels',
+              'earnLakhs',
+            ),
+            'shipments': ChartSeries.fromJson(
+              entry.value,
+              'labels',
+              'shipments',
+            ),
+          },
+      };
+      deliveryStatus.value = ChartSeries.fromJson(
+        data['deliveryStatus'],
+        'labels',
+        'counts',
+      );
+      transportTypes.value = ChartSeries.fromJson(
+        data['transportTypes'],
+        'labels',
+        'share',
+      );
+      topRoutes.value = ChartSeries.fromJson(
+        data['topRoutes'],
+        'labels',
+        'trips',
+      );
+
+      final slaData = data['slaDrivers'] ??
+          data['sla_drivers'] ??
+          data['slaOnTime'] ??
+          data['sla_on_time'] ??
+          data['driverSla'] ??
+          data['driver_sla'] ??
+          data['sla'];
+      ChartSeries parsedSla = const ChartSeries([], []);
+      if (slaData is Map) {
+        for (final vKey in ['percentages', 'values', 'otd', 'rates', 'scores', 'share']) {
+          final s = ChartSeries.fromJson(slaData, 'labels', vKey);
+          if (!s.isEmpty) {
+            parsedSla = s;
+            break;
+          }
+        }
+      }
+      slaDrivers.value = parsedSla;
     } catch (e) {
-      print("Error fetching KPIs: $e");
+      errorMessage(e.toString().replaceFirst('Exception: ', ''));
     } finally {
       isLoading(false);
     }

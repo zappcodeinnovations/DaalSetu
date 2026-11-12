@@ -1,8 +1,10 @@
+import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
 import '../controller/seller_contract_controller.dart';
 import '../model/seller_contract_model.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class SellerContractView extends StatelessWidget {
   const SellerContractView({super.key});
@@ -10,13 +12,18 @@ class SellerContractView extends StatelessWidget {
   static const Color primaryColor = Color(0xFFFFB300);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PageAutoRefresh(
+    onRefresh: () => Get.find<SellerContractController>().fetchContracts(silent: true),
+    child: _buildPageContent(context),
+  );
+
+  Widget _buildPageContent(BuildContext context) {
     final controller = Get.put(SellerContractController());
     final theme = Theme.of(context);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
@@ -96,7 +103,7 @@ class SellerContractView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  contract.status.toUpperCase(),
+                  (contract.status ?? 'ACTIVE').toUpperCase(),
                   style: const TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -111,7 +118,7 @@ class SellerContractView extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Dated: ${contract.createdAt.day}/${contract.createdAt.month}/${contract.createdAt.year}",
+                "Dated: ${contract.createdAt ?? 'N/A'}",
                 style: theme.textTheme.bodySmall,
               ),
               ElevatedButton.icon(

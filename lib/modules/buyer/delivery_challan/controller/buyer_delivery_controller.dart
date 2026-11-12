@@ -1,5 +1,6 @@
 import '../model/buyer_challan_model.dart';
 import '../../../../services/buyer_services.dart';
+import '../../../../utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -22,7 +23,7 @@ class BuyerDeliveryController extends GetxController {
       final list = (data['results'] as List?) ?? (data['challans'] as List?) ?? (data['data'] as List?) ?? [];
       challans.assignAll(list.map((e) => BuyerChallanModel.fromJson(e)).toList());
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.showError(title: "Error", message: e.toString());
     } finally {
       isLoading(false);
     }
@@ -34,7 +35,7 @@ class BuyerDeliveryController extends GetxController {
       final data = await BuyerServices.getChallanDetails(id);
       selectedChallan.value = data;
     } catch (e) {
-      Get.snackbar("Error", "Could not fetch details");
+      AppSnackbar.showError(title: "Error", message: "Could not fetch details");
     } finally {
       isDetailLoading(false);
     }
@@ -44,13 +45,13 @@ class BuyerDeliveryController extends GetxController {
     try {
       isLoading(true);
       await BuyerServices.receiveChallan(id, remarks);
-      Get.snackbar("Success", "Shipment received successfully");
+      AppSnackbar.showSuccess(title: "Success", message: "Shipment received successfully");
       fetchChallans();
       if (selectedChallan.value != null && selectedChallan.value!['id'] == id) {
         fetchChallanDetails(id);
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.showError(title: "Error", message: e.toString());
     } finally {
       isLoading(false);
     }

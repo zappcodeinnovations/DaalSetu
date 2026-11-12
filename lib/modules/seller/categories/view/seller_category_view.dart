@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
 import '../controller/seller_category_controller.dart';
 import '../model/seller_category_model.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class SellerCategoryView extends StatelessWidget {
   const SellerCategoryView({super.key});
@@ -12,17 +13,21 @@ class SellerCategoryView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(SellerCategoryController());
+    final controller = Get.isRegistered<SellerCategoryController>()
+        ? Get.find<SellerCategoryController>()
+        : Get.put(SellerCategoryController());
     final theme = Theme.of(context);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
           "Categories",
-          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           Padding(
@@ -30,11 +35,16 @@ class SellerCategoryView extends StatelessWidget {
             child: ElevatedButton.icon(
               onPressed: () => _showAddRootDialog(context),
               icon: const Icon(Icons.add, size: 18, color: Colors.white),
-              label: const Text("Add Category", style: TextStyle(color: Colors.white)),
+              label: const Text(
+                "Add Category",
+                style: TextStyle(color: Colors.white),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
               ),
             ),
@@ -46,7 +56,9 @@ class SellerCategoryView extends StatelessWidget {
         color: primaryColor,
         child: Obx(() {
           if (controller.isLoading.value && controller.categoryTree.isEmpty) {
-            return const Center(child: CircularProgressIndicator(color: primaryColor));
+            return const Center(
+              child: CircularProgressIndicator(color: primaryColor),
+            );
           }
 
           return Column(
@@ -83,28 +95,58 @@ class SellerCategoryView extends StatelessWidget {
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
-          )
+          ),
         ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _dashboardItem(context, "Total", data.total.toString(), Icons.inventory_2_outlined),
-          _dashboardItem(context, "Root", data.root.toString(), Icons.account_tree_outlined),
-          _dashboardItem(context, "Active", data.active.toString(), Icons.check_circle_outline),
-          _dashboardItem(context, "Pending", data.pending.toString(), Icons.pending_actions),
+          _dashboardItem(
+            context,
+            "Total",
+            data.total.toString(),
+            Icons.inventory_2_outlined,
+          ),
+          _dashboardItem(
+            context,
+            "Root",
+            data.root.toString(),
+            Icons.account_tree_outlined,
+          ),
+          _dashboardItem(
+            context,
+            "Active",
+            data.active.toString(),
+            Icons.check_circle_outline,
+          ),
+          _dashboardItem(
+            context,
+            "Pending",
+            data.pending.toString(),
+            Icons.pending_actions,
+          ),
         ],
       ),
     );
   }
 
-  Widget _dashboardItem(BuildContext context, String title, String value, IconData icon) {
+  Widget _dashboardItem(
+    BuildContext context,
+    String title,
+    String value,
+    IconData icon,
+  ) {
     final theme = Theme.of(context);
     return Column(
       children: [
         Icon(icon, color: primaryColor, size: 24),
         const SizedBox(height: 8),
-        Text(value, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        Text(
+          value,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         Text(title, style: theme.textTheme.bodySmall),
       ],
     );
@@ -113,25 +155,77 @@ class SellerCategoryView extends StatelessWidget {
   Widget _buildSearchBar(BuildContext context) {
     final controller = Get.find<SellerCategoryController>();
     return Padding(
-      padding: const EdgeInsets.all(16),
-      child: TextField(
-        controller: controller.searchController,
-        onChanged: controller.search,
-        decoration: InputDecoration(
-          hintText: "Search Categories...",
-          prefixIcon: const Icon(IconlyLight.search),
-          filled: true,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-        ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: ValueListenableBuilder<TextEditingValue>(
+        valueListenable: controller.searchController,
+        builder: (context, value, _) {
+          return TextField(
+            controller: controller.searchController,
+            onChanged: controller.search,
+            decoration: InputDecoration(
+              hintText: "Search Categories...",
+              prefixIcon: const Icon(IconlyLight.search),
+              suffixIcon: value.text.isNotEmpty
+                  ? IconButton(
+                      key: const Key('clear_category_search_btn'),
+                      icon: const Icon(Icons.clear, size: 20),
+                      splashRadius: 20,
+                      tooltip: "Clear search",
+                      onPressed: () {
+                        controller.searchController.clear();
+                        controller.search('');
+                      },
+                    )
+                  : null,
+              filled: true,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
   Widget _buildSearchResults(BuildContext context) {
     final controller = Get.find<SellerCategoryController>();
+    final theme = Theme.of(context);
+
+    if (controller.searchResults.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                IconlyLight.search,
+                size: 64,
+                color: theme.disabledColor,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "No categories found",
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "No categories match \"${controller.searchController.text.trim()}\"",
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.disabledColor,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
       itemCount: controller.searchResults.length,
@@ -143,7 +237,10 @@ class SellerCategoryView extends StatelessWidget {
     );
   }
 
-  Widget _buildSearchResultNode(BuildContext context, CategoryDetailModel category) {
+  Widget _buildSearchResultNode(
+    BuildContext context,
+    CategoryDetailModel category,
+  ) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final controller = Get.find<SellerCategoryController>();
@@ -154,17 +251,23 @@ class SellerCategoryView extends StatelessWidget {
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+          color: isDark
+              ? Colors.white.withOpacity(0.1)
+              : Colors.grey.withOpacity(0.2),
         ),
-        boxShadow: isDark ? [] : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
-      child: ListTile(
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Container(
           padding: const EdgeInsets.all(2),
@@ -179,7 +282,8 @@ class SellerCategoryView extends StatelessWidget {
                     child: Image.network(
                       category.imageUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => const Icon(IconlyLight.category, color: primaryColor),
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Icon(IconlyLight.category, color: primaryColor),
                     ),
                   )
                 : const Icon(IconlyLight.category, color: primaryColor),
@@ -193,12 +297,27 @@ class SellerCategoryView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 6),
-            _categoryInfoRow(IconlyLight.category, "${category.childrenCount} sub-categories", theme),
+            if (category.fullPath.isNotEmpty &&
+                category.fullPath.toLowerCase() != category.name.toLowerCase())
+              _categoryInfoRow(
+                IconlyLight.arrow_right_2,
+                category.fullPath,
+                theme,
+              ),
             _categoryInfoRow(
-              category.status == 'active' ? Icons.check_circle_outline : Icons.pending_actions,
+              IconlyLight.category,
+              "${category.childrenCount} sub-categories",
+              theme,
+            ),
+            _categoryInfoRow(
+              category.status.toLowerCase() == 'active'
+                  ? Icons.check_circle_outline
+                  : Icons.pending_actions,
               "Status: ${category.status.toUpperCase()}",
               theme,
-              textColor: category.status == 'active' ? Colors.green : Colors.orange,
+              textColor: category.status.toLowerCase() == 'active'
+                  ? Colors.green
+                  : Colors.orange,
             ),
           ],
         ),
@@ -262,12 +381,38 @@ class SellerCategoryView extends StatelessWidget {
             ),
           ],
         ),
+        ),
       ),
     );
   }
 
   Widget _buildCategoryTree(BuildContext context) {
     final controller = Get.find<SellerCategoryController>();
+    if (controller.categoryTree.isEmpty) {
+      final theme = Theme.of(context);
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                IconlyLight.category,
+                size: 64,
+                color: theme.disabledColor,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "No categories available",
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
       physics: const AlwaysScrollableScrollPhysics(),
@@ -289,17 +434,23 @@ class SellerCategoryView extends StatelessWidget {
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+          color: isDark
+              ? Colors.white.withOpacity(0.1)
+              : Colors.grey.withOpacity(0.2),
         ),
-        boxShadow: isDark ? [] : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
-      child: Theme(
+      child: Material(
+        color: Colors.transparent,
+        child: Theme(
         data: theme.copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -316,7 +467,11 @@ class SellerCategoryView extends StatelessWidget {
                       child: Image.network(
                         node.image!,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => const Icon(IconlyLight.category, color: primaryColor),
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(
+                              IconlyLight.category,
+                              color: primaryColor,
+                            ),
                       ),
                     )
                   : const Icon(IconlyLight.category, color: primaryColor),
@@ -330,16 +485,28 @@ class SellerCategoryView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 6),
-              _categoryInfoRow(IconlyLight.category, "${node.childrenCount} sub-categories", theme),
               _categoryInfoRow(
-                node.status == 'active' ? Icons.check_circle_outline : Icons.pending_actions,
+                IconlyLight.category,
+                "${node.childrenCount} sub-categories",
+                theme,
+              ),
+              _categoryInfoRow(
+                node.status == 'active'
+                    ? Icons.check_circle_outline
+                    : Icons.pending_actions,
                 "Status: ${node.status.toUpperCase()}",
                 theme,
-                textColor: node.status == 'active' ? Colors.green : Colors.orange,
+                textColor: node.status == 'active'
+                    ? Colors.green
+                    : Colors.orange,
               ),
             ],
           ),
-          childrenPadding: const EdgeInsets.only(left: 12, right: 12, bottom: 12),
+          childrenPadding: const EdgeInsets.only(
+            left: 12,
+            right: 12,
+            bottom: 12,
+          ),
           trailing: PopupMenuButton<String>(
             onSelected: (value) {
               switch (value) {
@@ -400,13 +567,21 @@ class SellerCategoryView extends StatelessWidget {
               ),
             ],
           ),
-          children: node.children.map((child) => _buildCategoryNode(context, child)).toList(),
+          children: node.children
+              .map((child) => _buildCategoryNode(context, child))
+              .toList(),
         ),
+      ),
       ),
     );
   }
 
-  Widget _categoryInfoRow(IconData icon, String text, ThemeData theme, {Color? textColor}) {
+  Widget _categoryInfoRow(
+    IconData icon,
+    String text,
+    ThemeData theme, {
+    Color? textColor,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
@@ -417,8 +592,12 @@ class SellerCategoryView extends StatelessWidget {
             child: Text(
               text,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: textColor ?? theme.textTheme.bodySmall?.color?.withOpacity(0.8),
-                fontWeight: textColor != null ? FontWeight.bold : FontWeight.normal,
+                color:
+                    textColor ??
+                    theme.textTheme.bodySmall?.color?.withOpacity(0.8),
+                fontWeight: textColor != null
+                    ? FontWeight.bold
+                    : FontWeight.normal,
               ),
             ),
           ),
@@ -444,17 +623,29 @@ class SellerCategoryView extends StatelessWidget {
               hintText: "Enter Category Name",
               filled: true,
               fillColor: Theme.of(context).cardColor.withOpacity(0.5),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
               prefixIcon: const Icon(IconlyLight.category),
             ),
           ),
           const SizedBox(height: 20),
           const Align(
             alignment: Alignment.centerLeft,
-            child: Text("Select Brands", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            child: Text(
+              "Select Brands",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
           ),
           const SizedBox(height: 8),
           Obx(() {
+            if (controller.isBrandsLoading.value) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 28),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
             if (controller.brandsList.isEmpty) {
               return Container(
                 padding: const EdgeInsets.symmetric(vertical: 30),
@@ -464,38 +655,78 @@ class SellerCategoryView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.red.withOpacity(0.1)),
                 ),
-                child: const Column(
+                child: Column(
                   children: [
-                    Icon(IconlyLight.info_square, color: Colors.red, size: 24),
-                    SizedBox(height: 8),
-                    Text("Brands not Found", style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500)),
+                    const Icon(
+                      IconlyLight.info_square,
+                      color: Colors.red,
+                      size: 24,
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "No active brands found",
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        // Backend links only active brands; seller-added brands stay pending until admin approval.
+                        "Brands you add stay pending until the admin approves them, then they appear here.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: controller.fetchBrands,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                    ),
                   ],
                 ),
               );
             }
 
             return Container(
-              constraints: const BoxConstraints(maxHeight: 200),
+              constraints: const BoxConstraints(maxHeight: 180),
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: ListView.builder(
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
-                itemCount: controller.brandsList.length,
-                itemBuilder: (context, index) {
-                  final brand = controller.brandsList[index];
-                  return CheckboxListTile(
-                    title: Text(brand.brandName, style: const TextStyle(fontSize: 14)),
-                    value: controller.selectedBrandIds.contains(brand.id),
-                    onChanged: (val) => controller.toggleBrandSelection(brand.id),
-                    activeColor: primaryColor,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    dense: true,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  );
-                },
+              child: Material(
+                color: Colors.transparent,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  primary: false,
+                  physics: const ClampingScrollPhysics(),
+                  padding: EdgeInsets.zero,
+                  itemCount: controller.brandsList.length,
+                  itemBuilder: (context, index) {
+                    final brand = controller.brandsList[index];
+                    // Own Obx: list items are built lazily, outside the parent Obx,
+                    // so without it a tap never redraws the tick.
+                    return Obx(() => CheckboxListTile(
+                      title: Text(
+                        brand.brandName,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      value: controller.selectedBrandIds.contains(brand.id),
+                      onChanged: (val) =>
+                          controller.toggleBrandSelection(brand.id),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      side: BorderSide(color: Colors.grey.shade500, width: 1.5),
+                      activeColor: primaryColor,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                      dense: true,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ));
+                  },
+                ),
               ),
             );
           }),
@@ -517,7 +748,10 @@ class SellerCategoryView extends StatelessWidget {
           hintText: "Enter Sub-Category Name",
           filled: true,
           fillColor: Theme.of(context).cardColor.withOpacity(0.5),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
         ),
       ),
       onConfirm: () => controller.addSubCategory(parentId),
@@ -536,7 +770,10 @@ class SellerCategoryView extends StatelessWidget {
           hintText: "Enter Category Name",
           filled: true,
           fillColor: Theme.of(context).cardColor.withOpacity(0.5),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
         ),
       ),
       onConfirm: () => controller.updateCategory(id),
@@ -549,35 +786,100 @@ class SellerCategoryView extends StatelessWidget {
     required Widget content,
     required VoidCallback onConfirm,
   }) {
+    final theme = Theme.of(context);
     Get.dialog(
       BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: Dialog(
-          backgroundColor: Theme.of(context).cardColor.withOpacity(0.8),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 20),
-                content,
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(onPressed: () => Get.back(), child: const Text("CANCEL", style: TextStyle(color: Colors.grey))),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: onConfirm,
-                      style: ElevatedButton.styleFrom(backgroundColor: primaryColor, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                      child: const Text("SAVE", style: TextStyle(color: Colors.white)),
+          backgroundColor: theme.cardColor.withOpacity(0.95),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          clipBehavior: Clip.antiAlias,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20),
+                        splashRadius: 18,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        tooltip: "Close",
+                        onPressed: () => Get.back(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      physics: const ClampingScrollPhysics(),
+                      child: content,
                     ),
-                  ],
-                )
-              ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Get.back(),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                        ),
+                        child: Text(
+                          "CANCEL",
+                          style: TextStyle(
+                            color: theme.disabledColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: onConfirm,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          "SAVE",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -588,7 +890,8 @@ class SellerCategoryView extends StatelessWidget {
   void _showDeleteConfirm(BuildContext context, int id) {
     Get.defaultDialog(
       title: "Delete Category",
-      middleText: "Are you sure you want to delete this category? This action cannot be undone.",
+      middleText:
+          "Are you sure you want to delete this category? This action cannot be undone.",
       textConfirm: "DELETE",
       confirmTextColor: Colors.white,
       buttonColor: Colors.red,

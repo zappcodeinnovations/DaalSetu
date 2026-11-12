@@ -2,11 +2,17 @@ import '../../../services/category_services.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../model/category_model.dart';
+import '../model/category_request_model.dart';
+import '../../../utils/app_snackbar.dart';
 
 class CategoryController extends GetxController {
 
   var isLoading = false.obs;
+  var allCategories = <CategoryModel>[].obs;
+  var systemCategories = <CategoryModel>[].obs;
   var categories = <CategoryModel>[].obs;
+  var recentRequests = <CategoryRequestModel>[].obs;
+  var searchQuery = ''.obs;
 
   @override
   void onInit() {
@@ -18,31 +24,69 @@ class CategoryController extends GetxController {
     try {
       isLoading.value = true;
 
-      final data = await CategoryService.fetchCategories();
-      categories.assignAll(data);
-
+      final result = await CategoryService.fetchBuyerCategoryData();
+      recentRequests.assignAll(result.requests);
+      if (result.buyerCategories.isNotEmpty) {
+        allCategories.assignAll(result.buyerCategories);
+        systemCategories.assignAll(result.systemCategories);
+        _applyFilter();
+      } else if (allCategories.isEmpty && result.systemCategories.isNotEmpty) {
+        systemCategories.assignAll(result.systemCategories);
+      }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      // Background and screen-load failures should fail silently with graceful fallback
+      // rather than interrupting the user with generic server error toasts.
+      print("⚠️ fetchCategories error: $e");
     } finally {
       isLoading.value = false;
     }
   }
 
-  Future<void> createCategory(String name) async {
+  void searchCategories(String query) {
+    searchQuery.value = query;
+    _applyFilter();
+  }
+
+  void _applyFilter() {
+    if (searchQuery.value.trim().isEmpty) {
+      categories.assignAll(allCategories);
+    } else {
+      final q = searchQuery.value.trim().toLowerCase();
+      categories.assignAll(
+        allCategories.where((c) => c.categoryName.toLowerCase().contains(q)).toList(),
+      );
+    }
+  }
+
+  Future<bool> sendForApproval({List<int>? categoryIds, String? categoryName, String? note}) async {
     try {
       Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
-      final response = await CategoryService.createCategory(name);
-      Get.back(); // close dialog
-      
-      if (response['success'] == true || response['category_name'] == name) {
-        Get.snackbar("Success", "Category created successfully", snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
-        fetchCategories(); // Refresh list
-      } else {
-        Get.snackbar("Error", response['message'] ?? "Failed to create category", snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
-      }
+      final response = await CategoryService.requestCategoryApproval(
+        categoryIds: categoryIds ?? [],
+        categoryName: categoryName,
+        note: note,
+      );
+      if (Get.isDialogOpen ?? false) Get.back();
+
+      AppSnackbar.snackbar(
+        "Success",
+        response['message'] ?? "Category request sent for approval successfully",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+      await fetchCategories(); // Refresh list
+      return true;
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
-      Get.snackbar("Error", e.toString(), snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+      AppSnackbar.snackbar(
+        "Error",
+        e.toString().replaceAll("Exception: ", ""),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return false;
     }
   }
 
@@ -55,7 +99,7 @@ class CategoryController extends GetxController {
       _showBrandsBottomSheet(brands);
     } catch (e) {
       if (Get.isDialogOpen ?? false) Get.back();
-      Get.snackbar("Error", e.toString(), snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+      AppSnackbar.snackbar("Error", e.toString(), snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
 

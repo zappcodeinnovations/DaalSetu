@@ -1,13 +1,60 @@
 import 'dart:convert';
 import 'dart:io';
-import '../utils/global_error_handler.dart';
+import 'dart:async';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+
 import '../comman/api_url.dart';
 import '../utils/app_preferences.dart';
-import 'dart:async';
+import '../utils/global_error_handler.dart';
+
+/// An error safe to show directly in the UI.
+///
+/// `Exception.toString()` prefixes messages with "Exception:", which used to
+/// leak backend-style errors into snackbars throughout the app. API failures
+/// now use this type so every panel receives one clean message.
+class ApiRequestException implements Exception {
+  const ApiRequestException(this.message, {this.fieldErrors});
+
+  final String message;
+  final Map<String, String>? fieldErrors;
+
+  @override
+  String toString() => message;
+}
 
 class ApiClient {
   static const Duration _timeout = Duration(seconds: 30);
+
+  static MediaType _resolveMediaType(String path) {
+    final lower = path.toLowerCase();
+    if (lower.endsWith('.png')) {
+      return MediaType('image', 'png');
+    } else if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
+      return MediaType('image', 'jpeg');
+    } else if (lower.endsWith('.webp')) {
+      return MediaType('image', 'webp');
+    } else if (lower.endsWith('.gif')) {
+      return MediaType('image', 'gif');
+    } else if (lower.endsWith('.pdf')) {
+      return MediaType('application', 'pdf');
+    } else if (lower.endsWith('.mp4')) {
+      return MediaType('video', 'mp4');
+    } else if (lower.endsWith('.mov')) {
+      return MediaType('video', 'quicktime');
+    } else if (lower.endsWith('.avi')) {
+      return MediaType('video', 'x-msvideo');
+    } else if (lower.endsWith('.webm')) {
+      return MediaType('video', 'webm');
+    } else if (lower.endsWith('.m4v')) {
+      return MediaType('video', 'x-m4v');
+    } else if (lower.endsWith('.3gp')) {
+      return MediaType('video', '3gpp');
+    } else if (lower.endsWith('.mkv')) {
+      return MediaType('video', 'x-matroska');
+    }
+    return MediaType('image', 'jpeg');
+  }
 
   /// ===============================
   /// MULTIPART POST REQUEST
@@ -17,50 +64,61 @@ class ApiClient {
     required Map<String, String> fields,
     Map<String, String>? files,
     bool requireAuth = false,
+    String method = 'POST', // 'PATCH' for edits that also upload a file
+    Duration? timeout,
   }) async {
     try {
       final uri = Uri.parse(ApiUrls.baseUrl + endpoint);
-      print("🔗 API CALL (MULTIPART): $endpoint");
+      print("🔗 API CALL (MULTIPART $method): $endpoint");
       print("📤 FIELDS: $fields");
       print("📤 FILES: $files");
 
-      final request = http.MultipartRequest('POST', uri);
+      final request = http.MultipartRequest(method, uri);
 
-      // Add headers
-      request.headers.addAll(await _buildHeaders(requireAuth));
+      // Add headers: remove Content-Type so http.MultipartRequest auto-sets
+      // multipart/form-data; boundary=... instead of leaking application/json.
+      final headers = await _buildHeaders(requireAuth);
+      headers.removeWhere((k, _) => k.toLowerCase() == 'content-type');
+      request.headers.addAll(headers);
 
       // Add form fields
       request.fields.addAll(fields);
 
-      // Add files
+      // Add files with explicit media type
       if (files != null) {
         for (var entry in files.entries) {
           if (entry.value.isNotEmpty) {
             request.files.add(
-              await http.MultipartFile.fromPath(entry.key, entry.value),
+              await http.MultipartFile.fromPath(
+                entry.key,
+                entry.value,
+                contentType: _resolveMediaType(entry.value),
+              ),
             );
           }
         }
       }
 
-      final streamedResponse = await request.send().timeout(_timeout);
+      final effectiveTimeout = timeout ?? _timeout;
+      final streamedResponse = await request.send().timeout(effectiveTimeout);
 
       final response = await http.Response.fromStream(streamedResponse);
 
       return _handleResponse(response);
-    } on SocketException {
-      print("❌ NO INTERNET: $endpoint");
+    } on SocketException catch (e) {
+      // The reason (e.g. "Failed host lookup", "Network is unreachable") tells offline from DNS problems.
+      print("❌ NO INTERNET: $endpoint ($e)");
       GlobalErrorHandler.showNoInternet();
-      throw Exception("No Internet Connection");
-    } on HttpException {
+      throw const ApiRequestException(
+        "No internet connection. Please try again.",
+      );
+    } on TimeoutException {
+      print("⏳ API TIMEOUT: $endpoint");
       GlobalErrorHandler.showServerError();
-      throw Exception("Server Error");
-    } on FormatException {
-      throw Exception("Invalid Response Format");
+      throw const ApiRequestException(
+        "The server took too long to respond. Please try again.",
+      );
     } catch (e) {
-      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized")) {
-        GlobalErrorHandler.showServerError();
-      }
       rethrow;
     }
   }
@@ -91,14 +149,20 @@ class ApiClient {
       print("📥 RESPONSE: ${response.body}");
 
       return _handleResponse(response);
-    } on SocketException {
-      print("❌ NO INTERNET: $endpoint");
+    } on SocketException catch (e) {
+      // The reason (e.g. "Failed host lookup", "Network is unreachable") tells offline from DNS problems.
+      print("❌ NO INTERNET: $endpoint ($e)");
       GlobalErrorHandler.showNoInternet();
-      throw Exception("No Internet Connection");
+      throw const ApiRequestException(
+        "No internet connection. Please try again.",
+      );
+    } on TimeoutException {
+      print("⏳ API TIMEOUT: $endpoint");
+      GlobalErrorHandler.showServerError();
+      throw const ApiRequestException(
+        "The server took too long to respond. Please try again.",
+      );
     } catch (e) {
-      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized")) {
-        GlobalErrorHandler.showServerError();
-      }
       rethrow;
     }
   }
@@ -126,17 +190,22 @@ class ApiClient {
           .timeout(_timeout);
 
       print("📥 STATUS CODE: ${response.statusCode}");
-      print("📥 RESPONSE: ${response.body}");
 
       return _handleResponse(response);
-    } on SocketException {
-      print("❌ NO INTERNET: $endpoint");
+    } on SocketException catch (e) {
+      // The reason (e.g. "Failed host lookup", "Network is unreachable") tells offline from DNS problems.
+      print("❌ NO INTERNET: $endpoint ($e)");
       GlobalErrorHandler.showNoInternet();
-      throw Exception("No Internet Connection");
+      throw const ApiRequestException(
+        "No internet connection. Please try again.",
+      );
+    } on TimeoutException {
+      print("⏳ API TIMEOUT: $endpoint");
+      GlobalErrorHandler.showServerError();
+      throw const ApiRequestException(
+        "The server took too long to respond. Please try again.",
+      );
     } catch (e) {
-      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized")) {
-        GlobalErrorHandler.showServerError();
-      }
       rethrow;
     }
   }
@@ -158,17 +227,22 @@ class ApiClient {
           .timeout(_timeout);
 
       print("📥 STATUS CODE: ${response.statusCode}");
-      print("📥 RESPONSE: ${response.body}");
 
       return _handleResponse(response);
-    } on SocketException {
-      print("❌ NO INTERNET: $endpoint");
+    } on SocketException catch (e) {
+      // The reason (e.g. "Failed host lookup", "Network is unreachable") tells offline from DNS problems.
+      print("❌ NO INTERNET: $endpoint ($e)");
       GlobalErrorHandler.showNoInternet();
-      throw Exception("No Internet Connection");
+      throw const ApiRequestException(
+        "No internet connection. Please try again.",
+      );
+    } on TimeoutException {
+      print("⏳ API TIMEOUT: $endpoint");
+      GlobalErrorHandler.showServerError();
+      throw const ApiRequestException(
+        "The server took too long to respond. Please try again.",
+      );
     } catch (e) {
-      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized")) {
-        GlobalErrorHandler.showServerError();
-      }
       rethrow;
     }
   }
@@ -180,11 +254,11 @@ class ApiClient {
     required String endpoint,
     required Map<String, dynamic> body,
     bool requireAuth = false,
+    bool suppressErrorDialog = false,
   }) async {
     try {
       final uri = Uri.parse(ApiUrls.baseUrl + endpoint);
       print("🔗 API CALL (POST): $endpoint");
-      print("📤 BODY: $body");
 
       final response = await http
           .post(
@@ -194,17 +268,25 @@ class ApiClient {
           )
           .timeout(_timeout);
       print("📥 STATUS CODE: ${response.statusCode}");
-      print("📥 RESPONSE: ${response.body}");
 
-      return _handleResponse(response);
-    } on SocketException {
-      print("❌ NO INTERNET: $endpoint");
-      GlobalErrorHandler.showNoInternet();
-      throw Exception("No Internet Connection");
+      return _handleResponse(
+        response,
+        suppressErrorDialog: suppressErrorDialog,
+      );
+    } on SocketException catch (e) {
+      // The reason (e.g. "Failed host lookup", "Network is unreachable") tells offline from DNS problems.
+      print("❌ NO INTERNET: $endpoint ($e)");
+      if (!suppressErrorDialog) GlobalErrorHandler.showNoInternet();
+      throw const ApiRequestException(
+        "No internet connection. Please try again.",
+      );
+    } on TimeoutException {
+      print("⏳ API TIMEOUT: $endpoint");
+      if (!suppressErrorDialog) GlobalErrorHandler.showServerError();
+      throw const ApiRequestException(
+        "The server took too long to respond. Please try again.",
+      );
     } catch (e) {
-      if (!e.toString().contains("Forbidden") && !e.toString().contains("Unauthorized")) {
-        GlobalErrorHandler.showServerError();
-      }
       rethrow;
     }
   }
@@ -215,6 +297,7 @@ class ApiClient {
   static Future<dynamic> get({
     required String endpoint,
     bool requireAuth = false,
+    bool suppressErrorDialog = false,
   }) async {
     try {
       final uri = Uri.parse(ApiUrls.baseUrl + endpoint);
@@ -225,29 +308,28 @@ class ApiClient {
           .timeout(_timeout);
 
       print("📥 STATUS CODE: ${response.statusCode}");
-      print("📥 RESPONSE: ${response.body}");
 
-      return _handleResponse(response);
-    } on SocketException {
-      print("❌ NO INTERNET: $endpoint");
-      GlobalErrorHandler.showNoInternet();
-      throw Exception("No Internet Connection");
+      return _handleResponse(
+        response,
+        suppressErrorDialog: suppressErrorDialog,
+      );
+    } on SocketException catch (e) {
+      // The reason (e.g. "Failed host lookup", "Network is unreachable") tells offline from DNS problems.
+      print("❌ NO INTERNET: $endpoint ($e)");
+      if (!suppressErrorDialog) GlobalErrorHandler.showNoInternet();
+      throw const ApiRequestException(
+        "No internet connection. Please try again.",
+      );
     } on TimeoutException {
       print("⏳ API TIMEOUT: $endpoint");
-      GlobalErrorHandler.showServerError();
-      throw Exception("Server Timeout");
+      if (!suppressErrorDialog) GlobalErrorHandler.showServerError();
+      throw const ApiRequestException(
+        "The server took too long to respond. Please try again.",
+      );
     } catch (e) {
       print("❌ API FAILED (GET): $endpoint");
       print("⚠️ ERROR: $e");
-
-      // Don't show server error dialog for 401/403/400 etc.
-      // These are usually handled by the controller or specifically by _handleResponse
-      if (e.toString().contains("Forbidden") || e.toString().contains("Unauthorized")) {
-         rethrow;
-      }
-
-      GlobalErrorHandler.showServerError();
-      throw Exception("Error: $e");
+      rethrow;
     }
   }
 
@@ -261,10 +343,9 @@ class ApiClient {
       final token = await AppPreferences.getAccessToken();
 
       if (token != null) {
-        print("🔑 ACCESS TOKEN TTTTTTTTTTTT: $token");
         headers["Authorization"] = "Bearer $token";
       } else {
-        throw Exception("Unauthorized: No access token found");
+        throw const ApiRequestException("Please sign in again to continue.");
       }
     }
 
@@ -274,44 +355,261 @@ class ApiClient {
   /// ===============================
   /// HANDLE RESPONSE
   /// ===============================
-  static dynamic _handleResponse(http.Response response) {
+  static dynamic _handleResponse(
+    http.Response response, {
+    bool suppressErrorDialog = false,
+  }) {
     final statusCode = response.statusCode;
     final body = response.body;
 
-    if (statusCode >= 200 && statusCode < 300) {
-      return body.isNotEmpty ? jsonDecode(body) : {};
+    if (statusCode >= 200 && statusCode < 400) {
+      if (body.trim().isEmpty)
+        return <String, dynamic>{
+          "success": true,
+          "message": "Action successful",
+        };
+      try {
+        return jsonDecode(body);
+      } catch (_) {
+        return <String, dynamic>{
+          "success": true,
+          "message": "Action successful",
+        };
+      }
     } else {
       print("❌ API RESPONSE ERROR");
       print("📥 STATUS CODE: $statusCode");
-      print("📥 BODY: $body");
+      print("📥 RESPONSE BODY: $body");
 
-      String errorMessage = "Unexpected Error";
-      try {
-        final decoded = jsonDecode(body);
-        if (decoded is Map && decoded.containsKey('detail')) {
-          errorMessage = decoded['detail'];
-        } else if (decoded is Map && decoded.containsKey('message')) {
-          errorMessage = decoded['message'];
-        } else {
-          errorMessage = body;
+      String errorMessage = "Something went wrong. Please try again.";
+      final rawFieldErrors = <String, String>{};
+      if (body.trim().startsWith("<") ||
+          body.contains("<!doctype") ||
+          body.contains("<html")) {
+        errorMessage =
+            "Server is temporarily unavailable (HTML response). Please try again later.";
+      } else {
+        try {
+          final decoded = jsonDecode(body);
+          if (decoded is Map) {
+            final messages = <String>[];
+
+            Map? errSource;
+            if (decoded['errors'] is Map) {
+              errSource = decoded['errors'] as Map;
+            } else if (decoded['error'] is Map) {
+              errSource = decoded['error'] as Map;
+            }
+
+            if (errSource != null) {
+              errSource.forEach((key, val) {
+                final k = key.toString();
+                final text = val is List ? val.join(', ') : val.toString();
+                rawFieldErrors[k] = text;
+                messages.add(_fieldErrorMessage(k, text));
+              });
+            } else if (decoded['detail'] is String &&
+                decoded['detail'].toString().trim().isNotEmpty) {
+              messages.add(decoded['detail']);
+            } else if (decoded['error'] is String &&
+                decoded['error'].toString().trim().isNotEmpty) {
+              messages.add(decoded['error']);
+            } else if (decoded['message'] is String &&
+                decoded['message'].toString().trim().isNotEmpty) {
+              messages.add(decoded['message']);
+            } else {
+              decoded.forEach((key, val) {
+                if (key == 'status' ||
+                    key == 'statusCode' ||
+                    key == 'status_code' ||
+                    key == 'environment' ||
+                    key == 'tested_at' ||
+                    key == 'http_status' ||
+                    key == 'success') {
+                  return;
+                }
+
+                final k = key.toString();
+                if (val is List) {
+                  final text = val.join(', ');
+                  rawFieldErrors[k] = text;
+                  messages.add(_fieldErrorMessage(k, text));
+                } else if (val is String && val.trim().isNotEmpty) {
+                  rawFieldErrors[k] = val;
+                  messages.add(_fieldErrorMessage(k, val));
+                } else if (val is Map) {
+                  val.forEach((kSub, v) {
+                    final composite = '$k.$kSub';
+                    final text = v.toString();
+                    rawFieldErrors[composite] = text;
+                    messages.add(_fieldErrorMessage(composite, text));
+                  });
+                }
+              });
+            }
+
+            if (messages.isNotEmpty) {
+              errorMessage = userFriendlyErrorMessage(messages.join('\n'));
+            }
+          } else if (decoded is List) {
+            errorMessage = decoded.join('\n');
+          } else if (decoded is String && decoded.trim().isNotEmpty) {
+            errorMessage = userFriendlyErrorMessage(decoded);
+          }
+        } catch (_) {
+          if (statusCode >= 500) {
+            errorMessage =
+                "The server is temporarily unavailable. Please try again later.";
+          }
         }
-      } catch (_) {
-        errorMessage = body;
       }
 
-      if (statusCode == 400) {
-        throw Exception(errorMessage);
+      if (statusCode >= 500) {
+        if (!suppressErrorDialog) GlobalErrorHandler.showServerError();
+        throw ApiRequestException(userFriendlyErrorMessage(errorMessage));
+      } else if (statusCode == 400) {
+        throw ApiRequestException(
+          userFriendlyErrorMessage(errorMessage),
+          fieldErrors: rawFieldErrors.isNotEmpty ? rawFieldErrors : null,
+        );
       } else if (statusCode == 401) {
-        throw Exception("Unauthorized");
+        throw ApiRequestException(
+          userFriendlyErrorMessage(
+            errorMessage.isNotEmpty &&
+                    errorMessage != "Something went wrong. Please try again."
+                ? errorMessage
+                : "Please sign in again to continue.",
+          ),
+        );
       } else if (statusCode == 403) {
-        throw Exception("Forbidden");
+        throw ApiRequestException(
+          userFriendlyErrorMessage(
+            errorMessage.isNotEmpty &&
+                    errorMessage != "Something went wrong. Please try again."
+                ? errorMessage
+                : "You do not have permission to perform this action.",
+          ),
+        );
       } else if (statusCode == 404) {
-        throw Exception("Not Found");
-      } else if (statusCode >= 500) {
-        throw Exception("Server Error: $errorMessage");
+        throw ApiRequestException(
+          userFriendlyErrorMessage(
+            errorMessage.isNotEmpty &&
+                    errorMessage != "Something went wrong. Please try again."
+                ? errorMessage
+                : "The requested item was not found.",
+          ),
+        );
       } else {
-        throw Exception(errorMessage);
+        throw ApiRequestException(userFriendlyErrorMessage(errorMessage));
       }
     }
+  }
+
+  /// Converts common Django/DRF validation output into messages suitable for
+  /// every role's snackbar or dialog. Keep this public for unit tests and for
+  /// UI code that receives an error outside [ApiClient].
+  static String userFriendlyErrorMessage(String message) {
+    final cleaned = message
+        .replaceFirst(RegExp(r'^Exception:\s*', caseSensitive: false), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    final normalized = cleaned.toLowerCase();
+
+    if (normalized.contains('branch') &&
+        (normalized.contains('ref code') ||
+            normalized.contains('reference code') ||
+            normalized.contains('referral code') ||
+            normalized.contains('branch_code')) &&
+        (normalized.contains('invalid') ||
+            normalized.contains('not found') ||
+            normalized.contains('does not exist'))) {
+      return 'Invalid branch reference code. Please check the code and try again.';
+    }
+    if (normalized.contains('branch') &&
+        (normalized.contains('ref code') ||
+            normalized.contains('reference code') ||
+            normalized.contains('referral code') ||
+            normalized.contains('branch_code')) &&
+        normalized.contains('required')) {
+      return 'Enter the branch reference code to continue.';
+    }
+    if (normalized.contains('transporter_id') &&
+        normalized.contains('required')) {
+      return 'Select a transporter before continuing.';
+    }
+    if (normalized.contains('invalid credentials')) {
+      return 'The mobile number or password is incorrect.';
+    }
+    if (normalized.contains('html response') ||
+        normalized.contains('server error') ||
+        normalized.contains('internal server error')) {
+      return 'The server is temporarily unavailable. Please try again later.';
+    }
+    if (normalized.contains('permission denied') ||
+        normalized.contains('forbidden')) {
+      return 'You do not have permission to perform this action.';
+    }
+    if (normalized.contains('not found')) {
+      return 'The requested item was not found.';
+    }
+    return cleaned.isEmpty
+        ? 'Something went wrong. Please try again.'
+        : cleaned;
+  }
+
+  static String _fieldErrorMessage(String field, String detail) {
+    final normalizedField = field.toLowerCase().replaceAll('-', '_');
+    var friendlyDetail = detail.trim();
+    if (friendlyDetail.toLowerCase().contains('a valid integer is required') ||
+        friendlyDetail.toLowerCase().contains('valid integer is required')) {
+      friendlyDetail = 'Please enter a valid number.';
+    }
+
+    if (normalizedField == 'branch_code' ||
+        normalizedField == 'branch_ref_code' ||
+        normalizedField == 'branch_reference_code') {
+      return 'Branch reference code: $friendlyDetail';
+    }
+    if (normalizedField == 'transporter_id') {
+      return friendlyDetail.contains('required') ||
+              friendlyDetail.contains('valid number')
+          ? 'Please select a transporter'
+          : 'Transporter: $friendlyDetail';
+    }
+    if (normalizedField == 'non_field_errors' || normalizedField == 'detail') {
+      return friendlyDetail;
+    }
+    const fieldLabels = <String, String>{
+      'phone': 'Mobile number',
+      'mobile': 'Mobile number',
+      'mobile_number': 'Mobile number',
+      'phone_number': 'Phone number',
+      'driver_name': 'Driver name',
+      'license_number': 'License number',
+      'license_expiry': 'License expiry',
+      'experience': 'Experience',
+      'email': 'Email address',
+      'gst_number': 'GST number',
+      'pan_number': 'PAN number',
+      'aadhar_number': 'Aadhaar number',
+      'aadhaar_number': 'Aadhaar number',
+      'password': 'Password',
+      'confirm_password': 'Confirm password',
+      'quantity': 'Quantity',
+      'price': 'Price',
+      'branch_id': 'Branch',
+      'company_id': 'Company',
+      'driver_id': 'Driver',
+      'vehicle_id': 'Vehicle',
+    };
+    final readableField =
+        fieldLabels[normalizedField] ??
+        field
+            .replaceAll(RegExp(r'[_\.]'), ' ')
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim();
+    return readableField.isEmpty
+        ? friendlyDetail
+        : '$readableField: $friendlyDetail';
   }
 }

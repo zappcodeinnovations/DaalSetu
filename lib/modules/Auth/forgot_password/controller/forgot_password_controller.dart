@@ -2,6 +2,7 @@ import '../model/forgot_password_model.dart';
 import '../../../../services/auth_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class ForgotPasswordController extends GetxController {
 
@@ -17,12 +18,12 @@ class ForgotPasswordController extends GetxController {
 
     // ✅ Validation
     if (email.isEmpty) {
-      Get.snackbar("Error", "Email is required");
+      AppSnackbar.snackbar("Error", "Email is required");
       return;
     }
 
     if (!GetUtils.isEmail(email)) {
-      Get.snackbar("Error", "Enter valid email");
+      AppSnackbar.snackbar("Error", "Enter valid email");
       return;
     }
 
@@ -41,12 +42,12 @@ class ForgotPasswordController extends GetxController {
       );
 
       /// ✅ Success Message
-      Get.snackbar("Success", response.message);
+      AppSnackbar.snackbar("Success", response.message);
 
       emailController.clear();
 
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Error",
         e.toString().replaceAll("Exception: ", ""),
       );

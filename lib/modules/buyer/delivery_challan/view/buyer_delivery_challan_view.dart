@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../utils/money_format.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
@@ -6,6 +7,7 @@ import '../../../../theme/glass_widgets.dart';
 import '../../../../routes/app_routes.dart';
 import '../controller/buyer_delivery_challan_controller.dart';
 import '../model/buyer_delivery_challan_model.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class BuyerDeliveryChallanView extends StatelessWidget {
   const BuyerDeliveryChallanView({super.key});
@@ -17,20 +19,21 @@ class BuyerDeliveryChallanView extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: Obx(() {
           final theme = Theme.of(context);
           return AppBar(
-            backgroundColor: Colors.transparent,
+            backgroundColor: theme.scaffoldBackgroundColor,
             elevation: 0,
-            leading: controller.isSearching.value
-                ? const SizedBox.shrink()
-                : IconButton(
-                    icon: const Icon(IconlyLight.arrow_left_2),
+            automaticallyImplyLeading: false,
+            leading: AppBarLeading(child: Navigator.canPop(context)
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new, size: 20),
                     onPressed: () => Get.back(),
-                  ),
+                  )
+                : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
             title: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: controller.isSearching.value
@@ -40,7 +43,7 @@ class BuyerDeliveryChallanView extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: theme.cardColor,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: theme.dividerColor.withOpacity(0.5)),
+                        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
                       ),
                       child: TextField(
                         autofocus: true,
@@ -87,15 +90,27 @@ class BuyerDeliveryChallanView extends StatelessWidget {
                   },
                 ),
               if (!controller.isSearching.value)
-                IconButton(
-                  icon: const Icon(IconlyLight.filter),
-                  onPressed: () {
-                    Get.snackbar(
-                      "Filter",
-                      "Filter options will go here.",
-                      snackPosition: SnackPosition.BOTTOM,
-                    );
-                  },
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(IconlyLight.filter),
+                      onPressed: () => _showFilterBottomSheet(context, controller),
+                    ),
+                    if (controller.selectedStatus.value != "All Statuses")
+                      Positioned(
+                        top: 10,
+                        right: 10,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
             ],
           );
@@ -108,57 +123,333 @@ class BuyerDeliveryChallanView extends StatelessWidget {
 
         if (controller.errorMessage.value.isNotEmpty && controller.challans.isEmpty) {
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  controller.errorMessage.value,
-                  style: TextStyle(color: theme.colorScheme.error),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => controller.fetchChallans(isRefresh: true),
-                  child: const Text("Retry"),
-                ),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.cloud_off_rounded,
+                    size: 60,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Unable to Load Challans",
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    controller.errorMessage.value,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: theme.textTheme.bodyMedium?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: () => controller.fetchChallans(isRefresh: true),
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text("Retry"),
+                  ),
+                ],
+              ),
             ),
           );
         }
 
         if (controller.challans.isEmpty) {
-          return const Center(
-            child: Text("No delivery challans found."),
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.receipt_long_outlined,
+                    size: 60,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "No Delivery Challans",
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "There are no delivery challans available at this time.",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: theme.textTheme.bodyMedium?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: () => controller.fetchChallans(isRefresh: true),
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text("Refresh"),
+                  ),
+                ],
+              ),
+            ),
           );
         }
 
-        return RefreshIndicator(
-          onRefresh: () => controller.fetchChallans(isRefresh: true),
-          child: NotificationListener<ScrollNotification>(
-            onNotification: (ScrollNotification scrollInfo) {
-              if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
-                controller.fetchNextPage();
-              }
-              return false;
-            },
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              itemCount: controller.challans.length + (controller.isFetchingMore.value ? 1 : 0),
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                if (index == controller.challans.length) {
-                  return const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-                
-                final challan = controller.challans[index];
-                return _buildChallanCard(context, challan);
-              },
+        return Column(
+          children: [
+            if (controller.selectedStatus.value != "All Statuses")
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(IconlyLight.filter, size: 14, color: theme.colorScheme.primary),
+                          const SizedBox(width: 6),
+                          Text(
+                            "Status: ${controller.selectedStatus.value}",
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          GestureDetector(
+                            onTap: controller.clearFilter,
+                            child: Icon(Icons.close, size: 14, color: theme.colorScheme.primary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: controller.clearFilter,
+                      child: Text("Clear", style: GoogleFonts.inter(fontSize: 12)),
+                    ),
+                  ],
+                ),
+              ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () => controller.fetchChallans(isRefresh: true),
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: (ScrollNotification scrollInfo) {
+                    if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+                      controller.fetchNextPage();
+                    }
+                    return false;
+                  },
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                    itemCount: controller.challans.length + (controller.isFetchingMore.value ? 1 : 0),
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      if (index == controller.challans.length) {
+                        return const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+
+                      final challan = controller.challans[index];
+                      return _buildChallanCard(context, challan);
+                    },
+                  ),
+                ),
+              ),
             ),
-          ),
+          ],
         );
       }),
+    );
+  }
+
+  void _showFilterBottomSheet(BuildContext context, BuyerDeliveryChallanController controller) {
+    final theme = Theme.of(context);
+    String tempStatus = controller.selectedStatus.value;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: theme.scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 20,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: theme.dividerColor.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Filter Challans",
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: theme.textTheme.bodyLarge?.color,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          controller.clearFilter();
+                          Navigator.pop(ctx);
+                        },
+                        child: Text(
+                          "Clear All",
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.redAccent,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    "CHALLAN STATUS",
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.0,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 10,
+                    children: controller.statusOptions.map((status) {
+                      final isSelected = tempStatus == status;
+                      Color statusColor = theme.colorScheme.primary;
+                      if (status == "Delivered") statusColor = Colors.green;
+                      if (status == "Dispatched") statusColor = Colors.blue;
+                      if (status == "Cancelled") statusColor = Colors.red;
+                      if (status == "Draft") statusColor = Colors.grey;
+
+                      return InkWell(
+                        onTap: () {
+                          setState(() {
+                            tempStatus = status;
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? (status == "All Statuses" ? theme.colorScheme.primary : statusColor)
+                                : theme.cardColor,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isSelected
+                                  ? Colors.transparent
+                                  : theme.dividerColor.withValues(alpha: 0.6),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (isSelected) ...[
+                                const Icon(Icons.check, size: 14, color: Colors.white),
+                                const SizedBox(width: 6),
+                              ],
+                              Text(
+                                status,
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                  color: isSelected ? Colors.white : theme.textTheme.bodyMedium?.color,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 28),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: Text("Cancel", style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            controller.applyStatusFilter(tempStatus);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: Text("Apply Filter", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -166,7 +457,7 @@ class BuyerDeliveryChallanView extends StatelessWidget {
     final theme = Theme.of(context);
     String status = challan.status ?? "Unknown";
     Color statusColor = Colors.orange;
-    
+
     if (status.toLowerCase().contains("delivered") || status.toLowerCase().contains("received")) {
       statusColor = Colors.green;
     } else if (status.toLowerCase().contains("dispatched") || status.toLowerCase().contains("transit")) {
@@ -210,9 +501,9 @@ class BuyerDeliveryChallanView extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: statusColor.withOpacity(0.5)),
+                    border: Border.all(color: statusColor.withValues(alpha: 0.5)),
                   ),
                   child: Text(
                     status.toUpperCase(),
@@ -230,7 +521,7 @@ class BuyerDeliveryChallanView extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 20,
-                  backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                  backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
                   child: Icon(IconlyBold.document, color: theme.colorScheme.primary, size: 20),
                 ),
                 const SizedBox(width: 12),
@@ -255,6 +546,19 @@ class BuyerDeliveryChallanView extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      if (challan.companyNameDisplay != null) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          "Company: ${challan.companyNameDisplay!}",
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.primary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -262,16 +566,27 @@ class BuyerDeliveryChallanView extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      "₹${challan.totalAmount ?? '0'}",
+                      formatInr(challan.totalAmount ?? 0),
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: theme.textTheme.bodyLarge?.color,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    if (challan.totalQuantityDisplay != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        challan.totalQuantityDisplay!,
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: theme.textTheme.bodyMedium?.color,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 3),
                     Text(
-                      _formatDate(challan.challanDate),
+                      _formatDateTime(challan.createdAt ?? challan.challanDate),
                       style: GoogleFonts.inter(
                         fontSize: 10,
                         color: Colors.grey,
@@ -308,12 +623,19 @@ class BuyerDeliveryChallanView extends StatelessWidget {
     );
   }
 
-  String _formatDate(String? dateStr) {
-    if (dateStr == null || dateStr.isEmpty) return "N/A";
+  String _formatDateTime(String? dateStr) {
+    if (dateStr == null || dateStr.trim().isEmpty) return "N/A";
     try {
-      final date = DateTime.parse(dateStr);
-      return "${date.day}/${date.month}/${date.year}";
-    } catch (e) {
+      final date = DateTime.parse(dateStr).toLocal();
+      final day = date.day.toString().padLeft(2, '0');
+      final month = date.month.toString().padLeft(2, '0');
+      final year = date.year.toString();
+      final h = date.hour;
+      final hour12 = (h % 12 == 0 ? 12 : h % 12).toString().padLeft(2, '0');
+      final minute = date.minute.toString().padLeft(2, '0');
+      final amPm = h >= 12 ? 'PM' : 'AM';
+      return "$day-$month-$year $hour12:$minute $amPm";
+    } catch (_) {
       return dateStr;
     }
   }

@@ -1,0 +1,209 @@
+# Current Task State
+
+## Current Task
+- **Goal**: Point 8 — Hide Internal Database IDs Across Transporter Brands, Dashboards, Orders, and Contract Details.
+- **Status**: Completed & Verified.
+- **Output**:
+  - `lib/modules/transporter/brands/view/transporter_brands_view.dart`: Replaced `"Brand ID: #"` with `"Verified Brand"`.
+  - `lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`: Replaced `"Order ID:"` with seller name / `'Confirmed Order'`.
+  - `lib/modules/buyer/orders/view/buyer_orders_view.dart`: Replaced `"Order ID:"` with seller name / `'Confirmed Order'`.
+  - `lib/modules/dashboard/view/dashboard_page.dart`: Replaced `"ID: "` with `"${contract.seller} → ${contract.buyer}"`.
+  - `lib/modules/seller/dashboard/view/seller_dashboard_view.dart`: Replaced `"ID: "` with Category and Brand.
+  - `lib/modules/transporter/bidding/view/transporter_bidding_view.dart`: Replaced Contract ID numbers with product/commodity title.
+  - `lib/modules/contracts/view/contract_details_view.dart`: Removed `(ID: $id)` suffix from admin detail rows.
+  - Added test suite `test/hide_database_ids_test.dart` (4/4 passed).
+- **Evidence**: `test/hide_database_ids_test.dart` (4/4 passed), `test/buyer_contract_details_offer_id_test.dart` (4/4 passed), static analysis clean.
+
+---
+
+## Completed Work in Current Session
+- **Bug 54 Completed (Hide Internal Database IDs)**:
+  - Eliminated raw database integer IDs from Transporter Brands, Dashboards, Buyer Orders, and Contract administration details.
+  - Replaced IDs with meaningful business information (Seller name, Category, Brand, Product title).
+- **Bug 53 Completed (Display Full User Name & Company Name on Admin Offers & Seller Interests)**:
+  - Fixed mobile number display on Admin Offer cards by prioritizing `Seller.fullName`.
+  - Fixed raw ID display on Seller Interests cards by prioritizing Buyer Name and Company Name over `buyer_unique_id`.
+  - Verified with 3 automated tests in `test/seller_offer_interest_identity_test.dart`.
+- **Bug 52 Completed (Replace "Operation Control" Branding with "KISOR")**:
+  - Updated subtitle text beneath DaalSetu logo on `LoginScreen` from `'Operations control centre'` to `'KISOR'`.
+  - Verified with automated widget test in `test/login_screen_test.dart`.
+- **Bug 51 Completed (Login Screen Password Eye Icon Inverted State)**:
+  - Corrected inverted eye icon behavior: shows open eye (`Icons.visibility_outlined`) when password is dots/hidden, and crossed-out eye (`Icons.visibility_off_outlined`) when password is text/revealed.
+  - Verified with 2 automated widget tests and clean static analysis.
+- **Bug 50 Completed (Brand Name & Offer Name Display on Contract Screens)**:
+- **Bug 47 Completed (Notifications Not Opening & 2nd Tap Not Redirecting)**:
+  - Eliminated silent suppression on deal/contract notifications.
+  - Resolved GetX duplicate route suppression on consecutive notification taps.
+  - Eliminated UI spinner flickering during `markAsRead` in Seller notifications.
+  - Verified with 4 automated tests in `test/notification_reclick_navigation_test.dart`.
+- **Bug 46 Completed (Card-Wide Clickability on Buyer Dashboard & Admin Offers)**:
+  - Enabled card-wide tap gestures on Buyer Dashboard carousel and Admin Offers screen with zero child button collision.
+  - Verified with 2 test suites.
+- **Bug 45 Completed (Seller Product Card Full Clickability)**:
+  - Enabled card-wide clickability on Seller's "My Products" screen so tapping on image, title, price, or body opens `ProductDetailScreen`.
+  - Verified no conflict with inner action buttons.
+- **Bug 44 Completed (System Navigation Bar Overlap with Floating Glass Bottom Bar)**:
+  - Fixed bottom navigation bar cutoff and overlap on Android 3-button navigation devices by integrating dynamic safe area insets into `GlassNavBar`.
+  - Guarded against keyboard jitter using `isKeyboardOpen` detection.
+  - Verified across 4 test scenarios in `test/bottom_nav_bar_insets_test.dart`.
+- **Bug 43 Completed (Login Screen Password Eye Icon Toggle Unresponsiveness & Cursor Loss)**:
+  - Fixed second-tap unresponsiveness by removing gesture-intercepting tooltips and configuring non-stealing focus node.
+  - Preserved cursor selection offset on visibility change.
+  - Switched to reactive GetX `isPasswordVisible` and added theme-aware contrast colors.
+  - Verified with 2 new widget tests and regression test suite.
+- **Bug 41 Completed (Seller Products 154px Overflow & Buyer Offer Mixing)**:
+  - Fixed `RIGHT OVERFLOWED BY 154 PIXELS` on product cards by decoupling location into an `Expanded` row with 2-line ellipsis.
+  - Excluded buyer request bridge products from the Seller's "My Products" screen on both frontend and backend.
+  - Verified with 5 automated widget and model unit tests.
+- **Bug 40 Completed (Delete Account Dialog Assertion Error on Cancel)**:
+  - Fixed red error screen displaying `Failed assertion: line 6281 pos 12: '_dependents.isEmpty': is not true.` when cancelling the Delete Account dialog.
+  - Converted dialog to dedicated `_DeleteAccountDialog` `StatefulWidget` to safely handle `TextEditingController` disposal in `dispose()` and scoped `Navigator.of(context).pop()`.
+  - Added regression test `test/delete_account_dialog_test.dart` (verified passing).
+- **Bug 39 Completed (Admin User Creation Form Auto-Reset Parity)**:
+  - Addressed form state retention where user creation inputs (Name, Mobile, Email, Branch, Role, Password, PAN, GST, Images, Tag) persisted across submissions.
+  - Converted `AddUserScreen` to `StatefulWidget` with clean controller initialization, reset, and disposal lifecycles.
+  - Added `branchController` ("Branch Code (Optional)") and passed it through to `AddUserController.createUser` and `AddUserServices.addUser`.
+  - Implemented `resetForm()` in `AddUserScreenState` to wipe all controllers, dropdowns, and Rx variables clean upon successful user creation and upon opening.
+  - Added `AddUserController.reset()` to reset `selectedTagId` and `isLoading`.
+  - Implemented `resetForm()` in `AdminRecordFormScreenState` on successful record creation.
+  - Added automated test suite `test/admin_user_form_reset_test.dart` (3/3 passing).
+- **Bug 38 Completed (Place Bid Modal - Primary Orange/Yellow Theming Parity)**:
+  - Addressed inconsistent legacy teal (`Color(0xFF0F766E)`) and dark navy (`Color(0xFF131D2E)`) styling on Shipments Place Bid / Update Bid modal.
+  - Updated header background to brand linear gradient using primary amber/gold (`_gold = Color(0xFFFFB300)`) and secondary orange (`Color(0xFFF57C00)`).
+  - Updated close icon to solid `Colors.white` for high contrast against the header gradient.
+  - Updated TextField focused border and cursor color to `_gold`.
+  - Updated Submit button to `ElevatedButton` with `backgroundColor: _gold` and white typography, matching the offer card's "PLACE BID" button and app theme.
+  - Adapted text styles to support dark and light theme brightness cleanly.
+  - Added automated widget test `test/transporter_place_bid_theming_test.dart`.
+- **Bug 37 Completed (Buyer Dashboard Active Requirements & Offers Carousel Slider)**:
+  - Addressed missing data in Buyer Dashboard "Active Requirement" banner when buyers had no open RFQs.
+  - Integrated active marketplace offers loader in `BuyerDashboardController` with automatic fallback to active dashboard items.
+  - Implemented strict filtering (`BuyerDashboardController.filterValidOffers`) excluding out-of-stock, expired, inactive, and closed/rejected deals.
+  - Replaced single static card with `BuyerOffersCarouselSlider`:
+    - Multi-offer carousel with smooth horizontal swipe `PageView` and animated dot indicators.
+    - Single offer card display without superfluous indicators.
+    - Friendly empty-state CTA card ("Looking for Bulk Commodities?") with direct actions to post requirement or browse offers.
+    - Clean typography, currency/quantity formatting, and one-tap navigation to `ProductDetailScreen` or `BuyerOfferDetailsView`.
+  - Added automated test suite `test/buyer_dashboard_offers_slider_test.dart` (10 tests passing).
+- **Bug 36 Completed (GST Entry Length)**: Seller, Transporter, and Admin company forms accept all 15 GST alphanumeric characters while preserving official-format validation on submit.
+- **Bug 35 Completed (Transporter Contract Detail Data)**: My Deals now carries complete deal, product, date, buyer/seller company/contact, GST/address, remarks, and route fields so details remain populated even when optional enrichment is unavailable.
+- **Bug 34 Completed (Contract Detail Request Scope)**: Transporter detail no longer calls inaccessible consignment management, non-consignment statuses skip the lookup, and optional detail enrichment failures remain silent while initial list data renders.
+- **Bug 33 Completed (Stale Flutter Compilation State)**: Confirmed all reported model/API members are present in tracked source, cleared generated artifacts, regenerated package metadata, and verified the missing-member errors no longer reproduce.
+- **Bug 32 Completed (Admin Offer Video Playback)**: Removed the fixed-height player clipping, added visible inline playback controls, fullscreen viewing, progress seeking, and a retry state. Backend authenticated video streaming and byte ranges were verified.
+- **Bug 31 Completed (Sub Admin Email Validation)**: Added shared Flutter form validation and matching Django validation for Sub Admin create/edit. Incomplete domains such as `rest@gmail.c` are rejected before persistence, while the API returns a clean validation message.
+- **Bug 30 Completed (Seller Offers Excel Formatting)**: Replaced the formatting-limited CSV export with a native XLSX workbook and added professional title/timestamp banners, colored headers, readable widths, wrapping, numeric alignment, zebra rows, and correct Excel sharing metadata.
+- **Bug 22 Completed (Buyer Dashboard Analytics Parity)**: `1M`, `3M`, and `1Y` now refresh all dashboard chart datasets. Spend/Orders, Supplier Spend, and Commodity Mix render with web-equivalent chart types, and Average Purchase Price uses the web-authoritative API field.
+- **Bug 21 Completed (Background API Error Toasts)**: Non-critical Buyer profile and branch synchronization failures now retain functional screen content without opening generic server-error UI. User-triggered refresh errors remain concise and actionable.
+- **Bug 18 Completed (Buyer Pending Offers False Out-of-Stock)**: Added complete inventory fields to the backend offer-list payload and mobile fallback hydration for older API responses. Active offers now retain `Active` status, real available quantity, and an enabled CTA; genuine zero-stock offers remain unavailable.
+- **Repository Sync**: Fast-forwarded `rohit` from `0add5ff` to `a5f3ae2`; preserved local documentation while resolving the `TASK_STATE.md` stash conflict.
+- **Weekly Report**: Documented mobile and web/backend delivery, QA evidence, repository status, risks, and next-week priorities in `docs/reports/WEEKLY_REPORT_2026-10-12_TO_2026-10-17.md`.
+- **Bug 29 (Buyer Dashboard — TOP SUPPLIER & AVG PURCHASE PRICE Navigation Parity)**:
+  - Addressed issue where tapping on either the "TOP SUPPLIER (MTD)" card or the "AVG PURCHASE PRICE" card on the Buyer Dashboard navigated to `ContractsScreen` instead of the "Offers & Requirements" screen (`BuyerOffersView`).
+  - Updated both `onTap` handlers in `BuyerDashboardView._buildKPIGrid` (`lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`) to `Get.to(() => const BuyerOffersView(initialIndex: 0))`.
+  - Exposed `@visibleForTesting buildKPIGrid` in `BuyerDashboardView` for isolated widget testability.
+  - Added automated widget tests in `test/buyer_dashboard_kpi_navigation_test.dart` verifying tapping each card navigates to `BuyerOffersView`.
+  - Verified with `flutter test test/buyer_dashboard_kpi_navigation_test.dart --no-pub` (2 tests PASSED) and full regression suite (11 tests PASSED).
+- **Bug 28 (Buyer Categories — Request Timestamps & Recent Requests Parity)**:
+  - Addressed missing request dates/timestamps on category cards and omitted approval requests list.
+  - Confirmed `/api/buyer-categories/` already returns `data["requests"]` with `requested_at`, `status`, `categories`, `reviewed_at`, and `reviewed_by`.
+  - Added `CategoryRequestModel` parsing all request fields and preserved `requests` in `BuyerCategoriesResult` and `CategoryController.recentRequests`.
+  - Added `requestedAt` to `CategoryModel` with `requested_at` mapping from `requests`.
+  - Fixed timezone conversion in `CategoryPageView._formatDateTime` (`.toLocal()`), formatting as `dd MMM yyyy, hh:mm a` (e.g. `16 Oct 2026, 06:21 AM`, `17 Oct 2026, 10:54 AM`) matching the web panel 1:1.
+  - Added `DefaultTabController` with "My Categories" and "Recent Requests" tabs with count badge, rendering the full approval requests list matching web panel parity.
+  - Verified with `test/buyer_category_requests_test.dart` (3 tests PASSED) and full regression suite (11 tests PASSED).
+- **Bug 27 (Contract Details — Offer ID Display & Model Parsing Parity)**:
+  - Fixed missing offer/product ID on mobile Contract Details screen (`contract_details_view.dart`).
+  - Diagnosed live contract API: backend returns `"product_id": 152` while `ContractDetailModel.fromJson` parsed `number('product')`, causing `productId` to be `null`.
+  - Added `productId` and `interestId` to `ContractModel` with fallback parser (`product_id` ?? `product` ?? `offer_id` ?? `offer`).
+  - Updated `ContractDetailModel.fromJson` to prioritize `*_id` variants (`product_id`, `interest_id`, `buyer_id`, `seller_id`) and wired `c.productId` and `c.interestId` in `fromContractModel`.
+  - Formatted the row in `contract_details_view.dart` as `'Offer'` displaying `${contract.productTitle} (ID: ${contract.productId})` matching 1:1 with the web panel and seller contract view.
+  - Verified with `test/buyer_contract_details_offer_id_test.dart` (3 tests PASSED) and `test/contract_detail_model_test.dart` (1 test PASSED).
+- **Bug 26 (Delivery Challan PDF Issuing Company PAN Number Parity)**:
+  - Fixed PAN number disparity between Android app PDF (`ABCDE1234E`) and website PDF (`ABVSC1223F`).
+  - Resolved root cause where `companyPan` was pulling `challan.sellerPan` (seller's PAN) instead of the issuing company (`FARMLAND`) PAN.
+  - Implemented prioritized resolution in `buyer_challan_pdf_service.dart`: checks `company?.panNumber`, derives from `companyGst.substring(2, 12)` if present, and falls back cleanly to `'ABVSC1223F'`.
+  - Both places in the generated PDF (top header `GST: ... PAN: ...` and bottom signatory box `PAN No. : ...`) now display `ABVSC1223F`, matching the web panel 1:1.
+  - Created automated test in `test/buyer_challan_pdf_test.dart` and verified all tests pass.
+
+- **Bug 25 (Pending Offers API `/api/offers/pending/` Missing Quantity Analysis)**:
+  - Investigated issue where offers "toor angar" and "dal" display red "OUT OF STOCK" status badge and disabled "Out of Stock" button on mobile, but display as "Active" on the web dashboard.
+  - Authenticated and queried live backend endpoints `GET /api/offers/pending/` and `GET /api/products/<id>/`.
+  - Discovered that `/api/offers/pending/` returns only 10 fields (`id`, `title`, `image`, `price`, `offer_price`, `discount_percentage`, `created_at`, `status_code`, `status_label`, `status_tone`) and completely omits quantity/inventory fields.
+  - Confirmed via `GET /api/products/146/` (20.100 QTL available) and `GET /api/products/141/` (660.000 QTL available) that both products have full operational stock in the database.
+  - Identified that web panel shows "Active" because it only renders `status_label`, while mobile parses `Available Quantity` which defaults to `0.000 QTL` and triggers client-side out-of-stock logic.
+  - Documented exact findings and recommended payload additions for the backend developer.
+
+- **Bug 24 (Buyer Offer Negotiation Summary — Seller Price & Available Qty Data Binding)**:
+  - Fixed data binding in `buyer_offer_details_view.dart` and `buyer_offer_detail_controller.dart` where Seller Price rendered as `₹-/ton` and Available Qty rendered as `- qtl`.
+  - Unpacked `productMap` and mapped operational snapshot fields (`seller_snapshot_amount`, `seller_snapshot_quantity`) in `loadNegotiationThread`.
+  - Added multi-candidate resolution checking `seller_snapshot_amount`, `seller_snapshot_quantity`, nested product maps, parent offer details (`target_price`, `available_quantity`), and fallback to `ProductService.getProductDetail`.
+  - Verified with `test/buyer_negotiation_summary_card_test.dart` (3 tests PASSED), full regression suite (16 tests PASSED), and clean `flutter analyze --no-pub`.
+
+- **Bug 23 (Buyer Delivery Challan PDF — Consignee Telephone & DEL AT Address Parity)**:
+  - Corrected consignee contact mapping in `buyer_challan_pdf_service.dart`: replaced erroneous `challan.driverMobile` with buyer registered mobile number resolution (checks `challan.buyerMobile`, `ProfileController.profile.value.mobile`, and `AppPreferences.getUsername()`).
+  - Corrected delivery destination mapping: bound `DEL AT` to `challan.deliveryAddress` instead of copying `challan.buyerAddress`, ensuring `DEL AT` remains blank when no separate delivery address is designated.
+  - Added `buyerMobile` and `deliveryAddress` fields to `BuyerDeliveryChallanModel` with comprehensive key fallback parsing and sanitization.
+  - Verified with `test/buyer_challan_pdf_test.dart` (3 tests PASSED) and full regression suite (13 tests PASSED).
+
+- **Bug 22 (Buyer Delivery Challan — Driver License Number Field)**:
+  - Added "License Number" field to Transport Details card in `buyer_delivery_challan_detail_view.dart`, positioned directly below "Driver Name" and above "Driver Mobile" to achieve 1:1 parity with the Buyer web panel.
+  - Enhanced `BuyerDeliveryChallanModel.fromJson` with robust parsing for `driver_license_number`, `license_number`, `driver_license`, and nested `driver['license_number']` keys.
+  - Implemented string sanitization (`cleanStr`) ensuring `"null"` strings, empty strings, and whitespace fall back cleanly to `"N/A"`, preventing broken/null UI display.
+  - Created automated test `test/buyer_challan_transport_details_test.dart` (2 tests PASSED) and verified zero regressions across 9 existing tests.
+
+- **Bug 9**: Resolved negotiation submission error in `negotiation_page.dart`.
+- **Bug 10**: Resolved negotiation timestamp discrepancy in `negotiation_page.dart`.
+- **Bug 11**: Resolved user list refresh defect in `user_view.dart`, `user_controller.dart`, and `add_user_controller.dart`.
+- **Bug 12**: Resolved Brand Master search persistence defect in `admin_catalog_controller.dart`, `admin_common_widgets.dart`, and `admin_module_list_screen.dart`.
+- **Bug 13 (Buyer Drawer)**: Fixed Buyer Drawer navigation and permission checks for buyer roles in `admin_drawer.dart`.
+- **Bug 17 (Buyer Branches Filter Consolidation & Type Badges)**:
+  - Removed duplicate "Clear" text link from Search filter card in `buyer_branch_view.dart`, standardizing on single "Reset" and "Apply" buttons matching the Buyer web panel.
+  - Added `_buildBranchTypeBadge` to render blue "Primary" and green "Additional" pill badges on mobile branch cards.
+  - Kept the "LEAVE" button visible alongside the "Additional" badge on non-primary branches.
+  - Verified with `test/buyer_branch_view_badge_test.dart` and `test/buyer_branch_search_filter_test.dart` (8/8 tests PASSED).
+- **Bug 16 (Buyer Dashboard Routing to My Interests)**:
+  - Updated "View All" on Recent Requirements & Negotiations section in `buyer_dashboard_view.dart` to open `BuyerActivityView(initialIndex: 0)` ("My Interests" tab) instead of index 1 ("My Requirements").
+  - Verified with `test/buyer_dashboard_view_all_navigation_test.dart` (PASSED).
+- **Bug 15 (Buyer Action Button Text Clipping & Category Filter Removal)**:
+  - Fixed vertical clipping of the green "Accept" text label in `buyer_offer_details_view.dart` by removing vertical padding conflicts (`padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0)`), setting font size 14, and height 48.
+  - Removed artificial category filtering (`isDummyCategory` / `_isDummyOrTestCategory`) across `category_services.dart`, `category_page.dart`, and `add_buyer_offer_view.dart` so all categories (including test/dummy names) are displayed without restriction.
+  - Added tests in `buyer_category_screen_test.dart` and `buyer_negotiation_accept_button_test.dart`.
+- **Bug 14 (Delivery Challan PDF Formatting & Typos)**:
+  - Corrected label typo "PAYMENT SCHEDULS :" -> "PAYMENT SCHEDULE :".
+  - Professionalized salutation text to formal business standard.
+  - Corrected charge breakdown label typo "LORRY FRIGHT" -> "LORRY FREIGHT".
+  - Fixed vertical empty stretch by replacing `pw.Expanded` / `pw.Spacer()` with compact `pw.Table` (flex 4, 3, 3) and top-aligned container.
+  - Formatted all monetary totals, rates, and charges with consistent vector Rupee (₹) prefixes via `_currencyWidget`.
+  - Resolved `color: highlightYellow` and `decoration: BoxDecoration` container assertion collision.
+- **Bug 15 (Broadcast Expiry in Requirement Details)**:
+  - Added "Broadcast Expiry" field in mobile "Requirement Details" view (`buyer_offer_details_view.dart` and `seller_rfq_detail_view.dart`).
+  - Added comprehensive fallback extraction (`broadcast_expiry`, `broadcast_expiry_datetime`, `expiry_datetime`, `deal_expiry_datetime`, `expiry_date`, `expires_at`, nested RFQ/Offer/Product maps).
+  - Formatted into web panel format `dd MMM yyyy, hh:mm a` (e.g. `22 Oct 2026, 01:52 PM`) with timezone localization.
+  - Verified with unit and widget test `test/requirement_details_broadcast_expiry_test.dart` and clean `flutter analyze`.
+- **Task 16 (Rename 'All' Category to 'Offers')**:
+  - Confirmed and updated primary tab in "Offers & Requirements" page (`buyer_offers_view.dart`) to `'Offers'`.
+  - Cleaned empty state text interpolation for `offerType == 'all'` to display "No offers are available at the moment." instead of "No all offers...".
+  - Renamed "All Offers" tab in `transporter_offers_view.dart` to "Offers" with clean empty state phrasing.
+  - Removed unused import in `transporter_offers_view.dart`.
+- **Task 17 (Buyer Submit Offer dd-mm-yyyy Date Format)**:
+  - Formatted delivery date strictly as `dd-mm-yyyy` (e.g. `18-10-2026`) upon date selection across Buyer Panel modals (`buyer_offers_view.dart`, `buyer_today_offers_view.dart`, `buyer_my_interests_view.dart`).
+  - Added automatic ISO date normalizer in `BuyerServices.showInterest` to ensure full backend compatibility with `yyyy-MM-dd`.
+  - Verified with automated test `test/buyer_submit_offer_date_format_test.dart` and 0-issue `flutter analyze`.
+- **Task 18 (Negotiation Summary Data, Standardized Timestamps & Composer Layout)**:
+  - Fixed unbound summary data in `OfferInterestNegotiationChatView` (`seller_price` and `available_quantity` now populate via product fallback and format as `₹10,000.00 / TON` and `5000.100 QTL`).
+  - Standardized date/time parsing and formatting in negotiation log to `dd/MM/yyyy hh:mm a` across mobile (`offer_interest_negotiation_chat_view.dart`) and web (`negotiation_page.dart`), removing hardcoded `"13 Oct 12:22"` and converting UTC naive timestamps to local IST.
+  - Resolved input placeholder truncation ("Counter qua...") by separating inputs and send action into a balanced layout with full labels `Counter Price (₹)` and `Counter Qty`.
+  - Added unit suffixes/affordances (`/$priceUnit` and `quantityUnit`) directly inside the text fields.
+  - Replaced cramped circular send icon with a prominent, full-width `Submit Negotiation` button with proper 46px touch target and loading state.
+  - Added helper note matching Buyer web panel specifications.
+- **Task 21 (Transporter Dashboard — 3M Trend Chart Scaling & Missing Web Analytical Charts)**:
+  - Synchronized dual-axis gridlines and scaling via `_calculateScale` algorithm with 6 equal divisions (0.02 step for Earnings up to 0.12, 0.4 step for Shipments up to 2.4).
+  - Resolved negative curve sagging below Y=0 by enabling `preventCurveOverShooting: true`, `preventCurveOvershootingThreshold: 0.0`, and `curveSmoothness: 0.25` on `LineChartBarData`.
+  - Added dynamic proportional bar width (42px on 3M) matching web styling.
+  - Added `slaDrivers` reactive series and fallback parser to `TransporterDashboardController`.
+  - Added missing `"SLA: On-time % (Drivers)"` card (`_buildSlaDriversCard`) with driver breakdown, SLA target badge (90%), progress bars, and fleet on-time fallback.
+  - Renamed "Top Routes" to `"Top Routes (Trips)"` with route corridor badge styling.
+  - Enhanced `"Transport Types"` card with proportional progress indicators.
+- **Verification**: Created `test/transporter_trend_chart_test.dart` (4 tests passing), verified `test/transporter_api_models_test.dart` (passing), and confirmed 0 issues with `flutter analyze lib/modules/transporter/dashboard/`.
+
+

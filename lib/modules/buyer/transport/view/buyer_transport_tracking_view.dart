@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../services/buyer_services.dart';
 import '../../delivery_challan/model/buyer_challan_model.dart';
 import '../../../../theme/glass_widgets.dart';
+import '../../../../utils/app_snackbar.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class BuyerTransportTrackingView extends StatefulWidget {
   const BuyerTransportTrackingView({super.key});
@@ -38,7 +40,7 @@ class _BuyerTransportTrackingViewState extends State<BuyerTransportTrackingView>
       });
     } catch (e) {
       setState(() => isLoading = false);
-      Get.snackbar("Error", "Failed to load tracking data");
+      AppSnackbar.showError(title: "Error", message: "Failed to load tracking data");
     }
   }
 
@@ -48,9 +50,9 @@ class _BuyerTransportTrackingViewState extends State<BuyerTransportTrackingView>
     const primaryColor = Color(0xFFFFB300);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         title: Text("Transport Tracking", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
       ),

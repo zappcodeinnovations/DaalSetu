@@ -1,0 +1,334 @@
+{
+  "rfq_list_incoming": {
+    "success": true,
+    "tab": "incoming",
+    "results": [
+      {
+        "id": 1,
+        "rfq_id": "RFQ-20261005-8746",
+        "buyer_name": "buyer-one",
+        "title": "Need Toor Daal",
+        "description": "Grade A, machine clean",
+        "category": {
+          "id": 1,
+          "name": "Toor Dal"
+        },
+        "brand": null,
+        "required_quantity": "100.000",
+        "quantity_unit": "qtl",
+        "required_bag_count": null,
+        "packing_weight_kg": null,
+        "target_price": "1100.00",
+        "price_unit": "qtl",
+        "delivery_terms": "",
+        "buyer_remark": "",
+        "status": "open",
+        "expiry_datetime": "2026-10-08T19:20:19.270549+05:30",
+        "created_at": "2026-10-05T19:20:19.271929+05:30",
+        "updated_at": "2026-10-05T19:20:19.271967+05:30",
+        "target_branches": [
+          {
+            "id": 1,
+            "name": "Nagpur Branch"
+          }
+        ],
+        "quotation_count": 0,
+        "my_quotation_id": null,
+        "permissions": {
+          "is_buyer": false,
+          "is_seller": true,
+          "is_admin": false,
+          "can_quote": true,
+          "can_close": false
+        }
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "num_pages": 1,
+      "count": 1,
+      "has_next": false,
+      "has_previous": false,
+      "window": [
+        1
+      ]
+    }
+  },
+  "rfq_detail_seller": {
+    "success": true,
+    "data": {
+      "id": 1,
+      "rfq_id": "RFQ-20261005-8746",
+      "buyer_name": "buyer-one",
+      "title": "Need Toor Daal",
+      "description": "Grade A, machine clean",
+      "category": {
+        "id": 1,
+        "name": "Toor Dal"
+      },
+      "brand": null,
+      "required_quantity": "100.000",
+      "quantity_unit": "qtl",
+      "required_bag_count": null,
+      "packing_weight_kg": null,
+      "target_price": "1100.00",
+      "price_unit": "qtl",
+      "delivery_terms": "",
+      "buyer_remark": "",
+      "status": "negotiation_in_progress",
+      "expiry_datetime": "2026-10-08T19:20:19.270549+05:30",
+      "created_at": "2026-10-05T19:20:19.271929+05:30",
+      "updated_at": "2026-10-05T19:20:19.271967+05:30",
+      "target_branches": [
+        {
+          "id": 1,
+          "name": "Nagpur Branch"
+        }
+      ],
+      "quotation_count": 2,
+      "my_quotation_id": 1,
+      "permissions": {
+        "is_buyer": false,
+        "is_seller": true,
+        "is_admin": false,
+        "can_quote": false,
+        "can_close": false
+      },
+      "quotations": [
+        {
+          "id": 1,
+          "rfq": 1,
+          "seller_name": "seller-one",
+          "offered_price": "1150.00",
+          "price_unit": "qtl",
+          "offered_quantity": "100.000",
+          "quantity_unit": "qtl",
+          "offered_bag_count": null,
+          "packing_weight_kg": null,
+          "delivery_terms": "FOR Bhopal",
+          "seller_remark": "Fresh stock",
+          "status": "pending",
+          "is_read_only": false,
+          "created_at": "2026-10-05T19:20:19.792032+05:30",
+          "updated_at": "2026-10-05T19:20:19.792085+05:30",
+          "latest_terms": {
+            "latest_price": 1150.0,
+            "latest_quantity": 100.0,
+            "latest_by": "seller"
+          },
+          "messages": []
+        }
+      ]
+    }
+  },
+  "rfq_thread": {
+    "success": true,
+    "data": {
+      "id": 1,
+      "rfq": 1,
+      "seller_name": "seller-one",
+      "offered_price": "1150.00",
+      "price_unit": "qtl",
+      "offered_quantity": "100.000",
+      "quantity_unit": "qtl",
+      "offered_bag_count": null,
+      "packing_weight_kg": null,
+      "delivery_terms": "FOR Bhopal",
+      "seller_remark": "Fresh stock",
+      "status": "negotiating",
+      "is_read_only": false,
+      "created_at": "2026-10-05T19:20:19.792032+05:30",
+      "updated_at": "2026-10-05T19:20:20.570456+05:30",
+      "latest_terms": {
+        "latest_price": 1120.0,
+        "latest_quantity": 100.0,
+        "latest_by": "buyer"
+      },
+      "messages": [
+        {
+          "id": 1,
+          "sender_role": "buyer",
+          "sender_name": "buyer-one",
+          "counter_price": "1120.00",
+          "price_unit": "qtl",
+          "counter_quantity": null,
+          "quantity_unit": "",
+          "counter_bag_count": null,
+          "packing_weight_kg": null,
+          "message": "Can you do 1120?",
+          "created_at": "2026-10-05T19:20:20.574036+05:30"
+        }
+      ],
+      "rfq_id": "RFQ-20261005-8746",
+      "rfq_status": "negotiation_in_progress",
+      "buyer_display_id": "BUY-20261005-GVBX",
+      "seller_display_id": "SEL70A37D8F97",
+      "latest_offer_by": "buyer",
+      "can_reply": true,
+      "can_accept": true,
+      "can_reject": true
+    }
+  },
+  "rfq_quote": {
+    "success": true,
+    "message": "Your quotation has been submitted successfully.",
+    "data": {
+      "id": 1,
+      "rfq": 1,
+      "seller_name": "seller-one",
+      "offered_price": "1150.00",
+      "price_unit": "qtl",
+      "offered_quantity": "100.000",
+      "quantity_unit": "qtl",
+      "offered_bag_count": null,
+      "packing_weight_kg": null,
+      "delivery_terms": "FOR Bhopal",
+      "seller_remark": "Fresh stock",
+      "status": "pending",
+      "is_read_only": false,
+      "created_at": "2026-10-05T19:20:19.792032+05:30",
+      "updated_at": "2026-10-05T19:20:19.792085+05:30",
+      "latest_terms": {
+        "latest_price": 1150.0,
+        "latest_quantity": 100.0,
+        "latest_by": "seller"
+      },
+      "messages": [],
+      "rfq_id": "RFQ-20261005-8746",
+      "rfq_status": "negotiation_in_progress",
+      "buyer_display_id": "BUY-20261005-GVBX",
+      "seller_display_id": "SEL70A37D8F97",
+      "latest_offer_by": "seller",
+      "can_reply": true,
+      "can_accept": false,
+      "can_reject": true
+    }
+  },
+  "cons_list_seller": {
+    "success": true,
+    "results": [
+      {
+        "id": 1,
+        "contract_id": "JBC2610059633",
+        "status": "active",
+        "product_id": 1,
+        "product_title": "Toor Daal",
+        "display_seller_id": "seller-one (ID:2 | SEL70A37D8F97)",
+        "display_buyer_id": "buyer-one (ID:3 | BUY59A5A0C7C3)",
+        "deal_amount": "1200.00",
+        "amount_unit": "qtl",
+        "deal_quantity": "1200.000",
+        "quantity_unit": "qtl",
+        "bag_count": 4000,
+        "trade_value": "1440000.00000",
+        "loading_from": "Nagpur Warehouse",
+        "loading_to": "Bhopal Warehouse",
+        "confirmed_at": "2026-10-05T19:19:51.355349+05:30",
+        "transporter_visible_at": null,
+        "ready_label": "Pending",
+        "is_dispatched": false,
+        "is_delivered": false,
+        "received_label": "Pending",
+        "can_mark_ready": true,
+        "can_mark_received": false,
+        "assigned_transporter": null
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "num_pages": 1,
+      "count": 1,
+      "has_next": false,
+      "has_previous": false,
+      "window": [
+        1
+      ]
+    }
+  },
+  "cons_detail": {
+    "success": true,
+    "data": {
+      "id": 1,
+      "contract_id": "JBC2610059633",
+      "status": "active",
+      "product_id": 1,
+      "product_title": "Toor Daal",
+      "display_seller_id": "seller-one (ID:2 | SEL70A37D8F97)",
+      "display_buyer_id": "buyer-one (ID:3 | BUY59A5A0C7C3)",
+      "deal_amount": "1200.00",
+      "amount_unit": "qtl",
+      "deal_quantity": "1200.000",
+      "quantity_unit": "qtl",
+      "bag_count": 4000,
+      "trade_value": "1440000.00000",
+      "loading_from": "Nagpur Warehouse",
+      "loading_to": "Bhopal Warehouse",
+      "confirmed_at": "2026-10-05T19:19:51.355349+05:30",
+      "transporter_visible_at": "2026-10-05T19:19:51.966750+05:30",
+      "ready_label": "Ready",
+      "is_dispatched": true,
+      "is_delivered": false,
+      "received_label": "Pending",
+      "can_mark_ready": false,
+      "can_mark_received": true,
+      "assigned_transporter": "transporter-one (Transporter)"
+    }
+  },
+  "bill_detail": {
+    "success": true,
+    "data": {
+      "id": 1,
+      "bill_number": null,
+      "status": "draft",
+      "billing_company": 1,
+      "billing_company_name": "",
+      "seller": {
+        "id": 2,
+        "name": "seller-one",
+        "mobile": "9400000002"
+      },
+      "assigned_sub_admin": null,
+      "bill_date": "2026-10-05",
+      "period_from": null,
+      "period_to": null,
+      "remarks": "October brokerage",
+      "commission_type": "per_quantity",
+      "default_brokerage_rate": "10.0000",
+      "total_brokerage_amount": "144.00",
+      "has_pdf": false,
+      "pdf_generated_at": null,
+      "issued_at": null,
+      "cancelled_at": null,
+      "cancellation_reason": "",
+      "can_edit": true,
+      "created_at": "2026-10-05T19:19:58.626347+05:30",
+      "updated_at": "2026-10-05T19:19:58.738842+05:30",
+      "billing_company_snapshot": {},
+      "seller_snapshot": {},
+      "lines": [
+        {
+          "id": 1,
+          "line_position": 1,
+          "contract": 1,
+          "contract_number": "JBC2610059633",
+          "delivery_challan": 1,
+          "challan_number": "DC-20261005-0001",
+          "delivery_date": "2026-10-05",
+          "buyer_name": "buyer-one",
+          "product_name": "Toor Daal",
+          "bag_count": 40,
+          "packing_weight_kg": "30.000",
+          "quantity": "12.000",
+          "quantity_unit": "qtl",
+          "rate": "1200.00",
+          "rate_unit": "qtl",
+          "brokerage_rate": "12.0000",
+          "commission_type": "per_quantity",
+          "brokerage_amount": "144.00",
+          "trade_value": "14400.00"
+        }
+      ],
+      "total_trade_value": "14400.00"
+    }
+  }
+}

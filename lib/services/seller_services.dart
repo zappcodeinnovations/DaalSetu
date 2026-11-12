@@ -10,22 +10,42 @@ class SellerServices {
     final response = await ApiClient.get(
       endpoint: ApiUrls.brandsDropdown,
       requireAuth: true,
+      suppressErrorDialog: true,
     );
 
     if (response == null) {
       throw Exception("Failed to fetch brands");
     }
 
-    if (response is Map<String, dynamic> && response["success"] == true) {
-      return response["data"] is List ? response["data"] : [];
+    if (response is List) return response;
+    if (response is Map<String, dynamic>) {
+      if (response["data"] is List) return response["data"];
+      if (response["results"] is List) return response["results"];
     }
     return [];
+  }
+
+  static Future<List<dynamic>> getCategoryBrands(int categoryId) async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.categoryBrands(categoryId),
+      requireAuth: true,
+    );
+    if (response is Map<String, dynamic> && response['success'] == true) {
+      return response['data'] is List ? response['data'] as List : const [];
+    }
+    throw Exception(
+      response is Map<String, dynamic>
+          ? response['message'] ?? 'Failed to fetch category brands'
+          : 'Failed to fetch category brands',
+    );
   }
 
   /// ============================================================
   /// CREATE CATEGORY (ROOT)
   /// ============================================================
-  static Future<Map<String, dynamic>> createCategory(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> createCategory(
+    Map<String, dynamic> data,
+  ) async {
     final response = await ApiClient.post(
       endpoint: ApiUrls.categories,
       body: data,
@@ -67,24 +87,33 @@ class SellerServices {
       endpoint: ApiUrls.company,
       requireAuth: true,
     );
-    
+
     if (response == null) {
       throw Exception("Failed to fetch companies");
     }
 
     if (response is List) {
-      return response.map((e) => SellerCompanyModel.fromJson(e)).toList();
-    } else if (response is Map<String, dynamic> && response.containsKey("data")) {
-      return (response["data"] as List).map((e) => SellerCompanyModel.fromJson(e)).toList();
+      return response
+          .map((e) => SellerCompanyModel.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    } else if (response is Map<String, dynamic> &&
+        response.containsKey("data")) {
+      return (response["data"] as List)
+          .map((e) => SellerCompanyModel.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    } else if (response is Map<String, dynamic>) {
+      return [SellerCompanyModel.fromJson(response)];
     } else {
-       return [SellerCompanyModel.fromJson(response)];
+      return [];
     }
   }
 
   /// ============================================================
   /// CREATE COMPANY
   /// ============================================================
-  static Future<SellerCompanyModel> createCompany(Map<String, dynamic> data) async {
+  static Future<SellerCompanyModel> createCompany(
+    Map<String, dynamic> data,
+  ) async {
     final response = await ApiClient.post(
       endpoint: ApiUrls.company,
       body: data,
@@ -94,14 +123,17 @@ class SellerServices {
     if (response == null || response is! Map<String, dynamic>) {
       throw Exception("Invalid response format");
     }
-    
+
     return SellerCompanyModel.fromJson(response);
   }
 
   /// ============================================================
   /// UPDATE COMPANY (PUT)
   /// ============================================================
-  static Future<SellerCompanyModel> updateCompany(int id, Map<String, dynamic> data) async {
+  static Future<SellerCompanyModel> updateCompany(
+    int id,
+    Map<String, dynamic> data,
+  ) async {
     final response = await ApiClient.put(
       endpoint: ApiUrls.companyDetails(id),
       data: data,
@@ -110,12 +142,71 @@ class SellerServices {
     return SellerCompanyModel.fromJson(response);
   }
 
+  static Future<Map<String, dynamic>> editCompany(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
+    final response = await ApiClient.patch(
+      endpoint: "/api/company/$id/",
+      data: data,
+      requireAuth: true,
+    );
+
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Invalid response format");
+    }
+
+    return response;
+  }
+
   /// ============================================================
-  /// SET PRIMARY COMPANY (POST)
+  /// GET COMPANY DROPDOWN
   /// ============================================================
-  static Future<void> setPrimaryCompany(int id) async {
+  static Future<List<dynamic>> getCompanyDropdown() async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.companyDropdown,
+      requireAuth: true,
+    );
+
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Invalid response format");
+    }
+
+    if (response["success"] == true) {
+      return response["data"];
+    } else {
+      throw Exception(
+        response["message"] ?? "Failed to fetch company dropdown",
+      );
+    }
+  }
+
+  /// ============================================================
+  /// GET PRIMARY COMPANY
+  /// ============================================================
+  static Future<Map<String, dynamic>> getPrimaryCompany() async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.companyPrimary,
+      requireAuth: true,
+    );
+
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Invalid response format");
+    }
+
+    if (response["success"] == true) {
+      return response["data"];
+    } else {
+      throw Exception(response["message"] ?? "Failed to fetch primary company");
+    }
+  }
+
+  /// ============================================================
+  /// SET PRIMARY COMPANY
+  /// ============================================================
+  static Future<void> setPrimaryCompany(dynamic id) async {
     await ApiClient.post(
-      endpoint: ApiUrls.setPrimaryCompany(id),
+      endpoint: ApiUrls.setPrimaryCompany(int.tryParse(id.toString()) ?? 0),
       body: {},
       requireAuth: true,
     );
@@ -137,7 +228,6 @@ class SellerServices {
     return SellerCompanyModel.fromJson(response);
   }
 
-
   /// ============================================================
   /// CATEGORIES DASHBOARD
   /// ============================================================
@@ -154,7 +244,9 @@ class SellerServices {
     if (response["success"] == true) {
       return response["data"];
     } else {
-      throw Exception(response["message"] ?? "Failed to fetch categories dashboard");
+      throw Exception(
+        response["message"] ?? "Failed to fetch categories dashboard",
+      );
     }
   }
 
@@ -209,7 +301,8 @@ class SellerServices {
 
     if (response is List) {
       return response;
-    } else if (response is Map<String, dynamic> && response.containsKey("data")) {
+    } else if (response is Map<String, dynamic> &&
+        response.containsKey("data")) {
       return response["data"];
     }
     return [];
@@ -218,7 +311,10 @@ class SellerServices {
   /// ============================================================
   /// CREATE SUB CATEGORY
   /// ============================================================
-  static Future<Map<String, dynamic>> createSubCategory(int parentId, String name) async {
+  static Future<Map<String, dynamic>> createSubCategory(
+    int parentId,
+    String name,
+  ) async {
     final response = await ApiClient.post(
       endpoint: ApiUrls.createSubCategory(parentId),
       body: {"category_name": name},
@@ -235,7 +331,10 @@ class SellerServices {
   /// ============================================================
   /// UPDATE CATEGORY (PUT)
   /// ============================================================
-  static Future<Map<String, dynamic>> updateCategory(int id, String name) async {
+  static Future<Map<String, dynamic>> updateCategory(
+    int id,
+    String name,
+  ) async {
     final response = await ApiClient.put(
       endpoint: ApiUrls.categoryDetails(id),
       data: {"category_name": name},
@@ -252,9 +351,13 @@ class SellerServices {
   /// ============================================================
   /// DELETE CATEGORY
   /// ============================================================
-  static Future<void> deleteCategory(int id, {bool deleteSubcategories = false}) async {
+  static Future<void> deleteCategory(
+    int id, {
+    bool deleteSubcategories = false,
+  }) async {
     await ApiClient.delete(
-      endpoint: "${ApiUrls.categoryDetails(id)}${deleteSubcategories ? "?delete_subcategories=true" : ""}",
+      endpoint:
+          "${ApiUrls.categoryDetails(id)}${deleteSubcategories ? "?delete_subcategories=true" : ""}",
       requireAuth: true,
     );
   }
@@ -262,7 +365,10 @@ class SellerServices {
   /// ============================================================
   /// UPLOAD CATEGORY IMAGE
   /// ============================================================
-  static Future<Map<String, dynamic>> uploadCategoryImage(int id, String imagePath) async {
+  static Future<Map<String, dynamic>> uploadCategoryImage(
+    int id,
+    String imagePath,
+  ) async {
     final response = await ApiClient.postMultipart(
       endpoint: ApiUrls.categoryImage(id),
       fields: {},
@@ -294,28 +400,6 @@ class SellerServices {
     await ApiClient.post(
       endpoint: ApiUrls.branchRequestByCode,
       body: {"branch_code": code},
-      requireAuth: true,
-    );
-  }
-
-  /// ============================================================
-  /// LEAVE BRANCH
-  /// ============================================================
-  static Future<void> leaveBranch(int id) async {
-    await ApiClient.post(
-      endpoint: ApiUrls.leaveBranch(id),
-      body: {},
-      requireAuth: true,
-    );
-  }
-
-  /// ============================================================
-  /// CANCEL BRANCH REQUEST
-  /// ============================================================
-  static Future<void> cancelBranchRequest(int id) async {
-    await ApiClient.post(
-      endpoint: ApiUrls.cancelBranchRequest(id),
-      body: {},
       requireAuth: true,
     );
   }
@@ -366,10 +450,12 @@ class SellerServices {
   /// ============================================================
   /// GET PRODUCTS
   /// ============================================================
-  static Future<List<dynamic>> getProducts() async {
+  /// [silent] for background refreshes: no global server-error popup on a failed poll.
+  static Future<List<dynamic>> getProducts({bool silent = false}) async {
     final response = await ApiClient.get(
       endpoint: ApiUrls.products,
       requireAuth: true,
+      suppressErrorDialog: silent,
     );
     if (response == null) {
       throw Exception("Failed to fetch products");
@@ -410,5 +496,843 @@ class SellerServices {
       }
     }
     return response is List ? response : [];
+  }
+
+  /// ============================================================
+  /// OFFER INTERESTS & NEGOTIATIONS
+  /// ============================================================
+  static Future<Map<String, dynamic>> getOfferInterests(
+    int productId, {
+    String mode = 'seller',
+  }) async {
+    final response = await ApiClient.get(
+      endpoint: "${ApiUrls.offerInterests(productId)}?mode=$mode",
+      requireAuth: true,
+    );
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Failed to fetch offer interests");
+    }
+    return response;
+  }
+
+  static Future<Map<String, dynamic>> sendCounterOfferMessage(
+    int productId,
+    int interestId, {
+    required String counterPrice,
+    required String counterQuantity,
+    int? counterBagCount,
+    String? counterPackingWeightKg,
+  }) async {
+    final cleanPrice =
+        counterPrice.replaceAll('₹', '').replaceAll(',', '').trim();
+    final cleanQty = counterQuantity.replaceAll(',', '').trim();
+    final cleanWeight = counterPackingWeightKg?.trim();
+
+    final body = {
+      if (cleanPrice.isNotEmpty) "counter_price": cleanPrice,
+      if (cleanQty.isNotEmpty) "counter_quantity": cleanQty,
+      if (counterBagCount != null && counterBagCount > 0)
+        "counter_bag_count": counterBagCount,
+      if (cleanWeight != null && cleanWeight.isNotEmpty)
+        "counter_packing_weight_kg": cleanWeight,
+    };
+
+    // The old /message/ endpoint answers with a redirect for mobile, so use the thread API.
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.offerInterestThread(productId, interestId),
+      body: body,
+      requireAuth: true,
+      suppressErrorDialog: true,
+    );
+    if (response['success'] == false) {
+      throw Exception(
+        response['message'] ?? "Failed to send counter offer",
+      );
+    }
+    return response;
+  }
+
+  static Future<Map<String, dynamic>> getOfferInterestThread(
+    int productId,
+    int interestId,
+  ) async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.offerInterestThread(productId, interestId),
+      requireAuth: true,
+    );
+    return _asMap(response, "Failed to load negotiation");
+  }
+
+  static Future<Map<String, dynamic>> confirmOfferDeal(
+    int productId,
+    int interestId, {
+    String? adminRemark,
+    int? subAdminId,
+  }) async {
+    final body = {
+      "interest_id": interestId,
+      if (adminRemark != null) "admin_remark": adminRemark,
+      if (subAdminId != null) "assigned_sub_admin_id": subAdminId,
+    };
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.offerConfirmDeal(productId),
+      body: body,
+      requireAuth: true,
+    );
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Failed to confirm deal");
+    }
+    return response;
+  }
+
+  /// ============================================================
+  /// STOCK & ACTIVE TOGGLE
+  /// ============================================================
+  static Future<Map<String, dynamic>> updateOfferStock(
+    int productId, {
+    required String mode,
+    required String operation,
+    required String quantity,
+  }) async {
+    final body = {"mode": mode, "operation": operation, "quantity": quantity};
+    final response = await ApiClient.patch(
+      endpoint: ApiUrls.offerUpdateStock(productId),
+      data: body,
+      requireAuth: true,
+    );
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Failed to update stock");
+    }
+    return response;
+  }
+
+  static Future<Map<String, dynamic>> toggleOfferStatus(
+    int productId,
+    bool isActive,
+  ) async {
+    final response = await ApiClient.patch(
+      endpoint: "${ApiUrls.offerToggle(productId)}?is_active=$isActive",
+      data: {"is_active": isActive},
+      requireAuth: true,
+    );
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception("Failed to toggle offer status");
+    }
+    return response;
+  }
+
+  /// ============================================================
+  /// PRODUCT IMAGES & VIDEOS
+  /// ============================================================
+  static Future<List<dynamic>> getProductImages({int? productId}) async {
+    String endpoint = ApiUrls.productImages;
+    if (productId != null && productId > 0) {
+      endpoint += "?product=$productId";
+    }
+    final response = await ApiClient.get(endpoint: endpoint, requireAuth: true);
+    if (response is List) return response;
+    if (response is Map<String, dynamic>) {
+      if (response["results"] is List) return response["results"];
+      if (response["data"] is List) return response["data"];
+    }
+    return [];
+  }
+
+  static Future<Map<String, dynamic>> uploadProductImage(
+    int productId,
+    String imagePath, {
+    bool isPrimary = true,
+  }) async {
+    final response = await ApiClient.postMultipart(
+      endpoint: ApiUrls.productImages,
+      fields: {
+        "product": productId.toString(),
+        "is_primary": isPrimary.toString(),
+      },
+      files: {"image": imagePath},
+      requireAuth: true,
+    );
+    return response;
+  }
+
+  static Future<void> deleteProductImage(int imageId) async {
+    await ApiClient.delete(
+      endpoint: ApiUrls.productImageDetail(imageId),
+      requireAuth: true,
+    );
+  }
+
+  static Future<List<dynamic>> getProductVideos({int? productId}) async {
+    String endpoint = ApiUrls.productVideos;
+    if (productId != null && productId > 0) {
+      endpoint += "?product=$productId";
+    }
+    final response = await ApiClient.get(endpoint: endpoint, requireAuth: true);
+    if (response is List) return response;
+    if (response is Map<String, dynamic>) {
+      if (response["results"] is List) return response["results"];
+      if (response["data"] is List) return response["data"];
+    }
+    return [];
+  }
+
+  static Future<Map<String, dynamic>> uploadProductVideo(
+    int productId,
+    String videoPath,
+    String title, {
+    bool isPrimary = true,
+    Duration timeout = const Duration(minutes: 3),
+  }) async {
+    final response = await ApiClient.postMultipart(
+      endpoint: ApiUrls.productVideos,
+      fields: {
+        "product": productId.toString(),
+        "title": title,
+        "is_primary": isPrimary.toString(),
+      },
+      files: {"video": videoPath},
+      requireAuth: true,
+      timeout: timeout,
+    );
+    return response;
+  }
+
+  static Future<void> deleteProductVideo(int videoId) async {
+    await ApiClient.delete(
+      endpoint: ApiUrls.productVideoDetail(videoId),
+      requireAuth: true,
+    );
+  }
+
+  /// ============================================================
+  /// TAGS DROPDOWN
+  /// ============================================================
+  static Future<List<dynamic>> getTagsDropdown() async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.tagsDropdown,
+      requireAuth: true,
+    );
+    if (response is List) return response;
+    if (response is Map<String, dynamic> && response["data"] is List)
+      return response["data"];
+    return [];
+  }
+
+  /// ============================================================
+  /// BUYER REQUIREMENTS / RFQS & QUOTING
+  /// ============================================================
+  static Future<List<dynamic>> getBuyerRFQs({
+    String? categoryId,
+    String? search,
+  }) async {
+    String endpoint = ApiUrls.sellerRFQs;
+    final Map<String, String> queryParams = {};
+    if (categoryId != null && categoryId.isNotEmpty) {
+      queryParams['category'] = categoryId;
+    }
+    if (search != null && search.isNotEmpty) {
+      queryParams['search'] = search;
+    }
+    if (queryParams.isNotEmpty) {
+      endpoint += "?${Uri(queryParameters: queryParams).query}";
+    }
+
+    final response = await ApiClient.get(endpoint: endpoint, requireAuth: true);
+    if (response is List) return response;
+    if (response is Map<String, dynamic> && response["rfqs"] is List)
+      return response["rfqs"];
+    if (response is Map<String, dynamic> && response["results"] is List)
+      return response["results"];
+    if (response is Map<String, dynamic> && response["data"] is List)
+      return response["data"];
+    return [];
+  }
+
+  static Future<Map<String, dynamic>> submitRFQQuote(
+    int rfqId,
+    Map<String, dynamic> body,
+  ) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.submitRFQQuote(rfqId),
+      body: body,
+      requireAuth: true,
+    );
+    if (response is Map<String, dynamic>) return response;
+    return {"success": true, "message": "Quote submitted successfully"};
+  }
+
+  /// ============================================================
+  /// CONTRACTS & DELIVERY CHALLANS
+  /// ============================================================
+  static Future<List<dynamic>> getSellerContracts({bool silent = false}) async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.mobileContracts,
+      requireAuth: true,
+      suppressErrorDialog: silent,
+    );
+    if (response is List) return response;
+    if (response is Map<String, dynamic> && response["results"] is List)
+      return response["results"];
+    if (response is Map<String, dynamic> && response["data"] is List)
+      return response["data"];
+    return [];
+  }
+
+  static Future<Map<String, dynamic>> getContractDetails(
+    int contractId, {
+    bool silent = false,
+  }) async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.mobileContractDetails(contractId),
+      requireAuth: true,
+      suppressErrorDialog: silent,
+    );
+    if (response is Map<String, dynamic>) return response;
+    return {};
+  }
+
+  static Future<Map<String, dynamic>> dispatchDeliveryChallan(
+    int challanId,
+  ) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.sellerDispatchChallan(challanId),
+      body: {},
+      requireAuth: true,
+    );
+    if (response is Map<String, dynamic>) return response;
+    return {
+      "success": true,
+      "message": "Delivery challan dispatched successfully",
+    };
+  }
+
+  /// ============================================================
+  /// SELLER COMPANY BRANCHES
+  /// ============================================================
+  static Future<Map<String, dynamic>> getSellerBranches({
+    bool silent = false,
+  }) async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.sellerBranches,
+      requireAuth: true,
+      suppressErrorDialog: silent,
+    );
+    if (response is Map<String, dynamic>) return response;
+    return {};
+  }
+
+  static Future<Map<String, dynamic>> getBranchDetails(int branchId) async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.branchDetails(branchId),
+      requireAuth: true,
+    );
+    if (response is Map<String, dynamic>) return response;
+    return {};
+  }
+
+  static Future<Map<String, dynamic>> requestBranchByCode(
+    String branchCode,
+  ) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.requestBranchByCode,
+      body: {"branch_code": branchCode},
+      requireAuth: true,
+    );
+    if (response is Map<String, dynamic>) return response;
+    return {
+      "success": true,
+      "message": "Branch join request submitted successfully",
+    };
+  }
+
+  static Future<Map<String, dynamic>> cancelBranchRequest(int branchId) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.cancelBranchRequest(branchId),
+      body: {},
+      requireAuth: true,
+    );
+    if (response is Map<String, dynamic>) return response;
+    return {
+      "success": true,
+      "message": "Branch request cancelled successfully",
+    };
+  }
+
+  static Future<Map<String, dynamic>> leaveBranch(int branchId) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.leaveBranch(branchId),
+      body: {},
+      requireAuth: true,
+    );
+    if (response is Map<String, dynamic>) return response;
+    return {"success": true, "message": "Left branch successfully"};
+  }
+
+  /// Switches the user's primary branch to one they already belong to.
+  static Future<Map<String, dynamic>> makePrimaryBranch(int branchId) {
+    return ApiClient.post(
+      endpoint: ApiUrls.makePrimaryBranch(branchId),
+      body: {},
+      requireAuth: true,
+    );
+  }
+
+  static Future<Map<String, dynamic>> createBranch(
+    Map<String, dynamic> body,
+  ) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.createBranch,
+      body: body,
+      requireAuth: true,
+    );
+    if (response is Map<String, dynamic>) return response;
+    return {"success": true, "message": "Branch created successfully"};
+  }
+
+  /// ============================================================
+  /// MASTER DATA (BRANDS, CATEGORIES, TAGS)
+  /// ============================================================
+  /// Brand Master list: same as the web page (all statuses, so a seller sees
+  /// their own pending brands). The dropdown API only has active brands.
+  static Future<List<dynamic>> getBrandsList() async {
+    for (final endpoint in [ApiUrls.brands, ApiUrls.brandsDropdown]) {
+      try {
+        final response = await ApiClient.get(
+          endpoint: endpoint,
+          requireAuth: true,
+          suppressErrorDialog: true,
+        );
+        if (response is List) return response;
+        if (response is Map<String, dynamic>) {
+          if (response["data"] is List) return response["data"];
+          if (response["results"] is List) return response["results"];
+        }
+      } catch (_) {}
+    }
+    return [];
+  }
+
+  static Future<Map<String, dynamic>> createBrand(
+    String name, {
+    String? description,
+  }) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.brands,
+      body: {"brand_name": name.trim()},
+      requireAuth: true,
+      suppressErrorDialog: true,
+    );
+    return _asMap(response, "Failed to create brand");
+  }
+
+  static Future<Map<String, dynamic>> updateBrand(
+    int brandId,
+    String name,
+  ) async {
+    final response = await ApiClient.patch(
+      endpoint: "${ApiUrls.brands}$brandId/",
+      data: {"brand_name": name.trim()},
+      requireAuth: true,
+    );
+    return _asMap(response, "Failed to update brand");
+  }
+
+  static Future<Map<String, dynamic>> deleteBrand(int brandId) async {
+    final response = await ApiClient.delete(
+      endpoint: "${ApiUrls.brands}$brandId/",
+      requireAuth: true,
+    );
+    return _asMap(response, "Failed to delete brand");
+  }
+
+  static Future<List<dynamic>> getCategoryTree() async {
+    try {
+      final response = await ApiClient.get(
+        endpoint: ApiUrls.categoriesTree,
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
+      if (response is List) return response;
+      if (response is Map<String, dynamic>) {
+        if (response["data"] is List) return response["data"];
+        if (response["categories"] is List) return response["categories"];
+        if (response["results"] is List) return response["results"];
+      }
+    } catch (_) {}
+
+    try {
+      final fallbackRes = await ApiClient.get(
+        endpoint: ApiUrls.categories,
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
+      if (fallbackRes is List) return fallbackRes;
+      if (fallbackRes is Map<String, dynamic> && fallbackRes["data"] is List)
+        return fallbackRes["data"];
+      if (fallbackRes is Map<String, dynamic> && fallbackRes["results"] is List)
+        return fallbackRes["results"];
+    } catch (_) {}
+    return [];
+  }
+
+  static Future<List<dynamic>> getTagsList() async {
+    try {
+      final response = await ApiClient.get(
+        endpoint: ApiUrls.tagsDropdown,
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
+      if (response is List) return response;
+      if (response is Map<String, dynamic>) {
+        if (response["data"] is List) return response["data"];
+        if (response["results"] is List) return response["results"];
+      }
+    } catch (_) {}
+
+    try {
+      final response = await ApiClient.get(
+        endpoint: ApiUrls.tagsList,
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
+      if (response is List) return response;
+      if (response is Map<String, dynamic> && response["results"] is List)
+        return response["results"];
+      if (response is Map<String, dynamic> && response["data"] is List)
+        return response["data"];
+    } catch (_) {}
+    return [];
+  }
+
+  static Future<Map<String, dynamic>> createTag(String name) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.tags,
+      body: {"tag_name": name.trim()},
+      requireAuth: true,
+      suppressErrorDialog: true,
+    );
+    return _asMap(response, "Failed to create tag");
+  }
+
+  static Map<String, dynamic> _asMap(dynamic response, String error) {
+    if (response is Map<String, dynamic>) return response;
+    throw Exception(error);
+  }
+
+  static String _withQuery(String endpoint, Map<String, String?> params) {
+    final query = {
+      for (final entry in params.entries)
+        if (entry.value != null && entry.value!.isNotEmpty)
+          entry.key: entry.value!,
+    };
+    return query.isEmpty
+        ? endpoint
+        : "$endpoint?${Uri(queryParameters: query).query}";
+  }
+
+  /// ============================================================
+  /// OFFER MANAGEMENT (edit, delete, stock history, buyer interests)
+  /// ============================================================
+  static Future<Map<String, dynamic>> createOffer(
+    Map<String, dynamic> body, {
+    String? imagePath,
+    String? videoPath,
+  }) async {
+    final hasImage = imagePath != null && imagePath.trim().isNotEmpty;
+    final hasVideo = videoPath != null && videoPath.trim().isNotEmpty;
+
+    dynamic response;
+    if (hasImage || hasVideo) {
+      final Map<String, String> fields = {};
+      body.forEach((key, value) {
+        if (value != null) {
+          if (value is List) {
+            fields[key] = value.join(',');
+          } else {
+            fields[key] = value.toString();
+          }
+        }
+      });
+
+      final Map<String, String> files = {};
+      if (hasImage) files['product_image'] = imagePath.trim();
+      if (hasVideo) files['product_video'] = videoPath.trim();
+
+      response = await ApiClient.postMultipart(
+        endpoint: ApiUrls.offerCreate,
+        fields: fields,
+        files: files,
+        requireAuth: true,
+        // Offer videos can take longer than the normal API timeout to upload.
+        timeout: hasVideo ? const Duration(minutes: 3) : null,
+      );
+    } else {
+      response = await ApiClient.post(
+        endpoint: ApiUrls.offerCreate,
+        body: body,
+        requireAuth: true,
+      );
+    }
+    return _asMap(response, "Failed to create offer");
+  }
+
+  static Future<Map<String, dynamic>> getOfferDetail(int productId) async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.offerDetail(productId),
+      requireAuth: true,
+    );
+    return _asMap(response, "Failed to load offer");
+  }
+
+  static Future<Map<String, dynamic>> updateOffer(
+    int productId,
+    Map<String, dynamic> body,
+  ) async {
+    final response = await ApiClient.patch(
+      endpoint: ApiUrls.offerUpdate(productId),
+      data: body,
+      requireAuth: true,
+    );
+    return _asMap(response, "Failed to update offer");
+  }
+
+  static Future<Map<String, dynamic>> deleteOffer(int productId) async {
+    final response = await ApiClient.delete(
+      endpoint: ApiUrls.offerDelete(productId),
+      requireAuth: true,
+    );
+    return _asMap(response, "Failed to delete offer");
+  }
+
+  static Future<Map<String, dynamic>> getOfferStockHistory(
+    int productId, {
+    int page = 1,
+  }) async {
+    final response = await ApiClient.get(
+      endpoint: "${ApiUrls.offerStockHistory(productId)}?page=$page",
+      requireAuth: true,
+    );
+    return _asMap(response, "Failed to load stock history");
+  }
+
+  static Future<Map<String, dynamic>> approveBuyerInterest(
+    int productId,
+    int interestId, {
+    String remark = "",
+    int? subAdminId,
+  }) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.offerApproveBuyer(productId),
+      body: {
+        "interest_id": interestId,
+        "seller_remark": remark,
+        if (subAdminId != null) ...{
+          "assigned_sub_admin_id": subAdminId,
+          "sub_admin_id": subAdminId,
+        },
+      },
+      requireAuth: true,
+    );
+    return _asMap(response, "Failed to approve buyer interest");
+  }
+
+  static Future<Map<String, dynamic>> rejectBuyerInterest(
+    int productId,
+    int interestId, {
+    String remark = "",
+  }) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.offerRejectBuyer(productId),
+      body: {"interest_id": interestId, "seller_remark": remark},
+      requireAuth: true,
+    );
+    return _asMap(response, "Failed to reject buyer interest");
+  }
+
+  /// ============================================================
+  /// BUYER REQUIREMENTS (RFQ) - single API
+  /// ============================================================
+  static Future<Map<String, dynamic>> getBuyerRequirements({
+    String tab = "incoming",
+    String? search,
+    String? status,
+    int page = 1,
+  }) async {
+    final response = await ApiClient.get(
+      endpoint: _withQuery(ApiUrls.buyerRequirements, {
+        "tab": tab,
+        "search": search,
+        "status": status,
+        "page": "$page",
+      }),
+      requireAuth: true,
+    );
+    return _asMap(response, "Failed to load buyer requirements");
+  }
+
+  static Future<Map<String, dynamic>> getBuyerRequirement(
+    String rfqId, {
+    int? quotationId,
+    bool silent = false,
+  }) async {
+    final response = await ApiClient.get(
+      endpoint: _withQuery(ApiUrls.buyerRequirementDetail(rfqId), {
+        "quotation_id": quotationId?.toString(),
+      }),
+      requireAuth: true,
+      suppressErrorDialog: silent,
+    );
+    return _asMap(response, "Failed to load buyer requirement");
+  }
+
+  static Future<Map<String, dynamic>> buyerRequirementAction(
+    String rfqId,
+    Map<String, dynamic> body,
+  ) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.buyerRequirementDetail(rfqId),
+      body: body,
+      requireAuth: true,
+    );
+    return _asMap(response, "Request failed");
+  }
+
+  /// ============================================================
+  /// CONSIGNMENTS - single API
+  /// ============================================================
+  static Future<Map<String, dynamic>> getConsignments({
+    String? workflowStatus,
+    String? search,
+    int page = 1,
+  }) async {
+    final response = await ApiClient.get(
+      endpoint: _withQuery(ApiUrls.consignments, {
+        "workflow_status": workflowStatus,
+        "search": search,
+        "page": "$page",
+      }),
+      requireAuth: true,
+    );
+    return _asMap(response, "Failed to load consignments");
+  }
+
+  static Future<Map<String, dynamic>> getConsignmentDetail(
+    int contractId,
+    {bool silent = false}
+  ) async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.consignmentDetail(contractId),
+      requireAuth: true,
+      suppressErrorDialog: silent,
+    );
+    return _asMap(response, "Failed to load consignment");
+  }
+
+  static Future<Map<String, dynamic>> consignmentAction(
+    int contractId,
+    String action,
+  ) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.consignmentDetail(contractId),
+      body: {"action": action},
+      requireAuth: true,
+    );
+    return _asMap(response, "Request failed");
+  }
+
+  /// ============================================================
+  /// BUYER OFFERS (seller side)
+  /// ============================================================
+  static Future<List<dynamic>> getBuyerOfferRequests({
+    String tab = "incoming",
+    String? search,
+    String? status,
+  }) async {
+    final response = await ApiClient.get(
+      endpoint: _withQuery(ApiUrls.buyerOffers, {
+        "tab": tab,
+        "search": search,
+        "status": status,
+      }),
+      requireAuth: true,
+    );
+    if (response is Map<String, dynamic> && response["buyer_offers"] is List)
+      return response["buyer_offers"];
+    if (response is List) return response;
+    return [];
+  }
+
+  static Future<Map<String, dynamic>> getBuyerOfferRequest(int id) async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.buyerOfferDetails(id),
+      requireAuth: true,
+    );
+    final map = _asMap(response, "Failed to load buyer offer");
+    return map["buyer_offer"] is Map<String, dynamic>
+        ? map["buyer_offer"]
+        : map;
+  }
+
+  static Future<Map<String, dynamic>> buyerOfferAction(
+    int id,
+    Map<String, dynamic> body,
+  ) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.buyerOfferAction(id),
+      body: body,
+      requireAuth: true,
+    );
+    return _asMap(response, "Request failed");
+  }
+
+  static Future<Map<String, dynamic>> deleteCompany(int companyId) async {
+    // DELETE answers 204 with an empty body, which the client returns as an empty map.
+    return ApiClient.delete(
+      endpoint: ApiUrls.companyDetails(companyId),
+      requireAuth: true,
+    );
+  }
+
+  static Future<List<Map<String, dynamic>>> getPublicBranches() async {
+    final response = await ApiClient.get(
+      endpoint: ApiUrls.publicBranches,
+      requireAuth: true,
+    );
+    final list = response is Map<String, dynamic> ? response['data'] : response;
+    return (list is List ? list : const [])
+        .whereType<Map<String, dynamic>>()
+        .toList();
+  }
+
+  /// ============================================================
+  /// QUALITY TAGS (edit / delete; delete never forces removal from users)
+  /// ============================================================
+  static Future<Map<String, dynamic>> updateTag(int tagId, String name) async {
+    final response = await ApiClient.patch(
+      endpoint: "${ApiUrls.tags}$tagId/",
+      data: {"tag_name": name},
+      requireAuth: true,
+    );
+    return _asMap(response, "Failed to update tag");
+  }
+
+  static Future<Map<String, dynamic>> deleteTag(int tagId) async {
+    final response = await ApiClient.delete(
+      endpoint: "${ApiUrls.tags}$tagId/",
+      requireAuth: true,
+    );
+    return _asMap(response, "Failed to delete tag");
+  }
+
+  /// ============================================================
+  /// KYC RE-APPROVAL
+  /// ============================================================
+  static Future<Map<String, dynamic>> requestKycApproval() async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.kycRequestApproval,
+      body: {},
+      requireAuth: true,
+    );
+    return _asMap(response, "Failed to send KYC request");
   }
 }

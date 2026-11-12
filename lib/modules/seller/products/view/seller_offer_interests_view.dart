@@ -1,0 +1,435 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:iconly/iconly.dart';
+import '../controller/seller_negotiation_controller.dart';
+import '../../common/seller_ui.dart';
+import 'seller_interest_thread_view.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
+
+class SellerOfferInterestsView extends StatefulWidget {
+  const SellerOfferInterestsView({super.key});
+
+  @override
+  State<SellerOfferInterestsView> createState() => _SellerOfferInterestsViewState();
+}
+
+class _SellerOfferInterestsViewState extends State<SellerOfferInterestsView> {
+  /// Read once when the page opens: Get.arguments belongs to whichever route is
+  /// on top, so reading it in build (side menu or a dialog open) gave product 0.
+  late final int productId = int.tryParse(
+        Get.parameters['productId'] ?? (Get.arguments?.toString() ?? '0'),
+      ) ??
+      0;
+
+  late final SellerNegotiationController controller = Get.put(
+    SellerNegotiationController(productId: productId),
+    tag: 'seller_negotiation_$productId',
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    const primaryColor = Color(0xFFFFB300);
+
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        titleSpacing: 0,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Buyer Interests & Offers",
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
+            ),
+            Text(
+              'Live negotiation • auto-refresh',
+              style: GoogleFonts.inter(fontSize: 11, color: Colors.green),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            onPressed: controller.fetchInterests,
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Refresh interests',
+          ),
+        ],
+      ),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(
+            child: CircularProgressIndicator(color: primaryColor),
+          );
+        }
+
+        if (controller.interestsList.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  IconlyLight.document,
+                  size: 64,
+                  color: Colors.grey.shade400,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "No buyer interests yet for this offer",
+                  style: GoogleFonts.poppins(
+                    color: Colors.grey.shade600,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: controller.fetchInterests,
+          color: primaryColor,
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: controller.interestsList.length,
+            itemBuilder: (context, index) {
+              final item = controller.interestsList[index];
+              final status = (item.status ?? 'requested').toLowerCase();
+
+              return Card(
+                elevation: 3,
+                margin: const EdgeInsets.only(bottom: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // A buyer can have several offers on one product, so lead
+                          // with the offer's own id; the buyer id alone looked duplicated.
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  (item.transactionId ?? '').isNotEmpty
+                                      ? item.transactionId!
+                                      : "Offer #${item.id}",
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  [
+                                    "Buyer: ${item.displayBuyerInfo}",
+                                    if ((item.createdAt ?? '').isNotEmpty) item.createdAt!,
+                                  ].join(' • '),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          SellerUi.statusChip(status),
+                        ],
+                      ),
+                      const Divider(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Buyer Offer",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  "₹${item.buyerOfferedAmount ?? 'N/A'}",
+                                  style: GoogleFonts.inter(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Quantity Needed",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  "${item.buyerRequiredQuantity ?? 'N/A'} Qtl",
+                                  style: GoogleFonts.inter(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (item.buyerRemark != null &&
+                          item.buyerRemark!.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          "Buyer Remark: ${item.buyerRemark}",
+                          style: const TextStyle(
+                            fontStyle: FontStyle.italic,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                      if (item.counterPrice != null &&
+                          item.counterPrice!.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.amber.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                IconlyLight.swap,
+                                size: 18,
+                                color: Colors.amber,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  "Last Counter Offer: ₹${item.counterPrice} for ${item.counterQuantity} Qtl",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                      // Keep the common thread for live counter proposals, but retain
+                      // the seller's primary approve/reject controls on the interest
+                      // card.  Otherwise a seller has to discover the action inside
+                      // the thread and it looks like the actions are missing.
+                      if (item.canSellerAction) ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: item.id == null
+                                    ? null
+                                    : () => controller.rejectInterest(item.id!),
+                                icon: const Icon(Icons.close, size: 16),
+                                label: const Text(
+                                  'REJECT',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                  side: const BorderSide(color: Colors.red),
+                                  minimumSize: const Size(0, 42),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: item.id == null
+                                    ? null
+                                    : () =>
+                                          controller.approveInterest(item.id!),
+                                icon: const Icon(Icons.check, size: 16),
+                                label: const Text(
+                                  'ACCEPT',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  minimumSize: const Size(0, 42),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ] else if (item.stockBlocked) ...[
+                        // Stock is held by another accepted offer: closed for accept/negotiation.
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.orange.shade200),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.lock_outline, size: 16, color: Colors.orange.shade800),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  (item.blockedReason ?? '').isNotEmpty
+                                      ? item.blockedReason!
+                                      : 'Stock is reserved for another accepted offer.',
+                                  style: TextStyle(fontSize: 12, color: Colors.orange.shade900),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (item.canSellerReject && item.id != null) ...[
+                          const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () => controller.rejectInterest(item.id!),
+                            icon: const Icon(Icons.close, size: 16),
+                            label: const Text(
+                              'REJECT',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.red,
+                              side: const BorderSide(color: Colors.red),
+                              minimumSize: const Size(0, 42),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                        ],
+                      ] else if (status == 'seller_confirmed' ||
+                          status == 'buyer_confirmed')
+                        Text(
+                          status == 'seller_confirmed'
+                              ? "You approved this interest. Waiting for the buyer to confirm."
+                              : "Buyer confirmed. Waiting for admin to confirm the deal.",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      if (item.canOpenNegotiation ||
+                          const {
+                            'deal_confirmed',
+                            'rejected',
+                            'cancelled',
+                          }.contains(status)) ...[
+                        if (item.canSellerAction || item.stockBlocked) const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: item.id == null
+                                ? null
+                                : () => Get.to(
+                                    () => SellerInterestThreadView(
+                                      productId: productId,
+                                      interestId: item.id!,
+                                    ),
+                                  )?.then((_) => controller.fetchInterests()),
+                            icon: const Icon(
+                              IconlyLight.time_circle,
+                              size: 16,
+                              color: primaryColor,
+                            ),
+                            label: Text(
+                              item.canSellerAction
+                                  ? "NEGOTIATE PRICE / QUANTITY"
+                                  : "View negotiation history",
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: primaryColor,
+                              side: const BorderSide(color: primaryColor),
+                              minimumSize: const Size(0, 42),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      }),
+    );
+  }
+}

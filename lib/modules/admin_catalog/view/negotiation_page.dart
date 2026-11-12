@@ -1,0 +1,1485 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:daalsetu/modules/products/model/offer_interest_model.dart';
+import 'package:daalsetu/services/buyer_services.dart';
+import 'package:daalsetu/services/product_services.dart';
+import 'package:daalsetu/services/seller_services.dart';
+import 'package:daalsetu/theme/app_theme.dart';
+import 'package:daalsetu/utils/global_error_handler.dart';
+
+import 'approve_deal_dialog.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../utils/app_snackbar.dart';
+
+class NegotiationPage extends StatefulWidget {
+  final String offerId;
+  final String offerTitle;
+  final String? availableStock;
+  final String? sellerOfferAmount;
+  final OfferInterestModel interest;
+
+  const NegotiationPage({
+    super.key,
+    required this.offerId,
+    required this.offerTitle,
+    this.availableStock,
+    this.sellerOfferAmount,
+    required this.interest,
+  });
+
+  @override
+  State<NegotiationPage> createState() => _NegotiationPageState();
+}
+
+class _NegotiationPageState extends State<NegotiationPage> {
+  final TextEditingController _negPriceCtrl = TextEditingController();
+  final TextEditingController _negBagsCtrl = TextEditingController();
+  final TextEditingController _negWeightCtrl = TextEditingController();
+  bool _isLoading = false;
+  bool _isLoadingThread = false;
+  bool _threadRefreshInProgress = false;
+  Map<String, dynamic>? _thread;
+  Timer? _refreshTimer;
+  OfferInterestModel get _liveInterest =>
+      _thread == null ? widget.interest : OfferInterestModel.fromJson(_thread!);
+  bool get _canApprove => _liveInterest.canAcceptForRole(isAdmin: true);
+  bool get _canReject => _liveInterest.canRejectForRole(isAdmin: true);
+
+  Color get bgColor => Get.theme.scaffoldBackgroundColor;
+  Color get cardColor => Get.theme.cardColor;
+  Color get textDark => Get.theme.textTheme.bodyLarge?.color ?? Colors.black;
+  Color get textLight => Get.theme.textTheme.bodySmall?.color ?? Colors.grey;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadThread();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (AppForeground.isActive) _loadThread(silent: true);
+    });
+  }
+
+  Future<void> _loadThread({bool silent = false}) async {
+    if (!mounted || _threadRefreshInProgress) return;
+    _threadRefreshInProgress = true;
+    if (!silent) setState(() => _isLoadingThread = true);
+    try {
+      final response = await BuyerServices.getOfferInterestThread(
+        int.tryParse(widget.offerId) ?? 0,
+        widget.interest.interestId,
+      );
+      final raw = response['data'];
+      if (raw is Map && mounted) {
+        setState(() {
+          _thread = Map<String, dynamic>.from(raw);
+        });
+      }
+    } catch (e) {
+      debugPrint('Could not load negotiation thread: $e');
+    } finally {
+      _threadRefreshInProgress = false;
+      if (!silent && mounted) setState(() => _isLoadingThread = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    _negPriceCtrl.dispose();
+    _negBagsCtrl.dispose();
+    _negWeightCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _approveDeal() async {
+    if (_isLoading || !_canApprove) return;
+    final result = await showDialog<ApproveDealResult>(
+      context: context,
+      builder: (ctx) => ApproveDealDialog(
+        buyerName: widget.interest.buyerName,
+        offerTitle: widget.offerTitle,
+      ),
+    );
+
+    if (result != null && mounted) {
+      setState(() => _isLoading = true);
+      try {
+        if (_liveInterest.status == 'interested') {
+          final response = await SellerServices.approveBuyerInterest(
+            int.parse(widget.offerId),
+            widget.interest.interestId,
+            remark: result.remark,
+            subAdminId: result.subAdminId,
+          );
+          if (response['success'] != true)
+            throw Exception(
+              response['message'] ?? 'Could not accept interest.',
+            );
+        } else {
+          await ProductService.confirmOfferDeal(
+            productId: int.parse(widget.offerId),
+            interestId: widget.interest.interestId,
+            decision: "approve",
+            superadminRemark: result.remark,
+            subAdminId: result.subAdminId,
+          );
+        }
+        AppSnackbar.snackbar(
+          'Success',
+          'Deal approved successfully',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+        if (mounted) Navigator.of(context).pop(true);
+      } catch (e) {
+        setState(() => _isLoading = false);
+        final message = e.toString().replaceFirst('Exception: ', '');
+        AppSnackbar.snackbar(
+          'Error',
+          message,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    }
+  }
+
+  Future<void> _rejectDeal() async {
+    if (_isLoading || !_canReject) return;
+    final remarkCtrl = TextEditingController();
+    String selectedReason = 'Price too low';
+    final reasons = [
+      'Price too low',
+      'Quantity not available',
+      'Buyer not verified',
+      'Other',
+    ];
+
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Reject Deal",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.errorRed,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Rejecting deal with ${widget.interest.buyerName}",
+                    style: TextStyle(color: textDark),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedReason,
+                    dropdownColor: cardColor,
+                    style: TextStyle(color: textDark),
+                    decoration: InputDecoration(
+                      labelText: "Reason",
+                      labelStyle: TextStyle(color: textLight),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: textLight.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: AppTheme.errorRed),
+                      ),
+                    ),
+                    items: reasons
+                        .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                        .toList(),
+                    onChanged: (v) {
+                      if (v != null) {
+                        setModalState(() => selectedReason = v);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: remarkCtrl,
+                    style: TextStyle(color: textDark),
+                    decoration: InputDecoration(
+                      labelText: "Remarks (Optional)",
+                      labelStyle: TextStyle(color: textLight),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: textLight.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: AppTheme.errorRed),
+                      ),
+                    ),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: textDark,
+                            side: BorderSide(
+                              color: textLight.withValues(alpha: 0.3),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: const Text("Cancel"),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppTheme.errorRed,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: const Text(
+                            "Reject",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (result == true && mounted) {
+      setState(() => _isLoading = true);
+      try {
+        if (_liveInterest.status == 'interested') {
+          final response = await SellerServices.rejectBuyerInterest(
+            int.parse(widget.offerId),
+            widget.interest.interestId,
+            remark: '$selectedReason. ${remarkCtrl.text}'.trim(),
+          );
+          if (response['success'] != true)
+            throw Exception(
+              response['message'] ?? 'Could not reject interest.',
+            );
+        } else {
+          await ProductService.confirmOfferDeal(
+            productId: int.parse(widget.offerId),
+            interestId: widget.interest.interestId,
+            decision: "reject",
+            superadminRemark: '$selectedReason. ${remarkCtrl.text}'.trim(),
+          );
+        }
+        AppSnackbar.snackbar(
+          'Rejected',
+          'Deal rejected successfully',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        if (mounted) Navigator.of(context).pop(true);
+      } catch (e) {
+        setState(() => _isLoading = false);
+        AppSnackbar.snackbar(
+          'Error',
+          e.toString(),
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    }
+  }
+
+  Future<void> _submitNegotiation() async {
+    final priceText = _negPriceCtrl.text.trim();
+    final bagsText = _negBagsCtrl.text.trim();
+    final weightText = _negWeightCtrl.text.trim();
+
+    if (priceText.isEmpty && bagsText.isEmpty && weightText.isEmpty) {
+      AppSnackbar.snackbar(
+        'Required Fields',
+        'Please enter a Counter Price or Packing details.',
+        backgroundColor: Colors.orange.shade800,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    if ((bagsText.isNotEmpty && weightText.isEmpty) ||
+        (weightText.isNotEmpty && bagsText.isEmpty)) {
+      AppSnackbar.snackbar(
+        'Incomplete Packing Details',
+        'Seller packing changes require both Bags and Packing Weight.',
+        backgroundColor: Colors.orange.shade800,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final res = await ProductService.sendNegotiationMessage(
+        productId: int.parse(widget.offerId),
+        interestId: widget.interest.interestId,
+        counterPrice: priceText,
+        counterQuantity: '',
+        counterBagCount: bagsText,
+        counterPackingWeightKg: weightText,
+      );
+
+      if (res['success'] == false) {
+        throw Exception(res['message'] ?? 'Failed to submit counter proposal');
+      }
+
+      AppSnackbar.snackbar(
+        'Success',
+        res['message']?.toString() ?? 'Counter proposal submitted successfully',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+
+      _negPriceCtrl.clear();
+      _negBagsCtrl.clear();
+      _negWeightCtrl.clear();
+
+      await _loadThread();
+    } catch (e) {
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      AppSnackbar.snackbar(
+        'Error',
+        'Failed to submit: $msg',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: bgColor,
+      appBar: AppBar(
+        leading: const AppBarLeading(),
+        leadingWidth: AppBarLeading.widthFor(context),
+        titleSpacing: 0,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Negotiation: ${widget.offerTitle}",
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+            const Text(
+              'Live negotiation • auto-refresh',
+              style: TextStyle(fontSize: 11, color: Colors.green),
+            ),
+          ],
+        ),
+        backgroundColor: bgColor,
+        surfaceTintColor: Colors.transparent,
+        actions: [
+          IconButton(
+            onPressed: _isLoading ? null : _loadThread,
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Refresh negotiation',
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _buildLayout(),
+    );
+  }
+
+  Widget _buildLayout() {
+    // For smaller screens we can just scroll the whole thing, but a Column is better
+    return Column(
+      children: [
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _loadThread,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              children: [
+                _buildSummaryCard(),
+                const SizedBox(height: 20),
+                _buildNegotiationLog(),
+              ],
+            ),
+          ),
+        ),
+        if (!_liveInterest.isFinal &&
+            (_thread?['can_reply'] == true ||
+                (_thread == null && widget.interest.canSellerAction)))
+          _buildBottomForm(),
+      ],
+    );
+  }
+
+  String _formatPrice(String? raw) {
+    if (raw == null || raw.trim().isEmpty || raw == '-') return '-';
+    var clean = raw.trim();
+    if (!clean.startsWith('₹')) clean = '₹$clean';
+    if (!clean.contains('/')) clean = '$clean/TON';
+    return clean;
+  }
+
+  String _formatQty(String? raw) {
+    if (raw == null || raw.trim().isEmpty || raw == '-') return '-';
+    var clean = raw.trim();
+    final upper = clean.toUpperCase();
+    if (!upper.contains('QTL') &&
+        !upper.contains('TON') &&
+        !upper.contains('KG')) {
+      clean = '$clean QTL';
+    }
+    return clean;
+  }
+
+  Widget _buildSummaryCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final headerBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFFFF7ED);
+    final headerBorder = isDark ? Colors.white12 : const Color(0xFFFED7AA);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: textLight.withValues(alpha: 0.15)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Highlighted Table/Card Header (Distinct Background, Bold Styling, Clean Bottom Border)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: headerBg,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
+              border: Border(
+                bottom: BorderSide(color: headerBorder, width: 1.5),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Negotiation Summary",
+                  style: TextStyle(
+                    color: textDark,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryGold.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppTheme.primaryGold.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  child: Text(
+                    (widget.interest.status ?? 'Interested').toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.primaryGold,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                _buildSummaryRow(
+                  "Seller Price:",
+                  _formatPrice(widget.sellerOfferAmount),
+                ),
+                const SizedBox(height: 10),
+                _buildSummaryRow(
+                  "Available Qty:",
+                  _formatQty(widget.availableStock),
+                ),
+                const SizedBox(height: 10),
+                _buildSummaryRow(
+                  "Current Offer:",
+                  _formatPrice(widget.interest.buyerOfferedAmount),
+                ),
+                const SizedBox(height: 10),
+                _buildSummaryRow(
+                  "Current Qty:",
+                  _formatQty(widget.interest.requiredQuantity),
+                ),
+                if (widget.interest.condition != null &&
+                    widget.interest.condition!.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Divider(color: textLight.withValues(alpha: 0.15)),
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Buyer Remark: ",
+                        style: TextStyle(
+                          color: textDark.withValues(alpha: 0.85),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          widget.interest.condition!,
+                          style: TextStyle(
+                            color: textDark,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Divider(height: 1, color: textLight.withValues(alpha: 0.15)),
+          if (_canApprove || _canReject)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Seller Action",
+                    style: TextStyle(
+                      color: textDark.withValues(alpha: 0.85),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  if (_dealExpired) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      _expiredReason,
+                      style: TextStyle(
+                        color: Colors.orange.shade800,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      if (_canApprove)
+                        Expanded(
+                          child: FilledButton.icon(
+                            icon: const Icon(Icons.check, size: 16),
+                            label: const Text(
+                              "Accept",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppTheme.successGreen,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            // Expired offers cannot be accepted until reactivated.
+                            onPressed: _dealExpired ? null : _approveDeal,
+                          ),
+                        ),
+                      if (_canApprove && _canReject) const SizedBox(width: 12),
+                      if (_canReject)
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.close, size: 16),
+                            label: const Text(
+                              "Reject",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppTheme.errorRed,
+                              side: const BorderSide(
+                                color: AppTheme.errorRed,
+                                width: 1.5,
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            onPressed: _rejectDeal,
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: textDark.withValues(alpha: 0.85),
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: textDark,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String get _displayBuyerCode {
+    // The web log names the buyer by its display id (e.g. BUY-20261010-SKGT).
+    final fromThread =
+        _thread?['buyer_display_id'] ??
+        _thread?['buyer_company_name'] ??
+        _thread?['buyer_company'] ??
+        _thread?['company_name'] ??
+        _thread?['buyer_name'] ??
+        _thread?['buyer_code'] ??
+        _thread?['buyer_username'];
+    if (fromThread != null && fromThread.toString().trim().isNotEmpty) {
+      final name = fromThread.toString().trim();
+      if (RegExp(r'^buyer\s+(\d+)$', caseSensitive: false).hasMatch(name)) {
+        return name.replaceAllMapped(
+          RegExp(r'^buyer\s+(\d+)$', caseSensitive: false),
+          (m) => 'Buyer #${m[1]}',
+        );
+      }
+      return name;
+    }
+    if (widget.interest.buyerName != null &&
+        widget.interest.buyerName!.trim().isNotEmpty) {
+      final name = widget.interest.buyerName!.trim();
+      if (RegExp(r'^buyer\s+(\d+)$', caseSensitive: false).hasMatch(name)) {
+        return name.replaceAllMapped(
+          RegExp(r'^buyer\s+(\d+)$', caseSensitive: false),
+          (m) => 'Buyer #${m[1]}',
+        );
+      }
+      return name;
+    }
+    return 'Buyer';
+  }
+
+  String _formatTimestamp(String? raw) {
+    if (raw == null || raw.trim().isEmpty || raw == '-') return '';
+    final trimmed = raw.trim();
+
+    DateTime? dt;
+
+    // 1. Try standard ISO 8601 parsing
+    dt = DateTime.tryParse(trimmed);
+
+    // 2. If it contains a space between date and time (e.g. "2026-10-17 05:19:28")
+    if (dt == null && trimmed.contains(' ')) {
+      final isoCandidate = trimmed.replaceFirst(' ', 'T');
+      dt = DateTime.tryParse(isoCandidate);
+    }
+
+    // 3. If ISO parsed as naive (isUtc == false) and had no explicit timezone offset,
+    // backend timestamps are UTC by contract in Django (USE_TZ = True).
+    // An ISO string without 'Z', '+', or '-' (after time) must be treated as UTC.
+    if (dt != null && !dt.isUtc) {
+      final hasTz = RegExp(
+        r'(Z|[+-]\d{2}:?\d{2})$',
+        caseSensitive: false,
+      ).hasMatch(trimmed);
+      if (!hasTz) {
+        dt = DateTime.utc(
+          dt.year,
+          dt.month,
+          dt.day,
+          dt.hour,
+          dt.minute,
+          dt.second,
+          dt.millisecond,
+          dt.microsecond,
+        );
+      }
+    }
+
+    // 4. Try parsing common formats like "Jul 29, 2026 10:48 AM", "16 Oct 16:50", "16 Oct 2026 16:50"
+    if (dt == null) {
+      final formats = [
+        DateFormat('MMM d, yyyy h:mm a'),
+        DateFormat('MMM dd, yyyy h:mm a'),
+        DateFormat('MMM d, yyyy hh:mm a'),
+        DateFormat('MMM dd, yyyy hh:mm a'),
+        DateFormat('d MMM yyyy, h:mm a'),
+        DateFormat('dd MMM yyyy, h:mm a'),
+        DateFormat('d MMM yyyy, hh:mm a'),
+        DateFormat('dd MMM yyyy, hh:mm a'),
+        DateFormat('dd-MM-yyyy hh:mm a'),
+        DateFormat('yyyy-MM-dd HH:mm:ss'),
+        DateFormat('yyyy-MM-dd HH:mm'),
+        DateFormat('dd-MM-yyyy HH:mm'),
+        DateFormat('d MMM HH:mm'),
+        DateFormat('dd MMM HH:mm'),
+        DateFormat('d MMM, HH:mm'),
+        DateFormat('dd MMM, HH:mm'),
+        DateFormat('d MMM yyyy HH:mm'),
+        DateFormat('dd MMM yyyy HH:mm'),
+        DateFormat('d MMM yyyy'),
+        DateFormat('dd MMM yyyy'),
+        DateFormat('MMM d, yyyy'),
+        DateFormat('MMM dd, yyyy'),
+      ];
+      for (final fmt in formats) {
+        try {
+          final parsed = fmt.parseLoose(trimmed);
+          final year = parsed.year <= 1970 ? DateTime.now().year : parsed.year;
+          // Backend strftime format '%b %d, %Y %I:%M %p' produces UTC representation
+          dt = DateTime.utc(
+            year,
+            parsed.month,
+            parsed.day,
+            parsed.hour,
+            parsed.minute,
+            parsed.second,
+          );
+          break;
+        } catch (_) {}
+      }
+    }
+
+    if (dt != null) {
+      // Same as the web negotiation log: "18 Oct 16:24" in local time.
+      return DateFormat('dd MMM HH:mm').format(dt.toLocal());
+    }
+
+    return trimmed;
+  }
+
+  Widget _buildNegotiationLog() {
+    const logHeaderBg = Color(0xFFF58220); // Signature web orange header banner
+    final messages = (_thread?['messages'] as List?) ?? [];
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: textLight.withValues(alpha: 0.15)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Highlighted Header (Web Parity Orange Header with Bottom Border)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            decoration: BoxDecoration(
+              color: logHeaderBg,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
+              border: Border(
+                bottom: BorderSide(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  width: 1.5,
+                ),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.history, color: Colors.white, size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      "Negotiation Log",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+                if (_isLoadingThread)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                else
+                  IconButton(
+                    icon: const Icon(
+                      Icons.refresh,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: _loadThread,
+                    tooltip: 'Refresh Log',
+                  ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Initial Offer Card (Buyer)
+                _buildInitialOfferCard(),
+
+                // 2. Ongoing Counter-Proposals
+                if (messages.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  ...messages.map((m) {
+                    if (m is! Map) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildProposalCard(Map<String, dynamic>.from(m)),
+                    );
+                  }),
+                ] else if (!_isLoadingThread) ...[
+                  const SizedBox(height: 20),
+                  Center(
+                    child: Text(
+                      "No further negotiation proposals yet.",
+                      style: TextStyle(
+                        color: textLight,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInitialOfferCard() {
+    final buyerCode = _displayBuyerCode;
+    final createdAtRaw =
+        _thread?['created_at']?.toString() ?? widget.interest.createdAt;
+    final formattedDate = _formatTimestamp(createdAtRaw);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: textLight.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: textLight.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  "$buyerCode (Initial Offer)",
+                  style: TextStyle(
+                    color: textDark,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              if (formattedDate.isNotEmpty)
+                Text(
+                  formattedDate,
+                  style: TextStyle(
+                    color: textLight,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Price: ${_formatPrice(widget.interest.buyerOfferedAmount)}",
+            style: TextStyle(
+              color: textDark,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
+          if (widget.interest.requiredQuantity != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              "Requested: ${_formatQty(widget.interest.requiredQuantity)}",
+              style: TextStyle(
+                color: textDark,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
+          if (_requestedPacking().isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              _requestedPacking(),
+              style: TextStyle(color: textLight, fontSize: 12),
+            ),
+          ],
+          if (widget.interest.condition != null &&
+              widget.interest.condition!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              "Remark: ${widget.interest.condition}",
+              style: TextStyle(
+                color: textLight,
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// "Bags: 1,800 × 25 kg" from the thread's requested bags and packing weight.
+  String _requestedPacking() {
+    final bags = int.tryParse('${_thread?['required_bag_count'] ?? ''}');
+    final packing = double.tryParse('${_thread?['packing_weight_kg'] ?? ''}');
+    if (bags == null || bags <= 0) return '';
+    final bagsText = NumberFormat('#,##0', 'en_IN').format(bags);
+    if (packing == null || packing <= 0) return 'Bags: $bagsText';
+    final kg = packing == packing.roundToDouble()
+        ? packing.toStringAsFixed(0)
+        : packing.toString();
+    return 'Bags: $bagsText × $kg kg';
+  }
+
+  Widget _buildProposalCard(Map<String, dynamic> msg) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final role = (msg['actor_role'] ?? '').toString().toLowerCase();
+    final isAdminOrSeller = role == 'admin' || role == 'seller' || role.isEmpty;
+
+    String textVal(dynamic v) =>
+        v == null || v.toString().trim() == 'null' ? '' : v.toString().trim();
+    final price = textVal(msg['counter_price']);
+    final quantity = textVal(msg['counter_quantity']);
+    final bags = textVal(msg['counter_bag_count']);
+    final packingKg = textVal(msg['counter_packing_weight_kg']);
+    final status = textVal(msg['to_status']).replaceAll('_', ' ');
+    final action = textVal(msg['action']).replaceAll('_', ' ');
+    final timeRaw = textVal(msg['created_at']).isNotEmpty
+        ? textVal(msg['created_at'])
+        : textVal(msg['timestamp']);
+    final formattedTime = _formatTimestamp(timeRaw);
+
+    final bool isProposal =
+        price.isNotEmpty || quantity.isNotEmpty || bags.isNotEmpty;
+    if (!isProposal) {
+      return _buildStatusBanner(
+        msg,
+        status: status,
+        action: action,
+        time: formattedTime,
+      );
+    }
+
+    final cardBg = isAdminOrSeller
+        ? (isDark ? const Color(0xFF2C1E14) : const Color(0xFFFFF7ED))
+        : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC));
+    final cardBorder = isAdminOrSeller
+        ? const Color(0xFFFDBA74)
+        : textLight.withValues(alpha: 0.2);
+    final roleTitle = isAdminOrSeller
+        ? (role == 'seller'
+              ? 'Seller (Counter-Proposal)'
+              : 'Admin (Counter-Proposal)')
+        : '$_displayBuyerCode (Counter-Proposal)';
+    final titleColor = isAdminOrSeller ? const Color(0xFFEA580C) : textDark;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: cardBorder, width: 1.2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(
+                      isAdminOrSeller
+                          ? Icons.admin_panel_settings_outlined
+                          : Icons.person_outline,
+                      size: 15,
+                      color: titleColor,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        roleTitle,
+                        style: TextStyle(
+                          color: titleColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              if (formattedTime.isNotEmpty)
+                Text(
+                  formattedTime,
+                  style: TextStyle(
+                    color: textLight,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (price.isNotEmpty)
+            Text(
+              "Counter Price: ${_formatPrice(price)}",
+              style: TextStyle(
+                color: textDark,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          if (bags.isNotEmpty || packingKg.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              "Counter Bags: ${bags.isNotEmpty ? '$bags bags' : ''}${packingKg.isNotEmpty ? ' ($packingKg KG)' : ''}",
+              style: TextStyle(
+                color: textDark,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
+          if (quantity.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              "Calculated Quantity: ${_formatQty(quantity)}",
+              style: TextStyle(
+                color: textDark,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
+          if (status.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: isAdminOrSeller
+                    ? const Color(0xFFFED7AA)
+                    : textLight.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                status.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: isAdminOrSeller ? const Color(0xFFC2410C) : textDark,
+                ),
+              ),
+            ),
+          ] else if (action.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              action,
+              style: TextStyle(
+                color: textLight,
+                fontSize: 11,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusBanner(
+    Map<String, dynamic> msg, {
+    required String status,
+    required String action,
+    required String time,
+  }) {
+    final cleanStatus = status.isNotEmpty ? status : action;
+    final lower = cleanStatus.toLowerCase();
+    final role = (msg['actor_role'] ?? '').toString().toLowerCase();
+
+    Color bannerColor = const Color(0xFF64748B);
+    IconData bannerIcon = Icons.info_outline_rounded;
+    String displayTitle = '';
+
+    if (lower.contains('confirm') ||
+        lower.contains('approv') ||
+        lower.contains('accept') ||
+        lower.contains('won')) {
+      bannerColor = const Color(0xFF10B981);
+      bannerIcon = Icons.check_circle_outline_rounded;
+      if (lower.contains('buyer') || role == 'buyer') {
+        displayTitle = 'Buyer Confirmed the Deal';
+      } else if (lower.contains('seller') || role == 'seller') {
+        displayTitle = 'Seller Confirmed the Deal';
+      } else {
+        displayTitle = 'Deal Confirmed';
+      }
+    } else if (lower.contains('reject') ||
+        lower.contains('cancel') ||
+        lower.contains('lost')) {
+      bannerColor = const Color(0xFFEF4444);
+      bannerIcon = Icons.cancel_outlined;
+      if (lower.contains('buyer') || role == 'buyer') {
+        displayTitle = 'Buyer Rejected Negotiation';
+      } else if (lower.contains('seller') || role == 'seller') {
+        displayTitle = 'Seller Rejected Negotiation';
+      } else {
+        displayTitle = 'Negotiation Closed';
+      }
+    } else {
+      bannerColor = const Color(0xFFF59E0B);
+      bannerIcon = Icons.sync_rounded;
+      displayTitle = cleanStatus.isNotEmpty
+          ? (cleanStatus[0].toUpperCase() + cleanStatus.substring(1))
+          : 'Status Updated';
+    }
+
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: bannerColor.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: bannerColor.withValues(alpha: 0.25)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(bannerIcon, size: 15, color: bannerColor),
+                const SizedBox(width: 6),
+                Text(
+                  displayTitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: bannerColor,
+                  ),
+                ),
+              ],
+            ),
+            if (time.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                time,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: textLight,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  bool get _dealExpired => _thread?['deal_expired'] == true;
+
+  String get _expiredReason {
+    final reason = _thread?['blocked_reason']?.toString() ?? '';
+    return reason.isNotEmpty
+        ? reason
+        : 'Deal has expired. Negotiation and accept stay closed until the offer is reactivated.';
+  }
+
+  Widget _buildBottomForm() {
+    if (_dealExpired) {
+      // No negotiation on an expired offer (either side) until it is reactivated.
+      return SafeArea(
+        top: false,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          color: Colors.orange.withValues(alpha: 0.08),
+          child: Text(
+            _expiredReason,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.orange.shade900,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      );
+    }
+    final priceUnit = _thread?['price_unit']?.toString().toUpperCase() ?? 'QTL';
+    return Container(
+      decoration: BoxDecoration(
+        color: cardColor,
+        border: Border(
+          top: BorderSide(color: textLight.withValues(alpha: 0.15), width: 1),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, -3),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 14,
+        bottom: MediaQuery.of(context).padding.bottom + 14,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Row 1: Counter Price + Counter Bags
+          Row(
+            children: [
+              Expanded(
+                child: _buildInput(
+                  label: "Counter Price (₹)",
+                  hint: "Optional",
+                  controller: _negPriceCtrl,
+                  suffix: "/$priceUnit",
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildInput(
+                  label: "Counter Bags",
+                  hint: "Optional",
+                  controller: _negBagsCtrl,
+                  suffix: "bags",
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Row 2: Packing Weight
+          Row(
+            children: [
+              Expanded(
+                child: _buildInput(
+                  label: "Packing Weight",
+                  hint: "KG",
+                  controller: _negWeightCtrl,
+                  suffix: "KG",
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          // Helper Note
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.info_outline, size: 14, color: textLight),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    "Seller packing changes require both Bags and Packing Weight; quantity is calculated automatically.",
+                    style: TextStyle(
+                      color: textLight,
+                      fontSize: 11,
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Submit Negotiation Button (Signature Web Orange)
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _isLoading ? null : _submitNegotiation,
+              icon: const Icon(Icons.send_rounded, size: 18),
+              label: const Text(
+                "Submit Negotiation",
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFF58220),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInput({
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    String? suffix,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: textDark.withValues(alpha: 0.85),
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          style: TextStyle(
+            color: textDark,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: textLight.withValues(alpha: 0.6),
+              fontSize: 12,
+            ),
+            suffixText: suffix,
+            suffixStyle: TextStyle(
+              color: textLight,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 11,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: textLight.withValues(alpha: 0.3)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            focusedBorder: const OutlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFFF58220), width: 1.5),
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+            ),
+            filled: true,
+            fillColor: bgColor,
+          ),
+        ),
+      ],
+    );
+  }
+}

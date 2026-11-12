@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../../../services/product_services.dart';
 import '../model/product_model.dart';
+import '../../../utils/app_snackbar.dart';
 
 class ProductController extends GetxController {
   /// ===============================
@@ -11,11 +12,13 @@ class ProductController extends GetxController {
   /// ===============================
   final isLoading = false.obs;
   final isRefreshing = false.obs;
+  final processingProductId = RxnInt();
 
   final products = <ProductModel>[].obs;
   final categories = <CategoryModel>[].obs;
 
   final errorMessage = "".obs;
+  bool _fetchingProducts = false;
 
   /// ===============================
   /// INIT
@@ -29,14 +32,17 @@ class ProductController extends GetxController {
   /// ===============================
   /// FETCH PRODUCTS
   /// ===============================
-  Future<void> fetchProducts() async {
+  Future<void> fetchProducts({bool silent = false}) async {
+    if (_fetchingProducts || isClosed || (silent && (isRefreshing.value || processingProductId.value != null))) return;
+    _fetchingProducts = true;
     try {
-      isLoading.value = true;
-      errorMessage.value = "";
+      if (!silent) isLoading.value = true;
 
       debugPrint("🚀 Fetching Products...");
 
-      final data = await ProductService.getProducts();
+      final data = await ProductService.getProducts(silent: silent);
+      if (isClosed) return;
+      errorMessage.value = "";
 
       debugPrint("📦 PRODUCT COUNT: ${data.length}");
 
@@ -46,11 +52,12 @@ class ProductController extends GetxController {
         debugPrint("⚠️ No products received from API");
       }
     } catch (e) {
+      if (silent || isClosed) return;
       debugPrint("❌ PRODUCT FETCH ERROR: $e");
 
       errorMessage.value = e.toString();
 
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Error",
         "Failed to load products",
         snackPosition: SnackPosition.BOTTOM,
@@ -58,7 +65,8 @@ class ProductController extends GetxController {
         colorText: Colors.white,
       );
     } finally {
-      isLoading.value = false;
+      _fetchingProducts = false;
+      if (!silent && !isClosed) isLoading.value = false;
     }
   }
 
@@ -91,7 +99,7 @@ class ProductController extends GetxController {
     } catch (e) {
       debugPrint("❌ REFRESH ERROR: $e");
 
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Error",
         "Failed to refresh products",
         snackPosition: SnackPosition.BOTTOM,
@@ -134,15 +142,83 @@ class ProductController extends GetxController {
         );
       }
 
-      Get.snackbar("Success", "Product created");
+      AppSnackbar.snackbar("Success", "Product created");
 
       await fetchProducts();
 
       Get.back();
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.snackbar("Error", e.toString());
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<bool> updateProduct({
+    required ProductModel product,
+    required String title,
+    required String description,
+    required String amount,
+    required String location,
+  }) async {
+    try {
+      processingProductId.value = product.id;
+      final updated = await ProductService.updateProduct(
+        productId: product.id,
+        title: title,
+        description: description,
+        amount: amount,
+        loadingLocation: location,
+        categoryId: product.category?.id,
+      );
+      final index = products.indexWhere((item) => item.id == product.id);
+      if (index >= 0) products[index] = updated;
+      AppSnackbar.snackbar(
+        "Product updated",
+        "$title was updated successfully.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green.shade700,
+        colorText: Colors.white,
+      );
+      return true;
+    } catch (e) {
+      AppSnackbar.snackbar(
+        "Update failed",
+        "Could not update this product. Please try again.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade700,
+        colorText: Colors.white,
+      );
+      return false;
+    } finally {
+      processingProductId.value = null;
+    }
+  }
+
+  Future<bool> deleteProduct(ProductModel product) async {
+    try {
+      processingProductId.value = product.id;
+      await ProductService.deleteProduct(product.id);
+      products.removeWhere((item) => item.id == product.id);
+      AppSnackbar.snackbar(
+        "Product deleted",
+        "${product.title} was removed.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green.shade700,
+        colorText: Colors.white,
+      );
+      return true;
+    } catch (e) {
+      AppSnackbar.snackbar(
+        "Delete failed",
+        "Could not delete this product. Please try again.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade700,
+        colorText: Colors.white,
+      );
+      return false;
+    } finally {
+      processingProductId.value = null;
     }
   }
 

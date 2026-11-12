@@ -1,10 +1,12 @@
-import 'package:iconly/iconly.dart';
-import '../model/login_model.dart';
-import '../../../../services/auth_services.dart';
-import '../../../../utils/app_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:iconly/iconly.dart';
+import 'package:daalsetu/modules/Auth/login/model/login_model.dart';
+import '../../../../services/auth_services.dart';
+import '../../../../services/realtime_notification_service.dart';
+import '../../../../utils/app_preferences.dart';
 import '../../../../routes/app_routes.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class LoginController extends GetxController {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
@@ -13,6 +15,19 @@ class LoginController extends GetxController {
   final TextEditingController passwordController = TextEditingController();
 
   var isLoading = false.obs;
+  final RxBool isPasswordVisible = false.obs;
+
+  void togglePasswordVisibility() {
+    isPasswordVisible.toggle();
+    final text = passwordController.text;
+    final currentOffset = passwordController.selection.baseOffset;
+    final targetOffset = (currentOffset >= 0 && currentOffset <= text.length)
+        ? currentOffset
+        : text.length;
+    passwordController.selection = TextSelection.fromPosition(
+      TextPosition(offset: targetOffset),
+    );
+  }
 
   Future<void> login() async {
     final form = formKey.currentState;
@@ -27,8 +42,15 @@ class LoginController extends GetxController {
         password: passwordController.text.trim(),
       );
 
-      if (response.user.accountStatus != "active") {
+      final accountStatus = response.user.accountStatus.trim().toLowerCase();
+      final status = response.user.status.trim().toLowerCase();
+      final role = response.user.role.trim().toLowerCase();
+
+      if (accountStatus != "active" || status != "active") {
         await AppPreferences.logout();
+        if (Get.isRegistered<RealtimeNotificationService>()) {
+          RealtimeNotificationService.to.clearOnLogout();
+        }
 
         Get.defaultDialog(
           title: "Account Inactive",
@@ -41,9 +63,20 @@ class LoginController extends GetxController {
         return;
       }
 
-      final allowedRoles = ["admin", "seller", "transporter", "buyer"];
-      if (!allowedRoles.contains(response.user.role)) {
+      final allowedRoles = [
+        "super_admin",
+        "admin",
+        "seller",
+        "transporter",
+        "buyer",
+        "both_sellerandbuyer",
+        "sub_admin",
+      ];
+      if (!allowedRoles.contains(role)) {
         await AppPreferences.logout();
+        if (Get.isRegistered<RealtimeNotificationService>()) {
+          RealtimeNotificationService.to.clearOnLogout();
+        }
 
         Get.dialog(
           Dialog(
@@ -56,13 +89,12 @@ class LoginController extends GetxController {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  
                   Container(
                     height: 70,
                     width: 70,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFF1661EF).withOpacity(0.15),
+                      color: const Color(0xFF1661EF).withValues(alpha: 0.15),
                     ),
                     child: const Icon(
                       IconlyLight.shield_done,
@@ -70,10 +102,7 @@ class LoginController extends GetxController {
                       color: Color(0xFF1661EF),
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
-                  /// TITLE
                   const Text(
                     "Access Denied",
                     style: TextStyle(
@@ -82,10 +111,7 @@ class LoginController extends GetxController {
                       color: Colors.white,
                     ),
                   ),
-
                   const SizedBox(height: 12),
-
-                  /// MESSAGE
                   const Text(
                     "Your role does not have access to this portal.",
                     textAlign: TextAlign.center,
@@ -95,10 +121,7 @@ class LoginController extends GetxController {
                       height: 1.5,
                     ),
                   ),
-
                   const SizedBox(height: 30),
-
-                  /// BUTTON
                   SizedBox(
                     width: double.infinity,
                     height: 45,
@@ -124,7 +147,6 @@ class LoginController extends GetxController {
             ),
           ),
         );
-
         return;
       }
 
@@ -135,20 +157,50 @@ class LoginController extends GetxController {
         role: response.user.role,
         userId: response.user.id.toString(),
         username: response.user.username,
+        activeBranchId: response.user.activeBranchId?.toString(),
+        activeBranchCode: response.user.activeBranchCode,
       );
+
+      if (Get.isRegistered<RealtimeNotificationService>()) {
+        RealtimeNotificationService.to.startPolling();
+      }
 
       Get.offAllNamed(AppRoutes.mainNav);
     } catch (e) {
-      Get.defaultDialog(
-        title: "Login Failed",
-        middleText: e.toString(),
-        textConfirm: "OK",
-        confirmTextColor: Colors.white,
-        onConfirm: () => Get.back(),
-      );
+      _showMessage(title: "Unable to sign in", message: _friendlyError(e));
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void _showMessage({required String title, required String message}) {
+    AppSnackbar.snackbar(
+      title,
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      margin: const EdgeInsets.all(16),
+      backgroundColor: const Color(0xFF1F2937),
+      colorText: Colors.white,
+      icon: const Icon(Icons.info_outline_rounded, color: Colors.white),
+      duration: const Duration(seconds: 4),
+    );
+  }
+
+  String _friendlyError(Object error) {
+    final text = error.toString().toLowerCase();
+    if (text.contains("unauthorized") || text.contains("401")) {
+      return "The mobile number or password is incorrect.";
+    }
+    if (text.contains("socket") || text.contains("internet")) {
+      return "Check your internet connection and try again.";
+    }
+    if (text.contains("timeout")) {
+      return "The server took too long to respond. Please try again.";
+    }
+    if (text.contains("server error") || text.contains("500")) {
+      return "The server is temporarily unavailable. Please try again later.";
+    }
+    return "Sign-in failed. Please verify your details and try again.";
   }
 
   @override

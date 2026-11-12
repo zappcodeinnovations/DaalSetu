@@ -2,12 +2,15 @@ import 'package:flutter/foundation.dart';
 import '../../../services/dashboard_service.dart';
 import 'package:get/get.dart';
 import '../model/dashboard_model.dart';
+import '../../../utils/app_snackbar.dart';
 
 class DashboardController extends GetxController {
   final isLoading = false.obs;
   final dashboardData = Rxn<DashboardModel>();
   final isPaymentsExpanded = false.obs;
   final isKpiExpanded = false.obs;
+  final selectedGtvPeriod = '7D'.obs;
+  final isUpdatingTrend = false.obs;
 
   @override
   void onInit() {
@@ -21,6 +24,24 @@ class DashboardController extends GetxController {
 
   void togglePayments() {
     isPaymentsExpanded.value = !isPaymentsExpanded.value;
+  }
+
+  Future<void> updateGtvPeriod(String period) async {
+    selectedGtvPeriod.value = period;
+    // Every range already came with the dashboard; no refetch needed.
+    final ranges = dashboardData.value?.charts.gtvDealsRanges ?? const {};
+    if (ranges.keys.any(period.toUpperCase().startsWith)) return;
+    isUpdatingTrend.value = true;
+    try {
+      final data = await DashboardService.fetchDashboard(period: period);
+      dashboardData.value = data;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint("Period filter error: $e");
+      }
+    } finally {
+      isUpdatingTrend.value = false;
+    }
   }
 
   Future<void> fetchDashboard() async {
@@ -50,7 +71,7 @@ class DashboardController extends GetxController {
         debugPrint("StackTrace: $stackTrace");
       }
 
-      Get.snackbar("Error", "Failed to load dashboard");
+      AppSnackbar.snackbar("Error", "Failed to load dashboard");
     } finally {
       isLoading.value = false;
     }

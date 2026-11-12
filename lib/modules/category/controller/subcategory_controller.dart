@@ -1,6 +1,7 @@
 import '../model/subcategory_model.dart';
 import '../../../services/category_services.dart';
 import 'package:get/get.dart';
+import '../../../utils/app_snackbar.dart';
 
 class SubCategoryController extends GetxController {
   var isLoading = false.obs;
@@ -35,7 +36,7 @@ class SubCategoryController extends GetxController {
 
     } catch (e) {
       
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.snackbar("Error", e.toString());
     } finally {
       isLoading.value = false;
     }

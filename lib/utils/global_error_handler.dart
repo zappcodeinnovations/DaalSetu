@@ -3,8 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class GlobalErrorHandler {
+  static bool _isShowingDialog = false;
+
+  /// Network errors are expected while the screen is off and for a moment after
+  /// unlocking (Android cuts background network), so no popup in those windows.
+  static bool get _appCanShowNetworkError {
+    AppForeground.ensureTracking();
+    return AppForeground.isActive && AppForeground.secondsSinceResume >= 5;
+  }
+
   /// SERVER ERROR
   static void showServerError() {
+    if (_isShowingDialog || !_appCanShowNetworkError) return;
+    _isShowingDialog = true;
     Get.dialog(
       _buildErrorDialog(
         icon: IconlyLight.danger,
@@ -13,12 +24,16 @@ class GlobalErrorHandler {
         message:
             "We sincerely apologize from the Daal Setu team.\n\nOur server is currently not responding. Please try again in a few moments.",
       ),
-      barrierDismissible: false,
-    );
+      barrierDismissible: true,
+    ).then((_) {
+      _isShowingDialog = false;
+    });
   }
 
   /// NO INTERNET
   static void showNoInternet() {
+    if (_isShowingDialog || !_appCanShowNetworkError) return;
+    _isShowingDialog = true;
     Get.dialog(
       _buildErrorDialog(
         icon: IconlyLight.danger,
@@ -27,8 +42,10 @@ class GlobalErrorHandler {
         message:
             "Please check your internet connection and try again.\n\nIf the problem continues, try reconnecting to your network.",
       ),
-      barrierDismissible: false,
-    );
+      barrierDismissible: true,
+    ).then((_) {
+      _isShowingDialog = false;
+    });
   }
 
   /// COMMON MODERN DIALOG UI
@@ -116,5 +133,36 @@ class GlobalErrorHandler {
         ),
       ),
     );
+  }
+}
+
+/// Whether the app is on screen, and how long since it came back from background.
+class AppForeground with WidgetsBindingObserver {
+  AppForeground._();
+
+  static final AppForeground _instance = AppForeground._();
+  static bool _tracking = false;
+  static DateTime? _resumedAt;
+
+  /// Call once at startup; also called lazily by the helpers below.
+  static void ensureTracking() {
+    if (_tracking) return;
+    _tracking = true;
+    WidgetsBinding.instance.addObserver(_instance);
+  }
+
+  /// True while the app is visible and in the foreground (screen on, not minimised).
+  static bool get isActive {
+    ensureTracking();
+    final state = WidgetsBinding.instance.lifecycleState;
+    return state == null || state == AppLifecycleState.resumed;
+  }
+
+  static int get secondsSinceResume =>
+      _resumedAt == null ? 1 << 30 : DateTime.now().difference(_resumedAt!).inSeconds;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _resumedAt = DateTime.now();
   }
 }

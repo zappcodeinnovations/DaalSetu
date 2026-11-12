@@ -1,9 +1,10 @@
+import '../comman/api_url.dart';
 import '../modules/Auth/forgot_password/model/forgot_password_model.dart';
 import '../modules/Auth/login/model/login_model.dart';
 import '../network/api_client.dart';
-import '../comman/api_url.dart';
 import '../utils/app_preferences.dart';
-import '../modules/Auth/register/model/register_model.dart';
+import 'package:get/get.dart';
+import 'realtime_notification_service.dart';
 
 class AuthService {
   /// ============================================================
@@ -11,7 +12,7 @@ class AuthService {
   /// ============================================================
   static Future<String> register({
     required Map<String, String> fields,
-    required Map<String, String> files,
+    Map<String, String>? files,
   }) async {
     final response = await ApiClient.postMultipart(
       endpoint: ApiUrls.register,
@@ -19,12 +20,6 @@ class AuthService {
       files: files,
       requireAuth: false,
     );
-
-    print("REGISTER RESPONSE: $response");
-
-    if (response == null || response is! Map<String, dynamic>) {
-      throw Exception("Invalid response format");
-    }
 
     if (response["status"] == "success") {
       return response["message"] ?? "Registration successful";
@@ -46,14 +41,14 @@ class AuthService {
       requireAuth: false,
     );
 
-    if (response == null || response is! Map<String, dynamic>) {
-      throw Exception("Invalid response format");
-    }
-
-    if (response.containsKey("access")) {
+    if (response.containsKey("access") &&
+        response.containsKey("refresh") &&
+        response["user"] is Map<String, dynamic>) {
       return LoginResponse.fromJson(response);
     } else {
-      throw Exception(response["detail"] ?? "Login Failed");
+      throw Exception(
+        response["message"] ?? response["detail"] ?? "Login failed",
+      );
     }
   }
 
@@ -72,7 +67,7 @@ class AuthService {
         "new_password": newPassword,
         "confirm_password": confirmPassword,
       },
-      requireAuth: true, // 🔥 Important (uses access token)
+      requireAuth: true,
     );
 
     if (response.containsKey("message")) {
@@ -80,6 +75,23 @@ class AuthService {
     } else {
       throw Exception(response["message"] ?? "Password Change Failed");
     }
+  }
+
+  /// Soft deletes the currently authenticated account on the server.
+  static Future<String> deleteAccount({required String currentPassword}) async {
+    final refreshToken = await AppPreferences.getRefreshToken();
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.deleteAccount,
+      body: {
+        "current_password": currentPassword,
+        if (refreshToken != null && refreshToken.isNotEmpty)
+          "refresh": refreshToken,
+      },
+      requireAuth: true,
+      suppressErrorDialog: true,
+    );
+
+    return response["message"] ?? "Your account has been deleted successfully.";
   }
 
   /// ============================================================
@@ -158,5 +170,8 @@ class AuthService {
   /// ============================================================
   static Future<void> logout() async {
     await AppPreferences.logout();
+    if (Get.isRegistered<RealtimeNotificationService>()) {
+      RealtimeNotificationService.to.clearOnLogout();
+    }
   }
 }

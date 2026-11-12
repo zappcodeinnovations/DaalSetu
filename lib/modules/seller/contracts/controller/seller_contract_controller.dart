@@ -1,10 +1,13 @@
-import '../model/seller_contract_model.dart';
-import '../../../../services/seller_services.dart';
 import 'package:get/get.dart';
+import '../../../../services/seller_services.dart';
+import '../model/seller_contract_model.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class SellerContractController extends GetxController {
-  var isLoading = true.obs;
-  var contracts = <SellerContractModel>[].obs;
+  var isLoading = false.obs;
+  var contractsList = <SellerContractModel>[].obs;
+  bool _fetchingContracts = false;
+  List<SellerContractModel> get contracts => contractsList;
 
   @override
   void onInit() {
@@ -12,15 +15,19 @@ class SellerContractController extends GetxController {
     fetchContracts();
   }
 
-  Future<void> fetchContracts() async {
+  Future<void> fetchContracts({bool silent = false}) async {
+    if (_fetchingContracts || isClosed) return;
+    _fetchingContracts = true;
     try {
-      isLoading(true);
-      final data = await SellerServices.getContracts();
-      contracts.assignAll(data.map((e) => SellerContractModel.fromJson(e)).toList());
+      if (!silent) isLoading.value = true;
+      final data = await SellerServices.getSellerContracts(silent: silent);
+      if (isClosed) return;
+      contractsList.value = data.map((e) => SellerContractModel.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      if (!silent && !isClosed) AppSnackbar.snackbar("Error", e.toString(), snackPosition: SnackPosition.BOTTOM);
     } finally {
-      isLoading(false);
+      _fetchingContracts = false;
+      if (!isClosed && !silent) isLoading.value = false;
     }
   }
 }

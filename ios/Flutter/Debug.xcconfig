@@ -1,1 +1,7 @@
+#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"
 #include "Generated.xcconfig"
+
+// Fix for Xcode 16+ lipo verify_arch issue on Apple Silicon
+ARCHS[sdk=iphonesimulator*] = arm64
+ONLY_ACTIVE_ARCH = YES
+

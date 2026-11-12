@@ -35,6 +35,7 @@ class DriverModel {
   final String assignmentStatus;
   final String assignmentStatusDisplay;
   final AssignedVehicle? assignedVehicle;
+  final String? licenseUploadUrl;
 
   DriverModel({
     required this.id,
@@ -50,6 +51,7 @@ class DriverModel {
     required this.assignmentStatus,
     required this.assignmentStatusDisplay,
     this.assignedVehicle,
+    this.licenseUploadUrl,
   });
 
   factory DriverModel.fromJson(Map<String, dynamic> json) {
@@ -69,6 +71,7 @@ class DriverModel {
       assignedVehicle: json['assigned_vehicle'] != null
           ? AssignedVehicle.fromJson(json['assigned_vehicle'])
           : null,
+      licenseUploadUrl: (json['license_upload_url'] ?? '').toString().isEmpty ? null : json['license_upload_url'].toString(),
     );
   }
 

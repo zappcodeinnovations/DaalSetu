@@ -1,10 +1,19 @@
+import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
 import '../controller/seller_product_controller.dart';
 import '../model/seller_product_model.dart';
+import '../../../products/view/product_detail.dart';
 import 'add_product_view.dart';
-import 'add_product_view.dart';
+import 'seller_stock_update_dialog.dart';
+import 'seller_offer_interests_view.dart';
+import 'seller_media_gallery_view.dart';
+import 'edit_offer_view.dart';
+import 'offer_stock_history_view.dart';
+import '../../../../routes/app_routes.dart';
+import '../../../../widgets/authenticated_network_image.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class SellerProductView extends StatelessWidget {
   const SellerProductView({super.key});
@@ -12,23 +21,40 @@ class SellerProductView extends StatelessWidget {
   static const Color primaryColor = Color(0xFFFFB300);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PageAutoRefresh(
+    onRefresh: () => Get.find<SellerProductController>().fetchProducts(silent: true),
+    child: _buildPageContent(context),
+  );
+
+  Widget _buildPageContent(BuildContext context) {
     final controller = Get.put(SellerProductController());
     final theme = Theme.of(context);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
           "My Products",
-          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           IconButton(
-            onPressed: controller.fetchProducts,
-            icon: Icon(IconlyLight.arrow_down_square, color: theme.iconTheme.color),
+            onPressed: () => Get.toNamed(AppRoutes.sellerNotifications),
+            icon: Icon(IconlyLight.notification, color: theme.iconTheme.color),
+          ),
+          IconButton(
+            tooltip: 'Share offers',
+            onPressed: controller.shareProducts,
+            icon: Icon(Icons.share_outlined, color: theme.iconTheme.color),
+          ),
+          IconButton(
+            tooltip: 'Download offers',
+            onPressed: controller.exportProducts,
+            icon: Icon(IconlyLight.download, color: theme.iconTheme.color),
           ),
         ],
       ),
@@ -37,7 +63,9 @@ class SellerProductView extends StatelessWidget {
         color: primaryColor,
         child: Obx(() {
           if (controller.isLoading.value && controller.products.isEmpty) {
-            return const Center(child: CircularProgressIndicator(color: primaryColor));
+            return const Center(
+              child: CircularProgressIndicator(color: primaryColor),
+            );
           }
 
           if (controller.products.isEmpty) {
@@ -47,7 +75,10 @@ class SellerProductView extends StatelessWidget {
                 children: [
                   Icon(IconlyLight.bag, size: 64, color: theme.disabledColor),
                   const SizedBox(height: 16),
-                  Text("No products listed yet", style: theme.textTheme.titleMedium),
+                  Text(
+                    "No products listed yet",
+                    style: theme.textTheme.titleMedium,
+                  ),
                 ],
               ),
             );
@@ -59,47 +90,70 @@ class SellerProductView extends StatelessWidget {
             separatorBuilder: (context, index) => const SizedBox(height: 16),
             itemBuilder: (context, index) {
               final product = controller.products[index];
-              return _buildProductCard(context, product);
+              return _buildProductCard(context, controller, product);
             },
           );
         }),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: () => Get.to(() => const AddProductView()),
         backgroundColor: primaryColor,
         icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text("Add Product", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        label: const Text(
+          "Add Product",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }
 
-  Widget _buildProductCard(BuildContext context, SellerProductModel product) {
+  Widget _buildProductCard(
+    BuildContext context,
+    SellerProductController controller,
+    SellerProductModel product,
+  ) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final status = _statusPresentation(product);
+    final cardRadius = BorderRadius.circular(20);
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+    return Material(
+      color: theme.cardColor,
+      borderRadius: cardRadius,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        key: Key('seller_product_card_${product.id}'),
+        borderRadius: cardRadius,
+        onTap: () => Get.to(
+          () => ProductDetailScreen(productId: product.id),
         ),
-        boxShadow: isDark ? [] : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: Column(
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: cardRadius,
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withOpacity(0.1)
+                  : Colors.grey.withOpacity(0.2),
+            ),
+            boxShadow: isDark
+                ? []
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+          ),
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Product Image
+              // Product Image / Media
               Container(
                 width: 80,
                 height: 80,
@@ -107,33 +161,151 @@ class SellerProductView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(15),
                   color: primaryColor.withOpacity(0.1),
                 ),
-                child: product.imageUrls.isNotEmpty
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(15),
-                        child: Image.network(
-                          product.imageUrls.first,
-                          fit: BoxFit.cover,
-                          errorBuilder: (c, e, s) => const Icon(IconlyLight.bag, color: primaryColor),
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: product.imageUrls.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(15),
+                              // Offer media previews need the JWT; a plain Image.network got 403.
+                              child: AuthenticatedNetworkImage(
+                                url: product.imageUrls.first,
+                                fit: BoxFit.contain,
+                                fallback: product.videoUrls.isNotEmpty
+                                    ? const Icon(
+                                        IconlyLight.video,
+                                        color: primaryColor,
+                                        size: 32,
+                                      )
+                                    : const Icon(
+                                        IconlyLight.bag,
+                                        color: primaryColor,
+                                      ),
+                              ),
+                            )
+                          : Center(
+                              child: Icon(
+                                product.videoUrls.isNotEmpty
+                                    ? IconlyLight.video
+                                    : IconlyLight.bag,
+                                color: primaryColor,
+                                size: product.videoUrls.isNotEmpty ? 32 : 24,
+                              ),
+                            ),
+                    ),
+                    if (product.imageUrls.isNotEmpty &&
+                        product.videoUrls.isNotEmpty)
+                      Positioned(
+                        right: 4,
+                        bottom: 4,
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.65),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.play_arrow_rounded,
+                            size: 14,
+                            color: Colors.white,
+                          ),
                         ),
-                      )
-                    : const Icon(IconlyLight.bag, color: primaryColor),
+                      ),
+                  ],
+                ),
               ),
-              const SizedBox(width: 16),
-              // Product Info
+              const SizedBox(width: 14),
+              // Product Details & Actions
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: status.color.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              status.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: status.color,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+                        PopupMenuButton<String>(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: Icon(Icons.more_vert, color: theme.iconTheme.color),
+                          onSelected: (value) async {
+                            switch (value) {
+                              case 'edit':
+                                final updated = await Get.to(
+                                  () => EditOfferView(productId: product.id),
+                                );
+                                if (updated == true) controller.fetchProducts();
+                                break;
+                              case 'toggle':
+                                controller.toggleOffer(product);
+                                break;
+                              case 'history':
+                                Get.to(
+                                  () => OfferStockHistoryView(
+                                    productId: product.id,
+                                    title: product.title,
+                                  ),
+                                );
+                                break;
+                              case 'delete':
+                                controller.deleteOffer(product);
+                                break;
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(value: 'edit', child: Text("Edit Offer")),
+                            PopupMenuItem(
+                              value: 'toggle',
+                              child: Text(product.isActive ? "Deactivate" : "Activate"),
+                            ),
+                            const PopupMenuItem(
+                              value: 'history',
+                              child: Text("Stock History"),
+                            ),
+                            const PopupMenuItem(
+                              value: 'delete',
+                              child: Text("Delete", style: TextStyle(color: Colors.red)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
                     Text(
                       product.title,
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      product.categoryName ?? "Uncategorized",
-                      style: theme.textTheme.bodySmall?.copyWith(color: primaryColor),
+                      _categoryBrandLabel(product),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: primaryColor,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -146,63 +318,122 @@ class SellerProductView extends StatelessWidget {
                   ],
                 ),
               ),
-              // Status Badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: (product.status == 'active' ? Colors.green : Colors.orange).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  product.status.toUpperCase(),
-                  style: TextStyle(
-                    color: product.status == 'active' ? Colors.green : Colors.orange,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
             ],
           ),
-          const Divider(height: 32),
+          const Divider(height: 24),
+          if (product.loadingLocation.isNotEmpty) ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(IconlyLight.location, size: 14, color: theme.disabledColor),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    product.loadingLocation,
+                    style: theme.textTheme.bodySmall,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
           Wrap(
             spacing: 12,
             runSpacing: 8,
             children: [
-              _infoItem(IconlyLight.location, product.loadingLocation, theme),
               _infoItem(IconlyLight.work, "${product.bagCount} Bags", theme),
-              _infoItem(IconlyLight.info_square, "${product.packingWeight}kg", theme),
+              _infoItem(
+                IconlyLight.info_square,
+                "${product.packingWeight}kg",
+                theme,
+              ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => Get.to(
+                () => ProductDetailScreen(productId: product.id),
+              ),
+              icon: const Icon(IconlyLight.show, size: 16),
+              label: const Text(
+                'View Details',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: theme.colorScheme.primary,
+                side: BorderSide(color: theme.colorScheme.primary),
+                minimumSize: const Size.fromHeight(44),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(IconlyLight.edit, size: 14),
-                  label: const Text("Edit", style: TextStyle(fontSize: 12)),
+                  onPressed: () => Get.to(
+                    () => const SellerOfferInterestsView(),
+                    arguments: product.id,
+                  ),
+                  icon: const Icon(IconlyLight.chat, size: 14),
+                  label: Text(
+                    'Interests (${product.interestCount})',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    foregroundColor: primaryColor,
+                    side: const BorderSide(color: primaryColor),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(IconlyLight.show, size: 14, color: Colors.white),
-                  label: const Text(
-                    "View Details",
-                    style: TextStyle(color: Colors.white, fontSize: 12),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: () => SellerStockUpdateDialog.show(
+                  context,
+                  product.id,
+                  onSuccess: controller.fetchProducts,
+                ),
+                icon: const Icon(IconlyLight.work, size: 14),
+                label: const Text("Stock", style: TextStyle(fontSize: 12)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 12,
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: () => Get.to(
+                  () => SellerMediaGalleryView(productId: product.id),
+                  arguments: product.id,
+                ),
+                icon: const Icon(IconlyLight.image, size: 14),
+                label: const Text("Media", style: TextStyle(fontSize: 12)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
               ),
@@ -210,7 +441,9 @@ class SellerProductView extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _infoItem(IconData icon, String text, ThemeData theme) {
@@ -219,11 +452,57 @@ class SellerProductView extends StatelessWidget {
       children: [
         Icon(icon, size: 14, color: theme.disabledColor),
         const SizedBox(width: 6),
-        Text(
-          text,
-          style: theme.textTheme.bodySmall,
-        ),
+        Text(text, style: theme.textTheme.bodySmall),
       ],
     );
   }
+
+  String _categoryBrandLabel(SellerProductModel product) {
+    final labels = <String>[
+      if ((product.categoryName ?? '').trim().isNotEmpty)
+        product.categoryName!.trim(),
+      if ((product.brandName ?? '').trim().isNotEmpty)
+        product.brandName!.trim(),
+    ];
+    return labels.isEmpty ? 'Category not specified' : labels.join(' | ');
+  }
+
+  _ProductStatusPresentation _statusPresentation(SellerProductModel product) {
+    if (!product.isActive) {
+      return const _ProductStatusPresentation('INACTIVE', Colors.blueGrey);
+    }
+    final normalized = product.status.trim().toLowerCase();
+    if (product.isExpired || normalized.contains('expired')) {
+      return const _ProductStatusPresentation(
+        'DEAL EXPIRED',
+        Colors.deepOrange,
+      );
+    }
+    if (normalized == 'out_of_stock' || normalized == 'out of stock') {
+      return const _ProductStatusPresentation('OUT OF STOCK', Colors.red);
+    }
+    if (normalized == 'active' || normalized == 'available') {
+      return const _ProductStatusPresentation('AVAILABLE', Colors.green);
+    }
+    if (normalized == 'sold') {
+      return const _ProductStatusPresentation('SOLD', Colors.redAccent);
+    }
+    if (normalized == 'sold_pending_confirmation' || normalized.contains('pending')) {
+      return const _ProductStatusPresentation('PENDING CONFIRMATION', Colors.orange);
+    }
+    if (normalized == 'inactive') {
+      return const _ProductStatusPresentation('INACTIVE', Colors.blueGrey);
+    }
+    return _ProductStatusPresentation(
+      normalized.isEmpty ? 'STATUS UNKNOWN' : normalized.replaceAll('_', ' ').toUpperCase(),
+      Colors.orange,
+    );
+  }
+}
+
+class _ProductStatusPresentation {
+  const _ProductStatusPresentation(this.label, this.color);
+
+  final String label;
+  final Color color;
 }

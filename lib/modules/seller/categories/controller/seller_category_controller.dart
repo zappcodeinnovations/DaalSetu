@@ -1,9 +1,11 @@
 import '../model/category_dashboard_model.dart';
 import '../model/seller_category_model.dart';
 import '../../../../services/seller_services.dart';
+import '../../../../network/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class SellerCategoryController extends GetxController {
   var isLoading = true.obs;
@@ -14,6 +16,7 @@ class SellerCategoryController extends GetxController {
 
   var brandsList = <BrandModel>[].obs;
   var selectedBrandIds = <int>[].obs;
+  var isBrandsLoading = false.obs;
 
   final searchController = TextEditingController();
   final categoryNameController = TextEditingController();
@@ -28,12 +31,12 @@ class SellerCategoryController extends GetxController {
   Future<void> fetchAllData() async {
     try {
       isLoading(true);
-      await Future.wait([
-        fetchDashboard(),
-        fetchTree(),
-      ]);
+      await Future.wait([fetchDashboard(), fetchTree()]);
+      if (isSearching.value && searchController.text.trim().isNotEmpty) {
+        await search(searchController.text);
+      }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.snackbar("Error", e.toString());
     } finally {
       isLoading(false);
     }
@@ -41,10 +44,17 @@ class SellerCategoryController extends GetxController {
 
   Future<void> fetchBrands() async {
     try {
+      isBrandsLoading.value = true;
       final data = await SellerServices.getBrandsDropdown();
       brandsList.assignAll(data.map((e) => BrandModel.fromJson(e)).toList());
     } catch (e) {
-      print("Error fetching brands: $e");
+      AppSnackbar.snackbar(
+        "Could not load brands",
+        ApiClient.userFriendlyErrorMessage(e.toString()),
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      isBrandsLoading.value = false;
     }
   }
 
@@ -55,23 +65,99 @@ class SellerCategoryController extends GetxController {
 
   Future<void> fetchTree() async {
     final data = await SellerServices.getCategoriesTree();
-    categoryTree.assignAll(data.map((e) => CategoryTreeModel.fromJson(e)).toList());
+    categoryTree.assignAll(
+      data.map((e) => CategoryTreeModel.fromJson(e)).toList(),
+    );
   }
 
   Future<void> search(String query) async {
-    if (query.isEmpty) {
+    final cleanQuery = query.trim().toLowerCase();
+    if (cleanQuery.isEmpty) {
       isSearching(false);
       searchResults.clear();
       return;
     }
 
-    try {
-      isSearching(true);
-      final data = await SellerServices.searchCategories(query);
-      searchResults.assignAll(data.map((e) => CategoryDetailModel.fromJson(e)).toList());
-    } catch (e) {
-      print("Search Error: $e");
+    isSearching(true);
+
+    if (categoryTree.isEmpty && isLoading.value) {
+      await fetchTree();
     }
+
+    final List<CategoryDetailModel> localResults = [];
+    void traverse(
+      List<CategoryTreeModel> nodes, {
+      String parentPath = '',
+      String? parentName,
+    }) {
+      for (final node in nodes) {
+        final currentPath = parentPath.isEmpty
+            ? node.name
+            : '$parentPath > ${node.name}';
+
+        if (node.name.toLowerCase().contains(cleanQuery) ||
+            currentPath.toLowerCase().contains(cleanQuery)) {
+          final isNodeActive = node.status.toLowerCase() == 'active';
+          localResults.add(
+            CategoryDetailModel(
+              id: node.id,
+              name: node.name,
+              parent: node.parentId,
+              parentName: parentName,
+              level: node.level,
+              path: currentPath,
+              isActive: isNodeActive,
+              status: node.status,
+              childrenCount: node.children.length,
+              fullPath: currentPath,
+              isRoot: node.level == 0 || node.parentId == null,
+              isLeaf: node.children.isEmpty,
+              imageUrl: node.image,
+              hasChildren: node.children.isNotEmpty,
+              brands: node.brands,
+            ),
+          );
+        }
+
+        if (node.children.isNotEmpty) {
+          traverse(
+            node.children,
+            parentPath: currentPath,
+            parentName: node.name,
+          );
+        }
+      }
+    }
+
+    traverse(categoryTree);
+
+    if (localResults.isEmpty && categoryTree.isEmpty) {
+      try {
+        final data = await SellerServices.searchCategories(cleanQuery);
+        for (final item in data) {
+          if (item is Map<String, dynamic>) {
+            final name =
+                (item['category_name'] ?? item['name'] ?? '').toString();
+            if (name.toLowerCase().contains(cleanQuery)) {
+              localResults.add(CategoryDetailModel.fromJson(item));
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint("API search fallback error: $e");
+      }
+    }
+
+    searchResults.assignAll(localResults);
+  }
+
+  /// Seller-created categories wait for admin approval; say so instead of a plain "added".
+  String _savedMessage(Map<String, dynamic> result, String label) {
+    final data = result['data'] is Map ? result['data'] as Map : result;
+    final pending = (data['status'] ?? '').toString().toLowerCase() == 'pending';
+    return pending
+        ? "$label sent for admin approval. It becomes active once approved."
+        : "$label added successfully";
   }
 
   Future<void> addRootCategory() async {
@@ -83,14 +169,14 @@ class SellerCategoryController extends GetxController {
         "is_active": "true",
         "brand_ids": selectedBrandIds.toList(),
       };
-      await SellerServices.createCategory(body);
+      final result = await SellerServices.createCategory(body);
       categoryNameController.clear();
       selectedBrandIds.clear();
+      await fetchAllData();
       Get.back();
-      Get.snackbar("Success", "Category added successfully");
-      fetchAllData();
+      AppSnackbar.snackbar("Success", _savedMessage(result, "Category"));
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.snackbar("Error", e.toString());
     } finally {
       isLoading(false);
     }
@@ -100,13 +186,16 @@ class SellerCategoryController extends GetxController {
     if (categoryNameController.text.isEmpty) return;
     try {
       isLoading(true);
-      await SellerServices.createSubCategory(parentId, categoryNameController.text.trim());
+      final result = await SellerServices.createSubCategory(
+        parentId,
+        categoryNameController.text.trim(),
+      );
       categoryNameController.clear();
+      await fetchAllData();
       Get.back();
-      Get.snackbar("Success", "Sub-category added successfully");
-      fetchAllData();
+      AppSnackbar.snackbar("Success", _savedMessage(result, "Sub-category"));
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.snackbar("Error", e.toString());
     } finally {
       isLoading(false);
     }
@@ -116,13 +205,16 @@ class SellerCategoryController extends GetxController {
     if (categoryNameController.text.isEmpty) return;
     try {
       isLoading(true);
-      await SellerServices.updateCategory(id, categoryNameController.text.trim());
+      await SellerServices.updateCategory(
+        id,
+        categoryNameController.text.trim(),
+      );
       categoryNameController.clear();
+      await fetchAllData();
       Get.back();
-      Get.snackbar("Success", "Category updated successfully");
-      fetchAllData();
+      AppSnackbar.snackbar("Success", "Category updated successfully");
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.snackbar("Error", e.toString());
     } finally {
       isLoading(false);
     }
@@ -132,14 +224,14 @@ class SellerCategoryController extends GetxController {
     try {
       isLoading(true);
       await SellerServices.deleteCategory(id, deleteSubcategories: force);
-      Get.snackbar("Success", "Category deleted successfully");
+      AppSnackbar.snackbar("Success", "Category deleted successfully");
       fetchAllData();
     } catch (e) {
       String errorMsg = e.toString();
       if (errorMsg.contains("has subcategories")) {
         _showForceDeleteConfirm(id);
       } else {
-        Get.snackbar("Error", errorMsg.replaceAll("Exception: ", ""));
+        AppSnackbar.snackbar("Error", errorMsg.replaceAll("Exception: ", ""));
       }
     } finally {
       isLoading(false);
@@ -149,7 +241,8 @@ class SellerCategoryController extends GetxController {
   void _showForceDeleteConfirm(int id) {
     Get.defaultDialog(
       title: "Confirm Full Delete",
-      middleText: "This category has sub-categories. Do you want to delete the full category tree?",
+      middleText:
+          "This category has sub-categories. Do you want to delete the full category tree?",
       textConfirm: "DELETE ALL",
       confirmTextColor: Colors.white,
       buttonColor: Colors.red,
@@ -169,10 +262,10 @@ class SellerCategoryController extends GetxController {
       try {
         isLoading(true);
         await SellerServices.uploadCategoryImage(id, image.path);
-        Get.snackbar("Success", "Image uploaded successfully");
+        AppSnackbar.snackbar("Success", "Image uploaded successfully");
         fetchAllData();
       } catch (e) {
-        Get.snackbar("Error", e.toString());
+        AppSnackbar.snackbar("Error", e.toString());
       } finally {
         isLoading(false);
       }

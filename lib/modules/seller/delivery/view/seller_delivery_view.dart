@@ -4,6 +4,7 @@ import 'package:iconly/iconly.dart';
 import '../controller/seller_delivery_controller.dart';
 import '../model/delivery_challan_model.dart';
 import 'seller_challan_details_view.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class SellerDeliveryView extends StatelessWidget {
   const SellerDeliveryView({super.key});
@@ -17,7 +18,7 @@ class SellerDeliveryView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(

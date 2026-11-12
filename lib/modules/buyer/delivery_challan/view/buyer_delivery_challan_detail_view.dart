@@ -1,49 +1,115 @@
 import 'package:flutter/material.dart';
+import '../../../../utils/money_format.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../../theme/glass_widgets.dart';
+import '../../../../utils/app_snackbar.dart';
 import '../controller/buyer_delivery_challan_controller.dart';
 import '../model/buyer_delivery_challan_model.dart';
+import '../service/buyer_challan_pdf_service.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class BuyerDeliveryChallanDetailView extends StatelessWidget {
   BuyerDeliveryChallanDetailView({super.key});
 
-  final BuyerDeliveryChallanController controller = Get.find<BuyerDeliveryChallanController>();
+  final BuyerDeliveryChallanController controller =
+      Get.find<BuyerDeliveryChallanController>();
+
+  /// Read once when the page opens: Get.arguments belongs to whichever route is
+  /// on top, so reading it in build (e.g. while the side menu or a dialog is
+  /// open) gave null and requested /api/buyer/delivery-challans/0/.
+  final int challanId = _idFrom(Get.arguments);
+
+  /// Set after the first fetch of this page, so rebuilds do not refetch.
+  final _fetched = <bool>[false];
+
+  static int _idFrom(dynamic argument) =>
+      argument is int ? argument : int.tryParse('${argument ?? ''}') ?? 0;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final int challanId = Get.arguments ?? 0;
 
-    // Fetch details when screen loads
+    // Load once each time the page opens; rebuilds must not refetch.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.fetchChallanDetails(challanId);
+      if (challanId > 0 && !_fetched.first) {
+        _fetched[0] = true;
+        controller.fetchChallanDetails(challanId);
+      }
     });
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
+        leading: AppBarLeading(child: IconButton(
           icon: const Icon(IconlyLight.arrow_left_2),
           onPressed: () => Get.back(),
-        ),
+        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
         title: Text(
           "Challan Details",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Save PDF to Downloads',
+            icon: const Icon(Icons.picture_as_pdf_outlined),
+            onPressed: () async {
+              final challan = controller.currentChallan.value;
+              if (challan == null) {
+                AppSnackbar.showWarning(
+                  title: 'Please wait',
+                  message: 'Challan details are still loading.',
+                );
+                return;
+              }
+              try {
+                await BuyerChallanPdfService.download(challan);
+                AppSnackbar.showSuccess(
+                  title: 'PDF downloaded',
+                  message: 'Delivery challan was saved to Downloads.',
+                );
+              } catch (error) {
+                AppSnackbar.showError(
+                  title: 'PDF failed',
+                  message: error.toString().replaceFirst('Exception: ', ''),
+                );
+              }
+            },
+          ),
+          IconButton(
+            tooltip: 'Share PDF',
+            icon: const Icon(Icons.share_outlined),
+            onPressed: () async {
+              final challan = controller.currentChallan.value;
+              if (challan == null) {
+                AppSnackbar.showWarning(
+                  title: 'Please wait',
+                  message: 'Challan details are still loading.',
+                );
+                return;
+              }
+              try {
+                await BuyerChallanPdfService.downloadAndShare(challan);
+              } catch (error) {
+                AppSnackbar.showError(
+                  title: 'PDF share failed',
+                  message: error.toString().replaceFirst('Exception: ', ''),
+                );
+              }
+            },
+          ),
+        ],
       ),
       body: Obx(() {
         if (controller.isDetailLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (controller.errorMessage.value.isNotEmpty && controller.currentChallan.value == null) {
+        if (controller.errorMessage.value.isNotEmpty &&
+            controller.currentChallan.value == null) {
           return Center(
             child: Text(
               controller.errorMessage.value,
@@ -70,46 +136,20 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
                   const SizedBox(height: 16),
                   _buildTransportInfo(context, challan),
                   const SizedBox(height: 16),
-                  _buildItemsList(context, challan.items ?? []),
+                  _buildItemsList(context, challan.items ?? [], challan.totalAmount),
                   const SizedBox(height: 16),
                   _buildAmountDetails(context, challan),
-                  if (challan.narration != null && challan.narration!.isNotEmpty) ...[
+                  if (challan.narration != null &&
+                      challan.narration!.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     _buildNarration(context, challan.narration!),
                   ],
-                  const SizedBox(height: 100), // Space for bottom button
+                  const SizedBox(height: 16),
+                  _buildActionsCard(context, challan),
+                  const SizedBox(height: 32),
                 ],
               ),
             ),
-            if (challan.status?.toLowerCase() == 'delivered' || challan.status?.toLowerCase() == 'dispatched')
-              Positioned(
-                bottom: 16,
-                left: 16,
-                right: 16,
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: () => _showReceiveDialog(context, challan.id!),
-                    child: controller.isReceiving.value
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : Text(
-                            "Mark as Received",
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                  ),
-                ),
-              ),
           ],
         );
       }),
@@ -124,7 +164,9 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text("Are you sure you want to mark this challan as received?"),
+            const Text(
+              "Are you sure you want to mark this challan as received?",
+            ),
             const SizedBox(height: 16),
             TextField(
               controller: remarksController,
@@ -137,12 +179,12 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text("Cancel"),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () {
               Get.back(); // close dialog
               controller.receiveChallan(challanId, remarksController.text);
@@ -154,7 +196,10 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
     );
   }
 
-  Widget _buildHeaderInfo(BuildContext context, BuyerDeliveryChallanModel challan) {
+  Widget _buildHeaderInfo(
+    BuildContext context,
+    BuyerDeliveryChallanModel challan,
+  ) {
     final theme = Theme.of(context);
     String status = challan.status ?? "Unknown";
     Color statusColor = _getStatusColor(status);
@@ -176,7 +221,10 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: statusColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -199,7 +247,7 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
               const Icon(IconlyLight.calendar, size: 16, color: Colors.grey),
               const SizedBox(width: 8),
               Text(
-                "Date: ${challan.challanDate ?? "N/A"}",
+                "Date: ${_formatDateOnly(challan.challanDate)}",
                 style: GoogleFonts.inter(fontSize: 14),
               ),
             ],
@@ -210,39 +258,117 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
               const Icon(IconlyLight.time_circle, size: 16, color: Colors.grey),
               const SizedBox(width: 8),
               Text(
-                "Created: ${_formatDate(challan.createdAt)}",
+                "Created At: ${_formatDateTime(challan.createdAt)}",
                 style: GoogleFonts.inter(fontSize: 14),
               ),
             ],
           ),
+          if (challan.updatedAt != null && challan.updatedAt!.trim().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(IconlyLight.edit, size: 16, color: Colors.grey),
+                const SizedBox(width: 8),
+                Text(
+                  "Updated At: ${_formatDateTime(challan.updatedAt)}",
+                  style: GoogleFonts.inter(fontSize: 14),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildEntitiesInfo(BuildContext context, BuyerDeliveryChallanModel challan) {
+  Widget _buildEntitiesInfo(
+    BuildContext context,
+    BuyerDeliveryChallanModel challan,
+  ) {
     return GlassCard(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildInfoRow(context, "Seller", challan.sellerNameDisplay ?? "N/A", IconlyLight.profile),
+          ..._partyRows(
+            context,
+            "Seller",
+            challan.sellerNameDisplay ?? challan.sellerName,
+            challan.sellerCompanyName,
+            challan.sellerGst,
+            challan.sellerPan,
+            challan.sellerAddress,
+          ),
           const Divider(height: 24),
-          _buildInfoRow(context, "Transporter", challan.transporterNameDisplay ?? "N/A", IconlyLight.send),
+          ..._partyRows(
+            context,
+            "Buyer",
+            challan.buyerNameDisplay ?? challan.buyerName,
+            challan.buyerCompanyName,
+            challan.buyerGst,
+            challan.buyerPan,
+            challan.buyerAddress,
+          ),
           if (challan.dispatchedByName != null) ...[
             const Divider(height: 24),
-            _buildInfoRow(context, "Dispatched By", challan.dispatchedByName!, IconlyLight.arrow_up_circle),
+            _buildInfoRow(
+              context,
+              "Dispatched By",
+              challan.dispatchedByName!,
+              IconlyLight.arrow_up_circle,
+            ),
           ],
           if (challan.receivedByName != null) ...[
             const Divider(height: 24),
-            _buildInfoRow(context, "Received By", challan.receivedByName!, IconlyLight.arrow_down_circle),
+            _buildInfoRow(
+              context,
+              "Received By",
+              challan.receivedByName!,
+              IconlyLight.arrow_down_circle,
+            ),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildTransportInfo(BuildContext context, BuyerDeliveryChallanModel challan) {
+  /// Name, company, GST, PAN and address for one party, as on the web challan page.
+  List<Widget> _partyRows(
+    BuildContext context,
+    String label,
+    String? name,
+    String? company,
+    String? gst,
+    String? pan,
+    String? address,
+  ) {
+    String show(String? value) => (value == null || value.trim().isEmpty) ? "—" : value.trim();
+    final theme = Theme.of(context);
+    Widget line(String key, String? value) => Padding(
+          padding: const EdgeInsets.only(left: 34, top: 4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(width: 72, child: Text(key, style: theme.textTheme.bodySmall)),
+              Expanded(
+                child: Text(show(value), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              ),
+            ],
+          ),
+        );
+    return [
+      _buildInfoRow(context, label, show(name), IconlyLight.profile),
+      line("Company", company),
+      line("GST", gst),
+      line("PAN", pan),
+      line("Address", address),
+    ];
+  }
+
+  Widget _buildTransportInfo(
+    BuildContext context,
+    BuyerDeliveryChallanModel challan,
+  ) {
     return GlassCard(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -250,20 +376,56 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
         children: [
           Text(
             "Transport Details",
-            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 12),
-          _buildInfoRow(context, "Truck No", challan.truckNumber ?? "N/A", IconlyLight.discovery),
+          _buildInfoRow(
+            context,
+            "Truck No",
+            challan.truckNumber ?? "N/A",
+            IconlyLight.discovery,
+          ),
           const SizedBox(height: 12),
-          _buildInfoRow(context, "Driver Name", challan.driverName ?? "N/A", IconlyLight.profile),
+          _buildInfoRow(
+            context,
+            "Driver Name",
+            challan.driverName ?? "N/A",
+            IconlyLight.profile,
+          ),
           const SizedBox(height: 12),
-          _buildInfoRow(context, "Driver Mobile", challan.driverMobile ?? "N/A", IconlyLight.call),
+          _buildInfoRow(
+            context,
+            "License Number",
+            challan.driverLicenseNumber ?? "N/A",
+            IconlyLight.paper,
+          ),
+          const SizedBox(height: 12),
+          _buildInfoRow(
+            context,
+            "Driver Mobile",
+            challan.driverMobile ?? "N/A",
+            IconlyLight.call,
+          ),
+          const SizedBox(height: 12),
+          _buildInfoRow(
+            context,
+            "Transporter",
+            challan.transporterNameDisplay ?? "N/A",
+            IconlyLight.send,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildItemsList(BuildContext context, List<DeliveryChallanItem> items) {
+  Widget _buildItemsList(
+    BuildContext context,
+    List<DeliveryChallanItem> items,
+    String? totalAmount,
+  ) {
     return GlassCard(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -271,7 +433,10 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
         children: [
           Text(
             "Items (${items.length})",
-            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 12),
           ListView.separated(
@@ -287,10 +452,15 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(IconlyBold.bag, color: Theme.of(context).colorScheme.primary),
+                    child: Icon(
+                      IconlyBold.bag,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -299,12 +469,18 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
                       children: [
                         Text(
                           item.productName ?? "Product",
-                          style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           "${item.quantity} ${item.unit} (${item.bagCount} bags)",
-                          style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
                         ),
                       ],
                     ),
@@ -313,13 +489,19 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        "₹${item.amount}",
-                        style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
+                        formatInr(item.amount),
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         "₹${item.rate} / ${item.unit}",
-                        style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
                       ),
                     ],
                   ),
@@ -327,41 +509,21 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
               );
             },
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAmountDetails(BuildContext context, BuyerDeliveryChallanModel challan) {
-    return GlassCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Amount Details",
-            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          _buildAmountRow(context, "Lorry Freight (per bag)", challan.lorryFreightPerBag),
-          const SizedBox(height: 8),
-          _buildAmountRow(context, "Loading Charges", challan.loadingCharges),
-          const SizedBox(height: 8),
-          _buildAmountRow(context, "Other Expenses", challan.otherExp),
-          const SizedBox(height: 8),
-          _buildAmountRow(context, "Less Advance", challan.lessAdvance),
           const Divider(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Total Amount",
-                style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+                "Total",
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               Text(
-                "₹${challan.totalAmount ?? '0.0'}",
+                formatInr(totalAmount ?? 0),
                 style: GoogleFonts.poppins(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).colorScheme.primary,
                 ),
@@ -372,7 +534,40 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
       ),
     );
   }
-  
+
+  Widget _buildAmountDetails(
+    BuildContext context,
+    BuyerDeliveryChallanModel challan,
+  ) {
+    return GlassCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Charges Summary",
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildAmountRow(
+            context,
+            "Lorry Freight (per bag)",
+            challan.lorryFreightPerBag,
+          ),
+          const SizedBox(height: 8),
+          _buildAmountRow(context, "Loading Charges", challan.loadingCharges),
+          const SizedBox(height: 8),
+          _buildAmountRow(context, "Other Expenses", challan.otherExp),
+          const SizedBox(height: 8),
+          _buildAmountRow(context, "Less Advance", challan.lessAdvance),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAmountRow(BuildContext context, String label, String? amount) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -391,7 +586,10 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
         children: [
           Text(
             "Narration / Details",
-            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 12),
           Text(
@@ -403,7 +601,110 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(BuildContext context, String label, String value, IconData icon) {
+  Widget _buildActionsCard(
+    BuildContext context,
+    BuyerDeliveryChallanModel challan,
+  ) {
+    final status = challan.status?.toLowerCase() ?? '';
+    final canReceive = (status == 'dispatched' ||
+            status == 'in_transit' ||
+            status == 'shipped') &&
+        status != 'delivered' &&
+        status != 'received' &&
+        status != 'completed';
+
+    return GlassCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Actions",
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 14),
+          if (canReceive) ...[
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () => _showReceiveDialog(context, challan.id!),
+                icon: const Icon(Icons.check_circle_outline, size: 20),
+                label: controller.isReceiving.value
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(
+                        "Mark as Received",
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.primary,
+                side: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 1.5,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () async {
+                try {
+                  await BuyerChallanPdfService.downloadAndShare(challan);
+                } catch (error) {
+                  AppSnackbar.showError(
+                    title: 'PDF generation failed',
+                    message: error.toString().replaceFirst('Exception: ', ''),
+                  );
+                }
+              },
+              icon: const Icon(Icons.picture_as_pdf_outlined, size: 20),
+              label: Text(
+                "Download PDF",
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(
+    BuildContext context,
+    String label,
+    String value,
+    IconData icon,
+  ) {
     return Row(
       children: [
         Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
@@ -418,7 +719,10 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               value,
-              style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500),
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -428,18 +732,40 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
 
   Color _getStatusColor(String status) {
     status = status.toLowerCase();
-    if (status.contains('delivered') || status.contains('received')) return Colors.green;
-    if (status.contains('dispatched') || status.contains('transit')) return Colors.blue;
+    if (status.contains('delivered') || status.contains('received'))
+      return Colors.green;
+    if (status.contains('dispatched') || status.contains('transit'))
+      return Colors.blue;
     if (status.contains('cancel')) return Colors.red;
     return Colors.orange;
   }
 
-  String _formatDate(String? dateStr) {
-    if (dateStr == null || dateStr.isEmpty) return "N/A";
+  String _formatDateOnly(String? dateStr) {
+    if (dateStr == null || dateStr.trim().isEmpty) return "N/A";
     try {
-      final date = DateTime.parse(dateStr);
-      return "${date.day}/${date.month}/${date.year}";
-    } catch (e) {
+      final date = DateTime.parse(dateStr).toLocal();
+      final day = date.day.toString().padLeft(2, '0');
+      final month = date.month.toString().padLeft(2, '0');
+      final year = date.year.toString();
+      return "$day-$month-$year";
+    } catch (_) {
+      return dateStr;
+    }
+  }
+
+  String _formatDateTime(String? dateStr) {
+    if (dateStr == null || dateStr.trim().isEmpty) return "N/A";
+    try {
+      final date = DateTime.parse(dateStr).toLocal();
+      final day = date.day.toString().padLeft(2, '0');
+      final month = date.month.toString().padLeft(2, '0');
+      final year = date.year.toString();
+      final h = date.hour;
+      final hour12 = (h % 12 == 0 ? 12 : h % 12).toString().padLeft(2, '0');
+      final minute = date.minute.toString().padLeft(2, '0');
+      final amPm = h >= 12 ? 'PM' : 'AM';
+      return "$day-$month-$year $hour12:$minute $amPm";
+    } catch (_) {
       return dateStr;
     }
   }

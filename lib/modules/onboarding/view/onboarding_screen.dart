@@ -120,7 +120,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         children: [
           // Image with glass frame
           Container(
-            padding: const EdgeInsets.all(24),
+            width: 220,
+            height: 220,
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isDark
@@ -139,10 +141,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ],
             ),
-            child: Image.asset(
-              page.image,
-              height: 180,
-              fit: BoxFit.contain,
+            child: ClipOval(
+              child: Image.asset(
+                page.image,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Center(
+                  child: Icon(IconlyLight.image, size: 64, color: theme.colorScheme.primary),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 50),

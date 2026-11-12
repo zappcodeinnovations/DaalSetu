@@ -2,11 +2,13 @@ import '../../../../comman/api_url.dart';
 import '../../../../network/api_client.dart';
 import '../model/branch_model.dart';
 import 'package:get/get.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class TransporterBranchController extends GetxController {
   
   var branches = <BranchModel>[].obs;
   var isLoading = false.obs;
+  bool _fetchingBranches = false;
 
   @override
   void onInit() {
@@ -14,15 +16,18 @@ class TransporterBranchController extends GetxController {
     fetchBranches();
   }
 
-  Future<void> fetchBranches() async {
+  Future<void> fetchBranches({bool silent = false}) async {
+    if (_fetchingBranches || isClosed) return;
+    _fetchingBranches = true;
     try {
-      isLoading(true);
+      if (!silent) isLoading(true);
       final response = await ApiClient.get(
         endpoint: ApiUrls.publicBranches,
         requireAuth: true,
+        suppressErrorDialog: silent,
       );
 
-      if (response != null) {
+      if (response != null && !isClosed) {
         List<dynamic> dataList = [];
         if (response is List) {
           dataList = response;
@@ -35,9 +40,10 @@ class TransporterBranchController extends GetxController {
         branches.value = dataList.map((json) => BranchModel.fromJson(json)).toList();
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to load branches: $e', snackPosition: SnackPosition.BOTTOM);
+      if (!silent && !isClosed) AppSnackbar.snackbar('Error', 'Failed to load branches: $e', snackPosition: SnackPosition.BOTTOM);
     } finally {
-      isLoading(false);
+      _fetchingBranches = false;
+      if (!silent && !isClosed) isLoading(false);
     }
   }
 
@@ -52,12 +58,12 @@ class TransporterBranchController extends GetxController {
       );
 
       if (response != null) {
-        Get.snackbar('Success', 'Branch request sent to Super Admin!', snackPosition: SnackPosition.BOTTOM);
+        AppSnackbar.snackbar('Success', 'Branch request sent to Super Admin!', snackPosition: SnackPosition.BOTTOM);
         await fetchBranches();
         return true;
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to request branch: $e', snackPosition: SnackPosition.BOTTOM);
+      AppSnackbar.snackbar('Error', 'Failed to request branch: $e', snackPosition: SnackPosition.BOTTOM);
     }
     return false;
   }

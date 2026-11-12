@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
+
+import '../../../../theme/app_theme.dart';
 import '../controller/seller_company_controller.dart';
 import '../model/seller_company_model.dart';
 import 'add_company_view.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class SellerCompanyView extends StatelessWidget {
   const SellerCompanyView({super.key});
 
-  static const Color primaryColor = Color(0xFFFFB300);
+  static const Color primaryColor = AppTheme.primaryGold;
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +20,7 @@ class SellerCompanyView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
@@ -180,64 +183,30 @@ class SellerCompanyView extends StatelessWidget {
           _infoRow(IconlyLight.document, "GST: ${company.gstNumber}", theme),
           const SizedBox(height: 12),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      controller.populateFields(company);
-                      Get.to(() => const AddCompanyView());
-                    },
-                    icon: const Icon(Icons.edit_outlined, size: 16),
-                    label: const Text("Edit"),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.blue,
-                      side: const BorderSide(color: Colors.blue),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: () {
-                      // Delete functionality (No API yet)
-                    },
-                    icon: const Icon(Icons.delete_outline, color: Colors.red),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.red.withOpacity(0.1),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
-                ],
+              OutlinedButton.icon(
+                onPressed: () {
+                  controller.populateFields(company);
+                  Get.to(() => const AddCompanyView());
+                },
+                icon: const Icon(Icons.edit_outlined, size: 16),
+                label: const Text("Edit"),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.blue,
+                  side: const BorderSide(color: Colors.blue),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
               ),
-              if (company.isVerified)...[
-                Row(
-                  children: [
-                    const Icon(Icons.verified, color: Colors.blue, size: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      "Verified",
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.blue,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: () => controller.deleteCompany(company),
+                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.red.withValues(alpha: 0.1),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-              ]else...[
-                Row(
-                  children: [
-                    Text(
-                      "Not Verified",
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.redAccent,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ]
+              ),
             ],
           ),
         ],
@@ -255,7 +224,9 @@ class SellerCompanyView extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: theme.textTheme.bodyMedium?.copyWith(color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8)),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
+              ),
             ),
           ),
         ],

@@ -14,9 +14,15 @@ class AppPreferences {
   static const _roleKey = "user_role";
   static const _userIdKey = "user_id";
   static const _usernameKey = "username";
+  static const _activeBranchIdKey = "active_branch_id";
+  static const _activeBranchCodeKey = "active_branch_code";
 
   static final FlutterSecureStorage _secureStorage =
       const FlutterSecureStorage();
+
+  /// Bumped on every login and logout, so screens that cache per-user state (the
+  /// side drawer's role menu) can tell a different session started.
+  static int sessionVersion = 0;
 
   /// ===============================
   /// ONBOARDING
@@ -40,12 +46,27 @@ class AppPreferences {
     required String role,
     required String userId,
     required String username,
+    String? activeBranchId,
+    String? activeBranchCode,
   }) async {
+    sessionVersion++;
     await _secureStorage.write(key: _accessTokenKey, value: accessToken);
     await _secureStorage.write(key: _refreshTokenKey, value: refreshToken);
     await _secureStorage.write(key: _roleKey, value: role);
     await _secureStorage.write(key: _userIdKey, value: userId);
     await _secureStorage.write(key: _usernameKey, value: username);
+    if (activeBranchId != null) {
+      await _secureStorage.write(
+        key: _activeBranchIdKey,
+        value: activeBranchId,
+      );
+    }
+    if (activeBranchCode != null) {
+      await _secureStorage.write(
+        key: _activeBranchCodeKey,
+        value: activeBranchCode,
+      );
+    }
   }
 
   /// ===============================
@@ -83,6 +104,12 @@ class AppPreferences {
     return await _secureStorage.read(key: _usernameKey);
   }
 
+  static Future<String?> getActiveBranchId() =>
+      _secureStorage.read(key: _activeBranchIdKey);
+
+  static Future<String?> getActiveBranchCode() =>
+      _secureStorage.read(key: _activeBranchCodeKey);
+
   /// ===============================
   /// CHECK IF LOGGED IN
   /// ===============================
@@ -95,11 +122,14 @@ class AppPreferences {
   /// LOGOUT (Clear Only Auth Data)
   /// ===============================
   static Future<void> logout() async {
+    sessionVersion++;
     await _secureStorage.delete(key: _accessTokenKey);
     await _secureStorage.delete(key: _refreshTokenKey);
     await _secureStorage.delete(key: _roleKey);
     await _secureStorage.delete(key: _userIdKey);
     await _secureStorage.delete(key: _usernameKey);
+    await _secureStorage.delete(key: _activeBranchIdKey);
+    await _secureStorage.delete(key: _activeBranchCodeKey);
   }
 
   /// ===============================

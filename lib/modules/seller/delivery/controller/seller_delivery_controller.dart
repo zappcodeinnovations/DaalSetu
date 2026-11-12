@@ -1,6 +1,7 @@
 import '../model/delivery_challan_model.dart';
 import '../../../../services/seller_services.dart';
 import 'package:get/get.dart';
+import '../../../../utils/app_snackbar.dart';
 
 class SellerDeliveryController extends GetxController {
   var isLoading = true.obs;
@@ -20,7 +21,7 @@ class SellerDeliveryController extends GetxController {
       final data = await SellerServices.getDeliveryChallans();
       challans.assignAll(data.map((e) => SellerChallanModel.fromJson(e)).toList());
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.snackbar("Error", e.toString());
     } finally {
       isLoading(false);
     }
@@ -30,9 +31,11 @@ class SellerDeliveryController extends GetxController {
     try {
       isDetailLoading(true);
       final data = await SellerServices.getChallanDetails(id);
-      selectedChallan.value = data;
+      // API wraps the challan as {"success": true, "data": {...}}.
+      final payload = data['data'] is Map ? data['data'] as Map : data;
+      selectedChallan.value = Map<String, dynamic>.from(payload);
     } catch (e) {
-      Get.snackbar("Error", "Could not fetch details");
+      AppSnackbar.snackbar("Error", "Could not fetch details");
     } finally {
       isDetailLoading(false);
     }
@@ -42,7 +45,7 @@ class SellerDeliveryController extends GetxController {
     try {
       isLoading(true);
       await SellerServices.dispatchChallan(id);
-      Get.snackbar("Success", "Shipment marked as dispatched");
+      AppSnackbar.snackbar("Success", "Shipment marked as dispatched");
       
       // Refresh list and details if open
       fetchChallans();
@@ -50,7 +53,7 @@ class SellerDeliveryController extends GetxController {
         fetchChallanDetails(id);
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+      AppSnackbar.snackbar("Error", e.toString());
     } finally {
       isLoading(false);
     }

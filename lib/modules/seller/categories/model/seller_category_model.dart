@@ -33,11 +33,13 @@ class CategoryTreeModel {
       status: json['status'] ?? "active",
       childrenCount: json['children_count'] ?? 0,
       hasChildren: json['has_children'] ?? false,
-      brands: (json['brands'] as List?)
+      brands:
+          (json['brands'] as List?)
               ?.map((e) => BrandModel.fromJson(e))
               .toList() ??
           [],
-      children: (json['children'] as List?)
+      children:
+          (json['children'] as List?)
               ?.map((e) => CategoryTreeModel.fromJson(e))
               .toList() ??
           [],
@@ -53,8 +55,10 @@ class BrandModel {
 
   factory BrandModel.fromJson(Map<String, dynamic> json) {
     return BrandModel(
-      id: json['id'],
-      brandName: json['brand_name'] ?? "",
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse('${json['id']}') ?? 0,
+      brandName: (json['brand_name'] ?? json['name'] ?? "").toString(),
     );
   }
 }
@@ -96,22 +100,40 @@ class CategoryDetailModel {
 
   factory CategoryDetailModel.fromJson(Map<String, dynamic> json) {
     return CategoryDetailModel(
-      id: json['id'],
-      name: json['category_name'] ?? "",
-      parent: json['parent'],
-      parentName: json['parent_name'],
-      level: json['level'] ?? 0,
-      path: json['path'] ?? "",
-      isActive: json['is_active'] ?? false,
-      status: json['status'] ?? "active",
-      childrenCount: json['children_count'] ?? 0,
-      fullPath: json['full_path'] ?? "",
-      isRoot: json['is_root'] ?? false,
-      isLeaf: json['is_leaf'] ?? false,
-      imageUrl: json['image_url'],
-      hasChildren: json['has_children'] ?? false,
-      brands: (json['brands'] as List?)
-              ?.map((e) => BrandModel.fromJson(e))
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse('${json['id']}') ?? 0,
+      name: (json['category_name'] ?? json['name'] ?? "").toString(),
+      parent: json['parent'] is int
+          ? json['parent'] as int
+          : int.tryParse('${json['parent'] ?? json['parent_id']}'),
+      parentName: json['parent_name']?.toString(),
+      level: json['level'] is int
+          ? json['level'] as int
+          : int.tryParse('${json['level']}') ?? 0,
+      path: (json['path'] ?? json['full_path'] ?? "").toString(),
+      isActive: json['is_active'] is bool
+          ? json['is_active'] as bool
+          : (json['is_active']?.toString().toLowerCase() == 'true' ||
+              (json['status'] ?? 'active').toString().toLowerCase() == 'active'),
+      status: (json['status'] ?? "active").toString(),
+      childrenCount: json['children_count'] is int
+          ? json['children_count'] as int
+          : int.tryParse('${json['children_count']}') ?? 0,
+      fullPath: (json['full_path'] ?? json['path'] ?? "").toString(),
+      isRoot: json['is_root'] is bool
+          ? json['is_root'] as bool
+          : (json['level'] == 0 || json['parent'] == null),
+      isLeaf: json['is_leaf'] is bool
+          ? json['is_leaf'] as bool
+          : false,
+      imageUrl: (json['image_url'] ?? json['image'])?.toString(),
+      hasChildren: json['has_children'] is bool
+          ? json['has_children'] as bool
+          : false,
+      brands:
+          (json['brands'] as List?)
+              ?.map((e) => BrandModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
     );

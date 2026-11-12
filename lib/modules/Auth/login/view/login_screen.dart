@@ -1,321 +1,360 @@
-import 'dart:ui';
-import 'package:iconly/iconly.dart';
-import '../../../../routes/app_routes.dart';
-import '../../../../theme/glass_widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:iconly/iconly.dart';
+
+import '../../../../routes/app_routes.dart';
+import '../../../../theme/app_theme.dart';
+import '../../../../theme/glass_widgets.dart';
 import '../controller/login_controller.dart';
 
-class LoginScreen extends StatelessWidget {
-  LoginScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
-  final ValueNotifier<bool> _isPasswordVisible = ValueNotifier<bool>(false);
-  final ValueNotifier<bool> _rememberMe = ValueNotifier<bool>(false);
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  late final LoginController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.isRegistered<LoginController>()
+        ? Get.find<LoginController>()
+        : Get.put(LoginController());
+    final arguments = Get.arguments;
+    if (arguments is Map && arguments['mobile'] != null) {
+      controller.usernameController.text = arguments['mobile'].toString();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final LoginController controller = Get.put(LoginController());
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? AppTheme.textPrimary : AppTheme.textPrimaryLight;
+    final subtextColor = isDark
+        ? AppTheme.textSecondary
+        : AppTheme.textSecondaryLight;
+    final mutedColor = isDark ? AppTheme.textMuted : AppTheme.textMutedLight;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: isDark
-                ? [
-                    const Color(0xFF2A1B00),
-                    const Color(0xFF0D1117),
-                  ]
-                : [
-                    const Color(0xFFFFF3CC),
-                    const Color(0xFFFFFCF5),
-                    Colors.white,
-                  ],
-          ),
-        ),
+        decoration: BoxDecoration(color: theme.scaffoldBackgroundColor),
         child: Stack(
           children: [
-            // ── Decorative circles ──────────────────────────────
             Positioned(
-              top: -80,
-              right: -60,
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      theme.colorScheme.primary.withValues(alpha: 0.15),
-                      theme.colorScheme.primary.withValues(alpha: 0),
-                    ],
-                  ),
-                ),
+              top: -110,
+              right: -90,
+              child: _Glow(
+                size: 280,
+                color: const Color(0xFFFFB300),
+                isDark: isDark,
               ),
             ),
             Positioned(
-              bottom: -60,
-              left: -40,
-              child: Container(
-                width: 160,
-                height: 160,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      theme.colorScheme.secondary.withValues(alpha: 0.1),
-                      theme.colorScheme.secondary.withValues(alpha: 0),
-                    ],
-                  ),
-                ),
+              bottom: -100,
+              left: -100,
+              child: _Glow(
+                size: 250,
+                color: const Color(0xFFFF6D00),
+                isDark: isDark,
               ),
             ),
-
-            // ── Main Content ─────────────────────────────────────
             SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                child: Form(
-                  key: controller.formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 30),
-
-                      // ── Logo with glass frame ─────────────────
-                      Container(
-                        width: 110,
-                        height: 110,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: theme.colorScheme.primary
-                                  .withValues(alpha: 0.25),
-                              blurRadius: 24,
-                              spreadRadius: 4,
-                            ),
-                          ],
-                        ),
-                        child: ClipOval(
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.3),
-                                  width: 2,
-                                ),
-                              ),
-                              child: ClipOval(
-                                child: Image.asset(
-                                  'assets/images/app_icon.jpeg',
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 28),
-
-                      // ── Welcome Text ──────────────────────────
-                      Text(
-                        "Welcome Back",
-                        style: GoogleFonts.poppins(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: theme.textTheme.bodyLarge?.color,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        "Sign in to manage your platform",
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: theme.textTheme.bodyMedium?.color,
-                        ),
-                      ),
-
-                      const SizedBox(height: 36),
-
-                      // ── Glass Form Card ───────────────────────
-                      GlassCard(
-                        padding: const EdgeInsets.all(24),
-                        blur: 20,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Admin ID
-                            Text(
-                              "Admin ID or Email",
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: theme.textTheme.bodyLarge?.color,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            GlassTextField(
-                              controller: controller.usernameController,
-                              hintText: "Enter your admin ID",
-                              prefixIcon: IconlyLight.profile,
-                              validator: (value) =>
-                                  value!.isEmpty ? "Enter Admin ID" : null,
-                            ),
-
-                            const SizedBox(height: 22),
-
-                            // Password Label + Forgot
-                            Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 24,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 460),
+                    child: Form(
+                      key: controller.formKey,
+                      child: Column(
+                        children: [
+                          _brandHeader(textColor, subtextColor),
+                          const SizedBox(height: 28),
+                          GlassCard(
+                            borderRadius: 28,
+                            blur: 24,
+                            padding: const EdgeInsets.all(24),
+                            glowColor: AppTheme.primaryGold,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "Password",
-                                  style: GoogleFonts.inter(
+                                  'Sign In',
+                                  style: TextStyle(
+                                    color: textColor,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.4,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  'Use your registered mobile number to continue.',
+                                  style: TextStyle(
+                                    color: subtextColor,
                                     fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: theme.textTheme.bodyLarge?.color,
+                                    height: 1.45,
                                   ),
                                 ),
-                                GestureDetector(
-                                  onTap: () {
-                                    Get.toNamed(AppRoutes.forgot_password);
+                                const SizedBox(height: 24),
+                                _label('Mobile number', textColor),
+                                const SizedBox(height: 8),
+                                GlassTextField(
+                                  controller: controller.usernameController,
+                                  hintText: '10-digit mobile number',
+                                  prefixIcon: IconlyLight.call,
+                                  keyboardType: TextInputType.phone,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                    LengthLimitingTextInputFormatter(10),
+                                  ],
+                                  textInputAction: TextInputAction.next,
+                                  autofillHints: const [
+                                    AutofillHints.telephoneNumber,
+                                  ],
+                                  validator: (value) {
+                                    final mobile = value?.trim() ?? '';
+                                    if (mobile.isEmpty) {
+                                      return 'Enter your mobile number';
+                                    }
+                                    if (!RegExp(r'^\d{10}$').hasMatch(mobile)) {
+                                      return 'Enter a valid 10-digit mobile number';
+                                    }
+                                    return null;
                                   },
-                                  child: Text(
-                                    "Forgot Password?",
-                                    style: GoogleFonts.inter(
-                                      color: theme.colorScheme.primary,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-
-                            // Password Input
-                            ValueListenableBuilder<bool>(
-                              valueListenable: _isPasswordVisible,
-                              builder: (context, isVisible, child) {
-                                return GlassTextField(
-                                  controller: controller.passwordController,
-                                  obscureText: !isVisible,
-                                  hintText: "••••••••",
-                                  prefixIcon: IconlyLight.lock,
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      isVisible
-                                          ? IconlyLight.show
-                                          : IconlyLight.hide,
-                                      color:
-                                          theme.textTheme.bodyMedium?.color,
-                                      size: 20,
-                                    ),
-                                    onPressed: () {
-                                      _isPasswordVisible.value = !isVisible;
-                                    },
-                                  ),
-                                  validator: (value) => value!.isEmpty
-                                      ? "Enter password"
-                                      : null,
-                                );
-                              },
-                            ),
-
-                            const SizedBox(height: 18),
-
-                            // Remember Me
-                            Row(
-                              children: [
-                                ValueListenableBuilder<bool>(
-                                  valueListenable: _rememberMe,
-                                  builder: (context, val, child) {
-                                    return SizedBox(
-                                      height: 22,
-                                      width: 22,
-                                      child: Checkbox(
-                                        value: val,
-                                        onChanged: (value) =>
-                                            _rememberMe.value = value!,
+                                const SizedBox(height: 20),
+                                _label('Password', textColor),
+                                const SizedBox(height: 8),
+                                Obx(
+                                  () {
+                                    final isVisible = controller.isPasswordVisible.value;
+                                    return GlassTextField(
+                                      controller: controller.passwordController,
+                                      hintText: 'Enter your password',
+                                      prefixIcon: IconlyLight.lock,
+                                      obscureText: !isVisible,
+                                      textInputAction: TextInputAction.done,
+                                      autofillHints: const [AutofillHints.password],
+                                      onFieldSubmitted: (_) => controller.login(),
+                                      suffixIcon: IconButton(
+                                        key: const Key('login_password_visibility_toggle'),
+                                        focusNode: FocusNode(skipTraversal: true),
+                                        onPressed: controller.togglePasswordVisibility,
+                                        icon: Icon(
+                                          isVisible
+                                              ? Icons.visibility_off_outlined
+                                              : Icons.visibility_outlined,
+                                          color: isDark
+                                              ? AppTheme.primaryGold
+                                              : AppTheme.secondaryOrange,
+                                          size: 20,
+                                        ),
                                       ),
+                                      validator: (value) => (value?.isEmpty ?? true)
+                                          ? 'Enter your password'
+                                          : null,
                                     );
                                   },
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  "Remember this device",
-                                  style: GoogleFonts.inter(
-                                    color: theme.textTheme.bodyMedium?.color,
-                                    fontSize: 13,
+                                const SizedBox(height: 6),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton(
+                                    onPressed: () =>
+                                        Get.toNamed(AppRoutes.forgot_password),
+                                    style: TextButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                        vertical: 2,
+                                      ),
+                                      minimumSize: Size.zero,
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: const Text('Forgot password?'),
+                                  ),
+                                ),
+                                const SizedBox(height: 18),
+                                Obx(
+                                  () => GlassButton(
+                                    isLoading: controller.isLoading.value,
+                                    onPressed: controller.login,
+                                    borderRadius: 16,
+                                    gradientColors: const [
+                                      AppTheme.primaryGold,
+                                      AppTheme.secondaryOrange,
+                                    ],
+                                    child: const Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          'Sign in securely',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        SizedBox(width: 10),
+                                        Icon(
+                                          Icons.arrow_forward_rounded,
+                                          color: Colors.white,
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-
-                            const SizedBox(height: 28),
-
-                            // Sign In Button
-                            Obx(
-                              () => GlassButton(
-                                isLoading: controller.isLoading.value,
-                                onPressed: controller.login,
-                                gradientColors: [
-                                  theme.colorScheme.primary,
-                                  const Color(0xFFFF8F00),
-                                ],
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      "Sign In",
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 5),
-                                    const Icon(
-                                      IconlyLight.arrow_right_2,
-                                      color: Colors.white,
-                                      size: 20,
-                                    ),
-                                  ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'New to DaalSetu? ',
+                                style: TextStyle(
+                                  color: mutedColor,
+                                  fontSize: 13,
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      TextButton(
-                        onPressed: () => Get.toNamed('/register'),
-                        child: Text(
-                          "Register New Account",
-                          style: GoogleFonts.inter(
-                            color: theme.textTheme.bodyMedium?.color,
-                            fontSize: 14,
+                              TextButton(
+                                onPressed: () =>
+                                    Get.toNamed(AppRoutes.register),
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                    vertical: 2,
+                                  ),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: const Text('Create account'),
+                              ),
+                            ],
                           ),
-                        ),
+                          const SizedBox(height: 20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.lock_outline_rounded,
+                                size: 15,
+                                color: mutedColor,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Protected secure access',
+                                style: TextStyle(
+                                  color: mutedColor,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _brandHeader(Color textColor, Color subtextColor) {
+    return Column(
+      children: [
+        Container(
+          width: 92,
+          height: 92,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFFB300).withValues(alpha: 0.28),
+                blurRadius: 28,
+                spreadRadius: 3,
+                offset: const Offset(0, 3),
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                spreadRadius: 0,
+                offset: const Offset(0, 2),
+              ),
+            ],
+            border: Border.all(color: Colors.white, width: 2),
+          ),
+          child: ClipOval(
+            child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Image.asset(
+                'assets/images/app_icon.jpeg',
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 18),
+        Text(
+          'DaalSetu',
+          style: TextStyle(
+            color: textColor,
+            fontSize: 28,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.8,
+          ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          'KISOR',
+          style: TextStyle(color: subtextColor, fontSize: 14),
+        ),
+      ],
+    );
+  }
+
+  Widget _label(String text, Color color) => Text(
+    text,
+    style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w700),
+  );
+}
+
+class _Glow extends StatelessWidget {
+  const _Glow({required this.size, required this.color, this.isDark = true});
+
+  final double size;
+  final Color color;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [
+            color.withValues(alpha: isDark ? 0.18 : 0.08),
+            color.withValues(alpha: 0),
           ],
         ),
       ),

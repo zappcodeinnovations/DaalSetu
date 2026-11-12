@@ -7,18 +7,23 @@ class SplashController {
 
   Future<void> handleNavigation(BuildContext context) async {
     await Future.delayed(const Duration(seconds: 3));
+    if (!context.mounted) return;
 
     final onboardingDone =
         await AppPreferences.isOnboardingCompleted();
-
-    final loggedIn =
-        await AppPreferences.isLoggedIn();
+    if (!context.mounted) return;
 
     if (!onboardingDone) {
       Navigator.pushReplacementNamed(
           context, AppRoutes.onboarding);
-    } 
-    else if (!loggedIn) {
+      return;
+    }
+
+    final loggedIn =
+        await AppPreferences.isLoggedIn();
+    if (!context.mounted) return;
+
+    if (!loggedIn) {
       Navigator.pushReplacementNamed(
           context, AppRoutes.login);
     } 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
 import '../controller/buyer_delivery_controller.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class BuyerChallanDetailsView extends StatelessWidget {
   final int challanId;
@@ -25,10 +26,10 @@ class BuyerChallanDetailsView extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text("Shipment Details", style: TextStyle(fontWeight: FontWeight.bold)),
-        leading: IconButton(
+        leading: AppBarLeading(child: IconButton(
           icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
-        ),
+        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
       ),
       body: Obx(() {
         if (controller.isDetailLoading.value) {
@@ -49,7 +50,7 @@ class BuyerChallanDetailsView extends StatelessWidget {
               _buildStatusBanner(status),
               const SizedBox(height: 24),
               
-              _sectionTitle("Shipment Information"),
+              _sectionTitle("Challan Information"),
               _detailCard([
                 _infoRow("Challan ID", "#${data['challan_number'] ?? data['id']}"),
                 _infoRow("Truck Number", data['truck_number'] ?? "N/A"),

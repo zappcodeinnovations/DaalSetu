@@ -12,31 +12,32 @@ abstract class AppRoutes {
   static const change_password = '/change-password';
   static const forgot_password = '/forgot-password';
 
-  //profile
+  // PROFILE
   static const profile_page = '/profile-page';
+  static const profile = '/profile';
+  static const editProfile = '/edit-profile';
+  static const completeProfile = '/complete-profile';
 
-  //Dashboard
+  // DASHBOARD
   static const dashboard = '/dashboard';
 
-  //categories
+  // CATEGORIES
   static const subcategory = "/subcategory";
 
   // MAIN APP
   static const mainNav = '/main-nav';
   static const home = '/home';
-  //usersss
+
+  // USERS
   static const users = '/users';
   static const users_details = '/users-details';
-  // PROFILE
-  static const profile = '/profile';
-  static const editProfile = '/edit-profile';
-  static const completeProfile = '/complete-profile';
 
   // OTHER FEATURES
   static const notifications = '/notifications';
   static const search = '/search';
   static const subscription = '/subscription';
   static const documents = '/documents';
+  static const downloads = '/downloads';
   static const settings = '/settings';
   static const support = '/support';
   static const about = '/about';
@@ -49,6 +50,12 @@ abstract class AppRoutes {
   static const sellerLogistics = '/seller/logistics';
   static const sellerProducts = '/seller/products';
   static const sellerContracts = '/seller/contracts';
+  static const sellerOfferInterests = '/seller/offer-interests';
+  static const sellerMediaGallery = '/seller/media-gallery';
+  static const sellerNotifications = '/seller/notifications';
+  static const sellerRFQs = '/seller/rfqs';
+  static const sellerDeliveryChallans = '/seller/delivery-challans';
+  static const sellerMasters = '/seller/masters';
 
   // TRANSPORTER PANEL
   static const transporterDashboard = '/transporter/dashboard';
@@ -65,6 +72,7 @@ abstract class AppRoutes {
   static const transporterUsers = '/transporter/users';
   static const transporterDrivers = '/transporter/drivers';
   static const transporterVehicles = '/transporter/vehicles';
+  static const transporterBidding = '/transporter/bidding';
 
   // BUYER PANEL
   static const buyerDashboard = '/buyer/dashboard';
@@ -78,4 +86,26 @@ abstract class AppRoutes {
   static const buyerDeliveryChallanDetails = '/buyer/delivery-challan-details';
   static const buyerOrders = '/buyer/orders';
   static const buyerTransportTracking = '/buyer/transport-tracking';
+
+  // ADMIN SIDEBAR
+  static String adminModule(String key) => '/admin/$key';
+  static const adminCreateOffer = '/admin/create-offer';
+  static const adminBranchSettings = '/admin/branches/settings';
+  static const adminContractHistory = '/admin/deals/contract-history';
+  static const adminContracts = '/admin/deals/contracts';
+  static const adminComplaints = '/admin/complaints';
+  static const adminBrokerageBills = '/admin/accounting/brokerage-bills';
+  static const adminRoles = '/admin/settings/roles';
+  static const adminPermissionsMatrix = '/admin/settings/permissions-matrix';
+
+  // ADMIN DELIVERY CHALLANS
+  static const adminDeliveryChallans = '/admin/delivery-challans';
+  static const adminCreateDC = '/admin/delivery-challans/create';
+  static const adminDCDetails = '/admin/delivery-challans/details';
+
+  // ADMIN REPORTS
+  static const adminBranchReports = '/admin/reports/branches';
+
+  // ADMIN NOTIFICATIONS
+  static const adminNotifications = '/admin/notifications';
 }

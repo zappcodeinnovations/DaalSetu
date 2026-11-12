@@ -2,19 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'routes/app_pages.dart';
 import 'routes/app_routes.dart';
+import 'services/realtime_notification_service.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
+import 'widgets/realtime_notification_banner_overlay.dart';
+import 'widgets/page_auto_refresh.dart';
 
 class AgroBrokerApp extends StatelessWidget {
   const AgroBrokerApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final ThemeController themeController = Get.put(ThemeController());
+    final themeController = Get.put(ThemeController());
+    Get.put(RealtimeNotificationService(), permanent: true);
 
     return Obx(
       () => GetMaterialApp(
-        title: 'Dal Broker Admin',
+        title: 'Daal Setu',
         debugShowCheckedModeBanner: false,
 
         theme: AppTheme.lightTheme,
@@ -24,16 +28,20 @@ class AgroBrokerApp extends StatelessWidget {
 
         initialRoute: AppRoutes.splash,
         getPages: AppPages.routes,
-        builder: (context, child) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
-          return Stack(
+        navigatorObservers: [pageRefreshRouteObserver],
+      builder: (context, child) {
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
+        return Material(
+          color: theme.scaffoldBackgroundColor,
+          child: Stack(
             children: [
               if (child != null) child,
               Positioned.fill(
                 child: IgnorePointer(
                   child: Center(
                     child: Opacity(
-                      opacity: isDark ? 0.08 : 0.08,
+                      opacity: isDark ? 0.03 : 0.025,
                       child: Image.asset(
                         'assets/images/thumb_logo.png',
                         width: 300,
@@ -43,10 +51,11 @@ class AgroBrokerApp extends StatelessWidget {
                   ),
                 ),
               ),
+              const RealtimeNotificationBannerOverlay(),
             ],
-          );
-        },
-      ),
-    );
+          ),
+        );
+      },
+    ));
   }
 }

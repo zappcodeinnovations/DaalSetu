@@ -1,8 +1,13 @@
 import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
+
+import '../../../theme/app_theme.dart';
 import '../../seller/dashboard/view/seller_dashboard_view.dart';
-import '../../seller/company/view/seller_company_view.dart';
-import '../../seller/categories/view/seller_category_view.dart';
+import '../../seller/products/view/seller_product_view.dart';
+import '../../seller/contracts/view/seller_contracts_view.dart';
+import '../../../widgets/app_shell.dart';
 import '../../contracts/view/contract_view.dart';
 import '../../dashboard/view/dashboard_page.dart';
 import '../../kyc_users/view/kyc_user_view.dart';
@@ -11,13 +16,13 @@ import '../../products/view/product_view.dart';
 import '../../transporter/dashboard/view/transporter_dashboard_view.dart';
 import '../../transporter/drivers/view/transporter_drivers_view.dart';
 import '../../transporter/vehicles/view/transporter_vehicles_view.dart';
+import '../../transporter/bidding/view/transporter_bidding_view.dart';
 import '../../buyer/dashboard/view/buyer_dashboard_view.dart';
 import '../../buyer/offers/view/buyer_offers_view.dart';
+import '../../buyer/offers/view/buyer_activity_view.dart';
 import '../../buyer/delivery_challan/view/buyer_delivery_challan_view.dart';
 import '../../buyer/branch/view/buyer_branch_view.dart';
 import '../../settings/view/settings_page.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 class MainNavigationScreen extends StatelessWidget {
   MainNavigationScreen({super.key});
@@ -25,28 +30,36 @@ class MainNavigationScreen extends StatelessWidget {
   final BottomNavController navController = Get.put(BottomNavController());
 
   List<Widget> _getPages(String role) {
-    if (role == 'seller') {
+    // "both_sellerandbuyer" users get the seller app instead of falling through to admin tabs.
+    if (role == 'seller' || role == 'both_sellerandbuyer') {
       return [
             SellerDashboardView(),
-            const SellerCompanyView(),
-            const SellerCategoryView(),
+            const SellerProductView(),
+            // "Menu" opens the side drawer (see _onTap), so this slot is never shown.
+            const SizedBox.shrink(),
+            const SellerContractsView(),
           ] +
           [SettingsScreen()];
     }
     if (role == 'transporter') {
       return [
             TransporterDashboardView(),
+            const TransporterBiddingView(),
             TransporterDriversView(),
             const TransporterVehiclesView(),
           ] +
           [SettingsScreen()];
     }
-    if (role == 'buyer') {
+    if (role == 'buyer' ||
+        role == 'both_sellerandbuyer' ||
+        role == 'buyer_seller' ||
+        role == 'both') {
       return [
             BuyerDashboardView(),
             const BuyerOffersView(),
+            const BuyerActivityView(),
             const BuyerDeliveryChallanView(),
-            BuyerBranchView(),
+            const BuyerBranchView(),
           ] +
           [SettingsScreen()];
     }
@@ -67,55 +80,61 @@ class MainNavigationScreen extends StatelessWidget {
       }
 
       return Scaffold(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         extendBody: true,
+        resizeToAvoidBottomInset: navController.userRole.value == 'admin' ? false : true,
         body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: Theme.of(context).brightness == Brightness.dark
-                  ? [
-                      const Color(0xFF1A1206),
-                      const Color(0xFF0D1117),
-                      const Color(0xFF0D1117),
-                    ]
-                  : [
-                      const Color(0xFFFFF8E1),
-                      const Color(0xFFFFFCF5),
-                      Colors.white,
-                    ],
-            ),
-          ),
+          color: Theme.of(context).scaffoldBackgroundColor,
           child: IndexedStack(
             index: navController.selectedIndex.value,
-            children: _getPages(navController.userRole.value),
+            children: _getPages(navController.userRole.value)
+                .asMap()
+                .entries
+                .map((entry) => TickerMode(
+                      enabled: entry.key == navController.selectedIndex.value,
+                      child: entry.value,
+                    ))
+                .toList(),
           ),
         ),
-        bottomNavigationBar: _GlassNavBar(
+        bottomNavigationBar: GlassNavBar(
           currentIndex: navController.selectedIndex.value,
           role: navController.userRole.value,
-          onTap: navController.changeIndex,
+          onTap: _onTap,
         ),
       );
     });
   }
+
+  static const _sellerMenuTab = 2;
+
+  void _onTap(int index) {
+    final role = navController.userRole.value;
+    final isSeller = role == 'seller' || role == 'both_sellerandbuyer';
+    if (isSeller && index == _sellerMenuTab) {
+      // The seller tools live in the side drawer, the same list on every page.
+      AppShell.openDrawer();
+      return;
+    }
+    navController.changeIndex(index);
+  }
 }
 
 /// ─── FLOATING GLASS BOTTOM NAV BAR ────────────────────────────────────────
-class _GlassNavBar extends StatelessWidget {
+class GlassNavBar extends StatelessWidget {
   final int currentIndex;
   final String role;
   final ValueChanged<int> onTap;
 
-  const _GlassNavBar({
+  const GlassNavBar({
+    super.key,
     required this.currentIndex,
     required this.role,
     required this.onTap,
   });
 
   List<_NavItem> get _items {
-    if (role == 'seller') {
+    if (role == 'seller' || role == 'both_sellerandbuyer') {
       return const [
         _NavItem(
           icon: IconlyLight.category,
@@ -123,14 +142,19 @@ class _GlassNavBar extends StatelessWidget {
           label: 'Dashboard',
         ),
         _NavItem(
-          icon: IconlyLight.home,
-          activeIcon: IconlyBold.home,
-          label: 'Company',
+          icon: IconlyLight.bag,
+          activeIcon: IconlyBold.bag,
+          label: 'Products',
         ),
         _NavItem(
-          icon: IconlyLight.document,
-          activeIcon: IconlyBold.document,
-          label: 'Category',
+          icon: IconlyLight.category,
+          activeIcon: IconlyBold.category,
+          label: 'Menu',
+        ),
+        _NavItem(
+          icon: IconlyLight.paper,
+          activeIcon: IconlyBold.paper,
+          label: 'Deals',
         ),
         _NavItem(
           icon: IconlyLight.setting,
@@ -145,6 +169,11 @@ class _GlassNavBar extends StatelessWidget {
           icon: IconlyLight.category,
           activeIcon: IconlyBold.category,
           label: 'Dashboard',
+        ),
+        _NavItem(
+          icon: IconlyLight.ticket_star,
+          activeIcon: IconlyBold.ticket_star,
+          label: 'Shipments',
         ),
         _NavItem(
           icon: IconlyLight.user_1,
@@ -163,7 +192,10 @@ class _GlassNavBar extends StatelessWidget {
         ),
       ];
     }
-    if (role == 'buyer') {
+    if (role == 'buyer' ||
+        role == 'both_sellerandbuyer' ||
+        role == 'buyer_seller' ||
+        role == 'both') {
       return const [
         _NavItem(
           icon: IconlyLight.category,
@@ -173,7 +205,12 @@ class _GlassNavBar extends StatelessWidget {
         _NavItem(
           icon: IconlyLight.ticket_star,
           activeIcon: IconlyBold.ticket_star,
-          label: 'Offers',
+          label: 'Products',
+        ),
+        _NavItem(
+          icon: IconlyLight.paper,
+          activeIcon: IconlyBold.paper,
+          label: 'Activity',
         ),
         _NavItem(
           icon: IconlyLight.document,
@@ -226,8 +263,14 @@ class _GlassNavBar extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    final mediaQuery = MediaQuery.of(context);
+    final isKeyboardOpen = mediaQuery.viewInsets.bottom > 0;
+    final systemBottom = isKeyboardOpen ? 0.0 : mediaQuery.padding.bottom;
+    final bottomMargin = systemBottom > 0 ? 16.0 + systemBottom : 16.0;
+
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      key: const Key('floating_glass_nav_bar_container'),
+      margin: EdgeInsets.fromLTRB(16, 0, 16, bottomMargin),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: BackdropFilter(
@@ -238,7 +281,7 @@ class _GlassNavBar extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: Theme.of(context).brightness == Brightness.dark
+                colors: isDark
                     ? [
                         const Color(0xFF1A1206),
                         const Color(0xFF0D1117),
@@ -251,25 +294,23 @@ class _GlassNavBar extends StatelessWidget {
                       ],
               ),
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.white.withValues(alpha: 0.6),
-                width: 1,
-              ),
+              border: Border.all(color: theme.dividerColor, width: 1),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.3)
+                      : Colors.black.withValues(alpha: 0.05),
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: List.generate(
                 _items.length,
-                (index) => _buildNavItem(context, index, _items),
+                (index) => Expanded(
+                  child: _buildNavItem(context, index, _items),
+                ),
               ),
             ),
           ),
@@ -286,59 +327,43 @@ class _GlassNavBar extends StatelessWidget {
     return GestureDetector(
       onTap: () => onTap(index),
       behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeInOut,
-        padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? 16 : 12,
-          vertical: 8,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? theme.colorScheme.primary.withValues(alpha: 0.12)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isSelected ? item.activeIcon : item.icon,
-              size: 22,
-              color: isSelected
-                  ? theme.colorScheme.primary
-                  : theme.iconTheme.color,
-            ),
-            const SizedBox(height: 4),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 200),
-              style: TextStyle(
-                fontSize: isSelected ? 10.5 : 10,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected
-                    ? theme.colorScheme.primary
-                    : theme.textTheme.bodySmall?.color,
+      child: Center(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          padding: EdgeInsets.symmetric(
+            horizontal: isSelected ? 8 : 4,
+            vertical: 6,
+          ),
+          decoration: BoxDecoration(
+            color: isSelected ? AppTheme.primaryGold : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isSelected ? item.activeIcon : item.icon,
+                size: 20,
+                color: isSelected ? Colors.white : theme.iconTheme.color,
               ),
-              child: Text(item.label),
-            ),
-            if (isSelected) ...[
               const SizedBox(height: 3),
-              Container(
-                width: 5,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.5),
-                      blurRadius: 6,
-                    ),
-                  ],
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 200),
+                style: TextStyle(
+                  fontSize: isSelected ? 9.5 : 9,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected
+                      ? Colors.white
+                      : theme.textTheme.bodySmall?.color,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                child: Text(item.label),
               ),
             ],
-          ],
+          ),
         ),
       ),
     );

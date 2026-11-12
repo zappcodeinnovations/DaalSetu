@@ -4,6 +4,8 @@ import '../model/tag_model.dart';
 import '../../../services/tag_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import './user_controller.dart';
+import '../../../utils/app_snackbar.dart';
 
 class AddUserController extends GetxController {
   var isLoading = false.obs;
@@ -26,49 +28,36 @@ class AddUserController extends GetxController {
   Future<void> fetchTags() async {
     try {
       final result = await TagService.fetchTags();
-
-      print("TAG RESULT: $result");
-      print("TAG TYPE: ${result.runtimeType}");
-
       tags.assignAll(result);
     } catch (e) {
-      print("Tag fetch error: $e");
+      debugPrint("Tag fetch error: $e");
     }
   }
 
-  // create tag
-  Future<Tag?> createTag(String tagName) async {
-    try {
-      final TagResponse response = await TagService.createTag(tagName);
-
-      final Tag newTag = response.tag;
-
-      tags.add(newTag);
-
-      selectedTagId.value = newTag.id;
-
-      return newTag;
-    } catch (e) {
-      print("Create tag error: $e");
-      return null;
-    }
+  /// Resets controller state to clean initial values.
+  void reset() {
+    selectedTagId.value = null;
+    isLoading.value = false;
   }
 
   /// ===============================
   /// CREATE USER
   /// ===============================
-  Future<void> createUser({
+  Future<bool> createUser({
     required String mobile,
     required String email,
     required String firstName,
     String? lastName,
     required String role,
+    required String password,
+    String? branchCode,
     String? panNumber,
     String? gstNumber,
     String? gender,
     String? dob,
     File? panImage,
     File? gstImage,
+    VoidCallback? onSuccess,
   }) async {
     try {
       isLoading.value = true;
@@ -79,6 +68,8 @@ class AddUserController extends GetxController {
         firstName: firstName,
         lastName: lastName,
         role: role,
+        password: password,
+        branchCode: branchCode,
         panNumber: panNumber,
         gstNumber: gstNumber,
         gender: gender,
@@ -89,7 +80,14 @@ class AddUserController extends GetxController {
       );
 
       if (response["status"] == "success") {
-        Get.snackbar(
+        if (Get.isRegistered<UserController>()) {
+          Get.find<UserController>().fetchUsers();
+        }
+
+        reset();
+        onSuccess?.call();
+
+        AppSnackbar.snackbar(
           "Success",
           response["message"] ?? "User created successfully",
           snackPosition: SnackPosition.BOTTOM,
@@ -103,21 +101,24 @@ class AddUserController extends GetxController {
         Future.delayed(const Duration(milliseconds: 900), () {
           Get.back(result: true);
         });
+        return true;
       } else {
-        Get.snackbar(
+        AppSnackbar.snackbar(
           "Error",
           response["message"] ?? "Something went wrong",
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
+        return false;
       }
     } catch (e) {
-      Get.snackbar(
+      AppSnackbar.snackbar(
         "Error",
         e.toString(),
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
+      return false;
     } finally {
       isLoading.value = false;
     }

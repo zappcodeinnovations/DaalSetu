@@ -1,0 +1,780 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:iconly/iconly.dart';
+import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../theme/app_theme.dart';
+import '../../../theme/glass_widgets.dart';
+import '../../../utils/tax_id_formatters.dart';
+import '../controller/profile_controller.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
+import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/utils/input_validators.dart';
+
+class EditProfileScreen extends StatefulWidget {
+  const EditProfileScreen({super.key});
+
+  @override
+  State<EditProfileScreen> createState() => _EditProfileScreenState();
+}
+
+class _EditProfileScreenState extends State<EditProfileScreen> {
+  final ProfileController controller = Get.find<ProfileController>();
+  final _formKey = GlobalKey<FormState>();
+
+  late TextEditingController _firstNameController;
+  late TextEditingController _lastNameController;
+  late TextEditingController _emailController;
+  late TextEditingController _mobileController;
+  late TextEditingController _genderController;
+  late TextEditingController _dobController;
+  late TextEditingController _panController;
+  late TextEditingController _gstController;
+  late String _originalPan;
+  late String _originalGst;
+  final ImagePicker _picker = ImagePicker();
+  XFile? _profileImage;
+  XFile? _panDocument;
+  XFile? _gstDocument;
+  XFile? _aadhaarDocument;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = controller.profile.value;
+
+    _firstNameController = TextEditingController(text: user?.firstName ?? '');
+    _lastNameController = TextEditingController(text: user?.lastName ?? '');
+    _emailController = TextEditingController(text: user?.email ?? '');
+    _mobileController = TextEditingController(text: user?.mobile ?? '');
+
+    String initialGender = 'Male';
+    if (user != null && user.gender.isNotEmpty) {
+      final g = user.gender.toLowerCase();
+      if (g == 'female') {
+        initialGender = 'Female';
+      } else if (g == 'other') {
+        initialGender = 'Other';
+      } else {
+        initialGender = 'Male';
+      }
+    }
+    _genderController = TextEditingController(text: initialGender);
+    String initialDob = '';
+    final rawDob = (user?.dob ?? '').trim();
+    if (rawDob.isNotEmpty && rawDob != 'null') {
+      if (rawDob.contains('-')) {
+        final parts = rawDob.split('-');
+        if (parts.length == 3) {
+          if (parts[0].length == 4) {
+            initialDob = '${parts[2].padLeft(2, '0')}/${parts[1].padLeft(2, '0')}/${parts[0]}';
+          } else {
+            initialDob = '${parts[0].padLeft(2, '0')}/${parts[1].padLeft(2, '0')}/${parts[2]}';
+          }
+        } else {
+          initialDob = rawDob;
+        }
+      } else {
+        initialDob = rawDob;
+      }
+    }
+    _dobController = TextEditingController(text: initialDob);
+    _panController = TextEditingController(text: user?.panNumber ?? '');
+    _gstController = TextEditingController(text: user?.gstNumber ?? '');
+    _originalPan = (user?.panNumber ?? '').trim().toUpperCase();
+    _originalGst = (user?.gstNumber ?? '').trim().toUpperCase();
+  }
+
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _mobileController.dispose();
+    _genderController.dispose();
+    _dobController.dispose();
+    _panController.dispose();
+    _gstController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectDate() async {
+    DateTime initial = DateTime.now();
+    final currentText = _dobController.text.trim();
+    if (currentText.isNotEmpty) {
+      try {
+        if (currentText.contains('/')) {
+          final parts = currentText.split('/');
+          if (parts.length == 3) {
+            final day = int.parse(parts[0]);
+            final month = int.parse(parts[1]);
+            final year = int.parse(parts[2]);
+            initial = DateTime(year, month, day);
+          }
+        } else if (currentText.contains('-')) {
+          final parsed = DateTime.tryParse(currentText);
+          if (parsed != null) initial = parsed;
+        }
+      } catch (_) {}
+    }
+
+    final now = DateTime.now();
+    if (initial.isAfter(now)) {
+      initial = now;
+    }
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: Theme.of(context).colorScheme.primary,
+              onPrimary: Colors.black,
+              surface: const Color(0xFF161C2C),
+              onSurface: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        _dobController.text = DateFormat('dd/MM/yyyy').format(picked);
+      });
+    }
+  }
+
+  Future<void> _pickImage(String type) async {
+    final picked = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      switch (type) {
+        case 'profile':
+          _profileImage = picked;
+          break;
+        case 'pan':
+          _panDocument = picked;
+          break;
+        case 'gst':
+          _gstDocument = picked;
+          break;
+        case 'aadhaar':
+          _aadhaarDocument = picked;
+          break;
+      }
+    });
+  }
+
+  void _saveProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+    final gstPanError = TaxIdValidator.gstMatchesPan(
+      _panController.text,
+      _gstController.text,
+    );
+    if (gstPanError != null) {
+      AppSnackbar.snackbar('Invalid GST number', gstPanError);
+      return;
+    }
+
+    final data = <String, dynamic>{
+      'first_name': _firstNameController.text.trim(),
+      'last_name': _lastNameController.text.trim(),
+      'gender': _genderController.text.trim().toLowerCase(),
+    };
+
+    if (_dobController.text.trim().isNotEmpty) {
+      final dobStr = _dobController.text.trim();
+      if (dobStr.contains('/')) {
+        final parts = dobStr.split('/');
+        if (parts.length == 3) {
+          final day = parts[0].padLeft(2, '0');
+          final month = parts[1].padLeft(2, '0');
+          final year = parts[2];
+          final formattedIso = '$year-$month-$day';
+          data['dob'] = formattedIso;
+          data['date_of_birth'] = formattedIso;
+        } else {
+          data['dob'] = dobStr;
+          data['date_of_birth'] = dobStr;
+        }
+      } else if (dobStr.contains('-')) {
+        final parts = dobStr.split('-');
+        if (parts.length == 3) {
+          if (parts[0].length == 4) {
+            data['dob'] = dobStr;
+            data['date_of_birth'] = dobStr;
+          } else {
+            final day = parts[0].padLeft(2, '0');
+            final month = parts[1].padLeft(2, '0');
+            final year = parts[2];
+            final formattedIso = '$year-$month-$day';
+            data['dob'] = formattedIso;
+            data['date_of_birth'] = formattedIso;
+          }
+        } else {
+          data['dob'] = dobStr;
+          data['date_of_birth'] = dobStr;
+        }
+      } else {
+        data['dob'] = dobStr;
+        data['date_of_birth'] = dobStr;
+      }
+    }
+
+    final email = _emailController.text.trim();
+    if (email.isNotEmpty && email != (controller.profile.value?.email ?? '')) {
+      data['email'] = email;
+    }
+
+    final mobile = _mobileController.text.trim();
+    if (mobile.isNotEmpty && mobile != (controller.profile.value?.mobile ?? '')) {
+      data['mobile'] = mobile;
+    }
+
+    final pan = _panController.text.trim().toUpperCase();
+    if (pan.isNotEmpty && pan != _originalPan) {
+      data['pan_number'] = pan;
+    }
+
+    final gst = _gstController.text.trim().toUpperCase();
+    if (gst.isNotEmpty && gst != _originalGst) data['gst_number'] = gst;
+
+    final files = <String, String>{
+      if (_profileImage != null) 'profile_image': _profileImage!.path,
+      if (_panDocument != null) 'pan_image': _panDocument!.path,
+      if (_gstDocument != null) 'gst_image': _gstDocument!.path,
+      if (_aadhaarDocument != null) 'adharcard_image': _aadhaarDocument!.path,
+    };
+    final success = files.isEmpty
+        ? await controller.updateProfile(data)
+        : await controller.updateProfileWithFiles(
+            fields: data.map((key, value) => MapEntry(key, '$value')),
+            files: files,
+          );
+    if (success) {
+      await Get.dialog<void>(
+        AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green),
+              SizedBox(width: 10),
+              Expanded(child: Text("Profile Updated")),
+            ],
+          ),
+          content: const Text(
+            "Your profile changes have been saved successfully.",
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Get.back(),
+              child: const Text("Done"),
+            ),
+          ],
+        ),
+        barrierDismissible: false,
+      );
+      if (mounted) Get.back();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return GradientScaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: AppBarLeading(child: IconButton(
+          icon: Icon(IconlyLight.arrow_left, color: theme.iconTheme.color),
+          onPressed: () => Get.back(),
+        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
+        title: Text(
+          "Edit Profile",
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            color: theme.textTheme.bodyLarge?.color,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: Stack(
+        children: [
+          DecoCircle(
+            size: 250,
+            color: theme.colorScheme.primary,
+            alignment: Alignment.topRight,
+            offset: const Offset(50, -50),
+          ),
+          DecoCircle(
+            size: 200,
+            color: const Color(0xFF8B5CF6),
+            alignment: Alignment.bottomLeft,
+            offset: const Offset(-50, 50),
+          ),
+
+          SafeArea(
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.all(20),
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7).withValues(
+                        alpha: theme.brightness == Brightness.dark ? 0.15 : 0.9,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          size: 20,
+                          color: theme.brightness == Brightness.dark
+                              ? const Color(0xFFFBBF24)
+                              : const Color(0xFFB45309),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            "Some field cannot be modified after profile verification.",
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: theme.brightness == Brightness.dark
+                                  ? const Color(0xFFFDE68A)
+                                  : const Color(0xFF92400E),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  Center(
+                    child: GestureDetector(
+                      onTap: () => _pickImage('profile'),
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: const Color(0xFF2A2312),
+                              border: Border.all(
+                                color: theme.colorScheme.primary.withValues(
+                                  alpha: 0.5,
+                                ),
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: theme.colorScheme.primary.withValues(
+                                    alpha: 0.2,
+                                  ),
+                                  blurRadius: 20,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: ClipOval(
+                              child: _profileImage != null
+                                  ? Image.file(
+                                      File(_profileImage!.path),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : controller.profile.value?.profileImage !=
+                                            null &&
+                                        controller
+                                            .profile
+                                            .value!
+                                            .profileImage!
+                                            .isNotEmpty
+                                  ? Image.network(
+                                      controller.profileImageUrl(
+                                        controller.profile.value!.profileImage,
+                                      ),
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, _, __) =>
+                                          _buildInitials(),
+                                    )
+                                  : _buildInitials(),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFF0F1522),
+                                  width: 3,
+                                ),
+                              ),
+                              child: const Icon(
+                                IconlyBold.camera,
+                                size: 16,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  _buildLabel("First Name"),
+                  GlassTextField(
+                    controller: _firstNameController,
+                    hintText: "Enter first name",
+                    prefixIcon: IconlyLight.profile,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? "Required"
+                        : InputValidators.personName(v, label: 'First name'),
+                  ),
+                  const SizedBox(height: 20),
+
+                  _buildLabel("Last Name"),
+                  GlassTextField(
+                    controller: _lastNameController,
+                    hintText: "Enter last name",
+                    prefixIcon: IconlyLight.profile,
+                    validator: (v) => InputValidators.personName(v, label: 'Last name'),
+                  ),
+                  const SizedBox(height: 20),
+
+                  _buildLabel("Email"),
+                  GlassTextField(
+                    controller: _emailController,
+                    hintText: "Enter email (e.g. buyer@gmail.com)",
+                    prefixIcon: IconlyLight.message,
+                    keyboardType: TextInputType.emailAddress,
+                    readOnly: (controller.profile.value?.email ?? '').isNotEmpty,
+                    suffixIcon: (controller.profile.value?.email ?? '').isNotEmpty
+                        ? const Icon(Icons.lock_outline, size: 18, color: Colors.grey)
+                        : null,
+                  ),
+                  const SizedBox(height: 20),
+
+                  _buildLabel("Mobile"),
+                  GlassTextField(
+                    controller: _mobileController,
+                    hintText: "Enter mobile (e.g. 1234567891)",
+                    prefixIcon: IconlyLight.call,
+                    keyboardType: TextInputType.phone,
+                    readOnly: (controller.profile.value?.mobile ?? '').isNotEmpty,
+                    suffixIcon: (controller.profile.value?.mobile ?? '').isNotEmpty
+                        ? const Icon(Icons.lock_outline, size: 18, color: Colors.grey)
+                        : null,
+                  ),
+                  const SizedBox(height: 20),
+
+                  _buildLabel("Date of Birth"),
+                  GestureDetector(
+                    onTap: _selectDate,
+                    child: AbsorbPointer(
+                      child: GlassTextField(
+                        controller: _dobController,
+                        hintText: "dd/mm/yyyy",
+                        prefixIcon: IconlyLight.calendar,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  _buildLabel("Gender"),
+                  DropdownButtonFormField<String>(
+                    initialValue: _genderController.text.isEmpty
+                        ? null
+                        : _genderController.text,
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: theme.brightness == Brightness.dark
+                          ? Colors.white
+                          : const Color(0xFF0F172A),
+                    ),
+                    icon: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: theme.brightness == Brightness.dark
+                          ? Colors.white70
+                          : const Color(0xFF64748B),
+                    ),
+                    selectedItemBuilder: (BuildContext context) {
+                      return ['Male', 'Female', 'Other'].map<Widget>((
+                        String item,
+                      ) {
+                        return Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            item,
+                            style: GoogleFonts.inter(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: theme.brightness == Brightness.dark
+                                  ? Colors.white
+                                  : const Color(0xFF0F172A),
+                            ),
+                          ),
+                        );
+                      }).toList();
+                    },
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: theme.brightness == Brightness.dark
+                          ? Colors.white.withValues(alpha: 0.06)
+                          : const Color(0xFFF1F5F9),
+                      prefixIcon: Icon(
+                        IconlyLight.user,
+                        color: theme.colorScheme.primary,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 18,
+                        horizontal: 20,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: theme.brightness == Brightness.dark
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : AppTheme.borderLight,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: theme.brightness == Brightness.dark
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : AppTheme.borderLight,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.primary,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                    dropdownColor: theme.brightness == Brightness.dark
+                        ? const Color(0xFF161C2C)
+                        : Colors.white,
+                    items: ['Male', 'Female', 'Other']
+                        .map(
+                          (g) => DropdownMenuItem(
+                            value: g,
+                            child: Text(
+                              g,
+                              style: GoogleFonts.inter(
+                                color: theme.brightness == Brightness.dark
+                                    ? Colors.white
+                                    : const Color(0xFF0F172A),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) {
+                      if (v != null) {
+                        setState(() {
+                          _genderController.text = v;
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 20),
+
+                  _buildLabel("PAN Number"),
+                  GlassTextField(
+                    controller: _panController,
+                    hintText: "Enter PAN number (e.g. ABCDE1234F)",
+                    prefixIcon: IconlyLight.document,
+                    textCapitalization: TextCapitalization.characters,
+                    inputFormatters: const [TaxIdInputFormatter.pan()],
+                    validator: TaxIdValidator.pan,
+                  ),
+                  const SizedBox(height: 20),
+
+                  _buildLabel("GST Number"),
+                  GlassTextField(
+                    controller: _gstController,
+                    hintText: "Enter GST number (e.g. 29ABCDE1234F1Z5)",
+                    prefixIcon: IconlyLight.document,
+                    textCapitalization: TextCapitalization.characters,
+                    inputFormatters: const [TaxIdInputFormatter.gst()],
+                    validator: TaxIdValidator.gst,
+                  ),
+
+                  const SizedBox(height: 28),
+                  Text(
+                    "Documents",
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _documentPicker(
+                    "PAN Document",
+                    'pan',
+                    _panDocument,
+                    controller.profile.value?.panImage ?? '',
+                  ),
+                  const SizedBox(height: 10),
+                  _documentPicker(
+                    "GST Document",
+                    'gst',
+                    _gstDocument,
+                    controller.profile.value?.gstImage ?? '',
+                  ),
+                  const SizedBox(height: 10),
+                  _documentPicker(
+                    "Aadhaar Document",
+                    'aadhaar',
+                    _aadhaarDocument,
+                    controller.profile.value?.aadhaarImage ?? '',
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  Obx(
+                    () => GlassButton(
+                      onPressed: _saveProfile,
+                      isLoading: controller.isUpdating.value,
+                      child: Text(
+                        "Save Changes",
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8, left: 4),
+      child: Text(
+        text,
+        style: GoogleFonts.inter(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: isDark ? Colors.white70 : const Color(0xFF334155),
+        ),
+      ),
+    );
+  }
+
+  Widget _documentPicker(
+    String title,
+    String type,
+    XFile? selected,
+    String uploadedUrl,
+  ) {
+    final theme = Theme.of(context);
+    final hasExisting = uploadedUrl.trim().isNotEmpty;
+    return GlassCard(
+      onTap: hasExisting ? null : () => _pickImage(type),
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: .12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(IconlyLight.document, color: theme.colorScheme.primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+                ),
+                Text(
+                  selected != null
+                      ? selected.name
+                      : hasExisting
+                      ? 'Already uploaded'
+                      : 'Tap to select JPG or PNG',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    color: theme.textTheme.bodyMedium?.color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            selected != null || hasExisting
+                ? Icons.check_circle
+                : IconlyLight.upload,
+            color: selected != null || hasExisting
+                ? Colors.green
+                : theme.colorScheme.primary,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInitials() {
+    final user = controller.profile.value;
+    return Center(
+      child: Text(
+        user?.firstName.isNotEmpty == true
+            ? user!.firstName[0].toUpperCase()
+            : "A",
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 36,
+        ),
+      ),
+    );
+  }
+}

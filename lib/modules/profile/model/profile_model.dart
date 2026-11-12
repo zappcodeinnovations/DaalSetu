@@ -13,7 +13,9 @@ class ProfileModel {
   final String dob;
   final String panImage;
   final String gstImage;
+  final String aadhaarImage;
   final String kycStatus;
+  final bool hasPendingKycRequest;
   final String accountStatus;
   final bool isActive;
 
@@ -32,30 +34,173 @@ class ProfileModel {
     required this.dob,
     required this.panImage,
     required this.gstImage,
+    required this.aadhaarImage,
     required this.kycStatus,
+    this.hasPendingKycRequest = false,
     required this.accountStatus,
     required this.isActive,
   });
 
-  factory ProfileModel.fromJson(Map<String, dynamic> json) {
+  ProfileModel copyWith({
+    int? id,
+    String? username,
+    String? mobile,
+    String? email,
+    String? firstName,
+    String? lastName,
+    String? role,
+    String? panNumber,
+    String? gstNumber,
+    String? profileImage,
+    String? gender,
+    String? dob,
+    String? panImage,
+    String? gstImage,
+    String? aadhaarImage,
+    String? kycStatus,
+    bool? hasPendingKycRequest,
+    String? accountStatus,
+    bool? isActive,
+  }) {
     return ProfileModel(
-      id: json["id"],
-      username: json["username"] ?? "",
-      mobile: json["mobile"] ?? "",
-      email: json["email"] ?? "",
-      firstName: json["first_name"] ?? "",
-      lastName: json["last_name"] ?? "",
-      role: json["role"] ?? "",
-      panNumber: json["pan_number"] ?? "",
-      gstNumber: json["gst_number"] ?? "",
-      profileImage: json["profile_image"],
-      gender: json["gender"] ?? "",
-      dob: json["dob"] ?? "",
-      panImage: json["pan_image"] ?? "",
-      gstImage: json["gst_image"] ?? "",
-      kycStatus: json["kyc_status"] ?? "",
-      accountStatus: json["account_status"] ?? "",
-      isActive: json["is_active"] ?? false,
+      id: id ?? this.id,
+      username: username ?? this.username,
+      mobile: mobile ?? this.mobile,
+      email: email ?? this.email,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      role: role ?? this.role,
+      panNumber: panNumber ?? this.panNumber,
+      gstNumber: gstNumber ?? this.gstNumber,
+      profileImage: profileImage ?? this.profileImage,
+      gender: gender ?? this.gender,
+      dob: dob ?? this.dob,
+      panImage: panImage ?? this.panImage,
+      gstImage: gstImage ?? this.gstImage,
+      aadhaarImage: aadhaarImage ?? this.aadhaarImage,
+      kycStatus: kycStatus ?? this.kycStatus,
+      hasPendingKycRequest: hasPendingKycRequest ?? this.hasPendingKycRequest,
+      accountStatus: accountStatus ?? this.accountStatus,
+      isActive: isActive ?? this.isActive,
+    );
+  }
+
+  bool get isKycApproved =>
+      const ['approved', 'verified'].contains(kycStatus.trim().toLowerCase());
+
+  bool get isKycAwaitingApproval =>
+      !isKycApproved &&
+      (kycStatus.trim().toLowerCase() == 'pending' || hasPendingKycRequest);
+
+  bool get canRequestKycApproval =>
+      kycStatus.trim().toLowerCase() == 'rejected' && !hasPendingKycRequest;
+
+  factory ProfileModel.fromJson(Map<String, dynamic> json) {
+    Map<String, dynamic> data = json;
+    if (data.containsKey('body') && data['body'] is Map<String, dynamic>) {
+      data = data['body'] as Map<String, dynamic>;
+    }
+    if (data.containsKey('data') && data['data'] is Map<String, dynamic>) {
+      data = data['data'] as Map<String, dynamic>;
+    }
+
+    final idVal = data["id"];
+    final int parsedId = idVal is int
+        ? idVal
+        : (idVal != null ? int.tryParse(idVal.toString()) ?? 0 : 0);
+
+    String extractDoc(List<String> keys) {
+      for (final key in keys) {
+        final val = data[key];
+        if (val != null &&
+            val.toString().trim().isNotEmpty &&
+            val.toString() != 'null') {
+          return val.toString().trim();
+        }
+      }
+      for (final parent in ['documents', 'kyc_documents', 'kyc', 'company']) {
+        if (data[parent] is Map) {
+          final sub = data[parent] as Map;
+          for (final key in keys) {
+            final val = sub[key];
+            if (val != null &&
+                val.toString().trim().isNotEmpty &&
+                val.toString() != 'null') {
+              return val.toString().trim();
+            }
+          }
+        }
+      }
+      return "";
+    }
+
+    final rawDob = data["dob"] ?? data["date_of_birth"];
+    final String parsedDob = (rawDob == null || rawDob.toString() == 'null')
+        ? ""
+        : rawDob.toString().trim();
+
+    final rawEmail = data["email"] ?? data["user_email"];
+    final String parsedEmail =
+        (rawEmail == null || rawEmail.toString() == 'null')
+        ? ""
+        : rawEmail.toString().trim();
+
+    final rawMobile =
+        data["mobile"] ??
+        data["phone"] ??
+        data["phone_number"] ??
+        data["username"];
+    final String parsedMobile =
+        (rawMobile == null || rawMobile.toString() == 'null')
+        ? ""
+        : rawMobile.toString().trim();
+
+    return ProfileModel(
+      id: parsedId,
+      username: data["username"]?.toString() ?? "",
+      mobile: parsedMobile,
+      email: parsedEmail,
+      firstName: data["first_name"]?.toString() ?? "",
+      lastName: data["last_name"]?.toString() ?? "",
+      role: data["role"]?.toString() ?? "",
+      panNumber: data["pan_number"]?.toString() ?? "",
+      gstNumber: data["gst_number"]?.toString() ?? "",
+      profileImage: data["profile_image"]?.toString(),
+      gender: data["gender"]?.toString() ?? "",
+      dob: parsedDob,
+      panImage: extractDoc([
+        "pan_card_upload",
+        "pan_image",
+        "pan_card",
+        "pan_document",
+        "pan_card_image",
+        "pan_file",
+        "pan_url",
+      ]),
+      gstImage: extractDoc([
+        "gst_certificate_upload",
+        "gst_image",
+        "gst_certificate",
+        "gst_document",
+        "gst_certificate_image",
+        "gst_file",
+        "gst_url",
+      ]),
+      aadhaarImage: extractDoc([
+        "adhar_front_upload",
+        "adharcard_image",
+        "aadhaar_image",
+        "aadhaar_front_image",
+        "aadhaar_card",
+        "aadhar_image",
+        "aadhaar_document",
+        "aadhaar_file",
+        "aadhaar_url",
+      ]),
+      kycStatus: data["kyc_status"] ?? "",
+      hasPendingKycRequest: data['has_pending_kyc_request'] == true,
+      accountStatus: data["account_status"] ?? "",
+      isActive: data["is_active"] ?? false,
     );
   }
 }
