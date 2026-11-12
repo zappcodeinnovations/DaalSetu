@@ -14,8 +14,12 @@ import 'package:daalsetu/widgets/dispatch_bills_section.dart';
 class BuyerDeliveryChallanDetailView extends StatelessWidget {
   BuyerDeliveryChallanDetailView({super.key});
 
+  // Opened straight from a notification the list screen (which registers the
+  // controller) may never have been visited, so create it when missing.
   final BuyerDeliveryChallanController controller =
-      Get.find<BuyerDeliveryChallanController>();
+      Get.isRegistered<BuyerDeliveryChallanController>()
+          ? Get.find<BuyerDeliveryChallanController>()
+          : Get.put(BuyerDeliveryChallanController());
 
   /// Read once when the page opens: Get.arguments belongs to whichever route is
   /// on top, so reading it in build (e.g. while the side menu or a dialog is

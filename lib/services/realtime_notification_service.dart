@@ -24,6 +24,9 @@ import 'package:daalsetu/utils/global_error_handler.dart';
 import '../modules/buyer/branch/controller/buyer_branch_controller.dart';
 import '../modules/seller/branches/controller/seller_branch_controller.dart';
 import '../modules/branches/controller/branch_controller.dart';
+import '../modules/buyer/delivery_challan/view/buyer_delivery_challan_detail_view.dart';
+import '../modules/seller/delivery/view/seller_challan_details_view.dart';
+import '../routes/app_routes.dart';
 
 class RealtimeNotificationService extends GetxService {
   static RealtimeNotificationService get to => Get.find<RealtimeNotificationService>();
@@ -396,6 +399,21 @@ class RealtimeNotificationService extends GetxService {
       final url = notification.redirectUrl ?? "";
       final role = (await AppPreferences.getRole() ?? "").trim().toLowerCase();
 
+      // 0. A delivery challan link (e.g. "Dispatch Bill Uploaded") opens that challan,
+      //    not a contract: its reference id is not a contract id.
+      final challanMatch = RegExp(r'/delivery-challan/(\d+)').firstMatch(url);
+      if (challanMatch != null && role != 'transporter') {
+        final challanId = int.parse(challanMatch.group(1)!);
+        if (role == 'seller') {
+          Get.to(() => SellerChallanDetailsView(challanId: challanId), preventDuplicates: false);
+        } else if (role == 'buyer' || role == 'both_sellerandbuyer') {
+          Get.to(() => BuyerDeliveryChallanDetailView(), arguments: challanId, preventDuplicates: false);
+        } else {
+          Get.toNamed(AppRoutes.adminDCDetails, arguments: challanId);
+        }
+        return;
+      }
+
       // 1. Try to extract contract or deal ID first if notification relates to contract, deal, or accepted offer
       final isContractOrDeal = type.contains('contract') ||
           type.contains('deal') ||
@@ -411,7 +429,14 @@ class RealtimeNotificationService extends GetxService {
 
       int? contractId;
       if (isContractOrDeal) {
-        contractId = notification.referenceId;
+        // A contract link (/contracts/?contract_id=12 or /contracts/12/) is the surest id.
+        final linkMatch = RegExp(r'contract_id=(\d+)').firstMatch(url) ??
+            RegExp(r'/(?:contracts|mobile/contracts|deals)/(\d+)').firstMatch(url);
+        if (linkMatch != null) contractId = int.tryParse(linkMatch.group(1)!);
+        // The reference id is a contract id only for contract / deal notifications;
+        // interest / offer notifications carry an interest or product id.
+        final typeIsContract = type.contains('contract') || type.contains('deal');
+        if (typeIsContract) contractId ??= notification.referenceId;
         // Check url for contract or deal ID (e.g. /contracts/12/ or /mobile/contracts/12/ or /deals/12/)
         if (contractId == null && url.isNotEmpty) {
           final contractMatch = RegExp(r'/(?:contracts|mobile/contracts|deals)/(\d+)').firstMatch(url);
@@ -426,11 +451,10 @@ class RealtimeNotificationService extends GetxService {
             contractId = int.tryParse(contractMatch.group(1)!);
           }
         }
-        // Fallback to relatedProduct or generic ID if referenceId wasn't set but type is explicitly contract/deal
-        if (contractId == null && (type.contains('contract') || title.contains('contract') || type.contains('deal') || title.contains('deal'))) {
-          contractId = notification.relatedProduct;
-        }
-
+        // No contract id on an interest / offer notification: open its offer instead (below).
+        if (contractId == null && !typeIsContract) {
+          // fall through to the product / offer routing
+        } else
         // Redirect directly to the Contract Details page
         if (role == 'seller') {
           if (contractId != null && contractId > 0) {
