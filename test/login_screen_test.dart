@@ -33,4 +33,19 @@ void main() {
     final paddingWidget = tester.widget<Padding>(paddingFinder.first);
     expect(paddingWidget.padding, const EdgeInsets.all(10));
   });
+
+  testWidgets('LoginScreen displays updated branding KISOR beneath DaalSetu title',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: LoginScreen(),
+      ),
+    );
+    await tester.pump();
+
+    // Verify 'KISOR' branding text is rendered
+    expect(find.text('KISOR'), findsOneWidget);
+    // Verify old branding text is no longer present
+    expect(find.text('Operations control centre'), findsNothing);
+  });
 }

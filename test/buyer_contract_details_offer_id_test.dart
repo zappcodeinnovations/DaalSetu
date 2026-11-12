@@ -134,7 +134,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.text('Offer'), findsOneWidget);
-      expect(find.text('50 (ID: 152)'), findsOneWidget);
+      expect(find.text('50'), findsOneWidget);
       expect(find.text('Category'), findsOneWidget);
       expect(find.text('Polished'), findsOneWidget);
     });

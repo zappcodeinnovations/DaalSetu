@@ -95,7 +95,13 @@ class OfferInterestModel {
     String? bMobile = json['buyer_mobile'];
 
     if (buyer != null && buyer is Map) {
-      bName ??= buyer['username'] ?? buyer['first_name'] ?? buyer['name'];
+      final firstLast =
+          '${buyer['first_name'] ?? ''} ${buyer['last_name'] ?? ''}'.trim();
+      bName ??= buyer['full_name'] ??
+          (firstLast.isNotEmpty ? firstLast : null) ??
+          buyer['company_name'] ??
+          buyer['username'] ??
+          buyer['name'];
       bMobile ??= buyer['mobile'];
     }
 

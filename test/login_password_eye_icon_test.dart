@@ -29,28 +29,35 @@ void main() {
     final toggleFinder = find.byKey(const Key('login_password_visibility_toggle'));
     expect(toggleFinder, findsOneWidget);
 
-    // Initial state: password field should have obscureText: true
+    // Initial state: password field should have obscureText: true and normal eye icon (visibility_outlined)
     EditableText editableText() =>
         tester.widget<EditableText>(find.byType(EditableText).last);
-    expect(editableText().obscureText, isTrue);
+    Icon toggleIcon() => tester.widget<Icon>(
+        find.descendant(of: toggleFinder, matching: find.byType(Icon)));
 
-    // First tap: reveals password
+    expect(editableText().obscureText, isTrue);
+    expect(toggleIcon().icon, Icons.visibility_outlined);
+
+    // First tap: reveals password and displays crossed-out eye icon (visibility_off_outlined)
     await tester.tap(toggleFinder);
     await tester.pumpAndSettle();
     expect(controller.isPasswordVisible.value, isTrue);
     expect(editableText().obscureText, isFalse);
+    expect(toggleIcon().icon, Icons.visibility_off_outlined);
 
-    // Second tap: hides password again (verifies no stuck/intercepted tap)
+    // Second tap: hides password again and restores normal eye icon (visibility_outlined)
     await tester.tap(toggleFinder);
     await tester.pumpAndSettle();
     expect(controller.isPasswordVisible.value, isFalse);
     expect(editableText().obscureText, isTrue);
+    expect(toggleIcon().icon, Icons.visibility_outlined);
 
-    // Third tap: reveals password once more
+    // Third tap: reveals password once more and displays crossed-out eye icon (visibility_off_outlined)
     await tester.tap(toggleFinder);
     await tester.pumpAndSettle();
     expect(controller.isPasswordVisible.value, isTrue);
     expect(editableText().obscureText, isFalse);
+    expect(toggleIcon().icon, Icons.visibility_off_outlined);
   });
 
   testWidgets('LoginScreen preserves cursor position when toggling password visibility',

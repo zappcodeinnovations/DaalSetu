@@ -1,21 +1,36 @@
 # Current Task State
 
 ## Current Task
-- **Goal**: TSK-035 — Contract Screen: Display Brand Name and Offer Name clearly on cards and detail views.
+- **Goal**: Point 8 — Hide Internal Database IDs Across Transporter Brands, Dashboards, Orders, and Contract Details.
 - **Status**: Completed & Verified.
 - **Output**:
-  - `lib/modules/seller/contracts/model/seller_contract_model.dart`: Added `productTitle` and `offerName` getter, parsed `product_brand_name` and `product_title` from Contract API JSON.
-  - `lib/modules/seller/contracts/view/seller_contracts_view.dart`: Displayed Offer Name with icon and verified Brand Name chip directly on "My Deal Contracts" cards.
-  - `lib/modules/contracts/model/contract_model.dart`: Added `productBrand` field and parsing from `product_brand_name`.
-  - `lib/modules/contracts/model/contract_details_model.dart`: Added `productBrand` mapping and `fromContractModel` bridge.
-  - `lib/modules/contracts/view/contract_view.dart`: Added Brand display on contract cards.
-  - `lib/modules/contracts/view/contract_details_view.dart`: Added Brand row in 'Product & deal' section.
-  - Added unit test suite `test/seller_contract_brand_offer_test.dart` (2/2 passed).
-- **Evidence**: `test/seller_contract_brand_offer_test.dart` (2/2 passed), full regression test suite (36/36 passed), static analysis clean (0 issues).
+  - `lib/modules/transporter/brands/view/transporter_brands_view.dart`: Replaced `"Brand ID: #"` with `"Verified Brand"`.
+  - `lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`: Replaced `"Order ID:"` with seller name / `'Confirmed Order'`.
+  - `lib/modules/buyer/orders/view/buyer_orders_view.dart`: Replaced `"Order ID:"` with seller name / `'Confirmed Order'`.
+  - `lib/modules/dashboard/view/dashboard_page.dart`: Replaced `"ID: "` with `"${contract.seller} → ${contract.buyer}"`.
+  - `lib/modules/seller/dashboard/view/seller_dashboard_view.dart`: Replaced `"ID: "` with Category and Brand.
+  - `lib/modules/transporter/bidding/view/transporter_bidding_view.dart`: Replaced Contract ID numbers with product/commodity title.
+  - `lib/modules/contracts/view/contract_details_view.dart`: Removed `(ID: $id)` suffix from admin detail rows.
+  - Added test suite `test/hide_database_ids_test.dart` (4/4 passed).
+- **Evidence**: `test/hide_database_ids_test.dart` (4/4 passed), `test/buyer_contract_details_offer_id_test.dart` (4/4 passed), static analysis clean.
 
 ---
 
 ## Completed Work in Current Session
+- **Bug 54 Completed (Hide Internal Database IDs)**:
+  - Eliminated raw database integer IDs from Transporter Brands, Dashboards, Buyer Orders, and Contract administration details.
+  - Replaced IDs with meaningful business information (Seller name, Category, Brand, Product title).
+- **Bug 53 Completed (Display Full User Name & Company Name on Admin Offers & Seller Interests)**:
+  - Fixed mobile number display on Admin Offer cards by prioritizing `Seller.fullName`.
+  - Fixed raw ID display on Seller Interests cards by prioritizing Buyer Name and Company Name over `buyer_unique_id`.
+  - Verified with 3 automated tests in `test/seller_offer_interest_identity_test.dart`.
+- **Bug 52 Completed (Replace "Operation Control" Branding with "KISOR")**:
+  - Updated subtitle text beneath DaalSetu logo on `LoginScreen` from `'Operations control centre'` to `'KISOR'`.
+  - Verified with automated widget test in `test/login_screen_test.dart`.
+- **Bug 51 Completed (Login Screen Password Eye Icon Inverted State)**:
+  - Corrected inverted eye icon behavior: shows open eye (`Icons.visibility_outlined`) when password is dots/hidden, and crossed-out eye (`Icons.visibility_off_outlined`) when password is text/revealed.
+  - Verified with 2 automated widget tests and clean static analysis.
+- **Bug 50 Completed (Brand Name & Offer Name Display on Contract Screens)**:
 - **Bug 47 Completed (Notifications Not Opening & 2nd Tap Not Redirecting)**:
   - Eliminated silent suppression on deal/contract notifications.
   - Resolved GetX duplicate route suppression on consecutive notification taps.

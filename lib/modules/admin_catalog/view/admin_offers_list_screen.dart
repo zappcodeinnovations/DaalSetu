@@ -187,7 +187,7 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
           const SizedBox(height: 16),
 
           // Attributes
-          _buildAttributeRow(Icons.person, 'Seller', offer.seller?.username ?? '-'),
+          _buildAttributeRow(Icons.person, 'Seller', offer.seller?.displayName ?? '-'),
           const SizedBox(height: 8),
           _buildAttributeRow(Icons.location_on, 'Loading', offer.loadingLocation.isNotEmpty ? offer.loadingLocation : '-'),
           const SizedBox(height: 8),
@@ -525,7 +525,7 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
       builder: (_) => StockHistoryDialog(
         productId: offer.id.toString(),
         productTitle: offer.title,
-        sellerName: offer.seller?.username ?? '-',
+        sellerName: offer.seller?.displayName ?? '-',
         currentStock: '${offer.availableQuantity} QTL',
       ),
     );

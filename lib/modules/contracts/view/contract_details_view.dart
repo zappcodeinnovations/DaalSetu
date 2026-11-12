@@ -558,8 +558,9 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
   }
 
   String _withId(String name, int? id) {
-    if (id == null) return '-';
-    return name.isEmpty ? 'ID: $id' : '$name (ID: $id)';
+    if (name.trim().isNotEmpty) return name.trim();
+    if (id != null) return 'Ref #$id';
+    return '-';
   }
 
   Widget _item(String label, Object? rawValue) {

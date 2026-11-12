@@ -1,5 +1,94 @@
 # Bug Log & Historical Fixes
 
+## Bug 54: Hide Raw Database IDs Across Transporter Brands, Dashboards, Orders, and Contract Details
+- **Symptom**: Raw internal database IDs were exposed to users in several areas:
+  1. Transporter Brands: fallback displayed `"Brand ID: #12"`.
+  2. Buyer Dashboard & Buyer Orders: displayed `"Order ID: 84"`.
+  3. Dashboard Recent Deals: bold title was `"ID: 142"`.
+  4. Seller Dashboard Deals: subtitle was `"ID: 142"`.
+  5. Transporter Bidding: place bid dialog and card showed `"Contract ID: 142"`.
+  6. Contract Details (Admin Section): labels appended `(ID: 15)`.
+- **Root Cause**: Hardcoded text bindings displaying entity database integer IDs instead of business information.
+- **Fix**:
+  1. `transporter_brands_view.dart`: Replaced `"Brand ID: #${brand.id}"` with `"Verified Brand"` / `"Registered Brand"`.
+  2. `buyer_dashboard_view.dart` & `buyer_orders_view.dart`: Replaced `"Order ID: ${order['id']}"` with seller name / brand / `'Confirmed Order'`.
+  3. `dashboard_page.dart`: Replaced `"ID: ${contract.id}"` with clean parties row `"${contract.seller} → ${contract.buyer}"` and bag count / quantity subtitle.
+  4. `seller_dashboard_view.dart`: Replaced `"ID: ${contract.contractId}"` with category and brand information (`'Category • Brand'`).
+  5. `transporter_bidding_view.dart`: Replaced `"Contract ID: ${offer.contractId}"` with `offer.productTitle`.
+  6. `contract_details_view.dart`: Updated `_withId` to return plain entity name without appending `(ID: $id)`.
+  7. Added unit and widget tests in `test/hide_database_ids_test.dart` and updated `test/buyer_contract_details_offer_id_test.dart`.
+- **Files Changed**:
+  - `lib/modules/transporter/brands/view/transporter_brands_view.dart`
+  - `lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`
+  - `lib/modules/buyer/orders/view/buyer_orders_view.dart`
+  - `lib/modules/dashboard/view/dashboard_page.dart`
+  - `lib/modules/seller/dashboard/view/seller_dashboard_view.dart`
+  - `lib/modules/transporter/bidding/view/transporter_bidding_view.dart`
+  - `lib/modules/contracts/view/contract_details_view.dart`
+  - `test/hide_database_ids_test.dart`
+  - `test/buyer_contract_details_offer_id_test.dart`
+- **Verification**: `test/hide_database_ids_test.dart` (4/4 passed); `test/buyer_contract_details_offer_id_test.dart` (4/4 passed); static analysis verified.
+
+---
+
+## Bug 53: Display Full User Name & Company Name Prioritization on Admin Offers and Seller Interests
+- **Symptom**:
+  1. On the Admin Offers Catalog (`AdminOffersListScreen`), the seller attribute displayed `offer.seller?.username` (often a raw 10-digit mobile number) instead of the seller's full name.
+  2. On the Seller Offer Interests screen (`SellerOfferInterestsView`), the buyer line prioritized `buyer_unique_id` (raw ID like `BUY9CED...`) over human-readable buyer full name and completely omitted `buyerCompany`.
+- **Root Cause**:
+  1. In `admin_offers_list_screen.dart:190` & `528`, the UI directly bound to `seller.username`.
+  2. In `lib/modules/seller/products/model/offer_interest_model.dart:69`, `buyer_unique_id` was checked before `buyer_name`.
+- **Fix**:
+  1. Added `displayName` getter to `Seller` model in `lib/modules/products/model/product_model.dart` prioritizing `fullName` before `username`.
+  2. Updated `AdminOffersListScreen` attribute row and `StockHistoryDialog` to display `offer.seller?.displayName`.
+  3. Updated `lib/modules/seller/products/model/offer_interest_model.dart` to prioritize `buyer_full_name`, `buyer_name`, and nested `first_name + last_name` before falling back to `buyer_unique_id`. Added `displayBuyerInfo` formatting as `'Name (Company)'`.
+  4. Updated `SellerOfferInterestsView` to display `item.displayBuyerInfo` with `maxLines: 1` and `TextOverflow.ellipsis`.
+  5. Updated `lib/modules/products/model/offer_interest_model.dart` to prioritize full name over username for admin interest dialog.
+  6. Added widget/unit tests in `test/seller_offer_interest_identity_test.dart`.
+- **Files Changed**:
+  - `lib/modules/products/model/product_model.dart`
+  - `lib/modules/admin_catalog/view/admin_offers_list_screen.dart`
+  - `lib/modules/seller/products/model/offer_interest_model.dart`
+  - `lib/modules/seller/products/view/seller_offer_interests_view.dart`
+  - `lib/modules/products/model/offer_interest_model.dart`
+  - `test/seller_offer_interest_identity_test.dart`
+- **Verification**: `test/seller_offer_interest_identity_test.dart` (3/3 passed); `flutter analyze` clean (0 issues).
+
+---
+
+## Bug 52: Replace "Operation Control" Branding with "KISOR"
+- **Symptom**: On the Login screen (`LoginScreen`), beneath the DaalSetu app title, the subtitle text read `'Operations control centre'`, inconsistent with client-specified branding.
+- **Root Cause**: Hardcoded text `'Operations control centre'` in `lib/modules/Auth/login/view/login_screen.dart:327`.
+- **Fix**:
+  1. Replaced `'Operations control centre'` with `'KISOR'` in `lib/modules/Auth/login/view/login_screen.dart`.
+  2. Added test assertion in `test/login_screen_test.dart` verifying that `'KISOR'` is displayed on `LoginScreen` and `'Operations control centre'` is absent.
+- **Files Changed**:
+  - `lib/modules/Auth/login/view/login_screen.dart`
+  - `test/login_screen_test.dart`
+- **Verification**: `flutter test test/login_screen_test.dart test/login_password_eye_icon_test.dart` (4/4 passed); `flutter analyze` clean (0 issues).
+
+---
+
+## Bug 51: Login Screen Password Eye Icon Inverted State (Closed Eye Displayed When Password Hidden)
+- **Symptom**: On the Login screen (`LoginScreen`), when the password is in its initial hidden state (`•••••`), the suffix icon displays `Icons.visibility_off_outlined` (eye with slash / closed eye). When the user taps it to reveal the password text, the icon flips to `Icons.visibility_outlined` (open eye). The icon glyph mapping is inverted relative to standard UI conventions and the Register screen (`register_page.dart`), where an open eye signifies "Show password" and a crossed-out eye signifies "Hide password".
+- **Root Cause**: In `lib/modules/Auth/login/view/login_screen.dart:154-156`, the ternary condition was:
+  ```dart
+  isVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined
+  ```
+  rendering the crossed-out eye when `isVisible` is `false` (hidden/dots) and the open eye when `isVisible` is `true`.
+- **Fix**:
+  1. Updated the icon expression in `lib/modules/Auth/login/view/login_screen.dart` to:
+     ```dart
+     isVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined
+     ```
+  2. Updated `test/login_password_eye_icon_test.dart` to assert exact `IconData` (`visibility_outlined` initially when obscured, `visibility_off_outlined` when revealed) across consecutive toggles.
+- **Files Changed**:
+  - `lib/modules/Auth/login/view/login_screen.dart`
+  - `test/login_password_eye_icon_test.dart`
+- **Verification**: `flutter test test/login_password_eye_icon_test.dart` (2/2 passed); `flutter test test/login_screen_test.dart` (2/2 passed); `flutter analyze` clean (0 issues).
+
+---
+
 ## Bug 50: TSK-035 — Brand Name & Offer Name Display on Contract Screens
 - **Symptom**: On "My Deal Contracts" cards and general contract views, only "Commodity" was shown; the specific Offer Name (e.g. "mix daal") and Brand Name (e.g. "Natureland Organics") were missing.
 - **Root Cause**:

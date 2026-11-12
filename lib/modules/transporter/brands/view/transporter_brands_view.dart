@@ -476,7 +476,7 @@ class TransporterBrandsView extends StatelessWidget {
                     )
                   else
                     Text(
-                      "Brand ID: #${brand.id ?? '---'}",
+                      brand.isActive ? "Verified Brand" : "Registered Brand",
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),

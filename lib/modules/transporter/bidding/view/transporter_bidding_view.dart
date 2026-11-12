@@ -206,13 +206,17 @@ class TransporterBiddingView extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Contract ID
+                    // Contract Title
                     Text(
-                      "Contract ID: ${offer.contractId}",
+                      offer.productTitle.trim().isNotEmpty
+                          ? offer.productTitle.trim()
+                          : "Deal Contract",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: isDark ? Colors.white70 : Colors.grey.shade700,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : Colors.grey.shade800,
                       ),
                     ),
                     if (offer.currentLowestBid != null) ...[
@@ -450,7 +454,11 @@ class _OffersTab extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    "Contract #${offer.contractId}",
+                    offer.productTitle.trim().isNotEmpty
+                        ? offer.productTitle.trim()
+                        : "Deal Contract",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
@@ -585,7 +593,9 @@ class _OffersTab extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Bids on Contract #${offer.contractId}",
+                            "Bids on ${offer.productTitle.trim().isNotEmpty ? offer.productTitle.trim() : 'Contract'}",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,

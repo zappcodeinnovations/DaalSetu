@@ -135,13 +135,15 @@ class _SellerOfferInterestsViewState extends State<SellerOfferInterestsView> {
                                 const SizedBox(height: 2),
                                 Text(
                                   [
-                                    "Buyer: ${item.buyerName ?? '-'}",
+                                    "Buyer: ${item.displayBuyerInfo}",
                                     if ((item.createdAt ?? '').isNotEmpty) item.createdAt!,
                                   ].join(' • '),
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey.shade600,
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ),

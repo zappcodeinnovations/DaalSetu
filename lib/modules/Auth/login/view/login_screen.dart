@@ -152,8 +152,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                         onPressed: controller.togglePasswordVisibility,
                                         icon: Icon(
                                           isVisible
-                                              ? Icons.visibility_outlined
-                                              : Icons.visibility_off_outlined,
+                                              ? Icons.visibility_off_outlined
+                                              : Icons.visibility_outlined,
                                           color: isDark
                                               ? AppTheme.primaryGold
                                               : AppTheme.secondaryOrange,
@@ -324,7 +324,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 5),
         Text(
-          'Operations control centre',
+          'KISOR',
           style: TextStyle(color: subtextColor, fontSize: 14),
         ),
       ],

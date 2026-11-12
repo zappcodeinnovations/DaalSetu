@@ -993,7 +993,10 @@ class BuyerDashboardView extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      "Order ID: ${order['id']}",
+                      order['seller_name']?.toString() ??
+                          order['brand']?.toString() ??
+                          order['contract_number']?.toString() ??
+                          'Confirmed Order',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(

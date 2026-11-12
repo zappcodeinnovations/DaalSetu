@@ -172,11 +172,16 @@ class _BuyerOrdersViewState extends State<BuyerOrdersView> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    "Order ID: ${order['id'] ?? 'N/A'}",
+                                    order['seller_name']?.toString() ??
+                                        order['brand']?.toString() ??
+                                        order['contract_number']?.toString() ??
+                                        'Confirmed Order',
                                     style: GoogleFonts.inter(
                                       fontSize: 11,
                                       color: Colors.grey,
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                   const SizedBox(height: 6),
                                   Row(
