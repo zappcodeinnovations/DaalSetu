@@ -66,6 +66,10 @@ class ContractDetailModel {
   /// Agreed Delivery Period, e.g. "12 Nov 2026 - 15 Nov 2026" (MoM point 8).
   final String deliveryPeriod;
 
+  /// Company printed on the bill, chosen once by each party (MoM point 14):
+  /// party, can_select, selected, current_company_id, options, *_company_name.
+  final Map<String, dynamic> billCompany;
+
   ContractDetailModel({
     required this.id,
     required this.contractId,
@@ -128,6 +132,7 @@ class ContractDetailModel {
     this.deliveryChallanId,
     this.deliveryChallanNumber,
     this.deliveryPeriod = '',
+    this.billCompany = const {},
   });
 
   factory ContractDetailModel.fromJson(Map<String, dynamic> json) {
@@ -262,6 +267,9 @@ class ContractDetailModel {
               ? text('challan_number')
               : (json['delivery_challan'] is Map ? json['delivery_challan']['challan_number']?.toString() : null)),
       deliveryPeriod: text('delivery_period').isNotEmpty ? text('delivery_period') : text('delivery_date'),
+      billCompany: json['bill_company'] is Map
+          ? Map<String, dynamic>.from(json['bill_company'] as Map)
+          : const {},
     );
   }
 

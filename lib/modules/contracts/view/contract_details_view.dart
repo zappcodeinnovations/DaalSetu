@@ -19,6 +19,7 @@ import 'package:daalsetu/modules/admin_catalog/view/transport_bids_sheet.dart';
 import 'contract_edit_view.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/services/contract_services.dart';
 
 class ContractDetailScreen extends StatefulWidget {
   const ContractDetailScreen({super.key});
@@ -98,6 +99,13 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
             children: [
               _header(contract),
+              // MoM 14: choose, once, the company printed on the bill.
+              BillCompanyCard(
+                key: ValueKey('bill-company-${contract.id}-${contract.billCompany['selected']}'),
+                contractId: contract.id,
+                info: contract.billCompany,
+                onSaved: () => controller.fetchContractDetail(contractId),
+              ),
               _section('Product & deal', [
                 _item(
                   'Offer',
@@ -850,6 +858,165 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Lets the buyer / seller choose, once, which of their companies is printed on
+/// the contract, delivery challans and bills (MoM point 14).
+class BillCompanyCard extends StatefulWidget {
+  const BillCompanyCard({
+    super.key,
+    required this.contractId,
+    required this.info,
+    required this.onSaved,
+  });
+
+  final int contractId;
+  final Map<String, dynamic> info;
+  final VoidCallback onSaved;
+
+  @override
+  State<BillCompanyCard> createState() => _BillCompanyCardState();
+}
+
+class _BillCompanyCardState extends State<BillCompanyCard> {
+  int? _companyId;
+  bool _saving = false;
+
+  List<Map<String, dynamic>> get _options => (widget.info['options'] is List
+          ? widget.info['options'] as List
+          : const [])
+      .whereType<Map>()
+      .map((option) => Map<String, dynamic>.from(option))
+      .toList();
+
+  @override
+  void initState() {
+    super.initState();
+    final current = widget.info['current_company_id'];
+    final ids = _options.map((o) => o['id']).toSet();
+    _companyId = current is int && ids.contains(current)
+        ? current
+        : (_options.isNotEmpty ? _options.first['id'] as int? : null);
+  }
+
+  String _label(Map<String, dynamic> option) {
+    final parts = <String>['${option['legal_name'] ?? ''}'];
+    if ('${option['gst_number'] ?? ''}'.isNotEmpty) parts.add('GST ${option['gst_number']}');
+    if ('${option['city'] ?? ''}'.isNotEmpty) parts.add('${option['city']}');
+    return parts.join(' · ');
+  }
+
+  Future<void> _save() async {
+    final selected = _options.firstWhereOrNull((o) => o['id'] == _companyId);
+    if (selected == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirm bill company'),
+        content: Text('Print "${selected['legal_name']}" on the bill for this deal? This cannot be changed later.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Confirm')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    setState(() => _saving = true);
+    try {
+      final response = await ContractService.selectBillCompany(widget.contractId, _companyId!);
+      AppSnackbar.showSuccess(message: '${response['message'] ?? 'Bill company saved.'}');
+      widget.onSaved();
+    } catch (error) {
+      AppSnackbar.showError(message: error.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final party = '${widget.info['party'] ?? ''}';
+    if (party.isEmpty) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    final canSelect = widget.info['can_select'] == true;
+    final myCompany = '${widget.info['${party}_company_name'] ?? ''}';
+
+    if (!canSelect) {
+      if (widget.info['selected'] != true || myCompany.isEmpty) return const SizedBox.shrink();
+      return Card(
+        margin: const EdgeInsets.only(bottom: 14),
+        child: ListTile(
+          leading: const Icon(Icons.business_rounded),
+          title: const Text('Company on the bill'),
+          subtitle: Text(myCompany),
+          trailing: const Icon(Icons.lock_outline, size: 18),
+        ),
+      );
+    }
+
+    return Card(
+      key: const Key('bill-company-card'),
+      margin: const EdgeInsets.only(bottom: 14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.business_rounded, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Choose your company for the bill',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Printed on the contract, delivery challans and bills. You can choose only once.',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<int>(
+              initialValue: _companyId,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Company',
+                border: OutlineInputBorder(),
+              ),
+              items: [
+                for (final option in _options)
+                  DropdownMenuItem<int>(
+                    value: option['id'] as int?,
+                    child: Text(_label(option), overflow: TextOverflow.ellipsis),
+                  ),
+              ],
+              onChanged: _saving ? null : (value) => setState(() => _companyId = value),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                key: const Key('bill-company-save'),
+                onPressed: _saving || _companyId == null ? null : _save,
+                icon: _saving
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.check_rounded),
+                label: const Text('Save (one time)'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

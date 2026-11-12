@@ -21,6 +21,9 @@ class ContractModel {
 
   final String status;
 
+  /// Pending transport bids (admins only); such contracts come first (MoM 15).
+  final int activeBidCount;
+
   final String createdAt;
 
   final String? bags;
@@ -54,6 +57,7 @@ class ContractModel {
     required this.loadingFrom,
     required this.loadingTo,
     required this.status,
+    this.activeBidCount = 0,
     required this.createdAt,
     this.bags,
     this.bagCount,
@@ -108,6 +112,7 @@ class ContractModel {
       loadingTo: text('loading_to'),
 
       status: text('status'),
+      activeBidCount: json['active_bid_count'] is int ? json['active_bid_count'] as int : 0,
       createdAt: text('created_at'),
 
       bags: text('bags').isNotEmpty ? text('bags') : null,

@@ -11,6 +11,7 @@ import '../../../../widgets/authenticated_network_image.dart';
 import '../../../../widgets/media_url.dart';
 import '../../../../utils/app_preferences.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/offer_image_picker.dart';
 
 class SellerMediaGalleryView extends StatefulWidget {
   final int? productId;
@@ -66,9 +67,11 @@ class _SellerMediaGalleryViewState extends State<SellerMediaGalleryView> {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text('$mediaType already uploaded'),
+        title: Text(mediaType == 'Image' ? 'Image limit reached' : '$mediaType already uploaded'),
         content: Text(
-          'Only one ${mediaType.toLowerCase()} is allowed per product. Delete the existing ${mediaType.toLowerCase()} first, then upload its replacement.',
+          mediaType == 'Image'
+              ? 'You can upload up to $maxOfferImages images per offer. Delete an image first to add another.'
+              : 'Only one ${mediaType.toLowerCase()} is allowed per product. Delete the existing ${mediaType.toLowerCase()} first, then upload its replacement.',
         ),
         actions: [
           FilledButton(
@@ -264,15 +267,15 @@ class _SellerMediaGalleryViewState extends State<SellerMediaGalleryView> {
                         onPressed: controller.isUploading.value
                             ? null
                             : () async {
-                                if (controller.imagesList.isNotEmpty) {
+                                final room = maxOfferImages - controller.imagesList.length;
+                                if (room <= 0) {
                                   _showLimitMessage(context, 'Image');
                                   return;
                                 }
-                                final picked = await picker.pickImage(
-                                  source: ImageSource.gallery,
-                                );
-                                if (picked != null) {
-                                  controller.uploadImage(picked.path);
+                                // Multi-select, up to 10 images per offer.
+                                final picked = await pickOfferImages(room: room);
+                                if (picked.isNotEmpty) {
+                                  controller.uploadImages(picked);
                                 }
                               },
                         icon: controller.isUploading.value
@@ -492,12 +495,18 @@ class _DynamicVideoPreviewDialogState extends State<DynamicVideoPreviewDialog> {
                 borderRadius: BorderRadius.circular(12),
               ),
               clipBehavior: Clip.antiAlias,
-              child: FittedBox(
-                fit: BoxFit.contain,
-                child: SizedBox(
-                  width: videoSize.width > 0 ? videoSize.width : 16,
-                  height: videoSize.height > 0 ? videoSize.height : 9,
-                  child: VideoPlayer(controller),
+              // Two-finger (pinch) zoom, like the offer images.
+              child: InteractiveViewer(
+                key: const Key('video-preview-pinch-zoom'),
+                minScale: 1,
+                maxScale: 5,
+                child: FittedBox(
+                  fit: BoxFit.contain,
+                  child: SizedBox(
+                    width: videoSize.width > 0 ? videoSize.width : 16,
+                    height: videoSize.height > 0 ? videoSize.height : 9,
+                    child: VideoPlayer(controller),
+                  ),
                 ),
               ),
             ),

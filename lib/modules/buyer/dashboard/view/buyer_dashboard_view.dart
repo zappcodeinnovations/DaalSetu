@@ -1357,7 +1357,10 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
       } else {
         final pId = offer.productId ?? offer.id;
         if (pId != null) {
-          Get.to(() => ProductDetailScreen(productId: pId));
+          Get.to(() => ProductDetailScreen(
+                productId: pId,
+                onSubmitOffer: buyerSubmitOfferCallback(offer),
+              ));
         } else if (offer.id != null) {
           Get.to(() => BuyerOfferDetailsView(offerId: offer.id!));
         } else {

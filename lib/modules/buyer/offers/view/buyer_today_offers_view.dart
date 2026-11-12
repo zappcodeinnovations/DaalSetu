@@ -11,6 +11,7 @@ import '../model/buyer_offer_model.dart';
 import '../../../products/view/product_detail.dart';
 import 'buyer_offer_details_view.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/modules/buyer/offers/view/buyer_offers_view.dart';
 
 class BuyerTodayOffersView extends StatelessWidget {
   const BuyerTodayOffersView({super.key});
@@ -129,7 +130,10 @@ class BuyerTodayOffersView extends StatelessWidget {
   void _openDetails(BuyerOfferModel offer) {
     final pId = offer.productId ?? offer.id;
     if (pId != null) {
-      Get.to(() => ProductDetailScreen(productId: pId));
+      Get.to(() => ProductDetailScreen(
+            productId: pId,
+            onSubmitOffer: buyerSubmitOfferCallback(offer, tag: 'today'),
+          ));
     } else if (offer.id != null) {
       Get.to(() => BuyerOfferDetailsView(offerId: offer.id!));
     }

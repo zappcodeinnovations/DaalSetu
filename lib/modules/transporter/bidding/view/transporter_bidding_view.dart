@@ -255,6 +255,17 @@ class TransporterBiddingView extends StatelessWidget {
                         color: isDark ? Colors.white : Colors.grey.shade800,
                       ),
                     ),
+                    // Contract number (like the web bid modal) so the transporter knows which deal this is.
+                    if (offer.contractId.trim().isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        "Contract ID: ${offer.contractId}",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? Colors.white60 : Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
                     if (offer.currentLowestBid != null) ...[
                       const SizedBox(height: 4),
                       Text(
@@ -921,6 +932,15 @@ class _MyDealsTab extends StatelessWidget {
             const Divider(height: 18),
             _row("My Bid", "₹${bid.bidAmount}"),
             _row("Route", "${bid.loadingFrom} → ${bid.loadingTo}"),
+            // MoM 20: cities only until the admin accepts the bid.
+            if (bid.contractData['details_after_acceptance'] == true)
+              Padding(
+                padding: const EdgeInsets.only(top: 4, bottom: 4),
+                child: Text(
+                  "Full address and party details are shown after the admin accepts your bid.",
+                  style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
+                ),
+              ),
             _row("Quantity", "${bid.dealQuantity} ${bid.quantityUnit}"),
             if (bid.adminRemark != null) _row("Admin Remark", bid.adminRemark!),
             if (hasAssignment) ...[

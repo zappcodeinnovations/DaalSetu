@@ -12,6 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../../services/realtime_notification_service.dart';
 import '../../../nav_bar/controller/nav_controller.dart';
+import 'package:daalsetu/widgets/offer_image_picker.dart';
 
 class SellerProductController extends GetxController {
   var isLoading = true.obs;
@@ -32,6 +33,8 @@ class SellerProductController extends GetxController {
   var amountUnit = 'qtl'.obs;
   var quantityUnit = 'qtl'.obs;
   var selectedImagePath = RxnString();
+  /// Offer images chosen with multi-select (max 10).
+  final selectedImagePaths = <String>[].obs;
   var selectedVideoPath = RxnString();
   var sellerName = 'Seller'.obs;
   var loadingFrom = Rxn<DateTime>();
@@ -351,12 +354,22 @@ class SellerProductController extends GetxController {
     }
   }
 
+  /// Adds images with multi-select, up to 10 in total.
   Future<void> pickOfferImage() async {
-    final image = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 88,
-    );
-    if (image != null) selectedImagePath.value = image.path;
+    final room = maxOfferImages - selectedImagePaths.length;
+    if (room <= 0) {
+      SellerUi.error("You can add up to $maxOfferImages images.");
+      return;
+    }
+    final paths = await pickOfferImages(room: room);
+    if (paths.isEmpty) return;
+    selectedImagePaths.addAll(paths);
+    selectedImagePath.value = selectedImagePaths.first;
+  }
+
+  void removeOfferImage(String path) {
+    selectedImagePaths.remove(path);
+    selectedImagePath.value = selectedImagePaths.isEmpty ? null : selectedImagePaths.first;
   }
 
   Future<void> pickOfferVideo() async {
@@ -435,12 +448,12 @@ class SellerProductController extends GetxController {
 
     try {
       isSaving(true);
-      final imageToUpload = selectedImagePath.value;
+      final imagesToUpload = selectedImagePaths.toList();
       final videoToUpload = selectedVideoPath.value;
 
       final result = await SellerServices.createOffer(
         body,
-        imagePath: imageToUpload,
+        imagePaths: imagesToUpload,
         videoPath: videoToUpload,
       );
       // /api/offers/create/ returns the new offer under "product".
@@ -460,11 +473,13 @@ class SellerProductController extends GetxController {
             ? ((data['product_videos'] ?? data['videos']) as List)
             : [];
 
-        if (imageToUpload != null && existingImages.isEmpty) {
-          try {
-            await SellerServices.uploadProductImage(productId, imageToUpload);
-          } catch (_) {
-            mediaFailed = true;
+        if (imagesToUpload.isNotEmpty && existingImages.isEmpty) {
+          for (var i = 0; i < imagesToUpload.length; i++) {
+            try {
+              await SellerServices.uploadProductImage(productId, imagesToUpload[i], isPrimary: i == 0);
+            } catch (_) {
+              mediaFailed = true;
+            }
           }
         }
         if (videoToUpload != null && existingVideos.isEmpty) {
@@ -583,6 +598,7 @@ class SellerProductController extends GetxController {
     quantityUnit.value = 'qtl';
     packingWeightController.text = '30';
     selectedImagePath.value = null;
+    selectedImagePaths.clear();
     selectedVideoPath.value = null;
     loadingFrom.value = null;
     loadingTo.value = null;

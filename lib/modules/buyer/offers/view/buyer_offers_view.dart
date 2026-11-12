@@ -15,6 +15,23 @@ import 'buyer_offer_details_view.dart';
 import 'buyer_negotiation_view.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 
+/// Opens the buyer's Submit Offer dialog for a seller offer. Used by the offer
+/// detail page (MoM 7) from every buyer screen that opens it.
+void showBuyerSubmitOfferDialog(BuildContext context, BuyerOfferModel offer, {String tag = 'all'}) {
+  final pId = offer.productId ?? offer.id;
+  if (pId == null) return;
+  final controller = Get.isRegistered<BuyerOffersController>(tag: tag)
+      ? Get.find<BuyerOffersController>(tag: tag)
+      : Get.put(BuyerOffersController(offerType: tag), tag: tag);
+  _OfferList(offerType: tag)._showInterestDialog(context, controller, pId, offer);
+}
+
+/// The detail-page callback, or null when this offer cannot take a new offer.
+void Function(BuildContext)? buyerSubmitOfferCallback(BuyerOfferModel offer, {String tag = 'all'}) {
+  if (!offer.canSubmitOffer || offer.isExpired || offer.isOutOfStock || !offer.isActive) return null;
+  return (context) => showBuyerSubmitOfferDialog(context, offer, tag: tag);
+}
+
 class BuyerOffersView extends StatelessWidget {
   final int initialIndex;
   const BuyerOffersView({super.key, this.initialIndex = 0});
@@ -86,7 +103,10 @@ class _OfferList extends StatelessWidget {
     } else {
       final pId = offer.productId ?? offer.id;
       if (pId != null) {
-        Get.to(() => ProductDetailScreen(productId: pId));
+        Get.to(() => ProductDetailScreen(
+              productId: pId,
+              onSubmitOffer: buyerSubmitOfferCallback(offer, tag: offerType),
+            ));
       } else if (offer.id != null) {
         Get.to(() => BuyerOfferDetailsView(offerId: offer.id!));
       }

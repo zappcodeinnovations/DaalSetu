@@ -36,9 +36,22 @@ class _AuthenticatedVideoPlayerState extends State<AuthenticatedVideoPlayer> {
   BoxFit _fit = BoxFit.contain;
   double _zoom = 1;
 
+  /// Two-finger (pinch) zoom, like the offer images. Panning is only enabled
+  /// once zoomed in, so a one-finger drag still scrolls the page.
+  final TransformationController _pinch = TransformationController();
+  bool _pinched = false;
+
+  void _handlePinchChange() {
+    final pinched = _pinch.value.getMaxScaleOnAxis() > 1.01;
+    if (pinched != _pinched && mounted) setState(() => _pinched = pinched);
+  }
+
+  void _resetPinch() => _pinch.value = Matrix4.identity();
+
   @override
   void initState() {
     super.initState();
+    _pinch.addListener(_handlePinchChange);
     final shared = widget._sharedController;
     if (shared != null) {
       _controller = shared;
@@ -186,39 +199,49 @@ class _AuthenticatedVideoPlayerState extends State<AuthenticatedVideoPlayer> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          ClipRect(
-            key: const Key('video-viewport'),
-            child: Transform.scale(
-              scale: _zoom,
-              child: SizedBox.expand(
-                child: FittedBox(
-                  fit: _fit,
-                  child: SizedBox(
-                    width: controller.value.size.width,
-                    height: controller.value.size.height,
-                    child: VideoPlayer(controller),
+          // Tap = play / pause; two fingers = zoom (the tap and the pinch share
+          // one gesture arena, so neither blocks the other).
+          GestureDetector(
+            key: const Key('video-playback-surface'),
+            behavior: HitTestBehavior.opaque,
+            onTap: _togglePlayback,
+            onDoubleTap: _resetPinch,
+            child: InteractiveViewer(
+              key: const Key('video-pinch-zoom'),
+              transformationController: _pinch,
+              minScale: 1,
+              maxScale: 5,
+              panEnabled: _pinched,
+              child: ClipRect(
+                key: const Key('video-viewport'),
+                child: Transform.scale(
+                  scale: _zoom,
+                  child: SizedBox.expand(
+                    child: FittedBox(
+                      fit: _fit,
+                      child: SizedBox(
+                        width: controller.value.size.width,
+                        height: controller.value.size.height,
+                        child: VideoPlayer(controller),
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              key: const Key('video-playback-surface'),
-              onTap: _togglePlayback,
-              child: Center(
-                child: AnimatedOpacity(
-                  opacity: _wasPlaying ? 0 : 1,
-                  duration: const Duration(milliseconds: 150),
-                  child: const CircleAvatar(
-                    radius: 28,
-                    backgroundColor: Colors.black54,
-                    child: Icon(
-                      Icons.play_arrow_rounded,
-                      color: Colors.white,
-                      size: 38,
-                    ),
+          IgnorePointer(
+            child: Center(
+              child: AnimatedOpacity(
+                opacity: _wasPlaying ? 0 : 1,
+                duration: const Duration(milliseconds: 150),
+                child: const CircleAvatar(
+                  radius: 28,
+                  backgroundColor: Colors.black54,
+                  child: Icon(
+                    Icons.play_arrow_rounded,
+                    color: Colors.white,
+                    size: 38,
                   ),
                 ),
               ),
@@ -300,6 +323,7 @@ class _AuthenticatedVideoPlayerState extends State<AuthenticatedVideoPlayer> {
                 onSelected: (fit) => setState(() {
                   _fit = fit;
                   _zoom = 1;
+                  _resetPinch();
                 }),
                 itemBuilder: (_) => const [
                   PopupMenuItem(value: BoxFit.contain, child: Text('Fit')),
@@ -333,7 +357,10 @@ class _AuthenticatedVideoPlayerState extends State<AuthenticatedVideoPlayer> {
             ),
             TextButton(
               key: const Key('video-zoom-reset'),
-              onPressed: () => setState(() => _zoom = 1),
+              onPressed: () => setState(() {
+                _zoom = 1;
+                _resetPinch();
+              }),
               style: TextButton.styleFrom(foregroundColor: Colors.white),
               child: Text('${(_zoom * 100).round()}%'),
             ),
@@ -353,6 +380,8 @@ class _AuthenticatedVideoPlayerState extends State<AuthenticatedVideoPlayer> {
 
   @override
   void dispose() {
+    _pinch.removeListener(_handlePinchChange);
+    _pinch.dispose();
     _controller?.removeListener(_handlePlaybackChange);
     if (widget._sharedController == null) _controller?.dispose();
     super.dispose();

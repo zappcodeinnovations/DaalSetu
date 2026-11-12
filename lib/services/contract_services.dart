@@ -32,6 +32,16 @@ class ContractService {
   /// ===============================
   /// FETCH CONTRACT DETAILS
   /// ===============================
+  /// Buyer / seller pick, once, the company printed on the bill (MoM point 14).
+  static Future<Map<String, dynamic>> selectBillCompany(int contractId, int companyId) async {
+    final response = await ApiClient.post(
+      endpoint: '/api/contracts/$contractId/bill-company/',
+      body: {'company_id': companyId},
+      requireAuth: true,
+    );
+    return response is Map<String, dynamic> ? response : <String, dynamic>{};
+  }
+
   static Future<ContractDetailModel> getContractDetail(int contractId) async {
     dynamic response;
     try {

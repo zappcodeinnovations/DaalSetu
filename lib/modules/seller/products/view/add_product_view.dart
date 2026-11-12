@@ -5,6 +5,8 @@ import '../../common/seller_ui.dart';
 import '../controller/seller_product_controller.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/delivery_period_picker.dart';
+import 'package:daalsetu/widgets/offer_image_picker.dart';
+import 'dart:io';
 
 class AddProductView extends StatefulWidget {
   const AddProductView({super.key});
@@ -321,15 +323,7 @@ class _AddProductViewState extends State<AddProductView> {
               const SizedBox(height: 8),
               _sectionTitle("Offer Media (Optional)"),
               const SizedBox(height: 16),
-              _mediaPicker(
-                label: "Offer Image",
-                fileName: controller.fileName(
-                  controller.selectedImagePath.value,
-                ),
-                icon: IconlyLight.image,
-                onPick: controller.pickOfferImage,
-                onClear: () => controller.selectedImagePath.value = null,
-              ),
+              _offerImagesPicker(),
               _mediaPicker(
                 label: "Offer Video",
                 fileName: controller.fileName(
@@ -588,6 +582,85 @@ class _AddProductViewState extends State<AddProductView> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  /// Offer images: multi-select from the gallery, up to 10, each removable.
+  Widget _offerImagesPicker() {
+    final paths = controller.selectedImagePaths;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 8, 8, 10),
+        decoration: BoxDecoration(
+          color: Get.theme.cardColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(IconlyLight.image, color: primaryColor),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    paths.isEmpty
+                        ? "Offer Images (up to $maxOfferImages)"
+                        : "${paths.length} of $maxOfferImages images selected",
+                  ),
+                ),
+                TextButton(
+                  onPressed: paths.length >= maxOfferImages ? null : controller.pickOfferImage,
+                  child: Text(paths.isEmpty ? "Choose" : "Add more"),
+                ),
+              ],
+            ),
+            if (paths.isNotEmpty)
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final path in paths)
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.file(
+                            File(path),
+                            width: 64,
+                            height: 64,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              width: 64,
+                              height: 64,
+                              color: Colors.black12,
+                              child: const Icon(Icons.image_outlined),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: -8,
+                          right: -8,
+                          child: IconButton(
+                            visualDensity: VisualDensity.compact,
+                            tooltip: "Remove",
+                            onPressed: () => controller.removeOfferImage(path),
+                            icon: const CircleAvatar(
+                              radius: 10,
+                              backgroundColor: Colors.black54,
+                              child: Icon(Icons.close, size: 12, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+          ],
         ),
       ),
     );

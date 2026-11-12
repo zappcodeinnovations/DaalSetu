@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../services/seller_services.dart';
 import '../../../../utils/app_preferences.dart';
 import '../../common/seller_ui.dart';
+import 'package:daalsetu/modules/contracts/view/contract_details_view.dart' show BillCompanyCard;
 
 /// Same content as the web "Contract Details" modal (summary, buyer and seller cards,
 /// logistics route, remarks) plus the consignment workflow.
@@ -289,6 +290,36 @@ class _SellerContractDetailViewState extends State<SellerContractDetailView> {
                     padding: const EdgeInsets.all(16),
                     children: [
                       _summaryCard(context, contract),
+                      // MoM 20: a transporter with a pending bid sees only the cities.
+                      if (contract['details_after_acceptance'] == true)
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.lock_clock_outlined, size: 18),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Only the pickup and delivery cities are shown. Full address and party details appear after the admin accepts your bid.',
+                                  style: TextStyle(fontSize: 12.5),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      // MoM 14: choose, once, the company printed on the bill.
+                      if (contract['bill_company'] is Map)
+                        BillCompanyCard(
+                          key: ValueKey('bill-company-${widget.contractId}-${(contract['bill_company'] as Map)['selected']}'),
+                          contractId: widget.contractId,
+                          info: Map<String, dynamic>.from(contract['bill_company'] as Map),
+                          onSaved: _load,
+                        ),
                       _partyCard(context, contract, seller: false),
                       _partyCard(context, contract, seller: true),
                       _routeSection(context, contract),

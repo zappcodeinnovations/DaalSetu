@@ -1052,9 +1052,14 @@ class SellerServices {
   static Future<Map<String, dynamic>> createOffer(
     Map<String, dynamic> body, {
     String? imagePath,
+    List<String> imagePaths = const [],
     String? videoPath,
   }) async {
-    final hasImage = imagePath != null && imagePath.trim().isNotEmpty;
+    final images = [
+      ...imagePaths.where((path) => path.trim().isNotEmpty),
+      if (imagePaths.isEmpty && imagePath != null && imagePath.trim().isNotEmpty) imagePath.trim(),
+    ];
+    final hasImage = images.isNotEmpty;
     final hasVideo = videoPath != null && videoPath.trim().isNotEmpty;
 
     dynamic response;
@@ -1071,13 +1076,14 @@ class SellerServices {
       });
 
       final Map<String, String> files = {};
-      if (hasImage) files['product_image'] = imagePath.trim();
       if (hasVideo) files['product_video'] = videoPath.trim();
 
       response = await ApiClient.postMultipart(
         endpoint: ApiUrls.offerCreate,
         fields: fields,
         files: files,
+        // Up to 10 offer images in one request.
+        fileLists: hasImage ? {'product_image': images} : null,
         requireAuth: true,
         // Offer videos can take longer than the normal API timeout to upload.
         timeout: hasVideo ? const Duration(minutes: 3) : null,

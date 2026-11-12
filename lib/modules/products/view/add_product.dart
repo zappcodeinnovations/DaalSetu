@@ -12,6 +12,7 @@ import '../../../services/realtime_notification_service.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/widgets/delivery_period_picker.dart';
+import 'package:daalsetu/widgets/offer_image_picker.dart';
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -51,6 +52,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
   DateTime? deliveryTo;
   DateTime? expiry;
   File? image;
+  /// Offer images chosen with multi-select (max 10).
+  final List<File> images = [];
   File? video;
   String rateUnit = 'ton';
   String quantityUnit = 'ton';
@@ -237,11 +240,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
       });
       final id = response['id'] as int?;
       if (id == null) throw Exception('Offer ID missing');
-      if (image != null) {
+      for (var i = 0; i < images.length; i++) {
         await ProductService.uploadProductImage(
           productId: id,
-          imagePath: image!.path,
-          isPrimary: true,
+          imagePath: images[i].path,
+          isPrimary: i == 0,
         );
       }
       if (video != null) {
@@ -389,14 +392,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
             ]),
             _section('Offer media (optional)', [
               _mediaTile(
-                'Offer image',
-                image?.path,
+                images.isEmpty ? 'Offer images (up to $maxOfferImages)' : 'Offer images',
+                images.isEmpty ? null : '${images.length} of $maxOfferImages images selected',
                 Icons.image_outlined,
                 () async {
-                  final file = await _picker.pickImage(
-                    source: ImageSource.gallery,
-                  );
-                  if (file != null) setState(() => image = File(file.path));
+                  final paths = await pickOfferImages(room: maxOfferImages - images.length);
+                  if (paths.isNotEmpty) {
+                    setState(() {
+                      images.addAll(paths.map(File.new));
+                      image = images.first;
+                    });
+                  }
                 },
               ),
               _mediaTile(

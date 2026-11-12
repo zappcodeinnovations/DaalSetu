@@ -7,6 +7,7 @@ import '../../../../services/product_services.dart';
 import '../../../../network/api_client.dart';
 import 'seller_product_controller.dart';
 import '../../common/seller_ui.dart';
+import 'package:daalsetu/widgets/offer_image_picker.dart';
 
 class SellerMediaController extends GetxController {
   final int productId;
@@ -246,6 +247,67 @@ class SellerMediaController extends GetxController {
         isError: true,
       );
     } finally {
+      isUploading(false);
+    }
+  }
+
+  /// Uploads several images (max 10 per offer); the first becomes primary when
+  /// the offer has no image yet.
+  Future<void> uploadImages(List<String> filePaths) async {
+    if (isUploading.value || filePaths.isEmpty) return;
+    final room = maxOfferImages - imagesList.length;
+    if (room <= 0) {
+      _showNotification("Limit reached", "You can upload up to $maxOfferImages images.", isError: true);
+      return;
+    }
+    if (filePaths.length == 1) return uploadImage(filePaths.first, isPrimary: imagesList.isEmpty);
+    final paths = filePaths.take(room).toList();
+    var failed = 0;
+    try {
+      isUploading(true);
+      if (Get.context != null) {
+        Get.dialog(
+          PopScope(
+            canPop: false,
+            child: Center(
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(width: 20),
+                      Text("Uploading ${paths.length} images..."),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          barrierDismissible: false,
+        );
+      }
+      final makeFirstPrimary = imagesList.isEmpty;
+      for (var i = 0; i < paths.length; i++) {
+        try {
+          await SellerServices.uploadProductImage(productId, paths[i], isPrimary: makeFirstPrimary && i == 0);
+        } catch (_) {
+          failed++;
+        }
+      }
+      if (Get.isDialogOpen ?? false) Get.back();
+      if (failed == 0) {
+        _showNotification("Success", "${paths.length} images uploaded successfully");
+      } else {
+        _showNotification("Upload incomplete", "$failed of ${paths.length} images could not be uploaded.", isError: true);
+      }
+      await fetchMedia();
+      if (Get.isRegistered<SellerProductController>()) {
+        Get.find<SellerProductController>().fetchProducts(silent: true);
+      }
+    } finally {
+      if (Get.isDialogOpen ?? false) Get.back();
       isUploading(false);
     }
   }

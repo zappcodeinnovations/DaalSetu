@@ -9,7 +9,11 @@ import 'package:daalsetu/modules/admin_catalog/view/offer_interests_dialog.dart'
 import 'package:daalsetu/widgets/app_shell.dart';
 
 class ProductDetailScreen extends StatefulWidget {
-  const ProductDetailScreen({super.key, required this.productId});
+  /// Buyer screens pass this to show "Submit Offer" on the offer page (MoM 7);
+  /// it opens the same Submit Offer dialog as the offers list.
+  final void Function(BuildContext context)? onSubmitOffer;
+
+  const ProductDetailScreen({super.key, required this.productId, this.onSubmitOffer});
   final int productId;
 
   @override
@@ -72,7 +76,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 30),
               children: [
-                _images(product),
+                _mediaBar(product),
                 const SizedBox(height: 14),
                 _header(product),
                 if (product.isExpired)
@@ -101,7 +105,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ],
                     ),
                   ),
-                if (_canManageInterests)
+                if (widget.onSubmitOffer != null)
+                  _buildSubmitOfferButton(product, context)
+                else if (_canManageInterests)
                   _buildDealActionButton(product, context),
                 _section('Offer information', [
                   _item('Title', product.title),
@@ -146,41 +152,78 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   _item('Created', _date(product.createdAt)),
                   _item('Updated', _date(product.updatedAt)),
                 ]),
-                if (product.videos.isNotEmpty) ...[
-                  Text(
-                    'Product videos',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  ...product.videos.map(
-                    (video) => Card(
-                      margin: const EdgeInsets.only(bottom: 14),
-                      clipBehavior: Clip.antiAlias,
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              video.title,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            AuthenticatedVideoPlayer(url: video.videoUrl),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
               ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  /// Top media bar (MoM 6): offer images and videos in one slider; a video
+  /// slide opens the full-screen player (with two-finger zoom) when tapped.
+  Widget _mediaBar(ProductModel product) {
+    final total = product.images.length + product.videos.length;
+    if (product.videos.isEmpty) return _images(product);
+    return SizedBox(
+      height: 240,
+      child: PageView.builder(
+        key: const Key('product-media-bar'),
+        itemCount: total,
+        itemBuilder: (context, index) {
+          final Widget slide = index < product.images.length
+              ? _imageSlide(product.images[index].imageUrl)
+              : OfferVideoSlide(
+                  video: product.videos[index - product.images.length],
+                  onTap: () => _openVideo(product.videos[index - product.images.length]),
+                );
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              slide,
+              if (total > 1)
+                Positioned(
+                  left: 12,
+                  top: 10,
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.55),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        child: Text(
+                          '${index + 1} / $total',
+                          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _openVideo(ProductVideo video) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            backgroundColor: Colors.black,
+            foregroundColor: Colors.white,
+            title: Text(video.title.trim().isEmpty ? 'Offer video' : video.title),
+          ),
+          body: SafeArea(
+            child: Center(
+              child: AuthenticatedVideoPlayer(url: video.videoUrl, enableFullscreen: false),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -200,8 +243,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       height: 240,
       child: PageView.builder(
         itemCount: product.images.length,
-        itemBuilder: (context, index) {
-          final imageUrl = product.images[index].imageUrl;
+        itemBuilder: (context, index) => _imageSlide(product.images[index].imageUrl),
+      ),
+    );
+  }
+
+  Widget _imageSlide(String imageUrl) {
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: ClipRRect(
@@ -250,9 +297,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
             ),
           );
-        },
-      ),
-    );
   }
 
   void _showImagePreview(String imageUrl) {
@@ -336,6 +380,37 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Buyer's "Submit Offer" right on the seller's offer page.
+  Widget _buildSubmitOfferButton(ProductModel product, BuildContext context) {
+    final unavailable = product.isExpired ||
+        product.stockStatus.toLowerCase() == 'out_of_stock' ||
+        !product.isActive;
+    // Expired / out of stock already shows its own notice: no dead button.
+    if (unavailable) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: SizedBox(
+        width: double.infinity,
+        height: 50,
+        child: FilledButton.icon(
+          key: const Key('product-submit-offer'),
+          style: FilledButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          onPressed: () async {
+            widget.onSubmitOffer!(context);
+          },
+          icon: const Icon(Icons.send_rounded, color: Colors.white),
+          label: const Text(
+            'Submit Offer',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+          ),
         ),
       ),
     );
@@ -511,5 +586,62 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     if (parsed == null) return value;
     final local = parsed.toLocal();
     return DateFormat('d MMM yyyy, hh:mm a').format(local);
+  }
+}
+
+/// A video in the offer's top media bar (MoM 6): play button + title; tap opens it.
+class OfferVideoSlide extends StatelessWidget {
+  const OfferVideoSlide({super.key, required this.video, required this.onTap});
+
+  final ProductVideo video;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: Material(
+          color: Colors.black,
+          child: InkWell(
+            key: Key('product-video-slide-${video.videoUrl.hashCode}'),
+            onTap: onTap,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                const Center(
+                  child: CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Colors.white24,
+                    child: Icon(Icons.play_arrow_rounded, color: Colors.white, size: 42),
+                  ),
+                ),
+                Positioned(
+                  left: 14,
+                  right: 14,
+                  bottom: 12,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.videocam_rounded, color: Colors.white70, size: 18),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          video.title.trim().isEmpty ? 'Offer video' : video.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      const Text('Tap to play', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

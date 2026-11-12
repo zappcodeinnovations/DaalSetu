@@ -287,7 +287,32 @@ class _ContractsScreenState extends State<ContractsScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  _statusBadge(contract.status),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _statusBadge(contract.status),
+                      // MoM 15: contracts with new transport bids are listed first.
+                      if (contract.activeBidCount > 0)
+                        Container(
+                          key: const Key('contract-new-bids'),
+                          margin: const EdgeInsets.only(top: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.amber.shade700),
+                          ),
+                          child: Text(
+                            '${contract.activeBidCount} new bid${contract.activeBidCount == 1 ? '' : 's'}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.amber.shade900,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 12),

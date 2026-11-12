@@ -123,6 +123,60 @@ void main() {
     },
   );
 
+  testWidgets('two fingers zoom the inline video, like the offer images', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: AuthenticatedVideoPlayer(url: 'https://example.com/offer.mp4'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final zoom = find.byKey(const Key('video-pinch-zoom'));
+    expect(zoom, findsOneWidget);
+    double scale() => tester
+        .widget<InteractiveViewer>(zoom)
+        .transformationController!
+        .value
+        .getMaxScaleOnAxis();
+    expect(scale(), 1);
+
+    // Pinch out with two fingers.
+    final center = tester.getCenter(zoom);
+    final first = await tester.startGesture(center - const Offset(20, 0));
+    final second = await tester.startGesture(center + const Offset(20, 0));
+    await tester.pump();
+    for (var i = 1; i <= 10; i++) {
+      await first.moveTo(center - Offset(20.0 + i * 8, 0));
+      await second.moveTo(center + Offset(20.0 + i * 8, 0));
+      await tester.pump();
+    }
+    await first.up();
+    await second.up();
+    await tester.pumpAndSettle();
+    expect(scale(), greaterThan(1.5));
+    // Zoomed in: panning is now allowed.
+    expect(tester.widget<InteractiveViewer>(zoom).panEnabled, isTrue);
+
+    // Double tap resets the zoom.
+    await tester.tap(zoom);
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tap(zoom);
+    await tester.pumpAndSettle();
+    expect(scale(), 1);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('size menu and zoom controls change the rendered video', (
     tester,
   ) async {
