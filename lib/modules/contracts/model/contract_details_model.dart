@@ -63,6 +63,9 @@ class ContractDetailModel {
   final int? deliveryChallanId;
   final String? deliveryChallanNumber;
 
+  /// Agreed Delivery Period, e.g. "12 Nov 2026 - 15 Nov 2026" (MoM point 8).
+  final String deliveryPeriod;
+
   ContractDetailModel({
     required this.id,
     required this.contractId,
@@ -124,6 +127,7 @@ class ContractDetailModel {
     this.hasDeliveryChallan = false,
     this.deliveryChallanId,
     this.deliveryChallanNumber,
+    this.deliveryPeriod = '',
   });
 
   factory ContractDetailModel.fromJson(Map<String, dynamic> json) {
@@ -257,6 +261,7 @@ class ContractDetailModel {
           : (text('challan_number').isNotEmpty
               ? text('challan_number')
               : (json['delivery_challan'] is Map ? json['delivery_challan']['challan_number']?.toString() : null)),
+      deliveryPeriod: text('delivery_period').isNotEmpty ? text('delivery_period') : text('delivery_date'),
     );
   }
 

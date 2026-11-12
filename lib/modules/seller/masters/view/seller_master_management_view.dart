@@ -210,7 +210,7 @@ class SellerMasterManagementView extends StatelessWidget {
             ],
           );
         }),
-        // Adds to whichever tab is open; seller brands go to admin for approval.
+        // Adds to whichever tab is open; a seller brand is live at once (MoM point 26).
         floatingActionButton: Builder(
           builder: (tabContext) => FloatingActionButton.extended(
             heroTag: null,

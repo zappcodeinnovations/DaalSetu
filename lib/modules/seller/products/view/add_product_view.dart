@@ -4,6 +4,7 @@ import 'package:iconly/iconly.dart';
 import '../../common/seller_ui.dart';
 import '../controller/seller_product_controller.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/delivery_period_picker.dart';
 
 class AddProductView extends StatefulWidget {
   const AddProductView({super.key});
@@ -270,6 +271,17 @@ class _AddProductViewState extends State<AddProductView> {
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+              DeliveryPeriodPicker(
+                from: controller.deliveryFrom.value,
+                to: controller.deliveryTo.value,
+                hint: "Shown to buyers; they can negotiate it.",
+                onChanged: (from, to) {
+                  controller.deliveryFrom.value = from;
+                  controller.deliveryTo.value = to;
+                },
+              ),
+              const SizedBox(height: 8),
               _expiryField(context, controller),
               ValueListenableBuilder<TextEditingValue>(
                 valueListenable: controller.locationController,

@@ -314,7 +314,7 @@ class _SellerMediaGalleryViewState extends State<SellerMediaGalleryView> {
                                   IconlyLight.video,
                                   color: primaryColor,
                                 ),
-                                title: Text(item.title ?? "Video #${item.id}"),
+                                title: Text(item.title ?? "Video"),
                                 subtitle: const Text('Tap to play'),
                                 onTap: () =>
                                     _previewVideo(context, _url(item.videoUrl)),

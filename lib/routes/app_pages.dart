@@ -11,7 +11,7 @@ import '../modules/admin_catalog/config/admin_module_config.dart';
 import '../modules/admin_catalog/view/admin_category_master_screen.dart';
 import '../modules/admin_catalog/view/admin_branch_settings_screen.dart';
 import '../modules/admin_catalog/view/admin_brokerage_bills_screen.dart';
-import '../modules/admin_catalog/view/admin_contract_history_screen.dart';
+import '../modules/analytics/view/my_analytics_screen.dart';
 import '../modules/admin_catalog/view/admin_complaints_view.dart';
 import '../modules/contracts/view/contract_view.dart';
 import '../modules/admin_catalog/view/admin_module_list_screen.dart';
@@ -119,6 +119,7 @@ class AppPages {
     GetPage(name: AppRoutes.editProfile, page: () => const EditProfileScreen()),
     GetPage(name: AppRoutes.mainNav, page: () => MainNavigationScreen()),
     GetPage(name: AppRoutes.downloads, page: () => const DownloadsView()),
+    GetPage(name: AppRoutes.myAnalytics, page: () => const MyAnalyticsScreen()),
     GetPage(name: AppRoutes.subcategory, page: () => SubCategoryScreen()),
     GetPage(name: AppRoutes.users, page: () => UserScreen()),
     GetPage(name: AppRoutes.users_details, page: () => UserDetailScreen()),
@@ -287,7 +288,7 @@ class AppPages {
     ),
     GetPage(
       name: AppRoutes.adminContractHistory,
-      page: () => const AdminContractHistoryScreen(),
+      page: () => const MyAnalyticsScreen(),
     ),
     GetPage(
       name: AppRoutes.adminContracts,

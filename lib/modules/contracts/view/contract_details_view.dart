@@ -110,7 +110,6 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                   _item('Brand', contract.productBrand),
                 _item('Category', contract.productCategory),
                 if (_isSuperAdmin && contract.interestId != null && contract.interestId != 0)
-                  _item('Interest ID', contract.interestId),
                 _item(
                   'Deal amount',
                   contract.amountUnit.isEmpty
@@ -155,6 +154,8 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                     _item('Pickup Location', contract.loadingFrom),
                   if (contract.loadingTo.isNotEmpty)
                     _item('Delivery Location', contract.loadingTo),
+                  if (contract.deliveryPeriod.isNotEmpty)
+                    _item('Delivery Period', contract.deliveryPeriod),
                   if (contract.readyForLoadingAt.isNotEmpty)
                     _item(
                       'Ready for loading at',
@@ -270,7 +271,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     final color = _statusColor(contract.status);
     final contractTitle = contract.contractId.isNotEmpty
         ? 'Contract: ${contract.contractId}'
-        : 'Contract #${contract.id}';
+        : 'Contract';
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
       child: Padding(
@@ -559,7 +560,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
 
   String _withId(String name, int? id) {
     if (name.trim().isNotEmpty) return name.trim();
-    if (id != null) return 'Ref #$id';
+    if (id != null) return 'Ref';
     return '-';
   }
 
@@ -727,7 +728,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                     ),
                   ),
                   pw.SizedBox(height: 4),
-                  _pdfRow('Buyer ID', contract.displayBuyerId.isNotEmpty ? contract.displayBuyerId : contract.buyerName),
+                  _pdfRow('Buyer', contract.displayBuyerId.isNotEmpty ? contract.displayBuyerId : contract.buyerName),
                   _pdfRow('Name', contract.buyerName),
                   _pdfRow('Company', contract.buyerCompany ?? '-'),
                   _pdfRow('Email', contract.buyerEmail ?? '-'),
@@ -740,7 +741,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                     ),
                   ),
                   pw.SizedBox(height: 4),
-                  _pdfRow('Seller ID', contract.displaySellerId.isNotEmpty ? contract.displaySellerId : contract.sellerName),
+                  _pdfRow('Seller', contract.displaySellerId.isNotEmpty ? contract.displaySellerId : contract.sellerName),
                   _pdfRow('Name', contract.sellerName),
                   _pdfRow('Company', contract.sellerCompany ?? '-'),
                   _pdfRow('Email', contract.sellerEmail ?? '-'),

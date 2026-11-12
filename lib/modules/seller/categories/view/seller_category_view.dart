@@ -36,7 +36,7 @@ class SellerCategoryView extends StatelessWidget {
               onPressed: () => _showAddRootDialog(context),
               icon: const Icon(Icons.add, size: 18, color: Colors.white),
               label: const Text(
-                "Add Category",
+                "Add",
                 style: TextStyle(color: Colors.white),
               ),
               style: ElevatedButton.styleFrom(

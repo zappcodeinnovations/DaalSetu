@@ -73,6 +73,8 @@ class SellerNegotiationController extends GetxController {
     required String counterQuantity,
     int? counterBagCount,
     String? counterPackingWeightKg,
+    String? counterDeliveryFrom,
+    String? counterDeliveryTo,
   }) async {
     try {
       Get.dialog(
@@ -86,6 +88,8 @@ class SellerNegotiationController extends GetxController {
         counterQuantity: counterQuantity,
         counterBagCount: counterBagCount,
         counterPackingWeightKg: counterPackingWeightKg,
+        counterDeliveryFrom: counterDeliveryFrom,
+        counterDeliveryTo: counterDeliveryTo,
       );
       if (Get.isDialogOpen ?? false) Get.back();
       if (res['success'] == true) {

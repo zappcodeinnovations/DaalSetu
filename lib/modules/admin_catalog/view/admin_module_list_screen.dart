@@ -154,7 +154,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
     appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
       title: Text(
         widget.moduleKey == 'category_requests'
-            ? 'Buyer Category Management'
+            ? 'Category Requests'
             : config.title,
         style: const TextStyle(fontWeight: FontWeight.w800),
       ),
@@ -166,7 +166,9 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
         ),
       ],
     ),
+    // Only sellers add brands now (MoM point 26); admins review and edit them.
     floatingActionButton: config.canCreate &&
+            widget.moduleKey != 'brands' &&
             (widget.moduleKey != 'category_requests' ||
                 _activeCategoryRequestTab == 0)
         ? FloatingActionButton.extended(
@@ -734,7 +736,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      title.isEmpty ? '${config.title} #${config.recordId(record)}' : title,
+                      title.isEmpty ? config.title : title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleMedium?.copyWith(
@@ -755,11 +757,18 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
                         width: 92,
                         child: Text(
                           _label(entry.key),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodySmall,
                         ),
                       ),
                       Expanded(
-                        child: (entry.value == 'Active' || entry.value == 'Inactive')
+                        child: _isStatusKey(entry.key)
+                            ? Align(
+                                alignment: Alignment.centerLeft,
+                                child: _statusChip(entry.value),
+                              )
+                            : (entry.value == 'Active' || entry.value == 'Inactive')
                             ? Align(
                                 alignment: Alignment.centerLeft,
                                 child: Container(
@@ -950,7 +959,46 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
 
   String _display(Object? value, {String? key}) => adminDisplayValue(value, key: key);
 
-  String _label(String key) => key
+  /// Short card labels so every row stays on one line and lines up.
+  static const Map<String, String> _shortLabels = {
+    'kyc_status': 'KYC',
+    'is_active': 'Active',
+    'parent_name': 'Parent',
+    'created_by_name': 'Created By',
+    'created_at': 'Created',
+    'updated_at': 'Updated',
+    'requested_at': 'Requested',
+    'phone_number': 'Phone',
+    'license_number': 'License',
+    'assignment_status_display': 'Assignment',
+    'status_display': 'Status',
+    'vehicle_status_display': 'Status',
+    'vehicle_type': 'Type',
+    'load_capacity_tons': 'Capacity (t)',
+    'driver_name': 'Driver',
+    'product_title': 'Product',
+    'deal_quantity': 'Quantity',
+    'loading_from': 'From',
+    'loading_to': 'To',
+    'branch_code': 'Code',
+    'bill_prefix': 'Prefix',
+    'billing_email': 'Email',
+    'billing_phone': 'Phone',
+    'request_note': 'Note',
+    'seller_name': 'Seller',
+    'buyer_name': 'Buyer',
+    'category_name': 'Category',
+    'required_quantity': 'Quantity',
+    'target_price': 'Target',
+    'quotation_count': 'Quotes',
+    'requested_amount': 'Amount',
+    'requested_quantity': 'Quantity',
+    'page_label': 'Page',
+    'is_primary': 'Primary',
+  };
+
+  String _label(String key) => _shortLabels[key] ?? key
+      .replaceAll(RegExp(r'_display$'), '')
       .split('_')
       .map(
         (word) => word.isEmpty
@@ -958,4 +1006,43 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
             : '${word[0].toUpperCase()}${word.substring(1)}',
       )
       .join(' ');
+
+  /// Status-like rows (status, kyc_status, is_active, ...) render as one chip style.
+  static bool _isStatusKey(String key) =>
+      key == 'is_active' || key.contains('status');
+
+  static String _titleCase(String value) => value
+      .replaceAll('_', ' ')
+      .split(' ')
+      .where((word) => word.isNotEmpty)
+      .map((word) => '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}')
+      .join(' ');
+
+  static Color _statusColor(String value) {
+    final v = value.toLowerCase();
+    if (RegExp(r'reject|inactive|cancel|expired|suspend|deactivat|fail|block|unverified').hasMatch(v)) {
+      return Colors.red;
+    }
+    if (RegExp(r'pending|progress|review|requested|draft|busy|maintenance|unassigned|open').hasMatch(v)) {
+      return const Color(0xFFF59E0B);
+    }
+    return Colors.green;
+  }
+
+  Widget _statusChip(String raw) {
+    final text = _titleCase(raw);
+    final color = _statusColor(text);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 11),
+      ),
+    );
+  }
 }

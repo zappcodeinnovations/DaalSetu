@@ -9,6 +9,7 @@ import '../controller/buyer_delivery_challan_controller.dart';
 import '../model/buyer_delivery_challan_model.dart';
 import '../service/buyer_challan_pdf_service.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/dispatch_bills_section.dart';
 
 class BuyerDeliveryChallanDetailView extends StatelessWidget {
   BuyerDeliveryChallanDetailView({super.key});
@@ -145,6 +146,11 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
                     _buildNarration(context, challan.narration!),
                   ],
                   const SizedBox(height: 16),
+                  // Bills the seller attached at dispatch (download only).
+                  DispatchBillsSection(
+                    key: ValueKey('bills-${challan.id ?? challanId}-${challan.status}'),
+                    challanId: challan.id ?? challanId,
+                  ),
                   _buildActionsCard(context, challan),
                   const SizedBox(height: 32),
                 ],

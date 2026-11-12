@@ -2,7 +2,7 @@ import 'package:daalsetu/modules/admin_catalog/config/admin_actions.dart';
 import 'package:daalsetu/modules/admin_catalog/config/admin_module_config.dart';
 import 'package:daalsetu/modules/admin_catalog/model/admin_record.dart';
 import 'package:daalsetu/modules/admin_catalog/repository/drawer_menu_service.dart';
-import 'package:daalsetu/modules/admin_catalog/view/admin_contract_history_screen.dart';
+import 'package:daalsetu/modules/analytics/view/my_analytics_screen.dart';
 import 'package:daalsetu/modules/admin_catalog/view/admin_record_form_screen.dart';
 import 'package:daalsetu/modules/seller/challans/model/seller_challan_model.dart';
 import 'package:daalsetu/routes/app_routes.dart';
@@ -115,7 +115,7 @@ void main() {
     final deals = sections.singleWhere((section) => section.sectionTitle == 'DEALS');
     final items = {for (final item in deals.items) item.key: item};
     expect(items['consignments']!.route, AppRoutes.adminModule('consignments'));
-    expect(items['contract_history']!.route, AppRoutes.adminContractHistory);
+    expect(items['my_analytics']!.route, AppRoutes.adminContractHistory);
   });
 
   test('accounting drawer and billing company module use brokerage APIs', () async {
@@ -192,7 +192,7 @@ void main() {
     // These routes remain visible to Sub Admins because the server's role and
     // per-user permission checks determine their actual access.
     expect(items['consignments']!.isVisibleFor('sub_admin'), isTrue);
-    expect(items['contract_history']!.isVisibleFor('sub_admin'), isTrue);
+    expect(items['my_analytics']!.isVisibleFor('sub_admin'), isTrue);
   });
 
   for (final key in ['vehicles', 'brands', 'sub_categories', 'offer_images', 'drivers']) {
@@ -204,10 +204,10 @@ void main() {
     });
   }
 
-  testWidgets('contract history screen renders its loading state', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: AdminContractHistoryScreen()));
+  testWidgets('My Analytics screen renders its loading state', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: MyAnalyticsScreen()));
     await tester.pump();
-    expect(find.text('Contract History'), findsOneWidget);
+    expect(find.text('My Analytics'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

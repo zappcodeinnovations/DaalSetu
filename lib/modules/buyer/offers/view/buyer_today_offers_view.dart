@@ -445,6 +445,8 @@ class BuyerTodayOffersView extends StatelessWidget {
                             ),
                           ),
                         ),
+                        // Expired / out of stock is already in the status badge: no second copy.
+                        if (!offer.isExpired && !offer.isOutOfStock) ...[
                         const SizedBox(width: 10),
                         Expanded(
                           child: ElevatedButton(
@@ -525,6 +527,7 @@ class BuyerTodayOffersView extends StatelessWidget {
                             ),
                           ),
                         ),
+                        ],
                       ],
                     ),
                   ],

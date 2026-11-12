@@ -1,20 +1,22 @@
 import 'package:daalsetu/modules/admin_catalog/view/admin_drawer.dart';
 import 'package:daalsetu/network/api_client.dart';
+import 'package:daalsetu/utils/money_format.dart';
 import 'package:flutter/material.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../utils/app_snackbar.dart';
 
-class AdminContractHistoryScreen extends StatefulWidget {
-  const AdminContractHistoryScreen({super.key});
+/// "My Analytics" (MoM point 30): the web /contracts/history/ page for every role.
+/// The server scopes it: admins see their branch/team, sellers the contracts they
+/// sold, buyers the ones they bought, transporters the ones they carry.
+class MyAnalyticsScreen extends StatefulWidget {
+  const MyAnalyticsScreen({super.key});
 
   @override
-  State<AdminContractHistoryScreen> createState() =>
-      _AdminContractHistoryScreenState();
+  State<MyAnalyticsScreen> createState() => _MyAnalyticsScreenState();
 }
 
-class _AdminContractHistoryScreenState
-    extends State<AdminContractHistoryScreen> {
-  static const _endpoint = '/api/admin/contract-history/';
+class _MyAnalyticsScreenState extends State<MyAnalyticsScreen> {
+  static const _endpoint = '/api/contracts/history/';
 
   final searchController = TextEditingController();
   final contractController = TextEditingController();
@@ -27,15 +29,27 @@ class _AdminContractHistoryScreenState
   String? error;
   int page = 1;
   String status = '';
+  String brand = '';
+  String category = '';
   String branch = '';
   String subAdmin = '';
   DateTime? dateFrom;
   DateTime? dateTo;
+
+  /// 'admin' or 'party' (seller / buyer / transporter), as the server reports it.
+  String roleView = 'party';
   List<Map<String, dynamic>> records = const [];
   List<Map<String, dynamic>> kpis = const [];
+  List<Map<String, dynamic>> brandWise = const [];
+  List<Map<String, dynamic>> categoryWise = const [];
+  List<Map<String, dynamic>> productWise = const [];
   List<Map<String, dynamic>> statuses = const [];
+  List<Map<String, dynamic>> brands = const [];
+  List<Map<String, dynamic>> categories = const [];
   List<Map<String, dynamic>> branches = const [];
   List<Map<String, dynamic>> subAdmins = const [];
+
+  bool get isAdminView => roleView == 'admin';
 
   @override
   void initState() {
@@ -75,11 +89,13 @@ class _AdminContractHistoryScreenState
       if (!mounted || data is! Map) return;
       setState(() {
         statuses = _maps(data['statuses']);
+        brands = _maps(data['brands']);
+        categories = _maps(data['categories']);
         branches = _maps(data['branches']);
         subAdmins = _maps(data['sub_admins']);
       });
     } catch (_) {
-      // The history rows remain useful even if filter choices cannot be loaded.
+      // The analytics remain useful even if filter choices cannot be loaded.
     }
   }
 
@@ -108,6 +124,8 @@ class _AdminContractHistoryScreenState
       if (sellerController.text.trim().isNotEmpty)
         'seller': sellerController.text.trim(),
       if (status.isNotEmpty) 'status': status,
+      if (brand.isNotEmpty) 'brand': brand,
+      if (category.isNotEmpty) 'category': category,
       if (branch.isNotEmpty) 'branch': branch,
       if (subAdmin.isNotEmpty) 'sub_admin': subAdmin,
       if (dateFrom != null) 'date_from': _date(dateFrom!),
@@ -126,7 +144,13 @@ class _AdminContractHistoryScreenState
       final freshRows = _maps(response['results']);
       setState(() {
         records = reset ? freshRows : [...records, ...freshRows];
-        if (reset) kpis = _maps(response['kpis']);
+        if (reset) {
+          roleView = '${response['role_view'] ?? 'party'}';
+          kpis = _maps(response['kpis']);
+          brandWise = _maps(response['brand_wise']);
+          categoryWise = _maps(response['category_wise']);
+          productWise = _maps(response['product_wise']);
+        }
         page = requestedPage;
         hasNext = pagination['has_next'] == true;
       });
@@ -135,7 +159,8 @@ class _AdminContractHistoryScreenState
       if (reset) {
         setState(() => error = _message(exception));
       } else {
-        AppSnackbar.showSnackBar(context, 
+        AppSnackbar.showSnackBar(
+          context,
           SnackBar(
             content: Text(_message(exception)),
             backgroundColor: Theme.of(context).colorScheme.error,
@@ -181,6 +206,8 @@ class _AdminContractHistoryScreenState
       buyerController.clear();
       sellerController.clear();
       status = '';
+      brand = '';
+      category = '';
       branch = '';
       subAdmin = '';
       dateFrom = null;
@@ -191,10 +218,12 @@ class _AdminContractHistoryScreenState
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    drawer: const AdminDrawer(activeKey: 'contract_history'),
-    appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
+    drawer: const AdminDrawer(activeKey: 'my_analytics'),
+    appBar: AppBar(
+      leading: const AppBarLeading(),
+      leadingWidth: AppBarLeading.widthFor(context),
       title: const Text(
-        'Contract History',
+        'My Analytics',
         style: TextStyle(fontWeight: FontWeight.w800),
       ),
       actions: [
@@ -217,24 +246,22 @@ class _AdminContractHistoryScreenState
                 const SizedBox(height: 10),
                 _filters(),
                 if (kpis.isNotEmpty) ...[
-                  const SizedBox(height: 18),
-                  Text(
-                    'Overview',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
+                  _heading('Overview'),
                   _kpiCards(),
                 ],
-                const SizedBox(height: 18),
-                Text(
-                  'Contracts',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 10),
+                if (brandWise.isNotEmpty) ...[
+                  _heading('Brand-wise Trade'),
+                  _tradeCard(brandWise, Icons.sell_outlined),
+                ],
+                if (categoryWise.isNotEmpty) ...[
+                  _heading('Category-wise Trade'),
+                  _tradeCard(categoryWise, Icons.category_outlined),
+                ],
+                if (productWise.isNotEmpty) ...[
+                  _heading('Product-wise Trade'),
+                  _tradeCard(productWise, Icons.inventory_2_outlined),
+                ],
+                _heading('Contracts'),
                 if (error != null) _errorCard(),
                 if (error == null && records.isEmpty) _emptyCard(),
                 ...records.map(_recordCard),
@@ -244,12 +271,22 @@ class _AdminContractHistoryScreenState
           ),
   );
 
+  Widget _heading(String text) => Padding(
+    padding: const EdgeInsets.only(top: 18, bottom: 10),
+    child: Text(
+      text,
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        fontWeight: FontWeight.w800,
+      ),
+    ),
+  );
+
   Widget _search() => TextField(
     controller: searchController,
     textInputAction: TextInputAction.search,
     onSubmitted: (_) => load(reset: true),
     decoration: InputDecoration(
-      hintText: 'Search contract, product, party or branch',
+      hintText: 'Search contract, product or party',
       prefixIcon: const Icon(Icons.search_rounded),
       suffixIcon: IconButton(
         tooltip: 'Search',
@@ -270,12 +307,24 @@ class _AdminContractHistoryScreenState
       childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       children: [
         const SizedBox(height: 6),
-        TextField(
-          controller: contractController,
-          decoration: const InputDecoration(
-            labelText: 'Contract ID',
-            border: OutlineInputBorder(),
-          ),
+        _dropdown(
+          label: 'Brand',
+          value: brand,
+          options: brands,
+          valueOf: (item) => '${item['id'] ?? ''}',
+          labelOf: (item) => '${item['name'] ?? ''}',
+          onChanged: (value) => setState(() => brand = value),
+        ),
+        const SizedBox(height: 12),
+        _dropdown(
+          label: 'Category',
+          value: category,
+          options: categories,
+          valueOf: (item) => '${item['id'] ?? ''}',
+          // Sub-categories are indented under their main category.
+          labelOf: (item) =>
+              '${item['is_main'] == false ? '   ' : ''}${item['name'] ?? ''}',
+          onChanged: (value) => setState(() => category = value),
         ),
         const SizedBox(height: 12),
         _dropdown(
@@ -286,40 +335,54 @@ class _AdminContractHistoryScreenState
           labelOf: (item) => '${item['label'] ?? item['value'] ?? ''}',
           onChanged: (value) => setState(() => status = value),
         ),
-        const SizedBox(height: 12),
-        _dropdown(
-          label: 'Branch',
-          value: branch,
-          options: branches,
-          valueOf: (item) => '${item['id'] ?? ''}',
-          labelOf: (item) => '${item['name'] ?? ''}',
-          onChanged: (value) => setState(() => branch = value),
-        ),
-        const SizedBox(height: 12),
-        _dropdown(
-          label: 'Sub admin',
-          value: subAdmin,
-          options: subAdmins,
-          valueOf: (item) => '${item['id'] ?? ''}',
-          labelOf: _userLabel,
-          onChanged: (value) => setState(() => subAdmin = value),
-        ),
+        if (branches.length > 1 || isAdminView) ...[
+          const SizedBox(height: 12),
+          _dropdown(
+            label: 'Branch',
+            value: branch,
+            options: branches,
+            valueOf: (item) => '${item['id'] ?? ''}',
+            labelOf: (item) => '${item['name'] ?? ''}',
+            onChanged: (value) => setState(() => branch = value),
+          ),
+        ],
+        if (isAdminView) ...[
+          const SizedBox(height: 12),
+          _dropdown(
+            label: 'Sub admin',
+            value: subAdmin,
+            options: subAdmins,
+            valueOf: (item) => '${item['id'] ?? ''}',
+            labelOf: _userLabel,
+            onChanged: (value) => setState(() => subAdmin = value),
+          ),
+        ],
         const SizedBox(height: 12),
         TextField(
-          controller: buyerController,
+          controller: contractController,
           decoration: const InputDecoration(
-            labelText: 'Buyer ID',
+            labelText: 'Contract ID',
             border: OutlineInputBorder(),
           ),
         ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: sellerController,
-          decoration: const InputDecoration(
-            labelText: 'Seller ID',
-            border: OutlineInputBorder(),
+        if (isAdminView) ...[
+          const SizedBox(height: 12),
+          TextField(
+            controller: buyerController,
+            decoration: const InputDecoration(
+              labelText: 'Buyer',
+              border: OutlineInputBorder(),
+            ),
           ),
-        ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: sellerController,
+            decoration: const InputDecoration(
+              labelText: 'Seller',
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ],
         const SizedBox(height: 12),
         Row(
           children: [
@@ -432,6 +495,65 @@ class _AdminContractHistoryScreenState
         .toList(),
   );
 
+  /// One row per brand / category / product with a bar sized by trade value.
+  Widget _tradeCard(List<Map<String, dynamic>> rows, IconData icon) {
+    final values = rows
+        .map((row) => double.tryParse('${row['trade_value'] ?? 0}') ?? 0)
+        .toList();
+    final maxValue = values.fold<double>(0, (max, value) => value > max ? value : max);
+    final color = Theme.of(context).colorScheme.primary;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          children: [
+            for (var index = 0; index < rows.length; index++)
+              Padding(
+                padding: EdgeInsets.only(bottom: index == rows.length - 1 ? 0 : 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(icon, size: 16, color: color),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            '${rows[index]['name'] ?? '—'}',
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        Text(
+                          formatInr(values[index]),
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: LinearProgressIndicator(
+                        value: maxValue > 0 ? values[index] / maxValue : 0,
+                        minHeight: 8,
+                        color: color,
+                        backgroundColor: color.withValues(alpha: .12),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${rows[index]['contracts'] ?? 0} contract(s)',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _errorCard() => Card(
     child: Padding(
       padding: const EdgeInsets.all(20),
@@ -456,7 +578,7 @@ class _AdminContractHistoryScreenState
       padding: EdgeInsets.all(24),
       child: Column(
         children: [
-          Icon(Icons.history_outlined, size: 44),
+          Icon(Icons.insights_outlined, size: 44),
           SizedBox(height: 10),
           Text(
             'No contracts found for these filters.',
@@ -493,24 +615,41 @@ class _AdminContractHistoryScreenState
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           const Divider(height: 20),
-          _line('Buyer', record['buyer_id_display']),
-          _line('Seller', record['seller_id_display']),
+          _line('Brand', record['brand']),
+          _line('Category', _categoryText(record)),
+          // Company names instead of people/IDs for sellers, buyers and transporters (MoM 24).
+          if (isAdminView) ...[
+            _line('Buyer', record['buyer_id_display']),
+            _line('Seller', record['seller_id_display']),
+          ] else ...[
+            _line('Buyer', record['buyer_company']),
+            _line('Seller', record['seller_company']),
+          ],
           _line(
-            'Amount',
+            'Rate',
             '₹${record['deal_amount'] ?? '—'} / ${record['amount_unit'] ?? ''}',
           ),
           _line(
             'Quantity',
             '${record['deal_quantity'] ?? '—'} ${record['quantity_unit'] ?? ''}',
           ),
-          _line('Trade value', '₹${record['trade_value'] ?? '—'}'),
+          _line('Trade value', formatInr(record['trade_value'])),
           _line('Branch', record['branch']),
-          _line('Sub admin', record['sub_admin']),
-          _line('Confirmed', record['confirmed_at']),
+          if (isAdminView) ...[
+            _line('Sub admin', record['sub_admin']),
+            _line('Confirmed', record['confirmed_at']),
+          ],
         ],
       ),
     ),
   );
+
+  String _categoryText(Map<String, dynamic> record) {
+    final main = '${record['category'] ?? ''}'.trim();
+    final sub = '${record['product_category'] ?? ''}'.trim();
+    if (sub.isEmpty || sub == main) return main.isEmpty ? '—' : main;
+    return '$main › $sub';
+  }
 
   Widget _line(String label, Object? value) => Padding(
     padding: const EdgeInsets.only(bottom: 5),
@@ -523,7 +662,7 @@ class _AdminContractHistoryScreenState
         ),
         Expanded(
           child: Text(
-            '${value ?? '—'}',
+            '${(value == null || '$value'.isEmpty) ? '—' : value}',
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
         ),
@@ -533,7 +672,7 @@ class _AdminContractHistoryScreenState
 
   Widget _status(String value) {
     final color = switch (value.toLowerCase()) {
-      'received' => Colors.green,
+      'received' || 'completed' => Colors.green,
       'cancelled' || 'rejected' => Colors.red,
       'active' || 'confirmed' => Colors.blue,
       _ => Colors.orange,

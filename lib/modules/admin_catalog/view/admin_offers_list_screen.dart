@@ -189,8 +189,12 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
           // Attributes
           _buildAttributeRow(Icons.person, 'Seller', offer.seller?.displayName ?? '-'),
           const SizedBox(height: 8),
-          _buildAttributeRow(Icons.location_on, 'Loading', offer.loadingLocation.isNotEmpty ? offer.loadingLocation : '-'),
-          const SizedBox(height: 8),
+          // Without a real location the backend stores the date range here; the
+          // Date row already shows it, so skip this row instead of repeating it.
+          if (!_isDateRangeText(offer.loadingLocation)) ...[
+            _buildAttributeRow(Icons.location_on, 'Loading', offer.loadingLocation.isNotEmpty ? offer.loadingLocation : '-'),
+            const SizedBox(height: 8),
+          ],
           _buildDateRow(offer),
           const SizedBox(height: 16),
 
@@ -391,10 +395,22 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
     );
   }
 
+  static bool _isDateRangeText(String text) =>
+      RegExp(r'^\s*\d{4}-\d{2}-\d{2}').hasMatch(text) && text.contains('->');
+
+  /// "2026-07-29T00:00:00+05:30" -> "29 Jul 2026"; other text is kept as is.
+  static String _shortDate(String raw) {
+    final parsed = DateTime.tryParse(raw.trim());
+    if (parsed == null) return raw;
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final local = parsed.isUtc ? parsed.toLocal() : parsed;
+    return '${local.day.toString().padLeft(2, '0')} ${months[local.month - 1]} ${local.year}';
+  }
+
   Widget _buildDateRow(ProductModel offer) {
     String dateStr = '-';
     if (offer.loadingFrom.isNotEmpty && offer.loadingTo.isNotEmpty) {
-      dateStr = '${offer.loadingFrom} → ${offer.loadingTo}';
+      dateStr = '${_shortDate(offer.loadingFrom)} → ${_shortDate(offer.loadingTo)}';
     } else if (offer.createdAt.toString().isNotEmpty) {
       dateStr = offer.createdAt.toString().split(' ').first;
     }

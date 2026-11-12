@@ -12,6 +12,7 @@ import 'package:daalsetu/utils/global_error_handler.dart';
 
 import 'approve_deal_dialog.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/delivery_period_picker.dart';
 import '../../../utils/app_snackbar.dart';
 
 class NegotiationPage extends StatefulWidget {
@@ -38,6 +39,8 @@ class _NegotiationPageState extends State<NegotiationPage> {
   final TextEditingController _negPriceCtrl = TextEditingController();
   final TextEditingController _negBagsCtrl = TextEditingController();
   final TextEditingController _negWeightCtrl = TextEditingController();
+  DateTime? _negDeliveryFrom;
+  DateTime? _negDeliveryTo;
   bool _isLoading = false;
   bool _isLoadingThread = false;
   bool _threadRefreshInProgress = false;
@@ -320,8 +323,10 @@ class _NegotiationPageState extends State<NegotiationPage> {
     final priceText = _negPriceCtrl.text.trim();
     final bagsText = _negBagsCtrl.text.trim();
     final weightText = _negWeightCtrl.text.trim();
+    final deliveryFrom = _negDeliveryFrom;
+    final deliveryTo = _negDeliveryTo ?? deliveryFrom;
 
-    if (priceText.isEmpty && bagsText.isEmpty && weightText.isEmpty) {
+    if (priceText.isEmpty && bagsText.isEmpty && weightText.isEmpty && deliveryFrom == null) {
       AppSnackbar.snackbar(
         'Required Fields',
         'Please enter a Counter Price or Packing details.',
@@ -351,6 +356,8 @@ class _NegotiationPageState extends State<NegotiationPage> {
         counterQuantity: '',
         counterBagCount: bagsText,
         counterPackingWeightKg: weightText,
+        counterDeliveryFrom: deliveryFrom == null ? null : DeliveryPeriodPicker.apiDate(deliveryFrom),
+        counterDeliveryTo: deliveryTo == null ? null : DeliveryPeriodPicker.apiDate(deliveryTo),
       );
 
       if (res['success'] == false) {
@@ -367,6 +374,8 @@ class _NegotiationPageState extends State<NegotiationPage> {
       _negPriceCtrl.clear();
       _negBagsCtrl.clear();
       _negWeightCtrl.clear();
+      _negDeliveryFrom = null;
+      _negDeliveryTo = null;
 
       await _loadThread();
     } catch (e) {
@@ -1050,8 +1059,12 @@ class _NegotiationPageState extends State<NegotiationPage> {
         : textVal(msg['timestamp']);
     final formattedTime = _formatTimestamp(timeRaw);
 
+    final deliveryText = DeliveryPeriodPicker.periodText(
+      textVal(msg['counter_delivery_from']),
+      textVal(msg['counter_delivery_to']),
+    );
     final bool isProposal =
-        price.isNotEmpty || quantity.isNotEmpty || bags.isNotEmpty;
+        price.isNotEmpty || quantity.isNotEmpty || bags.isNotEmpty || deliveryText.isNotEmpty;
     if (!isProposal) {
       return _buildStatusBanner(
         msg,
@@ -1152,6 +1165,17 @@ class _NegotiationPageState extends State<NegotiationPage> {
             const SizedBox(height: 2),
             Text(
               "Calculated Quantity: ${_formatQty(quantity)}",
+              style: TextStyle(
+                color: textDark,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
+          if (deliveryText.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              "Delivery Period: $deliveryText",
               style: TextStyle(
                 color: textDark,
                 fontWeight: FontWeight.w600,
@@ -1374,6 +1398,16 @@ class _NegotiationPageState extends State<NegotiationPage> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 10),
+          DeliveryPeriodPicker(
+            label: "Counter Delivery Period (optional)",
+            from: _negDeliveryFrom,
+            to: _negDeliveryTo,
+            onChanged: (from, to) => setState(() {
+              _negDeliveryFrom = from;
+              _negDeliveryTo = to;
+            }),
           ),
           const SizedBox(height: 6),
           // Helper Note

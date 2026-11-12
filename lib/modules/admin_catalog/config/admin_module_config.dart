@@ -205,7 +205,6 @@ class AdminModules {
     AdminDetailSection(
       title: 'Account Information',
       fields: [
-        AdminDetailField('id', 'User ID', copyable: true),
         AdminDetailField('name|full_name|username', 'Name'),
         AdminDetailField(
           'mobile',
@@ -273,7 +272,8 @@ class AdminModules {
       title: 'User Management',
       icon: Icons.people_alt_outlined,
       listEndpoint: '/api/users/',
-      titleKeys: const ['username', 'name', 'mobile'],
+      // Company name as the title (MoM 24), not the login mobile number.
+      titleKeys: const ['company_display_name', 'name', 'username', 'mobile'],
       subtitleKeys: const ['role', 'mobile', 'email', 'kyc_status'],
       detailEndpoint: (id) => '/api/users/$id/',
       filterParameter: 'role',
@@ -341,7 +341,6 @@ class AdminModules {
         const AdminDetailSection(
           title: 'Account',
           fields: [
-            AdminDetailField('id', 'User ID', copyable: true),
             AdminDetailField('name', 'Name'),
             AdminDetailField(
               'mobile',
@@ -435,7 +434,8 @@ class AdminModules {
       title: 'User KYCs',
       icon: Icons.verified_user_outlined,
       listEndpoint: '/api/kyc/list/',
-      titleKeys: const ['username', 'name', 'mobile'],
+      // Company name as the title (MoM 24), not the login mobile number.
+      titleKeys: const ['company_name', 'name', 'username', 'mobile'],
       subtitleKeys: const ['role', 'kyc_status', 'mobile'],
       detailEndpoint: (id) => '/api/users/$id/',
       searchParameter: 'search',
@@ -445,7 +445,6 @@ class AdminModules {
         const AdminDetailSection(
           title: 'User Information',
           fields: [
-            AdminDetailField('id|user.id', 'User ID', copyable: true),
             AdminDetailField('name|full_name|username|user.name|user.full_name|user.username', 'Name'),
             AdminDetailField('first_name|user.first_name', 'First Name'),
             AdminDetailField('last_name|user.last_name', 'Last Name'),
@@ -584,7 +583,6 @@ class AdminModules {
         const AdminDetailSection(
           title: 'Branch Request',
           fields: [
-            AdminDetailField('id', 'Request ID', copyable: true),
             AdminDetailField('branch.name', 'Branch'),
             AdminDetailField(
               'branch.branch_code',
@@ -764,8 +762,8 @@ class AdminModules {
         const AdminDetailSection(
           title: 'Parties',
           fields: [
-            AdminDetailField('display_seller_id', 'Seller ID'),
-            AdminDetailField('display_buyer_id', 'Buyer ID'),
+            AdminDetailField('display_seller_id', 'Seller'),
+            AdminDetailField('display_buyer_id', 'Buyer'),
           ],
         ),
       ],
@@ -927,7 +925,6 @@ class AdminModules {
         const AdminDetailSection(
           title: 'Request',
           fields: [
-            AdminDetailField('id', 'Request ID', copyable: true),
             AdminDetailField(
               'status',
               'Status',
@@ -999,7 +996,8 @@ class AdminModules {
       icon: Icons.account_tree_outlined,
       listEndpoint: '/api/categories/',
       titleKeys: const ['category_name'],
-      subtitleKeys: const ['parent_name', 'status', 'is_active'],
+      // One status only: 'status' already says Active / Pending / Inactive.
+      subtitleKeys: const ['parent_name', 'status'],
       detailEndpoint: (id) => '/api/categories/$id/',
       createEndpoint: '/api/categories/',
       updateEndpoint: (id) => '/api/categories/$id/',
@@ -1025,7 +1023,6 @@ class AdminModules {
         const AdminDetailSection(
           title: 'Sub-category',
           fields: [
-            AdminDetailField('id', 'ID', copyable: true),
             AdminDetailField('category_name', 'Name'),
             AdminDetailField('parent_name', 'Parent Category'),
             AdminDetailField('full_path', 'Full Path'),
@@ -1073,7 +1070,6 @@ class AdminModules {
         const AdminDetailSection(
           title: 'Category Information',
           fields: [
-            AdminDetailField('id', 'Category ID', copyable: true),
             AdminDetailField('name', 'Name'),
             AdminDetailField('description', 'Description'),
             AdminDetailField('level', 'Level'),
@@ -1156,7 +1152,6 @@ class AdminModules {
         const AdminDetailSection(
           title: 'Brand Information',
           fields: [
-            AdminDetailField('id', 'Brand ID', copyable: true),
             AdminDetailField('brand_name', 'Brand Name'),
             AdminDetailField(
               'status',
@@ -1218,7 +1213,6 @@ class AdminModules {
         const AdminDetailSection(
           title: 'Tag Information',
           fields: [
-            AdminDetailField('id', 'Tag ID', copyable: true),
             AdminDetailField('tag_name', 'Tag Name'),
             AdminDetailField(
               'is_active',
@@ -1295,7 +1289,6 @@ class AdminModules {
         const AdminDetailSection(
           title: 'Driver Information',
           fields: [
-            AdminDetailField('id', 'Driver ID', copyable: true),
             AdminDetailField('driver_name', 'Driver Name'),
             AdminDetailField(
               'phone_number',
@@ -1339,11 +1332,6 @@ class AdminModules {
         const AdminDetailSection(
           title: 'Transporter Information',
           fields: [
-            AdminDetailField(
-              'transporter.id',
-              'Transporter ID',
-              copyable: true,
-            ),
             AdminDetailField('transporter.username', 'Transporter Name'),
             AdminDetailField(
               'transporter.mobile',
@@ -1572,7 +1560,6 @@ class AdminModules {
         const AdminDetailSection(
           title: 'Vehicle Information',
           fields: [
-            AdminDetailField('id', 'Vehicle ID', copyable: true),
             AdminDetailField(
               'vehicle_number',
               'Vehicle Number',
@@ -1614,11 +1601,6 @@ class AdminModules {
         const AdminDetailSection(
           title: 'Transporter Information',
           fields: [
-            AdminDetailField(
-              'transporter.id',
-              'Transporter ID',
-              copyable: true,
-            ),
             AdminDetailField('transporter.username', 'Transporter Name'),
             AdminDetailField(
               'transporter.mobile',
@@ -1708,7 +1690,6 @@ class AdminModules {
         const AdminDetailSection(
           title: 'Offer Information',
           fields: [
-            AdminDetailField('id', 'Offer ID', copyable: true),
             AdminDetailField('title', 'Offer Title'),
             AdminDetailField('amount', 'Amount'),
             AdminDetailField('quantity', 'Quantity'),
@@ -2077,9 +2058,7 @@ class AdminModules {
         const AdminDetailSection(
           title: 'Media Details',
           fields: [
-            AdminDetailField('id', 'Image ID', copyable: true),
             AdminDetailField('product_title', 'Offer'),
-            AdminDetailField('product', 'Offer ID'),
             AdminDetailField(
               'is_primary',
               'Primary Image',
@@ -2131,9 +2110,7 @@ class AdminModules {
         const AdminDetailSection(
           title: 'Media Details',
           fields: [
-            AdminDetailField('id', 'Video ID', copyable: true),
             AdminDetailField('product_title', 'Offer'),
-            AdminDetailField('product', 'Offer ID'),
           ],
         ),
         const AdminDetailSection(

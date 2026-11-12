@@ -109,7 +109,7 @@ class TransporterContractsView extends StatelessWidget {
                   final contract = controller.contractsList[index];
                   final status = (contract.status ?? 'ACTIVE').toUpperCase();
                   final isCompleted = status.contains("COMPLETED") || status.contains("CONFIRMED");
-                  final contractNum = contract.contractNumber ?? "Contract #${contract.id ?? ''}";
+                  final contractNum = contract.contractNumber ?? "Contract";
                   final commodity = contract.categoryName ?? contract.brandName ?? "Commodity";
                   final buyer = contract.buyerCompany ?? "Buyer";
                   final amount = contract.dealAmount ?? contract.totalAmount ?? "0";

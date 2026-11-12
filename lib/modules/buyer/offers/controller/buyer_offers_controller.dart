@@ -169,6 +169,7 @@ class BuyerOffersController extends GetxController {
     String qty,
     String remark, {
     String? deliveryDate,
+    String? deliveryDateTo,
     String? loadingTo,
     String? condition,
     int? interestId,
@@ -203,6 +204,7 @@ class BuyerOffersController extends GetxController {
         requestedAmount: amount,
         requestedQuantity: qty,
         deliveryDate: deliveryDate,
+        deliveryDateTo: deliveryDateTo,
         loadingTo: loadingTo,
         condition: condition,
         interestId: interestId,

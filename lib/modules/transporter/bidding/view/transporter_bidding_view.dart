@@ -8,6 +8,7 @@ import '../../../seller/contracts/view/seller_contract_detail_view.dart';
 import '../../../../routes/app_routes.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../../utils/app_snackbar.dart';
+import 'package:daalsetu/widgets/dispatch_bills_section.dart';
 
 const _gold = Color(0xFFFFB300);
 
@@ -150,8 +151,43 @@ class TransporterBiddingView extends StatelessWidget {
             ? Get.find<TransporterBiddingController>()
             : Get.put(TransporterBiddingController()));
     final amount = TextEditingController(text: offer.myBid ?? '');
+    final note = TextEditingController();
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+
+    // Admin price / counter offer box with an accept button (MoM 16).
+    Widget acceptBox(String title, String value, String subtitle, String buttonText, String action, Color color) {
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(top: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.4)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("$title: ₹$value", style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13, color: color)),
+            if (subtitle.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(subtitle, style: TextStyle(fontSize: 12, color: isDark ? Colors.white70 : Colors.grey.shade700)),
+              ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: color, foregroundColor: Colors.white, elevation: 0),
+              onPressed: () {
+                Get.back();
+                biddingController.acceptAdminAmount(offer, action);
+              },
+              child: Text(buttonText),
+            ),
+          ],
+        ),
+      );
+    }
 
     Get.dialog(
       Dialog(
@@ -229,10 +265,16 @@ class TransporterBiddingView extends StatelessWidget {
                         ),
                       ),
                     ],
+                    if (offer.hasAdminPrice)
+                      acceptBox("Admin price", offer.maxBid!, "Accept this price or negotiate below.",
+                          "Accept ₹${offer.maxBid}", "accept_max", Colors.green.shade700),
+                    if (offer.hasCounterOffer)
+                      acceptBox("Admin counter offer", offer.counterAmount!, offer.counterNote,
+                          "Accept ₹${offer.counterAmount}", "accept_counter", Colors.blue.shade700),
                     const SizedBox(height: 16),
                     // Field label: "Bid Amount"
                     Text(
-                      "Bid Amount",
+                      offer.hasAdminPrice ? "Or negotiate: your price" : "Bid Amount",
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -282,6 +324,18 @@ class TransporterBiddingView extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if (offer.hasAdminPrice) ...[
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: note,
+                        maxLength: 500,
+                        maxLines: 2,
+                        decoration: const InputDecoration(
+                          labelText: "Note for admin (optional)",
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 24),
                     // Action Buttons (Cancel and Submit matching app branding)
                     Row(
@@ -336,10 +390,15 @@ class TransporterBiddingView extends StatelessWidget {
                               return;
                             }
                             Get.back();
-                            biddingController.placeBid(offer, amount.text.trim());
+                            biddingController.placeBid(
+                              offer,
+                              amount.text.trim(),
+                              action: offer.hasAdminPrice ? "negotiate" : null,
+                              note: note.text,
+                            );
                           },
-                          child: const Text(
-                            "Submit",
+                          child: Text(
+                            offer.hasAdminPrice ? "Negotiate" : "Submit",
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -530,7 +589,11 @@ class _OffersTab extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      hasBid ? "UPDATE BID" : "PLACE BID",
+                      offer.hasCounterOffer
+                          ? "COUNTER ₹${offer.counterAmount}"
+                          : offer.hasAdminPrice
+                              ? "ACCEPT / NEGOTIATE"
+                              : (hasBid ? "UPDATE BID" : "PLACE BID"),
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -881,6 +944,12 @@ class _MyDealsTab extends StatelessWidget {
                 ),
               ),
             const SizedBox(height: 14),
+            // Bills the seller attached at dispatch, to download (MoM point 23).
+            if (bid.dispatchBills.isNotEmpty)
+              DispatchBillsSection(
+                key: ValueKey('bid-bills-${bid.bidId}-${bid.dispatchBills.length}'),
+                bills: bid.dispatchBills,
+              ),
             Row(
               children: [
                 // Buyer/seller details only for won (accepted) bids, as on the web;
@@ -959,6 +1028,8 @@ class _MyDealsTab extends StatelessWidget {
     }
     int? vehicleId = bid.assignedVehicleId;
     int? driverId = bid.assignedDriverId;
+    final phoneSearch = TextEditingController();
+    String searchMessage = '';
     Get.dialog(
       StatefulBuilder(
         builder: (context, setState) => AlertDialog(
@@ -969,10 +1040,69 @@ class _MyDealsTab extends StatelessWidget {
               fontSize: 16,
             ),
           ),
-          content: Column(
+          content: SingleChildScrollView(
+            child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Find a driver by phone number and fill in their details (MoM 22).
+              TextField(
+                controller: phoneSearch,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  labelText: "Search driver by phone",
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.search),
+                    onPressed: () => setState(() {
+                      if (phoneSearch.text.replaceAll(RegExp(r'\D'), '').length < 4) {
+                        searchMessage = "Enter at least 4 digits.";
+                        return;
+                      }
+                      final matches = FleetOption.matchByPhone(controller.drivers, phoneSearch.text);
+                      if (matches.isEmpty) {
+                        searchMessage = "No active driver found with this phone number.";
+                        return;
+                      }
+                      driverId = matches.first.id;
+                      final linked = matches.first.linkedVehicleId;
+                      if (linked != null && controller.vehicles.any((v) => v.id == linked)) vehicleId = linked;
+                      searchMessage = matches.length > 1
+                          ? "${matches.length} drivers match; the first is selected."
+                          : "Driver found and selected.";
+                    }),
+                  ),
+                ),
+              ),
+              if (searchMessage.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(searchMessage, style: const TextStyle(fontSize: 12)),
+                ),
+              Builder(builder: (_) {
+                final selected = controller.drivers.firstWhereOrNull((d) => d.id == driverId);
+                if (selected == null || selected.details.isEmpty) return const SizedBox(height: 12);
+                return Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.symmetric(vertical: 10),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: selected.details.entries
+                        .map((e) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 1),
+                              child: Text("${e.key}: ${e.value}", style: const TextStyle(fontSize: 12)),
+                            ))
+                        .toList(),
+                  ),
+                );
+              }),
               DropdownButtonFormField<int>(
+                key: ValueKey('vehicle-$vehicleId'),
                 initialValue: controller.vehicles.any((v) => v.id == vehicleId)
                     ? vehicleId
                     : null,
@@ -993,6 +1123,7 @@ class _MyDealsTab extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<int>(
+                key: ValueKey('driver-$driverId'),
                 initialValue: controller.drivers.any((d) => d.id == driverId)
                     ? driverId
                     : null,
@@ -1022,6 +1153,7 @@ class _MyDealsTab extends StatelessWidget {
                 }),
               ),
             ],
+          ),
           ),
           actions: [
             TextButton(

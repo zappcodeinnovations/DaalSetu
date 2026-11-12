@@ -23,14 +23,13 @@ class OfferInterestModel {
   final String? blockedReason;
   final bool canSellerReject;
 
+  /// The buyer as shown on cards: the company name, never the person when a
+  /// company is known (MoM point 24); the person's name is only a fallback.
   String get displayBuyerInfo {
     final name = (buyerName ?? '').trim();
     final company = (buyerCompany ?? '').trim();
-    if (name.isNotEmpty && company.isNotEmpty && name.toLowerCase() != company.toLowerCase()) {
-      return '$name ($company)';
-    }
-    if (name.isNotEmpty) return name;
     if (company.isNotEmpty) return company;
+    if (name.isNotEmpty) return name;
     return '-';
   }
 

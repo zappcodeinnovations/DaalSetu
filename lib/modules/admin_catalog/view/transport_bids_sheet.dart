@@ -110,6 +110,123 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
     }
   }
 
+  /// Asks for an amount (+ optional note). Returns null when cancelled.
+  Future<({String amount, String note})?> _askAmount(String title, {String initial = '', bool withNote = false}) async {
+    final amount = TextEditingController(text: initial);
+    final note = TextEditingController();
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: amount,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(prefixText: '₹ ', labelText: 'Amount', border: OutlineInputBorder()),
+            ),
+            if (withNote) ...[
+              const SizedBox(height: 10),
+              TextField(
+                controller: note,
+                maxLines: 2,
+                decoration: const InputDecoration(labelText: 'Note (optional)', border: OutlineInputBorder()),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Save')),
+        ],
+      ),
+    );
+    if (result != true) return null;
+    final value = double.tryParse(amount.text.trim());
+    if (value == null || value <= 0) {
+      if (mounted) {
+        AppSnackbar.showSnackBar(context, const SnackBar(content: Text('Enter an amount greater than 0.')));
+      }
+      return null;
+    }
+    return (amount: amount.text.trim(), note: note.text.trim());
+  }
+
+  Future<void> _post(String endpoint, Map<String, dynamic> body, {int? bidId}) async {
+    setState(() => processingBidId = bidId ?? -1);
+    try {
+      final response = await ApiClient.post(endpoint: endpoint, body: body, requireAuth: true);
+      if (!mounted) return;
+      changed = true;
+      AppSnackbar.showSnackBar(context, SnackBar(content: Text((response['message'] ?? 'Saved.').toString())));
+      await loadBids();
+    } catch (exception) {
+      if (!mounted) return;
+      AppSnackbar.showSnackBar(context, SnackBar(
+        content: Text(_message(exception)),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ));
+    } finally {
+      if (mounted) setState(() => processingBidId = null);
+    }
+  }
+
+  /// Admin price transporters accept or negotiate (MoM 16).
+  Future<void> setMaxBid({bool clear = false}) async {
+    String value = '';
+    if (!clear) {
+      final input = await _askAmount('Set max bid (admin price)', initial: '${contract['max_bid'] ?? ''}');
+      if (input == null) return;
+      value = input.amount;
+    }
+    await _post('/api/contracts/${widget.contractId}/transport-max-bid/', {'max_bid': value});
+  }
+
+  Future<void> counterBid(Map<String, dynamic> bid) async {
+    final bidId = int.tryParse('${bid['bid_id'] ?? ''}');
+    if (bidId == null) return;
+    final input = await _askAmount('Counter offer',
+        initial: '${bid['admin_counter_amount'] ?? bid['bid_amount'] ?? ''}', withNote: true);
+    if (input == null) return;
+    await _post('/api/transport-bids/$bidId/',
+        {'action': 'counter', 'counter_amount': input.amount, 'note': input.note}, bidId: bidId);
+  }
+
+  Widget _maxBidBar() {
+    final maxBid = contract['max_bid'];
+    final canSet = contract['can_set_max_bid'] == true;
+    if (maxBid == null && !canSet) return const SizedBox.shrink();
+    return Card(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            const Icon(Icons.price_change_outlined),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                maxBid == null
+                    ? 'No admin price: transporters bid freely.'
+                    : 'Admin price: ₹$maxBid (accept or negotiate)',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+            if (canSet) ...[
+              TextButton(onPressed: processingBidId != null ? null : setMaxBid, child: Text(maxBid == null ? 'Set Price' : 'Change')),
+              if (maxBid != null)
+                TextButton(
+                  onPressed: processingBidId != null ? null : () => setMaxBid(clear: true),
+                  child: const Text('Open Bidding'),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> runAction(Map<String, dynamic> bid, String action) async {
     final bidId = int.tryParse('${bid['bid_id'] ?? ''}');
     if (bidId == null) return;
@@ -178,7 +295,7 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
         ? contract['contract_id'].toString()
         : widget.contractNumber.isNotEmpty
         ? widget.contractNumber
-        : 'Contract #${widget.contractId}';
+        : 'Contract';
     return SafeArea(
       child: SizedBox(
         height: MediaQuery.sizeOf(context).height * .82,
@@ -214,6 +331,7 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
               ),
             ),
             const Divider(height: 1),
+            if (!loading && error == null) _maxBidBar(),
             Expanded(child: _body()),
           ],
         ),
@@ -273,7 +391,15 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
     final isPending = status.toLowerCase() == 'pending' || status.toLowerCase() == 'reserved';
     final canAccept = bid['can_accept'] == true || (bid['can_accept'] == null && isPending);
     final canReject = bid['can_reject'] == true || (bid['can_reject'] == null && isPending);
+    final canCounter = bid['can_counter'] == true;
     final isProcessing = processingBidId == bidId;
+    final company = '${bid['transporter_company'] ?? ''}'.trim();
+    final person = '${bid['transporter_name'] ?? ''}'.trim();
+    final mobile = '${bid['mobile'] ?? ''}'.trim();
+    final bidType = '${bid['bid_type'] ?? 'bid'}';
+    final history = (bid['negotiation_history'] is List ? bid['negotiation_history'] as List : const [])
+        .whereType<Map>()
+        .toList();
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -283,9 +409,19 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    '${bid['transporter_unique_id'] ?? 'Transporter'}',
-                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        company.isNotEmpty ? company : '${bid['transporter_unique_id'] ?? 'Transporter'}',
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                      if (person.isNotEmpty || mobile.isNotEmpty)
+                        Text(
+                          [person, mobile].where((part) => part.isNotEmpty).join(' • '),
+                          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                        ),
+                    ],
                   ),
                 ),
                 _status(status),
@@ -298,9 +434,40 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
+            if (bidType != 'bid' && '${bid['bid_type_label'] ?? ''}'.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Chip(
+                  label: Text('${bid['bid_type_label']}'),
+                  visualDensity: VisualDensity.compact,
+                  backgroundColor: bidType == 'negotiation' ? Colors.orange.shade50 : Colors.blue.shade50,
+                ),
+              ),
+            if ('${bid['transporter_note'] ?? ''}'.isNotEmpty)
+              Text('Note: ${bid['transporter_note']}', style: const TextStyle(fontStyle: FontStyle.italic)),
+            if (bid['admin_counter_amount'] != null)
+              Text('Your counter: ₹${bid['admin_counter_amount']} (awaiting transporter)',
+                  style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.w600)),
             const SizedBox(height: 4),
             Text('Submitted: ${bid['bid_date'] ?? '—'}'),
-            if (canAccept || canReject) ...[
+            if (history.length > 1)
+              ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                title: Text('Negotiation history (${history.length})', style: const TextStyle(fontSize: 13)),
+                children: history
+                    .map((step) => Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            '${step['at'] ?? ''} • ${step['by'] == 'admin' ? 'Admin' : 'Transporter'}: '
+                            '${'${step['action'] ?? ''}'.replaceAll('_', ' ')} '
+                            '${'${step['amount'] ?? ''}'.isEmpty ? '' : '₹${step['amount']}'}'
+                            '${'${step['note'] ?? ''}'.isEmpty ? '' : ' – ${step['note']}'}',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ))
+                    .toList(),
+              ),
+            if (canAccept || canReject || canCounter) ...[
               const SizedBox(height: 12),
               if (isProcessing)
                 const SizedBox(
@@ -322,6 +489,12 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
                         ),
                         icon: const Icon(Icons.check_circle_outline, size: 18),
                         label: const Text('Accept', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    if (canCounter)
+                      OutlinedButton.icon(
+                        onPressed: () => counterBid(bid),
+                        icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+                        label: const Text('Counter'),
                       ),
                     if (canReject)
                       OutlinedButton.icon(

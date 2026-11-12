@@ -4,6 +4,7 @@ import '../model/admin_challan_model.dart';
 import '../service/admin_dc_service.dart';
 import 'admin_dc_list_controller.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/widgets/dispatch_bills_section.dart';
 
 class AdminDCDetailsController extends GetxController {
   final isLoading = true.obs;
@@ -65,12 +66,15 @@ class AdminDCDetailsController extends GetxController {
   Future<void> dispatchShipment() async {
     final id = challanId.value;
     if (id <= 0) return;
+    // Optional bill files go with the dispatch (MoM point 23).
+    final bills = await askDispatchBills();
+    if (bills == null) return;
 
     try {
       isDispatching.value = true;
       debugPrint("📦 [AdminDCDetailsController] Dispatching shipment for Challan #$id...");
 
-      final result = await AdminDCService.dispatchChallan(id);
+      final result = await AdminDCService.dispatchChallan(id, billPaths: bills);
 
       if (result['success'] == true) {
         AppSnackbar.snackbar(

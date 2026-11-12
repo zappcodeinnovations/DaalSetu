@@ -1239,7 +1239,7 @@ class _AdminCreateBrokerageBillScreenState
               value: selected,
               title: Text(
                 _billingText(challan['challan_number']).isEmpty
-                    ? 'Delivery challan #$id'
+                    ? 'Delivery challan'
                     : _billingText(challan['challan_number']),
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
@@ -2149,7 +2149,7 @@ class _AdminBrokerageBillDetailScreenState
                               value: selected.contains(id),
                               title: Text(
                                 _billingText(source['challan_number']).isEmpty
-                                    ? 'Challan #$id'
+                                    ? 'Challan'
                                     : _billingText(source['challan_number']),
                               ),
                               subtitle: Text(
@@ -2326,7 +2326,7 @@ class _AdminBrokerageBillDetailScreenState
                 Expanded(
                   child: Text(
                     _billingText(bill['bill_number']).isEmpty
-                        ? 'Draft Bill #${widget.billId}'
+                        ? 'Draft Bill'
                         : _billingText(bill['bill_number']),
                     style: const TextStyle(
                       fontSize: 18,

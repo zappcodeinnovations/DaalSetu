@@ -97,11 +97,13 @@ class OfferInterestModel {
     if (buyer != null && buyer is Map) {
       final firstLast =
           '${buyer['first_name'] ?? ''} ${buyer['last_name'] ?? ''}'.trim();
-      bName ??= buyer['full_name'] ??
-          (firstLast.isNotEmpty ? firstLast : null) ??
+      // Company name first, never the person when a company is known (MoM 24).
+      bName ??= buyer['company_display_name'] ??
           buyer['company_name'] ??
-          buyer['username'] ??
-          buyer['name'];
+          buyer['full_name'] ??
+          buyer['name'] ??
+          (firstLast.isNotEmpty ? firstLast : null) ??
+          buyer['username'];
       bMobile ??= buyer['mobile'];
     }
 

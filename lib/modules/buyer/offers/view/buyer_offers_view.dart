@@ -6,6 +6,7 @@ import 'package:iconly/iconly.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/app_snackbar.dart';
 import '../../../../widgets/authenticated_network_image.dart';
+import '../../../../widgets/delivery_period_picker.dart';
 import '../../../products/view/product_detail.dart';
 import '../controller/buyer_offers_controller.dart';
 import '../model/buyer_offer_model.dart';
@@ -838,30 +839,9 @@ class _OfferList extends StatelessWidget {
             icon: IconlyLight.show,
             onTap: () => _openDetails(offer, type),
           ),
-          if (offer.isExpired)
-            _ActionBtn(
-              label: "Deal Expired",
-              color: Colors.grey,
-              icon: Icons.timer_off_outlined,
-              onTap: () {
-                AppSnackbar.showError(
-                  message: "Deal has expired. You cannot show interest.",
-                );
-              },
-            )
-          else if (offer.isOutOfStock)
-            _ActionBtn(
-              label: "Out of Stock",
-              color: Colors.grey,
-              icon: Icons.remove_shopping_cart_outlined,
-              onTap: () {
-                AppSnackbar.showWarning(
-                  title: "Out of Stock",
-                  message:
-                      "This item is currently out of stock. You cannot submit an offer.",
-                );
-              },
-            )
+          // Expired / out of stock is already shown in the status badge; no second copy here.
+          if (offer.isExpired || offer.isOutOfStock)
+            ...const <Widget>[]
           else if (!offer.isActive)
             _ActionBtn(
               label: "Unavailable",
@@ -983,30 +963,9 @@ class _OfferList extends StatelessWidget {
             icon: IconlyLight.show,
             onTap: () => _openDetails(offer, type),
           ),
-          if (offer.isExpired)
-            _ActionBtn(
-              label: "Deal Expired",
-              color: Colors.grey,
-              icon: Icons.timer_off_outlined,
-              onTap: () {
-                AppSnackbar.showError(
-                  message: "Deal has expired. You cannot show interest.",
-                );
-              },
-            )
-          else if (offer.isOutOfStock)
-            _ActionBtn(
-              label: "Out of Stock",
-              color: Colors.grey,
-              icon: Icons.remove_shopping_cart_outlined,
-              onTap: () {
-                AppSnackbar.showWarning(
-                  title: "Out of Stock",
-                  message:
-                      "This item is currently out of stock. You cannot submit an offer.",
-                );
-              },
-            )
+          // Expired / out of stock is already shown in the status badge; no second copy here.
+          if (offer.isExpired || offer.isOutOfStock)
+            ...const <Widget>[]
           else if (!offer.isActive)
             _ActionBtn(
               label: "Unavailable",
@@ -1139,8 +1098,15 @@ class _OfferList extends StatelessWidget {
     final locationCtrl = TextEditingController(text: defaultLocation);
     final remarkCtrl = TextEditingController();
 
-    DateTime? selectedDeliveryDate;
-    String? formattedDeliveryDate;
+    // Delivery Period: starts as the buyer's current one, else the seller's offered one.
+    DateTime? deliveryFrom = DeliveryPeriodPicker.parseUpcoming(
+      offer.myDeliveryFrom ?? offer.deliveryFrom,
+    );
+    DateTime? deliveryTo = DeliveryPeriodPicker.parseUpcoming(
+          offer.myDeliveryTo ?? offer.myDeliveryFrom ?? offer.deliveryTo,
+        ) ??
+        deliveryFrom;
+    final offerPeriodText = DeliveryPeriodPicker.periodText(offer.deliveryFrom, offer.deliveryTo);
 
     Get.dialog(
       Dialog(
@@ -1274,6 +1240,14 @@ class _OfferList extends StatelessWidget {
                         decimal: true,
                       ),
                     ),
+                    // Buyers may ask for up to twice the available stock (MoM point 9).
+                    if ((offer.maxQuantity ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        "You can ask for up to ${offer.maxQuantity} (twice the available quantity).",
+                        style: GoogleFonts.inter(fontSize: 11, color: Colors.grey.shade600),
+                      ),
+                    ],
                     const SizedBox(height: 12),
 
                     Text(
@@ -1307,62 +1281,16 @@ class _OfferList extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
 
-                    Text(
-                      "Delivery Date *",
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    InkWell(
-                      onTap: () async {
-                        final picked = await showDatePicker(
-                          context: dialogContext,
-                          initialDate: selectedDeliveryDate ?? DateTime.now(),
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime.now().add(
-                            const Duration(days: 365),
-                          ),
-                        );
-                        if (picked != null) {
-                          setDialogState(() {
-                            selectedDeliveryDate = picked;
-                            formattedDeliveryDate =
-                                "${picked.day.toString().padLeft(2, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.year.toString().padLeft(4, '0')}";
-                          });
-                        }
-                      },
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: theme.cardColor,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: theme.dividerColor.withValues(alpha: 0.5),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              formattedDeliveryDate ?? "dd-mm-yyyy",
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: formattedDeliveryDate != null
-                                    ? null
-                                    : Colors.grey,
-                              ),
-                            ),
-                            const Icon(IconlyLight.calendar, size: 18),
-                          ],
-                        ),
-                      ),
+DeliveryPeriodPicker(
+                      from: deliveryFrom,
+                      to: deliveryTo,
+                      hint: offerPeriodText.isEmpty
+                          ? null
+                          : 'Seller delivery period: $offerPeriodText',
+                      onChanged: (from, to) => setDialogState(() {
+                        deliveryFrom = from;
+                        deliveryTo = to;
+                      }),
                     ),
                     const SizedBox(height: 12),
 
@@ -1414,12 +1342,10 @@ class _OfferList extends StatelessWidget {
                               );
                               return;
                             }
-                            if (formattedDeliveryDate == null ||
-                                formattedDeliveryDate!.isEmpty) {
+                            if (deliveryFrom == null || deliveryTo == null) {
                               AppSnackbar.showWarning(
                                 title: "Required Field",
-                                message:
-                                    "Please select a preferred delivery date",
+                                message: "Please select the delivery period",
                               );
                               return;
                             }
@@ -1429,7 +1355,8 @@ class _OfferList extends StatelessWidget {
                               priceCtrl.text.trim(),
                               qtyCtrl.text.trim(),
                               remarkCtrl.text.trim(),
-                              deliveryDate: formattedDeliveryDate,
+                              deliveryDate: DeliveryPeriodPicker.apiDate(deliveryFrom!),
+                              deliveryDateTo: DeliveryPeriodPicker.apiDate(deliveryTo!),
                               loadingTo: locationCtrl.text.trim().isNotEmpty
                                   ? locationCtrl.text.trim()
                                   : null,

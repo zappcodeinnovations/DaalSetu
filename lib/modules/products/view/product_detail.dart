@@ -104,7 +104,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 if (_canManageInterests)
                   _buildDealActionButton(product, context),
                 _section('Offer information', [
-                  _item('Product ID', product.id),
                   _item('Title', product.title),
                   _item('Description', product.description),
                   _item('Category', product.category?.name),

@@ -76,7 +76,18 @@ class TransporterBiddingController extends GetxController {
       drivers.value = (data['drivers'] as List? ?? [])
           .whereType<Map>()
           .map((d) => FleetOption(d['id'] as int, "${d['driver_name']} • ${d['phone_number'] ?? ''}",
-              linkedVehicleId: d['assigned_vehicle_id'] is int ? d['assigned_vehicle_id'] as int : null))
+              linkedVehicleId: d['assigned_vehicle_id'] is int ? d['assigned_vehicle_id'] as int : null,
+              phone: '${d['phone_number'] ?? ''}',
+              details: {
+                'Name': '${d['driver_name'] ?? ''}',
+                'Phone': '${d['phone_number'] ?? ''}',
+                'Email': '${d['email'] ?? ''}',
+                'License No.': '${d['license_number'] ?? ''}',
+                'License Expiry': '${d['license_expiry'] ?? ''}',
+                'Experience': d['experience'] == null ? '' : '${d['experience']} years',
+                'Assigned Vehicle': '${d['assigned_vehicle_number'] ?? ''}',
+                'Address': '${d['address'] ?? ''}',
+              }..removeWhere((_, value) => value.trim().isEmpty)))
           .toList();
     } catch (e) {
       myBids.clear();
@@ -91,8 +102,19 @@ class TransporterBiddingController extends GetxController {
     fetchMyBids();
   }
 
-  Future<bool> placeBid(ShipmentOfferModel offer, String amount) async {
-    return _post(ApiUrls.transportBids, {"contract_id": offer.id, "bid_amount": amount});
+  /// [action] (MoM 16): null = plain bid, "negotiate" = own price against the admin price.
+  Future<bool> placeBid(ShipmentOfferModel offer, String amount, {String? action, String note = ''}) async {
+    return _post(ApiUrls.transportBids, {
+      "contract_id": offer.id,
+      "bid_amount": amount,
+      if (action != null) "bid_action": action,
+      if (note.trim().isNotEmpty) "note": note.trim(),
+    });
+  }
+
+  /// Takes the admin's price ("accept_max") or counter offer ("accept_counter").
+  Future<bool> acceptAdminAmount(ShipmentOfferModel offer, String action) async {
+    return _post(ApiUrls.transportBids, {"contract_id": offer.id, "bid_action": action});
   }
 
   Future<bool> assignDriver(MyBidModel bid, int vehicleId, int driverId) async {

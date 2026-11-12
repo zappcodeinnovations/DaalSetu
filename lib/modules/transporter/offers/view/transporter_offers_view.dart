@@ -130,7 +130,7 @@ class _TransporterOfferList extends StatelessWidget {
           separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final offer = offers[index];
-            final title = offer.displayTitle ?? offer.title ?? "Offer #${offer.id ?? ''}";
+            final title = offer.displayTitle ?? offer.title ?? "Offer";
             final price = offer.displayPrice ?? (offer.requestedAmount != null ? "₹${offer.requestedAmount}" : "₹0");
             final quantity = offer.displayQuantity ?? "${offer.requestedQuantity ?? ''} ${offer.quantityUnit ?? ''}".trim();
             final status = offer.displayStatus ?? (offer.status ?? 'ACTIVE').toUpperCase();

@@ -38,6 +38,8 @@ abstract class AppRoutes {
   static const subscription = '/subscription';
   static const documents = '/documents';
   static const downloads = '/downloads';
+  // My Analytics (the web /contracts/history/ page) for every role.
+  static const myAnalytics = '/analytics';
   static const settings = '/settings';
   static const support = '/support';
   static const about = '/about';

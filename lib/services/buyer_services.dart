@@ -775,10 +775,17 @@ class BuyerServices {
     String counterQuantity = '',
     String counterBagCount = '',
     String counterPackingWeightKg = '',
+    String counterDeliveryFrom = '',
+    String counterDeliveryTo = '',
   }) async {
     final response = await ApiClient.post(
       endpoint: ApiUrls.offerInterestThread(productId, interestId),
       body: <String, dynamic>{
+        // A new Delivery Period proposal (yyyy-MM-dd), MoM point 8.
+        if (counterDeliveryFrom.trim().isNotEmpty)
+          'counter_delivery_from': counterDeliveryFrom.trim(),
+        if (counterDeliveryTo.trim().isNotEmpty)
+          'counter_delivery_to': counterDeliveryTo.trim(),
         if (counterPrice.trim().isNotEmpty)
           'counter_price': counterPrice.trim(),
         if (counterQuantity.trim().isNotEmpty)
@@ -1046,6 +1053,7 @@ class BuyerServices {
     required dynamic requestedAmount,
     required dynamic requestedQuantity,
     String? deliveryDate,
+    String? deliveryDateTo,
     String? loadingTo,
     String? condition,
     int? interestId,
@@ -1089,6 +1097,9 @@ class BuyerServices {
       "buyer_required_quantity": cleanQty,
       "loading_to": effectiveLoadingTo,
       "delivery_date": apiDeliveryDate.isNotEmpty ? apiDeliveryDate : effectiveDeliveryDate,
+      // End of the buyer's Delivery Period (yyyy-MM-dd); the start is delivery_date.
+      if (deliveryDateTo != null && deliveryDateTo.trim().isNotEmpty)
+        "delivery_date_to": deliveryDateTo.trim(),
       "buyer_remark": effectiveRemark,
       // Field aliases for compatibility
       "offered_amount": cleanPrice,

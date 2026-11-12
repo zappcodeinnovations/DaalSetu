@@ -135,7 +135,7 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
         title: Text(
-          'Consignment Management',
+          'Consignments',
           style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
         ),
         actions: [

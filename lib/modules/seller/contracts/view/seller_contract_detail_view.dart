@@ -183,8 +183,11 @@ class _SellerContractDetailViewState extends State<SellerContractDetailView> {
       const Divider(height: 22),
       if (_has(c['deal_date']) || _has(c['confirmed_at']))
         SellerUi.infoRow('Deal Date', _text(c['deal_date'], SellerUi.date(c['confirmed_at']))),
-      if (_has(c['delivery_date']))
-        SellerUi.infoRow('Delivery Date', _text(c['delivery_date'])),
+      if (_has(c['delivery_period']) || _has(c['delivery_date']))
+        SellerUi.infoRow(
+          'Delivery Period',
+          _has(c['delivery_period']) ? _text(c['delivery_period']) : _text(c['delivery_date']),
+        ),
       if (_has(c['buyer_offer_amount']))
         SellerUi.infoRow('Buyer Offer Amount', _money(c['buyer_offer_amount'])),
       if (_has(c['buyer_required_quantity']))

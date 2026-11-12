@@ -63,6 +63,8 @@ class ApiClient {
     required String endpoint,
     required Map<String, String> fields,
     Map<String, String>? files,
+    // Several files under one field name, e.g. {'bill_files': [path1, path2]}.
+    Map<String, List<String>>? fileLists,
     bool requireAuth = false,
     String method = 'POST', // 'PATCH' for edits that also upload a file
     Duration? timeout,
@@ -93,6 +95,19 @@ class ApiClient {
                 entry.key,
                 entry.value,
                 contentType: _resolveMediaType(entry.value),
+              ),
+            );
+          }
+        }
+      }
+      if (fileLists != null) {
+        for (final entry in fileLists.entries) {
+          for (final path in entry.value.where((p) => p.isNotEmpty)) {
+            request.files.add(
+              await http.MultipartFile.fromPath(
+                entry.key,
+                path,
+                contentType: _resolveMediaType(path),
               ),
             );
           }

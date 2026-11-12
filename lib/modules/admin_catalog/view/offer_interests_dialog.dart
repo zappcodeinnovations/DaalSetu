@@ -75,7 +75,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
         !widget.offerTitle.toLowerCase().contains('confirmed')) {
       return widget.offerTitle;
     }
-    return _loadedTitle ?? 'Offer #${widget.offerId}';
+    return _loadedTitle ?? 'Offer';
   }
 
   String get displayStock {

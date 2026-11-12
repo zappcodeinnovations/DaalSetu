@@ -30,7 +30,8 @@ void main() {
 
     expect(interest.buyerName, 'Rajesh Sharma');
     expect(interest.buyerCompany, 'Sharma Agro Traders');
-    expect(interest.displayBuyerInfo, 'Rajesh Sharma (Sharma Agro Traders)');
+    // MoM 24: cards show the company, not the person.
+    expect(interest.displayBuyerInfo, 'Sharma Agro Traders');
   });
 
   test('handles nested buyer map with first and last name', () {
@@ -47,6 +48,7 @@ void main() {
 
     expect(interest.buyerName, 'Amit Patel');
     expect(interest.buyerCompany, 'Patel Pulses Ltd');
-    expect(interest.displayBuyerInfo, 'Amit Patel (Patel Pulses Ltd)');
+    // MoM 24: cards show the company, not the person.
+    expect(interest.displayBuyerInfo, 'Patel Pulses Ltd');
   });
 }

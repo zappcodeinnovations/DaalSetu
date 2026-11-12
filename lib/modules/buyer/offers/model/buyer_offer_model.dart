@@ -79,9 +79,25 @@ class BuyerOfferModel {
     this.isActive = true,
     this.isExpired = false,
     this.expiresAt,
+    this.deliveryFrom,
+    this.deliveryTo,
+    this.myDeliveryFrom,
+    this.myDeliveryTo,
+    this.maxQuantity,
   });
 
   final bool isExpired;
+
+  /// Delivery Period the seller offers (yyyy-MM-dd), shown to buyers (MoM point 8).
+  final String? deliveryFrom;
+  final String? deliveryTo;
+
+  /// The buyer's own Delivery Period on an open interest (yyyy-MM-dd), for edits.
+  final String? myDeliveryFrom;
+  final String? myDeliveryTo;
+
+  /// Most a buyer may ask for: twice the available stock (MoM point 9).
+  final String? maxQuantity;
 
   /// Earliest expiry the API sent for this offer/requirement, if any.
   final DateTime? expiresAt;
@@ -188,6 +204,11 @@ class BuyerOfferModel {
     bool? isActive,
     bool? isExpired,
     DateTime? expiresAt,
+    String? deliveryFrom,
+    String? deliveryTo,
+    String? myDeliveryFrom,
+    String? myDeliveryTo,
+    String? maxQuantity,
   }) {
     return BuyerOfferModel(
       id: id ?? this.id,
@@ -228,7 +249,23 @@ class BuyerOfferModel {
       isActive: isActive ?? this.isActive,
       isExpired: isExpired ?? this.isExpired,
       expiresAt: expiresAt ?? this.expiresAt,
+      deliveryFrom: deliveryFrom ?? this.deliveryFrom,
+      deliveryTo: deliveryTo ?? this.deliveryTo,
+      myDeliveryFrom: myDeliveryFrom ?? this.myDeliveryFrom,
+      myDeliveryTo: myDeliveryTo ?? this.myDeliveryTo,
+      maxQuantity: maxQuantity ?? this.maxQuantity,
     );
+  }
+
+  /// First value that is an ISO date (yyyy-MM-dd...), trimmed to the date.
+  static String? isoDate(List<dynamic> candidates) {
+    for (final value in candidates) {
+      final text = value?.toString().trim() ?? '';
+      if (RegExp(r'^\d{4}-\d{2}-\d{2}').hasMatch(text)) {
+        return text.substring(0, 10);
+      }
+    }
+    return null;
   }
 
   factory BuyerOfferModel.fromJson(dynamic raw) {
@@ -1204,6 +1241,25 @@ class BuyerOfferModel {
       isActive: detectedActive,
       isExpired: detectedExpired,
       expiresAt: parsedExpiry,
+      deliveryFrom: isoDate([
+        json['delivery_from'],
+        if (json['product'] is Map) json['product']['delivery_from'],
+        if (json['offer'] is Map) json['offer']['delivery_from'],
+      ]),
+      deliveryTo: isoDate([
+        json['delivery_to'],
+        if (json['product'] is Map) json['product']['delivery_to'],
+        if (json['offer'] is Map) json['offer']['delivery_to'],
+      ]),
+      myDeliveryFrom: isoDate([
+        if (json['my_interest'] is Map) json['my_interest']['delivery_date'],
+        if (json['interest'] is Map) json['interest']['delivery_date'],
+      ]),
+      myDeliveryTo: isoDate([
+        if (json['my_interest'] is Map) json['my_interest']['delivery_date_to'],
+        if (json['interest'] is Map) json['interest']['delivery_date_to'],
+      ]),
+      maxQuantity: json['max_quantity']?.toString(),
     );
   }
 

@@ -1223,7 +1223,10 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
               ),
             ),
             const SizedBox(height: 14),
-            Row(
+            // Wraps to a second line on narrow phones instead of overflowing.
+            Wrap(
+              spacing: 10,
+              runSpacing: 8,
               children: [
                 ElevatedButton.icon(
                   onPressed: widget.onPostRequirementTap ??
@@ -1246,7 +1249,6 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
                 OutlinedButton(
                   onPressed: widget.onViewAllOffersTap ??
                       () =>

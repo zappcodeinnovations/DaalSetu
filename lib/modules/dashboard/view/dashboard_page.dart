@@ -427,7 +427,8 @@ class AdminDashboardScreen extends StatelessWidget {
             crossAxisCount: columns,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: columns == 2 ? 1.12 : 1.2,
+            // Fixed height that fits the card's content, so no empty band below it.
+            mainAxisExtent: 136,
           ),
           itemBuilder: (context, index) {
             final metric = metrics[index];

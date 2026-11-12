@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../controller/seller_delivery_controller.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/dispatch_bills_section.dart';
 
 /// Full seller-facing delivery challan. The API returns the same snapshot-rich
 /// document used by the web panel, so every available party, transport, charge
@@ -426,6 +427,11 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
                 : items.map(_itemCard).toList(),
           ),
           const SizedBox(height: 12),
+          // Bills attached at dispatch; the key reloads it when the status changes.
+          DispatchBillsSection(
+            key: ValueKey('bills-${widget.challanId}-${_text(data['status'])}'),
+            challanId: widget.challanId,
+          ),
           _section(
             icon: Icons.history_rounded,
             title: 'Timeline',

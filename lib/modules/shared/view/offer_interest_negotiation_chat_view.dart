@@ -12,6 +12,7 @@ import '../../../services/seller_services.dart';
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/utils/global_error_handler.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/delivery_period_picker.dart';
 
 /// One live chat for a ProductInterest.  It intentionally powers both the
 /// buyer's My Interests route and the seller's Buyer Interests route so the
@@ -64,6 +65,9 @@ class _OfferInterestNegotiationChatViewState
   final _quantityController = TextEditingController();
   final _bagsController = TextEditingController();
   final _packingController = TextEditingController(text: '30');
+  // Optional counter Delivery Period.
+  DateTime? _counterDeliveryFrom;
+  DateTime? _counterDeliveryTo;
   final _scrollController = ScrollController();
 
   Map<String, dynamic>? _thread;
@@ -221,10 +225,12 @@ class _OfferInterestNegotiationChatViewState
     final quantity = _quantityController.text.trim();
     final bags = _bagsController.text.trim();
     final packing = _packingController.text.trim();
-    if (price.isEmpty && quantity.isEmpty && bags.isEmpty) {
+    final deliveryFrom = _counterDeliveryFrom;
+    final deliveryTo = _counterDeliveryTo ?? deliveryFrom;
+    if (price.isEmpty && quantity.isEmpty && bags.isEmpty && deliveryFrom == null) {
       AppSnackbar.showWarning(
         title: 'Enter counter terms',
-        message: 'Enter a counter price, quantity, or bags.',
+        message: 'Enter a counter price, quantity, bags or delivery period.',
       );
       return;
     }
@@ -238,11 +244,19 @@ class _OfferInterestNegotiationChatViewState
         counterQuantity: quantity,
         counterBagCount: widget.isBuyer ? '' : bags,
         counterPackingWeightKg: widget.isBuyer || bags.isEmpty ? '' : packing,
+        counterDeliveryFrom: deliveryFrom == null ? '' : DeliveryPeriodPicker.apiDate(deliveryFrom),
+        counterDeliveryTo: deliveryTo == null ? '' : DeliveryPeriodPicker.apiDate(deliveryTo),
       );
       _priceController.clear();
       _quantityController.clear();
       _bagsController.clear();
-      if (mounted) setState(() => _showPacking = false);
+      if (mounted) {
+        setState(() {
+          _showPacking = false;
+          _counterDeliveryFrom = null;
+          _counterDeliveryTo = null;
+        });
+      }
       await _load(silent: true);
       _scrollToLatest();
     } catch (error) {
@@ -653,6 +667,16 @@ class _OfferInterestNegotiationChatViewState
           row("Available Qty:", qAvail == '-' ? '-' : "$qAvail $qtyUnit"),
           row("Current Offer:", pOffer == '-' ? '₹-' : "₹$pOffer / $priceUnit"),
           row("Current Qty:", qOffer == '-' ? '-' : "$qOffer $qtyUnit"),
+          if (DeliveryPeriodPicker.periodText(thread['offer_delivery_from']?.toString(), thread['offer_delivery_to']?.toString()).isNotEmpty)
+            row(
+              "Seller Delivery:",
+              DeliveryPeriodPicker.periodText(thread['offer_delivery_from']?.toString(), thread['offer_delivery_to']?.toString()),
+            ),
+          if (DeliveryPeriodPicker.periodText(thread['delivery_date']?.toString(), thread['delivery_date_to']?.toString()).isNotEmpty)
+            row(
+              "Current Delivery:",
+              DeliveryPeriodPicker.periodText(thread['delivery_date']?.toString(), thread['delivery_date_to']?.toString()),
+            ),
           if (buyerRemark != null &&
               buyerRemark.toString().trim().isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -911,6 +935,7 @@ class _OfferInterestNegotiationChatViewState
       final price = text(msg['counter_price']);
       final quantity = text(msg['counter_quantity']);
       final bags = text(msg['counter_bag_count']);
+      final delivery = text(msg['counter_delivery_from']);
       final remark = text(msg['remark'] ?? msg['comment'] ?? msg['message']);
       final action = text(msg['action']).replaceAll('_', ' ');
       final status = text(msg['to_status']).replaceAll('_', ' ');
@@ -922,6 +947,7 @@ class _OfferInterestNegotiationChatViewState
           price.isNotEmpty ||
           quantity.isNotEmpty ||
           bags.isNotEmpty ||
+          delivery.isNotEmpty ||
           (remark.isNotEmpty && !remark.toLowerCase().startsWith('status'));
 
       if (isProposal) {
@@ -1109,6 +1135,8 @@ class _OfferInterestNegotiationChatViewState
       if (quantity.isNotEmpty)
         'Quantity: $quantity ${message['quantity_unit'] ?? ''}',
       if (bags.isNotEmpty) 'Bags: $bags × $packing kg',
+      if (text(message['counter_delivery_from']).isNotEmpty)
+        'Delivery: ${DeliveryPeriodPicker.periodText(text(message['counter_delivery_from']), text(message['counter_delivery_to']))}',
       if (remark.isNotEmpty) remark,
       if (status.isNotEmpty && (price.isNotEmpty || quantity.isNotEmpty))
         'Status: $status',
@@ -1446,6 +1474,16 @@ class _OfferInterestNegotiationChatViewState
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            DeliveryPeriodPicker(
+              label: 'Counter Delivery Period (optional)',
+              from: _counterDeliveryFrom,
+              to: _counterDeliveryTo,
+              onChanged: (from, to) => setState(() {
+                _counterDeliveryFrom = from;
+                _counterDeliveryTo = to;
+              }),
+            ),
             Padding(
               padding: const EdgeInsets.only(top: 8, bottom: 10),
               child: Row(
@@ -1460,7 +1498,7 @@ class _OfferInterestNegotiationChatViewState
                   Expanded(
                     child: Text(
                       widget.isBuyer
-                          ? "Bags are calculated automatically from the seller's packing configuration. Free text messages are disabled."
+                          ? "Bags are calculated automatically from the seller's packing configuration. You can ask for up to twice the available quantity${(_thread?['max_quantity'] ?? '').toString().isNotEmpty ? ' (${_thread!['max_quantity']} $quantityUnit)' : ''}. Free text messages are disabled."
                           : "Seller packing changes require both Bags and Packing Weight; quantity is calculated automatically.",
                       style: GoogleFonts.inter(
                         fontSize: 11,

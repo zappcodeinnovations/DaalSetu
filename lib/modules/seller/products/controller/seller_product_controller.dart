@@ -36,6 +36,9 @@ class SellerProductController extends GetxController {
   var sellerName = 'Seller'.obs;
   var loadingFrom = Rxn<DateTime>();
   var loadingTo = Rxn<DateTime>();
+  // Delivery Period offered to buyers (MoM point 8).
+  var deliveryFrom = Rxn<DateTime>();
+  var deliveryTo = Rxn<DateTime>();
   var dealExpiry = Rxn<DateTime>();
 
   final titleController = TextEditingController();
@@ -382,6 +385,10 @@ class SellerProductController extends GetxController {
       return "Loading from and to dates are required.";
     if (loadingTo.value!.isBefore(loadingFrom.value!))
       return "Loading to cannot be before loading from.";
+    if (deliveryFrom.value == null || deliveryTo.value == null)
+      return "Delivery period (from and to) is required.";
+    if (deliveryTo.value!.isBefore(deliveryFrom.value!))
+      return "Delivery To cannot be before Delivery From.";
     if (dealExpiry.value == null) return "Deal expiry is required.";
     if (!dealExpiry.value!.isAfter(DateTime.now())) {
       return "Deal expiry time must be in the future.";
@@ -414,6 +421,8 @@ class SellerProductController extends GetxController {
         "quantity": quantityController.text.trim(),
       "loading_from": _ymd(loadingFrom.value!),
       "loading_to": _ymd(loadingTo.value!),
+      "delivery_from": _ymd(deliveryFrom.value!),
+      "delivery_to": _ymd(deliveryTo.value!),
       "loading_location": locationController.text.trim(),
       "deal_expiry_datetime":
           "${_ymd(expiry)}T${expiry.hour.toString().padLeft(2, '0')}:${expiry.minute.toString().padLeft(2, '0')}",
@@ -577,6 +586,8 @@ class SellerProductController extends GetxController {
     selectedVideoPath.value = null;
     loadingFrom.value = null;
     loadingTo.value = null;
+    deliveryFrom.value = null;
+    deliveryTo.value = null;
     dealExpiry.value = null;
     selectedBranchIds.clear();
     if (branches.isNotEmpty) {

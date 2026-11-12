@@ -619,7 +619,7 @@ class CategoryPageView extends StatelessWidget {
 
     final title = req.categoryNames.isNotEmpty
         ? req.categoryNames.join(', ')
-        : "Category Request #${req.id}";
+        : "Category Request";
 
     return Material(
       color: theme.cardColor,

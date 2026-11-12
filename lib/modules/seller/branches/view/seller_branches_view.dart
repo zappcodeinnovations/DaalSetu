@@ -93,7 +93,7 @@ class SellerBranchesView extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          "Company Branches Network",
+          "My Branches",
           style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
         ),
         // Creating branches is super-admin only on the server; sellers browse and request to join.

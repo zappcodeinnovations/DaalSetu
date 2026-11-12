@@ -405,6 +405,8 @@ class ProductService {
     String? counterQuantity,
     String? counterBagCount,
     String? counterPackingWeightKg,
+    String? counterDeliveryFrom,
+    String? counterDeliveryTo,
   }) async {
     final cleanPrice =
         counterPrice.replaceAll('₹', '').replaceAll(',', '').trim();
@@ -430,6 +432,11 @@ class ProductService {
       if (cleanBags.isNotEmpty) "counter_bag_count": cleanBags,
       if (cleanWeight.isNotEmpty)
         "counter_packing_weight_kg": cleanWeight,
+      // A new Delivery Period proposal (yyyy-MM-dd), MoM point 8.
+      if (counterDeliveryFrom != null && counterDeliveryFrom.isNotEmpty)
+        "counter_delivery_from": counterDeliveryFrom,
+      if (counterDeliveryTo != null && counterDeliveryTo.isNotEmpty)
+        "counter_delivery_to": counterDeliveryTo,
     };
 
     final response = await ApiClient.post(

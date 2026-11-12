@@ -126,7 +126,7 @@ class _SellerOfferInterestsViewState extends State<SellerOfferInterestsView> {
                                 Text(
                                   (item.transactionId ?? '').isNotEmpty
                                       ? item.transactionId!
-                                      : "Offer #${item.id}",
+                                      : "Offer",
                                   style: GoogleFonts.poppins(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
