@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -26,7 +27,12 @@ class BuyerPreviousOffersView extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PageAutoRefresh(
+    onRefresh: () => Get.find<BuyerOffersController>(tag: 'previous').fetchOffers(silent: true),
+    child: _buildPageContent(context),
+  );
+
+  Widget _buildPageContent(BuildContext context) {
     final theme = Theme.of(context);
     final controller = Get.put(BuyerOffersController(offerType: 'previous'), tag: 'previous');
 
@@ -82,7 +88,7 @@ class BuyerPreviousOffersView extends StatelessWidget {
         return RefreshIndicator(
           onRefresh: () => controller.fetchOffers(),
           child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 200),
             itemCount: offers.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {

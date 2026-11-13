@@ -18,6 +18,7 @@ class ProductController extends GetxController {
   final categories = <CategoryModel>[].obs;
 
   final errorMessage = "".obs;
+  bool _fetchingProducts = false;
 
   /// ===============================
   /// INIT
@@ -31,14 +32,17 @@ class ProductController extends GetxController {
   /// ===============================
   /// FETCH PRODUCTS
   /// ===============================
-  Future<void> fetchProducts() async {
+  Future<void> fetchProducts({bool silent = false}) async {
+    if (_fetchingProducts || isClosed || (silent && (isRefreshing.value || processingProductId.value != null))) return;
+    _fetchingProducts = true;
     try {
-      isLoading.value = true;
-      errorMessage.value = "";
+      if (!silent) isLoading.value = true;
 
       debugPrint("🚀 Fetching Products...");
 
-      final data = await ProductService.getProducts();
+      final data = await ProductService.getProducts(silent: silent);
+      if (isClosed) return;
+      errorMessage.value = "";
 
       debugPrint("📦 PRODUCT COUNT: ${data.length}");
 
@@ -48,6 +52,7 @@ class ProductController extends GetxController {
         debugPrint("⚠️ No products received from API");
       }
     } catch (e) {
+      if (silent || isClosed) return;
       debugPrint("❌ PRODUCT FETCH ERROR: $e");
 
       errorMessage.value = e.toString();
@@ -60,7 +65,8 @@ class ProductController extends GetxController {
         colorText: Colors.white,
       );
     } finally {
-      isLoading.value = false;
+      _fetchingProducts = false;
+      if (!silent && !isClosed) isLoading.value = false;
     }
   }
 

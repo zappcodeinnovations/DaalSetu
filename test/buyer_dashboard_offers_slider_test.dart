@@ -17,7 +17,7 @@ class MockBuyerOffersController extends BuyerOffersController {
   MockBuyerOffersController({required super.offerType});
 
   @override
-  Future<void> fetchOffers({bool isRefresh = false}) async {}
+  Future<void> fetchOffers({bool silent = false, bool isRefresh = false}) async {}
 }
 
 void main() {
@@ -359,6 +359,44 @@ void main() {
       expect(viewDetailsFinder, findsOneWidget);
 
       await tester.tap(viewDetailsFinder);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(find.byType(ProductDetailScreen), findsOneWidget);
+    });
+
+    testWidgets('tapping anywhere on the card navigates to ProductDetailScreen', (
+      tester,
+    ) async {
+      final offer = BuyerOfferModel(
+        id: 705,
+        productId: 705,
+        title: 'Moong Dal Premium',
+        displayTitle: 'Moong Dal Premium',
+        displayPrice: '₹9,500.00/QTL',
+        displayQuantity: '20.000 QTL',
+        status: 'active',
+        isActive: true,
+      );
+
+      await tester.pumpWidget(
+        GetMaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: BuyerOffersCarouselSlider(
+                offers: [offer],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // Tap on the card title directly (not on the 'View Details' button)
+      final titleFinder = find.text('Moong Dal Premium');
+      expect(titleFinder, findsOneWidget);
+
+      await tester.tap(titleFinder);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
 

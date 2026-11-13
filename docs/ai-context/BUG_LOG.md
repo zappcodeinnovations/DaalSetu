@@ -1,5 +1,250 @@
 # Bug Log & Historical Fixes
 
+## Bug 54: Hide Raw Database IDs Across Transporter Brands, Dashboards, Orders, and Contract Details
+- **Symptom**: Raw internal database IDs were exposed to users in several areas:
+  1. Transporter Brands: fallback displayed `"Brand ID: #12"`.
+  2. Buyer Dashboard & Buyer Orders: displayed `"Order ID: 84"`.
+  3. Dashboard Recent Deals: bold title was `"ID: 142"`.
+  4. Seller Dashboard Deals: subtitle was `"ID: 142"`.
+  5. Transporter Bidding: place bid dialog and card showed `"Contract ID: 142"`.
+  6. Contract Details (Admin Section): labels appended `(ID: 15)`.
+- **Root Cause**: Hardcoded text bindings displaying entity database integer IDs instead of business information.
+- **Fix**:
+  1. `transporter_brands_view.dart`: Replaced `"Brand ID: #${brand.id}"` with `"Verified Brand"` / `"Registered Brand"`.
+  2. `buyer_dashboard_view.dart` & `buyer_orders_view.dart`: Replaced `"Order ID: ${order['id']}"` with seller name / brand / `'Confirmed Order'`.
+  3. `dashboard_page.dart`: Replaced `"ID: ${contract.id}"` with clean parties row `"${contract.seller} → ${contract.buyer}"` and bag count / quantity subtitle.
+  4. `seller_dashboard_view.dart`: Replaced `"ID: ${contract.contractId}"` with category and brand information (`'Category • Brand'`).
+  5. `transporter_bidding_view.dart`: Replaced `"Contract ID: ${offer.contractId}"` with `offer.productTitle`.
+  6. `contract_details_view.dart`: Updated `_withId` to return plain entity name without appending `(ID: $id)`.
+  7. Added unit and widget tests in `test/hide_database_ids_test.dart` and updated `test/buyer_contract_details_offer_id_test.dart`.
+- **Files Changed**:
+  - `lib/modules/transporter/brands/view/transporter_brands_view.dart`
+  - `lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`
+  - `lib/modules/buyer/orders/view/buyer_orders_view.dart`
+  - `lib/modules/dashboard/view/dashboard_page.dart`
+  - `lib/modules/seller/dashboard/view/seller_dashboard_view.dart`
+  - `lib/modules/transporter/bidding/view/transporter_bidding_view.dart`
+  - `lib/modules/contracts/view/contract_details_view.dart`
+  - `test/hide_database_ids_test.dart`
+  - `test/buyer_contract_details_offer_id_test.dart`
+- **Verification**: `test/hide_database_ids_test.dart` (4/4 passed); `test/buyer_contract_details_offer_id_test.dart` (4/4 passed); static analysis verified.
+
+---
+
+## Bug 53: Display Full User Name & Company Name Prioritization on Admin Offers and Seller Interests
+- **Symptom**:
+  1. On the Admin Offers Catalog (`AdminOffersListScreen`), the seller attribute displayed `offer.seller?.username` (often a raw 10-digit mobile number) instead of the seller's full name.
+  2. On the Seller Offer Interests screen (`SellerOfferInterestsView`), the buyer line prioritized `buyer_unique_id` (raw ID like `BUY9CED...`) over human-readable buyer full name and completely omitted `buyerCompany`.
+- **Root Cause**:
+  1. In `admin_offers_list_screen.dart:190` & `528`, the UI directly bound to `seller.username`.
+  2. In `lib/modules/seller/products/model/offer_interest_model.dart:69`, `buyer_unique_id` was checked before `buyer_name`.
+- **Fix**:
+  1. Added `displayName` getter to `Seller` model in `lib/modules/products/model/product_model.dart` prioritizing `fullName` before `username`.
+  2. Updated `AdminOffersListScreen` attribute row and `StockHistoryDialog` to display `offer.seller?.displayName`.
+  3. Updated `lib/modules/seller/products/model/offer_interest_model.dart` to prioritize `buyer_full_name`, `buyer_name`, and nested `first_name + last_name` before falling back to `buyer_unique_id`. Added `displayBuyerInfo` formatting as `'Name (Company)'`.
+  4. Updated `SellerOfferInterestsView` to display `item.displayBuyerInfo` with `maxLines: 1` and `TextOverflow.ellipsis`.
+  5. Updated `lib/modules/products/model/offer_interest_model.dart` to prioritize full name over username for admin interest dialog.
+  6. Added widget/unit tests in `test/seller_offer_interest_identity_test.dart`.
+- **Files Changed**:
+  - `lib/modules/products/model/product_model.dart`
+  - `lib/modules/admin_catalog/view/admin_offers_list_screen.dart`
+  - `lib/modules/seller/products/model/offer_interest_model.dart`
+  - `lib/modules/seller/products/view/seller_offer_interests_view.dart`
+  - `lib/modules/products/model/offer_interest_model.dart`
+  - `test/seller_offer_interest_identity_test.dart`
+- **Verification**: `test/seller_offer_interest_identity_test.dart` (3/3 passed); `flutter analyze` clean (0 issues).
+
+---
+
+## Bug 52: Replace "Operation Control" Branding with "KISOR"
+- **Symptom**: On the Login screen (`LoginScreen`), beneath the DaalSetu app title, the subtitle text read `'Operations control centre'`, inconsistent with client-specified branding.
+- **Root Cause**: Hardcoded text `'Operations control centre'` in `lib/modules/Auth/login/view/login_screen.dart:327`.
+- **Fix**:
+  1. Replaced `'Operations control centre'` with `'KISOR'` in `lib/modules/Auth/login/view/login_screen.dart`.
+  2. Added test assertion in `test/login_screen_test.dart` verifying that `'KISOR'` is displayed on `LoginScreen` and `'Operations control centre'` is absent.
+- **Files Changed**:
+  - `lib/modules/Auth/login/view/login_screen.dart`
+  - `test/login_screen_test.dart`
+- **Verification**: `flutter test test/login_screen_test.dart test/login_password_eye_icon_test.dart` (4/4 passed); `flutter analyze` clean (0 issues).
+
+---
+
+## Bug 51: Login Screen Password Eye Icon Inverted State (Closed Eye Displayed When Password Hidden)
+- **Symptom**: On the Login screen (`LoginScreen`), when the password is in its initial hidden state (`•••••`), the suffix icon displays `Icons.visibility_off_outlined` (eye with slash / closed eye). When the user taps it to reveal the password text, the icon flips to `Icons.visibility_outlined` (open eye). The icon glyph mapping is inverted relative to standard UI conventions and the Register screen (`register_page.dart`), where an open eye signifies "Show password" and a crossed-out eye signifies "Hide password".
+- **Root Cause**: In `lib/modules/Auth/login/view/login_screen.dart:154-156`, the ternary condition was:
+  ```dart
+  isVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined
+  ```
+  rendering the crossed-out eye when `isVisible` is `false` (hidden/dots) and the open eye when `isVisible` is `true`.
+- **Fix**:
+  1. Updated the icon expression in `lib/modules/Auth/login/view/login_screen.dart` to:
+     ```dart
+     isVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined
+     ```
+  2. Updated `test/login_password_eye_icon_test.dart` to assert exact `IconData` (`visibility_outlined` initially when obscured, `visibility_off_outlined` when revealed) across consecutive toggles.
+- **Files Changed**:
+  - `lib/modules/Auth/login/view/login_screen.dart`
+  - `test/login_password_eye_icon_test.dart`
+- **Verification**: `flutter test test/login_password_eye_icon_test.dart` (2/2 passed); `flutter test test/login_screen_test.dart` (2/2 passed); `flutter analyze` clean (0 issues).
+
+---
+
+## Bug 50: TSK-035 — Brand Name & Offer Name Display on Contract Screens
+- **Symptom**: On "My Deal Contracts" cards and general contract views, only "Commodity" was shown; the specific Offer Name (e.g. "mix daal") and Brand Name (e.g. "Natureland Organics") were missing.
+- **Root Cause**:
+  1. `SellerContractModel`: `productTitle` field was absent, and `brandName` only looked up `brand_name` instead of `product_brand_name`.
+  2. `seller_contracts_view.dart`: Card layout had no UI components for rendering offer title or brand chip.
+  3. `ContractModel` & `ContractDetailModel`: Did not map `product_brand_name`.
+- **Fix**:
+  1. Updated `SellerContractModel`: added `productTitle` and `offerName` getter; mapped `product_brand_name` and `product_title`.
+  2. Updated `seller_contracts_view.dart`: added clean responsive row with `IconlyLight.bag` + Offer Name and verified Brand Name chip with `TextOverflow.ellipsis`.
+  3. Updated `ContractModel` and `ContractDetailModel`: added `productBrand` mapping.
+  4. Updated `contract_view.dart` & `contract_details_view.dart`: displayed Brand on card and detail views.
+  5. Created unit tests in `test/seller_contract_brand_offer_test.dart`.
+- **Files Changed**:
+  - `lib/modules/seller/contracts/model/seller_contract_model.dart`
+  - `lib/modules/seller/contracts/view/seller_contracts_view.dart`
+  - `lib/modules/contracts/model/contract_model.dart`
+  - `lib/modules/contracts/model/contract_details_model.dart`
+  - `lib/modules/contracts/view/contract_view.dart`
+  - `lib/modules/contracts/view/contract_details_view.dart`
+  - `test/seller_contract_brand_offer_test.dart`
+- **Verification**: `test/seller_contract_brand_offer_test.dart` (2/2 passed); full regression test suite (36/36 passed); `flutter analyze` 0 issues found.
+
+---
+
+## Bug 49: TSK-014 — "My Offers" Rename to "My Products" in Seller Nav
+- **Symptom**: Seller bottom nav tab label and drawer menu item showed "Offers" instead of "Products"; share sheet text said "My offers list".
+- **Root Cause**: Three hardcoded strings across nav_page, admin_drawer, and seller_offer_export_service.
+- **Fix**:
+  1. `lib/modules/nav_bar/view/nav_page.dart` line 147: `label: 'Offers'` → `label: 'Products'`
+  2. `lib/modules/admin_catalog/view/admin_drawer.dart` line 509: `title: 'My Offers'` → `title: 'My Products'`
+  3. `lib/modules/seller/products/service/seller_offer_export_service.dart` line 197: share text → `'My products list from DaalSetu.'`
+- **Files Changed**: 3 files above.
+- **Verification**: Static analysis clean (0 issues); regression suite 34/34 PASSED.
+
+---
+
+## Bug 48: TSK-008/TSK-037 — Internal IDs Visible on Contract Detail Screens
+- **Symptom**: Contract details screen showed raw internal IDs like `"rajesh kumar (ID:166 | BUY9CED677AB6)"` in the Buyer/Seller rows and `"mix daal (ID: 186)"` in the Offer row. These expose database IDs to end users.
+- **Root Cause**:
+  1. `seller_contract_detail_view.dart`: `_party()` function returned `c['display_${prefix}_id']` (the ID-containing display string); `_summaryCard()` Offer row appended `(ID: $offerId)`; `_partyCard()` showed a `Reference` row with `idLine` containing real and mapped IDs.
+  2. `contract_details_view.dart`: Offer row built `'$title (ID: ${contract.productId})'`; Interest ID row unconditionally shown; `_partySection` showed `subtitleId` (the gray ID string) for all users.
+- **Fix**:
+  - `seller_contract_detail_view.dart`:
+    1. `_party()` → now reads `c['${prefix}_name']` (plain name, no ID string)
+    2. Offer row → `final offer = _text(c['product_title'])` (no ID suffix)
+    3. `_partyCard()` → removed `if (idLine.isNotEmpty) SellerUi.infoRow('Reference', idLine)` (replaced with comment)
+  - `contract_details_view.dart`:
+    1. Offer row → returns plain `title` without `(ID: ...)` suffix
+    2. Interest ID row → guarded with `if (_isSuperAdmin && ...)` (admin-only)
+    3. `subtitleId` block in `_partySection` → guarded with `if (_isSuperAdmin && ...)`
+- **Files Changed**:
+  - `lib/modules/seller/contracts/view/seller_contract_detail_view.dart`
+  - `lib/modules/contracts/view/contract_details_view.dart`
+- **Verification**: Static analysis clean (0 issues); regression suite 34/34 PASSED.
+
+---
+
+## Bug 46: Card-Wide Clickability on Buyer Dashboard Carousel & Admin Offers Catalog
+- **Symptom**: On the Buyer Dashboard carousel (`BuyerDashboardView`) and Admin Offers catalog (`AdminOffersListScreen`), tapping on the card body, commodity image, title, badge, or price produced no action. Users were constrained to clicking only a tiny "View Details" button or had no direct way to open product details by tapping the card.
+- **Root Cause**: `_buildOfferCard` in both `BuyerDashboardView` and `AdminOffersListScreen` returned static `Container` elements without interactive gesture recognizers.
+- **Fix**:
+  1. Wrapped `BuyerDashboardView._buildOfferCard` in `Material(color: Colors.transparent, borderRadius: cardRadius, clipBehavior: Clip.antiAlias)` with `InkWell(borderRadius: cardRadius, onTap: navigateToDetails)`, allowing users to tap anywhere on the 180px gradient card while retaining the explicit "View Details" button.
+  2. Wrapped `AdminOffersListScreen._buildOfferCard` in `Material(color: cardColor, borderRadius: cardRadius, clipBehavior: Clip.antiAlias)` with `InkWell(borderRadius: cardRadius, onTap: () => Get.to(() => ProductDetailScreen(productId: offer.id)))`.
+  3. Preserved independent pointer consumption for child interactive elements (Admin Switch, Interests Heart button, Stock update row, and Action buttons).
+- **Files Changed**:
+  - `lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`
+  - `lib/modules/admin_catalog/view/admin_offers_list_screen.dart`
+  - `test/buyer_dashboard_offers_slider_test.dart`
+  - `test/admin_offer_card_tap_test.dart`
+- **Verification**: `test/buyer_dashboard_offers_slider_test.dart` passed (13/13 tests, including card-wide tap navigation); `test/admin_offer_card_tap_test.dart` passed (1/1 test); regression tests across modules passed (12/12 tests).
+
+---
+
+## Bug 45: Seller Product Card Clickability Restricted to View Details Button Only
+- **Symptom**: On the Seller "My Products" screen (`SellerProductView`), users were unable to open product offer details by tapping on the product card (image, title, brand, price, or location). The entire card container was unresponsive to taps, forcing users to hit the narrow "View Details" button at the bottom of each card.
+- **Root Cause**: In `lib/modules/seller/products/view/seller_product_view.dart:120`, `_buildProductCard` returned a static `Container` with no gesture recognition. Navigation to `ProductDetailScreen` was strictly confined to the child `OutlinedButton.icon` at the bottom of the card.
+- **Fix**:
+  1. Wrapped `_buildProductCard` in `Material(color: theme.cardColor, borderRadius: cardRadius, clipBehavior: Clip.antiAlias)` with an outer `InkWell(borderRadius: cardRadius, onTap: () => Get.to(() => ProductDetailScreen(productId: product.id)))`.
+  2. Preserved independent pointer consumption for child action buttons (3-dots `PopupMenuButton`, `Interests`, `Stock Update`, `Media Gallery`, and the existing `View Details` button) so secondary actions function without triggering unintended card navigation.
+  3. Added `Key('seller_product_card_${product.id}')` for widget testing and accessibility.
+- **Files Changed**:
+  - `lib/modules/seller/products/view/seller_product_view.dart`
+  - `test/seller_offer_card_layout_and_status_test.dart`
+- **Verification**: `test/seller_offer_card_layout_and_status_test.dart` passed (6/6 tests passing, including card-wide tap navigation); `test/bottom_nav_bar_insets_test.dart` passed (4/4 regression tests).
+
+---
+
+## Bug 44: System Navigation Bar Overlap with Floating Bottom Navigation Bar on 3-Button & Gesture Devices
+- **Symptom**: On mobile devices with default Android 3-Button Navigation (Back ◀, Home ●, Recent ■) or persistent gesture navigation insets, the application's floating bottom navigation bar was overlapped and cut off by the system navigation bar, causing user taps on navigation items to inadvertently trigger system navigation actions instead.
+- **Root Cause**: In `lib/modules/nav_bar/view/nav_page.dart`, `_GlassNavBar` had a hardcoded margin `EdgeInsets.fromLTRB(16, 0, 16, 16)`. Combined with `Scaffold.extendBody = true`, the floating bar did not respect `MediaQuery.of(context).padding.bottom`, resulting in the 72px navbar sitting directly behind the 48px system navigation bar.
+- **Fix**:
+  1. Updated `_GlassNavBar` (now `GlassNavBar`) in `lib/modules/nav_bar/view/nav_page.dart` to dynamically calculate `systemBottom = isKeyboardOpen ? 0.0 : mediaQuery.padding.bottom`.
+  2. Applied dynamic bottom margin `bottomMargin = systemBottom > 0 ? 16.0 + systemBottom : 16.0`, ensuring the bar floats cleanly above Android 3-button bars (64px margin), gesture indicators (32px margin), and desktop/web viewports (16px standard margin).
+  3. Added `isKeyboardOpen` guard to prevent the navbar from jumping up when a soft keyboard is active.
+- **Files Changed**:
+  - `lib/modules/nav_bar/view/nav_page.dart`
+  - `test/bottom_nav_bar_insets_test.dart`
+- **Verification**: `test/bottom_nav_bar_insets_test.dart` passed (4/4 tests: 3-button nav, gesture nav, web/desktop, active keyboard); `test/login_password_eye_icon_test.dart` passed (2/2 regression tests).
+
+---
+
+## Bug 43: Login Screen Password Eye Icon Toggle Unresponsiveness, Cursor Offset Loss & Focus Interception
+- **Symptom**: On the Login screen (`LoginScreen`), after tapping the password visibility eye icon to reveal the password, tapping a second time failed to hide it (unresponsive / stuck in visible mode). Additionally, tapping the icon caused the soft keyboard to abruptly dismiss, the cursor position jumped to offset 0, and in Dark Mode the icon lacked contrast against the dark background.
+- **Root Cause**:
+  1. `IconButton(tooltip: ...)` in `suffixIcon` registered an active Flutter `Tooltip` gesture recognizer that captured pointer events on consecutive taps on mobile touch screens, intercepting subsequent taps before reaching `onPressed`.
+  2. `IconButton` took keyboard focus by default, causing the `TextFormField` to lose focus and the keyboard to collapse.
+  3. Visibility state was managed via `setState` in `_LoginScreenState` rather than reactive GetX state, triggering redundant whole-screen rebuilds.
+  4. `obscureText` toggle in Flutter's `RenderEditable` reset text selection offset unless explicitly restored.
+  5. In Dark Mode, `color: isDark ? null : AppTheme.textMutedLight` left the icon with low or un-themed contrast.
+- **Fix**:
+  1. Added `final RxBool isPasswordVisible = false.obs;` and `togglePasswordVisibility()` with cursor position preservation (`passwordController.selection = TextSelection.fromPosition(...)`) in `LoginController`.
+  2. Wrapped password `GlassTextField` in `Obx`.
+  3. Added `focusNode: FocusNode(skipTraversal: true)` to prevent focus stealing from the text input.
+  4. Removed `tooltip` property to prevent gesture interception on consecutive taps.
+  5. Applied high-contrast theme colors (`isDark ? AppTheme.primaryGold : AppTheme.secondaryOrange`).
+- **Files Changed**:
+  - `lib/modules/Auth/login/controller/login_controller.dart`
+  - `lib/modules/Auth/login/view/login_screen.dart`
+  - `test/login_password_eye_icon_test.dart`
+- **Verification**: `test/login_password_eye_icon_test.dart` passed (2/2 tests: consecutive toggles and cursor preservation); `test/login_screen_test.dart` passed (1/1 regression test).
+
+---
+
+## Bug 42: Seller Products UI Overflow by 154px & Buyer Offer Bridge Items Appearing in "My Products"
+- **Symptom**:
+  1. On the Seller "My Products" screen (`SellerProductView`), product cards with long route or location text (e.g., `nagpur, Nagpur, Maharashtra, India -> test address, Nagpur`) crashed with Flutter's yellow/black stripe warning: `RIGHT OVERFLOWED BY 154 PIXELS`.
+  2. Finalized buyer offers (bridge products automatically generated when a buyer's offer was accepted) were appearing in the seller's catalog list under "My Products".
+- **Root Cause**:
+  1. In `lib/modules/seller/products/view/seller_product_view.dart`, the `Wrap` widget contained `_infoItem(IconlyLight.location, product.loadingLocation, theme)`, which rendered an unconstrained `Row(mainAxisSize: MainAxisSize.min)`. Because `Wrap` does not constrain a single child row along the main axis, long addresses pushed the width beyond the mobile viewport, overflowing by 154px.
+  2. When a buyer offer was finalized, `_create_buyer_offer_contract_bridge` created a bridge `Product` with `seller=seller` and `description='Created from buyer request final confirmation.'`. `SellerProductController` called `/api/products/` without excluding these bridge items, causing them to be mixed into the seller's active product catalog.
+- **Fix**:
+  1. Extracted `loadingLocation` into its own dedicated `Row` with `Expanded(child: Text(..., maxLines: 2, overflow: TextOverflow.ellipsis))` directly above the `Wrap` containing bag count and packing weight.
+  2. Added `final bool isBuyerOffer;` to `SellerProductModel` with detection in `fromJson` (checking `is_buyer_offer`, `is_buyer_requirement`, or description containing `buyer request`).
+  3. Updated `SellerProductController.fetchProducts` to filter out `isBuyerOffer` items before assigning them to `products`.
+  4. Updated backend `ProductViewSet.get_queryset()` in `P:/Daal_Broker/Api/views.py` to exclude `description__startswith='Created from buyer request'` for sellers, and updated `ProductSerializer.to_representation()` in `P:/Daal_Broker/Api/serializers.py` to include `is_buyer_offer`.
+- **Files Changed**:
+  - `lib/modules/seller/products/view/seller_product_view.dart`
+  - `lib/modules/seller/products/model/seller_product_model.dart`
+  - `lib/modules/seller/products/controller/seller_product_controller.dart`
+  - `P:/Daal_Broker/Api/views.py`
+  - `P:/Daal_Broker/Api/serializers.py`
+  - `test/seller_offer_card_layout_and_status_test.dart`
+- **Verification**: `test/seller_offer_card_layout_and_status_test.dart` passed (5/5 tests passing); `test/buyer_contract_details_offer_id_test.dart` passed (3/3); `test/seller_confirm_dialog_test.dart` passed (1/1).
+
+---
+
+## Bug 41: Buyer Branch Card Layout Constraints (Vertical Text Squishing)
+- **Symptom**: In BuyerBranchView under 'My Branches', branch title text (e.g., 'Test Branch') was squeezed vertically with one character per line instead of rendering horizontally.
+- **Root Cause**: The action button Column inside the Card Row used 'crossAxisAlignment: CrossAxisAlignment.stretch'. In an unbounded horizontal flex container (Row), this generated invalid infinite-width layout constraints, collapsing the neighboring Expanded title text Column.
+- **Fix**: Replaced 'CrossAxisAlignment.stretch' with 'CrossAxisAlignment.end' in the button Column.
+- **Files Changed**:
+  - lib/modules/buyer/branch/view/buyer_branch_view.dart
+- **Verification**: Widget tests in test/buyer_branch_view_badge_test.dart passed; static analysis passed with zero issues.
+
+---
+
 ## Bug 40: Settings Screen Delete Account Dialog Red Assertion Screen On Cancel (`_dependents.isEmpty: is not true`)
 - **Symptom**: On the Settings Screen (`SettingsScreen`), when tapping the "Delete Account" button and then clicking "Cancel" in the confirmation dialog, the app crashed with a red screen of death asserting: `'package:flutter/src/widgets/framework.dart': Failed assertion: line 6281 pos 12: '_dependents.isEmpty': is not true.` instead of safely returning to the current Settings screen.
 - **Root Cause**:
@@ -516,3 +761,25 @@
   - `lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`
   - `test/buyer_dashboard_kpi_navigation_test.dart`
 - **Verification**: `flutter test test/buyer_dashboard_kpi_navigation_test.dart --no-pub` (2 tests PASSED), full regression suite (11 tests PASSED).
+
+## Bug 47: Notifications Not Opening & 2nd Tap Not Redirecting
+- **Symptom**:
+  1. Tapping on notifications related to deals or concluded offers ("Deal Confirmed", "Offer Accepted", etc.) frequently failed to open or redirect to any screen.
+  2. Clicking on the same notification a 2nd time after navigating back failed to redirect.
+  3. Clicking on an unread notification caused the entire notifications list to flicker and collapse into a loading spinner.
+- **Root Cause**:
+  1. `RealtimeNotificationService.navigateToTarget` had an explicit hardcoded suppression block `final isConcludedDealOrOffer = ...; if (isConcludedDealOrOffer) return;` that silently swallowed clicks for all deal/offer concluded notifications before they reached contract extraction logic.
+  2. GetX's default `preventDuplicates: true` suppressed subsequent `Get.to` pushes when navigating to the same destination after returning from a popped route.
+  3. `SellerNotificationController.markAsRead` triggered `fetchNotifications()`, which executed `isLoading(true)`, destroying the ListView and re-mounting a `CircularProgressIndicator`.
+  4. Fallback route unconditionally pushed `SellerNotificationView` even if the user was already on it, resulting in a dead end.
+- **Fix**:
+  1. Removed `isConcludedDealOrOffer` suppression in `RealtimeNotificationService.navigateToTarget` and routed concluded deals/accepted offers to `SellerContractDetailView` / `ContractDetailScreen` (or `SellerContractsView` / `ContractsScreen` if no specific contract ID is extractable).
+  2. Added a 500ms `_isNavigating` debounce lock to prevent accidental double-tap pushes while enabling smooth re-navigation on subsequent taps.
+  3. Added `preventDuplicates: false` to all `Get.to` calls in `RealtimeNotificationService`.
+  4. Updated `SellerNotificationController.markAsRead` to perform an optimistic in-place update of `isRead` and `unreadCount` without resetting `isLoading(true)`.
+  5. Guarded fallback navigation to prevent duplicate route pushes when already on a notifications view.
+- **Files Changed**:
+  - `lib/services/realtime_notification_service.dart`
+  - `lib/modules/seller/notifications/controller/seller_notification_controller.dart`
+  - `test/notification_reclick_navigation_test.dart`
+- **Verification**: `flutter test test/notification_reclick_navigation_test.dart` (4 tests PASSED), full regression test suite (26 tests PASSED).

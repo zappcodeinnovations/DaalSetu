@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:daalsetu/modules/products/model/product_model.dart';
@@ -7,6 +8,7 @@ import 'package:daalsetu/modules/admin_catalog/view/stock_history_dialog.dart';
 import 'package:daalsetu/widgets/authenticated_network_image.dart';
 import 'package:daalsetu/theme/app_theme.dart';
 import 'package:daalsetu/modules/products/view/edit_product.dart';
+import 'package:daalsetu/modules/products/view/product_detail.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 
 class AdminOffersListScreen extends StatefulWidget {
@@ -29,7 +31,12 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
   Color get textMuted => isDark ? AppTheme.textMuted : AppTheme.textMutedLight;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PageAutoRefresh(
+    onRefresh: () => controller.fetchOffers(silent: true),
+    child: _buildPageContent(context),
+  );
+
+  Widget _buildPageContent(BuildContext context) {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
@@ -91,23 +98,32 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
   }
 
   Widget _buildOfferCard(ProductModel offer) {
-    return Container(
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
-        boxShadow: isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
+    final cardRadius = BorderRadius.circular(16);
+
+    return Material(
+      color: cardColor,
+      borderRadius: cardRadius,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        key: Key('admin_offer_card_${offer.id}'),
+        borderRadius: cardRadius,
+        onTap: () => Get.to(() => ProductDetailScreen(productId: offer.id)),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: cardRadius,
+            border: Border.all(color: borderColor),
+            boxShadow: isDark
+                ? null
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header: Title, Subtitle, Image
@@ -171,10 +187,14 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
           const SizedBox(height: 16),
 
           // Attributes
-          _buildAttributeRow(Icons.person, 'Seller', offer.seller?.username ?? '-'),
+          _buildAttributeRow(Icons.person, 'Seller', offer.seller?.displayName ?? '-'),
           const SizedBox(height: 8),
-          _buildAttributeRow(Icons.location_on, 'Loading', offer.loadingLocation.isNotEmpty ? offer.loadingLocation : '-'),
-          const SizedBox(height: 8),
+          // Without a real location the backend stores the date range here; the
+          // Date row already shows it, so skip this row instead of repeating it.
+          if (!_isDateRangeText(offer.loadingLocation)) ...[
+            _buildAttributeRow(Icons.location_on, 'Loading', offer.loadingLocation.isNotEmpty ? offer.loadingLocation : '-'),
+            const SizedBox(height: 8),
+          ],
           _buildDateRow(offer),
           const SizedBox(height: 16),
 
@@ -345,7 +365,9 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
           ),
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildAttributeRow(IconData icon, String label, String value) {
@@ -373,10 +395,22 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
     );
   }
 
+  static bool _isDateRangeText(String text) =>
+      RegExp(r'^\s*\d{4}-\d{2}-\d{2}').hasMatch(text) && text.contains('->');
+
+  /// "2026-07-29T00:00:00+05:30" -> "29 Jul 2026"; other text is kept as is.
+  static String _shortDate(String raw) {
+    final parsed = DateTime.tryParse(raw.trim());
+    if (parsed == null) return raw;
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final local = parsed.isUtc ? parsed.toLocal() : parsed;
+    return '${local.day.toString().padLeft(2, '0')} ${months[local.month - 1]} ${local.year}';
+  }
+
   Widget _buildDateRow(ProductModel offer) {
     String dateStr = '-';
     if (offer.loadingFrom.isNotEmpty && offer.loadingTo.isNotEmpty) {
-      dateStr = '${offer.loadingFrom} → ${offer.loadingTo}';
+      dateStr = '${_shortDate(offer.loadingFrom)} → ${_shortDate(offer.loadingTo)}';
     } else if (offer.createdAt.toString().isNotEmpty) {
       dateStr = offer.createdAt.toString().split(' ').first;
     }
@@ -507,7 +541,7 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
       builder: (_) => StockHistoryDialog(
         productId: offer.id.toString(),
         productTitle: offer.title,
-        sellerName: offer.seller?.username ?? '-',
+        sellerName: offer.seller?.displayName ?? '-',
         currentStock: '${offer.availableQuantity} QTL',
       ),
     );

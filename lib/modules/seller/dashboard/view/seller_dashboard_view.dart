@@ -882,7 +882,11 @@ class SellerDashboardView extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      contract.buyerCompany,
+                      contract.buyerCompany.trim().isNotEmpty
+                          ? contract.buyerCompany.trim()
+                          : contract.buyerName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -891,7 +895,21 @@ class SellerDashboardView extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      "ID: ${contract.contractId}",
+                      [
+                        if (contract.categoryName.trim().isNotEmpty)
+                          contract.categoryName.trim(),
+                        if (contract.brandName.trim().isNotEmpty)
+                          contract.brandName.trim(),
+                      ].join(' • ').isNotEmpty
+                          ? [
+                              if (contract.categoryName.trim().isNotEmpty)
+                                contract.categoryName.trim(),
+                              if (contract.brandName.trim().isNotEmpty)
+                                contract.brandName.trim(),
+                            ].join(' • ')
+                          : 'Confirmed Deal',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         fontSize: 10,
                         color: theme.textTheme.bodyMedium?.color,

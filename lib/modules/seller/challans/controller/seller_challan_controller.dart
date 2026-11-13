@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../../services/seller_services.dart';
 import '../model/seller_challan_model.dart';
 import '../../../../utils/app_snackbar.dart';
+import 'package:daalsetu/widgets/dispatch_bills_section.dart';
 
 class SellerChallanController extends GetxController {
   var isLoading = false.obs;
@@ -27,9 +28,12 @@ class SellerChallanController extends GetxController {
   }
 
   Future<void> dispatchChallan(int challanId) async {
+    // Optional bill files go with the dispatch (MoM point 23).
+    final bills = await askDispatchBills();
+    if (bills == null) return;
     try {
       Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
-      final res = await SellerServices.dispatchDeliveryChallan(challanId);
+      final res = await SellerServices.dispatchDeliveryChallan(challanId, billPaths: bills);
       if (Get.isDialogOpen ?? false) Get.back();
 
       AppSnackbar.snackbar("Success", res['message'] ?? "Challan dispatched successfully", snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);

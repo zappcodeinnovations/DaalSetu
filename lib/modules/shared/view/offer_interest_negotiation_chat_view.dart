@@ -6,11 +6,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../services/buyer_services.dart';
+import '../../products/model/offer_interest_model.dart';
 import '../../../services/product_services.dart';
 import '../../../services/seller_services.dart';
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/utils/global_error_handler.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/delivery_period_picker.dart';
 
 /// One live chat for a ProductInterest.  It intentionally powers both the
 /// buyer's My Interests route and the seller's Buyer Interests route so the
@@ -63,6 +65,9 @@ class _OfferInterestNegotiationChatViewState
   final _quantityController = TextEditingController();
   final _bagsController = TextEditingController();
   final _packingController = TextEditingController(text: '30');
+  // Optional counter Delivery Period.
+  DateTime? _counterDeliveryFrom;
+  DateTime? _counterDeliveryTo;
   final _scrollController = ScrollController();
 
   Map<String, dynamic>? _thread;
@@ -71,6 +76,7 @@ class _OfferInterestNegotiationChatViewState
   bool _sending = false;
   bool _loadingInBackground = false;
   bool _showPacking = false;
+  int _decisionRevision = 0;
 
   @override
   void initState() {
@@ -126,6 +132,7 @@ class _OfferInterestNegotiationChatViewState
   Future<void> _load({bool silent = false}) async {
     if (_loadingInBackground) return;
     _loadingInBackground = true;
+    final revision = _decisionRevision;
     if (!silent && mounted) setState(() => _loading = true);
     final oldCount = _messages.length;
     try {
@@ -136,34 +143,56 @@ class _OfferInterestNegotiationChatViewState
       final raw = response['data'];
       if (raw is! Map || !mounted) return;
       final newThread = Map<String, dynamic>.from(raw);
-      final productMap = (newThread['product'] is Map ? newThread['product'] : null) ??
+      final productMap =
+          (newThread['product'] is Map ? newThread['product'] : null) ??
           (newThread['offer'] is Map ? newThread['offer'] : null) ??
-          (newThread['product_detail'] is Map ? newThread['product_detail'] : null);
+          (newThread['product_detail'] is Map
+              ? newThread['product_detail']
+              : null);
       if (productMap != null) {
-        newThread['seller_price'] ??= productMap['amount'] ?? productMap['seller_price'] ?? productMap['price'];
-        newThread['available_quantity'] ??= productMap['available_quantity'] ?? productMap['remaining_quantity'] ?? productMap['stock_quantity'] ?? productMap['quantity'];
-        newThread['price_unit'] ??= productMap['amount_unit'] ?? productMap['price_unit'];
+        newThread['seller_price'] ??=
+            productMap['amount'] ??
+            productMap['seller_price'] ??
+            productMap['price'];
+        newThread['available_quantity'] ??=
+            productMap['available_quantity'] ??
+            productMap['remaining_quantity'] ??
+            productMap['stock_quantity'] ??
+            productMap['quantity'];
+        newThread['price_unit'] ??=
+            productMap['amount_unit'] ?? productMap['price_unit'];
         newThread['quantity_unit'] ??= productMap['quantity_unit'];
       }
 
       if (widget.productId > 0 &&
-          (newThread['seller_price'] == null || newThread['available_quantity'] == null)) {
+          (newThread['seller_price'] == null ||
+              newThread['available_quantity'] == null)) {
         try {
-          final productDetail = await ProductService.getProductDetail(widget.productId);
+          final productDetail = await ProductService.getProductDetail(
+            widget.productId,
+          );
           newThread['seller_price'] ??= productDetail.amount;
-          newThread['available_quantity'] ??= productDetail.availableQuantity.isNotEmpty
+          newThread['available_quantity'] ??=
+              productDetail.availableQuantity.isNotEmpty
               ? productDetail.availableQuantity
               : productDetail.remainingQuantity;
-          if (newThread['price_unit'] == null || newThread['price_unit'].toString().isEmpty) {
-            newThread['price_unit'] = productDetail.amountUnit.isNotEmpty ? productDetail.amountUnit : 'TON';
+          if (newThread['price_unit'] == null ||
+              newThread['price_unit'].toString().isEmpty) {
+            newThread['price_unit'] = productDetail.amountUnit.isNotEmpty
+                ? productDetail.amountUnit
+                : 'TON';
           }
-          if (newThread['quantity_unit'] == null || newThread['quantity_unit'].toString().isEmpty) {
-            newThread['quantity_unit'] = productDetail.quantityUnit.isNotEmpty ? productDetail.quantityUnit : 'QTL';
+          if (newThread['quantity_unit'] == null ||
+              newThread['quantity_unit'].toString().isEmpty) {
+            newThread['quantity_unit'] = productDetail.quantityUnit.isNotEmpty
+                ? productDetail.quantityUnit
+                : 'QTL';
           }
         } catch (_) {}
       }
 
       final newCount = (newThread['messages'] as List?)?.length ?? 0;
+      if (!mounted || revision != _decisionRevision) return;
       setState(() => _thread = newThread);
       if (!silent || newCount > oldCount) _scrollToLatest();
     } catch (error) {
@@ -196,10 +225,12 @@ class _OfferInterestNegotiationChatViewState
     final quantity = _quantityController.text.trim();
     final bags = _bagsController.text.trim();
     final packing = _packingController.text.trim();
-    if (price.isEmpty && quantity.isEmpty && bags.isEmpty) {
+    final deliveryFrom = _counterDeliveryFrom;
+    final deliveryTo = _counterDeliveryTo ?? deliveryFrom;
+    if (price.isEmpty && quantity.isEmpty && bags.isEmpty && deliveryFrom == null) {
       AppSnackbar.showWarning(
         title: 'Enter counter terms',
-        message: 'Enter a counter price, quantity, or bags.',
+        message: 'Enter a counter price, quantity, bags or delivery period.',
       );
       return;
     }
@@ -213,11 +244,19 @@ class _OfferInterestNegotiationChatViewState
         counterQuantity: quantity,
         counterBagCount: widget.isBuyer ? '' : bags,
         counterPackingWeightKg: widget.isBuyer || bags.isEmpty ? '' : packing,
+        counterDeliveryFrom: deliveryFrom == null ? '' : DeliveryPeriodPicker.apiDate(deliveryFrom),
+        counterDeliveryTo: deliveryTo == null ? '' : DeliveryPeriodPicker.apiDate(deliveryTo),
       );
       _priceController.clear();
       _quantityController.clear();
       _bagsController.clear();
-      if (mounted) setState(() => _showPacking = false);
+      if (mounted) {
+        setState(() {
+          _showPacking = false;
+          _counterDeliveryFrom = null;
+          _counterDeliveryTo = null;
+        });
+      }
       await _load(silent: true);
       _scrollToLatest();
     } catch (error) {
@@ -242,10 +281,6 @@ class _OfferInterestNegotiationChatViewState
               : 'This action cannot be undone.',
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
-          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: accept ? Colors.green : Colors.red,
@@ -254,6 +289,10 @@ class _OfferInterestNegotiationChatViewState
             onPressed: () => Get.back(result: true),
             child: Text(accept ? 'Accept' : 'Reject'),
           ),
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
+          ),
         ],
       ),
     );
@@ -261,6 +300,7 @@ class _OfferInterestNegotiationChatViewState
   }
 
   Future<void> _decide({required bool accept}) async {
+    if (_sending) return;
     final verb = accept ? 'accept' : 'reject';
     if (widget.isAdmin) {
       final action = accept ? widget.onAdminAccept : widget.onAdminReject;
@@ -301,6 +341,32 @@ class _OfferInterestNegotiationChatViewState
               widget.interestId,
               remark: '',
             );
+      if (result['success'] != true) {
+        throw Exception(result['message'] ?? 'Could not $verb this interest.');
+      }
+      if (!mounted) return;
+      _decisionRevision++;
+      final updatedInterest = result['interest'];
+      final acceptedStatus = updatedInterest is Map
+          ? updatedInterest['status']?.toString()
+          : null;
+      setState(
+        () => _thread = {
+          ...?_thread,
+          'status': accept && acceptedStatus != null
+              ? acceptedStatus
+              : accept
+              ? (widget.isBuyer ? 'buyer_confirmed' : 'seller_confirmed')
+              : 'rejected',
+          'is_read_only': true,
+          'can_reply': false,
+          'can_buyer_accept': false,
+          'can_buyer_reject': false,
+          'can_seller_accept': false,
+          'can_seller_reject': false,
+          'can_seller_action': false,
+        },
+      );
       AppSnackbar.showSuccess(
         title: accept ? 'Accepted' : 'Rejected',
         message: result['message'] ?? 'Negotiation $verb successfully.',
@@ -322,31 +388,43 @@ class _OfferInterestNegotiationChatViewState
     final title =
         widget.title ?? thread?['product_title']?.toString() ?? 'Negotiation';
     final status = thread?['status']?.toString().toLowerCase() ?? '';
-    final isReadOnly = _permission(thread?['is_read_only']) ?? false;
+    final isFinal = OfferInterestModel.isFinalStatus(status);
+    final adminActions = OfferInterestModel.fromJson(thread ?? {});
+    final isReadOnly =
+        isFinal || (_permission(thread?['is_read_only']) ?? false);
     final canReply =
-        widget.isAdmin ||
-        (!isReadOnly && (_permission(thread?['can_reply']) ?? false));
-    final canAccept = widget.isAdmin
-        ? true
-        : widget.allowDecisions && widget.isBuyer
-        ? (_permission(thread?['can_buyer_accept']) ?? false)
-        : widget.allowDecisions &&
-              !isReadOnly &&
-              (_permission(thread?['can_seller_accept']) ??
-                  _permission(thread?['can_seller_action']) ??
-                  status == 'interested');
-    final canReject = widget.isAdmin
-        ? true
-        : widget.allowDecisions && widget.isBuyer
-        ? (_permission(thread?['can_buyer_reject']) ?? false)
-        : widget.allowDecisions &&
-              !isReadOnly &&
-              (_permission(thread?['can_seller_reject']) ??
-                  _permission(thread?['can_seller_action']) ??
-                  status == 'interested');
+        !isReadOnly && (_permission(thread?['can_reply']) ?? false);
+    final canAccept =
+        !isFinal &&
+        (widget.isAdmin
+            ? widget.allowDecisions &&
+                  widget.onAdminAccept != null &&
+                  adminActions.canAcceptForRole(isAdmin: true)
+            : widget.allowDecisions && widget.isBuyer
+            ? (_permission(thread?['can_buyer_accept']) ?? false)
+            : widget.allowDecisions &&
+                  !isReadOnly &&
+                  (_permission(thread?['can_seller_accept']) ??
+                      _permission(thread?['can_seller_action']) ??
+                      status == 'interested'));
+    final canReject =
+        !isFinal &&
+        (widget.isAdmin
+            ? widget.allowDecisions &&
+                  widget.onAdminReject != null &&
+                  adminActions.canRejectForRole(isAdmin: true)
+            : widget.allowDecisions && widget.isBuyer
+            ? (_permission(thread?['can_buyer_reject']) ?? false)
+            : widget.allowDecisions &&
+                  !isReadOnly &&
+                  (_permission(thread?['can_seller_reject']) ??
+                      _permission(thread?['can_seller_action']) ??
+                      status == 'interested'));
 
     return Scaffold(
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
+      appBar: AppBar(
+        leading: const AppBarLeading(),
+        leadingWidth: AppBarLeading.widthFor(context),
         titleSpacing: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -405,7 +483,10 @@ class _OfferInterestNegotiationChatViewState
                   _waitingBar(thread['blocked_reason']?.toString()),
                 if (canAccept || canReject) _decisionBar(canAccept, canReject),
                 if (canReply) _composer(context),
-                if (!isReadOnly && !canAccept && !canReject && !canReply &&
+                if (!isReadOnly &&
+                    !canAccept &&
+                    !canReject &&
+                    !canReply &&
                     thread['deal_expired'] != true)
                   _waitingBar(),
               ],
@@ -441,15 +522,20 @@ class _OfferInterestNegotiationChatViewState
         thread['required_quantity'] ??
         thread['quantity'] ??
         '-';
-    final qtyUnit = (thread['quantity_unit'] ?? 'QTL')
-        .toString()
-        .toUpperCase();
+    final qtyUnit = (thread['quantity_unit'] ?? 'QTL').toString().toUpperCase();
     final buyerRemark =
         thread['buyer_remark'] ?? thread['remark'] ?? thread['initial_remark'];
 
     String formatPrice(dynamic raw) {
-      if (raw == null || raw.toString().trim().isEmpty || raw.toString().trim() == '-') return '-';
-      final clean = raw.toString().replaceAll('₹', '').replaceAll(',', '').trim();
+      if (raw == null ||
+          raw.toString().trim().isEmpty ||
+          raw.toString().trim() == '-')
+        return '-';
+      final clean = raw
+          .toString()
+          .replaceAll('₹', '')
+          .replaceAll(',', '')
+          .trim();
       final numVal = double.tryParse(clean);
       if (numVal != null) {
         return NumberFormat('#,##0.00', 'en_IN').format(numVal);
@@ -458,7 +544,10 @@ class _OfferInterestNegotiationChatViewState
     }
 
     String formatQty(dynamic raw) {
-      if (raw == null || raw.toString().trim().isEmpty || raw.toString().trim() == '-') return '-';
+      if (raw == null ||
+          raw.toString().trim().isEmpty ||
+          raw.toString().trim() == '-')
+        return '-';
       final clean = raw.toString().replaceAll(',', '').trim();
       final numVal = double.tryParse(clean);
       if (numVal != null) {
@@ -571,10 +660,23 @@ class _OfferInterestNegotiationChatViewState
             ],
           ),
           const Divider(height: 16),
-          row("Seller Price:", pSeller == '-' ? '₹-' : "₹$pSeller / $priceUnit"),
+          row(
+            "Seller Price:",
+            pSeller == '-' ? '₹-' : "₹$pSeller / $priceUnit",
+          ),
           row("Available Qty:", qAvail == '-' ? '-' : "$qAvail $qtyUnit"),
           row("Current Offer:", pOffer == '-' ? '₹-' : "₹$pOffer / $priceUnit"),
           row("Current Qty:", qOffer == '-' ? '-' : "$qOffer $qtyUnit"),
+          if (DeliveryPeriodPicker.periodText(thread['offer_delivery_from']?.toString(), thread['offer_delivery_to']?.toString()).isNotEmpty)
+            row(
+              "Seller Delivery:",
+              DeliveryPeriodPicker.periodText(thread['offer_delivery_from']?.toString(), thread['offer_delivery_to']?.toString()),
+            ),
+          if (DeliveryPeriodPicker.periodText(thread['delivery_date']?.toString(), thread['delivery_date_to']?.toString()).isNotEmpty)
+            row(
+              "Current Delivery:",
+              DeliveryPeriodPicker.periodText(thread['delivery_date']?.toString(), thread['delivery_date_to']?.toString()),
+            ),
           if (buyerRemark != null &&
               buyerRemark.toString().trim().isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -622,31 +724,35 @@ class _OfferInterestNegotiationChatViewState
             ? (thread['buyer']['unique_id'] ?? thread['buyer']['name'])
             : null) ??
         'Buyer';
-    final rawPrice = thread['initial_offered_amount'] ??
+    final rawPrice =
+        thread['initial_offered_amount'] ??
         thread['buyer_offered_amount'] ??
         thread['offered_amount'] ??
         '-';
     final priceUnit = (thread['price_unit'] ?? thread['amount_unit'] ?? 'TON')
         .toString()
         .toUpperCase();
-    final rawQuantity = thread['buyer_required_quantity'] ??
+    final rawQuantity =
+        thread['buyer_required_quantity'] ??
         thread['initial_required_quantity'] ??
         thread['initial_quantity'] ??
         thread['requested_quantity'] ??
         thread['required_quantity'] ??
         '-';
-    final qtyUnit = (thread['quantity_unit'] ?? 'QTL')
-        .toString()
-        .toUpperCase();
+    final qtyUnit = (thread['quantity_unit'] ?? 'QTL').toString().toUpperCase();
     final timestamp = _formatNegotiationDateTime(
       thread['created_at'] ??
-      thread['interest_created_at'] ??
-      thread['submitted_at'] ??
-      thread['timestamp'] ??
-      (_messages.isNotEmpty ? _messages.first['created_at'] : null),
+          thread['interest_created_at'] ??
+          thread['submitted_at'] ??
+          thread['timestamp'] ??
+          (_messages.isNotEmpty ? _messages.first['created_at'] : null),
     );
 
-    final cleanPrice = rawPrice.toString().replaceAll('₹', '').replaceAll(',', '').trim();
+    final cleanPrice = rawPrice
+        .toString()
+        .replaceAll('₹', '')
+        .replaceAll(',', '')
+        .trim();
     final numPrice = double.tryParse(cleanPrice);
     final displayPrice = numPrice != null
         ? NumberFormat('#,##0.00', 'en_IN').format(numPrice)
@@ -656,8 +762,12 @@ class _OfferInterestNegotiationChatViewState
     final numQty = double.tryParse(cleanQty);
     final displayQty = numQty != null
         ? (cleanQty.contains('.')
-            ? numQty.toStringAsFixed(cleanQty.split('.')[1].length < 3 ? 3 : cleanQty.split('.')[1].length)
-            : numQty.toStringAsFixed(3))
+              ? numQty.toStringAsFixed(
+                  cleanQty.split('.')[1].length < 3
+                      ? 3
+                      : cleanQty.split('.')[1].length,
+                )
+              : numQty.toStringAsFixed(3))
         : rawQuantity;
 
     return Align(
@@ -693,7 +803,9 @@ class _OfferInterestNegotiationChatViewState
             ),
             const SizedBox(height: 6),
             Text(
-              displayPrice == '-' ? "Price: ₹-" : "Price: ₹$displayPrice/$priceUnit",
+              displayPrice == '-'
+                  ? "Price: ₹-"
+                  : "Price: ₹$displayPrice/$priceUnit",
               style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
@@ -702,7 +814,9 @@ class _OfferInterestNegotiationChatViewState
             ),
             const SizedBox(height: 2),
             Text(
-              displayQty == '-' ? "Requested: -" : "Requested: $displayQty $qtyUnit",
+              displayQty == '-'
+                  ? "Requested: -"
+                  : "Requested: $displayQty $qtyUnit",
               style: GoogleFonts.inter(
                 fontSize: 12,
                 color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -735,7 +849,10 @@ class _OfferInterestNegotiationChatViewState
   }
 
   String _formatNegotiationDateTime(dynamic raw) {
-    if (raw == null || raw.toString().trim().isEmpty || raw.toString().trim() == '-') return '';
+    if (raw == null ||
+        raw.toString().trim().isEmpty ||
+        raw.toString().trim() == '-')
+      return '';
     final trimmed = raw.toString().trim();
 
     DateTime? dt = DateTime.tryParse(trimmed);
@@ -812,23 +929,25 @@ class _OfferInterestNegotiationChatViewState
       final msg = _messages[i];
       String text(dynamic value) =>
           value == null || value.toString().trim().isEmpty || value == 'null'
-              ? ''
-              : value.toString().trim();
+          ? ''
+          : value.toString().trim();
 
       final price = text(msg['counter_price']);
       final quantity = text(msg['counter_quantity']);
       final bags = text(msg['counter_bag_count']);
+      final delivery = text(msg['counter_delivery_from']);
       final remark = text(msg['remark'] ?? msg['comment'] ?? msg['message']);
       final action = text(msg['action']).replaceAll('_', ' ');
       final status = text(msg['to_status']).replaceAll('_', ' ');
-      final role = (msg['actor_role'] ?? msg['sender_role'])
-              ?.toString()
-              .toLowerCase() ??
+      final role =
+          (msg['actor_role'] ?? msg['sender_role'])?.toString().toLowerCase() ??
           '';
 
-      final isProposal = price.isNotEmpty ||
+      final isProposal =
+          price.isNotEmpty ||
           quantity.isNotEmpty ||
           bags.isNotEmpty ||
+          delivery.isNotEmpty ||
           (remark.isNotEmpty && !remark.toLowerCase().startsWith('status'));
 
       if (isProposal) {
@@ -836,9 +955,11 @@ class _OfferInterestNegotiationChatViewState
         widgets.add(_bubble(context, msg));
       } else {
         // Pure status event or notification log
-        final timeRaw = text(msg['timestamp'] != null && msg['timestamp'].toString().isNotEmpty
-            ? msg['timestamp']
-            : msg['created_at']);
+        final timeRaw = text(
+          msg['timestamp'] != null && msg['timestamp'].toString().isNotEmpty
+              ? msg['timestamp']
+              : msg['created_at'],
+        );
         final statusDesc = status.isNotEmpty ? status : action;
         final currentKey = "${statusDesc.toLowerCase()}_$timeRaw";
 
@@ -848,13 +969,15 @@ class _OfferInterestNegotiationChatViewState
         }
         lastStatusKey = currentKey;
 
-        widgets.add(_statusEventBanner(
-          context,
-          role: role,
-          status: status,
-          action: action,
-          time: timeRaw,
-        ));
+        widgets.add(
+          _statusEventBanner(
+            context,
+            role: role,
+            status: status,
+            action: action,
+            time: timeRaw,
+          ),
+        );
       }
     }
 
@@ -977,7 +1100,9 @@ class _OfferInterestNegotiationChatViewState
     if (bags == null || bags <= 0) return '';
     final bagsText = NumberFormat('#,##0', 'en_IN').format(bags);
     if (packing == null || packing <= 0) return 'Bags: $bagsText';
-    final kg = packing == packing.roundToDouble() ? packing.toStringAsFixed(0) : packing.toString();
+    final kg = packing == packing.roundToDouble()
+        ? packing.toStringAsFixed(0)
+        : packing.toString();
     return 'Bags: $bagsText × $kg kg';
   }
 
@@ -1000,7 +1125,9 @@ class _OfferInterestNegotiationChatViewState
     final quantity = text(message['counter_quantity']);
     final bags = text(message['counter_bag_count']);
     final packing = text(message['counter_packing_weight_kg']);
-    final remark = text(message['remark'] ?? message['comment'] ?? message['message']);
+    final remark = text(
+      message['remark'] ?? message['comment'] ?? message['message'],
+    );
     final action = text(message['action']).replaceAll('_', ' ');
     final status = text(message['to_status']).replaceAll('_', ' ');
     final body = <String>[
@@ -1008,8 +1135,11 @@ class _OfferInterestNegotiationChatViewState
       if (quantity.isNotEmpty)
         'Quantity: $quantity ${message['quantity_unit'] ?? ''}',
       if (bags.isNotEmpty) 'Bags: $bags × $packing kg',
+      if (text(message['counter_delivery_from']).isNotEmpty)
+        'Delivery: ${DeliveryPeriodPicker.periodText(text(message['counter_delivery_from']), text(message['counter_delivery_to']))}',
       if (remark.isNotEmpty) remark,
-      if (status.isNotEmpty && (price.isNotEmpty || quantity.isNotEmpty)) 'Status: $status',
+      if (status.isNotEmpty && (price.isNotEmpty || quantity.isNotEmpty))
+        'Status: $status',
     ].join('\n');
     return Align(
       alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
@@ -1190,7 +1320,9 @@ class _OfferInterestNegotiationChatViewState
           ),
         ),
         child: Text(
-          (message ?? '').isNotEmpty ? message! : 'Waiting for the other party to respond.',
+          (message ?? '').isNotEmpty
+              ? message!
+              : 'Waiting for the other party to respond.',
           textAlign: TextAlign.center,
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
@@ -1209,50 +1341,37 @@ class _OfferInterestNegotiationChatViewState
       required String label,
       String? hint,
       String? suffixText,
-    }) =>
-        InputDecoration(
-          labelText: label,
-          hintText: hint ?? 'Optional',
-          suffixText: suffixText,
-          counterText: '',
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 12,
-          ),
-          filled: true,
-          fillColor: Theme.of(context).cardColor,
-          labelStyle: GoogleFonts.inter(
-            fontSize: 12,
-            color: Colors.grey.shade600,
-          ),
-          hintStyle: GoogleFonts.inter(
-            fontSize: 12,
-            color: Colors.grey.shade400,
-          ),
-          suffixStyle: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey.shade700,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Theme.of(context).dividerColor),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(
-              color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
-            ),
-          ),
-          focusedBorder: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(10)),
-            borderSide: BorderSide(
-              color: Color(0xFFF58220),
-              width: 1.5,
-            ),
-          ),
-        );
+    }) => InputDecoration(
+      labelText: label,
+      hintText: hint ?? 'Optional',
+      suffixText: suffixText,
+      counterText: '',
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      filled: true,
+      fillColor: Theme.of(context).cardColor,
+      labelStyle: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade600),
+      hintStyle: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade400),
+      suffixStyle: GoogleFonts.inter(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        color: Colors.grey.shade700,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: Theme.of(context).dividerColor),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
+        ),
+      ),
+      focusedBorder: const OutlineInputBorder(
+        borderRadius: BorderRadius.all(Radius.circular(10)),
+        borderSide: BorderSide(color: Color(0xFFF58220), width: 1.5),
+      ),
+    );
 
     return SafeArea(
       top: false,
@@ -1317,7 +1436,9 @@ class _OfferInterestNegotiationChatViewState
                     onPressed: () =>
                         setState(() => _showPacking = !_showPacking),
                     icon: Icon(
-                      _showPacking ? Icons.inventory_2 : Icons.inventory_2_outlined,
+                      _showPacking
+                          ? Icons.inventory_2
+                          : Icons.inventory_2_outlined,
                       color: const Color(0xFFF58220),
                     ),
                     tooltip: 'Bags & packing',
@@ -1353,6 +1474,16 @@ class _OfferInterestNegotiationChatViewState
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            DeliveryPeriodPicker(
+              label: 'Counter Delivery Period (optional)',
+              from: _counterDeliveryFrom,
+              to: _counterDeliveryTo,
+              onChanged: (from, to) => setState(() {
+                _counterDeliveryFrom = from;
+                _counterDeliveryTo = to;
+              }),
+            ),
             Padding(
               padding: const EdgeInsets.only(top: 8, bottom: 10),
               child: Row(
@@ -1367,7 +1498,7 @@ class _OfferInterestNegotiationChatViewState
                   Expanded(
                     child: Text(
                       widget.isBuyer
-                          ? "Bags are calculated automatically from the seller's packing configuration. Free text messages are disabled."
+                          ? "Bags are calculated automatically from the seller's packing configuration. You can ask for up to twice the available quantity${(_thread?['max_quantity'] ?? '').toString().isNotEmpty ? ' (${_thread!['max_quantity']} $quantityUnit)' : ''}. Free text messages are disabled."
                           : "Seller packing changes require both Bags and Packing Weight; quantity is calculated automatically.",
                       style: GoogleFonts.inter(
                         fontSize: 11,
@@ -1390,7 +1521,9 @@ class _OfferInterestNegotiationChatViewState
                         height: 18,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       )
                     : const Icon(Icons.send_rounded, size: 18),
@@ -1405,7 +1538,10 @@ class _OfferInterestNegotiationChatViewState
                   backgroundColor: const Color(0xFFF58220),
                   foregroundColor: Colors.white,
                   elevation: 1,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),

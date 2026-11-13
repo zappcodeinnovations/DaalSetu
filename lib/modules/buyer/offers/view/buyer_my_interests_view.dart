@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,6 +10,7 @@ import '../model/buyer_offer_model.dart';
 import 'buyer_offer_details_view.dart';
 import 'buyer_negotiation_view.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/delivery_period_picker.dart';
 
 class BuyerMyInterestsView extends StatelessWidget {
   final bool showAppBar;
@@ -89,9 +91,6 @@ class BuyerMyInterestsView extends StatelessWidget {
             .replaceAll(RegExp(r'[^\d.]'), '')
             .trim();
 
-    String formatDisplay(DateTime dt) =>
-        "${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year}";
-
     final loadingFromText = (offer.pickupFrom?.isNotEmpty == true)
         ? offer.pickupFrom!
         : (offer.location?.isNotEmpty == true
@@ -109,9 +108,14 @@ class BuyerMyInterestsView extends StatelessWidget {
     final locationCtrl = TextEditingController(text: initialLoadingTo);
     final remarkCtrl = TextEditingController();
 
-    DateTime? selectedDate;
-    String? formattedDate;
-    String? displayDateText;
+    DateTime? deliveryFrom = DeliveryPeriodPicker.parseUpcoming(
+      offer.myDeliveryFrom ?? offer.deliveryFrom,
+    );
+    DateTime? deliveryTo = DeliveryPeriodPicker.parseUpcoming(
+          offer.myDeliveryTo ?? offer.myDeliveryFrom ?? offer.deliveryTo,
+        ) ??
+        deliveryFrom;
+    final offerPeriodText = DeliveryPeriodPicker.periodText(offer.deliveryFrom, offer.deliveryTo);
 
     Get.dialog(
       Dialog(
@@ -270,64 +274,17 @@ class BuyerMyInterestsView extends StatelessWidget {
                             ),
                             const SizedBox(height: 14),
 
-                            // Delivery Date
-                            Text(
-                              "Delivery Date *",
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            InkWell(
-                              onTap: () async {
-                                final picked = await showDatePicker(
-                                  context: dialogContext,
-                                  initialDate: selectedDate ?? DateTime.now(),
-                                  firstDate: DateTime.now(),
-                                  lastDate: DateTime.now().add(
-                                    const Duration(days: 365),
-                                  ),
-                                );
-                                if (picked != null) {
-                                  setDialogState(() {
-                                    selectedDate = picked;
-                                    formattedDate =
-                                        "${picked.day.toString().padLeft(2, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.year.toString().padLeft(4, '0')}";
-                                    displayDateText = formatDisplay(picked);
-                                  });
-                                }
-                              },
-                              borderRadius: BorderRadius.circular(10),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: theme.cardColor,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: theme.dividerColor.withValues(alpha: 0.5),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      displayDateText ?? "dd-mm-yyyy",
-                                      style: GoogleFonts.inter(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                        color: displayDateText != null
-                                            ? null
-                                            : Colors.grey,
-                                      ),
-                                    ),
-                                    const Icon(IconlyLight.calendar, size: 18),
-                                  ],
-                                ),
-                              ),
+// Delivery Period
+                            DeliveryPeriodPicker(
+                              from: deliveryFrom,
+                              to: deliveryTo,
+                              hint: offerPeriodText.isEmpty
+                                  ? null
+                                  : 'Seller delivery period: $offerPeriodText',
+                              onChanged: (from, to) => setDialogState(() {
+                                deliveryFrom = from;
+                                deliveryTo = to;
+                              }),
                             ),
                             const SizedBox(height: 14),
 
@@ -375,11 +332,10 @@ class BuyerMyInterestsView extends StatelessWidget {
                                       );
                                       return;
                                     }
-                                    if (formattedDate == null ||
-                                        formattedDate!.isEmpty) {
+                                    if (deliveryFrom == null || deliveryTo == null) {
                                       AppSnackbar.showWarning(
                                         title: "Required",
-                                        message: "Please select delivery date",
+                                        message: "Please select the delivery period",
                                       );
                                       return;
                                     }
@@ -398,7 +354,8 @@ class BuyerMyInterestsView extends StatelessWidget {
                                       priceCtrl.text.trim(),
                                       qtyCtrl.text.trim(),
                                       remarkCtrl.text.trim(),
-                                      deliveryDate: formattedDate,
+                                      deliveryDate: DeliveryPeriodPicker.apiDate(deliveryFrom!),
+                                      deliveryDateTo: DeliveryPeriodPicker.apiDate(deliveryTo!),
                                       loadingTo: locationCtrl.text.trim(),
                                       condition: remarkCtrl.text.trim(),
                                       interestId: intId,
@@ -434,7 +391,13 @@ class BuyerMyInterestsView extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PageAutoRefresh(
+    onRefresh: () => Get.find<BuyerOffersController>(tag: 'interests').fetchOffers(silent: true),
+    tabIndex: showAppBar ? null : 0,
+    child: _buildPageContent(context),
+  );
+
+  Widget _buildPageContent(BuildContext context) {
     final theme = Theme.of(context);
     final controller = Get.put(
       BuyerOffersController(offerType: 'interests'),
@@ -506,7 +469,7 @@ class BuyerMyInterestsView extends StatelessWidget {
         return RefreshIndicator(
           onRefresh: () => controller.fetchOffers(),
           child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 200),
             itemCount: offers.length,
             separatorBuilder: (_, __) => const SizedBox(height: 14),
             itemBuilder: (context, index) {

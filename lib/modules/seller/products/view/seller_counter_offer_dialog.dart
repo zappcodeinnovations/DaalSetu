@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../controller/seller_negotiation_controller.dart';
 import '../model/offer_interest_model.dart';
 import '../../common/seller_ui.dart';
+import 'package:daalsetu/widgets/delivery_period_picker.dart';
 
 class SellerCounterOfferDialog {
   static void show(
@@ -22,6 +23,9 @@ class SellerCounterOfferDialog {
     final weightCtrl = TextEditingController(
       text: interest.counterPackingWeightKg ?? '',
     );
+    // Optional new Delivery Period proposal.
+    DateTime? deliveryFrom;
+    DateTime? deliveryTo;
 
     Get.defaultDialog(
       title: "Send Counter Offer",
@@ -75,6 +79,18 @@ class SellerCounterOfferDialog {
                   counterText: '',
                 ),
               ),
+              const SizedBox(height: 12),
+              StatefulBuilder(
+                builder: (context, setState) => DeliveryPeriodPicker(
+                  label: "Counter Delivery Period (optional)",
+                  from: deliveryFrom,
+                  to: deliveryTo,
+                  onChanged: (from, to) => setState(() {
+                    deliveryFrom = from;
+                    deliveryTo = to;
+                  }),
+                ),
+              ),
             ],
           ),
         ),
@@ -88,9 +104,9 @@ class SellerCounterOfferDialog {
         final bagText = bagCtrl.text.trim();
         final weightText = weightCtrl.text.trim();
 
-        if (priceText.isEmpty && qtyText.isEmpty && bagText.isEmpty) {
+        if (priceText.isEmpty && qtyText.isEmpty && bagText.isEmpty && deliveryFrom == null) {
           SellerUi.error(
-            "Please enter a Counter Price, Quantity, or Packing details.",
+            "Please enter a Counter Price, Quantity, Packing details or Delivery Period.",
           );
           return;
         }
@@ -110,6 +126,8 @@ class SellerCounterOfferDialog {
           counterQuantity: qtyText,
           counterBagCount: int.tryParse(bagText),
           counterPackingWeightKg: weightText.isNotEmpty ? weightText : null,
+          counterDeliveryFrom: deliveryFrom == null ? null : DeliveryPeriodPicker.apiDate(deliveryFrom!),
+          counterDeliveryTo: deliveryFrom == null ? null : DeliveryPeriodPicker.apiDate(deliveryTo ?? deliveryFrom!),
         );
       },
     );

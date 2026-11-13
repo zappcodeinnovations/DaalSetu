@@ -8,6 +8,7 @@ import '../model/admin_challan_model.dart';
 import '../service/admin_challan_pdf_service.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/widgets/dispatch_bills_section.dart';
 
 class AdminChallanDetailsView extends StatelessWidget {
   const AdminChallanDetailsView({super.key});
@@ -113,6 +114,12 @@ class AdminChallanDetailsView extends StatelessWidget {
                         // ── Transport & Driver Info ────────────────────────
                         _buildTransportCard(context, challan, isDark),
                         const SizedBox(height: 16),
+
+                        // ── Dispatch Bills ─────────────────────────────────
+                        DispatchBillsSection(
+                          key: ValueKey('bills-${controller.challanId.value}-${challan.status}'),
+                          challanId: controller.challanId.value,
+                        ),
 
                         // ── Remarks / Instructions ────────────────────────
                         if (challan.narration != null && challan.narration!.isNotEmpty)

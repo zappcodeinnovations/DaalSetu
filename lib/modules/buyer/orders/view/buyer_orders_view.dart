@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
@@ -17,6 +18,7 @@ class BuyerOrdersView extends StatefulWidget {
 class _BuyerOrdersViewState extends State<BuyerOrdersView> {
   bool isLoading = true;
   List<Map<String, dynamic>> orders = [];
+  bool _fetchingOrders = false;
 
   @override
   void initState() {
@@ -24,9 +26,11 @@ class _BuyerOrdersViewState extends State<BuyerOrdersView> {
     _fetchOrders();
   }
 
-  Future<void> _fetchOrders() async {
+  Future<void> _fetchOrders({bool silent = false}) async {
+    if (_fetchingOrders || !mounted) return;
+    _fetchingOrders = true;
     try {
-      setState(() => isLoading = true);
+      if (!silent) setState(() => isLoading = true);
       List<Map<String, dynamic>> fetched = [];
 
       // 1. First attempt: Load recent orders from Buyer Dashboard API
@@ -37,13 +41,14 @@ class _BuyerOrdersViewState extends State<BuyerOrdersView> {
           fetched = List<Map<String, dynamic>>.from(actual['recent_orders']);
         }
       } catch (e) {
+        if (silent) rethrow;
         print("Dashboard orders fetch notice: $e");
       }
 
       // 2. Second attempt if empty: Check contracts
       if (fetched.isEmpty) {
         try {
-          final contracts = await SellerServices.getSellerContracts();
+          final contracts = await SellerServices.getSellerContracts(silent: silent);
           fetched = contracts.map((c) {
             if (c is Map<String, dynamic>) {
               return {
@@ -58,21 +63,30 @@ class _BuyerOrdersViewState extends State<BuyerOrdersView> {
             return <String, dynamic>{};
           }).where((e) => e.isNotEmpty).toList();
         } catch (e) {
+          if (silent) rethrow;
           print("Contracts fetch notice: $e");
         }
       }
 
+      if (!mounted) return;
       setState(() {
         orders = fetched;
         isLoading = false;
       });
     } catch (e) {
-      setState(() => isLoading = false);
+      if (mounted && !silent) setState(() => isLoading = false);
+    } finally {
+      _fetchingOrders = false;
     }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PageAutoRefresh(
+    onRefresh: () => _fetchOrders(silent: true),
+    child: _buildPageContent(context),
+  );
+
+  Widget _buildPageContent(BuildContext context) {
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
 
@@ -158,11 +172,16 @@ class _BuyerOrdersViewState extends State<BuyerOrdersView> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    "Order ID: ${order['id'] ?? 'N/A'}",
+                                    order['seller_name']?.toString() ??
+                                        order['brand']?.toString() ??
+                                        order['contract_number']?.toString() ??
+                                        'Confirmed Order',
                                     style: GoogleFonts.inter(
                                       fontSize: 11,
                                       color: Colors.grey,
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                   const SizedBox(height: 6),
                                   Row(

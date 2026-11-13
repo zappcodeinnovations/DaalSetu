@@ -1,3 +1,5 @@
+import 'package:daalsetu/services/dispatch_bill_services.dart';
+
 /// Contract open for freight bidding (GET /api/transport-bids/?view=open, web "Active Shipment Offer's").
 class ShipmentOfferModel {
   final int id;
@@ -16,6 +18,15 @@ class ShipmentOfferModel {
   final String? myBidStatus;
   final int? myBidPosition;
   final int activeBidCount;
+  /// Admin's freight price (MoM 16): accept it or negotiate. Null = open bidding.
+  final String? maxBid;
+  final int? myBidId;
+  final String? counterAmount;
+  final String counterNote;
+  final String myBidTypeLabel;
+
+  bool get hasAdminPrice => maxBid != null;
+  bool get hasCounterOffer => counterAmount != null;
 
   ShipmentOfferModel({
     required this.id,
@@ -34,6 +45,11 @@ class ShipmentOfferModel {
     this.myBidStatus,
     this.myBidPosition,
     required this.activeBidCount,
+    this.maxBid,
+    this.myBidId,
+    this.counterAmount,
+    this.counterNote = '',
+    this.myBidTypeLabel = '',
   });
 
   factory ShipmentOfferModel.fromJson(Map<String, dynamic> json) {
@@ -41,6 +57,7 @@ class ShipmentOfferModel {
       final value = json[key];
       return value == null || '$value'.isEmpty ? null : '$value';
     }
+    final negotiation = json['my_bid_negotiation'] is Map ? json['my_bid_negotiation'] as Map : const {};
 
     return ShipmentOfferModel(
       id: json['id'] is int ? json['id'] : int.tryParse('${json['id']}') ?? 0,
@@ -59,6 +76,11 @@ class ShipmentOfferModel {
       myBidStatus: text('my_bid_status'),
       myBidPosition: json['my_bid_position'] is int ? json['my_bid_position'] : null,
       activeBidCount: json['active_bid_count'] is int ? json['active_bid_count'] : 0,
+      maxBid: text('max_bid'),
+      myBidId: json['my_bid_id'] is int ? json['my_bid_id'] : null,
+      counterAmount: negotiation['admin_counter_amount'] == null ? null : '${negotiation['admin_counter_amount']}',
+      counterNote: '${negotiation['admin_counter_note'] ?? ''}',
+      myBidTypeLabel: '${negotiation['bid_type_label'] ?? ''}',
     );
   }
 }
@@ -85,6 +107,14 @@ class MyBidModel {
   final bool canAssignDriver;
   final Map<String, dynamic> contractData;
 
+  /// Bills the seller attached at dispatch (accepted bids only, MoM point 23).
+  final List<DispatchBill> dispatchBills;
+
+  bool get isPending {
+    final s = status.toLowerCase().trim();
+    return s == 'pending' || s == 'active' || s == 'reserved';
+  }
+
   MyBidModel({
     required this.bidId,
     required this.status,
@@ -105,6 +135,7 @@ class MyBidModel {
     required this.assignmentLocked,
     required this.canAssignDriver,
     this.contractData = const {},
+    this.dispatchBills = const [],
   });
 
   factory MyBidModel.fromJson(Map<String, dynamic> json) {
@@ -131,6 +162,7 @@ class MyBidModel {
       canAssignDriver: json['can_assign_driver'] == true ||
           ('${json['status']}'.toLowerCase() == 'accepted' && json['assignment_locked'] != true),
       contractData: contract,
+      dispatchBills: DispatchBill.listFrom(json['dispatch_bills']),
     );
   }
 }
@@ -139,5 +171,17 @@ class FleetOption {
   final int id;
   final String label;
   final int? linkedVehicleId;
-  const FleetOption(this.id, this.label, {this.linkedVehicleId});
+  /// Driver phone + details, used by the phone search (MoM 22).
+  final String phone;
+  final Map<String, String> details;
+  const FleetOption(this.id, this.label, {this.linkedVehicleId, this.phone = '', this.details = const {}});
+
+  /// Drivers whose phone number contains the typed digits (MoM 22). Spaces,
+  /// "+91" and dashes are ignored; fewer than 4 digits match nothing.
+  static List<FleetOption> matchByPhone(Iterable<FleetOption> drivers, String query) {
+    String digits(String value) => value.replaceAll(RegExp(r'\D'), '');
+    final wanted = digits(query);
+    if (wanted.length < 4) return const [];
+    return drivers.where((driver) => digits(driver.phone).contains(wanted)).toList();
+  }
 }

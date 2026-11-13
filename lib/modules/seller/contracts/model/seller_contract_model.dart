@@ -3,6 +3,7 @@ class SellerContractModel {
   final String? contractId;
   final String? buyerCompany;
   final String? sellerCompany;
+  final String? productTitle;
   final String? categoryName;
   final String? brandName;
   final String? dealAmount;
@@ -15,6 +16,7 @@ class SellerContractModel {
     this.contractId,
     this.buyerCompany,
     this.sellerCompany,
+    this.productTitle,
     this.categoryName,
     this.brandName,
     this.dealAmount,
@@ -24,6 +26,7 @@ class SellerContractModel {
   });
 
   String? get contractNumber => contractId ?? id?.toString();
+  String? get offerName => productTitle;
   String? get commodity => categoryName;
   String? get quantity => dealQuantity;
   String? get unit => 'Qtl';
@@ -43,8 +46,9 @@ class SellerContractModel {
       contractId: text('contract_id') ?? text('id'),
       buyerCompany: text('buyer_company') ?? nested('buyer', 'company_name') ?? text('display_buyer_id') ?? text('buyer_name'),
       sellerCompany: text('seller_company') ?? nested('seller', 'company_name') ?? text('display_seller_id') ?? text('seller_name'),
-      categoryName: text('category_name') ?? text('product_category_name') ?? nested('category', 'name') ?? text('product_title') ?? text('commodity'),
-      brandName: text('brand_name') ?? nested('brand', 'name'),
+      productTitle: text('product_title') ?? text('product_name') ?? text('offer_name') ?? text('title'),
+      categoryName: text('product_category_name') ?? text('category_name') ?? nested('category', 'name') ?? text('commodity'),
+      brandName: text('product_brand_name') ?? text('brand_name') ?? nested('brand', 'name'),
       dealAmount: text('deal_amount') ?? text('amount') ?? text('total_price'),
       dealQuantity: text('deal_quantity') ?? text('quantity'),
       status: text('status') ?? 'active',
@@ -58,6 +62,7 @@ class SellerContractModel {
       'contract_id': contractId,
       'buyer_company': buyerCompany,
       'seller_company': sellerCompany,
+      'product_title': productTitle,
       'category_name': categoryName,
       'brand_name': brandName,
       'deal_amount': dealAmount,

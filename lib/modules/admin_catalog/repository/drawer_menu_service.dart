@@ -136,9 +136,9 @@ class DrawerMenuService {
             route: AppRoutes.adminModule('consignments'),
           ),
           DrawerMenuItem(
-            key: 'contract_history',
-            title: 'Contract History',
-            icon: Icons.history_rounded,
+            key: 'my_analytics',
+            title: 'My Analytics',
+            icon: Icons.insights_outlined,
             route: AppRoutes.adminContractHistory,
           ),
         ],

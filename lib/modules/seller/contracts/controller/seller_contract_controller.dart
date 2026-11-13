@@ -6,6 +6,7 @@ import '../../../../utils/app_snackbar.dart';
 class SellerContractController extends GetxController {
   var isLoading = false.obs;
   var contractsList = <SellerContractModel>[].obs;
+  bool _fetchingContracts = false;
   List<SellerContractModel> get contracts => contractsList;
 
   @override
@@ -14,15 +15,19 @@ class SellerContractController extends GetxController {
     fetchContracts();
   }
 
-  Future<void> fetchContracts() async {
+  Future<void> fetchContracts({bool silent = false}) async {
+    if (_fetchingContracts || isClosed) return;
+    _fetchingContracts = true;
     try {
-      isLoading.value = true;
-      final data = await SellerServices.getSellerContracts();
+      if (!silent) isLoading.value = true;
+      final data = await SellerServices.getSellerContracts(silent: silent);
+      if (isClosed) return;
       contractsList.value = data.map((e) => SellerContractModel.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e) {
-      AppSnackbar.snackbar("Error", e.toString(), snackPosition: SnackPosition.BOTTOM);
+      if (!silent && !isClosed) AppSnackbar.snackbar("Error", e.toString(), snackPosition: SnackPosition.BOTTOM);
     } finally {
-      isLoading.value = false;
+      _fetchingContracts = false;
+      if (!isClosed && !silent) isLoading.value = false;
     }
   }
 }

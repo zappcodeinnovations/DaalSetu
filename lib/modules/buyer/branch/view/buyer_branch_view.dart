@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -14,36 +15,24 @@ class BuyerBranchView extends StatefulWidget {
   State<BuyerBranchView> createState() => _BuyerBranchViewState();
 }
 
-class _BuyerBranchViewState extends State<BuyerBranchView> with WidgetsBindingObserver {
+class _BuyerBranchViewState extends State<BuyerBranchView> {
   late final BuyerBranchController controller;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     controller = Get.isRegistered<BuyerBranchController>()
         ? Get.find<BuyerBranchController>()
         : Get.put(BuyerBranchController());
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.fetchBranches(silent: true);
-    });
   }
 
   @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
+  Widget build(BuildContext context) => PageAutoRefresh(
+    onRefresh: () => controller.fetchBranches(silent: true),
+    child: _buildPageContent(context),
+  );
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      controller.fetchBranches(silent: true);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildPageContent(BuildContext context) {
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
 
@@ -487,7 +476,7 @@ class _BuyerBranchViewState extends State<BuyerBranchView> with WidgetsBindingOb
                               const SizedBox(width: 8),
                               Column(
                                 mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   OutlinedButton(
                                     onPressed: () => _showMakePrimaryDialog(

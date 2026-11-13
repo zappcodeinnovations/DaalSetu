@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:daalsetu/modules/products/model/offer_interest_model.dart';
@@ -35,6 +36,9 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
   bool isLoading = true;
   String? error;
   List<OfferInterestModel> interests = [];
+  final Map<int, String> _completedDecisions = {};
+  bool _loadingInterests = false;
+  int _actionRevision = 0;
   String _role = '';
 
   String? _loadedTitle;
@@ -71,7 +75,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
         !widget.offerTitle.toLowerCase().contains('confirmed')) {
       return widget.offerTitle;
     }
-    return _loadedTitle ?? 'Offer #${widget.offerId}';
+    return _loadedTitle ?? 'Offer';
   }
 
   String get displayStock {
@@ -108,15 +112,20 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
     });
   }
 
-  Future<void> _loadInterests() async {
-    setState(() {
-      isLoading = true;
-      error = null;
-    });
+  Future<void> _loadInterests({bool silent = false}) async {
+    if (!mounted || _loadingInterests) return;
+    _loadingInterests = true;
+    final revision = _actionRevision;
+    if (!silent)
+      setState(() {
+        isLoading = true;
+        error = null;
+      });
 
     try {
       final res = await ProductService.getOfferInterests(
         int.parse(widget.offerId),
+        silent: silent,
       );
 
       // Auto-fetch extra offer specifications if not passed directly
@@ -144,7 +153,8 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
               if (stockNum != null && stockNum > 0) {
                 _loadedStock = '${stockNum.toStringAsFixed(3)} QTL';
               } else {
-                final bags = map['remaining_bag_count'] ??
+                final bags =
+                    map['remaining_bag_count'] ??
                     map['original_bag_count'] ??
                     map['bag_count'];
                 final packing = map['packing_weight_kg'] ?? map['packing'];
@@ -171,8 +181,12 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                   map['deal_expiry_datetime']?.toString() ??
                   map['loading_to']?.toString();
               if (map['is_expired'] == true ||
-                  (map['status']?.toString().toLowerCase().contains('expire') ?? false) ||
-                  (map['deal_status']?.toString().toLowerCase().contains('expire') ?? false)) {
+                  (map['status']?.toString().toLowerCase().contains('expire') ??
+                      false) ||
+                  (map['deal_status']?.toString().toLowerCase().contains(
+                        'expire',
+                      ) ??
+                      false)) {
                 _loadedIsExpired = true;
               }
             }
@@ -182,20 +196,44 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
         }
       }
 
-      if (mounted) {
+      if (mounted && revision == _actionRevision) {
         setState(() {
-          interests = res;
+          interests = res.map((interest) {
+            final completed = _completedDecisions[interest.id];
+            return completed == null
+                ? interest
+                : interest.withStatus(completed);
+          }).toList();
           isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          error = e.toString();
+          if (!silent) error = e.toString();
           isLoading = false;
         });
       }
+    } finally {
+      _loadingInterests = false;
+      if (mounted && revision != _actionRevision)
+        setState(() => isLoading = false);
     }
+  }
+
+  void _recordDecision(OfferInterestModel interest, String status) {
+    if (!mounted) return;
+    setState(() {
+      _actionRevision++;
+      if (OfferInterestModel.isFinalStatus(status)) {
+        _completedDecisions[interest.id] = status;
+      }
+      interests = interests
+          .map(
+            (item) => item.id == interest.id ? item.withStatus(status) : item,
+          )
+          .toList();
+    });
   }
 
   String _formatDealExpiry(String? raw) {
@@ -270,7 +308,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
   }
 
   void _openNegotiationPage(OfferInterestModel interest) async {
-    final result = await Get.to(
+    await Get.to(
       () => _isAdminRole
           ? NegotiationPage(
               offerId: widget.offerId,
@@ -290,13 +328,14 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
             ),
     );
 
-    // If the negotiation page returns true, a deal was accepted/rejected, so we refresh the interests
-    if (result == true) {
+    // Reload after returning, including decisions made through the shared chat.
+    if (mounted) {
       _loadInterests();
     }
   }
 
   Future<void> _approveDeal(OfferInterestModel interest) async {
+    if (isLoading || !interest.canAcceptForRole(isAdmin: _isAdminRole)) return;
     final status = (interest.status ?? '').trim().toLowerCase();
     late final ApproveDealResult result;
     final adminResult = await showDialog<ApproveDealResult>(
@@ -313,15 +352,21 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
     setState(() => isLoading = true);
     try {
       if (status == 'interested') {
-        await SellerServices.approveBuyerInterest(
+        final response = await SellerServices.approveBuyerInterest(
           int.parse(widget.offerId),
           interest.interestId,
           remark: result.remark,
           subAdminId: result.subAdminId,
         );
+        if (response['success'] != true)
+          throw Exception(response['message'] ?? 'Could not accept interest.');
+        final updated = response['interest'];
+        _recordDecision(interest, updated is Map
+            ? updated['status']?.toString() ?? 'seller_confirmed'
+            : 'seller_confirmed');
         AppSnackbar.snackbar(
           'Accepted',
-          'Interest accepted. Waiting for buyer confirmation.',
+          response['message']?.toString() ?? 'Interest accepted.',
           backgroundColor: Colors.green,
           colorText: Colors.white,
         );
@@ -333,6 +378,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
           superadminRemark: result.remark,
           subAdminId: result.subAdminId,
         );
+        _recordDecision(interest, 'deal_confirmed');
         AppSnackbar.snackbar(
           'Success',
           'Deal approved successfully',
@@ -340,7 +386,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
           colorText: Colors.white,
         );
       }
-      await _loadInterests();
+      await _loadInterests(silent: true);
     } catch (e) {
       if (mounted) setState(() => isLoading = false);
       final message = e.toString().replaceFirst('Exception: ', '');
@@ -354,6 +400,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
   }
 
   Future<void> _rejectDeal(OfferInterestModel interest) async {
+    if (isLoading || !interest.canRejectForRole(isAdmin: _isAdminRole)) return;
     final remarkCtrl = TextEditingController();
     String selectedReason = 'Price too low';
     final reasons = [
@@ -480,11 +527,15 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
         final status = (interest.status ?? '').trim().toLowerCase();
         final remark = '$selectedReason. ${remarkCtrl.text}'.trim();
         if (status == 'interested') {
-          await SellerServices.rejectBuyerInterest(
+          final response = await SellerServices.rejectBuyerInterest(
             int.parse(widget.offerId),
             interest.interestId,
             remark: remark,
           );
+          if (response['success'] != true)
+            throw Exception(
+              response['message'] ?? 'Could not reject interest.',
+            );
         } else {
           await ProductService.confirmOfferDeal(
             productId: int.parse(widget.offerId),
@@ -493,15 +544,16 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
             superadminRemark: remark,
           );
         }
+        _recordDecision(interest, 'rejected');
         AppSnackbar.snackbar(
           'Rejected',
           'Deal rejected successfully',
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
-        await _loadInterests();
+        await _loadInterests(silent: true);
       } catch (e) {
-        setState(() => isLoading = false);
+        if (mounted) setState(() => isLoading = false);
         AppSnackbar.snackbar(
           'Error',
           e.toString(),
@@ -514,6 +566,13 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
 
   @override
   Widget build(BuildContext context) {
+    return PageAutoRefresh(
+      onRefresh: () => _loadInterests(silent: true),
+      child: _buildDialog(context),
+    );
+  }
+
+  Widget _buildDialog(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final dialogBg = isDark ? const Color(0xFF0F172A) : const Color(0xFFFFFDF8);
     final mediaQuery = MediaQuery.of(context);
@@ -560,7 +619,10 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                 if (isExpired)
                   Container(
                     margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFDE8E8),
                       borderRadius: BorderRadius.circular(8),
@@ -809,23 +871,8 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
   // ── Mobile Responsive Interest Card (Zero Overflow Guaranteed) ───────────
   Widget _buildMobileInterestCard(OfferInterestModel interest, bool isDark) {
     final statusStr = interest.statusLabel.toLowerCase();
-    final isFinalState = const {
-      'deal_confirmed',
-      'confirmed',
-      'approved',
-      'completed',
-      'rejected',
-      'cancelled',
-    }.contains(statusStr);
-
-    final canDecide =
-        !isFinalState &&
-        (_isAdminRole ||
-            interest.canSellerAction ||
-            interest.canAdminFinalAction ||
-            statusStr == 'interested' ||
-            statusStr == 'pending' ||
-            statusStr == 'countered');
+    final canAccept = interest.canAcceptForRole(isAdmin: _isAdminRole);
+    final canReject = interest.canRejectForRole(isAdmin: _isAdminRole);
 
     final canNegotiate =
         interest.canOpenNegotiation ||
@@ -977,8 +1024,8 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
             runSpacing: 8,
             children: [
               if (canNegotiate) _buildNegotiateButton(interest),
-              if (canDecide) _buildAcceptButton(interest),
-              if (canDecide) _buildRejectButton(interest),
+              if (canAccept) _buildAcceptButton(interest),
+              if (canReject) _buildRejectButton(interest),
             ],
           ),
         ],
@@ -1178,23 +1225,8 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
 
   Widget _buildTableRow(OfferInterestModel interest, bool isLast, bool isDark) {
     final statusStr = interest.statusLabel.toLowerCase();
-    final isFinalState = const {
-      'deal_confirmed',
-      'confirmed',
-      'approved',
-      'completed',
-      'rejected',
-      'cancelled',
-    }.contains(statusStr);
-
-    final canDecide =
-        !isFinalState &&
-        (_isAdminRole ||
-            interest.canSellerAction ||
-            interest.canAdminFinalAction ||
-            statusStr == 'interested' ||
-            statusStr == 'pending' ||
-            statusStr == 'countered');
+    final canAccept = interest.canAcceptForRole(isAdmin: _isAdminRole);
+    final canReject = interest.canRejectForRole(isAdmin: _isAdminRole);
 
     final canNegotiate =
         interest.canOpenNegotiation ||
@@ -1283,8 +1315,8 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
               runSpacing: 4,
               children: [
                 if (canNegotiate) _buildNegotiateButton(interest),
-                if (canDecide) _buildAcceptButton(interest),
-                if (canDecide) _buildRejectButton(interest),
+                if (canAccept) _buildAcceptButton(interest),
+                if (canReject) _buildRejectButton(interest),
               ],
             ),
           ),

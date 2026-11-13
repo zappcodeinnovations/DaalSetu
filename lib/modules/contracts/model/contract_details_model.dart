@@ -3,6 +3,7 @@ class ContractDetailModel {
   final String contractId;
   final String productTitle;
   final String productCategory;
+  final String productBrand;
   final String buyerName;
   final String buyerUniqueId;
   final String sellerName;
@@ -58,12 +59,23 @@ class ContractDetailModel {
   final String? sellerCompany;
   final String? buyerMobile;
   final String? sellerMobile;
+  final bool hasDeliveryChallan;
+  final int? deliveryChallanId;
+  final String? deliveryChallanNumber;
+
+  /// Agreed Delivery Period, e.g. "12 Nov 2026 - 15 Nov 2026" (MoM point 8).
+  final String deliveryPeriod;
+
+  /// Company printed on the bill, chosen once by each party (MoM point 14):
+  /// party, can_select, selected, current_company_id, options, *_company_name.
+  final Map<String, dynamic> billCompany;
 
   ContractDetailModel({
     required this.id,
     required this.contractId,
     required this.productTitle,
     required this.productCategory,
+    this.productBrand = '',
     required this.buyerName,
     required this.buyerUniqueId,
     required this.sellerName,
@@ -116,6 +128,11 @@ class ContractDetailModel {
     this.sellerCompany,
     this.buyerMobile,
     this.sellerMobile,
+    this.hasDeliveryChallan = false,
+    this.deliveryChallanId,
+    this.deliveryChallanNumber,
+    this.deliveryPeriod = '',
+    this.billCompany = const {},
   });
 
   factory ContractDetailModel.fromJson(Map<String, dynamic> json) {
@@ -178,6 +195,9 @@ class ContractDetailModel {
       productCategory: text('product_category_path').isNotEmpty
           ? text('product_category_path')
           : text('product_category_name'),
+      productBrand: text('product_brand_name').isNotEmpty
+          ? text('product_brand_name')
+          : text('brand_name'),
       buyerName: text('buyer_name'),
       buyerUniqueId: text('buyer_unique_id'),
       sellerName: text('seller_name'),
@@ -230,6 +250,26 @@ class ContractDetailModel {
       sellerCompany: _extractField(json, 'seller', ['company', 'company_name', 'business_name', 'org_name']),
       buyerMobile: _extractField(json, 'buyer', ['mobile', 'phone', 'contact', 'mobile_number', 'phone_number', 'username', 'login_username']),
       sellerMobile: _extractField(json, 'seller', ['mobile', 'phone', 'contact', 'mobile_number', 'phone_number', 'username', 'login_username']),
+      hasDeliveryChallan: json['has_delivery_challan'] == true ||
+          json['has_challan'] == true ||
+          number('delivery_challan_id') != null ||
+          number('challan_id') != null ||
+          (json['delivery_challan'] is Map && json['delivery_challan']['id'] != null) ||
+          text('delivery_challan_number').isNotEmpty ||
+          text('challan_number').isNotEmpty ||
+          (json['delivery_challan'] is Map && (json['delivery_challan']['challan_number']?.toString().isNotEmpty ?? false)),
+      deliveryChallanId: number('delivery_challan_id') ??
+          number('challan_id') ??
+          (json['delivery_challan'] is Map ? int.tryParse(json['delivery_challan']['id']?.toString() ?? '') : null),
+      deliveryChallanNumber: text('delivery_challan_number').isNotEmpty
+          ? text('delivery_challan_number')
+          : (text('challan_number').isNotEmpty
+              ? text('challan_number')
+              : (json['delivery_challan'] is Map ? json['delivery_challan']['challan_number']?.toString() : null)),
+      deliveryPeriod: text('delivery_period').isNotEmpty ? text('delivery_period') : text('delivery_date'),
+      billCompany: json['bill_company'] is Map
+          ? Map<String, dynamic>.from(json['bill_company'] as Map)
+          : const {},
     );
   }
 
@@ -264,6 +304,7 @@ class ContractDetailModel {
       contractId: c.contractId,
       productTitle: c.productTitle,
       productCategory: c.productCategory,
+      productBrand: (c.productBrand ?? '').toString(),
       buyerName: c.buyerName,
       buyerUniqueId: '',
       sellerName: c.sellerName,
@@ -308,6 +349,9 @@ class ContractDetailModel {
       bidAmount: c.bidAmount,
       buyerMobile: c.buyerName,
       sellerMobile: c.sellerName,
+      hasDeliveryChallan: false,
+      deliveryChallanId: null,
+      deliveryChallanNumber: null,
     );
   }
 }

@@ -61,7 +61,14 @@ class TransporterBiddingController extends GetxController {
         requireAuth: true,
       );
       final data = response is Map ? response : const {};
-      myBids.value = (data['results'] as List? ?? []).whereType<Map<String, dynamic>>().map(MyBidModel.fromJson).toList();
+      final parsedBids = (data['results'] as List? ?? []).whereType<Map<String, dynamic>>().map(MyBidModel.fromJson).toList();
+      // Auto-elevate active/pending bids to the top
+      parsedBids.sort((a, b) {
+        if (a.isPending && !b.isPending) return -1;
+        if (!a.isPending && b.isPending) return 1;
+        return 0;
+      });
+      myBids.value = parsedBids;
       vehicles.value = (data['vehicles'] as List? ?? [])
           .whereType<Map>()
           .map((v) => FleetOption(v['id'] as int, "${v['vehicle_number']} (${v['vehicle_status'] ?? ''})"))
@@ -69,7 +76,18 @@ class TransporterBiddingController extends GetxController {
       drivers.value = (data['drivers'] as List? ?? [])
           .whereType<Map>()
           .map((d) => FleetOption(d['id'] as int, "${d['driver_name']} • ${d['phone_number'] ?? ''}",
-              linkedVehicleId: d['assigned_vehicle_id'] is int ? d['assigned_vehicle_id'] as int : null))
+              linkedVehicleId: d['assigned_vehicle_id'] is int ? d['assigned_vehicle_id'] as int : null,
+              phone: '${d['phone_number'] ?? ''}',
+              details: {
+                'Name': '${d['driver_name'] ?? ''}',
+                'Phone': '${d['phone_number'] ?? ''}',
+                'Email': '${d['email'] ?? ''}',
+                'License No.': '${d['license_number'] ?? ''}',
+                'License Expiry': '${d['license_expiry'] ?? ''}',
+                'Experience': d['experience'] == null ? '' : '${d['experience']} years',
+                'Assigned Vehicle': '${d['assigned_vehicle_number'] ?? ''}',
+                'Address': '${d['address'] ?? ''}',
+              }..removeWhere((_, value) => value.trim().isEmpty)))
           .toList();
     } catch (e) {
       myBids.clear();
@@ -84,8 +102,19 @@ class TransporterBiddingController extends GetxController {
     fetchMyBids();
   }
 
-  Future<bool> placeBid(ShipmentOfferModel offer, String amount) async {
-    return _post(ApiUrls.transportBids, {"contract_id": offer.id, "bid_amount": amount});
+  /// [action] (MoM 16): null = plain bid, "negotiate" = own price against the admin price.
+  Future<bool> placeBid(ShipmentOfferModel offer, String amount, {String? action, String note = ''}) async {
+    return _post(ApiUrls.transportBids, {
+      "contract_id": offer.id,
+      "bid_amount": amount,
+      if (action != null) "bid_action": action,
+      if (note.trim().isNotEmpty) "note": note.trim(),
+    });
+  }
+
+  /// Takes the admin's price ("accept_max") or counter offer ("accept_counter").
+  Future<bool> acceptAdminAmount(ShipmentOfferModel offer, String action) async {
+    return _post(ApiUrls.transportBids, {"contract_id": offer.id, "bid_action": action});
   }
 
   Future<bool> assignDriver(MyBidModel bid, int vehicleId, int driverId) async {
@@ -97,7 +126,18 @@ class TransporterBiddingController extends GetxController {
     try {
       final response = await ApiClient.get(endpoint: "${ApiUrls.transportBids}?contract_id=$contractPk", requireAuth: true);
       final list = response is Map ? response['bids'] : null;
-      return (list is List ? list : const []).whereType<Map<String, dynamic>>().toList();
+      final rawList = (list is List ? list : const []).whereType<Map<String, dynamic>>().toList();
+      // Auto-elevate active/pending bids to the top
+      rawList.sort((a, b) {
+        final statusA = '${a['status'] ?? 'pending'}'.toLowerCase();
+        final statusB = '${b['status'] ?? 'pending'}'.toLowerCase();
+        final isPendingA = statusA == 'pending' || statusA == 'active' || statusA == 'reserved';
+        final isPendingB = statusB == 'pending' || statusB == 'active' || statusB == 'reserved';
+        if (isPendingA && !isPendingB) return -1;
+        if (!isPendingA && isPendingB) return 1;
+        return 0;
+      });
+      return rawList;
     } catch (e) {
       _snack("Error", _message(e), Colors.red);
       return [];

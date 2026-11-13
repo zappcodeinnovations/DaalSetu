@@ -143,11 +143,12 @@ class ProductService {
   /// ===============================
   /// GET PRODUCTS
   /// ===============================
-  static Future<List<ProductModel>> getProducts() async {
+  static Future<List<ProductModel>> getProducts({bool silent = false}) async {
     try {
       final dynamic response = await ApiClient.get(
         endpoint: ApiUrls.products,
         requireAuth: true,
+        suppressErrorDialog: silent,
       );
 
       print("📥 PRODUCT API RESPONSE: $response");
@@ -319,12 +320,14 @@ class ProductService {
   /// OFFER INTERESTS & APPROVAL
   /// ===============================
   static Future<List<OfferInterestModel>> getOfferInterests(
-    int productId,
-  ) async {
+    int productId, {
+    bool silent = false,
+  }) async {
     try {
       final response = await ApiClient.get(
         endpoint: "/api/offers/$productId/interests/",
         requireAuth: true,
+        suppressErrorDialog: silent,
       );
 
       List<dynamic> data;
@@ -379,12 +382,15 @@ class ProductService {
       },
     };
     try {
-      await ApiClient.post(
+      final response = await ApiClient.post(
         endpoint: ApiUrls.offerConfirmDeal(productId),
         requireAuth: true,
         body: body,
         suppressErrorDialog: true,
       );
+      if (response['success'] != true) {
+        throw Exception(response['message'] ?? 'Could not complete the deal decision.');
+      }
     } catch (e) {
       print("❌ confirmOfferDeal Error: $e");
       rethrow;
@@ -399,6 +405,8 @@ class ProductService {
     String? counterQuantity,
     String? counterBagCount,
     String? counterPackingWeightKg,
+    String? counterDeliveryFrom,
+    String? counterDeliveryTo,
   }) async {
     final cleanPrice =
         counterPrice.replaceAll('₹', '').replaceAll(',', '').trim();
@@ -424,6 +432,11 @@ class ProductService {
       if (cleanBags.isNotEmpty) "counter_bag_count": cleanBags,
       if (cleanWeight.isNotEmpty)
         "counter_packing_weight_kg": cleanWeight,
+      // A new Delivery Period proposal (yyyy-MM-dd), MoM point 8.
+      if (counterDeliveryFrom != null && counterDeliveryFrom.isNotEmpty)
+        "counter_delivery_from": counterDeliveryFrom,
+      if (counterDeliveryTo != null && counterDeliveryTo.isNotEmpty)
+        "counter_delivery_to": counterDeliveryTo,
     };
 
     final response = await ApiClient.post(

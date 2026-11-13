@@ -155,7 +155,7 @@ class AdminChallanModel {
     if (sellerName != null && sellerName!.isNotEmpty) {
       return sellerName!;
     }
-    return "Seller #$id";
+    return "Seller";
   }
 
   String get displayBuyer {
@@ -165,7 +165,7 @@ class AdminChallanModel {
     if (buyerName != null && buyerName!.isNotEmpty) {
       return buyerName!;
     }
-    return "Buyer #$id";
+    return "Buyer";
   }
 
   String get displayCommodity {

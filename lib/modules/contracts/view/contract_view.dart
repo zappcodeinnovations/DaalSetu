@@ -1,3 +1,5 @@
+import 'package:daalsetu/utils/app_preferences.dart';
+import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
@@ -25,12 +27,25 @@ class _ContractsScreenState extends State<ContractsScreen> {
   final isSelectionMode = false.obs;
   // Backend contract statuses: active, in_transit, received, completed, cancelled.
   final filters = const ['All', 'Active', 'In Transit', 'Received', 'Completed', 'Cancelled'];
+  String _userRole = '';
 
   @override
   void initState() {
     super.initState();
     selectedFilter = (widget.initialFilter ?? 'All').obs;
+    _loadRole();
   }
+
+  Future<void> _loadRole() async {
+    final role = await AppPreferences.getRole();
+    if (mounted) {
+      setState(() {
+        _userRole = (role ?? '').trim().toLowerCase();
+      });
+    }
+  }
+
+  bool get _isSuperAdmin => _userRole == 'super_admin';
 
   List<ContractModel> get filteredContracts {
     var contracts = controller.contracts.toList();
@@ -71,7 +86,12 @@ class _ContractsScreenState extends State<ContractsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PageAutoRefresh(
+    onRefresh: () => controller.fetchContracts(silent: true),
+    child: _buildPageContent(context),
+  );
+
+  Widget _buildPageContent(BuildContext context) {
     return PopScope(
       canPop: !isSelectionMode.value,
       onPopInvokedWithResult: (didPop, _) {
@@ -253,11 +273,46 @@ class _ContractsScreenState extends State<ContractsScreen> {
                           _text(contract.productCategory),
                           style: theme.textTheme.bodySmall,
                         ),
+                        if (contract.productBrand.isNotEmpty) ...[
+                          const SizedBox(height: 3),
+                          Text(
+                            'Brand: ${contract.productBrand}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
                   const SizedBox(width: 8),
-                  _statusBadge(contract.status),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _statusBadge(contract.status),
+                      // MoM 15: contracts with new transport bids are listed first.
+                      if (contract.activeBidCount > 0)
+                        Container(
+                          key: const Key('contract-new-bids'),
+                          margin: const EdgeInsets.only(top: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.amber.shade700),
+                          ),
+                          child: Text(
+                            '${contract.activeBidCount} new bid${contract.activeBidCount == 1 ? '' : 's'}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.amber.shade900,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -308,35 +363,41 @@ class _ContractsScreenState extends State<ContractsScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      visualDensity: VisualDensity.compact,
-                      side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  if (_isSuperAdmin) ...[
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        visualDensity: VisualDensity.compact,
+                        side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      icon: Icon(Icons.local_shipping_outlined, size: 14, color: theme.colorScheme.primary),
+                      label: Text(
+                        'Transporter Bids',
+                        style: TextStyle(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                        ),
+                      ),
+                      onPressed: () {
+                        showTransportBidsSheet(context, {
+                          'id': contract.id,
+                          'contract_id': contract.contractId,
+                        });
+                      },
                     ),
-                    icon: Icon(Icons.local_shipping_outlined, size: 14, color: theme.colorScheme.primary),
-                    label: Text(
-                      'Transporter Bids',
+                    const SizedBox(width: 8),
+                  ],
+                  Expanded(
+                    child: Text(
+                      'Tap to view complete details  ›',
+                      textAlign: _isSuperAdmin ? TextAlign.end : TextAlign.start,
                       style: TextStyle(
                         color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
                       ),
-                    ),
-                    onPressed: () {
-                      showTransportBidsSheet(context, {
-                        'id': contract.id,
-                        'contract_id': contract.contractId,
-                      });
-                    },
-                  ),
-                  Text(
-                    'Tap to view complete details  ›',
-                    style: TextStyle(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
                     ),
                   ),
                 ],

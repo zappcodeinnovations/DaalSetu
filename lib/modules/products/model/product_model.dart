@@ -262,6 +262,12 @@ class Seller {
   final String fullName;
   final String loginUsername;
 
+  String get displayName {
+    if (fullName.trim().isNotEmpty) return fullName.trim();
+    if (username.trim().isNotEmpty) return username.trim();
+    return '-';
+  }
+
   factory Seller.fromJson(Map<String, dynamic> json) => Seller(
     id: json["id"] as int? ?? 0,
     username: json["username"]?.toString() ?? "",

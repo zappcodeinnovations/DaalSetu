@@ -8,6 +8,7 @@ import '../../../utils/app_preferences.dart';
 import '../../../network/api_client.dart';
 import '../../contracts/model/contract_model.dart';
 import '../model/admin_challan_model.dart';
+import 'package:daalsetu/services/dispatch_bill_services.dart';
 
 class AdminDCService {
   static const String _localChallansKey = "admin_local_delivery_challans_v1";
@@ -187,7 +188,18 @@ class AdminDCService {
   /// ============================================================
   /// DISPATCH CHALLAN
   /// ============================================================
-  static Future<Map<String, dynamic>> dispatchChallan(int id) async {
+  static Future<Map<String, dynamic>> dispatchChallan(int id, {List<String> billPaths = const []}) async {
+    if (billPaths.isNotEmpty) {
+      try {
+        final res = await DispatchBillServices.dispatchWithBills(ApiUrls.adminDispatchChallan(id), billPaths);
+        return {
+          "success": res['success'] != false,
+          "message": res['message'] ?? "Shipment marked as Dispatched successfully!",
+        };
+      } catch (e) {
+        return {"success": false, "message": e.toString().replaceFirst('Exception: ', '')};
+      }
+    }
     final headers = await _buildHeaders();
 
     // Attempt on server

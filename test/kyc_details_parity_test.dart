@@ -53,7 +53,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     // Verify User Information fields
-    expect(find.text('User ID'), findsOneWidget);
+    // Database ids are never shown (MoM point 12).
+    expect(find.text('User ID'), findsNothing);
     expect(find.text('Name'), findsOneWidget);
     expect(find.text('First Name'), findsOneWidget);
     expect(find.text('Last Name'), findsOneWidget);

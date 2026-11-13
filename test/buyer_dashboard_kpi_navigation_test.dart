@@ -19,7 +19,7 @@ class MockBuyerOffersController extends BuyerOffersController {
   MockBuyerOffersController({required super.offerType});
 
   @override
-  Future<void> fetchOffers({bool isRefresh = false}) async {}
+  Future<void> fetchOffers({bool silent = false}) async {}
 }
 
 void main() {
@@ -86,7 +86,7 @@ void main() {
 
     // Verify it navigated to BuyerOffersView
     expect(find.byType(BuyerOffersView), findsOneWidget);
-    expect(find.text('Offers & Requirements'), findsOneWidget);
+    expect(find.text('Offers'), findsWidgets);
   });
 
   testWidgets('Tapping AVG PURCHASE PRICE navigates to BuyerOffersView', (tester) async {
@@ -115,7 +115,7 @@ void main() {
 
     // Verify it navigated to BuyerOffersView
     expect(find.byType(BuyerOffersView), findsOneWidget);
-    expect(find.text('Offers & Requirements'), findsOneWidget);
+    expect(find.text('Offers'), findsWidgets);
   });
 
   testWidgets('AVG PURCHASE PRICE prefers the web dashboard avg_price field', (

@@ -36,7 +36,7 @@ class SellerCompanyView extends StatelessWidget {
                 Get.to(() => const AddCompanyView());
               },
               icon: const Icon(Icons.add, size: 18, color: Colors.white),
-              label: const Text("Add Company", style: TextStyle(color: Colors.white)),
+              label: const Text("Add", style: TextStyle(color: Colors.white)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
                 elevation: 0,
@@ -215,6 +215,11 @@ class SellerCompanyView extends StatelessWidget {
   }
 
   Widget _infoRow(IconData icon, String text, ThemeData theme) {
+    // No icon-only row when the value is missing.
+    final value = text.trim();
+    if (value.isEmpty || value == ',' || value.endsWith(': ') || value == 'GST:') {
+      return const SizedBox.shrink();
+    }
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(

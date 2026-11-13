@@ -1071,10 +1071,6 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
               : 'This quotation will be rejected and cannot be negotiated further.',
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
-          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: accept ? Colors.green : Colors.red,
@@ -1082,6 +1078,10 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
             ),
             onPressed: () => Get.back(result: true),
             child: Text(accept ? 'Accept offer' : 'Reject quotation'),
+          ),
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
           ),
         ],
       ),
@@ -1667,10 +1667,6 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
               : 'This negotiation will be rejected and closed.',
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
-          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: accept ? Colors.green : Colors.red,
@@ -1678,6 +1674,10 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
             ),
             onPressed: () => Get.back(result: true),
             child: Text(accept ? 'Confirm Deal' : 'Reject'),
+          ),
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
           ),
         ],
       ),

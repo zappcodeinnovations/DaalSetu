@@ -18,4 +18,37 @@ void main() {
     expect(open.transactionId, 'INT-20261010-2222');
     expect(open.createdAt, 'Oct 10, 2026 11:30 AM');
   });
+
+  test('prioritizes buyer full name and company name over buyer_unique_id', () {
+    final interest = OfferInterestModel.fromJson({
+      'id': 101,
+      'buyer_name': 'Rajesh Sharma',
+      'buyer_company': 'Sharma Agro Traders',
+      'buyer_unique_id': 'BUY-9999-ID',
+      'offered_amount': '65.00',
+    });
+
+    expect(interest.buyerName, 'Rajesh Sharma');
+    expect(interest.buyerCompany, 'Sharma Agro Traders');
+    // MoM 24: cards show the company, not the person.
+    expect(interest.displayBuyerInfo, 'Sharma Agro Traders');
+  });
+
+  test('handles nested buyer map with first and last name', () {
+    final interest = OfferInterestModel.fromJson({
+      'id': 102,
+      'buyer': {
+        'first_name': 'Amit',
+        'last_name': 'Patel',
+        'company_name': 'Patel Pulses Ltd',
+        'username': '9876543210',
+      },
+      'buyer_unique_id': 'BUY-1234-ID',
+    });
+
+    expect(interest.buyerName, 'Amit Patel');
+    expect(interest.buyerCompany, 'Patel Pulses Ltd');
+    // MoM 24: cards show the company, not the person.
+    expect(interest.displayBuyerInfo, 'Patel Pulses Ltd');
+  });
 }

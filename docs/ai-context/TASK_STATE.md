@@ -1,23 +1,60 @@
 # Current Task State
 
 ## Current Task
-- **Goal**: Fix Delete Account confirmation dialog assertion error (`_dependents.isEmpty: is not true`) when tapping Cancel on Settings screen.
+- **Goal**: Point 8 — Hide Internal Database IDs Across Transporter Brands, Dashboards, Orders, and Contract Details.
 - **Status**: Completed & Verified.
 - **Output**:
-  - Updated `namespace` and `applicationId` to `"com.zappkode.daalsetu"` in [build.gradle.kts](file:///d:/Flutter_project/DaalSetu/android/app/build.gradle.kts).
-  - Relocated [MainActivity.kt](file:///d:/Flutter_project/DaalSetu/android/app/src/main/kotlin/com/zappkode/daalsetu/MainActivity.kt) to `com/zappkode/daalsetu/` and updated package declaration and downloads MethodChannel.
-  - Removed obsolete `android/app/src/main/kotlin/com/zappcode/` folder.
-  - Synchronized Dart MethodChannel to `'com.zappkode.daalsetu/downloads'` in [downloads_service.dart](file:///d:/Flutter_project/DaalSetu/lib/modules/downloads/service/downloads_service.dart) and [admin_challan_pdf_service.dart](file:///d:/Flutter_project/DaalSetu/lib/modules/admin_dc/service/admin_challan_pdf_service.dart).
-  - Validated static analysis (`flutter analyze` passed with 0 issues).
-  - Verified automated regression suite (`flutter test test/downloads_feature_test.dart test/buyer_challan_pdf_test.dart` passed 6/6 tests).
-  - Generated fresh, production-ready `upload-keystore.jks` in `android/app/upload-keystore.jks` using 2048-bit RSA with 10,000 days validity matching `key.properties`.
-  - Verified keystore via `keytool -list` (Owner: `CN=DaalSetu, OU=DaalSetu, O=ZappKode, L=Mumbai, ST=Maharashtra, C=IN`, Alias: `upload`).
-  - Confirmed `.gitignore` keeps `upload-keystore.jks` and `key.properties` protected from git commits.
-- **Evidence**: `keytool -list` confirmed alias `upload` with SHA-1/SHA-256 fingerprints, `flutter analyze` 0 issues, `flutter test` 6/6 tests passed.
+  - `lib/modules/transporter/brands/view/transporter_brands_view.dart`: Replaced `"Brand ID: #"` with `"Verified Brand"`.
+  - `lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`: Replaced `"Order ID:"` with seller name / `'Confirmed Order'`.
+  - `lib/modules/buyer/orders/view/buyer_orders_view.dart`: Replaced `"Order ID:"` with seller name / `'Confirmed Order'`.
+  - `lib/modules/dashboard/view/dashboard_page.dart`: Replaced `"ID: "` with `"${contract.seller} → ${contract.buyer}"`.
+  - `lib/modules/seller/dashboard/view/seller_dashboard_view.dart`: Replaced `"ID: "` with Category and Brand.
+  - `lib/modules/transporter/bidding/view/transporter_bidding_view.dart`: Replaced Contract ID numbers with product/commodity title.
+  - `lib/modules/contracts/view/contract_details_view.dart`: Removed `(ID: $id)` suffix from admin detail rows.
+  - Added test suite `test/hide_database_ids_test.dart` (4/4 passed).
+- **Evidence**: `test/hide_database_ids_test.dart` (4/4 passed), `test/buyer_contract_details_offer_id_test.dart` (4/4 passed), static analysis clean.
 
 ---
 
 ## Completed Work in Current Session
+- **Bug 54 Completed (Hide Internal Database IDs)**:
+  - Eliminated raw database integer IDs from Transporter Brands, Dashboards, Buyer Orders, and Contract administration details.
+  - Replaced IDs with meaningful business information (Seller name, Category, Brand, Product title).
+- **Bug 53 Completed (Display Full User Name & Company Name on Admin Offers & Seller Interests)**:
+  - Fixed mobile number display on Admin Offer cards by prioritizing `Seller.fullName`.
+  - Fixed raw ID display on Seller Interests cards by prioritizing Buyer Name and Company Name over `buyer_unique_id`.
+  - Verified with 3 automated tests in `test/seller_offer_interest_identity_test.dart`.
+- **Bug 52 Completed (Replace "Operation Control" Branding with "KISOR")**:
+  - Updated subtitle text beneath DaalSetu logo on `LoginScreen` from `'Operations control centre'` to `'KISOR'`.
+  - Verified with automated widget test in `test/login_screen_test.dart`.
+- **Bug 51 Completed (Login Screen Password Eye Icon Inverted State)**:
+  - Corrected inverted eye icon behavior: shows open eye (`Icons.visibility_outlined`) when password is dots/hidden, and crossed-out eye (`Icons.visibility_off_outlined`) when password is text/revealed.
+  - Verified with 2 automated widget tests and clean static analysis.
+- **Bug 50 Completed (Brand Name & Offer Name Display on Contract Screens)**:
+- **Bug 47 Completed (Notifications Not Opening & 2nd Tap Not Redirecting)**:
+  - Eliminated silent suppression on deal/contract notifications.
+  - Resolved GetX duplicate route suppression on consecutive notification taps.
+  - Eliminated UI spinner flickering during `markAsRead` in Seller notifications.
+  - Verified with 4 automated tests in `test/notification_reclick_navigation_test.dart`.
+- **Bug 46 Completed (Card-Wide Clickability on Buyer Dashboard & Admin Offers)**:
+  - Enabled card-wide tap gestures on Buyer Dashboard carousel and Admin Offers screen with zero child button collision.
+  - Verified with 2 test suites.
+- **Bug 45 Completed (Seller Product Card Full Clickability)**:
+  - Enabled card-wide clickability on Seller's "My Products" screen so tapping on image, title, price, or body opens `ProductDetailScreen`.
+  - Verified no conflict with inner action buttons.
+- **Bug 44 Completed (System Navigation Bar Overlap with Floating Glass Bottom Bar)**:
+  - Fixed bottom navigation bar cutoff and overlap on Android 3-button navigation devices by integrating dynamic safe area insets into `GlassNavBar`.
+  - Guarded against keyboard jitter using `isKeyboardOpen` detection.
+  - Verified across 4 test scenarios in `test/bottom_nav_bar_insets_test.dart`.
+- **Bug 43 Completed (Login Screen Password Eye Icon Toggle Unresponsiveness & Cursor Loss)**:
+  - Fixed second-tap unresponsiveness by removing gesture-intercepting tooltips and configuring non-stealing focus node.
+  - Preserved cursor selection offset on visibility change.
+  - Switched to reactive GetX `isPasswordVisible` and added theme-aware contrast colors.
+  - Verified with 2 new widget tests and regression test suite.
+- **Bug 41 Completed (Seller Products 154px Overflow & Buyer Offer Mixing)**:
+  - Fixed `RIGHT OVERFLOWED BY 154 PIXELS` on product cards by decoupling location into an `Expanded` row with 2-line ellipsis.
+  - Excluded buyer request bridge products from the Seller's "My Products" screen on both frontend and backend.
+  - Verified with 5 automated widget and model unit tests.
 - **Bug 40 Completed (Delete Account Dialog Assertion Error on Cancel)**:
   - Fixed red error screen displaying `Failed assertion: line 6281 pos 12: '_dependents.isEmpty': is not true.` when cancelling the Delete Account dialog.
   - Converted dialog to dedicated `_DeleteAccountDialog` `StatefulWidget` to safely handle `TextEditingController` disposal in `dispose()` and scoped `Navigator.of(context).pop()`.

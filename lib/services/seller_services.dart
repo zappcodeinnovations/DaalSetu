@@ -1,6 +1,7 @@
 import '../network/api_client.dart';
 import '../comman/api_url.dart';
 import '../modules/seller/company/model/seller_company_model.dart';
+import 'package:daalsetu/services/dispatch_bill_services.dart';
 
 class SellerServices {
   /// ============================================================
@@ -439,7 +440,11 @@ class SellerServices {
   /// ============================================================
   /// DISPATCH CHALLAN
   /// ============================================================
-  static Future<void> dispatchChallan(int id) async {
+  static Future<void> dispatchChallan(int id, {List<String> billPaths = const []}) async {
+    if (billPaths.isNotEmpty) {
+      await DispatchBillServices.dispatchWithBills(ApiUrls.dispatchChallan(id), billPaths);
+      return;
+    }
     await ApiClient.post(
       endpoint: ApiUrls.dispatchChallan(id),
       body: {},
@@ -522,6 +527,8 @@ class SellerServices {
     required String counterQuantity,
     int? counterBagCount,
     String? counterPackingWeightKg,
+    String? counterDeliveryFrom,
+    String? counterDeliveryTo,
   }) async {
     final cleanPrice =
         counterPrice.replaceAll('₹', '').replaceAll(',', '').trim();
@@ -529,6 +536,11 @@ class SellerServices {
     final cleanWeight = counterPackingWeightKg?.trim();
 
     final body = {
+      // A new Delivery Period proposal (yyyy-MM-dd), MoM point 8.
+      if (counterDeliveryFrom != null && counterDeliveryFrom.isNotEmpty)
+        "counter_delivery_from": counterDeliveryFrom,
+      if (counterDeliveryTo != null && counterDeliveryTo.isNotEmpty)
+        "counter_delivery_to": counterDeliveryTo,
       if (cleanPrice.isNotEmpty) "counter_price": cleanPrice,
       if (cleanQty.isNotEmpty) "counter_quantity": cleanQty,
       if (counterBagCount != null && counterBagCount > 0)
@@ -611,7 +623,7 @@ class SellerServices {
     bool isActive,
   ) async {
     final response = await ApiClient.patch(
-      endpoint: ApiUrls.offerToggle(productId),
+      endpoint: "${ApiUrls.offerToggle(productId)}?is_active=$isActive",
       data: {"is_active": isActive},
       requireAuth: true,
     );
@@ -764,10 +776,11 @@ class SellerServices {
   /// ============================================================
   /// CONTRACTS & DELIVERY CHALLANS
   /// ============================================================
-  static Future<List<dynamic>> getSellerContracts() async {
+  static Future<List<dynamic>> getSellerContracts({bool silent = false}) async {
     final response = await ApiClient.get(
       endpoint: ApiUrls.mobileContracts,
       requireAuth: true,
+      suppressErrorDialog: silent,
     );
     if (response is List) return response;
     if (response is Map<String, dynamic> && response["results"] is List)
@@ -791,8 +804,12 @@ class SellerServices {
   }
 
   static Future<Map<String, dynamic>> dispatchDeliveryChallan(
-    int challanId,
-  ) async {
+    int challanId, {
+    List<String> billPaths = const [],
+  }) async {
+    if (billPaths.isNotEmpty) {
+      return DispatchBillServices.dispatchWithBills(ApiUrls.sellerDispatchChallan(challanId), billPaths);
+    }
     final response = await ApiClient.post(
       endpoint: ApiUrls.sellerDispatchChallan(challanId),
       body: {},
@@ -1035,9 +1052,14 @@ class SellerServices {
   static Future<Map<String, dynamic>> createOffer(
     Map<String, dynamic> body, {
     String? imagePath,
+    List<String> imagePaths = const [],
     String? videoPath,
   }) async {
-    final hasImage = imagePath != null && imagePath.trim().isNotEmpty;
+    final images = [
+      ...imagePaths.where((path) => path.trim().isNotEmpty),
+      if (imagePaths.isEmpty && imagePath != null && imagePath.trim().isNotEmpty) imagePath.trim(),
+    ];
+    final hasImage = images.isNotEmpty;
     final hasVideo = videoPath != null && videoPath.trim().isNotEmpty;
 
     dynamic response;
@@ -1054,13 +1076,14 @@ class SellerServices {
       });
 
       final Map<String, String> files = {};
-      if (hasImage) files['product_image'] = imagePath.trim();
       if (hasVideo) files['product_video'] = videoPath.trim();
 
       response = await ApiClient.postMultipart(
         endpoint: ApiUrls.offerCreate,
         fields: fields,
         files: files,
+        // Up to 10 offer images in one request.
+        fileLists: hasImage ? {'product_image': images} : null,
         requireAuth: true,
         // Offer videos can take longer than the normal API timeout to upload.
         timeout: hasVideo ? const Duration(minutes: 3) : null,

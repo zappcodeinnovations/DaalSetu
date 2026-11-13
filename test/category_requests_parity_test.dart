@@ -22,7 +22,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     // Verify Title matches web parity: "Buyer Category Management"
-    expect(find.text('Buyer Category Management'), findsOneWidget);
+    expect(find.text('Category Requests'), findsOneWidget);
 
     // Verify Segmented Control with tabs exists
     expect(find.text('All Buyers'), findsOneWidget);

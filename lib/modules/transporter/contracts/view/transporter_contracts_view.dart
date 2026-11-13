@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,7 +11,12 @@ class TransporterContractsView extends StatelessWidget {
   const TransporterContractsView({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PageAutoRefresh(
+    onRefresh: () => Get.find<SellerContractController>().fetchContracts(silent: true),
+    child: _buildPageContent(context),
+  );
+
+  Widget _buildPageContent(BuildContext context) {
     final controller = Get.put(SellerContractController());
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -103,7 +109,7 @@ class TransporterContractsView extends StatelessWidget {
                   final contract = controller.contractsList[index];
                   final status = (contract.status ?? 'ACTIVE').toUpperCase();
                   final isCompleted = status.contains("COMPLETED") || status.contains("CONFIRMED");
-                  final contractNum = contract.contractNumber ?? "Contract #${contract.id ?? ''}";
+                  final contractNum = contract.contractNumber ?? "Contract";
                   final commodity = contract.categoryName ?? contract.brandName ?? "Commodity";
                   final buyer = contract.buyerCompany ?? "Buyer";
                   final amount = contract.dealAmount ?? contract.totalAmount ?? "0";

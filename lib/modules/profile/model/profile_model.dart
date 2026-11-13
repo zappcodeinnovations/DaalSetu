@@ -15,6 +15,7 @@ class ProfileModel {
   final String gstImage;
   final String aadhaarImage;
   final String kycStatus;
+  final bool hasPendingKycRequest;
   final String accountStatus;
   final bool isActive;
 
@@ -35,6 +36,7 @@ class ProfileModel {
     required this.gstImage,
     required this.aadhaarImage,
     required this.kycStatus,
+    this.hasPendingKycRequest = false,
     required this.accountStatus,
     required this.isActive,
   });
@@ -56,6 +58,7 @@ class ProfileModel {
     String? gstImage,
     String? aadhaarImage,
     String? kycStatus,
+    bool? hasPendingKycRequest,
     String? accountStatus,
     bool? isActive,
   }) {
@@ -76,10 +79,21 @@ class ProfileModel {
       gstImage: gstImage ?? this.gstImage,
       aadhaarImage: aadhaarImage ?? this.aadhaarImage,
       kycStatus: kycStatus ?? this.kycStatus,
+      hasPendingKycRequest: hasPendingKycRequest ?? this.hasPendingKycRequest,
       accountStatus: accountStatus ?? this.accountStatus,
       isActive: isActive ?? this.isActive,
     );
   }
+
+  bool get isKycApproved =>
+      const ['approved', 'verified'].contains(kycStatus.trim().toLowerCase());
+
+  bool get isKycAwaitingApproval =>
+      !isKycApproved &&
+      (kycStatus.trim().toLowerCase() == 'pending' || hasPendingKycRequest);
+
+  bool get canRequestKycApproval =>
+      kycStatus.trim().toLowerCase() == 'rejected' && !hasPendingKycRequest;
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
     Map<String, dynamic> data = json;
@@ -98,7 +112,9 @@ class ProfileModel {
     String extractDoc(List<String> keys) {
       for (final key in keys) {
         final val = data[key];
-        if (val != null && val.toString().trim().isNotEmpty && val.toString() != 'null') {
+        if (val != null &&
+            val.toString().trim().isNotEmpty &&
+            val.toString() != 'null') {
           return val.toString().trim();
         }
       }
@@ -107,7 +123,9 @@ class ProfileModel {
           final sub = data[parent] as Map;
           for (final key in keys) {
             final val = sub[key];
-            if (val != null && val.toString().trim().isNotEmpty && val.toString() != 'null') {
+            if (val != null &&
+                val.toString().trim().isNotEmpty &&
+                val.toString() != 'null') {
               return val.toString().trim();
             }
           }
@@ -122,12 +140,18 @@ class ProfileModel {
         : rawDob.toString().trim();
 
     final rawEmail = data["email"] ?? data["user_email"];
-    final String parsedEmail = (rawEmail == null || rawEmail.toString() == 'null')
+    final String parsedEmail =
+        (rawEmail == null || rawEmail.toString() == 'null')
         ? ""
         : rawEmail.toString().trim();
 
-    final rawMobile = data["mobile"] ?? data["phone"] ?? data["phone_number"] ?? data["username"];
-    final String parsedMobile = (rawMobile == null || rawMobile.toString() == 'null')
+    final rawMobile =
+        data["mobile"] ??
+        data["phone"] ??
+        data["phone_number"] ??
+        data["username"];
+    final String parsedMobile =
+        (rawMobile == null || rawMobile.toString() == 'null')
         ? ""
         : rawMobile.toString().trim();
 
@@ -174,6 +198,7 @@ class ProfileModel {
         "aadhaar_url",
       ]),
       kycStatus: data["kyc_status"] ?? "",
+      hasPendingKycRequest: data['has_pending_kyc_request'] == true,
       accountStatus: data["account_status"] ?? "",
       isActive: data["is_active"] ?? false,
     );

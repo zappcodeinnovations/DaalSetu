@@ -11,6 +11,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../../services/realtime_notification_service.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/widgets/delivery_period_picker.dart';
+import 'package:daalsetu/widgets/offer_image_picker.dart';
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -45,8 +47,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final Set<int> selectedBranchIds = {};
   DateTime? loadingFrom;
   DateTime? loadingTo;
+  // Delivery Period offered to buyers (MoM point 8).
+  DateTime? deliveryFrom;
+  DateTime? deliveryTo;
   DateTime? expiry;
   File? image;
+  /// Offer images chosen with multi-select (max 10).
+  final List<File> images = [];
   File? video;
   String rateUnit = 'ton';
   String quantityUnit = 'ton';
@@ -189,6 +196,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _message('Loading To date cannot be before Loading From.', error: true);
       return;
     }
+    if (deliveryFrom == null || deliveryTo == null) {
+      _message('Select the delivery period.', error: true);
+      return;
+    }
     if (!expiry!.isAfter(DateTime.now())) {
       _message('Deal expiry time must be in the future.', error: true);
       return;
@@ -219,6 +230,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
         'quantity_unit': quantityUnit,
         'loading_from': _apiDate(loadingFrom!),
         'loading_to': _apiDate(loadingTo!),
+        'delivery_from': _apiDate(deliveryFrom!),
+        'delivery_to': _apiDate(deliveryTo!),
         'deal_expiry_datetime': _apiDateTime(expiry!),
         'loading_location': _location.text.trim(),
         'remark': _remark.text.trim(),
@@ -227,11 +240,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
       });
       final id = response['id'] as int?;
       if (id == null) throw Exception('Offer ID missing');
-      if (image != null) {
+      for (var i = 0; i < images.length; i++) {
         await ProductService.uploadProductImage(
           productId: id,
-          imagePath: image!.path,
-          isPrimary: true,
+          imagePath: images[i].path,
+          isPrimary: i == 0,
         );
       }
       if (video != null) {
@@ -340,6 +353,18 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 () => _pickDate('from'),
               ),
               _dateTile('Loading to date', loadingTo, () => _pickDate('to')),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: DeliveryPeriodPicker(
+                  from: deliveryFrom,
+                  to: deliveryTo,
+                  hint: 'Shown to buyers; they can negotiate it.',
+                  onChanged: (from, to) => setState(() {
+                    deliveryFrom = from;
+                    deliveryTo = to;
+                  }),
+                ),
+              ),
               _dateTile(
                 'Deal expiry date & time',
                 expiry,
@@ -367,14 +392,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
             ]),
             _section('Offer media (optional)', [
               _mediaTile(
-                'Offer image',
-                image?.path,
+                images.isEmpty ? 'Offer images (up to $maxOfferImages)' : 'Offer images',
+                images.isEmpty ? null : '${images.length} of $maxOfferImages images selected',
                 Icons.image_outlined,
                 () async {
-                  final file = await _picker.pickImage(
-                    source: ImageSource.gallery,
-                  );
-                  if (file != null) setState(() => image = File(file.path));
+                  final paths = await pickOfferImages(room: maxOfferImages - images.length);
+                  if (paths.isNotEmpty) {
+                    setState(() {
+                      images.addAll(paths.map(File.new));
+                      image = images.first;
+                    });
+                  }
                 },
               ),
               _mediaTile(

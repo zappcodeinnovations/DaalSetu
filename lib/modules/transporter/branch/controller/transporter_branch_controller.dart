@@ -8,6 +8,7 @@ class TransporterBranchController extends GetxController {
   
   var branches = <BranchModel>[].obs;
   var isLoading = false.obs;
+  bool _fetchingBranches = false;
 
   @override
   void onInit() {
@@ -15,15 +16,18 @@ class TransporterBranchController extends GetxController {
     fetchBranches();
   }
 
-  Future<void> fetchBranches() async {
+  Future<void> fetchBranches({bool silent = false}) async {
+    if (_fetchingBranches || isClosed) return;
+    _fetchingBranches = true;
     try {
-      isLoading(true);
+      if (!silent) isLoading(true);
       final response = await ApiClient.get(
         endpoint: ApiUrls.publicBranches,
         requireAuth: true,
+        suppressErrorDialog: silent,
       );
 
-      if (response != null) {
+      if (response != null && !isClosed) {
         List<dynamic> dataList = [];
         if (response is List) {
           dataList = response;
@@ -36,9 +40,10 @@ class TransporterBranchController extends GetxController {
         branches.value = dataList.map((json) => BranchModel.fromJson(json)).toList();
       }
     } catch (e) {
-      AppSnackbar.snackbar('Error', 'Failed to load branches: $e', snackPosition: SnackPosition.BOTTOM);
+      if (!silent && !isClosed) AppSnackbar.snackbar('Error', 'Failed to load branches: $e', snackPosition: SnackPosition.BOTTOM);
     } finally {
-      isLoading(false);
+      _fetchingBranches = false;
+      if (!silent && !isClosed) isLoading(false);
     }
   }
 

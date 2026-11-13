@@ -25,7 +25,12 @@ class _ContractEditViewState extends State<ContractEditView> {
   late final Map<String, TextEditingController> _text;
   late final Map<String, String> _original;
   late String _status;
-  final _dates = <String, DateTime?>{'loading_from_date': null, 'loading_to_date': null, 'delivery_date': null};
+  final _dates = <String, DateTime?>{
+    'loading_from_date': null,
+    'loading_to_date': null,
+    'delivery_date': null,
+    'delivery_date_to': null,
+  };
   bool _saving = false;
 
   @override
@@ -135,7 +140,8 @@ class _ContractEditViewState extends State<ContractEditView> {
             _textField('delivery_location', 'Delivery location', required: true),
             _dateField('loading_from_date', 'Loading from date'),
             _dateField('loading_to_date', 'Loading to date'),
-            _dateField('delivery_date', 'Delivery date'),
+            _dateField('delivery_date', 'Delivery from date'),
+            _dateField('delivery_date_to', 'Delivery to date'),
             _section('Status & Remarks'),
             Padding(
               padding: const EdgeInsets.only(bottom: 14),

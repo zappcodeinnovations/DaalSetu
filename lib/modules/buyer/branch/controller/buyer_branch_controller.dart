@@ -4,20 +4,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../services/seller_services.dart';
 import '../../../../services/realtime_notification_service.dart';
 import '../../../../utils/app_snackbar.dart';
-import '../../../nav_bar/controller/nav_controller.dart';
 import '../../../seller/branches/model/seller_branch_model.dart';
 import '../../../seller/notifications/model/notification_model.dart';
 
-class BuyerBranchController extends GetxController with WidgetsBindingObserver {
+class BuyerBranchController extends GetxController {
   var isLoading = false.obs;
   var primaryBranch = Rxn<SellerBranchModel>();
   var myBranches = <SellerBranchModel>[].obs;
   var pendingRequests = <SellerBranchModel>[].obs;
+  bool _fetchingBranches = false;
 
   final Set<int> _leftBranchIds = {};
   final Set<String> _leftBranchCodes = {};
 
-  Worker? _navWorker;
   Worker? _notifBannerWorker;
   Worker? _notifListWorker;
 
@@ -109,7 +108,6 @@ class BuyerBranchController extends GetxController with WidgetsBindingObserver {
   @override
   void onInit() {
     super.onInit();
-    WidgetsBinding.instance.addObserver(this);
     _clearLegacyDiskCache();
     fetchBranches();
     _setupListeners();
@@ -123,33 +121,14 @@ class BuyerBranchController extends GetxController with WidgetsBindingObserver {
 
   @override
   void onClose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _navWorker?.dispose();
     _notifBannerWorker?.dispose();
     _notifListWorker?.dispose();
     searchTextController.dispose();
     super.onClose();
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      fetchBranches(silent: true);
-    }
-  }
-
   void _setupListeners() {
-    // 1. Listen for BottomNavController tab focus (index 4 is Buyer Branch tab)
-    if (_navWorker == null && Get.isRegistered<BottomNavController>()) {
-      final nav = Get.find<BottomNavController>();
-      _navWorker = ever(nav.selectedIndex, (int index) {
-        if (index == 4) {
-          fetchBranches(silent: true);
-        }
-      });
-    }
-
-    // 2. Listen for RealtimeNotificationService notifications
+    // Branch notifications still update immediately between page refreshes.
     if (Get.isRegistered<RealtimeNotificationService>()) {
       final rns = RealtimeNotificationService.to;
       _notifBannerWorker ??= ever(rns.activeBannerNotification, (AppNotificationModel? notif) {
@@ -275,9 +254,12 @@ class BuyerBranchController extends GetxController with WidgetsBindingObserver {
   }
 
   Future<void> fetchBranches({bool silent = false}) async {
+    if (_fetchingBranches || isClosed) return;
+    _fetchingBranches = true;
     try {
       if (!silent) isLoading.value = true;
       final res = await SellerServices.getSellerBranches(silent: silent);
+      if (isClosed) return;
       if (res['data'] is Map<String, dynamic>) {
         final data = res['data'] as Map<String, dynamic>;
 
@@ -348,7 +330,8 @@ class BuyerBranchController extends GetxController with WidgetsBindingObserver {
         AppSnackbar.showError(title: "Error", message: e.toString());
       }
     } finally {
-      isLoading.value = false;
+      _fetchingBranches = false;
+      if (!silent && !isClosed) isLoading.value = false;
     }
   }
 

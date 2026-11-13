@@ -2,6 +2,7 @@ import '../model/delivery_challan_model.dart';
 import '../../../../services/seller_services.dart';
 import 'package:get/get.dart';
 import '../../../../utils/app_snackbar.dart';
+import 'package:daalsetu/widgets/dispatch_bills_section.dart';
 
 class SellerDeliveryController extends GetxController {
   var isLoading = true.obs;
@@ -42,9 +43,12 @@ class SellerDeliveryController extends GetxController {
   }
 
   Future<void> dispatchChallan(int id) async {
+    // Optional bill files go with the dispatch (MoM point 23).
+    final bills = await askDispatchBills();
+    if (bills == null) return;
     try {
       isLoading(true);
-      await SellerServices.dispatchChallan(id);
+      await SellerServices.dispatchChallan(id, billPaths: bills);
       AppSnackbar.snackbar("Success", "Shipment marked as dispatched");
       
       // Refresh list and details if open

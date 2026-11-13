@@ -10,6 +10,7 @@ class SellerBranchController extends GetxController {
   var primaryBranch = Rxn<SellerBranchModel>();
   var myBranches = <SellerBranchModel>[].obs;
   var pendingRequests = <SellerBranchModel>[].obs;
+  bool _fetchingBranches = false;
 
   @override
   void onInit() {
@@ -17,10 +18,13 @@ class SellerBranchController extends GetxController {
     fetchBranches();
   }
 
-  Future<void> fetchBranches() async {
+  Future<void> fetchBranches({bool silent = false}) async {
+    if (_fetchingBranches || isClosed) return;
+    _fetchingBranches = true;
     try {
-      isLoading.value = true;
-      final res = await SellerServices.getSellerBranches();
+      if (!silent) isLoading.value = true;
+      final res = await SellerServices.getSellerBranches(silent: silent);
+      if (isClosed) return;
       if (res['data'] is Map<String, dynamic>) {
         final data = res['data'] as Map<String, dynamic>;
         // Replace every section, so a branch the server no longer returns
@@ -32,9 +36,10 @@ class SellerBranchController extends GetxController {
         pendingRequests.value = _branches(data['pending_requests']);
       }
     } catch (e) {
-      _showError('Could not load branches', e);
+      if (!silent && !isClosed) _showError('Could not load branches', e);
     } finally {
-      isLoading.value = false;
+      _fetchingBranches = false;
+      if (!isClosed && !silent) isLoading.value = false;
     }
   }
 

@@ -21,6 +21,9 @@ class ContractModel {
 
   final String status;
 
+  /// Pending transport bids (admins only); such contracts come first (MoM 15).
+  final int activeBidCount;
+
   final String createdAt;
 
   final String? bags;
@@ -36,6 +39,7 @@ class ContractModel {
   final String? bidAmount;
   final int? productId;
   final int? interestId;
+  final String productBrand;
 
   ContractModel({
     required this.id,
@@ -53,6 +57,7 @@ class ContractModel {
     required this.loadingFrom,
     required this.loadingTo,
     required this.status,
+    this.activeBidCount = 0,
     required this.createdAt,
     this.bags,
     this.bagCount,
@@ -66,6 +71,7 @@ class ContractModel {
     this.bidAmount,
     this.productId,
     this.interestId,
+    this.productBrand = '',
   });
 
   factory ContractModel.fromJson(Map<String, dynamic> json) {
@@ -106,6 +112,7 @@ class ContractModel {
       loadingTo: text('loading_to'),
 
       status: text('status'),
+      activeBidCount: json['active_bid_count'] is int ? json['active_bid_count'] as int : 0,
       createdAt: text('created_at'),
 
       bags: text('bags').isNotEmpty ? text('bags') : null,
@@ -121,6 +128,7 @@ class ContractModel {
       bidAmount: text('bid_amount').isNotEmpty ? text('bid_amount') : (text('accepted_bid_amount').isNotEmpty ? text('accepted_bid_amount') : null),
       productId: number('product_id') ?? number('product') ?? number('offer_id') ?? number('offer'),
       interestId: number('interest_id') ?? number('interest'),
+      productBrand: text('product_brand_name'),
     );
   }
 }

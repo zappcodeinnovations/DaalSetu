@@ -1,4 +1,5 @@
 import '../../../services/profile_services.dart';
+import '../../../services/buyer_services.dart';
 import '../../../comman/api_url.dart';
 import 'package:get/get.dart';
 import '../model/profile_model.dart';
@@ -9,6 +10,7 @@ class ProfileController extends GetxController {
   var profile = Rxn<ProfileModel>();
   var loadError = ''.obs;
   var imageRevision = DateTime.now().millisecondsSinceEpoch.obs;
+  bool _fetchingProfile = false;
 
   String profileImageUrl(String? value) {
     final raw = (value ?? '').trim();
@@ -34,22 +36,47 @@ class ProfileController extends GetxController {
   }
 
   var isUpdating = false.obs;
+  final isSubmittingKycApproval = false.obs;
 
-  Future<void> fetchProfile({bool showError = false}) async {
+  Future<bool> requestKycApproval() async {
+    final user = profile.value;
+    if (user == null || !user.canRequestKycApproval || isSubmittingKycApproval.value) return false;
+    isSubmittingKycApproval.value = true;
     try {
-      isLoading.value = true;
-      loadError.value = '';
+      final response = await BuyerServices.requestKycApproval();
+      if (response['success'] != true) {
+        throw Exception(response['message'] ?? 'Unable to submit KYC for approval.');
+      }
+      if (!isClosed && profile.value?.id == user.id) {
+        profile.value = profile.value!.copyWith(hasPendingKycRequest: true);
+        return true;
+      }
+      return false;
+    } finally {
+      if (!isClosed) isSubmittingKycApproval.value = false;
+    }
+  }
+
+  Future<void> fetchProfile({bool showError = false, bool silent = false}) async {
+    if (_fetchingProfile || isUpdating.value || isSubmittingKycApproval.value || isClosed) return;
+    _fetchingProfile = true;
+    try {
+      if (!silent) isLoading.value = true;
 
       final data = await ProfileService.getProfile(silent: !showError);
+      if (isClosed) return;
       profile.value = data;
-      imageRevision.value = DateTime.now().millisecondsSinceEpoch;
+      loadError.value = '';
+      if (!silent) imageRevision.value = DateTime.now().millisecondsSinceEpoch;
     } catch (e) {
+      if (silent || isClosed) return;
       loadError.value = e.toString();
       if (showError) {
         AppSnackbar.snackbar("Unable to refresh profile", "Please try again.");
       }
     } finally {
-      isLoading.value = false;
+      _fetchingProfile = false;
+      if (!isClosed && !silent) isLoading.value = false;
     }
   }
 

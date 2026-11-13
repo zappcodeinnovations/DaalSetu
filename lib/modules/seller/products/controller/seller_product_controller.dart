@@ -9,17 +9,15 @@ import '../../common/seller_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:async';
 import '../../../../routes/app_routes.dart';
 import '../../../../services/realtime_notification_service.dart';
 import '../../../nav_bar/controller/nav_controller.dart';
-import 'package:daalsetu/utils/global_error_handler.dart';
+import 'package:daalsetu/widgets/offer_image_picker.dart';
 
 class SellerProductController extends GetxController {
   var isLoading = true.obs;
   var isSaving = false.obs;
   var products = <SellerProductModel>[].obs;
-  Timer? _refreshTimer;
 
   // For Add Product (same fields as the web "Create Offer" form)
   var categories = <CategoryTreeModel>[].obs;
@@ -35,10 +33,15 @@ class SellerProductController extends GetxController {
   var amountUnit = 'qtl'.obs;
   var quantityUnit = 'qtl'.obs;
   var selectedImagePath = RxnString();
+  /// Offer images chosen with multi-select (max 10).
+  final selectedImagePaths = <String>[].obs;
   var selectedVideoPath = RxnString();
   var sellerName = 'Seller'.obs;
   var loadingFrom = Rxn<DateTime>();
   var loadingTo = Rxn<DateTime>();
+  // Delivery Period offered to buyers (MoM point 8).
+  var deliveryFrom = Rxn<DateTime>();
+  var deliveryTo = Rxn<DateTime>();
   var dealExpiry = Rxn<DateTime>();
 
   final titleController = TextEditingController();
@@ -214,22 +217,23 @@ class SellerProductController extends GetxController {
 
     fetchProducts();
     fetchSupportData();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (_) {
-      if (AppForeground.isActive) fetchProducts(silent: true);
-    });
   }
 
   bool _fetchInProgress = false;
 
   Future<void> fetchProducts({bool silent = false}) async {
     // Background refresh runs every 10s; skip it while a request is still open.
-    if (silent && _fetchInProgress) return;
+    if (_fetchInProgress || isClosed || (silent && isSaving.value)) return;
     _fetchInProgress = true;
     try {
       if (!silent) isLoading(true);
       final data = await SellerServices.getProducts(silent: silent);
+      if (isClosed) return;
       products.assignAll(
-        data.map((e) => SellerProductModel.fromJson(e)).toList(),
+        data
+            .map((e) => SellerProductModel.fromJson(e))
+            .where((p) => !p.isBuyerOffer)
+            .toList(),
       );
     } catch (e) {
       if (!silent) SellerUi.error(e);
@@ -350,12 +354,22 @@ class SellerProductController extends GetxController {
     }
   }
 
+  /// Adds images with multi-select, up to 10 in total.
   Future<void> pickOfferImage() async {
-    final image = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 88,
-    );
-    if (image != null) selectedImagePath.value = image.path;
+    final room = maxOfferImages - selectedImagePaths.length;
+    if (room <= 0) {
+      SellerUi.error("You can add up to $maxOfferImages images.");
+      return;
+    }
+    final paths = await pickOfferImages(room: room);
+    if (paths.isEmpty) return;
+    selectedImagePaths.addAll(paths);
+    selectedImagePath.value = selectedImagePaths.first;
+  }
+
+  void removeOfferImage(String path) {
+    selectedImagePaths.remove(path);
+    selectedImagePath.value = selectedImagePaths.isEmpty ? null : selectedImagePaths.first;
   }
 
   Future<void> pickOfferVideo() async {
@@ -384,6 +398,10 @@ class SellerProductController extends GetxController {
       return "Loading from and to dates are required.";
     if (loadingTo.value!.isBefore(loadingFrom.value!))
       return "Loading to cannot be before loading from.";
+    if (deliveryFrom.value == null || deliveryTo.value == null)
+      return "Delivery period (from and to) is required.";
+    if (deliveryTo.value!.isBefore(deliveryFrom.value!))
+      return "Delivery To cannot be before Delivery From.";
     if (dealExpiry.value == null) return "Deal expiry is required.";
     if (!dealExpiry.value!.isAfter(DateTime.now())) {
       return "Deal expiry time must be in the future.";
@@ -416,6 +434,8 @@ class SellerProductController extends GetxController {
         "quantity": quantityController.text.trim(),
       "loading_from": _ymd(loadingFrom.value!),
       "loading_to": _ymd(loadingTo.value!),
+      "delivery_from": _ymd(deliveryFrom.value!),
+      "delivery_to": _ymd(deliveryTo.value!),
       "loading_location": locationController.text.trim(),
       "deal_expiry_datetime":
           "${_ymd(expiry)}T${expiry.hour.toString().padLeft(2, '0')}:${expiry.minute.toString().padLeft(2, '0')}",
@@ -428,12 +448,12 @@ class SellerProductController extends GetxController {
 
     try {
       isSaving(true);
-      final imageToUpload = selectedImagePath.value;
+      final imagesToUpload = selectedImagePaths.toList();
       final videoToUpload = selectedVideoPath.value;
 
       final result = await SellerServices.createOffer(
         body,
-        imagePath: imageToUpload,
+        imagePaths: imagesToUpload,
         videoPath: videoToUpload,
       );
       // /api/offers/create/ returns the new offer under "product".
@@ -453,11 +473,13 @@ class SellerProductController extends GetxController {
             ? ((data['product_videos'] ?? data['videos']) as List)
             : [];
 
-        if (imageToUpload != null && existingImages.isEmpty) {
-          try {
-            await SellerServices.uploadProductImage(productId, imageToUpload);
-          } catch (_) {
-            mediaFailed = true;
+        if (imagesToUpload.isNotEmpty && existingImages.isEmpty) {
+          for (var i = 0; i < imagesToUpload.length; i++) {
+            try {
+              await SellerServices.uploadProductImage(productId, imagesToUpload[i], isPrimary: i == 0);
+            } catch (_) {
+              mediaFailed = true;
+            }
           }
         }
         if (videoToUpload != null && existingVideos.isEmpty) {
@@ -511,7 +533,35 @@ class SellerProductController extends GetxController {
     final result = await SellerUi.run(
       () => SellerServices.toggleOfferStatus(product.id, activate),
     );
-    if (result != null) fetchProducts();
+    if (result != null) {
+      // Optimistically update the item in the reactive list for instant UI feedback
+      final index = products.indexWhere((p) => p.id == product.id);
+      if (index != -1) {
+        final current = products[index];
+        products[index] = SellerProductModel(
+          id: current.id,
+          title: current.title,
+          description: current.description,
+          categoryId: current.categoryId,
+          categoryName: current.categoryName,
+          brandName: current.brandName,
+          amount: current.amount,
+          unit: current.unit,
+          status: activate ? 'active' : 'inactive',
+          isActive: activate,
+          isExpired: current.isExpired,
+          interestCount: current.interestCount,
+          bagCount: current.bagCount,
+          packingWeight: current.packingWeight,
+          loadingLocation: current.loadingLocation,
+          imageUrls: current.imageUrls,
+          videoUrls: current.videoUrls,
+          createdAt: current.createdAt,
+          isBuyerOffer: current.isBuyerOffer,
+        );
+      }
+      fetchProducts();
+    }
   }
 
   Future<void> deleteOffer(SellerProductModel product) async {
@@ -548,9 +598,12 @@ class SellerProductController extends GetxController {
     quantityUnit.value = 'qtl';
     packingWeightController.text = '30';
     selectedImagePath.value = null;
+    selectedImagePaths.clear();
     selectedVideoPath.value = null;
     loadingFrom.value = null;
     loadingTo.value = null;
+    deliveryFrom.value = null;
+    deliveryTo.value = null;
     dealExpiry.value = null;
     selectedBranchIds.clear();
     if (branches.isNotEmpty) {
@@ -560,7 +613,6 @@ class SellerProductController extends GetxController {
 
   @override
   void onClose() {
-    _refreshTimer?.cancel();
     for (final c in [
       titleController,
       descController,

@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/delivery_period_picker.dart';
 import '../../../utils/app_snackbar.dart';
 
 /// Admin "Edit Offer": same fields as the web edit form (category, brand, price unit,
@@ -42,6 +43,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
   bool _isActive = true;
   DateTime? _loadingFrom;
   DateTime? _loadingTo;
+  DateTime? _deliveryFrom;
+  DateTime? _deliveryTo;
   DateTime? _dealExpiry;
   Future<List<OfferOption>>? _brandsFuture;
 
@@ -74,6 +77,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
       _isActive = offer['is_active'] != false;
       _loadingFrom = DateTime.tryParse((offer['loading_from'] ?? '').toString());
       _loadingTo = DateTime.tryParse((offer['loading_to'] ?? '').toString());
+      _deliveryFrom = DeliveryPeriodPicker.parseUpcoming(offer['delivery_from']?.toString());
+      _deliveryTo = DeliveryPeriodPicker.parseUpcoming(offer['delivery_to']?.toString()) ?? _deliveryFrom;
       _dealExpiry = DateTime.tryParse((offer['deal_expiry_datetime'] ?? '').toString())?.toLocal();
       if (_categoryId != null) _brandsFuture = ProductService.getCategoryBrands(int.parse(_categoryId!));
     } catch (e) {
@@ -174,6 +179,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
       'amount_unit': _amountUnit,
       'loading_from': _ymd(_loadingFrom!),
       'loading_to': _ymd(_loadingTo ?? _loadingFrom!),
+      if (_deliveryFrom != null) 'delivery_from': _ymd(_deliveryFrom!),
+      if (_deliveryFrom != null) 'delivery_to': _ymd(_deliveryTo ?? _deliveryFrom!),
       'loading_location': _location.text.trim(),
       'remark': _remark.text.trim(),
       'is_active': _isActive,
@@ -291,6 +298,19 @@ class _EditProductScreenState extends State<EditProductScreen> {
                               final picked = await _pickDate(_loadingTo ?? _loadingFrom);
                               if (picked != null) setState(() => _loadingTo = picked);
                             }),
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: DeliveryPeriodPicker(
+                                label: 'Delivery Period',
+                                from: _deliveryFrom,
+                                to: _deliveryTo,
+                                hint: 'Shown to buyers; they can negotiate it.',
+                                onChanged: (from, to) => setState(() {
+                                  _deliveryFrom = from;
+                                  _deliveryTo = to;
+                                }),
+                              ),
+                            ),
                             _field(_location, 'Loading location', IconlyLight.location),
                             _dateTile('Deal expiry', _show(_dealExpiry, time: true), _pickExpiry),
                             _field(_remark, 'Remark', IconlyLight.paper, maxLines: 2),

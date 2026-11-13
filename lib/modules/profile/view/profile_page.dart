@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'dart:io';
 
 import 'package:iconly/iconly.dart';
@@ -11,7 +12,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_theme.dart';
-import '../../../services/buyer_services.dart';
 import '../../../utils/app_preferences.dart';
 import '../controller/profile_controller.dart';
 import '../model/profile_model.dart';
@@ -39,7 +39,12 @@ class ProfileScreen extends StatelessWidget {
   Color get accentBlue => AppTheme.secondaryOrange;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PageAutoRefresh(
+    onRefresh: () => controller.fetchProfile(silent: true),
+    child: _buildPageContent(context),
+  );
+
+  Widget _buildPageContent(BuildContext context) {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
@@ -905,9 +910,9 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _buildKycComplianceCard(BuildContext context, ProfileModel user) {
-    final kycStatus = user.kycStatus.trim().isEmpty
+    final kycStatus = user.isKycAwaitingApproval
         ? 'pending'
-        : user.kycStatus.toLowerCase();
+        : user.kycStatus.trim().toLowerCase();
     Color kycColor = accentGold;
     IconData kycIcon = Icons.access_time;
     if (kycStatus == 'approved' || kycStatus == 'verified') {
@@ -917,8 +922,6 @@ class ProfileScreen extends StatelessWidget {
       kycColor = Colors.red;
       kycIcon = Icons.cancel_outlined;
     }
-
-    final isNotApproved = kycStatus != 'approved' && kycStatus != 'verified';
 
     return Container(
       width: double.infinity,
@@ -952,7 +955,19 @@ class ProfileScreen extends StatelessWidget {
               _buildBadge(kycStatus.toUpperCase(), kycColor, kycIcon),
             ],
           ),
-          if (isNotApproved) ...[
+          if (user.isKycAwaitingApproval) ...[
+            const SizedBox(height: 12),
+            Text(
+              'KYC submitted for approval',
+              key: const Key('kyc-submitted-for-approval'),
+              style: TextStyle(color: textDark, fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Your KYC is under review. We will notify you once it is approved.',
+              style: TextStyle(color: textLight, fontSize: 12),
+            ),
+          ] else if (user.canRequestKycApproval) ...[
             const SizedBox(height: 12),
             Text(
               "Your KYC is currently ${kycStatus.toUpperCase()}. You can request a re-approval from our verification team.",
@@ -963,17 +978,18 @@ class ProfileScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.only(top: 4),
               child: FilledButton.icon(
-                onPressed: () async {
+                onPressed: controller.isSubmittingKycApproval.value ? null : () async {
                   try {
                     Get.dialog(
                       const Center(child: CircularProgressIndicator()),
                       barrierDismissible: false,
                     );
-                    final res = await BuyerServices.requestKycApproval();
+                    final submitted = await controller.requestKycApproval();
                     if (Get.isDialogOpen ?? false) Get.back();
+                    if (!submitted) return;
                     AppSnackbar.snackbar(
                       "Success",
-                      res['message'] ?? "KYC Approval Request Submitted",
+                      "KYC submitted for approval",
                       snackPosition: SnackPosition.BOTTOM,
                       backgroundColor: Colors.green,
                       colorText: Colors.white,
@@ -981,10 +997,10 @@ class ProfileScreen extends StatelessWidget {
                   } catch (e) {
                     if (Get.isDialogOpen ?? false) Get.back();
                     AppSnackbar.snackbar(
-                      "Notice",
-                      "Request submitted or status updated.",
+                      "Unable to submit KYC",
+                      e.toString().replaceFirst('Exception: ', ''),
                       snackPosition: SnackPosition.BOTTOM,
-                      backgroundColor: Colors.green,
+                      backgroundColor: Colors.red,
                       colorText: Colors.white,
                     );
                   }

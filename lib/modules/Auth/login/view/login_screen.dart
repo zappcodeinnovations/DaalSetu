@@ -17,7 +17,6 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   late final LoginController controller;
-  bool _showPassword = false;
 
   @override
   void initState() {
@@ -136,33 +135,36 @@ class _LoginScreenState extends State<LoginScreen> {
                                 const SizedBox(height: 20),
                                 _label('Password', textColor),
                                 const SizedBox(height: 8),
-                                GlassTextField(
-                                  controller: controller.passwordController,
-                                  hintText: 'Enter your password',
-                                  prefixIcon: IconlyLight.lock,
-                                  obscureText: !_showPassword,
-                                  textInputAction: TextInputAction.done,
-                                  autofillHints: const [AutofillHints.password],
-                                  onFieldSubmitted: (_) => controller.login(),
-                                  suffixIcon: IconButton(
-                                    tooltip: _showPassword
-                                        ? 'Hide password'
-                                        : 'Show password',
-                                    onPressed: () => setState(
-                                      () => _showPassword = !_showPassword,
-                                    ),
-                                    icon: Icon(
-                                      _showPassword
-                                          ? Icons.visibility_off_outlined
-                                          : Icons.visibility_outlined,
-                                      color: isDark
-                                          ? null
-                                          : AppTheme.textMutedLight,
-                                    ),
-                                  ),
-                                  validator: (value) => (value?.isEmpty ?? true)
-                                      ? 'Enter your password'
-                                      : null,
+                                Obx(
+                                  () {
+                                    final isVisible = controller.isPasswordVisible.value;
+                                    return GlassTextField(
+                                      controller: controller.passwordController,
+                                      hintText: 'Enter your password',
+                                      prefixIcon: IconlyLight.lock,
+                                      obscureText: !isVisible,
+                                      textInputAction: TextInputAction.done,
+                                      autofillHints: const [AutofillHints.password],
+                                      onFieldSubmitted: (_) => controller.login(),
+                                      suffixIcon: IconButton(
+                                        key: const Key('login_password_visibility_toggle'),
+                                        focusNode: FocusNode(skipTraversal: true),
+                                        onPressed: controller.togglePasswordVisibility,
+                                        icon: Icon(
+                                          isVisible
+                                              ? Icons.visibility_off_outlined
+                                              : Icons.visibility_outlined,
+                                          color: isDark
+                                              ? AppTheme.primaryGold
+                                              : AppTheme.secondaryOrange,
+                                          size: 20,
+                                        ),
+                                      ),
+                                      validator: (value) => (value?.isEmpty ?? true)
+                                          ? 'Enter your password'
+                                          : null,
+                                    );
+                                  },
                                 ),
                                 const SizedBox(height: 6),
                                 Align(
@@ -322,7 +324,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 5),
         Text(
-          'Operations control centre',
+          'KISOR',
           style: TextStyle(color: subtextColor, fontSize: 14),
         ),
       ],

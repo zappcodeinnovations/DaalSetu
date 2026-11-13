@@ -124,6 +124,14 @@ Future<List<AdminOption>> _load(String endpoint, AdminOption Function(Map<String
   return adminListFrom(response).map(map).where((option) => option.value.isNotEmpty).toList();
 }
 
+/// Party pickers (transporters) show the company, not the person (MoM point 24).
+String _partyLabel(Map<String, dynamic> user) {
+  final company = (user['company_display_name'] ?? user['company_name'] ?? '').toString().trim();
+  if (company.isEmpty) return _userLabel(user);
+  final mobile = (user['mobile'] ?? '').toString();
+  return mobile.isEmpty ? company : '$company ($mobile)';
+}
+
 String _userLabel(Map<String, dynamic> user) {
   final name = [user['first_name'], user['last_name']]
       .where((part) => (part ?? '').toString().trim().isNotEmpty)
@@ -144,7 +152,7 @@ List<AdminOption> transporterOptionsFromUsers(Iterable<Map<String, dynamic>> use
       final kycStatus = (user['kyc_status'] ?? '').toString().trim().toLowerCase();
       return role == 'transporter' && user['is_active'] != false && kycStatus == 'approved';
     })
-    .map((user) => AdminOption('${user['id'] ?? ''}', _userLabel(user)))
+    .map((user) => AdminOption('${user['id'] ?? ''}', _partyLabel(user)))
     .where((option) => option.value.isNotEmpty)
     .toList();
 

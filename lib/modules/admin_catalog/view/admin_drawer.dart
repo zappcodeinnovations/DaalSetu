@@ -434,6 +434,8 @@ class AdminDrawer extends StatelessWidget {
           icon: Icons.inventory_2_outlined,
           onTap: () => Get.to(() => const BuyerConsignmentView()),
         ),
+        _sectionLabel(context, 'ANALYTICS'),
+        _analyticsMenuItem(context),
         _sectionLabel(context, 'FILES'),
         _downloadsMenuItem(context),
         const SizedBox(height: 10),
@@ -506,7 +508,7 @@ class AdminDrawer extends StatelessWidget {
         _customMenuItem(
           context: context,
           key: 'products',
-          title: 'My Offers',
+          title: 'My Products',
           icon: Icons.inventory_2_outlined,
           onTap: () => Get.to(() => const SellerProductView()),
         ),
@@ -575,6 +577,8 @@ class AdminDrawer extends StatelessWidget {
           icon: Icons.local_shipping_outlined,
           onTap: () => Get.to(() => const SellerDeliveryChallanView()),
         ),
+        _sectionLabel(context, 'ANALYTICS'),
+        _analyticsMenuItem(context),
         _sectionLabel(context, 'FILES'),
         _downloadsMenuItem(context),
         _sectionLabel(context, 'SETTINGS'),
@@ -655,6 +659,8 @@ class AdminDrawer extends StatelessWidget {
           icon: Icons.store_mall_directory_outlined,
           onTap: () => Get.to(() => const SellerBranchesView()),
         ),
+        _sectionLabel(context, 'ANALYTICS'),
+        _analyticsMenuItem(context),
         _sectionLabel(context, 'FILES'),
         _downloadsMenuItem(context),
         const SizedBox(height: 10),
@@ -723,6 +729,14 @@ class AdminDrawer extends StatelessWidget {
       ),
     );
   }
+
+  Widget _analyticsMenuItem(BuildContext context) => _customMenuItem(
+        context: context,
+        key: 'my_analytics',
+        title: 'My Analytics',
+        icon: Icons.insights_outlined,
+        onTap: () => Get.toNamed(AppRoutes.myAnalytics),
+      );
 
   Widget _downloadsMenuItem(BuildContext context) => _customMenuItem(
         context: context,

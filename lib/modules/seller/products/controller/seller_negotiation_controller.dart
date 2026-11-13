@@ -38,9 +38,20 @@ class SellerNegotiationController extends GetxController {
           productData.value = response['product'];
         }
         final list = (response['interests'] as List?) ?? [];
-        interestsList.value = list
+        final parsed = list
             .map((e) => OfferInterestModel.fromJson(e))
             .toList();
+        // Auto-elevate active/pending negotiation interests to the top
+        parsed.sort((a, b) {
+          final statusA = (a.status ?? '').toLowerCase();
+          final statusB = (b.status ?? '').toLowerCase();
+          final isPendingA = statusA == 'pending' || statusA == 'negotiating';
+          final isPendingB = statusB == 'pending' || statusB == 'negotiating';
+          if (isPendingA && !isPendingB) return -1;
+          if (!isPendingA && isPendingB) return 1;
+          return 0;
+        });
+        interestsList.value = parsed;
       }
     } catch (e) {
       if (!silent) SellerUi.error("Could not fetch offer interests: $e");
@@ -62,6 +73,8 @@ class SellerNegotiationController extends GetxController {
     required String counterQuantity,
     int? counterBagCount,
     String? counterPackingWeightKg,
+    String? counterDeliveryFrom,
+    String? counterDeliveryTo,
   }) async {
     try {
       Get.dialog(
@@ -75,6 +88,8 @@ class SellerNegotiationController extends GetxController {
         counterQuantity: counterQuantity,
         counterBagCount: counterBagCount,
         counterPackingWeightKg: counterPackingWeightKg,
+        counterDeliveryFrom: counterDeliveryFrom,
+        counterDeliveryTo: counterDeliveryTo,
       );
       if (Get.isDialogOpen ?? false) Get.back();
       if (res['success'] == true) {

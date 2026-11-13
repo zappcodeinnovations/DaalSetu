@@ -101,7 +101,7 @@ class TransporterRfqView extends StatelessWidget {
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final rfq = controller.rfqList[index];
-                  final rfqNumber = rfq.id != null ? "RFQ #${rfq.id}" : "RFQ";
+                  const rfqNumber = "RFQ";
                   final title = rfq.categoryName ?? rfq.brandName ?? "Requirement";
                   final price = rfq.targetPrice != null ? "₹${rfq.targetPrice}/${rfq.priceUnit}" : "Price on Request";
                   final qty = "${rfq.requiredQuantity ?? ''} ${rfq.quantityUnit}".trim();

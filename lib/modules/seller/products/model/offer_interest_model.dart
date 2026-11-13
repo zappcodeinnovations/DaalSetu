@@ -23,6 +23,16 @@ class OfferInterestModel {
   final String? blockedReason;
   final bool canSellerReject;
 
+  /// The buyer as shown on cards: the company name, never the person when a
+  /// company is known (MoM point 24); the person's name is only a fallback.
+  String get displayBuyerInfo {
+    final name = (buyerName ?? '').trim();
+    final company = (buyerCompany ?? '').trim();
+    if (company.isNotEmpty) return company;
+    if (name.isNotEmpty) return name;
+    return '-';
+  }
+
   OfferInterestModel({
     this.id,
     this.productId,
@@ -57,6 +67,33 @@ class OfferInterestModel {
       return fallback;
     }
 
+    String? bName;
+    String? bCompany = (json['buyer_company'] ??
+            json['buyer_company_name'] ??
+            json['company_name'])
+        ?.toString();
+
+    final buyerObj = json['buyer'];
+    if (buyerObj is Map) {
+      final firstLast =
+          '${buyerObj['first_name'] ?? ''} ${buyerObj['last_name'] ?? ''}'
+              .trim();
+      bName = (buyerObj['full_name'] ??
+              buyerObj['name'] ??
+              (firstLast.isNotEmpty ? firstLast : null) ??
+              buyerObj['username'])
+          ?.toString();
+      bCompany ??= (buyerObj['company_name'] ??
+              buyerObj['legal_name'] ??
+              buyerObj['company'])
+          ?.toString();
+    }
+
+    bName ??= json['buyer_full_name']?.toString() ??
+        json['buyer_name']?.toString() ??
+        json['buyer_unique_id']?.toString() ??
+        (buyerObj is String ? buyerObj : null);
+
     return OfferInterestModel(
       id: json['id'] is int
           ? json['id']
@@ -64,12 +101,8 @@ class OfferInterestModel {
       productId: json['product'] is int
           ? json['product']
           : int.tryParse(json['product']?.toString() ?? ''),
-      // The interests API sends offered_amount / required_quantity / remark; older payloads used buyer_*.
-      buyerName:
-          json['buyer_unique_id']?.toString() ??
-          json['buyer_name']?.toString() ??
-          json['buyer']?.toString(),
-      buyerCompany: json['buyer_company']?.toString(),
+      buyerName: bName,
+      buyerCompany: bCompany,
       buyerOfferedAmount:
           (json['buyer_offered_amount'] ?? json['offered_amount'])?.toString(),
       buyerRequiredQuantity:

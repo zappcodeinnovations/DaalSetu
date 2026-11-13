@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,6 +11,7 @@ import '../model/buyer_offer_model.dart';
 import '../../../products/view/product_detail.dart';
 import 'buyer_offer_details_view.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/modules/buyer/offers/view/buyer_offers_view.dart';
 
 class BuyerTodayOffersView extends StatelessWidget {
   const BuyerTodayOffersView({super.key});
@@ -128,14 +130,22 @@ class BuyerTodayOffersView extends StatelessWidget {
   void _openDetails(BuyerOfferModel offer) {
     final pId = offer.productId ?? offer.id;
     if (pId != null) {
-      Get.to(() => ProductDetailScreen(productId: pId));
+      Get.to(() => ProductDetailScreen(
+            productId: pId,
+            onSubmitOffer: buyerSubmitOfferCallback(offer, tag: 'today'),
+          ));
     } else if (offer.id != null) {
       Get.to(() => BuyerOfferDetailsView(offerId: offer.id!));
     }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PageAutoRefresh(
+    onRefresh: () => Get.find<BuyerOffersController>(tag: 'today').fetchOffers(silent: true),
+    child: _buildPageContent(context),
+  );
+
+  Widget _buildPageContent(BuildContext context) {
     final theme = Theme.of(context);
     final controller = Get.put(BuyerOffersController(offerType: 'today'), tag: 'today');
 
@@ -184,7 +194,7 @@ class BuyerTodayOffersView extends StatelessWidget {
         }
 
         return ListView.separated(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 200),
           itemCount: offers.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
@@ -439,6 +449,8 @@ class BuyerTodayOffersView extends StatelessWidget {
                             ),
                           ),
                         ),
+                        // Expired / out of stock is already in the status badge: no second copy.
+                        if (!offer.isExpired && !offer.isOutOfStock) ...[
                         const SizedBox(width: 10),
                         Expanded(
                           child: ElevatedButton(
@@ -519,6 +531,7 @@ class BuyerTodayOffersView extends StatelessWidget {
                             ),
                           ),
                         ),
+                        ],
                       ],
                     ),
                   ],

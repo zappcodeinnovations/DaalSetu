@@ -21,8 +21,13 @@ class AppShell {
     AppRoutes.forgot_password,
   };
 
-  static bool get isSignedInPage =>
-      !_publicRoutes.contains(Get.currentRoute) && Get.currentRoute.isNotEmpty;
+  static bool get isSignedInPage {
+    final route = Get.currentRoute;
+    if (route.isNotEmpty && _publicRoutes.contains(route)) {
+      return false;
+    }
+    return true;
+  }
 
   /// [activeKey] highlights the current page's item in the menu.
   static void openDrawer({String? activeKey}) {

@@ -427,7 +427,8 @@ class AdminDashboardScreen extends StatelessWidget {
             crossAxisCount: columns,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: columns == 2 ? 1.12 : 1.2,
+            // Fixed height that fits the card's content, so no empty band below it.
+            mainAxisExtent: 136,
           ),
           itemBuilder: (context, index) {
             final metric = metrics[index];
@@ -2904,19 +2905,13 @@ child: Text(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "ID: ${contract.id}",
+                      "${contract.seller} → ${contract.buyer}",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: theme.textTheme.bodyLarge?.color,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      "${contract.seller} → ${contract.buyer}",
-                      style: GoogleFonts.inter(
-                        fontSize: 10,
-                        color: theme.textTheme.bodyMedium?.color,
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -2932,7 +2927,7 @@ child: Text(
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        fontSize: 9,
+                        fontSize: 10,
                         color: theme.textTheme.bodySmall?.color,
                       ),
                     ),

@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -70,7 +71,13 @@ class _TransporterOfferList extends StatelessWidget {
   const _TransporterOfferList({required this.offerType});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => PageAutoRefresh(
+    onRefresh: () => Get.find<BuyerOffersController>(tag: offerType).fetchOffers(silent: true),
+    tabIndex: const ['all', 'today', 'pending', 'previous'].indexOf(offerType),
+    child: _buildPageContent(context),
+  );
+
+  Widget _buildPageContent(BuildContext context) {
     final controller = Get.put(
       BuyerOffersController(offerType: offerType),
       tag: offerType,
@@ -123,7 +130,7 @@ class _TransporterOfferList extends StatelessWidget {
           separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final offer = offers[index];
-            final title = offer.displayTitle ?? offer.title ?? "Offer #${offer.id ?? ''}";
+            final title = offer.displayTitle ?? offer.title ?? "Offer";
             final price = offer.displayPrice ?? (offer.requestedAmount != null ? "₹${offer.requestedAmount}" : "₹0");
             final quantity = offer.displayQuantity ?? "${offer.requestedQuantity ?? ''} ${offer.quantityUnit ?? ''}".trim();
             final status = offer.displayStatus ?? (offer.status ?? 'ACTIVE').toUpperCase();
