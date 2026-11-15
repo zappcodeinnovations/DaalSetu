@@ -23,11 +23,11 @@ class AppTheme {
 
   static const Color bgLight = Color(0xFFF8F9FA);
   static const Color cardLight = Color(0xFFFFFFFF);
-  static const Color borderLight = Color(0xFFE2E8F0);
+  static const Color borderLight = Color(0xFFCBD5E1);
   
-  static const Color textPrimaryLight = Color(0xFF0F172A);
-  static const Color textSecondaryLight = Color(0xFF475569);
-  static const Color textMutedLight = Color(0xFF94A3B8);
+  static const Color textPrimaryLight = Color(0xFF0A0F1D);
+  static const Color textSecondaryLight = Color(0xFF1E293B);
+  static const Color textMutedLight = Color(0xFF475569);
 
   // ── Typography ─────────────────────────────────────────────────────────
   static TextTheme _buildTextTheme(TextTheme base, Color pColor, Color sColor, Color mColor) {
@@ -40,10 +40,10 @@ class AppTheme {
       headlineSmall: GoogleFonts.poppins(color: pColor, fontWeight: FontWeight.w600),
       titleLarge: GoogleFonts.poppins(color: pColor, fontWeight: FontWeight.w600, fontSize: 20),
       titleMedium: GoogleFonts.poppins(color: pColor, fontWeight: FontWeight.w500, fontSize: 16),
-      titleSmall: GoogleFonts.poppins(color: sColor, fontWeight: FontWeight.w500, fontSize: 14),
-      bodyLarge: GoogleFonts.inter(color: pColor, fontSize: 16),
-      bodyMedium: GoogleFonts.inter(color: sColor, fontSize: 14),
-      bodySmall: GoogleFonts.inter(color: mColor, fontSize: 12),
+      titleSmall: GoogleFonts.poppins(color: sColor, fontWeight: FontWeight.w600, fontSize: 14),
+      bodyLarge: GoogleFonts.inter(color: pColor, fontSize: 16, fontWeight: FontWeight.w600),
+      bodyMedium: GoogleFonts.inter(color: sColor, fontSize: 14, fontWeight: FontWeight.w500),
+      bodySmall: GoogleFonts.inter(color: mColor, fontSize: 12, fontWeight: FontWeight.w500),
       labelLarge: GoogleFonts.inter(color: pColor, fontWeight: FontWeight.w600, fontSize: 14),
       labelMedium: GoogleFonts.inter(color: sColor, fontWeight: FontWeight.w500, fontSize: 12),
       labelSmall: GoogleFonts.inter(color: mColor, fontWeight: FontWeight.w500, fontSize: 10, letterSpacing: 1.0),
@@ -240,10 +240,10 @@ class AppTheme {
         color: cardLight,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          side: const BorderSide(color: borderLight, width: 1),
+          side: const BorderSide(color: borderLight, width: 1.2),
         ),
-        elevation: 2,
-        shadowColor: Colors.black.withValues(alpha: 0.05),
+        elevation: 3,
+        shadowColor: Colors.black.withValues(alpha: 0.08),
       ),
 
       dividerColor: borderLight,
@@ -253,18 +253,18 @@ class AppTheme {
         filled: true,
         fillColor: cardLight,
         contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
-        hintStyle: const TextStyle(color: textMutedLight, fontSize: 14),
+        hintStyle: const TextStyle(color: textMutedLight, fontSize: 14, fontWeight: FontWeight.w500),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: borderLight),
+          borderSide: const BorderSide(color: borderLight, width: 1.2),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: borderLight),
+          borderSide: const BorderSide(color: borderLight, width: 1.2),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: primaryGold, width: 1.5),
+          borderSide: const BorderSide(color: secondaryOrange, width: 1.8),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -278,10 +278,10 @@ class AppTheme {
 
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryGold,
+          backgroundColor: secondaryOrange,
           foregroundColor: Colors.white,
           elevation: 4,
-          shadowColor: primaryGold.withValues(alpha: 0.3),
+          shadowColor: secondaryOrange.withValues(alpha: 0.35),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16),
@@ -290,7 +290,7 @@ class AppTheme {
 
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: primaryGold,
+          foregroundColor: secondaryOrange,
           textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
         ),
       ),
@@ -306,7 +306,7 @@ class AppTheme {
 
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return primaryGold;
+          if (states.contains(WidgetState.selected)) return secondaryOrange;
           return Colors.transparent;
         }),
         side: const BorderSide(color: borderLight, width: 2),
@@ -315,12 +315,12 @@ class AppTheme {
 
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return primaryGold;
+          if (states.contains(WidgetState.selected)) return secondaryOrange;
           return textMutedLight;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return primaryGold.withValues(alpha: 0.3);
+            return secondaryOrange.withValues(alpha: 0.3);
           }
           return borderLight;
         }),
@@ -329,7 +329,7 @@ class AppTheme {
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: cardLight,
         elevation: 12,
-        selectedItemColor: primaryGold,
+        selectedItemColor: secondaryOrange,
         unselectedItemColor: textMutedLight,
         type: BottomNavigationBarType.fixed,
       ),

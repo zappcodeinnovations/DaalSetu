@@ -1,22 +1,69 @@
 # Current Task State
 
 ## Current Task
-- **Goal**: Point 8 — Hide Internal Database IDs Across Transporter Brands, Dashboards, Orders, and Contract Details.
+- **Goal**: Upgrade Secondary / Detail Screens in Buyer Panel (`ContractDetailScreen`, `ProductDetailScreen`, `SellerNotificationView`, `EditProfileScreen`, `AddCompanyView`, `SubCategoryScreen`) with Modern Reusable HeroHeader.
 - **Status**: Completed & Verified.
 - **Output**:
-  - `lib/modules/transporter/brands/view/transporter_brands_view.dart`: Replaced `"Brand ID: #"` with `"Verified Brand"`.
-  - `lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`: Replaced `"Order ID:"` with seller name / `'Confirmed Order'`.
-  - `lib/modules/buyer/orders/view/buyer_orders_view.dart`: Replaced `"Order ID:"` with seller name / `'Confirmed Order'`.
-  - `lib/modules/dashboard/view/dashboard_page.dart`: Replaced `"ID: "` with `"${contract.seller} → ${contract.buyer}"`.
-  - `lib/modules/seller/dashboard/view/seller_dashboard_view.dart`: Replaced `"ID: "` with Category and Brand.
-  - `lib/modules/transporter/bidding/view/transporter_bidding_view.dart`: Replaced Contract ID numbers with product/commodity title.
-  - `lib/modules/contracts/view/contract_details_view.dart`: Removed `(ID: $id)` suffix from admin detail rows.
-  - Added test suite `test/hide_database_ids_test.dart` (4/4 passed).
-- **Evidence**: `test/hide_database_ids_test.dart` (4/4 passed), `test/buyer_contract_details_offer_id_test.dart` (4/4 passed), static analysis clean.
+  - `lib/modules/contracts/view/contract_details_view.dart`:
+    - Replaced plain monochrome AppBar with `HeroHeader` ("Contract Details" • "Deal summary & legal agreement") + PDF download action.
+  - `lib/modules/products/view/product_detail.dart`:
+    - Replaced plain monochrome AppBar with `HeroHeader` ("Product Details" • "Commodity specifications & seller terms") + refresh action.
+  - `lib/modules/seller/notifications/view/seller_notification_view.dart`:
+    - Replaced transparent AppBar with `HeroHeader` ("Notifications" • "Realtime updates & deal alerts") + mark all read action.
+  - `lib/modules/profile/view/edit_profile_page.dart`:
+    - Replaced custom AppBar with `HeroHeader` ("Edit Profile" • "Update personal & tax credentials").
+  - `lib/modules/seller/company/view/add_company_view.dart`:
+    - Replaced plain AppBar with `HeroHeader` (dynamic "Edit Company" / "Register Company" • "Enterprise identity, GST & branch details").
+  - `lib/modules/category/view/subcategory_page.dart`:
+    - Replaced blank/commented AppBar with `HeroHeader` (dynamic Category Name • "Browse commodities & varieties") + refresh action.
+- **Evidence**: `flutter analyze` passed with 0 errors across all updated files; comprehensive test suite passed (19/19 tests: `test/buyer_category_requests_test.dart`, `test/buyer_drawer_test.dart`, `test/buyer_contract_details_offer_id_test.dart`, `test/contract_delivery_challan_button_test.dart`, `test/buyer_submit_offer_on_detail_test.dart`, `test/notification_reclick_navigation_test.dart`).
 
 ---
 
 ## Completed Work in Current Session
+- **Final Specialized Screens Modernization**:
+  - `lib/modules/shared/view/offer_interest_negotiation_chat_view.dart`:
+    - Upgraded negotiation chat header to agritech `HeroHeader` ("${title}" • "Live negotiation · auto-refresh") with white back navigation and refresh action.
+  - `lib/modules/admin_catalog/view/admin_module_list_screen.dart`:
+    - Upgraded Sub-Admins/Salesman catalog view to `HeroHeader` with dynamic module title and refresh action.
+  - `lib/modules/admin_catalog/view/admin_roles_screen.dart`:
+    - Upgraded Roles screen to `HeroHeader` ("Roles" • "Manage administrative roles & permissions").
+- **Login Screen UI/UX Modernization**:
+  - Transformed flat/washed-out login screen into a warm, high-contrast, premium Agro Trading authentication portal.
+  - Added subtle saffron-to-amber top ambient gradient wash and soft radial glows.
+  - Elevated DaalSetu logo with 30px amber depth shadow, white border, and integrated `'KISOR'` badge with `'Pulse Trading Platform'` subtitle.
+  - Refined Sign-In card with amber border tint, soft multi-layer shadow, and "Encrypted" security badge pill.
+  - Upgraded "Sign in securely" button with deep saffron/amber dual gradient and glow.
+  - Strictly preserved 10-digit mobile input format, controller, form validation, password visibility toggling, autofocus, and route navigations.
+- **Buyer Panel Secondary & Detail Screens Modernization**:
+  - Safely refactored `ContractDetailScreen`, `ProductDetailScreen`, `SellerNotificationView`, `EditProfileScreen`, `AddCompanyView`, and `SubCategoryScreen` to use the unified warm `HeroHeader`.
+- **Settings Screen Destinations HeroHeader Unification**:
+  - Upgraded Profile and Change Password screens to follow the same warm hero gradient and typography.
+- **100% Buyer Drawer Destinations HeroHeader Unification**:
+  - Brought unified warm hero gradient and typography across all 14 screens accessible from Buyer Drawer.
+- **Buyer Panel Core Screens HeroHeader Rollout**:
+  - Implemented `HeroHeader` across Post Requirement, Offer Details, Delivery Challan Details, Recent Orders, Transport Tracking, and Consignments.
+- **Settings Screen HeroHeader Rollout**:
+  - Replaced plain white AppBar with warm gradient `HeroHeader`.
+- **HeroHeader Responsiveness & Overflow Prevention**:
+  - Hardened subtitle height calculation and padding to ensure 0-overflow on all device aspect ratios.
+- **Buyer Drawer Modern Redesign**:
+  - Upgraded flat, black-and-white drawer to a warm, eye-catching agritech/fintech drawer matching the redesigned HeroHeader and dashboard cards with zero risk to navigation.
+- **Buyer Offers Screen UI Beautification**:
+  - Transformed dull/translucent offer cards into crisp, high-contrast, beautiful fintech/agritech cards with prominent price and solid background.
+- **Active Offer & KPI Cards Transformation**:
+  - Transformed flat/dull active offer and KPI grid into vibrant, eye-catching components matching reference design.
+- **Complete Buyer Primary Navigation HeroHeader Rollout**:
+  - Upgraded all 5 main buyer tabs to have unified, warm, eye-catching curved hero headers.
+- **Reusable HeroHeader & Dashboard Parity**:
+  - Transformed flat clinical dashboard into warm, vibrant, eye-catching UI matching the reference design.
+- **Global Visual Polish (Nav Bar, TextButtons, Checkboxes, Switches)**:
+  - Eliminated faded yellow-on-white active bottom bar tabs and clickable action links by binding them to `secondaryOrange`.
+- **Global Button, Card, and Input Field Contrast Polish**:
+  - Replaced low-contrast white-on-yellow buttons with striking orange call-to-actions.
+  - Added clean definition to cards and text inputs so they pop against the scaffold background.
+- **Global Typography & Contrast Enhancement**:
+  - Solved faded and light text feedback across 109+ screens by centrally hardening text contrast and font weights in `lib/theme/app_theme.dart`.
 - **Bug 54 Completed (Hide Internal Database IDs)**:
   - Eliminated raw database integer IDs from Transporter Brands, Dashboards, Buyer Orders, and Contract administration details.
   - Replaced IDs with meaningful business information (Seller name, Category, Brand, Product title).

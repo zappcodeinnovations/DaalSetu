@@ -11,6 +11,7 @@ import '../model/buyer_offer_model.dart';
 import '../../../products/view/product_detail.dart';
 import 'buyer_offer_details_view.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:daalsetu/modules/buyer/offers/view/buyer_offers_view.dart';
 
 class BuyerTodayOffersView extends StatelessWidget {
@@ -151,27 +152,21 @@ class BuyerTodayOffersView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        leading: AppBarLeading(child: Navigator.canPop(context)
-            ? IconButton(
-                icon: Icon(
-                  Icons.arrow_back_ios_new,
-                  color: theme.textTheme.bodyLarge?.color,
-                  size: 20,
-                ),
-                onPressed: () => Get.back(),
-              )
-            : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-        title: Text(
-          "Today's Offers",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
+      appBar: HeroHeader(
+        leading: AppBarLeading(
+          child: Navigator.canPop(context)
+              ? IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  onPressed: () => Get.back(),
+                )
+              : null,
         ),
+        title: "Today's Offers",
+        subtitle: "Fresh commodity listings posted today",
       ),
       body: Obx(() {
         if (controller.isLoading.value) {

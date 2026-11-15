@@ -5,7 +5,7 @@ import 'package:daalsetu/utils/india_location_data.dart';
 import 'package:daalsetu/utils/tax_id_formatters.dart';
 import 'package:daalsetu/widgets/searchable_selection_sheet.dart';
 import '../controller/seller_company_controller.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class AddCompanyView extends StatefulWidget {
   const AddCompanyView({super.key});
@@ -121,26 +121,13 @@ class _AddCompanyViewState extends State<AddCompanyView> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Obx(
-          () => Text(
-            controller.isEditing.value
-                ? "Edit Company"
-                : "Register New Company",
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+      appBar: HeroHeader(
+        title: controller.isEditing.value ? "Edit Company" : "Register Company",
+        subtitle: "Enterprise identity, GST & branch details",
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
-        leading: AppBarLeading(
-          child: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
-            onPressed: () => Get.back(),
-          ),
-        ),
-        leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
       ),
       body: SafeArea(
         child: SingleChildScrollView(

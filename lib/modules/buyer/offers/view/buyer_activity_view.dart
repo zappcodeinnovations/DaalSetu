@@ -7,6 +7,7 @@ import 'buyer_my_interests_view.dart';
 import 'buyer_request_management_view.dart';
 import 'add_buyer_offer_view.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class BuyerActivityView extends StatelessWidget {
   final int initialIndex;
@@ -25,31 +26,21 @@ class BuyerActivityView extends StatelessWidget {
       initialIndex: (initialIndex >= 0 && initialIndex < 2) ? initialIndex : 0,
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: AppBar(
-          backgroundColor: theme.scaffoldBackgroundColor,
-          elevation: 0,
-          leading: AppBarLeading(child: Navigator.canPop(context)
-              ? IconButton(
-                  icon: Icon(
-                    IconlyLight.arrow_left_2,
-                    color: theme.textTheme.bodyLarge?.color,
-                  ),
-                  onPressed: () => Get.back(),
-                )
-              : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-          title: Text(
-            "My Activity",
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              color: theme.textTheme.bodyLarge?.color,
-            ),
+        appBar: HeroHeader(
+          leading: AppBarLeading(
+            child: Navigator.canPop(context)
+                ? IconButton(
+                    icon: const Icon(
+                      IconlyLight.arrow_left_2,
+                      color: Colors.white,
+                    ),
+                    onPressed: () => Get.back(),
+                  )
+                : null,
           ),
-          bottom: TabBar(
-            indicatorColor: theme.colorScheme.primary,
-            labelColor: theme.colorScheme.primary,
-            unselectedLabelColor: theme.textTheme.bodyMedium?.color,
-            labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-            tabs: const [
+          title: "My Activity",
+          bottom: const TabBar(
+            tabs: [
               Tab(text: "My Interests"),
               Tab(text: "My Requirements"),
             ],

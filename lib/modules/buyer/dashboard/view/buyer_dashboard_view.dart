@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../../theme/glass_widgets.dart';
+import '../../../../widgets/hero_header.dart';
 import '../controller/buyer_dashboard_controller.dart';
 import '../../../profile/controller/profile_controller.dart';
 import '../../../category/model/category_model.dart';
@@ -39,7 +40,6 @@ class BuyerDashboardView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: _buildAppBar(context),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
@@ -94,61 +94,66 @@ class BuyerDashboardView extends StatelessWidget {
           onRefresh: controller.fetchDashboardData,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: EdgeInsets.zero,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeroHeader(context),
-                const SizedBox(height: 16),
-                // _buildSearchBar(context),
-                // const SizedBox(height: 24),
-                _buildBannerSlider(context, data.recentRfqs),
-                const SizedBox(height: 30),
-                _buildSectionHeader(
-                  context,
-                  "Shop by Category",
-                  "View All",
-                  onTap: () {
-                    Get.to(() => CategoryPageView());
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildCategoriesList(context, controller.categories),
-                const SizedBox(height: 30),
-                _buildKPIGrid(context, data.kpis),
-                const SizedBox(height: 30),
-                Obx(
-                  () => BuyerDashboardAnalytics(
-                    charts: data.charts,
-                    transportTracking: data.transportTracking,
-                    selectedRange: controller.selectedRange.value,
-                    isRangeLoading: controller.isRangeLoading.value,
-                    onRangeChanged: controller.setRange,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildBannerSlider(context, data.recentRfqs),
+                      const SizedBox(height: 28),
+                      _buildSectionHeader(
+                        context,
+                        "Shop by Category",
+                        "View All",
+                        onTap: () {
+                          Get.to(() => CategoryPageView());
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildCategoriesList(context, controller.categories),
+                      const SizedBox(height: 28),
+                      _buildKPIGrid(context, data.kpis),
+                      const SizedBox(height: 28),
+                      Obx(
+                        () => BuyerDashboardAnalytics(
+                          charts: data.charts,
+                          transportTracking: data.transportTracking,
+                          selectedRange: controller.selectedRange.value,
+                          isRangeLoading: controller.isRangeLoading.value,
+                          onRangeChanged: controller.setRange,
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      _buildSectionHeader(
+                        context,
+                        "Recent Requirements & Negotiations",
+                        "View All",
+                        onTap: () {
+                          Get.to(() => const BuyerActivityView(initialIndex: 0));
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildRecentRequirementsList(context, data.recentRfqs),
+                      const SizedBox(height: 28),
+                      _buildSectionHeader(
+                        context,
+                        "Recent Deals & Orders",
+                        "View All",
+                        onTap: () {
+                          Get.to(() => const BuyerOrdersView());
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildRecentOrdersList(context, data.recentOrders),
+                      const SizedBox(height: 100),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 30),
-                _buildSectionHeader(
-                  context,
-                  "Recent Requirements & Negotiations",
-                  "View All",
-                  onTap: () {
-                    Get.to(() => const BuyerActivityView(initialIndex: 0));
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildRecentRequirementsList(context, data.recentRfqs),
-                const SizedBox(height: 30),
-                _buildSectionHeader(
-                  context,
-                  "Recent Deals & Orders",
-                  "View All",
-                  onTap: () {
-                    Get.to(() => const BuyerOrdersView());
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildRecentOrdersList(context, data.recentOrders),
-                const SizedBox(height: 100),
               ],
             ),
           ),
@@ -157,145 +162,67 @@ class BuyerDashboardView extends StatelessWidget {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return PreferredSize(
-      preferredSize: const Size.fromHeight(kToolbarHeight),
-      child: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        // Same app-wide menu as every other page: opens full screen, over the bottom nav.
-        leading: const AppBarLeading(),
-        leadingWidth: AppBarLeading.widthFor(context),
-        title: SizedBox(
-          width: 120,
-          height: 32,
-          child: Image.asset(
-            'assets/images/app_name.png',
-            fit: BoxFit.contain,
-          ),
-        ),
-        actions: [
-          Obx(() {
-            final count = Get.isRegistered<RealtimeNotificationService>()
-                ? RealtimeNotificationService.to.unreadCount.value
-                : 0;
-            return Stack(
-              alignment: Alignment.center,
-              children: [
-                IconButton(
-                  icon: const Icon(IconlyLight.notification, size: 28),
-                  onPressed: () => Get.to(() => const SellerNotificationView()),
-                ),
-                if (count > 0)
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 5,
-                        vertical: 2,
-                      ),
-                      decoration: const BoxDecoration(
-                        color: Colors.deepOrange,
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
-                      ),
-                      constraints: const BoxConstraints(
-                        minWidth: 16,
-                        minHeight: 16,
-                      ),
-                      child: Text(
-                        count > 99 ? '99+' : '$count',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          }),
-          // PopupMenuButton<String>(
-          //   tooltip: 'Buyer menu',
-          //   onSelected: (value) {
-          //     switch (value) {
-          //       case 'categories':
-          //         Get.to(() => const CategoryPageView());
-          //         break;
-          //       case 'companies':
-          //         Get.to(() => const SellerCompanyView());
-          //         break;
-          //       case 'consignments':
-          //         Get.to(() => const BuyerConsignmentView());
-          //         break;
-          //       case 'challans':
-          //         Get.to(() => const BuyerDeliveryChallanView());
-          //         break;
-          //     }
-          //   },
-          //   itemBuilder: (_) => const [
-          //     PopupMenuItem(value: 'categories', child: Text('My Categories')),
-          //     PopupMenuItem(value: 'companies', child: Text('My Companies')),
-          //     PopupMenuItem(
-          //       value: 'consignments',
-          //       child: Text('Consignment Management'),
-          //     ),
-          //     PopupMenuItem(
-          //       value: 'challans',
-          //       child: Text('Delivery Challans'),
-          //     ),
-          //   ],
-          // ),
-          const SizedBox(width: 8),
-        ],
-      ),
-    );
-  }
 
   Widget _buildHeroHeader(BuildContext context) {
-    final theme = Theme.of(context);
     return Obx(() {
       final profile = profileController.profile.value;
       final name = profile == null
           ? "Buyer"
           : "${profile.firstName} ${profile.lastName}";
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text.rich(
-            TextSpan(
-              text: "Hello, ",
-              style: GoogleFonts.poppins(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: theme.textTheme.bodyLarge?.color,
-              ),
-              children: [
-                TextSpan(
-                  text: name,
-                  style: GoogleFonts.poppins(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: theme.textTheme.bodyLarge?.color,
+      final count = Get.isRegistered<RealtimeNotificationService>()
+          ? RealtimeNotificationService.to.unreadCount.value
+          : 0;
+
+      return HeroHeader(
+        leading: const AppBarLeading(),
+        titleWidget: SizedBox(
+          width: 120,
+          height: 32,
+          child: Image.asset(
+            'assets/images/app_name.png',
+            fit: BoxFit.contain,
+            color: Colors.white,
+          ),
+        ),
+        trailing: Stack(
+          alignment: Alignment.center,
+          children: [
+            IconButton(
+              icon: const Icon(IconlyLight.notification, size: 26, color: Colors.white),
+              onPressed: () => Get.to(() => const SellerNotificationView()),
+            ),
+            if (count > 0)
+              Positioned(
+                right: 6,
+                top: 6,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 2,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 16,
+                    minHeight: 16,
+                  ),
+                  child: Text(
+                    count > 99 ? '99+' : '$count',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-                const TextSpan(text: " 👋"),
-              ],
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            "Welcome back! Here's what's happening today.",
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              color: theme.textTheme.bodyMedium?.color,
-            ),
-          ),
-        ],
+              ),
+          ],
+        ),
+        title: "Hello, $name 👋",
+        subtitle: "Welcome back! Here's what's happening today.",
       );
     });
   }
@@ -381,12 +308,27 @@ class BuyerDashboardView extends StatelessWidget {
               width: 76,
               child: Column(
                 children: [
-                  GlassCard(
-                    padding: const EdgeInsets.all(16),
-                    child: Icon(
-                      IconlyBold.category,
-                      size: 28,
-                      color: Colors.amber[700],
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF3E0),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFFFFE0B2), width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFF57C00).withValues(alpha: 0.12),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        IconlyBold.category,
+                        size: 26,
+                        color: Color(0xFFE65100),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -622,8 +564,29 @@ class BuyerDashboardView extends StatelessWidget {
     VoidCallback? onTap,
   }) {
     final theme = Theme.of(context);
-    const orangeColor = Color(0xFFEA580C);
-    const peachBg = Color(0xFFFFF3EA);
+
+    // Distinct vibrant color accents for each metric
+    Color iconColor;
+    Color iconBg;
+    if (title.contains("SPENT")) {
+      iconColor = const Color(0xFF059669); // Emerald Green
+      iconBg = const Color(0xFFECFDF5);
+    } else if (title.contains("ACTIVE ORDERS") || title.contains("REQUIREMENT")) {
+      iconColor = const Color(0xFFEA580C); // Warm Orange
+      iconBg = const Color(0xFFFFF7ED);
+    } else if (title.contains("CONTRACT")) {
+      iconColor = const Color(0xFF2563EB); // Royal Blue
+      iconBg = const Color(0xFFEFF6FF);
+    } else if (title.contains("TRANSIT")) {
+      iconColor = const Color(0xFF7C3AED); // Purple
+      iconBg = const Color(0xFFFAF5FF);
+    } else if (title.contains("PAYMENT") || title.contains("COMPLAINT") || title.contains("ISSUE")) {
+      iconColor = const Color(0xFFDC2626); // Red
+      iconBg = const Color(0xFFFEF2F2);
+    } else {
+      iconColor = const Color(0xFFD97706); // Amber
+      iconBg = const Color(0xFFFFFBEB);
+    }
 
     return InkWell(
       onTap: onTap,
@@ -634,13 +597,13 @@ class BuyerDashboardView extends StatelessWidget {
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: const Color(0xFFF97316).withValues(alpha: 0.25),
+            color: const Color(0xFFE2E8F0),
             width: 1.2,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 12,
               offset: const Offset(0, 4),
             ),
           ],
@@ -652,18 +615,18 @@ class BuyerDashboardView extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(7),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: peachBg,
-                    borderRadius: BorderRadius.circular(10),
+                    color: iconBg,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(icon, color: orangeColor, size: 18),
+                  child: Icon(icon, color: iconColor, size: 19),
                 ),
                 if (onTap != null)
                   Icon(
                     Icons.arrow_forward_ios_rounded,
                     size: 12,
-                    color: theme.dividerColor.withValues(alpha: 0.8),
+                    color: const Color(0xFF94A3B8),
                   ),
               ],
             ),
@@ -675,36 +638,57 @@ class BuyerDashboardView extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 10.5,
                 fontWeight: FontWeight.w700,
-                letterSpacing: 0.6,
-                color: theme.textTheme.bodyMedium?.color?.withValues(
-                  alpha: 0.7,
-                ),
+                letterSpacing: 0.5,
+                color: const Color(0xFF64748B),
               ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 4),
             Text(
               value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.poppins(
                 fontSize: 19,
-                fontWeight: FontWeight.bold,
-                color: theme.textTheme.bodyLarge?.color,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF0A0F1D),
               ),
             ),
             const SizedBox(height: 4),
-            Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                fontSize: 10.5,
-                fontWeight: isTrend ? FontWeight.w600 : FontWeight.w500,
-                color: isTrend
-                    ? Colors.green.shade700
-                    : theme.textTheme.bodySmall?.color,
+            if (isTrend && subtitle.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.only(top: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFECFDF5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.trending_up_rounded, size: 13, color: Color(0xFF059669)),
+                    const SizedBox(width: 4),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF059669),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF64748B),
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -1338,7 +1322,6 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
     int index,
     int totalCount,
   ) {
-    final theme = Theme.of(context);
     String title = offer.displayTitle ?? offer.title ?? "Special Deal";
     if (title.contains("API-DOC")) {
       title = title.split(" ").skip(1).join(" ");
@@ -1381,139 +1364,152 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
           width: double.infinity,
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
+            gradient: const LinearGradient(
               colors: [
-                theme.colorScheme.primary.withValues(alpha: 0.1),
-                theme.colorScheme.primary.withValues(alpha: 0.25),
+                Color(0xFFE65100), // Deep rich saffron
+                Color(0xFFF57C00), // Vibrant amber orange
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: cardRadius,
-            border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.15),
-            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFE65100).withValues(alpha: 0.28),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
           child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(
-                    isRfq ? IconlyBold.document : IconlyBold.discount,
-                    size: 14,
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    badgeLabel,
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
-                      letterSpacing: 1.0,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isRfq ? IconlyBold.document : IconlyBold.discount,
+                          size: 13,
+                          color: const Color(0xFFE65100),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          badgeLabel,
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFFE65100),
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                  if (totalCount > 1)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        "${index + 1} / $totalCount",
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
                 ],
               ),
-              if (totalCount > 1)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    "${index + 1} / $totalCount",
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
+              const SizedBox(height: 6),
+              Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: 19,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  height: 1.2,
                 ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: theme.textTheme.bodyLarge?.color,
-              height: 1.2,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              if (price.isNotEmpty)
-                Text(
-                  price.startsWith('₹') ? price : '₹$price',
-                  style: GoogleFonts.poppins(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-              if (qty.isNotEmpty) ...[
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    isRfq ? "Needed: $qty" : "Available: $qty",
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: theme.textTheme.bodyMedium?.color,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 8),
-          ElevatedButton(
-            onPressed: navigateToDetails,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  "View Details",
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
+              const SizedBox(height: 4),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  if (price.isNotEmpty)
+                    Text(
+                      price.startsWith('₹') ? price : '₹$price',
+                      style: GoogleFonts.poppins(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                  if (qty.isNotEmpty) ...[
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        isRfq ? "Needed: $qty" : "Available: $qty",
+                        style: GoogleFonts.inter(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: navigateToDetails,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFFE65100),
+                  elevation: 4,
+                  shadowColor: Colors.black.withValues(alpha: 0.15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
                   ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 ),
-                const SizedBox(width: 6),
-                const Icon(IconlyLight.arrow_right_2, size: 14),
-              ],
-            ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "View Details",
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        color: const Color(0xFFE65100),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(IconlyLight.arrow_right_2, size: 14, color: Color(0xFFE65100)),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     ),
   ),
 );

@@ -5,6 +5,7 @@ import 'package:iconly/iconly.dart';
 import '../controller/seller_notification_controller.dart';
 import '../../../../services/realtime_notification_service.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class SellerNotificationView extends StatelessWidget {
   const SellerNotificationView({super.key});
@@ -17,17 +18,18 @@ class SellerNotificationView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text("Notifications", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.done_all, color: primaryColor),
-            tooltip: "Mark all as read",
-            onPressed: controller.markAllAsRead,
-          ),
-        ],
+      appBar: HeroHeader(
+        title: "Notifications",
+        subtitle: "Realtime updates & deal alerts",
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        trailing: IconButton(
+          icon: const Icon(Icons.done_all_rounded, color: Colors.white),
+          tooltip: "Mark all as read",
+          onPressed: controller.markAllAsRead,
+        ),
       ),
       body: Obx(() {
         if (controller.isLoading.value) {

@@ -2,7 +2,9 @@ import 'package:daalsetu/modules/admin_catalog/view/admin_drawer.dart';
 import 'package:daalsetu/network/api_client.dart';
 import 'package:daalsetu/utils/money_format.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
 
 /// "My Analytics" (MoM point 30): the web /contracts/history/ page for every role.
@@ -219,20 +221,22 @@ class _MyAnalyticsScreenState extends State<MyAnalyticsScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
     drawer: const AdminDrawer(activeKey: 'my_analytics'),
-    appBar: AppBar(
-      leading: const AppBarLeading(),
-      leadingWidth: AppBarLeading.widthFor(context),
-      title: const Text(
-        'My Analytics',
-        style: TextStyle(fontWeight: FontWeight.w800),
+    appBar: HeroHeader(
+      leading: AppBarLeading(
+        child: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+                onPressed: () => Get.back(),
+              )
+            : null,
       ),
-      actions: [
-        IconButton(
-          tooltip: 'Refresh',
-          onPressed: loading ? null : () => load(reset: true),
-          icon: const Icon(Icons.refresh_rounded),
-        ),
-      ],
+      title: "My Analytics",
+      subtitle: "Business performance & trade insights",
+      trailing: IconButton(
+        tooltip: 'Refresh',
+        onPressed: loading ? null : () => load(reset: true),
+        icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 22),
+      ),
     ),
     body: loading && records.isEmpty
         ? const Center(child: CircularProgressIndicator())

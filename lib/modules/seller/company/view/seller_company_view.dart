@@ -7,6 +7,7 @@ import '../controller/seller_company_controller.dart';
 import '../model/seller_company_model.dart';
 import 'add_company_view.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class SellerCompanyView extends StatelessWidget {
   const SellerCompanyView({super.key});
@@ -20,32 +21,32 @@ class SellerCompanyView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          "Company",
-          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+      appBar: HeroHeader(
+        leading: AppBarLeading(
+          child: Navigator.canPop(context)
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+                  onPressed: () => Get.back(),
+                )
+              : null,
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
-            child: ElevatedButton.icon(
-              onPressed: () {
-                controller.clearForm();
-                Get.to(() => const AddCompanyView());
-              },
-              icon: const Icon(Icons.add, size: 18, color: Colors.white),
-              label: const Text("Add", style: TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-              ),
+        title: "Registered Company",
+        trailing: Container(
+          margin: const EdgeInsets.only(right: 4),
+          child: TextButton.icon(
+            onPressed: () {
+              controller.clearForm();
+              Get.to(() => const AddCompanyView());
+            },
+            icon: const Icon(Icons.add_rounded, size: 18, color: Colors.white),
+            label: const Text("Add", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.white.withValues(alpha: 0.25),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             ),
           ),
-        ],
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: controller.fetchCompanies,

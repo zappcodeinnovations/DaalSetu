@@ -14,6 +14,7 @@ import 'add_buyer_offer_view.dart';
 import 'buyer_offer_details_view.dart';
 import 'buyer_negotiation_view.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 /// Opens the buyer's Submit Offer dialog for a seller offer. Used by the offer
 /// detail page (MoM 7) from every buyer screen that opens it.
@@ -45,32 +46,22 @@ class BuyerOffersView extends StatelessWidget {
       initialIndex: (initialIndex >= 0 && initialIndex < 4) ? initialIndex : 0,
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: AppBar(
-          backgroundColor: theme.scaffoldBackgroundColor,
-          elevation: 0,
-          leading: AppBarLeading(child: Navigator.canPop(context)
-              ? IconButton(
-                  icon: Icon(
-                    IconlyLight.arrow_left_2,
-                    color: theme.textTheme.bodyLarge?.color,
-                  ),
-                  onPressed: () => Get.back(),
-                )
-              : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-          title: Text(
-            "Offers",
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              color: theme.textTheme.bodyLarge?.color,
-            ),
+        appBar: HeroHeader(
+          leading: AppBarLeading(
+            child: Navigator.canPop(context)
+                ? IconButton(
+                    icon: const Icon(
+                      IconlyLight.arrow_left_2,
+                      color: Colors.white,
+                    ),
+                    onPressed: () => Get.back(),
+                  )
+                : null,
           ),
-          bottom: TabBar(
+          title: "Offers",
+          bottom: const TabBar(
             isScrollable: true,
-            indicatorColor: theme.colorScheme.primary,
-            labelColor: theme.colorScheme.primary,
-            unselectedLabelColor: theme.textTheme.bodyMedium?.color,
-            labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-            tabs: const [
+            tabs: [
               Tab(text: "Offers"),
               Tab(text: "Today"),
               Tab(text: "Pending"),
@@ -130,28 +121,47 @@ class _OfferList extends StatelessWidget {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: Container(
-            height: 42,
+            height: 46,
             decoration: BoxDecoration(
-              color: theme.cardColor,
-              borderRadius: BorderRadius.circular(21),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: theme.dividerColor.withValues(alpha: 0.5),
+                color: const Color(0xFFE2E8F0),
+                width: 1.2,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             child: TextField(
               onChanged: controller.searchOffers,
-              style: GoogleFonts.inter(fontSize: 13),
+              style: GoogleFonts.inter(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF0F172A),
+              ),
               decoration: InputDecoration(
                 hintText: offerType == 'requirements'
                     ? "Search requirements..."
                     : "Search offers (name, price, qty)...",
-                hintStyle: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
-                prefixIcon: const Icon(IconlyLight.search, size: 18),
+                hintStyle: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: const Color(0xFF94A3B8),
+                ),
+                prefixIcon: const Icon(
+                  IconlyLight.search,
+                  size: 20,
+                  color: Color(0xFFF57C00),
+                ),
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(
-                  vertical: 11,
+                  vertical: 12,
                   horizontal: 14,
                 ),
               ),
@@ -336,45 +346,57 @@ class _OfferList extends StatelessWidget {
                       : null;
 
                   return InkWell(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(18),
                     onTap: () => _openDetails(offer, offerType),
-                    child: GlassCard(
-                      padding: const EdgeInsets.all(14),
+                    child: Container(
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: const Color(0xFFE2E8F0),
+                          width: 1.2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+                            blurRadius: 14,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Top Header: Thumbnail + Title/Heart & Wrapped Status/Code/Brand
+                          // Top Header: Thumbnail + Title/Heart & Status/Code/Brand
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               // Image thumbnail / NO MEDIA box
-                              Container(
-                                width: 54,
-                                height: 54,
-                                decoration: BoxDecoration(
-                                  color: theme.cardColor.withValues(alpha: 0.8),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: theme.dividerColor.withValues(
-                                      alpha: 0.3,
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  width: 58,
+                                  height: 58,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: const Color(0xFFE2E8F0),
                                     ),
                                   ),
-                                ),
-                                child:
-                                    (offer.imageUrl != null &&
-                                        offer.imageUrl!.isNotEmpty)
-                                    ? ClipRRect(
-                                        borderRadius: BorderRadius.circular(10),
-                                        child: AuthenticatedNetworkImage(
+                                  child: (offer.imageUrl != null &&
+                                          offer.imageUrl!.isNotEmpty)
+                                      ? AuthenticatedNetworkImage(
                                           url: offer.imageUrl!,
-                                          width: 54,
-                                          height: 54,
+                                          width: 58,
+                                          height: 58,
                                           fit: BoxFit.cover,
                                           fallback:
                                               _buildNoMediaPlaceholder(theme),
-                                        ),
-                                      )
-                                    : _buildNoMediaPlaceholder(theme),
+                                        )
+                                      : _buildNoMediaPlaceholder(theme),
+                                ),
                               ),
                               const SizedBox(width: 12),
 
@@ -383,7 +405,7 @@ class _OfferList extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Row 1: Title (Full remaining width) + Heart badge
+                                    // Row 1: Title + Heart badge
                                     Row(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
@@ -394,12 +416,10 @@ class _OfferList extends StatelessWidget {
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
                                             style: GoogleFonts.poppins(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14,
-                                              color: theme
-                                                  .textTheme
-                                                  .bodyLarge
-                                                  ?.color,
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 15,
+                                              color: const Color(0xFF0F172A),
+                                              height: 1.2,
                                             ),
                                           ),
                                         ),
@@ -409,7 +429,7 @@ class _OfferList extends StatelessWidget {
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 4),
+                                    const SizedBox(height: 6),
 
                                     // Row 2: Status & Code & Brand in a responsive Wrap
                                     Wrap(
@@ -428,8 +448,8 @@ class _OfferList extends StatelessWidget {
                                             offer.code!,
                                             style: GoogleFonts.inter(
                                               fontSize: 11,
-                                              fontWeight: FontWeight.w600,
-                                              color: theme.colorScheme.primary,
+                                              fontWeight: FontWeight.w700,
+                                              color: const Color(0xFFEA580C),
                                             ),
                                           ),
                                         if (offer.brand != null &&
@@ -438,13 +458,9 @@ class _OfferList extends StatelessWidget {
                                           Text(
                                             offer.brand!,
                                             style: GoogleFonts.inter(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w500,
-                                              color: theme
-                                                  .textTheme
-                                                  .bodyMedium
-                                                  ?.color
-                                                  ?.withValues(alpha: 0.8),
+                                              fontSize: 11.5,
+                                              fontWeight: FontWeight.w600,
+                                              color: const Color(0xFF475569),
                                             ),
                                           ),
                                       ],
@@ -455,21 +471,19 @@ class _OfferList extends StatelessWidget {
                             ],
                           ),
 
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 12),
 
                           // Main Highlights Box: Available/Required Quantity & Offer/Target Price / Offered Amount
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
+                              horizontal: 14,
                               vertical: 10,
                             ),
                             decoration: BoxDecoration(
-                              color: theme.cardColor.withValues(alpha: 0.6),
+                              color: const Color(0xFFF8FAFC),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: theme.dividerColor.withValues(
-                                  alpha: 0.3,
-                                ),
+                                color: const Color(0xFFE2E8F0),
                               ),
                             ),
                             child: Row(
@@ -477,10 +491,17 @@ class _OfferList extends StatelessWidget {
                                 Expanded(
                                   child: Row(
                                     children: [
-                                      Icon(
-                                        IconlyLight.buy,
-                                        size: 20,
-                                        color: theme.colorScheme.primary,
+                                      Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFFF7ED),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: const Icon(
+                                          IconlyLight.buy,
+                                          size: 16,
+                                          color: Color(0xFFEA580C),
+                                        ),
                                       ),
                                       const SizedBox(width: 8),
                                       Expanded(
@@ -492,19 +513,19 @@ class _OfferList extends StatelessWidget {
                                               qtyLabel,
                                               style: GoogleFonts.inter(
                                                 fontSize: 10,
-                                                color: Colors.grey,
+                                                fontWeight: FontWeight.w500,
+                                                color: const Color(0xFF64748B),
                                               ),
                                             ),
                                             Text(
                                               displayQtyStr,
                                               style: GoogleFonts.poppins(
                                                 fontSize: 13,
-                                                fontWeight: FontWeight.bold,
-                                                color: theme
-                                                    .textTheme
-                                                    .bodyLarge
-                                                    ?.color,
+                                                fontWeight: FontWeight.w700,
+                                                color: const Color(0xFF0F172A),
                                               ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ],
                                         ),
@@ -514,19 +535,24 @@ class _OfferList extends StatelessWidget {
                                 ),
                                 Container(
                                   width: 1,
-                                  height: 30,
-                                  color: theme.dividerColor.withValues(
-                                    alpha: 0.4,
-                                  ),
+                                  height: 28,
+                                  color: const Color(0xFFE2E8F0),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Row(
                                     children: [
-                                      const Icon(
-                                        IconlyLight.wallet,
-                                        size: 20,
-                                        color: Colors.green,
+                                      Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFECFDF5),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: const Icon(
+                                          IconlyLight.wallet,
+                                          size: 16,
+                                          color: Color(0xFF059669),
+                                        ),
                                       ),
                                       const SizedBox(width: 8),
                                       Expanded(
@@ -538,17 +564,19 @@ class _OfferList extends StatelessWidget {
                                               priceLabel,
                                               style: GoogleFonts.inter(
                                                 fontSize: 10,
-                                                color: Colors.grey,
+                                                fontWeight: FontWeight.w500,
+                                                color: const Color(0xFF64748B),
                                               ),
                                             ),
                                             Text(
                                               displayPriceStr,
                                               style: GoogleFonts.poppins(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.bold,
-                                                color:
-                                                    theme.colorScheme.primary,
+                                                fontSize: 13.5,
+                                                fontWeight: FontWeight.w700,
+                                                color: const Color(0xFFC2410C),
                                               ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ],
                                         ),
@@ -620,6 +648,8 @@ class _OfferList extends StatelessWidget {
                             ],
                           ),
 
+                          const SizedBox(height: 12),
+
                           _buildActionButtons(
                             context,
                             controller,
@@ -640,46 +670,58 @@ class _OfferList extends StatelessWidget {
   }
 
   Widget _buildNoMediaPlaceholder(ThemeData theme) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          Icons.grain,
-          size: 20,
-          color: theme.dividerColor.withValues(alpha: 0.8),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFFFFF7ED), Color(0xFFFFEDD5)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        const SizedBox(height: 2),
-        Text(
-          "NO MEDIA",
-          style: GoogleFonts.inter(
-            fontSize: 7,
-            fontWeight: FontWeight.w700,
-            color: Colors.grey,
-          ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.grain_rounded,
+              size: 24,
+              color: Color(0xFFEA580C),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              "DAAL",
+              style: GoogleFonts.inter(
+                fontSize: 8,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFFC2410C),
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
   Widget _buildHeartBadge(String count) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.08),
+        color: const Color(0xFFFFF1F2),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+        border: Border.all(color: const Color(0xFFFECDD3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.favorite, size: 11, color: Colors.redAccent),
-          const SizedBox(width: 3),
+          const Icon(Icons.favorite, size: 11, color: Color(0xFFE11D48)),
+          const SizedBox(width: 3.5),
           Text(
             count,
             style: GoogleFonts.inter(
-              fontSize: 10,
+              fontSize: 10.5,
               fontWeight: FontWeight.bold,
-              color: Colors.redAccent,
+              color: const Color(0xFFE11D48),
             ),
           ),
         ],
@@ -711,13 +753,23 @@ class _OfferList extends StatelessWidget {
             sUpper.contains('PENDING') ||
             sUpper.contains('INTEREST'));
 
-    final color = isGood
-        ? Colors.green
+    final Color bgColor = isGood
+        ? const Color(0xFFDCFCE7)
         : (isBad
-              ? Colors.red
-              : (isWarning
-                    ? const Color(0xFFF59E0B)
-                    : theme.colorScheme.primary));
+            ? const Color(0xFFFEE2E2)
+            : (isWarning ? const Color(0xFFFEF3C7) : const Color(0xFFFFEDD5)));
+
+    final Color textColor = isGood
+        ? const Color(0xFF15803D)
+        : (isBad
+            ? const Color(0xFFDC2626)
+            : (isWarning ? const Color(0xFFB45309) : const Color(0xFFEA580C)));
+
+    final Color borderColor = isGood
+        ? const Color(0xFF86EFAC)
+        : (isBad
+            ? const Color(0xFFFCA5A5)
+            : (isWarning ? const Color(0xFFFCD34D) : const Color(0xFFFDBA74)));
 
     String displayStatus = status;
     if (sUpper.contains('EXPIRED')) {
@@ -729,18 +781,18 @@ class _OfferList extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: borderColor, width: 0.8),
       ),
       child: Text(
         displayStatus,
         style: GoogleFonts.inter(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: color,
+          fontSize: 10.5,
+          fontWeight: FontWeight.w700,
+          color: textColor,
         ),
       ),
     );
@@ -753,21 +805,21 @@ class _OfferList extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: theme.cardColor.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: theme.colorScheme.primary),
+          Icon(icon, size: 12, color: const Color(0xFFEA580C)),
           const SizedBox(width: 4),
           Text(
             text,
             style: GoogleFonts.inter(
               fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: theme.textTheme.bodyMedium?.color,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF334155),
             ),
           ),
         ],
@@ -1492,29 +1544,43 @@ class _ActionBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isPrimary = label.contains("Submit") || label.contains("Post");
+
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          border: Border.all(color: color.withValues(alpha: 0.4)),
-          borderRadius: BorderRadius.circular(8),
+          color: isPrimary ? const Color(0xFFF57C00) : color.withValues(alpha: 0.12),
+          border: Border.all(
+            color: isPrimary ? const Color(0xFFE65100) : color.withValues(alpha: 0.35),
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: isPrimary
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFF57C00).withValues(alpha: 0.3),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 14, color: color),
-              const SizedBox(width: 4),
+              Icon(icon, size: 14, color: isPrimary ? Colors.white : color),
+              const SizedBox(width: 5),
             ],
             Text(
               label,
               style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: color,
+                color: isPrimary ? Colors.white : color,
               ),
             ),
           ],

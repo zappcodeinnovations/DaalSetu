@@ -47,6 +47,31 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Stack(
           children: [
             Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 280,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isDark
+                        ? [
+                            const Color(0xFFE65100).withValues(alpha: 0.22),
+                            const Color(0xFFF57C00).withValues(alpha: 0.10),
+                            Colors.transparent,
+                          ]
+                        : [
+                            const Color(0xFFFFE0B2).withValues(alpha: 0.65),
+                            const Color(0xFFFFF3E0).withValues(alpha: 0.35),
+                            Colors.transparent,
+                          ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
               top: -110,
               right: -90,
               child: _Glow(
@@ -77,24 +102,65 @@ class _LoginScreenState extends State<LoginScreen> {
                       key: controller.formKey,
                       child: Column(
                         children: [
-                          _brandHeader(textColor, subtextColor),
+                          _brandHeader(textColor, subtextColor, isDark),
                           const SizedBox(height: 28),
                           GlassCard(
-                            borderRadius: 28,
+                            borderRadius: 24,
                             blur: 24,
                             padding: const EdgeInsets.all(24),
-                            glowColor: AppTheme.primaryGold,
+                            borderColor: isDark
+                                ? const Color(0xFFFFB300).withValues(alpha: 0.28)
+                                : const Color(0xFFFFB74D).withValues(alpha: 0.45),
+                            glowColor: isDark ? AppTheme.primaryGold : const Color(0xFFFFE082),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'Sign In',
-                                  style: TextStyle(
-                                    color: textColor,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -0.4,
-                                  ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Sign In',
+                                      style: TextStyle(
+                                        color: textColor,
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 9,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                                        ),
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.lock_outline_rounded,
+                                            size: 13,
+                                            color: Color(0xFF059669),
+                                          ),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            'Encrypted',
+                                            style: TextStyle(
+                                              color: Color(0xFF059669),
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
@@ -105,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     height: 1.45,
                                   ),
                                 ),
-                                const SizedBox(height: 24),
+                                const SizedBox(height: 22),
                                 _label('Mobile number', textColor),
                                 const SizedBox(height: 8),
                                 GlassTextField(
@@ -132,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     return null;
                                   },
                                 ),
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 18),
                                 _label('Password', textColor),
                                 const SizedBox(height: 8),
                                 Obx(
@@ -166,7 +232,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     );
                                   },
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 8),
                                 Align(
                                   alignment: Alignment.centerRight,
                                   child: TextButton(
@@ -181,7 +247,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                       tapTargetSize:
                                           MaterialTapTargetSize.shrinkWrap,
                                     ),
-                                    child: const Text('Forgot password?'),
+                                    child: const Text(
+                                      'Forgot password?',
+                                      style: TextStyle(fontWeight: FontWeight.w600),
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(height: 18),
@@ -191,8 +260,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     onPressed: controller.login,
                                     borderRadius: 16,
                                     gradientColors: const [
-                                      AppTheme.primaryGold,
-                                      AppTheme.secondaryOrange,
+                                      Color(0xFFE65100),
+                                      Color(0xFFF57C00),
+                                      Color(0xFFFFA000),
                                     ],
                                     child: const Row(
                                       mainAxisAlignment:
@@ -202,14 +272,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                           'Sign in securely',
                                           style: TextStyle(
                                             color: Colors.white,
-                                            fontWeight: FontWeight.w700,
+                                            fontWeight: FontWeight.w800,
                                             fontSize: 16,
+                                            letterSpacing: 0.2,
                                           ),
                                         ),
                                         SizedBox(width: 10),
                                         Icon(
                                           Icons.arrow_forward_rounded,
                                           color: Colors.white,
+                                          size: 20,
                                         ),
                                       ],
                                     ),
@@ -218,7 +290,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 18),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -226,7 +298,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 'New to DaalSetu? ',
                                 style: TextStyle(
                                   color: mutedColor,
-                                  fontSize: 13,
+                                  fontSize: 14,
                                 ),
                               ),
                               TextButton(
@@ -241,7 +313,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                   tapTargetSize:
                                       MaterialTapTargetSize.shrinkWrap,
                                 ),
-                                child: const Text('Create account'),
+                                child: const Text(
+                                  'Create account',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -252,7 +330,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               Icon(
                                 Icons.lock_outline_rounded,
                                 size: 15,
-                                color: mutedColor,
+                                color: isDark
+                                    ? AppTheme.primaryGold
+                                    : AppTheme.secondaryOrange,
                               ),
                               const SizedBox(width: 6),
                               Text(
@@ -260,6 +340,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 style: TextStyle(
                                   color: mutedColor,
                                   fontSize: 12,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
@@ -277,30 +358,33 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _brandHeader(Color textColor, Color subtextColor) {
+  Widget _brandHeader(Color textColor, Color subtextColor, bool isDark) {
     return Column(
       children: [
         Container(
-          width: 92,
-          height: 92,
+          width: 96,
+          height: 96,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFFFB300).withValues(alpha: 0.28),
-                blurRadius: 28,
-                spreadRadius: 3,
-                offset: const Offset(0, 3),
+                color: const Color(0xFFE65100).withValues(alpha: 0.30),
+                blurRadius: 30,
+                spreadRadius: 4,
+                offset: const Offset(0, 4),
               ),
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 8,
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 10,
                 spreadRadius: 0,
                 offset: const Offset(0, 2),
               ),
             ],
-            border: Border.all(color: Colors.white, width: 2),
+            border: Border.all(
+              color: isDark ? const Color(0xFFFFB300) : Colors.white,
+              width: 2.5,
+            ),
           ),
           child: ClipOval(
             child: Padding(
@@ -312,20 +396,50 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
         Text(
           'DaalSetu',
           style: TextStyle(
             color: textColor,
-            fontSize: 28,
+            fontSize: 30,
             fontWeight: FontWeight.w900,
-            letterSpacing: -0.8,
+            letterSpacing: -0.6,
           ),
         ),
-        const SizedBox(height: 5),
-        Text(
-          'KISOR',
-          style: TextStyle(color: subtextColor, fontSize: 14),
+        const SizedBox(height: 6),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE65100).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: const Color(0xFFE65100).withValues(alpha: 0.25),
+                  width: 1,
+                ),
+              ),
+              child: const Text(
+                'KISOR',
+                style: TextStyle(
+                  color: Color(0xFFE65100),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Pulse Trading Platform',
+              style: TextStyle(
+                color: subtextColor,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ],
     );

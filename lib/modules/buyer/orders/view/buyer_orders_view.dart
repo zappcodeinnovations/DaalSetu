@@ -7,6 +7,7 @@ import '../../../../services/buyer_services.dart';
 import '../../../../services/seller_services.dart';
 import '../../../../theme/glass_widgets.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class BuyerOrdersView extends StatefulWidget {
   const BuyerOrdersView({super.key});
@@ -92,20 +93,17 @@ class _BuyerOrdersViewState extends State<BuyerOrdersView> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: AppBarLeading(child: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color, size: 20),
-          onPressed: () => Get.back(),
-        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-        title: Text(
-          "Recent Deals & Orders",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
+      appBar: HeroHeader(
+        leading: AppBarLeading(
+          child: Navigator.canPop(context)
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+                  onPressed: () => Get.back(),
+                )
+              : null,
         ),
+        title: "Recent Deals & Orders",
+        subtitle: "Confirmed purchases & order fulfillment status",
       ),
       body: RefreshIndicator(
         onRefresh: _fetchOrders,

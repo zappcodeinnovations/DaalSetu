@@ -7,6 +7,7 @@ import '../controller/buyer_branch_controller.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/app_snackbar.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class BuyerBranchView extends StatefulWidget {
   const BuyerBranchView({super.key});
@@ -38,23 +39,14 @@ class _BuyerBranchViewState extends State<BuyerBranchView> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        title: Text(
-          "Branches Network",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-          ),
+      appBar: HeroHeader(
+        leading: const AppBarLeading(),
+        title: "Branches Network",
+        trailing: IconButton(
+          onPressed: () => _showRequestBranchDialog(context),
+          icon: const Icon(IconlyLight.password, color: Colors.white),
+          tooltip: "Enter Ref Code",
         ),
-        actions: [
-          IconButton(
-            onPressed: () => _showRequestBranchDialog(context),
-            icon: Icon(IconlyLight.password, color: primaryColor),
-            tooltip: "Enter Ref Code",
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
       body: Obx(() {
         if (controller.isLoading.value &&

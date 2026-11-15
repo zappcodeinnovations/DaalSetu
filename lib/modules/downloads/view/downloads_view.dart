@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../theme/app_theme.dart';
 import '../../../widgets/admin_common_widgets.dart';
 import '../../../widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import '../../admin_catalog/view/admin_drawer.dart';
 import '../model/downloaded_file.dart';
 import '../service/downloads_service.dart';
@@ -134,17 +136,22 @@ class _DownloadsViewState extends State<DownloadsView> {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: const AdminDrawer(activeKey: 'downloads'),
-      appBar: AppBar(
-        leading: const AppBarLeading(),
-        leadingWidth: AppBarLeading.widthFor(context),
-        title: const Text('Downloads'),
-        actions: [
-          IconButton(
-            tooltip: 'Refresh downloads',
-            onPressed: _loading ? null : _load,
-            icon: const Icon(Icons.refresh_rounded),
-          ),
-        ],
+      appBar: HeroHeader(
+        leading: AppBarLeading(
+          child: Navigator.canPop(context)
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+                  onPressed: () => Get.back(),
+                )
+              : null,
+        ),
+        title: "Downloads",
+        subtitle: "Invoices, reports & exported files",
+        trailing: IconButton(
+          tooltip: 'Refresh downloads',
+          onPressed: _loading ? null : _load,
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 22),
+        ),
       ),
       body: SafeArea(
         child: Column(

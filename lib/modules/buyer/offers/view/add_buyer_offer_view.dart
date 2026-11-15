@@ -12,6 +12,7 @@ import '../controller/buyer_offers_controller.dart';
 import '../../dashboard/controller/buyer_dashboard_controller.dart';
 import '../../../../services/realtime_notification_service.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class AddBuyerOfferScreen extends StatefulWidget {
   const AddBuyerOfferScreen({super.key});
@@ -415,10 +416,20 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text("Post Requirement", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+      appBar: HeroHeader(
+        leading: AppBarLeading(
+          child: Navigator.canPop(context)
+              ? IconButton(
+                  icon: const Icon(
+                    IconlyLight.arrow_left_2,
+                    color: Colors.white,
+                  ),
+                  onPressed: () => Get.back(),
+                )
+              : null,
+        ),
+        title: "Post Requirement",
+        subtitle: "Broadcast commodity demands to verified suppliers",
       ),
       body: isLoading && categories.isEmpty
           ? const Center(child: CircularProgressIndicator(color: primaryColor))

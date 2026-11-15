@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../../services/buyer_services.dart';
 import '../../delivery_challan/model/buyer_challan_model.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/app_snackbar.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class BuyerTransportTrackingView extends StatefulWidget {
   const BuyerTransportTrackingView({super.key});
@@ -51,10 +51,17 @@ class _BuyerTransportTrackingViewState extends State<BuyerTransportTrackingView>
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        title: Text("Transport Tracking", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+      appBar: HeroHeader(
+        leading: AppBarLeading(
+          child: Navigator.canPop(context)
+              ? IconButton(
+                  icon: const Icon(IconlyLight.arrow_left_2, color: Colors.white, size: 20),
+                  onPressed: () => Get.back(),
+                )
+              : null,
+        ),
+        title: "Transport Tracking",
+        subtitle: "Live freight & consignment tracking",
       ),
       body: RefreshIndicator(
         onRefresh: _fetchTrackingData,

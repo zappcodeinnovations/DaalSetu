@@ -11,6 +11,7 @@ import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/app_snackbar.dart';
 import '../../../../services/buyer_services.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class BuyerOfferDetailsView extends StatefulWidget {
   final int offerId;
@@ -74,43 +75,24 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        titleSpacing: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.preferBuyerOffer
-                  ? "Buyer Offer Details"
-                  : "Requirement Details",
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              'Live negotiation • auto-refresh',
-              style: GoogleFonts.inter(fontSize: 11, color: Colors.green),
-            ),
-          ],
-        ),
-        leading: AppBarLeading(child: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
-          onPressed: () => Get.back(),
-        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, size: 20),
-            tooltip: "Refresh Details",
-            onPressed: () => controller.fetchDetails(
-              widget.offerId,
-              preferBuyerOffer: widget.preferBuyerOffer,
-              preferBuyerRequirement: widget.preferBuyerRequirement,
-            ),
+      appBar: HeroHeader(
+        leading: AppBarLeading(
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+            onPressed: () => Get.back(),
           ),
-        ],
+        ),
+        title: widget.preferBuyerOffer ? "Buyer Offer Details" : "Requirement Details",
+        subtitle: "Live negotiation & trade terms",
+        trailing: IconButton(
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 22),
+          tooltip: "Refresh Details",
+          onPressed: () => controller.fetchDetails(
+            widget.offerId,
+            preferBuyerOffer: widget.preferBuyerOffer,
+            preferBuyerRequirement: widget.preferBuyerRequirement,
+          ),
+        ),
       ),
       body: Obx(() {
         if (controller.isLoading.value) {

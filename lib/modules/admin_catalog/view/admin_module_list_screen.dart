@@ -13,6 +13,7 @@ import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
 
 class AdminModuleListScreen extends StatefulWidget {
@@ -151,20 +152,22 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
     drawer: widget.showAdminDrawer
         ? AdminDrawer(activeKey: widget.moduleKey)
         : null,
-    appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-      title: Text(
-        widget.moduleKey == 'category_requests'
-            ? 'Category Requests'
-            : config.title,
-        style: const TextStyle(fontWeight: FontWeight.w800),
+    appBar: HeroHeader(
+      leading: widget.showAdminDrawer
+          ? const AppBarLeading()
+          : IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+              onPressed: () => Navigator.of(context).maybePop(),
+            ),
+      title: widget.moduleKey == 'category_requests'
+          ? 'Category Requests'
+          : config.title,
+      subtitle: 'Directory & operational management',
+      trailing: IconButton(
+        tooltip: 'Refresh',
+        onPressed: _refresh,
+        icon: const Icon(Icons.refresh_rounded, color: Colors.white),
       ),
-      actions: [
-        IconButton(
-          tooltip: 'Refresh',
-          onPressed: _refresh,
-          icon: const Icon(Icons.refresh_rounded),
-        ),
-      ],
     ),
     // Only sellers add brands now (MoM point 26); admins review and edit them.
     floatingActionButton: config.canCreate &&

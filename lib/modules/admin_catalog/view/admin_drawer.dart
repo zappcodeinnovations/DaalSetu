@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'package:daalsetu/modules/admin_catalog/model/drawer_menu_model.dart';
+import 'package:daalsetu/modules/profile/controller/profile_controller.dart';
 import 'package:daalsetu/theme/app_theme.dart';
 import '../controller/drawer_controller.dart' as admin;
 
@@ -55,78 +57,14 @@ class AdminDrawer extends StatelessWidget {
     return Drawer(
       backgroundColor: theme.scaffoldBackgroundColor,
       width: widthFor(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.horizontal(right: Radius.circular(22)),
+      ),
       child: SafeArea(
+        top: false,
         child: Column(
           children: [
-            // ── Header ──────────────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 16, 16),
-              child: Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Image.asset(
-                      'assets/images/thumb_logo.png',
-                      width: 44,
-                      height: 44,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'DaalSetu',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        Obx(() {
-                          final role = controller.userRole.value.toLowerCase();
-                          final isAdmin = const ['super_admin', 'admin', 'sub_admin']
-                              .contains(role);
-                          final subtitle = controller.isLoading.value || controller.isStale
-                              ? ''
-                              : isAdmin
-                              ? 'ADMIN PANEL'
-                              : (role == 'seller'
-                                  ? 'SELLER PANEL'
-                                  : (role == 'transporter'
-                                      ? 'TRANSPORTER PANEL'
-                                      : 'BUYER PANEL'));
-                          return Text(
-                            subtitle,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1.1,
-                            ),
-                          );
-                        }),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Close menu',
-                    onPressed: () {
-                      if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
-                        Scaffold.of(context).closeDrawer();
-                      } else {
-                        Navigator.maybeOf(context)?.maybePop();
-                      }
-                    },
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
+            _buildHeader(context, controller),
 
             // ── Nav List ─────────────────────────────────────────────────────
             Expanded(
@@ -155,6 +93,146 @@ class AdminDrawer extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // ── HEADER ─────────────────────────────────────────────────────────────────
+  Widget _buildHeader(
+      BuildContext context, admin.DrawerController controller) {
+    final topInset = MediaQuery.of(context).padding.top;
+
+    return Obx(() {
+      final role = controller.userRole.value.toLowerCase();
+      final isAdmin =
+          const ['super_admin', 'admin', 'sub_admin'].contains(role);
+      final subtitle = controller.isLoading.value || controller.isStale
+          ? ''
+          : isAdmin
+              ? 'ADMIN PANEL'
+              : (role == 'seller'
+                  ? 'SELLER PANEL'
+                  : (role == 'transporter'
+                      ? 'TRANSPORTER PANEL'
+                      : 'BUYER PANEL'));
+
+      String title = 'DaalSetu';
+      if (role == 'buyer' ||
+          (!isAdmin &&
+              role != 'seller' &&
+              role != 'transporter' &&
+              role != 'both_sellerandbuyer')) {
+        if (Get.isRegistered<ProfileController>()) {
+          final profile = Get.find<ProfileController>().profile.value;
+          if (profile != null) {
+            final fullName = '${profile.firstName} ${profile.lastName}'.trim();
+            if (fullName.isNotEmpty) {
+              title = fullName;
+            } else if (profile.username.isNotEmpty) {
+              title = profile.username;
+            }
+          }
+        }
+      }
+
+      return Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFF59E0B), // Warm amber gold
+              Color(0xFFE37400), // Deep secondary orange
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.only(
+            bottomRight: Radius.circular(24),
+          ),
+        ),
+        padding: EdgeInsets.fromLTRB(18, topInset + 14, 14, 18),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(4),
+              child: Image.asset(
+                'assets/images/thumb_logo.png',
+                width: 36,
+                height: 36,
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 2.5),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.4),
+                        width: 0.8,
+                      ),
+                    ),
+                    child: Text(
+                      subtitle,
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.1,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Material(
+              color: Colors.white.withValues(alpha: 0.2),
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: IconButton(
+                tooltip: 'Close menu',
+                iconSize: 20,
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.all(8),
+                constraints: const BoxConstraints(),
+                onPressed: () => _closeDrawer(context),
+                icon: const Icon(Icons.close_rounded, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   // ── ADMIN MENU ─────────────────────────────────────────────────────────────
@@ -307,52 +385,99 @@ class AdminDrawer extends StatelessWidget {
   Widget _buildBuyerMenu(
       BuildContext context, admin.DrawerController controller) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(12, 14, 12, 24),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 28),
       children: [
-        _customMenuItem(
-          context: context,
-          key: 'dashboard',
-          title: 'Dashboard',
-          icon: Icons.dashboard_outlined,
-          onTap: _goToDashboard,
+        // ── 1. Overview & Business ──────────────────────────────
+        _buyerSectionHeader(
+            context, 'OVERVIEW & BUSINESS', Icons.business_center_outlined),
+        _buyerCardGroup(
+          context,
+          children: [
+            _buyerMenuItem(
+              context: context,
+              key: 'dashboard',
+              title: 'Dashboard',
+              icon: Icons.dashboard_outlined,
+              iconColor: const Color(0xFFD97706),
+              iconBgColor: const Color(0xFFFEF3C7),
+              onTap: _goToDashboard,
+            ),
+            _buyerDivider(context),
+            _buyerMenuItem(
+              context: context,
+              key: 'categories',
+              title: 'My Categories',
+              icon: Icons.category_outlined,
+              iconColor: const Color(0xFF0891B2),
+              iconBgColor: const Color(0xFFECFEFF),
+              onTap: () => Get.to(() => const CategoryPageView()),
+            ),
+            _buyerDivider(context),
+            _buyerMenuItem(
+              context: context,
+              key: 'registered_company',
+              title: 'Registered Company',
+              icon: Icons.apartment_rounded,
+              iconColor: const Color(0xFF4F46E5),
+              iconBgColor: const Color(0xFFEEF2FF),
+              onTap: () => Get.to(() => const SellerCompanyView()),
+            ),
+          ],
         ),
-        _customMenuItem(
-          context: context,
-          key: 'categories',
-          title: 'My Categories',
-          icon: Icons.category_outlined,
-          onTap: () => Get.to(() => const CategoryPageView()),
-        ),
-        _customMenuItem(
-          context: context,
-          key: 'registered_company',
-          title: 'Registered Company',
-          icon: Icons.apartment_rounded,
-          onTap: () => Get.to(() => const SellerCompanyView()),
-        ),
-        const SizedBox(height: 6),
+
+        // ── 2. Marketplace & Offers ─────────────────────────────
+        _buyerSectionHeader(
+            context, 'MARKETPLACE & OFFERS', Icons.storefront_outlined),
         Obx(() {
           final isExpanded = controller.offersExpanded.value;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          return _buyerCardGroup(
+            context,
             children: [
-              ListTile(
-                dense: true,
-                onTap: controller.toggleOffers,
-                title: Text(
-                  'OFFER',
-                  style: TextStyle(
-                    fontSize: 11,
-                    letterSpacing: 1.5,
-                    fontWeight: FontWeight.w800,
-                    color: Theme.of(context).textTheme.bodySmall?.color,
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: controller.toggleOffers,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF7ED),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.local_offer_rounded,
+                            size: 19,
+                            color: Color(0xFFEA580C),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Offers & Requirements',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? const Color(0xFFF1F5F9)
+                                  : const Color(0xFF0F172A),
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          isExpanded
+                              ? Icons.expand_less_rounded
+                              : Icons.expand_more_rounded,
+                          color: Theme.of(context).iconTheme.color,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                trailing: Icon(
-                  isExpanded
-                      ? Icons.expand_less_rounded
-                      : Icons.expand_more_rounded,
-                  color: Theme.of(context).iconTheme.color,
                 ),
               ),
               AnimatedCrossFade(
@@ -362,41 +487,49 @@ class AdminDrawer extends StatelessWidget {
                     : CrossFadeState.showSecond,
                 firstChild: Column(
                   children: [
-                    _customMenuItem(
+                    _buyerDivider(context),
+                    _buyerMenuItem(
                       context: context,
                       key: 'offers',
                       title: 'Browse Offers',
                       icon: Icons.local_offer_outlined,
-                      isSubItem: true,
+                      iconColor: const Color(0xFFEA580C),
+                      iconBgColor: const Color(0xFFFFF7ED),
                       onTap: () =>
                           Get.to(() => const BuyerOffersView(initialIndex: 0)),
                     ),
-                    _customMenuItem(
-                      context: context,
-                      key: 'my_interests',
-                      title: 'My Interests',
-                      icon: Icons.favorite_border_rounded,
-                      isSubItem: true,
-                      onTap: () => Get.to(() => const BuyerMyInterestsView()),
-                    ),
-                    _customMenuItem(
-                      context: context,
-                      key: 'buyer_requirements',
-                      title: 'Buyer Requirements',
-                      icon: Icons.assignment_outlined,
-                      isSubItem: true,
-                      onTap: () => Get.to(() => const BuyerRequestManagementView(
-                            mode: BuyerRequestMode.requirements,
-                            wrapInScaffold: true,
-                          )),
-                    ),
-                    _customMenuItem(
+                    _buyerDivider(context),
+                    _buyerMenuItem(
                       context: context,
                       key: 'today_offers',
                       title: "Today's Offers",
                       icon: Icons.today_outlined,
-                      isSubItem: true,
+                      iconColor: const Color(0xFFD97706),
+                      iconBgColor: const Color(0xFFFEF3C7),
                       onTap: () => Get.to(() => const BuyerTodayOffersView()),
+                    ),
+                    _buyerDivider(context),
+                    _buyerMenuItem(
+                      context: context,
+                      key: 'my_interests',
+                      title: 'My Interests',
+                      icon: Icons.favorite_border_rounded,
+                      iconColor: const Color(0xFFE11D48),
+                      iconBgColor: const Color(0xFFFFF1F2),
+                      onTap: () => Get.to(() => const BuyerMyInterestsView()),
+                    ),
+                    _buyerDivider(context),
+                    _buyerMenuItem(
+                      context: context,
+                      key: 'buyer_requirements',
+                      title: 'Buyer Requirements',
+                      icon: Icons.assignment_outlined,
+                      iconColor: const Color(0xFF4F46E5),
+                      iconBgColor: const Color(0xFFEEF2FF),
+                      onTap: () => Get.to(() => const BuyerRequestManagementView(
+                            mode: BuyerRequestMode.requirements,
+                            wrapInScaffold: true,
+                          )),
                     ),
                   ],
                 ),
@@ -405,65 +538,125 @@ class AdminDrawer extends StatelessWidget {
             ],
           );
         }),
-        const SizedBox(height: 6),
-        _customMenuItem(
-          context: context,
-          key: 'branches',
-          title: 'Branches',
-          icon: Icons.store_mall_directory_outlined,
-          onTap: () => Get.to(() => const BuyerBranchView()),
+
+        // ── 3. Deals & Logistics ────────────────────────────────
+        _buyerSectionHeader(
+            context, 'DEALS & LOGISTICS', Icons.local_shipping_outlined),
+        _buyerCardGroup(
+          context,
+          children: [
+            _buyerMenuItem(
+              context: context,
+              key: 'deals',
+              title: 'Deals',
+              icon: Icons.handshake_outlined,
+              iconColor: const Color(0xFF059669),
+              iconBgColor: const Color(0xFFECFDF5),
+              onTap: () => Get.to(() => const ContractsScreen()),
+            ),
+            _buyerDivider(context),
+            _buyerMenuItem(
+              context: context,
+              key: 'delivery_challans',
+              title: 'Delivery Challans',
+              icon: Icons.local_shipping_outlined,
+              iconColor: const Color(0xFF2563EB),
+              iconBgColor: const Color(0xFFEFF6FF),
+              onTap: () => Get.to(() => const BuyerDeliveryChallanView()),
+            ),
+            _buyerDivider(context),
+            _buyerMenuItem(
+              context: context,
+              key: 'consignments',
+              title: 'Consignments',
+              icon: Icons.inventory_2_outlined,
+              iconColor: const Color(0xFF0D9488),
+              iconBgColor: const Color(0xFFF0FDFA),
+              onTap: () => Get.to(() => const BuyerConsignmentView()),
+            ),
+            _buyerDivider(context),
+            _buyerMenuItem(
+              context: context,
+              key: 'branches',
+              title: 'Branches',
+              icon: Icons.store_mall_directory_outlined,
+              iconColor: const Color(0xFF7C3AED),
+              iconBgColor: const Color(0xFFF5F3FF),
+              onTap: () => Get.to(() => const BuyerBranchView()),
+            ),
+          ],
         ),
-        _customMenuItem(
-          context: context,
-          key: 'deals',
-          title: 'Deals',
-          icon: Icons.handshake_outlined,
-          onTap: () => Get.to(() => const ContractsScreen()),
+
+        // ── 4. Insights & Files ─────────────────────────────────
+        _buyerSectionHeader(
+            context, 'INSIGHTS & FILES', Icons.insights_outlined),
+        _buyerCardGroup(
+          context,
+          children: [
+            _buyerMenuItem(
+              context: context,
+              key: 'my_analytics',
+              title: 'My Analytics',
+              icon: Icons.insights_outlined,
+              iconColor: const Color(0xFFE11D48),
+              iconBgColor: const Color(0xFFFFF1F2),
+              onTap: () => Get.toNamed(AppRoutes.myAnalytics),
+            ),
+            _buyerDivider(context),
+            _buyerMenuItem(
+              context: context,
+              key: 'downloads',
+              title: 'Downloads',
+              icon: Icons.folder_open_outlined,
+              iconColor: const Color(0xFF0284C7),
+              iconBgColor: const Color(0xFFF0F9FF),
+              onTap: () => Get.toNamed(AppRoutes.downloads),
+            ),
+          ],
         ),
-        _customMenuItem(
-          context: context,
-          key: 'delivery_challans',
-          title: 'Delivery Challans',
-          icon: Icons.local_shipping_outlined,
-          onTap: () => Get.to(() => const BuyerDeliveryChallanView()),
+
+        // ── 5. Preferences & Account ─────────────────────────────
+        _buyerSectionHeader(
+            context, 'PREFERENCES & ACCOUNT', Icons.tune_rounded),
+        _buyerCardGroup(
+          context,
+          children: [
+            _buyerMenuItem(
+              context: context,
+              key: 'settings',
+              title: 'Settings',
+              icon: Icons.settings_outlined,
+              iconColor: const Color(0xFF475569),
+              iconBgColor: const Color(0xFFF1F5F9),
+              onTap: () => Get.to(() => SettingsScreen()),
+            ),
+            _buyerDivider(context),
+            _buyerMenuItem(
+              context: context,
+              key: 'logout',
+              title: 'Log Out',
+              icon: Icons.logout_rounded,
+              iconColor: const Color(0xFFDC2626),
+              iconBgColor: const Color(0xFFFEF2F2),
+              onTap: _logout,
+            ),
+          ],
         ),
-        _customMenuItem(
-          context: context,
-          key: 'consignments',
-          title: 'Consignments',
-          icon: Icons.inventory_2_outlined,
-          onTap: () => Get.to(() => const BuyerConsignmentView()),
-        ),
-        _sectionLabel(context, 'ANALYTICS'),
-        _analyticsMenuItem(context),
-        _sectionLabel(context, 'FILES'),
-        _downloadsMenuItem(context),
+
         const SizedBox(height: 10),
-        Padding(
-          padding: const EdgeInsets.only(left: 16, bottom: 6, top: 4),
+        Center(
           child: Text(
-            'SETTINGS',
-            style: TextStyle(
+            'DaalSetu • KISOR Platform',
+            style: GoogleFonts.inter(
               fontSize: 11,
-              letterSpacing: 1.5,
-              fontWeight: FontWeight.w800,
-              color: Theme.of(context).textTheme.bodySmall?.color,
+              fontWeight: FontWeight.w500,
+              color: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.color
+                  ?.withValues(alpha: 0.6),
             ),
           ),
-        ),
-        _customMenuItem(
-          context: context,
-          key: 'settings',
-          title: 'Settings',
-          icon: Icons.settings_outlined,
-          onTap: () => Get.to(() => SettingsScreen()),
-        ),
-        _customMenuItem(
-          context: context,
-          key: 'logout',
-          title: 'Log Out',
-          icon: Icons.logout_rounded,
-          onTap: _logout,
         ),
       ],
     );
@@ -796,6 +989,160 @@ class AdminDrawer extends StatelessWidget {
           _closeDrawer(context);
           onTap();
         },
+      ),
+    );
+  }
+
+  // ── BUYER REDESIGNED HELPERS ───────────────────────────────────────────────
+  Widget _buyerCardGroup(BuildContext context,
+      {required List<Widget> children}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2D3B55) : const Color(0xFFE2E8F0),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buyerSectionHeader(
+      BuildContext context, String text, IconData icon) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.only(left: 6, bottom: 6, top: 4),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 13,
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: GoogleFonts.inter(
+              fontSize: 10.5,
+              letterSpacing: 1.2,
+              fontWeight: FontWeight.w800,
+              color:
+                  isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buyerDivider(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Divider(
+      height: 1,
+      thickness: 1,
+      color: isDark ? const Color(0xFF2D3B55) : const Color(0xFFF1F5F9),
+    );
+  }
+
+  Widget _buyerMenuItem({
+    required BuildContext context,
+    required String key,
+    required String title,
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBgColor,
+    required VoidCallback onTap,
+  }) {
+    final active = activeKey == key ||
+        (activeKey == 'deals' && (key == 'deals' || key == 'contracts')) ||
+        (activeKey == 'buyer_offers' &&
+            (key == 'deals' || key == 'offers' || key == 'today_offers'));
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Material(
+      color: active
+          ? (isDark
+              ? AppTheme.secondaryOrange.withValues(alpha: 0.18)
+              : const Color(0xFFFFF7ED))
+          : Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          _closeDrawer(context);
+          onTap();
+        },
+        splashColor: AppTheme.secondaryOrange.withValues(alpha: 0.12),
+        highlightColor: AppTheme.secondaryOrange.withValues(alpha: 0.06),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            children: [
+              if (active)
+                Container(
+                  width: 3.5,
+                  height: 22,
+                  margin: const EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.secondaryOrange,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: active
+                      ? AppTheme.secondaryOrange.withValues(alpha: 0.15)
+                      : (isDark
+                          ? iconBgColor.withValues(alpha: 0.15)
+                          : iconBgColor),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  icon,
+                  size: 19,
+                  color: active ? AppTheme.secondaryOrange : iconColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+                    color: active
+                        ? AppTheme.secondaryOrange
+                        : (isDark
+                            ? const Color(0xFFF1F5F9)
+                            : const Color(0xFF1E293B)),
+                  ),
+                ),
+              ),
+              if (!active)
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color:
+                      isDark ? const Color(0xFF64748B) : const Color(0xFFCBD5E1),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

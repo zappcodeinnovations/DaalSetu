@@ -18,6 +18,7 @@ import '../controller/contract_controller.dart';
 import 'package:daalsetu/modules/admin_catalog/view/transport_bids_sheet.dart';
 import 'contract_edit_view.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/services/contract_services.dart';
 
@@ -70,20 +71,23 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-        title: const Text('Contract details'),
-        actions: [
-          IconButton(
-            tooltip: 'Download PDF',
-            icon: const Icon(Icons.download_rounded),
-            onPressed: () {
-              final contract = controller.contractDetail.value;
-              if (contract != null) {
-                _downloadContractPdf(context, contract);
-              }
-            },
-          ),
-        ],
+      appBar: HeroHeader(
+        title: 'Contract Details',
+        subtitle: 'Deal summary & legal agreement',
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        trailing: IconButton(
+          tooltip: 'Download PDF',
+          icon: const Icon(Icons.download_rounded, color: Colors.white),
+          onPressed: () {
+            final contract = controller.contractDetail.value;
+            if (contract != null) {
+              _downloadContractPdf(context, contract);
+            }
+          },
+        ),
       ),
       body: Obx(() {
         if (controller.isLoading.value) {

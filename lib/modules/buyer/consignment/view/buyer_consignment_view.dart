@@ -6,6 +6,7 @@ import '../../../../services/buyer_services.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/app_snackbar.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class BuyerConsignmentView extends StatefulWidget {
   const BuyerConsignmentView({super.key});
@@ -133,14 +134,22 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-        title: Text(
-          'Consignments',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+      appBar: HeroHeader(
+        leading: AppBarLeading(
+          child: Navigator.canPop(context)
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+                  onPressed: () => Get.back(),
+                )
+              : null,
         ),
-        actions: [
-          IconButton(onPressed: _load, icon: const Icon(Icons.refresh_rounded)),
-        ],
+        title: "Consignments",
+        subtitle: "Stock consignments & delivery receipts",
+        trailing: IconButton(
+          onPressed: _load,
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 22),
+          tooltip: 'Refresh',
+        ),
       ),
       body: Column(
         children: [

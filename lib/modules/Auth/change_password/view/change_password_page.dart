@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../theme/glass_widgets.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import '../controller/change_password_controller.dart';
 
 class ChangePasswordScreen extends StatelessWidget {
@@ -17,65 +19,37 @@ class ChangePasswordScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: isDark
-                ? [const Color(0xFF1A1206), const Color(0xFF0D1117)]
-                : [const Color(0xFFFFF8E1), Colors.white],
-          ),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: HeroHeader(
+        leading: AppBarLeading(
+          child: Navigator.canPop(context)
+              ? IconButton(
+                  icon: const Icon(IconlyLight.arrow_left_2, color: Colors.white, size: 20),
+                  onPressed: () => Get.back(),
+                )
+              : null,
         ),
-        child: SafeArea(
+        title: "Change Password",
+        subtitle: "Update and secure your account credentials",
+      ),
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // AppBar
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        IconlyLight.arrow_left_2,
-                        color: theme.iconTheme.color,
-                      ),
-                      onPressed: () => Get.back(),
-                    ),
-                    Text(
-                      "Change Password",
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: theme.textTheme.bodyLarge?.color,
-                      ),
-                    ),
-                  ],
+              Text(
+                "Please enter your current password and your new desired password to update your account security.",
+                style: GoogleFonts.inter(
+                  color: theme.textTheme.bodyMedium?.color,
+                  fontSize: 14,
+                  height: 1.5,
                 ),
               ),
-
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Please enter your current password and your new desired password to update your account security.",
-                        style: GoogleFonts.inter(
-                          color: theme.textTheme.bodyMedium?.color,
-                          fontSize: 14,
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 28),
+              const SizedBox(height: 28),
 
                       // Glass Form Card
                       GlassCard(
@@ -216,11 +190,7 @@ class ChangePasswordScreen extends StatelessWidget {
                   ),
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
+            );
   }
 
   Widget _buildPasswordField({

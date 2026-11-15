@@ -9,7 +9,7 @@ import '../../../theme/app_theme.dart';
 import '../../../theme/glass_widgets.dart';
 import '../../../utils/tax_id_formatters.dart';
 import '../controller/profile_controller.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/utils/input_validators.dart';
 
@@ -292,21 +292,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final theme = Theme.of(context);
 
     return GradientScaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: AppBarLeading(child: IconButton(
-          icon: Icon(IconlyLight.arrow_left, color: theme.iconTheme.color),
-          onPressed: () => Get.back(),
-        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-        title: Text(
-          "Edit Profile",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
+      appBar: HeroHeader(
+        title: "Edit Profile",
+        subtitle: "Update personal & tax credentials",
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
-        centerTitle: true,
       ),
       body: Stack(
         children: [

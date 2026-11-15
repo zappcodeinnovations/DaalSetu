@@ -10,6 +10,7 @@ import '../model/buyer_delivery_challan_model.dart';
 import '../service/buyer_challan_pdf_service.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/dispatch_bills_section.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class BuyerDeliveryChallanDetailView extends StatelessWidget {
   BuyerDeliveryChallanDetailView({super.key});
@@ -46,67 +47,68 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: AppBarLeading(child: IconButton(
-          icon: const Icon(IconlyLight.arrow_left_2),
-          onPressed: () => Get.back(),
-        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-        title: Text(
-          "Challan Details",
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18),
+      appBar: HeroHeader(
+        leading: AppBarLeading(
+          child: IconButton(
+            icon: const Icon(IconlyLight.arrow_left_2, color: Colors.white, size: 20),
+            onPressed: () => Get.back(),
+          ),
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Save PDF to Downloads',
-            icon: const Icon(Icons.picture_as_pdf_outlined),
-            onPressed: () async {
-              final challan = controller.currentChallan.value;
-              if (challan == null) {
-                AppSnackbar.showWarning(
-                  title: 'Please wait',
-                  message: 'Challan details are still loading.',
-                );
-                return;
-              }
-              try {
-                await BuyerChallanPdfService.download(challan);
-                AppSnackbar.showSuccess(
-                  title: 'PDF downloaded',
-                  message: 'Delivery challan was saved to Downloads.',
-                );
-              } catch (error) {
-                AppSnackbar.showError(
-                  title: 'PDF failed',
-                  message: error.toString().replaceFirst('Exception: ', ''),
-                );
-              }
-            },
-          ),
-          IconButton(
-            tooltip: 'Share PDF',
-            icon: const Icon(Icons.share_outlined),
-            onPressed: () async {
-              final challan = controller.currentChallan.value;
-              if (challan == null) {
-                AppSnackbar.showWarning(
-                  title: 'Please wait',
-                  message: 'Challan details are still loading.',
-                );
-                return;
-              }
-              try {
-                await BuyerChallanPdfService.downloadAndShare(challan);
-              } catch (error) {
-                AppSnackbar.showError(
-                  title: 'PDF share failed',
-                  message: error.toString().replaceFirst('Exception: ', ''),
-                );
-              }
-            },
-          ),
-        ],
+        title: "Challan Details",
+        subtitle: "Consignment dispatch & delivery receipts",
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              tooltip: 'Save PDF to Downloads',
+              icon: const Icon(Icons.picture_as_pdf_outlined, color: Colors.white, size: 21),
+              onPressed: () async {
+                final challan = controller.currentChallan.value;
+                if (challan == null) {
+                  AppSnackbar.showWarning(
+                    title: 'Please wait',
+                    message: 'Challan details are still loading.',
+                  );
+                  return;
+                }
+                try {
+                  await BuyerChallanPdfService.download(challan);
+                  AppSnackbar.showSuccess(
+                    title: 'PDF downloaded',
+                    message: 'Delivery challan was saved to Downloads.',
+                  );
+                } catch (error) {
+                  AppSnackbar.showError(
+                    title: 'PDF failed',
+                    message: error.toString().replaceFirst('Exception: ', ''),
+                  );
+                }
+              },
+            ),
+            IconButton(
+              tooltip: 'Share PDF',
+              icon: const Icon(Icons.share_outlined, color: Colors.white, size: 21),
+              onPressed: () async {
+                final challan = controller.currentChallan.value;
+                if (challan == null) {
+                  AppSnackbar.showWarning(
+                    title: 'Please wait',
+                    message: 'Challan details are still loading.',
+                  );
+                  return;
+                }
+                try {
+                  await BuyerChallanPdfService.downloadAndShare(challan);
+                } catch (error) {
+                  AppSnackbar.showError(
+                    title: 'PDF share failed',
+                    message: error.toString().replaceFirst('Exception: ', ''),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
       ),
       body: Obx(() {
         if (controller.isDetailLoading.value) {

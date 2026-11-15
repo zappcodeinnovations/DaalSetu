@@ -10,6 +10,7 @@ import '../model/buyer_offer_model.dart';
 import 'buyer_offer_details_view.dart';
 import 'buyer_negotiation_view.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:daalsetu/widgets/delivery_period_picker.dart';
 
 class BuyerMyInterestsView extends StatelessWidget {
@@ -407,27 +408,21 @@ class BuyerMyInterestsView extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: showAppBar
-          ? AppBar(
-              backgroundColor: theme.scaffoldBackgroundColor,
-              surfaceTintColor: Colors.transparent,
-              elevation: 0,
-              leading: AppBarLeading(child: Navigator.canPop(context)
-                  ? IconButton(
-                      icon: Icon(
-                        Icons.arrow_back_ios_new,
-                        color: theme.textTheme.bodyLarge?.color,
-                        size: 20,
-                      ),
-                      onPressed: () => Get.back(),
-                    )
-                  : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-              title: Text(
-                "My Interests",
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  color: theme.textTheme.bodyLarge?.color,
-                ),
+          ? HeroHeader(
+              leading: AppBarLeading(
+                child: Navigator.canPop(context)
+                    ? IconButton(
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        onPressed: () => Get.back(),
+                      )
+                    : null,
               ),
+              title: "My Interests",
+              subtitle: "Submitted commodity interests & negotiation status",
             )
           : null,
       body: Obx(() {

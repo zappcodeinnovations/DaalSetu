@@ -336,7 +336,7 @@ class GlassNavBar extends StatelessWidget {
             vertical: 6,
           ),
           decoration: BoxDecoration(
-            color: isSelected ? AppTheme.primaryGold : Colors.transparent,
+            color: isSelected ? AppTheme.secondaryOrange : Colors.transparent,
             borderRadius: BorderRadius.circular(14),
           ),
           child: Column(

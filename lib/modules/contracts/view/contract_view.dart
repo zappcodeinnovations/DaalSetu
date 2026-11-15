@@ -10,6 +10,7 @@ import '../model/contract_model.dart';
 import './contract_details_view.dart';
 import '../../admin_catalog/view/transport_bids_sheet.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class ContractsScreen extends StatefulWidget {
   final String? initialFilter;
@@ -102,52 +103,65 @@ class _ContractsScreenState extends State<ContractsScreen> {
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-          title: Obx(
+        appBar: HeroHeader(
+          leading: AppBarLeading(
+            child: Navigator.canPop(context)
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+                    onPressed: () => Get.back(),
+                  )
+                : null,
+          ),
+          titleWidget: Obx(
             () => Text(
               isSelectionMode.value
                   ? '${selectedContracts.length} selected'
                   : 'Contracts',
-              style: const TextStyle(fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          actions: [
-            Obx(() {
-              if (!isSelectionMode.value) {
-                return IconButton(
-                  tooltip: 'Refresh',
-                  onPressed: controller.fetchContracts,
-                  icon: const Icon(Icons.refresh_rounded),
-                );
-              }
-              return Row(
-                children: [
-                  IconButton(
-                    tooltip: 'Select all',
-                    onPressed: () {
-                      if (selectedContracts.length ==
-                          controller.contracts.length) {
-                        selectedContracts.clear();
-                      } else {
-                        selectedContracts
-                          ..clear()
-                          ..addAll(controller.contracts.map((item) => item.id));
-                      }
-                    },
-                    icon: const Icon(Icons.select_all_rounded),
-                  ),
-                  IconButton(
-                    tooltip: 'Close selection',
-                    onPressed: () {
-                      selectedContracts.clear();
-                      isSelectionMode.value = false;
-                    },
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ],
+          trailing: Obx(() {
+            if (!isSelectionMode.value) {
+              return IconButton(
+                tooltip: 'Refresh',
+                onPressed: controller.fetchContracts,
+                icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 22),
               );
-            }),
-          ],
+            }
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: 'Select all',
+                  onPressed: () {
+                    if (selectedContracts.length ==
+                        controller.contracts.length) {
+                      selectedContracts.clear();
+                    } else {
+                      selectedContracts
+                        ..clear()
+                        ..addAll(controller.contracts.map((item) => item.id));
+                    }
+                  },
+                  icon: const Icon(Icons.select_all_rounded, color: Colors.white, size: 21),
+                ),
+                IconButton(
+                  tooltip: 'Close selection',
+                  onPressed: () {
+                    selectedContracts.clear();
+                    isSelectionMode.value = false;
+                  },
+                  icon: const Icon(Icons.close_rounded, color: Colors.white, size: 21),
+                ),
+              ],
+            );
+          }),
         ),
         body: Column(
           children: [

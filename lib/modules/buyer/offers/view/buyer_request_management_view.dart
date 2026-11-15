@@ -10,6 +10,7 @@ import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/app_snackbar.dart';
 import 'buyer_offer_details_view.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 enum BuyerRequestMode { requirements, offers }
 
@@ -724,27 +725,21 @@ class _BuyerRequestManagementViewState
     if (shouldWrap) {
       return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: AppBar(
-          backgroundColor: theme.scaffoldBackgroundColor,
-          surfaceTintColor: Colors.transparent,
-          elevation: 0,
-          leading: AppBarLeading(child: Navigator.canPop(context)
-              ? IconButton(
-                  icon: Icon(
-                    Icons.arrow_back_ios_new,
-                    color: theme.textTheme.bodyLarge?.color,
-                    size: 20,
-                  ),
-                  onPressed: () => Get.back(),
-                )
-              : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-          title: Text(
-            heading,
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              color: theme.textTheme.bodyLarge?.color,
-            ),
+        appBar: HeroHeader(
+          leading: AppBarLeading(
+            child: Navigator.canPop(context)
+                ? IconButton(
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    onPressed: () => Get.back(),
+                  )
+                : null,
           ),
+          title: heading,
+          subtitle: "Broadcast commodity demands & inquiries",
         ),
         body: SafeArea(top: false, child: content),
       );

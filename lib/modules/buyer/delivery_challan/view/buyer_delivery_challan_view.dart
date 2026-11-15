@@ -8,6 +8,7 @@ import '../../../../routes/app_routes.dart';
 import '../controller/buyer_delivery_challan_controller.dart';
 import '../model/buyer_delivery_challan_model.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class BuyerDeliveryChallanView extends StatelessWidget {
   const BuyerDeliveryChallanView({super.key});
@@ -21,29 +22,33 @@ class BuyerDeliveryChallanView extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
+        preferredSize: const Size.fromHeight(kToolbarHeight + 14),
         child: Obx(() {
-          final theme = Theme.of(context);
-          return AppBar(
-            backgroundColor: theme.scaffoldBackgroundColor,
-            elevation: 0,
-            automaticallyImplyLeading: false,
-            leading: AppBarLeading(child: Navigator.canPop(context)
-                ? IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-                    onPressed: () => Get.back(),
-                  )
-                : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-            title: AnimatedSwitcher(
+          return HeroHeader(
+            leading: AppBarLeading(
+              child: Navigator.canPop(context)
+                  ? IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.white),
+                      onPressed: () => Get.back(),
+                    )
+                  : null,
+            ),
+            titleWidget: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: controller.isSearching.value
                   ? Container(
                       key: const ValueKey('searchField'),
                       height: 40,
                       decoration: BoxDecoration(
-                        color: theme.cardColor,
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: TextField(
                         autofocus: true,
@@ -55,9 +60,11 @@ class BuyerDeliveryChallanView extends StatelessWidget {
                           hintText: "Search challans...",
                           hintStyle: GoogleFonts.inter(fontSize: 13, color: Colors.grey),
                           border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         ),
-                        style: GoogleFonts.inter(fontSize: 14),
+                        style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF0A0F1D)),
                       ),
                     )
                   : Align(
@@ -68,51 +75,55 @@ class BuyerDeliveryChallanView extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
+                          color: Colors.white,
                         ),
                       ),
                     ),
             ),
-            actions: [
-              if (!controller.isSearching.value)
-                IconButton(
-                  icon: const Icon(IconlyLight.search),
-                  onPressed: () {
-                    controller.isSearching.value = true;
-                  },
-                ),
-              if (controller.isSearching.value)
-                IconButton(
-                  icon: const Icon(IconlyLight.close_square),
-                  onPressed: () {
-                    controller.isSearching.value = false;
-                    controller.searchQuery.value = '';
-                    controller.fetchChallans(isRefresh: true);
-                  },
-                ),
-              if (!controller.isSearching.value)
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    IconButton(
-                      icon: const Icon(IconlyLight.filter),
-                      onPressed: () => _showFilterBottomSheet(context, controller),
-                    ),
-                    if (controller.selectedStatus.value != "All Statuses")
-                      Positioned(
-                        top: 10,
-                        right: 10,
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary,
-                            shape: BoxShape.circle,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!controller.isSearching.value)
+                  IconButton(
+                    icon: const Icon(IconlyLight.search, color: Colors.white),
+                    onPressed: () {
+                      controller.isSearching.value = true;
+                    },
+                  ),
+                if (controller.isSearching.value)
+                  IconButton(
+                    icon: const Icon(IconlyLight.close_square, color: Colors.white),
+                    onPressed: () {
+                      controller.isSearching.value = false;
+                      controller.searchQuery.value = '';
+                      controller.fetchChallans(isRefresh: true);
+                    },
+                  ),
+                if (!controller.isSearching.value)
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(IconlyLight.filter, color: Colors.white),
+                        onPressed: () => _showFilterBottomSheet(context, controller),
+                      ),
+                      if (controller.selectedStatus.value != "All Statuses")
+                        Positioned(
+                          top: 10,
+                          right: 10,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
                           ),
                         ),
-                      ),
-                  ],
-                ),
-            ],
+                    ],
+                  ),
+              ],
+            ),
           );
         }),
       ),

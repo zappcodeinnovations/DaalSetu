@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:daalsetu/modules/admin_catalog/view/offer_interests_dialog.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   /// Buyer screens pass this to show "Submit Offer" on the offer page (MoM 7);
@@ -54,7 +55,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), title: const Text('Product details')),
+      appBar: HeroHeader(
+        title: 'Product Details',
+        subtitle: 'Commodity specifications & seller terms',
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        trailing: IconButton(
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+          tooltip: 'Refresh',
+          onPressed: _refresh,
+        ),
+      ),
       body: FutureBuilder<ProductModel>(
         future: _product,
         builder: (context, snapshot) {

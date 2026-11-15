@@ -6,6 +6,7 @@ import '../model/category_model.dart';
 import '../model/category_request_model.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class CategoryPageView extends StatelessWidget {
   const CategoryPageView({super.key});
@@ -21,34 +22,25 @@ class CategoryPageView extends StatelessWidget {
         backgroundColor: theme.scaffoldBackgroundColor,
 
         /// 🔥 MODERN APP BAR WITH TABS
-        appBar: AppBar(
-          elevation: 0,
-          centerTitle: false,
-          backgroundColor: theme.scaffoldBackgroundColor,
-          leading: AppBarLeading(child: Navigator.canPop(context)
-              ? IconButton(
-                  icon: Icon(IconlyLight.arrow_left_2, color: theme.textTheme.bodyLarge?.color),
-                  onPressed: () => Get.back(),
-                )
-              : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-          title: Text(
-            "Categories",
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+        appBar: HeroHeader(
+          leading: AppBarLeading(
+            child: Navigator.canPop(context)
+                ? IconButton(
+                    icon: const Icon(IconlyLight.arrow_left_2, color: Colors.white, size: 20),
+                    onPressed: () => Get.back(),
+                  )
+                : null,
           ),
-          actions: [
-            IconButton(
-              tooltip: "Send for Approval",
-              icon: Icon(IconlyLight.send, color: theme.colorScheme.primary),
-              onPressed: () => _showSendForApprovalBottomSheet(context, controller),
-            ),
-            const SizedBox(width: 8),
-          ],
+          title: "Commodity Categories",
+          trailing: IconButton(
+            tooltip: "Send for Approval",
+            icon: const Icon(IconlyLight.send, color: Colors.white, size: 21),
+            onPressed: () => _showSendForApprovalBottomSheet(context, controller),
+          ),
           bottom: TabBar(
-            indicatorColor: theme.colorScheme.primary,
-            labelColor: theme.colorScheme.primary,
-            unselectedLabelColor: theme.textTheme.bodyMedium?.color?.withOpacity(0.65),
+            indicatorColor: Colors.white,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white.withValues(alpha: 0.75),
             labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             tabs: [
               const Tab(text: "My Categories"),
@@ -64,15 +56,15 @@ class CategoryPageView extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withOpacity(0.12),
+                            color: Colors.white.withValues(alpha: 0.25),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
                             "$count",
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.primary,
+                              color: Colors.white,
                             ),
                           ),
                         ),

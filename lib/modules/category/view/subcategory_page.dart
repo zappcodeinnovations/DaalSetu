@@ -2,7 +2,7 @@ import 'package:iconly/iconly.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/subcategory_controller.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class SubCategoryScreen extends StatelessWidget {
   SubCategoryScreen({super.key});
@@ -17,19 +17,20 @@ class SubCategoryScreen extends StatelessWidget {
       backgroundColor: theme.scaffoldBackgroundColor,
 
       /// 🔹 APP BAR
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-        // elevation: 0,
-        // centerTitle: true,
-        // title: Obx(
-        //   () => Text(
-        //     (controller.categoryName as String).isEmpty
-        //         ? "Sub Categories"
-        //         : controller.categoryName as String,
-        //     style: theme.textTheme.titleLarge?.copyWith(
-        //       fontWeight: FontWeight.bold,
-        //     ),
-        //   ),
-        // ),
+      appBar: HeroHeader(
+        title: controller.categoryName.value.isNotEmpty
+            ? controller.categoryName.value
+            : "Sub Categories",
+        subtitle: "Browse commodities & varieties",
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        trailing: IconButton(
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+          tooltip: 'Refresh',
+          onPressed: controller.fetchSubCategories,
+        ),
       ),
 
       /// 🔹 BODY

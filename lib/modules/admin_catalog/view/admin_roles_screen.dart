@@ -3,6 +3,7 @@ import 'package:daalsetu/modules/admin_catalog/view/admin_permission_toggle_pane
 import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
 
 class AdminRolesScreen extends StatefulWidget {
@@ -94,7 +95,21 @@ class _AdminRolesScreenState extends State<AdminRolesScreen> {
     drawer: widget.showAdminDrawer
         ? const AdminDrawer(activeKey: 'roles')
         : null,
-    appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), title: const Text('Roles')),
+    appBar: HeroHeader(
+      leading: widget.showAdminDrawer
+          ? const AppBarLeading()
+          : IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+              onPressed: () => Navigator.of(context).maybePop(),
+            ),
+      title: 'Roles',
+      subtitle: 'Manage administrative roles & permissions',
+      trailing: IconButton(
+        tooltip: 'Refresh',
+        onPressed: _load,
+        icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+      ),
+    ),
     floatingActionButton: FloatingActionButton.extended(
       onPressed: _loading ? null : () => _openEditor(),
       icon: const Icon(Icons.add),

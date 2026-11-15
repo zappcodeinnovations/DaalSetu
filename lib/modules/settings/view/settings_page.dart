@@ -15,6 +15,7 @@ import '../../admin_catalog/view/admin_roles_screen.dart';
 import '../../seller/common/seller_ui.dart';
 import '../../../services/seller_services.dart';
 import 'package:daalsetu/theme/app_theme.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
 import '../../../widgets/app_shell.dart';
 
@@ -29,24 +30,23 @@ class SettingsScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
+      appBar: HeroHeader(
+        title: "Settings",
+        subtitle: "Manage your administrative preferences",
         leading: Navigator.canPop(context)
             ? IconButton(
-                icon: Icon(
+                icon: const Icon(
                   Icons.arrow_back_ios_new,
-                  color: theme.textTheme.bodyLarge?.color,
+                  color: Colors.white,
                   size: 20,
                 ),
                 onPressed: () => Get.back(),
               )
             : Builder(
                 builder: (ctx) => IconButton(
-                  icon: Icon(
+                  icon: const Icon(
                     Icons.menu_rounded,
-                    color: theme.textTheme.bodyLarge?.color,
+                    color: Colors.white,
                   ),
                   onPressed: () => AppShell.openDrawer(activeKey: 'settings'),
                 ),
@@ -55,27 +55,8 @@ class SettingsScreen extends StatelessWidget {
       body: SafeArea(
         top: false,
         child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           children: [
-            /// PAGE TITLE
-            Text(
-              "Settings",
-              style: GoogleFonts.poppins(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: theme.textTheme.bodyLarge?.color,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              "Manage your administrative preferences",
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                color: theme.textTheme.bodyMedium?.color,
-              ),
-            ),
-            const SizedBox(height: 28),
-
             /// ACCOUNT SECTION
             _sectionLabel(context, "ACCOUNT"),
             const SizedBox(height: 10),

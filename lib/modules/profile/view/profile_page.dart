@@ -16,6 +16,7 @@ import '../../../utils/app_preferences.dart';
 import '../controller/profile_controller.dart';
 import '../model/profile_model.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -47,30 +48,26 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildPageContent(BuildContext context) {
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: bgColor,
-        elevation: 0,
-        leading: AppBarLeading(child: IconButton(
-          icon: Icon(IconlyLight.arrow_left, color: Get.theme.iconTheme.color),
-          onPressed: () => Get.back(),
-        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-        title: Obx(
+      appBar: HeroHeader(
+        leading: AppBarLeading(
+          child: Navigator.canPop(context)
+              ? IconButton(
+                  icon: const Icon(IconlyLight.arrow_left, color: Colors.white, size: 20),
+                  onPressed: () => Get.back(),
+                )
+              : null,
+        ),
+        titleWidget: Obx(
           () => Text(
             "${_roleLabel(controller.profile.value?.role ?? '')} Profile",
-            style: TextStyle(
-              color: textDark,
+            style: const TextStyle(
+              color: Colors.white,
               fontWeight: FontWeight.bold,
-              fontSize: 20,
+              fontSize: 18,
             ),
           ),
         ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.more_horiz, color: textLight),
-            onPressed: () {},
-          ),
-        ],
+        subtitle: "Account credentials & KYC verification",
       ),
       body: Obx(() {
         if (controller.isLoading.value) {

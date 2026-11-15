@@ -11,8 +11,8 @@ import '../../../services/product_services.dart';
 import '../../../services/seller_services.dart';
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/utils/global_error_handler.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/delivery_period_picker.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 /// One live chat for a ProductInterest.  It intentionally powers both the
 /// buyer's My Interests route and the seller's Buyer Interests route so the
@@ -422,33 +422,18 @@ class _OfferInterestNegotiationChatViewState
                       status == 'interested'));
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const AppBarLeading(),
-        leadingWidth: AppBarLeading.widthFor(context),
-        titleSpacing: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            Text(
-              'Live negotiation · auto-refresh',
-              style: GoogleFonts.inter(fontSize: 11, color: Colors.green),
-            ),
-          ],
+      appBar: HeroHeader(
+        title: title,
+        subtitle: 'Live negotiation · auto-refresh',
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
-        actions: [
-          IconButton(
-            onPressed: _sending ? null : _load,
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh negotiation',
-          ),
-        ],
+        trailing: IconButton(
+          onPressed: _sending ? null : _load,
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+          tooltip: 'Refresh negotiation',
+        ),
       ),
       body: _loading && thread == null
           ? const Center(child: CircularProgressIndicator())
