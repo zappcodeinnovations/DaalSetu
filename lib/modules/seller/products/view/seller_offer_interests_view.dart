@@ -5,7 +5,7 @@ import 'package:iconly/iconly.dart';
 import '../controller/seller_negotiation_controller.dart';
 import '../../common/seller_ui.dart';
 import 'seller_interest_thread_view.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class SellerOfferInterestsView extends StatefulWidget {
   const SellerOfferInterestsView({super.key});
@@ -34,34 +34,18 @@ class _SellerOfferInterestsViewState extends State<SellerOfferInterestsView> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        titleSpacing: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Buyer Interests & Offers",
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: theme.textTheme.bodyLarge?.color,
-              ),
-            ),
-            Text(
-              'Live negotiation • auto-refresh',
-              style: GoogleFonts.inter(fontSize: 11, color: Colors.green),
-            ),
-          ],
+      appBar: HeroHeader(
+        title: "Buyer Interests",
+        subtitle: "Live negotiation • auto-refresh",
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
-        actions: [
-          IconButton(
-            onPressed: controller.fetchInterests,
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Refresh interests',
-          ),
-        ],
+        trailing: IconButton(
+          onPressed: controller.fetchInterests,
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+          tooltip: 'Refresh interests',
+        ),
       ),
       body: Obx(() {
         if (controller.isLoading.value) {

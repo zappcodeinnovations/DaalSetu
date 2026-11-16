@@ -1,26 +1,33 @@
 # Current Task State
 
 ## Current Task
-- **Goal**: Upgrade Secondary / Detail Screens in Buyer Panel (`ContractDetailScreen`, `ProductDetailScreen`, `SellerNotificationView`, `EditProfileScreen`, `AddCompanyView`, `SubCategoryScreen`) with Modern Reusable HeroHeader.
-- **Status**: Completed & Verified.
+- **Goal**: Full App UI Modernization — Milestone 2 (Auth Portal Modernization: 100% Completed & Verified).
+- **Status**: Milestone 1 & 2 Complete. Proceeding to Milestone 3 (Transporter Panel).
 - **Output**:
-  - `lib/modules/contracts/view/contract_details_view.dart`:
-    - Replaced plain monochrome AppBar with `HeroHeader` ("Contract Details" • "Deal summary & legal agreement") + PDF download action.
-  - `lib/modules/products/view/product_detail.dart`:
-    - Replaced plain monochrome AppBar with `HeroHeader` ("Product Details" • "Commodity specifications & seller terms") + refresh action.
-  - `lib/modules/seller/notifications/view/seller_notification_view.dart`:
-    - Replaced transparent AppBar with `HeroHeader` ("Notifications" • "Realtime updates & deal alerts") + mark all read action.
-  - `lib/modules/profile/view/edit_profile_page.dart`:
-    - Replaced custom AppBar with `HeroHeader` ("Edit Profile" • "Update personal & tax credentials").
-  - `lib/modules/seller/company/view/add_company_view.dart`:
-    - Replaced plain AppBar with `HeroHeader` (dynamic "Edit Company" / "Register Company" • "Enterprise identity, GST & branch details").
-  - `lib/modules/category/view/subcategory_page.dart`:
-    - Replaced blank/commented AppBar with `HeroHeader` (dynamic Category Name • "Browse commodities & varieties") + refresh action.
-- **Evidence**: `flutter analyze` passed with 0 errors across all updated files; comprehensive test suite passed (19/19 tests: `test/buyer_category_requests_test.dart`, `test/buyer_drawer_test.dart`, `test/buyer_contract_details_offer_id_test.dart`, `test/contract_delivery_challan_button_test.dart`, `test/buyer_submit_offer_on_detail_test.dart`, `test/notification_reclick_navigation_test.dart`).
+  - `lib/modules/Auth/forgot_password/view/forgot_password_page.dart`:
+    - Elevated flat screen into a modern Agro Trading authentication portal matching `login_screen.dart`.
+    - Added ambient saffron-to-amber top gradient wash, radial glow orbs, centered 76x76 DaalSetu logo, and verified `"KISOR • Pulse Trading Platform"` badge pill.
+    - Upgraded form container with 22px border radius, `#FFE0B2` border, soft depth shadow, rounded inputs with Iconly prefixes, and warm gradient "SEND PASSWORD" button.
+    - Preserved 100% of `ForgotPasswordController` and API dispatch logic.
+  - `lib/modules/Auth/register/view/register_page.dart`:
+    - Enhanced `_MobileBrandHeader` and `_BrandPanel` with official verified `"KISOR • Pulse Trading Platform"` badge pill.
+    - Preserved 100% of registration controllers, multi-column desktop & responsive mobile layout, field validators, and password visibility toggling.
+  - `lib/modules/seller/*` (Milestone 1 — 18/18 screens completed & verified).
+- **Evidence**: `flutter analyze` 0 errors on modified files; automated test suites (26/26 tests) passed (`test/auth_screens_modernization_test.dart`, `test/login_screen_test.dart`, `test/seller_batch_1a_screens_test.dart`, `test/seller_batch_1b_step1_test.dart`, `test/seller_batch_1b_step2_test.dart`, `test/seller_drawer_test.dart`, `test/contract_delivery_challan_button_test.dart`, `test/seller_api_models_test.dart`, `test/seller_contract_brand_offer_test.dart`).
 
 ---
 
 ## Completed Work in Current Session
+- **Milestone 2 (Auth Portal Modernization: 100% of all Auth Screens) Completed & Verified**:
+  - `login_screen.dart`, `register_page.dart`, `forgot_password_page.dart`, and `change_password_page.dart` are all unified under the same premium agritech design system with warm ambient top wash, DaalSetu logo, verified "KISOR" brand pill, and gradient buttons.
+- **Milestone 1 (Seller Panel: 100% of all 18 Screens) Completed & Verified**:
+  - All 18 Seller screens are unified under `HeroHeader`, 18px radius cards, `#FFE0B2` border tints, high-contrast typography, and warm saffron-to-amber gradient call-to-actions.
+  - Zero breaking changes to GetX controllers, dynamic calculation formulas, API models, dispatch callbacks, or negotiation streams.
+- **HeroHeader Architecture Hardening**:
+  - Dynamically calculates `bottom` widget preferred height, preventing overflows across all tabbed screens app-wide.
+- **Seller Panel Phase 1, Phase 2, & Phase 3 (100%) Complete**:
+  - Successfully redesigned Seller Drawer, Dashboard, Products, Create Offer, Deal Contracts, Contract Details, Buyer Requirements (RFQ List), Requirement Details, and Buyer Offers & Negotiation.
+  - Preserved 100% of GetX controllers, dynamic calculation math, location clearing buttons, dropdown items, role checks, quotation dialogs, live chat navigation, auto-refresh timers, and automated test finders.
 - **Final Specialized Screens Modernization**:
   - `lib/modules/shared/view/offer_interest_negotiation_chat_view.dart`:
     - Upgraded negotiation chat header to agritech `HeroHeader` ("${title}" • "Live negotiation · auto-refresh") with white back navigation and refresh action.

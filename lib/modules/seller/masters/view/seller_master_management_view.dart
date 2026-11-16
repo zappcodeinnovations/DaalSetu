@@ -5,7 +5,7 @@ import 'package:iconly/iconly.dart';
 import '../controller/seller_master_controller.dart';
 import 'seller_add_brand_dialog.dart';
 import 'seller_add_tag_dialog.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class SellerMasterManagementView extends StatelessWidget {
   const SellerMasterManagementView({super.key});
@@ -14,23 +14,30 @@ class SellerMasterManagementView extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(SellerMasterController());
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     const primaryColor = Color(0xFFFFB300);
 
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          title: Text(
-            "Master Data Management",
-            style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+        appBar: HeroHeader(
+          title: "Master Data",
+          subtitle: "Registered brands & commodity quality tags",
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
+          trailing: IconButton(
+            tooltip: 'Refresh',
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+            onPressed: controller.fetchAllMasters,
           ),
           bottom: TabBar(
-            indicatorColor: primaryColor,
-            labelColor: primaryColor,
-            unselectedLabelColor: Colors.grey,
+            indicatorColor: Colors.white,
+            indicatorWeight: 3,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white.withValues(alpha: 0.75),
             labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13),
             tabs: const [
               Tab(text: "Brands"),
@@ -50,9 +57,22 @@ class SellerMasterManagementView extends StatelessWidget {
                 onRefresh: controller.fetchAllMasters,
                 color: primaryColor,
                 child: ListView(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   children: [
-                    Text("Registered Brands", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Row(
+                      children: [
+                        Container(
+                          width: 4,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: primaryColor,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text("Registered Brands", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15)),
+                      ],
+                    ),
                     const SizedBox(height: 12),
                     if (controller.brandsList.isEmpty)
                       const Padding(
@@ -72,75 +92,94 @@ class SellerMasterManagementView extends StatelessWidget {
                         itemCount: controller.brandsList.length,
                         itemBuilder: (context, index) {
                           final brand = controller.brandsList[index];
-                          return Card(
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(12),
-                              onTap: () => Get.bottomSheet(
-                                Container(
-                                  color: theme.cardColor,
-                                  child: SafeArea(
-                                    child: Wrap(
-                                      children: [
-                                        ListTile(
-                                          leading: const Icon(IconlyLight.edit),
-                                          title: const Text("Edit Brand"),
-                                          onTap: () {
-                                            Get.back();
-                                            controller.editBrand(brand);
-                                          },
-                                        ),
-                                        ListTile(
-                                          leading: const Icon(IconlyLight.delete, color: Colors.red),
-                                          title: const Text("Delete Brand", style: TextStyle(color: Colors.red)),
-                                          onTap: () {
-                                            Get.back();
-                                            controller.deleteBrand(brand);
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                          return Container(
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+                                width: 1.2,
                               ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Row(
-                                  children: [
-                                    CircleAvatar(
-                                      backgroundColor: primaryColor.withValues(alpha: 0.15),
-                                      child: Text(
-                                        (brand.name != null && brand.name!.isNotEmpty) ? brand.name![0].toUpperCase() : "B",
-                                        style: const TextStyle(fontWeight: FontWeight.bold, color: primaryColor),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.03),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.circular(14),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(14),
+                                onTap: () => Get.bottomSheet(
+                                  Container(
+                                    color: theme.cardColor,
+                                    child: SafeArea(
+                                      child: Wrap(
                                         children: [
-                                          Text(
-                                            brand.name ?? 'Brand',
-                                            style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
+                                          ListTile(
+                                            leading: const Icon(IconlyLight.edit),
+                                            title: const Text("Edit Brand"),
+                                            onTap: () {
+                                              Get.back();
+                                              controller.editBrand(brand);
+                                            },
                                           ),
-                                          if (brand.status != 'active')
-                                            Text(
-                                              brand.status == 'pending'
-                                                  ? 'Pending approval'
-                                                  : brand.status[0].toUpperCase() + brand.status.substring(1),
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w600,
-                                                color: brand.status == 'pending' ? Colors.orange : Colors.red,
-                                              ),
-                                            ),
+                                          ListTile(
+                                            leading: const Icon(IconlyLight.delete, color: Colors.red),
+                                            title: const Text("Delete Brand", style: TextStyle(color: Colors.red)),
+                                            onTap: () {
+                                              Get.back();
+                                              controller.deleteBrand(brand);
+                                            },
+                                          ),
                                         ],
                                       ),
                                     ),
-                                  ],
+                                  ),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                  child: Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 18,
+                                        backgroundColor: primaryColor.withValues(alpha: 0.15),
+                                        child: Text(
+                                          (brand.name != null && brand.name!.isNotEmpty) ? brand.name![0].toUpperCase() : "B",
+                                          style: const TextStyle(fontWeight: FontWeight.bold, color: primaryColor),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              brand.name ?? 'Brand',
+                                              style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            if (brand.status != 'active')
+                                              Text(
+                                                brand.status == 'pending'
+                                                    ? 'Pending approval'
+                                                    : brand.status[0].toUpperCase() + brand.status.substring(1),
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: brand.status == 'pending' ? Colors.orange : Colors.red,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -156,10 +195,23 @@ class SellerMasterManagementView extends StatelessWidget {
                 onRefresh: controller.fetchAllMasters,
                 color: primaryColor,
                 child: ListView(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   children: [
-                    Text("Quality Tags Master", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
-                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Container(
+                          width: 4,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: primaryColor,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text("Quality Tags Master", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15)),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
                     if (controller.tagsList.isEmpty)
                       const Padding(
                         padding: EdgeInsets.all(32),
@@ -171,9 +223,21 @@ class SellerMasterManagementView extends StatelessWidget {
                         runSpacing: 8,
                         children: controller.tagsList.map((tag) {
                           return ActionChip(
-                            backgroundColor: primaryColor.withValues(alpha: 0.15),
+                            backgroundColor: isDark
+                                ? const Color(0xFF282828)
+                                : primaryColor.withValues(alpha: 0.12),
+                            side: BorderSide(
+                              color: primaryColor.withValues(alpha: 0.35),
+                            ),
                             avatar: const Icon(IconlyBold.discount, size: 14, color: primaryColor),
-                            label: Text(tag.name ?? 'Tag', style: const TextStyle(fontWeight: FontWeight.bold, color: primaryColor, fontSize: 12)),
+                            label: Text(
+                              tag.name ?? 'Tag',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? const Color(0xFFFFB300) : const Color(0xFFE65100),
+                                fontSize: 12,
+                              ),
+                            ),
                             onPressed: () => Get.bottomSheet(
                               Container(
                                 color: theme.cardColor,
@@ -212,15 +276,33 @@ class SellerMasterManagementView extends StatelessWidget {
         }),
         // Adds to whichever tab is open; a seller brand is live at once (MoM point 26).
         floatingActionButton: Builder(
-          builder: (tabContext) => FloatingActionButton.extended(
-            heroTag: null,
-            backgroundColor: primaryColor,
-            icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text("Add", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            onPressed: () {
-              final isBrandTab = DefaultTabController.of(tabContext).index == 0;
-              Get.dialog(isBrandTab ? const SellerAddBrandDialog() : const SellerAddTagDialog());
-            },
+          builder: (tabContext) => Container(
+            height: 46,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
+              ),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFF9800).withValues(alpha: 0.35),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: FloatingActionButton.extended(
+              heroTag: null,
+              elevation: 0,
+              highlightElevation: 0,
+              backgroundColor: Colors.transparent,
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: Text("Add", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold)),
+              onPressed: () {
+                final isBrandTab = DefaultTabController.of(tabContext).index == 0;
+                Get.dialog(isBrandTab ? const SellerAddBrandDialog() : const SellerAddTagDialog());
+              },
+            ),
           ),
         ),
       ),

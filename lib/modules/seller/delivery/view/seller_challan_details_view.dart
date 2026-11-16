@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../../utils/money_format.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../controller/seller_delivery_controller.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/dispatch_bills_section.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 /// Full seller-facing delivery challan. The API returns the same snapshot-rich
 /// document used by the web panel, so every available party, transport, charge
@@ -110,28 +111,36 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-      title: const Text('Challan Details'),
-      actions: [
-        IconButton(
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: HeroHeader(
+        title: "Challan Details",
+        subtitle: "Shipment manifest, parties & cargo charges",
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        trailing: IconButton(
           tooltip: 'Refresh',
           onPressed: () => _controller.fetchChallanDetails(widget.challanId),
-          icon: const Icon(Icons.refresh_rounded),
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
         ),
-      ],
-    ),
-    body: Obx(() {
-      if (_controller.isDetailLoading.value) {
-        return const Center(child: CircularProgressIndicator(color: _primary));
-      }
-      final data = _controller.selectedChallan.value;
-      if (data == null) {
-        return const Center(child: Text('Challan details were not found.'));
-      }
-      return _body(data);
-    }),
-  );
+      ),
+      body: Obx(() {
+        if (_controller.isDetailLoading.value) {
+          return const Center(child: CircularProgressIndicator(color: _primary));
+        }
+        final data = _controller.selectedChallan.value;
+        if (data == null) {
+          return const Center(child: Text('Challan details were not found.'));
+        }
+        return _body(data);
+      }),
+    );
+  }
 
   Widget _body(Map<String, dynamic> rawData) {
     final data = rawData['data'] is Map
@@ -460,13 +469,36 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
           ],
           if (canDispatch) ...[
             const SizedBox(height: 18),
-            SizedBox(
-              height: 52,
-              child: FilledButton.icon(
+            Container(
+              width: double.infinity,
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFF9800).withValues(alpha: 0.35),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: ElevatedButton.icon(
                 onPressed: () => _controller.dispatchChallan(widget.challanId),
-                icon: const Icon(Icons.send_rounded),
-                label: const Text('DISPATCH SHIPMENT'),
-                style: FilledButton.styleFrom(backgroundColor: _primary),
+                icon: const Icon(Icons.send_rounded, size: 18, color: Colors.white),
+                label: Text(
+                  'DISPATCH SHIPMENT',
+                  style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
               ),
             ),
           ],
@@ -477,25 +509,50 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
 
   Widget _statusBanner(String status) {
     final (color, label) = switch (status) {
-      'dispatched' => (Colors.blue, 'DISPATCHED'),
-      'received' || 'delivered' => (Colors.green, 'DELIVERED'),
-      'cancelled' => (Colors.red, 'CANCELLED'),
-      _ => (Colors.orange, status.isEmpty ? 'DRAFT' : status.toUpperCase()),
+      'dispatched' => (const Color(0xFF1976D2), 'DISPATCHED'),
+      'received' || 'delivered' => (const Color(0xFF2E7D32), 'DELIVERED'),
+      'cancelled' => (const Color(0xFFD32F2F), 'CANCELLED'),
+      _ => (const Color(0xFFE65100), status.isEmpty ? 'DRAFT' : status.toUpperCase()),
     };
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: color.withValues(alpha: .10),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: .28)),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: .30), width: 1.2),
       ),
       child: Row(
         children: [
-          Icon(Icons.info_outline_rounded, color: color),
-          const SizedBox(width: 10),
-          Text(
-            'Current status: $label',
-            style: TextStyle(color: color, fontWeight: FontWeight.w800),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: .15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.info_outline_rounded, size: 18, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Current Status',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey.shade700),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    label,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -506,26 +563,57 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
     required IconData icon,
     required String title,
     required List<Widget> children,
-  }) => Card(
-    margin: EdgeInsets.zero,
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: _primary),
-              const SizedBox(width: 8),
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
-            ],
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
-          const Divider(height: 24),
-          ...children,
         ],
       ),
-    ),
-  );
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: _primary,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(icon, size: 18, color: const Color(0xFFE65100)),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+              ],
+            ),
+            const Divider(height: 20),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _row(
     String label,
@@ -534,58 +622,87 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
     bool multiline = true,
   }) => Padding(
     padding: const EdgeInsets.only(bottom: 10),
-    child: Column(
+    child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: Theme.of(context).textTheme.labelMedium),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          softWrap: true,
-          style: TextStyle(
-            fontSize: prominent ? 16 : 14,
-            fontWeight: prominent ? FontWeight.w900 : FontWeight.w600,
+        Expanded(
+          flex: 4,
+          child: Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12)),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          flex: 6,
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            softWrap: true,
+            style: TextStyle(
+              fontSize: prominent ? 15 : 13,
+              fontWeight: prominent ? FontWeight.w800 : FontWeight.w600,
+              color: prominent ? const Color(0xFFE65100) : null,
+            ),
           ),
         ),
       ],
     ),
   );
 
-  Widget _itemCard(Map<String, dynamic> item) => Container(
-    width: double.infinity,
-    margin: const EdgeInsets.only(bottom: 10),
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      border: Border.all(color: _primary.withValues(alpha: .28)),
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          _show(item['product_name']),
-          softWrap: true,
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 8),
-        _itemRow(
-          'Quantity',
-          '${_show(item['quantity'])} ${_show(item['unit'])}',
-        ),
-        _itemRow(
-          'Bags / packing',
-          '${_show(item['bag_count'])} / ${_show(item['packing_weight_kg'])} KG',
-        ),
-        _itemRow('Rate', _money(item['rate'])),
-        _itemRow(
-          'Commission',
-          '${_show(item['commission_type'])} • ${_show(item['brokerage_rate'])}',
-        ),
-        const Divider(height: 18),
-        _itemRow('Item total', _money(item['amount']), bold: true),
-      ],
-    ),
-  );
+  Widget _itemCard(Map<String, dynamic> item) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF282828) : const Color(0xFFFFFDF8),
+        border: Border.all(color: const Color(0xFFFFB300).withValues(alpha: .30), width: 1),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFB300).withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.grain_rounded, size: 16, color: Color(0xFFE65100)),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _show(item['product_name']),
+                  softWrap: true,
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _itemRow(
+            'Quantity',
+            '${_show(item['quantity'])} ${_show(item['unit'])}',
+          ),
+          _itemRow(
+            'Bags / packing',
+            '${_show(item['bag_count'])} / ${_show(item['packing_weight_kg'])} KG',
+          ),
+          _itemRow('Rate', _money(item['rate'])),
+          _itemRow(
+            'Commission',
+            '${_show(item['commission_type'])} • ${_show(item['brokerage_rate'])}',
+          ),
+          const Divider(height: 16),
+          _itemRow('Item Total', _money(item['amount']), bold: true),
+        ],
+      ),
+    );
+  }
 
   Widget _itemRow(String label, String value, {bool bold = false}) => Padding(
     padding: const EdgeInsets.only(bottom: 4),

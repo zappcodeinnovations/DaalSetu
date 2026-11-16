@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../services/seller_services.dart';
 import '../../common/seller_ui.dart';
 import 'package:daalsetu/widgets/delivery_period_picker.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 /// Edits an offer's details. Stock (bags / quantity) is changed only from the
 /// Stock dialog: sending packing fields here would reset the remaining stock.
@@ -171,6 +172,9 @@ class _EditOfferViewState extends State<EditOfferView> {
   }
 
   Widget _field(TextEditingController c, String label, {TextInputType? type, int lines = 1}) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: TextField(
@@ -183,26 +187,60 @@ class _EditOfferViewState extends State<EditOfferView> {
         maxLines: lines,
         decoration: InputDecoration(
           labelText: label,
+          labelStyle: TextStyle(fontSize: 13, color: Colors.grey.shade600),
           counterText: "",
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(
+              color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Color(0xFFFFB300), width: 1.5),
+          ),
+          filled: true,
+          fillColor: theme.cardColor,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
       ),
     );
   }
 
   Widget _dateTile(String label, String value, VoidCallback onTap) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         child: InputDecorator(
           decoration: InputDecoration(
             labelText: label,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            suffixIcon: const Icon(Icons.calendar_month, color: SellerUi.primary),
+            labelStyle: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: Color(0xFFFFB300), width: 1.5),
+            ),
+            filled: true,
+            fillColor: theme.cardColor,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            suffixIcon: const Icon(Icons.calendar_month, color: Color(0xFFFFB300)),
           ),
-          child: Text(value.isEmpty ? 'Select' : value),
+          child: Text(
+            value.isEmpty ? 'Select' : value,
+            style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
         ),
       ),
     );
@@ -210,20 +248,54 @@ class _EditOfferViewState extends State<EditOfferView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      appBar: SellerUi.appBar(context, "Edit Offer"),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: HeroHeader(
+        title: "Edit Offer",
+        subtitle: "Commodity pricing, delivery window & terms",
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        trailing: IconButton(
+          tooltip: 'Reload',
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+          onPressed: _load,
+        ),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: SellerUi.primary))
           : _offer == null
               ? const Center(child: Text("Offer could not be loaded"))
               : ListView(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   children: [
-                    Text(
-                      "Category: ${_offer!['category_name'] ?? '-'}",
-                      style: GoogleFonts.inter(color: Colors.grey.shade600, fontSize: 13),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      margin: const EdgeInsets.only(bottom: 14),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF282828) : const Color(0xFFFFF8E1).withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFFFB300).withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.category_outlined, size: 16, color: Color(0xFFE65100)),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Category: ${_offer!['category_name'] ?? '-'}",
+                            style: GoogleFonts.inter(
+                              color: isDark ? Colors.grey.shade300 : const Color(0xFF5D4037),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 14),
                     _field(_title, "Offer Title *"),
                     _field(_description, "Description", lines: 3),
                     Row(
@@ -236,7 +308,24 @@ class _EditOfferViewState extends State<EditOfferView> {
                             child: DropdownButtonFormField<String>(
                               initialValue: _amountUnit,
                               isExpanded: true,
-                              decoration: InputDecoration(labelText: "Per", border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                              decoration: InputDecoration(
+                                labelText: "Per",
+                                labelStyle: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: BorderSide(
+                                    color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: const BorderSide(color: Color(0xFFFFB300), width: 1.5),
+                                ),
+                                filled: true,
+                                fillColor: theme.cardColor,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                              ),
                               items: const [
                                 DropdownMenuItem(value: 'kg', child: Text('KG', overflow: TextOverflow.ellipsis)),
                                 DropdownMenuItem(value: 'qtl', child: Text('Quintal', overflow: TextOverflow.ellipsis)),
@@ -266,22 +355,46 @@ class _EditOfferViewState extends State<EditOfferView> {
                     _dateTile("Deal Expiry", _dealExpiry == null ? '' : SellerUi.date(_dealExpiry!.toIso8601String()), _pickExpiry),
                     _field(_location, "Loading Location"),
                     _field(_remark, "Remark", lines: 2),
-                    Text(
-                      "To change bags / quantity use the Stock button on the offer card.",
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    Row(
+                      children: [
+                        Icon(Icons.info_outline_rounded, size: 14, color: Colors.grey.shade600),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            "To change bags / quantity use the Stock button on the offer card.",
+                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 20),
-                    SizedBox(
-                      height: 50,
+                    Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFF9800).withValues(alpha: 0.35),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
                       child: ElevatedButton(
                         onPressed: _saving ? null : _save,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: SellerUi.primary,
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         child: _saving
                             ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                            : const Text("SAVE CHANGES", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            : Text("SAVE CHANGES", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
                       ),
                     ),
                   ],

@@ -38,7 +38,10 @@ class HeroHeader extends StatelessWidget implements PreferredSizeWidget {
       height += 84;
     }
     if (bottom != null) {
-      height += 56;
+      final bottomH = bottom is PreferredSizeWidget
+          ? (bottom as PreferredSizeWidget).preferredSize.height
+          : 56.0;
+      height += bottomH + 8;
     }
     return Size.fromHeight(height);
   }

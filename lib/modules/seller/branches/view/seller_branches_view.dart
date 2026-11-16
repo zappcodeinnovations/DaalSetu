@@ -6,7 +6,7 @@ import 'package:iconly/iconly.dart';
 import '../controller/seller_branch_controller.dart';
 import 'seller_join_branch_dialog.dart';
 import '../../../../services/seller_services.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class SellerBranchesView extends StatelessWidget {
   const SellerBranchesView({super.key});
@@ -85,25 +85,23 @@ class SellerBranchesView extends StatelessWidget {
   Widget _buildPageContent(BuildContext context) {
     final controller = Get.put(SellerBranchController());
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     const primaryColor = Color(0xFFFFB300);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          "My Branches",
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+      appBar: HeroHeader(
+        title: "My Branches",
+        subtitle: "Warehouse branches & network directory",
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
-        // Creating branches is super-admin only on the server; sellers browse and request to join.
-        actions: [
-          IconButton(
-            icon: const Icon(IconlyLight.search, color: primaryColor),
-            onPressed: () => _showBranchDirectory(controller),
-            tooltip: "Browse Branches",
-          ),
-        ],
+        trailing: IconButton(
+          icon: const Icon(IconlyLight.search, color: Colors.white),
+          onPressed: () => _showBranchDirectory(controller),
+          tooltip: "Browse Branches",
+        ),
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
@@ -115,54 +113,137 @@ class SellerBranchesView extends StatelessWidget {
           color: primaryColor,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Join Branch Banner
-                Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  color: primaryColor.withValues(alpha: 0.12),
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: isDark
+                          ? [const Color(0xFF2C2416), const Color(0xFF1E1E1E)]
+                          : [const Color(0xFFFFF8E1), const Color(0xFFFFF3E0)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: const Color(0xFFFFB300).withValues(alpha: 0.35),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
-                        const CircleAvatar(
-                          backgroundColor: primaryColor,
-                          child: Icon(IconlyBold.work, color: Colors.white, size: 20),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
+                            ),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFF9800).withValues(alpha: 0.3),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(IconlyBold.work, color: Colors.white, size: 20),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text("Join Existing Branch", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15)),
+                              Text(
+                                "Join Existing Branch",
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  color: theme.textTheme.titleMedium?.color,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
                               Text("Connect via branch code", style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
                             ],
                           ),
                         ),
-                        ElevatedButton(
-                          onPressed: () => Get.dialog(const SellerJoinBranchDialog()),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryColor,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        Container(
+                          height: 38,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFF9800).withValues(alpha: 0.3),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                          child: const Text("JOIN CODE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                          child: ElevatedButton(
+                            onPressed: () => Get.dialog(const SellerJoinBranchDialog()),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              padding: const EdgeInsets.symmetric(horizontal: 14),
+                            ),
+                            child: const Text("JOIN CODE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
                 // Primary Branch
                 if (controller.primaryBranch.value != null) ...[
-                  Text("Primary Branch", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: primaryColor,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text("Primary Branch", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15)),
+                    ],
+                  ),
                   const SizedBox(height: 10),
-                  Card(
-                    elevation: 3,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+                        width: 1.2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
@@ -171,30 +252,78 @@ class SellerBranchesView extends StatelessWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                controller.primaryBranch.value!.locationName ?? 'Primary Branch',
-                                style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
+                              Expanded(
+                                child: Text(
+                                  controller.primaryBranch.value!.locationName ?? 'Primary Branch',
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: theme.textTheme.titleMedium?.color,
+                                  ),
+                                ),
                               ),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(color: Colors.blue.shade100, borderRadius: BorderRadius.circular(20)),
-                                child: Text("PRIMARY", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue.shade900)),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1976D2).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: const Color(0xFF1976D2).withValues(alpha: 0.3)),
+                                ),
+                                child: const Text(
+                                  "PRIMARY",
+                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF1976D2)),
+                                ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 6),
-                          Text("Branch Code: ${controller.primaryBranch.value!.branchCode ?? 'N/A'}", style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-                          Text("Location: ${controller.primaryBranch.value!.city ?? ''}, ${controller.primaryBranch.value!.state ?? ''}", style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Icon(Icons.tag_rounded, size: 14, color: Colors.grey.shade600),
+                              const SizedBox(width: 4),
+                              Text("Branch Code: ", style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                              Text(
+                                controller.primaryBranch.value!.branchCode ?? 'N/A',
+                                style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(Icons.location_on_outlined, size: 14, color: Colors.grey.shade600),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  "Location: ${controller.primaryBranch.value!.city ?? ''}, ${controller.primaryBranch.value!.state ?? ''}",
+                                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                 ],
 
                 // Pending Requests
                 if (controller.pendingRequests.isNotEmpty) ...[
-                  Text("Pending Join Requests", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF9800),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text("Pending Join Requests", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15)),
+                    ],
+                  ),
                   const SizedBox(height: 10),
                   ListView.builder(
                     shrinkWrap: true,
@@ -202,25 +331,44 @@ class SellerBranchesView extends StatelessWidget {
                     itemCount: controller.pendingRequests.length,
                     itemBuilder: (context, index) {
                       final req = controller.pendingRequests[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+                          ),
+                        ),
                         child: ListTile(
-                          title: Text(req.locationName ?? "Branch Request", style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text("Code: ${req.branchCode ?? 'N/A'} • Status: Pending Approval"),
+                          title: Text(req.locationName ?? "Branch Request", style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14)),
+                          subtitle: Text("Code: ${req.branchCode ?? 'N/A'} • Status: Pending Approval", style: const TextStyle(fontSize: 12)),
                           trailing: TextButton(
                             onPressed: () => controller.cancelRequest(req.branchId ?? req.id!),
-                            child: const Text("CANCEL", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                            child: const Text("CANCEL", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
                           ),
                         ),
                       );
                     },
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                 ],
 
                 // My Branches List
-                Text("My Warehouse Network", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)),
+                Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: primaryColor,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text("My Warehouse Network", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15)),
+                  ],
+                ),
                 const SizedBox(height: 10),
                 if (controller.myBranches.isEmpty)
                   Padding(
@@ -236,18 +384,24 @@ class SellerBranchesView extends StatelessWidget {
                     itemCount: controller.myBranches.length,
                     itemBuilder: (context, index) {
                       final b = controller.myBranches[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+                          ),
+                        ),
                         child: ListTile(
-                          title: Text(b.locationName ?? "Warehouse Branch", style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text("Code: ${b.branchCode ?? 'N/A'} • ${b.city ?? ''}, ${b.state ?? ''}"),
+                          title: Text(b.locationName ?? "Warehouse Branch", style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14)),
+                          subtitle: Text("Code: ${b.branchCode ?? 'N/A'} • ${b.city ?? ''}, ${b.state ?? ''}", style: const TextStyle(fontSize: 12)),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               if (b.isPrimary != true)
                                 IconButton(
-                                  icon: Icon(IconlyLight.star, color: Colors.amber.shade800, size: 20),
+                                  icon: const Icon(IconlyLight.star, color: Color(0xFFE65100), size: 20),
                                   onPressed: () => Get.defaultDialog(
                                     title: "Make Primary",
                                     middleText: "Make ${b.branchCode ?? 'this branch'} your primary branch?",

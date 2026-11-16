@@ -6,7 +6,7 @@ import 'package:iconly/iconly.dart';
 import '../controller/seller_contract_controller.dart';
 import '../../common/seller_ui.dart';
 import 'seller_contract_detail_view.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class SellerContractsView extends StatelessWidget {
   const SellerContractsView({super.key});
@@ -20,19 +20,22 @@ class SellerContractsView extends StatelessWidget {
   Widget _buildPageContent(BuildContext context) {
     final controller = Get.put(SellerContractController());
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     const primaryColor = Color(0xFFFFB300);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          "My Deal Contracts",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
+      appBar: HeroHeader(
+        title: "Deal Contracts",
+        subtitle: "Signed deals & legal trade agreements",
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        trailing: IconButton(
+          tooltip: 'Refresh contracts',
+          onPressed: controller.fetchContracts,
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
         ),
       ),
       body: Obx(() {
@@ -47,15 +50,34 @@ class SellerContractsView extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  IconlyLight.document,
-                  size: 64,
-                  color: Colors.grey.shade400,
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    IconlyLight.document,
+                    size: 56,
+                    color: primaryColor,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   "No signed deal contracts yet",
-                  style: GoogleFonts.poppins(color: Colors.grey.shade600),
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white70 : Colors.grey.shade700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  "Confirmed deals and agreements will appear here",
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? Colors.white38 : Colors.grey.shade500,
+                  ),
                 ),
               ],
             ),
@@ -77,11 +99,30 @@ class SellerContractsView extends StatelessWidget {
                     : () => Get.to(
                         () => SellerContractDetailView(contractId: item.id!),
                       ),
-                child: Card(
-                  elevation: 3,
+                child: Container(
                   margin: const EdgeInsets.only(bottom: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : const Color(0xFFFFE0B2).withValues(alpha: 0.7),
+                    ),
+                    boxShadow: isDark
+                        ? []
+                        : [
+                            BoxShadow(
+                              color: const Color(0xFFE65100).withValues(alpha: 0.04),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 6,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -106,15 +147,20 @@ class SellerContractsView extends StatelessWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: status.color.withValues(alpha: 0.14),
+                                color: status.color.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: status.color.withValues(alpha: 0.35),
+                                  width: 0.8,
+                                ),
                               ),
                               child: Text(
                                 status.label,
                                 style: TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 10.5,
                                   fontWeight: FontWeight.bold,
                                   color: status.color,
+                                  letterSpacing: 0.3,
                                 ),
                               ),
                             ),
@@ -214,9 +260,9 @@ class SellerContractsView extends StatelessWidget {
                                   Text(
                                     "₹${item.dealAmount ?? 'N/A'}",
                                     style: GoogleFonts.inter(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                      color: primaryColor,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 16,
+                                      color: const Color(0xFFE65100),
                                     ),
                                   ),
                                 ],

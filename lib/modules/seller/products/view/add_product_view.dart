@@ -3,9 +3,9 @@ import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
 import '../../common/seller_ui.dart';
 import '../controller/seller_product_controller.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/delivery_period_picker.dart';
 import 'package:daalsetu/widgets/offer_image_picker.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import 'dart:io';
 
 class AddProductView extends StatefulWidget {
@@ -35,27 +35,22 @@ class _AddProductViewState extends State<AddProductView> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text(
-          "Create Offer",
-          style: TextStyle(fontWeight: FontWeight.bold),
+      appBar: HeroHeader(
+        title: "Create Offer",
+        subtitle: "Commodity pricing, stock quantity & terms",
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
-        leading: AppBarLeading(child: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
-          onPressed: () => Get.back(),
-        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh_rounded, color: theme.iconTheme.color),
-            tooltip: "Reset Form",
-            onPressed: () {
-              controller.clearForm();
-              controller.fetchSupportData();
-            },
-          ),
-        ],
+        trailing: IconButton(
+          key: const Key('refresh_button'),
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+          tooltip: "Reset Form",
+          onPressed: () {
+            controller.clearForm();
+            controller.fetchSupportData();
+          },
+        ),
       ),
       body: Obx(() {
         return RefreshIndicator(
@@ -396,15 +391,35 @@ class _AddProductViewState extends State<AddProductView> {
               ],
 
               const SizedBox(height: 32),
-              SizedBox(
+              Container(
                 width: double.infinity,
-                height: 55,
+                height: 54,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFE65100),
+                      Color(0xFFF57C00),
+                      Color(0xFFFFA000),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFE65100).withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
                 child: ElevatedButton(
                   onPressed: controller.isSaving.value
                       ? null
                       : controller.createProduct,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -419,13 +434,21 @@ class _AddProductViewState extends State<AddProductView> {
                             strokeWidth: 2,
                           ),
                         )
-                      : const Text(
-                          "CREATE OFFER",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "CREATE OFFER",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
+                          ],
                         ),
                 ),
               ),
@@ -439,9 +462,22 @@ class _AddProductViewState extends State<AddProductView> {
   }
 
   Widget _sectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 18,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE65100),
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ],
     );
   }
 

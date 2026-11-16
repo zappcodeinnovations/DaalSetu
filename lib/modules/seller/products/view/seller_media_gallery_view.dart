@@ -10,7 +10,7 @@ import '../../../../comman/api_url.dart';
 import '../../../../widgets/authenticated_network_image.dart';
 import '../../../../widgets/media_url.dart';
 import '../../../../utils/app_preferences.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:daalsetu/widgets/offer_image_picker.dart';
 
 class SellerMediaGalleryView extends StatefulWidget {
@@ -147,17 +147,20 @@ class _SellerMediaGalleryViewState extends State<SellerMediaGalleryView> {
       length: 2,
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          title: Text(
-            "Product Media Gallery",
-            style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+        appBar: HeroHeader(
+          title: "Media Gallery",
+          subtitle: "Product images & videos gallery",
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+            onPressed: () => Navigator.of(context).maybePop(),
           ),
-          bottom: const TabBar(
-            indicatorColor: primaryColor,
-            labelColor: primaryColor,
-            tabs: [
+          bottom: TabBar(
+            indicatorColor: Colors.white,
+            indicatorWeight: 3,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white.withValues(alpha: 0.75),
+            labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13),
+            tabs: const [
               Tab(icon: Icon(IconlyLight.image), text: "Images"),
               Tab(icon: Icon(IconlyLight.video), text: "Videos"),
             ],
@@ -259,39 +262,59 @@ class _SellerMediaGalleryViewState extends State<SellerMediaGalleryView> {
                     bottom: 16,
                     right: 16,
                     child: Obx(
-                      () => FloatingActionButton.extended(
-                        heroTag: null,
-                        backgroundColor: controller.isUploading.value
-                            ? Colors.grey
-                            : primaryColor,
-                        onPressed: controller.isUploading.value
-                            ? null
-                            : () async {
-                                final room = maxOfferImages - controller.imagesList.length;
-                                if (room <= 0) {
-                                  _showLimitMessage(context, 'Image');
-                                  return;
-                                }
-                                // Multi-select, up to 10 images per offer.
-                                final picked = await pickOfferImages(room: room);
-                                if (picked.isNotEmpty) {
-                                  controller.uploadImages(picked);
-                                }
-                              },
-                        icon: controller.isUploading.value
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
+                      () => Container(
+                        height: 46,
+                        decoration: BoxDecoration(
+                          gradient: controller.isUploading.value
+                              ? null
+                              : const LinearGradient(
+                                  colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
                                 ),
-                              )
-                            : const Icon(Icons.add_a_photo),
-                        label: Text(
-                          controller.isUploading.value
-                              ? "Uploading..."
-                              : "Upload Image",
+                          color: controller.isUploading.value ? Colors.grey : null,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFF9800).withValues(alpha: 0.35),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: FloatingActionButton.extended(
+                          heroTag: null,
+                          elevation: 0,
+                          highlightElevation: 0,
+                          backgroundColor: Colors.transparent,
+                          onPressed: controller.isUploading.value
+                              ? null
+                              : () async {
+                                  final room = maxOfferImages - controller.imagesList.length;
+                                  if (room <= 0) {
+                                    _showLimitMessage(context, 'Image');
+                                    return;
+                                  }
+                                  // Multi-select, up to 10 images per offer.
+                                  final picked = await pickOfferImages(room: room);
+                                  if (picked.isNotEmpty) {
+                                    controller.uploadImages(picked);
+                                  }
+                                },
+                          icon: controller.isUploading.value
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.add_a_photo, color: Colors.white),
+                          label: Text(
+                            controller.isUploading.value
+                                ? "Uploading..."
+                                : "Upload Image",
+                            style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ),
                     ),
@@ -337,42 +360,62 @@ class _SellerMediaGalleryViewState extends State<SellerMediaGalleryView> {
                     bottom: 16,
                     right: 16,
                     child: Obx(
-                      () => FloatingActionButton.extended(
-                        heroTag: null,
-                        backgroundColor: controller.isUploading.value
-                            ? Colors.grey
-                            : primaryColor,
-                        onPressed: controller.isUploading.value
-                            ? null
-                            : () async {
-                                if (controller.videosList.isNotEmpty) {
-                                  _showLimitMessage(context, 'Video');
-                                  return;
-                                }
-                                final picked = await picker.pickVideo(
-                                  source: ImageSource.gallery,
-                                );
-                                if (picked != null) {
-                                  controller.uploadVideo(
-                                    picked.path,
-                                    "Product Video",
-                                  );
-                                }
-                              },
-                        icon: controller.isUploading.value
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
+                      () => Container(
+                        height: 46,
+                        decoration: BoxDecoration(
+                          gradient: controller.isUploading.value
+                              ? null
+                              : const LinearGradient(
+                                  colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
                                 ),
-                              )
-                            : const Icon(Icons.videocam),
-                        label: Text(
-                          controller.isUploading.value
-                              ? "Uploading..."
-                              : "Upload Video",
+                          color: controller.isUploading.value ? Colors.grey : null,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFF9800).withValues(alpha: 0.35),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: FloatingActionButton.extended(
+                          heroTag: null,
+                          elevation: 0,
+                          highlightElevation: 0,
+                          backgroundColor: Colors.transparent,
+                          onPressed: controller.isUploading.value
+                              ? null
+                              : () async {
+                                  if (controller.videosList.isNotEmpty) {
+                                    _showLimitMessage(context, 'Video');
+                                    return;
+                                  }
+                                  final picked = await picker.pickVideo(
+                                    source: ImageSource.gallery,
+                                  );
+                                  if (picked != null) {
+                                    controller.uploadVideo(
+                                      picked.path,
+                                      "Product Video",
+                                    );
+                                  }
+                                },
+                          icon: controller.isUploading.value
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.videocam, color: Colors.white),
+                          label: Text(
+                            controller.isUploading.value
+                                ? "Uploading..."
+                                : "Upload Video",
+                            style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ),
                     ),

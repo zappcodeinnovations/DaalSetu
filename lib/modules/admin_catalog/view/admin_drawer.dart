@@ -673,121 +673,228 @@ class AdminDrawer extends StatelessWidget {
   // ── SELLER MENU ────────────────────────────────────────────────────────────
   Widget _buildSellerMenu(
       BuildContext context, admin.DrawerController controller) {
-    // The one place for seller tools: replaces the old Seller Workspace page and
-    // the dashboard shortcut cards (same groups and screens).
     return ListView(
-      padding: const EdgeInsets.fromLTRB(12, 14, 12, 24),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 28),
       children: [
-        _customMenuItem(
-          context: context,
-          key: 'dashboard',
-          title: 'Dashboard',
-          icon: Icons.dashboard_outlined,
-          onTap: _goToDashboard,
+        // ── 1. Overview & Business ──────────────────────────────
+        _buyerSectionHeader(
+            context, 'OVERVIEW & BUSINESS', Icons.business_center_outlined),
+        _buyerCardGroup(
+          context,
+          children: [
+            _buyerMenuItem(
+              context: context,
+              key: 'dashboard',
+              title: 'Dashboard',
+              icon: Icons.dashboard_outlined,
+              iconColor: const Color(0xFFD97706),
+              iconBgColor: const Color(0xFFFEF3C7),
+              onTap: _goToDashboard,
+            ),
+            _buyerDivider(context),
+            _buyerMenuItem(
+              context: context,
+              key: 'categories',
+              title: 'Category Master',
+              icon: Icons.category_outlined,
+              iconColor: const Color(0xFF0891B2),
+              iconBgColor: const Color(0xFFECFEFF),
+              onTap: () => Get.toNamed(AppRoutes.sellerCategory),
+            ),
+            _buyerDivider(context),
+            _buyerMenuItem(
+              context: context,
+              key: 'company',
+              title: 'Companies',
+              icon: Icons.apartment_rounded,
+              iconColor: const Color(0xFF4F46E5),
+              iconBgColor: const Color(0xFFEEF2FF),
+              onTap: () => Get.to(() => const SellerCompanyView()),
+            ),
+            _buyerDivider(context),
+            _buyerMenuItem(
+              context: context,
+              key: 'branches',
+              title: 'My Branches',
+              icon: Icons.store_mall_directory_outlined,
+              iconColor: const Color(0xFF0D9488),
+              iconBgColor: const Color(0xFFCCFBF1),
+              onTap: () => Get.to(() => const SellerBranchesView()),
+            ),
+          ],
         ),
-        _sectionLabel(context, 'OFFERS'),
-        _customMenuItem(
-          context: context,
-          key: 'create_offer',
-          title: 'Create Offer',
-          icon: Icons.add_box_outlined,
-          onTap: () {
-            if (!Get.isRegistered<SellerProductController>()) {
-              Get.put(SellerProductController());
-            }
-            Get.to(() => const AddProductView());
-          },
+
+        // ── 2. Offers & Inventory ───────────────────────────────
+        _buyerSectionHeader(
+            context, 'OFFERS & INVENTORY', Icons.storefront_outlined),
+        _buyerCardGroup(
+          context,
+          children: [
+            _buyerMenuItem(
+              context: context,
+              key: 'create_offer',
+              title: 'Create Offer',
+              icon: Icons.add_circle_outline_rounded,
+              iconColor: const Color(0xFFEA580C),
+              iconBgColor: const Color(0xFFFFF7ED),
+              onTap: () {
+                if (!Get.isRegistered<SellerProductController>()) {
+                  Get.put(SellerProductController());
+                }
+                Get.to(() => const AddProductView());
+              },
+            ),
+            _buyerDivider(context),
+            _buyerMenuItem(
+              context: context,
+              key: 'products',
+              title: 'My Products',
+              icon: Icons.inventory_2_outlined,
+              iconColor: const Color(0xFF2563EB),
+              iconBgColor: const Color(0xFFEFF6FF),
+              onTap: () => Get.to(() => const SellerProductView()),
+            ),
+            _buyerDivider(context),
+            _buyerMenuItem(
+              context: context,
+              key: 'buyer_requirements',
+              title: 'Buyer Requirements',
+              icon: Icons.request_quote_outlined,
+              iconColor: const Color(0xFF7C3AED),
+              iconBgColor: const Color(0xFFF5F3FF),
+              onTap: () => Get.to(() => const SellerRfqListView()),
+            ),
+            _buyerDivider(context),
+            _buyerMenuItem(
+              context: context,
+              key: 'buyer_offers',
+              title: 'Buyer Offers',
+              icon: Icons.local_offer_outlined,
+              iconColor: const Color(0xFF059669),
+              iconBgColor: const Color(0xFFECFDF5),
+              onTap: () => Get.to(() => const SellerBuyerOffersView()),
+            ),
+            _buyerDivider(context),
+            _buyerMenuItem(
+              context: context,
+              key: 'masters',
+              title: 'Brand & Tag Master',
+              icon: Icons.bookmarks_outlined,
+              iconColor: const Color(0xFFDB2777),
+              iconBgColor: const Color(0xFFFDF2F8),
+              onTap: () => Get.to(() => const SellerMasterManagementView()),
+            ),
+          ],
         ),
-        _customMenuItem(
-          context: context,
-          key: 'products',
-          title: 'My Products',
-          icon: Icons.inventory_2_outlined,
-          onTap: () => Get.to(() => const SellerProductView()),
+
+        // ── 3. Deals & Dispatch ─────────────────────────────────
+        _buyerSectionHeader(
+            context, 'DEALS & DISPATCH', Icons.local_shipping_outlined),
+        _buyerCardGroup(
+          context,
+          children: [
+            _buyerMenuItem(
+              context: context,
+              key: 'contracts',
+              title: 'Contracts',
+              icon: Icons.handshake_outlined,
+              iconColor: const Color(0xFFD97706),
+              iconBgColor: const Color(0xFFFEF3C7),
+              onTap: () => Get.to(() => const SellerContractsView()),
+            ),
+            _buyerDivider(context),
+            _buyerMenuItem(
+              context: context,
+              key: 'consignments',
+              title: 'Consignments',
+              icon: Icons.inventory_outlined,
+              iconColor: const Color(0xFF0284C7),
+              iconBgColor: const Color(0xFFE0F2FE),
+              onTap: () => Get.to(() => const SellerConsignmentsView()),
+            ),
+            _buyerDivider(context),
+            _buyerMenuItem(
+              context: context,
+              key: 'delivery_challans',
+              title: 'Delivery Challans',
+              icon: Icons.local_shipping_outlined,
+              iconColor: const Color(0xFF059669),
+              iconBgColor: const Color(0xFFECFDF5),
+              onTap: () => Get.to(() => const SellerDeliveryChallanView()),
+            ),
+          ],
         ),
-        _customMenuItem(
-          context: context,
-          key: 'buyer_requirements',
-          title: 'Buyer Requirements',
-          icon: Icons.request_quote_outlined,
-          onTap: () => Get.to(() => const SellerRfqListView()),
+
+        // ── 4. Insights & Files ─────────────────────────────────
+        _buyerSectionHeader(
+            context, 'INSIGHTS & FILES', Icons.bar_chart_rounded),
+        _buyerCardGroup(
+          context,
+          children: [
+            _buyerMenuItem(
+              context: context,
+              key: 'analytics',
+              title: 'My Analytics',
+              icon: Icons.analytics_outlined,
+              iconColor: const Color(0xFF4F46E5),
+              iconBgColor: const Color(0xFFEEF2FF),
+              onTap: () => Get.toNamed(AppRoutes.myAnalytics),
+            ),
+            _buyerDivider(context),
+            _buyerMenuItem(
+              context: context,
+              key: 'downloads',
+              title: 'Downloads',
+              icon: Icons.download_outlined,
+              iconColor: const Color(0xFF0891B2),
+              iconBgColor: const Color(0xFFECFEFF),
+              onTap: () => Get.toNamed(AppRoutes.downloads),
+            ),
+          ],
         ),
-        _customMenuItem(
-          context: context,
-          key: 'buyer_offers',
-          title: 'Buyer Offers',
-          icon: Icons.local_offer_outlined,
-          onTap: () => Get.to(() => const SellerBuyerOffersView()),
+
+        // ── 5. Preferences & Account ────────────────────────────
+        _buyerSectionHeader(
+            context, 'PREFERENCES & ACCOUNT', Icons.account_circle_outlined),
+        _buyerCardGroup(
+          context,
+          children: [
+            _buyerMenuItem(
+              context: context,
+              key: 'settings',
+              title: 'Settings',
+              icon: Icons.settings_outlined,
+              iconColor: const Color(0xFF475569),
+              iconBgColor: const Color(0xFFF1F5F9),
+              onTap: () => Get.to(() => SettingsScreen()),
+            ),
+            _buyerDivider(context),
+            _buyerMenuItem(
+              context: context,
+              key: 'logout',
+              title: 'Log Out',
+              icon: Icons.logout_rounded,
+              iconColor: const Color(0xFFDC2626),
+              iconBgColor: const Color(0xFFFEF2F2),
+              onTap: _logout,
+            ),
+          ],
         ),
-        _sectionLabel(context, 'MASTERS & BUSINESS'),
-        _customMenuItem(
-          context: context,
-          key: 'categories',
-          title: 'Category Master',
-          icon: Icons.category_outlined,
-          onTap: () => Get.toNamed(AppRoutes.sellerCategory),
-        ),
-        _customMenuItem(
-          context: context,
-          key: 'masters',
-          title: 'Brand & Tag Master',
-          icon: Icons.bookmarks_outlined,
-          onTap: () => Get.to(() => const SellerMasterManagementView()),
-        ),
-        _customMenuItem(
-          context: context,
-          key: 'company',
-          title: 'Companies',
-          icon: Icons.business_outlined,
-          onTap: () => Get.to(() => const SellerCompanyView()),
-        ),
-        _customMenuItem(
-          context: context,
-          key: 'branches',
-          title: 'My Branches',
-          icon: Icons.store_mall_directory_outlined,
-          onTap: () => Get.to(() => const SellerBranchesView()),
-        ),
-        _sectionLabel(context, 'DEALS & DISPATCH'),
-        _customMenuItem(
-          context: context,
-          key: 'contracts',
-          title: 'Contracts',
-          icon: Icons.description_outlined,
-          onTap: () => Get.to(() => const SellerContractsView()),
-        ),
-        _customMenuItem(
-          context: context,
-          key: 'consignments',
-          title: 'Consignments',
-          icon: Icons.inventory_outlined,
-          onTap: () => Get.to(() => const SellerConsignmentsView()),
-        ),
-        _customMenuItem(
-          context: context,
-          key: 'delivery_challans',
-          title: 'Delivery Challans',
-          icon: Icons.local_shipping_outlined,
-          onTap: () => Get.to(() => const SellerDeliveryChallanView()),
-        ),
-        _sectionLabel(context, 'ANALYTICS'),
-        _analyticsMenuItem(context),
-        _sectionLabel(context, 'FILES'),
-        _downloadsMenuItem(context),
-        _sectionLabel(context, 'SETTINGS'),
-        _customMenuItem(
-          context: context,
-          key: 'settings',
-          title: 'Settings',
-          icon: Icons.settings_outlined,
-          onTap: () => Get.to(() => SettingsScreen()),
-        ),
-        _customMenuItem(
-          context: context,
-          key: 'logout',
-          title: 'Log Out',
-          icon: Icons.logout_rounded,
-          onTap: _logout,
+
+        const SizedBox(height: 10),
+        Center(
+          child: Text(
+            'DaalSetu • Seller Portal',
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.color
+                  ?.withValues(alpha: 0.6),
+            ),
+          ),
         ),
       ],
     );
@@ -1067,6 +1174,7 @@ class AdminDrawer extends StatelessWidget {
     required Color iconColor,
     required Color iconBgColor,
     required VoidCallback onTap,
+    Widget? trailingBadge,
   }) {
     final active = activeKey == key ||
         (activeKey == 'deals' && (key == 'deals' || key == 'contracts')) ||
@@ -1133,6 +1241,11 @@ class AdminDrawer extends StatelessWidget {
                   ),
                 ),
               ),
+              if (trailingBadge != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: trailingBadge,
+                ),
               if (!active)
                 Icon(
                   Icons.chevron_right_rounded,

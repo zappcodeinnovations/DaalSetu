@@ -8,7 +8,7 @@ import '../../../../services/seller_services.dart';
 import '../../../../utils/app_preferences.dart';
 import '../../../../utils/global_error_handler.dart';
 import '../../common/seller_ui.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 /// Buyer offer requests a seller can respond to (web: "Buyer Offers").
 class SellerBuyerOffersController extends GetxController {
@@ -46,22 +46,45 @@ class SellerBuyerOffersView extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(SellerBuyerOffersController());
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      appBar: SellerUi.appBar(context, "Buyer Offers"),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: HeroHeader(
+        title: "Buyer Offers",
+        subtitle: "Direct offers & deal proposals from buyers",
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        trailing: IconButton(
+          tooltip: 'Refresh offers',
+          onPressed: controller.fetch,
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+        ),
+      ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
             child: TextField(
               onChanged: (val) => controller.search.value = val,
               decoration: InputDecoration(
                 hintText: "Search buyer offers...",
                 prefixIcon: const Icon(
                   IconlyLight.search,
-                  color: SellerUi.primary,
+                  color: Color(0xFFE65100),
                 ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(
+                    color: isDark ? Colors.white12 : Colors.grey.shade300,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFE65100), width: 1.5),
                 ),
                 filled: true,
                 fillColor: theme.cardColor,
@@ -72,11 +95,11 @@ class SellerBuyerOffersView extends StatelessWidget {
             child: Obx(() {
               if (controller.isLoading.value && controller.offers.isEmpty) {
                 return const Center(
-                  child: CircularProgressIndicator(color: SellerUi.primary),
+                  child: CircularProgressIndicator(color: Color(0xFFE65100)),
                 );
               }
               return RefreshIndicator(
-                color: SellerUi.primary,
+                color: const Color(0xFFE65100),
                 onRefresh: controller.fetch,
                 child: controller.offers.isEmpty
                     ? SellerUi.emptyState(
@@ -87,7 +110,7 @@ class SellerBuyerOffersView extends StatelessWidget {
                         padding: const EdgeInsets.all(16),
                         itemCount: controller.offers.length,
                         itemBuilder: (context, index) =>
-                            _card(controller, controller.offers[index]),
+                            _card(context, controller, controller.offers[index]),
                       ),
               );
             }),
@@ -98,55 +121,87 @@ class SellerBuyerOffersView extends StatelessWidget {
   }
 
   Widget _card(
+    BuildContext context,
     SellerBuyerOffersController controller,
     Map<String, dynamic> offer,
   ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     String nameOf(dynamic v) => v is Map ? '${v['name'] ?? ''}' : '${v ?? ''}';
-    return Card(
-      elevation: 3,
+
+    return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () => Get.to(
-          () => SellerBuyerOfferDetailView(offerId: offer['id'] as int),
-        )?.then((_) => controller.fetch()),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      offer['title']?.toString() ?? 'Buyer Offer',
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : const Color(0xFFFFE0B2).withValues(alpha: 0.7),
+        ),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: const Color(0xFFE65100).withValues(alpha: 0.04),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 6,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () => Get.to(
+            () => SellerBuyerOfferDetailView(offerId: offer['id'] as int),
+          )?.then((_) => controller.fetch()),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        offer['title']?.toString() ?? 'Buyer Offer',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
+                    SellerUi.statusChip('${offer['status'] ?? 'requested'}'),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "${offer['transaction_id'] ?? ''} • ${nameOf(offer['category'])}",
+                  style: TextStyle(
+                    color: isDark ? Colors.white60 : Colors.grey.shade600,
+                    fontSize: 12,
                   ),
-                  SellerUi.statusChip('${offer['status'] ?? 'requested'}'),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                "${offer['transaction_id'] ?? ''} • ${nameOf(offer['category'])}",
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-              ),
-              const Divider(height: 20),
-              SellerUi.infoRow(
-                "Quantity",
-                "${offer['requested_quantity'] ?? '-'} ${offer['quantity_unit'] ?? ''}",
-              ),
-              SellerUi.infoRow(
-                "Buyer Price",
-                "₹${offer['requested_amount'] ?? '-'} / ${offer['amount_unit'] ?? ''}",
-                valueColor: SellerUi.primary,
-              ),
-              SellerUi.infoRow("Posted", SellerUi.date(offer['created_at'])),
-            ],
+                ),
+                const Divider(height: 20),
+                SellerUi.infoRow(
+                  "Quantity",
+                  "${offer['requested_quantity'] ?? '-'} ${offer['quantity_unit'] ?? ''}",
+                ),
+                SellerUi.infoRow(
+                  "Buyer Price",
+                  "₹${offer['requested_amount'] ?? '-'} / ${offer['amount_unit'] ?? ''}",
+                  valueColor: const Color(0xFFE65100),
+                ),
+                SellerUi.infoRow("Posted", SellerUi.date(offer['created_at'])),
+              ],
+            ),
           ),
         ),
       ),
@@ -379,37 +434,27 @@ class _SellerBuyerOfferDetailViewState
         .toList();
 
     return Scaffold(
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-        titleSpacing: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Buyer Offer',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-            Text(
-              'Live negotiation • auto-refresh',
-              style: GoogleFonts.inter(fontSize: 11, color: Colors.green),
-            ),
-          ],
+      appBar: HeroHeader(
+        title: "Buyer Offer Details",
+        subtitle: "Live negotiation · auto-refresh",
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
-        actions: [
-          IconButton(
-            onPressed: _loading ? null : _load,
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Refresh negotiation',
-          ),
-        ],
+        trailing: IconButton(
+          onPressed: _loading ? null : _load,
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+          tooltip: 'Refresh negotiation',
+        ),
       ),
       body: _loading && offer == null
           ? const Center(
-              child: CircularProgressIndicator(color: SellerUi.primary),
+              child: CircularProgressIndicator(color: Color(0xFFE65100)),
             )
           : offer == null
           ? const Center(child: Text("Buyer offer not found"))
           : RefreshIndicator(
-              color: SellerUi.primary,
+              color: const Color(0xFFE65100),
               onRefresh: _load,
               child: ListView(
                 padding: const EdgeInsets.all(16),
@@ -441,7 +486,7 @@ class _SellerBuyerOfferDetailViewState
                       SellerUi.infoRow(
                         "Buyer Price",
                         "₹${offer['requested_amount'] ?? '-'} / ${offer['amount_unit'] ?? ''}",
-                        valueColor: SellerUi.primary,
+                        valueColor: const Color(0xFFE65100),
                       ),
                       SellerUi.infoRow(
                         "Buyer Remark",
@@ -491,40 +536,55 @@ class _SellerBuyerOfferDetailViewState
                         OutlinedButton.icon(
                           onPressed: _counter,
                           icon: const Icon(IconlyLight.chat, size: 16),
-                          label: const Text("COUNTER"),
+                          label: const Text(
+                            "COUNTER",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: SellerUi.primary,
-                            side: const BorderSide(color: SellerUi.primary),
+                            foregroundColor: const Color(0xFFE65100),
+                            side: const BorderSide(color: Color(0xFFE65100)),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                         ElevatedButton.icon(
                           onPressed: _confirm,
                           icon: const Icon(
-                            Icons.check,
+                            Icons.check_circle_outline_rounded,
                             size: 16,
                             color: Colors.white,
                           ),
                           label: const Text(
                             "CONFIRM",
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
+                            backgroundColor: const Color(0xFF2E7D32),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                         ElevatedButton.icon(
                           onPressed: _reject,
                           icon: const Icon(
-                            Icons.close,
+                            Icons.cancel_outlined,
                             size: 16,
                             color: Colors.white,
                           ),
                           label: const Text(
                             "REJECT",
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
+                            backgroundColor: const Color(0xFFD32F2F),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ],

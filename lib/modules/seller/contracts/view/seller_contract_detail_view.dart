@@ -5,6 +5,7 @@ import '../../../../services/seller_services.dart';
 import '../../../../utils/app_preferences.dart';
 import '../../common/seller_ui.dart';
 import 'package:daalsetu/modules/contracts/view/contract_details_view.dart' show BillCompanyCard;
+import 'package:daalsetu/widgets/hero_header.dart';
 
 /// Same content as the web "Contract Details" modal (summary, buyer and seller cards,
 /// logistics route, remarks) plus the consignment workflow.
@@ -278,7 +279,19 @@ class _SellerContractDetailViewState extends State<SellerContractDetailView> {
     final contract = _contract;
     final consignment = _consignment;
     return Scaffold(
-      appBar: SellerUi.appBar(context, 'Contract Details'),
+      appBar: HeroHeader(
+        title: "Contract Details",
+        subtitle: "Deal summary, parties & logistics terms",
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        trailing: IconButton(
+          tooltip: 'Reload',
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+          onPressed: _load,
+        ),
+      ),
       body: _loading && contract == null
           ? const Center(child: CircularProgressIndicator(color: SellerUi.primary))
           : contract == null

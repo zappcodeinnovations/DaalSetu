@@ -586,6 +586,9 @@ class _MobileBrandHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Column(
       children: [
         Container(
@@ -597,12 +600,13 @@ class _MobileBrandHeader extends StatelessWidget {
             shape: BoxShape.circle,
             border: Border.all(
               color: AppTheme.primaryGold.withValues(alpha: .7),
-              width: 2,
+              width: 2.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primaryGold.withValues(alpha: .22),
+                color: AppTheme.primaryGold.withValues(alpha: .28),
                 blurRadius: 24,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
@@ -616,9 +620,43 @@ class _MobileBrandHeader extends StatelessWidget {
         const SizedBox(height: 10),
         Text(
           'DaalSetu',
-          style: Theme.of(
-            context,
-          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
+          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF2A2010) : const Color(0xFFFFF3E0),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: const Color(0xFFFFB300).withValues(alpha: 0.4),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.verified_rounded, size: 13, color: Color(0xFFE65100)),
+              const SizedBox(width: 4),
+              const Text(
+                "KISOR",
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                  color: Color(0xFFE65100),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                "• Pulse Trading Platform",
+                style: TextStyle(
+                  fontSize: 9.5,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -644,15 +682,68 @@ class _BrandPanel extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 190,
-            height: 190,
-            padding: const EdgeInsets.all(10),
-            child: Image.asset(
-              'assets/images/app_icon.jpeg',
-              fit: BoxFit.contain,
+            width: 170,
+            height: 170,
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppTheme.primaryGold.withValues(alpha: .7),
+                width: 3,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryGold.withValues(alpha: .30),
+                  blurRadius: 28,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: ClipOval(
+              child: Image.asset(
+                'assets/images/app_icon.jpeg',
+                fit: BoxFit.contain,
+              ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF2A2010) : const Color(0xFFFFF3E0),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: const Color(0xFFFFB300).withValues(alpha: 0.4),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.verified_rounded, size: 14, color: Color(0xFFE65100)),
+                const SizedBox(width: 5),
+                const Text(
+                  "KISOR",
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                    color: Color(0xFFE65100),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  "• Pulse Trading Platform",
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
           Text(
             'A trusted platform connecting buyers, sellers and transporters for a better trade experience.',
             textAlign: TextAlign.center,

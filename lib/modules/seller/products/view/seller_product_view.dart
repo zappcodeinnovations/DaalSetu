@@ -13,7 +13,7 @@ import 'edit_offer_view.dart';
 import 'offer_stock_history_view.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../../widgets/authenticated_network_image.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class SellerProductView extends StatelessWidget {
   const SellerProductView({super.key});
@@ -32,31 +32,33 @@ class SellerProductView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          "My Products",
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+      appBar: HeroHeader(
+        title: "My Products",
+        subtitle: "Active listings & stock inventory",
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
-        actions: [
-          IconButton(
-            onPressed: () => Get.toNamed(AppRoutes.sellerNotifications),
-            icon: Icon(IconlyLight.notification, color: theme.iconTheme.color),
-          ),
-          IconButton(
-            tooltip: 'Share offers',
-            onPressed: controller.shareProducts,
-            icon: Icon(Icons.share_outlined, color: theme.iconTheme.color),
-          ),
-          IconButton(
-            tooltip: 'Download offers',
-            onPressed: controller.exportProducts,
-            icon: Icon(IconlyLight.download, color: theme.iconTheme.color),
-          ),
-        ],
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              tooltip: 'Notifications',
+              onPressed: () => Get.toNamed(AppRoutes.sellerNotifications),
+              icon: const Icon(IconlyLight.notification, color: Colors.white, size: 22),
+            ),
+            IconButton(
+              tooltip: 'Share offers',
+              onPressed: controller.shareProducts,
+              icon: const Icon(Icons.share_outlined, color: Colors.white, size: 20),
+            ),
+            IconButton(
+              tooltip: 'Download offers',
+              onPressed: controller.exportProducts,
+              icon: const Icon(IconlyLight.download, color: Colors.white, size: 20),
+            ),
+          ],
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: controller.fetchProducts,
@@ -95,14 +97,43 @@ class SellerProductView extends StatelessWidget {
           );
         }),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: null,
-        onPressed: () => Get.to(() => const AddProductView()),
-        backgroundColor: primaryColor,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text(
-          "Add Product",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFFE65100),
+              Color(0xFFF57C00),
+              Color(0xFFFFA000),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFE65100).withValues(alpha: 0.35),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: FloatingActionButton.extended(
+          heroTag: null,
+          onPressed: () => Get.to(() => const AddProductView()),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          focusElevation: 0,
+          hoverElevation: 0,
+          highlightElevation: 0,
+          icon: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
+          label: const Text(
+            "Add Product",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+            ),
+          ),
         ),
       ),
     );
@@ -134,16 +165,21 @@ class SellerProductView extends StatelessWidget {
             borderRadius: cardRadius,
             border: Border.all(
               color: isDark
-                  ? Colors.white.withOpacity(0.1)
-                  : Colors.grey.withOpacity(0.2),
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : const Color(0xFFFFE0B2).withValues(alpha: 0.7),
             ),
             boxShadow: isDark
                 ? []
                 : [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
-                      blurRadius: 10,
+                      color: const Color(0xFFE65100).withValues(alpha: 0.05),
+                      blurRadius: 12,
                       offset: const Offset(0, 4),
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 6,
+                      offset: const Offset(0, 1),
                     ),
                   ],
           ),
@@ -159,7 +195,7 @@ class SellerProductView extends StatelessWidget {
                 height: 80,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(15),
-                  color: primaryColor.withOpacity(0.1),
+                  color: primaryColor.withValues(alpha: 0.1),
                 ),
                 child: Stack(
                   children: [
@@ -201,7 +237,7 @@ class SellerProductView extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(3),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.65),
+                            color: Colors.black.withValues(alpha: 0.65),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -227,7 +263,7 @@ class SellerProductView extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: status.color.withOpacity(0.12),
+                              color: status.color.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -447,13 +483,31 @@ class SellerProductView extends StatelessWidget {
   }
 
   Widget _infoItem(IconData icon, String text, ThemeData theme) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: theme.disabledColor),
-        const SizedBox(width: 6),
-        Text(text, style: theme.textTheme.bodySmall),
-      ],
+    final isDark = theme.brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFFFF8E1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isDark ? Colors.transparent : const Color(0xFFFFECB3),
+          width: 0.8,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: const Color(0xFFE65100)),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: isDark ? null : const Color(0xFF5D4037),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

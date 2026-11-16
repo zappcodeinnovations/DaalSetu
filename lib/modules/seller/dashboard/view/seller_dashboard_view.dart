@@ -10,6 +10,9 @@ import '../../../../theme/glass_widgets.dart';
 import '../../products/view/seller_product_view.dart';
 import '../../contracts/view/seller_contracts_view.dart';
 import '../../buyer_offers/view/seller_buyer_offers_view.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
+import '../../products/controller/seller_product_controller.dart';
+import '../../products/view/add_product_view.dart';
 import '../../../../services/notification_services.dart';
 import '../../../../routes/app_routes.dart';
 
@@ -104,137 +107,185 @@ class SellerDashboardView extends StatelessWidget {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
+    return HeroHeader(
       leading: const AppBarLeading(showBack: false),
-      leadingWidth: AppBarLeading.widthFor(context, showBack: false),
-      title: Image.asset(
-        'assets/images/app_name.png',
+      titleWidget: SizedBox(
+        width: 120,
         height: 32,
-        fit: BoxFit.contain,
+        child: Image.asset(
+          'assets/images/app_name.png',
+          fit: BoxFit.contain,
+          color: Colors.white,
+        ),
       ),
-      centerTitle: true,
-      actions: [
-        // Real unread count instead of a fixed badge; reloads when returning from the list.
-        StatefulBuilder(
-          builder: (context, setState) => FutureBuilder<int>(
-            future: NotificationServices.getUnreadCount(silent: true).catchError((_) => 0),
-            builder: (context, snapshot) {
-              final unread = snapshot.data ?? 0;
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  IconButton(
-                    icon: const Icon(IconlyLight.notification),
-                    onPressed: () async {
-                      await Get.toNamed(AppRoutes.sellerNotifications);
-                      setState(() {});
-                    },
-                  ),
-                  if (unread > 0)
-                    Positioned(
-                      right: 10,
-                      top: 10,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.deepOrange,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          unread > 99 ? '99+' : '$unread',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 8,
-                            fontWeight: FontWeight.bold,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          StatefulBuilder(
+            builder: (context, setState) => FutureBuilder<int>(
+              future: NotificationServices.getUnreadCount(silent: true).catchError((_) => 0),
+              builder: (context, snapshot) {
+                final unread = snapshot.data ?? 0;
+                return Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(IconlyLight.notification, color: Colors.white, size: 24),
+                      onPressed: () async {
+                        await Get.toNamed(AppRoutes.sellerNotifications);
+                        setState(() {});
+                      },
+                    ),
+                    if (unread > 0)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            unread > 99 ? '99+' : '$unread',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                ],
-              );
-            },
-          ),
-        ),
-        const SizedBox(width: 8),
-        GestureDetector(
-          onTap: () => Get.toNamed(AppRoutes.profile_page),
-          child: CircleAvatar(
-            radius: 16,
-            backgroundColor: Theme.of(
-              context,
-            ).colorScheme.primary.withOpacity(0.1),
-            child: Icon(
-              IconlyLight.user_1,
-              size: 16,
-              color: Theme.of(context).colorScheme.primary,
+                  ],
+                );
+              },
             ),
           ),
-        ),
-        const SizedBox(width: 16),
-      ],
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: () => Get.toNamed(AppRoutes.profile_page),
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 1.5),
+              ),
+              child: const CircleAvatar(
+                radius: 15,
+                backgroundColor: Colors.white,
+                child: Icon(
+                  IconlyLight.user_1,
+                  size: 16,
+                  color: Color(0xFFE65100),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      bottom: Obx(() {
+        final data = controller.dashboardData.value;
+        final sellerName = data?.header.name.trim() ?? '';
+        final branch = data?.header.branchName.trim() ?? '';
+        final kyc = (data?.header.kycStatus ?? '').trim().toUpperCase();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              sellerName.isNotEmpty ? "Hello, $sellerName 👋" : "Seller Dashboard",
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: -0.3,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              branch.isNotEmpty && kyc.isNotEmpty
+                  ? "$branch • KYC: $kyc"
+                  : "Welcome back to your trading desk",
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                color: Colors.white.withValues(alpha: 0.92),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        );
+      }),
     );
   }
 
   Widget _buildHeroSection(BuildContext context, SellerHeader header) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              "Hello, ",
-              style: GoogleFonts.poppins(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: theme.textTheme.bodyLarge?.color,
-              ),
-            ),
-            Text(
-              header.name,
-              style: GoogleFonts.poppins(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-            const Text(" 👋", style: TextStyle(fontSize: 24)),
-          ],
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 6),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFFFB300).withValues(alpha: 0.25),
         ),
-        const SizedBox(height: 4),
-        Row(
-          children: [
-            Icon(IconlyBold.home, size: 16, color: theme.colorScheme.primary),
-            const SizedBox(width: 4),
-            Text(
-              header.branchName,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: theme.textTheme.bodyLarge?.color,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                "KYC: ${header.kycStatus.toUpperCase()}",
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.bold,
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFE65100).withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Trading Desk Active",
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFFE65100),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 2),
+                Text(
+                  "Post commodity offers, respond to RFQs & manage mill contracts.",
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ],
+          ),
+          const SizedBox(width: 10),
+          FilledButton.icon(
+            onPressed: () {
+              if (!Get.isRegistered<SellerProductController>()) {
+                Get.put(SellerProductController());
+              }
+              Get.to(() => const AddProductView());
+            },
+            icon: const Icon(Icons.add_circle_outline, size: 16),
+            label: const Text("Post Offer", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFE65100),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -311,58 +362,88 @@ class SellerDashboardView extends StatelessWidget {
     IconData icon,
   ) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: () => _openKpi(metric.screen),
-      child: GlassCard(
-        padding: const EdgeInsets.all(12),
-        child: SizedBox(
-          width: double.infinity,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.1),
-                  shape: BoxShape.circle,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark
+                ? const Color(0xFF334155)
+                : const Color(0xFFFFE082).withValues(alpha: 0.5),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFE65100).withValues(alpha: isDark ? 0.15 : 0.05),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE65100).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, size: 18, color: const Color(0xFFE65100)),
                 ),
-                child: Icon(icon, size: 16, color: theme.colorScheme.primary),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                metric.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  color: theme.textTheme.bodyMedium?.color,
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 12,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade500,
                 ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              metric.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: theme.textTheme.bodyMedium?.color,
               ),
-              const SizedBox(height: 4),
-              Text(
-                metric.type == 'currency'
-                    ? "₹${metric.value}"
-                    : metric.value.toString(),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: theme.textTheme.bodyLarge?.color,
-                ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              metric.type == 'currency'
+                  ? "₹${metric.value}"
+                  : metric.value.toString(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: isDark ? Colors.white : const Color(0xFF0F172A),
               ),
-              const SizedBox(height: 4),
+            ),
+            if (metric.subtitle.isNotEmpty) ...[
+              const SizedBox(height: 2),
               Text(
                 metric.subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
-                  fontSize: 8,
-                  color: theme.textTheme.bodyMedium?.color,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                 ),
               ),
             ],
-          ),
+          ],
         ),
       ),
     );

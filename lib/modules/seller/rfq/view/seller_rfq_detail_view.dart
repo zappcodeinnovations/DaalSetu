@@ -8,6 +8,7 @@ import '../controller/seller_rfq_controller.dart';
 import '../model/seller_rfq_model.dart';
 import 'seller_submit_quote_dialog.dart';
 import 'seller_negotiation_chat_view.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class SellerRfqDetailView extends StatelessWidget {
   final String rfqId;
@@ -45,12 +46,24 @@ class SellerRfqDetailView extends StatelessWidget {
     );
 
     return Scaffold(
-      appBar: SellerUi.appBar(context, "Requirement Details"),
+      appBar: HeroHeader(
+        title: "Requirement Details",
+        subtitle: "Specifications, target price & quote negotiation",
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        trailing: IconButton(
+          tooltip: 'Reload',
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+          onPressed: controller.load,
+        ),
+      ),
       body: Obx(() {
         final rfq = controller.rfq.value;
         if (controller.isLoading.value && rfq == null) {
           return const Center(
-            child: CircularProgressIndicator(color: SellerUi.primary),
+            child: CircularProgressIndicator(color: Color(0xFFE65100)),
           );
         }
         if (rfq == null) {
@@ -59,7 +72,7 @@ class SellerRfqDetailView extends StatelessWidget {
         final thread = controller.thread.value;
 
         return RefreshIndicator(
-          color: SellerUi.primary,
+          color: const Color(0xFFE65100),
           onRefresh: controller.load,
           child: ListView(
             padding: const EdgeInsets.all(16),
@@ -88,7 +101,7 @@ class SellerRfqDetailView extends StatelessWidget {
                 SellerUi.infoRow(
                   "Target Price",
                   "₹${rfq.targetPrice ?? '-'} / ${rfq.priceUnit}",
-                  valueColor: SellerUi.primary,
+                  valueColor: const Color(0xFFE65100),
                 ),
                 SellerUi.infoRow("Delivery Terms", rfq.deliveryTerms),
                 SellerUi.infoRow("Branches", rfq.targetBranches.join(', ')),
@@ -102,8 +115,28 @@ class SellerRfqDetailView extends StatelessWidget {
                 ],
               ]),
               if (rfq.canQuote)
-                SizedBox(
-                  height: 50,
+                Container(
+                  width: double.infinity,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFFE65100),
+                        Color(0xFFF57C00),
+                        Color(0xFFFFA000),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFE65100).withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
                   child: ElevatedButton.icon(
                     onPressed: () =>
                         SellerSubmitQuoteDialog.show(controller, rfq),
@@ -117,12 +150,16 @@ class SellerRfqDetailView extends StatelessWidget {
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        letterSpacing: 0.3,
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: SellerUi.primary,
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                   ),
@@ -143,8 +180,28 @@ class SellerRfqDetailView extends StatelessWidget {
                     "${thread.offeredQuantity ?? '-'} ${thread.quantityUnit ?? ''}",
                   ),
                 ]),
-                SizedBox(
+                Container(
+                  width: double.infinity,
                   height: 52,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFFE65100),
+                        Color(0xFFF57C00),
+                        Color(0xFFFFA000),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFE65100).withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
                   child: ElevatedButton.icon(
                     onPressed: () =>
                         Get.to(() => SellerNegotiationChatView(rfqId: rfqId)),
@@ -154,10 +211,14 @@ class SellerRfqDetailView extends StatelessWidget {
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        letterSpacing: 0.3,
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: SellerUi.primary,
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
