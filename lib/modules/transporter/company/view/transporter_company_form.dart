@@ -1,7 +1,7 @@
+import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/tax_id_formatters.dart';
 import '../../../../utils/india_location_data.dart';
 import '../../../../widgets/searchable_selection_sheet.dart';
@@ -151,31 +151,41 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isEdit = widget.company != null;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+      appBar: HeroHeader(
+        title: isEdit ? "Edit Company" : "Register Company",
+        subtitle: isEdit
+            ? (widget.company?.legalName ?? "Update company details")
+            : "Enter company registration & tax details",
         leading: AppBarLeading(
           child: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
+            icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.white),
             onPressed: () => Get.back(),
-          ),
-        ),
-        leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-        title: Text(
-          isEdit ? "Edit Company" : "Register Company",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: theme.textTheme.bodyLarge?.color,
           ),
         ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: GlassCard(
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
           padding: const EdgeInsets.all(20),
           child: Form(
             key: _formKey,
@@ -265,15 +275,40 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
                 ),
 
                 const SizedBox(height: 32),
-                SizedBox(
-                  height: 54,
+                Container(
+                  height: 52,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF9800), Color(0xFFE65100)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFE65100).withValues(alpha: 0.35),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
                   child: ElevatedButton(
                     onPressed: _isSubmitting ? null : _submit,
                     style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                     ),
                     child: _isSubmitting
-                        ? const CircularProgressIndicator(color: Colors.white)
+                        ? const SizedBox(
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
                         : Text(
                             isEdit ? "Save Changes" : "Register Company",
                             style: GoogleFonts.poppins(
@@ -295,14 +330,27 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
 
   Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16, top: 8),
-      child: Text(
-        title,
-        style: GoogleFonts.poppins(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).colorScheme.primary,
-        ),
+      padding: const EdgeInsets.only(bottom: 14, top: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 14,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFB300),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFFE65100),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -373,16 +421,33 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
                   ),
                 )
               : Text(label),
+          labelStyle: GoogleFonts.inter(fontSize: 13, color: Colors.grey.shade600),
           hintText: effectiveHint,
           floatingLabelBehavior: FloatingLabelBehavior.always,
           counterText: "",
           filled: true,
           fillColor: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.black.withValues(alpha: 0.05),
+              ? const Color(0xFF252525)
+              : const Color(0xFFFFF8E1).withValues(alpha: 0.5),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+            borderSide: BorderSide(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF333333)
+                  : const Color(0xFFFFE0B2),
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF333333)
+                  : const Color(0xFFFFE0B2),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFFFB300), width: 1.5),
           ),
         ),
         validator: (value) {
@@ -518,16 +583,33 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
             child: InputDecorator(
               decoration: InputDecoration(
                 labelText: label,
+                labelStyle: GoogleFonts.inter(fontSize: 13, color: Colors.grey.shade600),
                 errorText: field.errorText,
                 floatingLabelBehavior: FloatingLabelBehavior.always,
-                prefixIcon: Icon(icon),
+                prefixIcon: Icon(icon, color: const Color(0xFFE65100)),
                 filled: true,
                 fillColor: theme.brightness == Brightness.dark
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.black.withValues(alpha: 0.05),
+                    ? const Color(0xFF252525)
+                    : const Color(0xFFFFF8E1).withValues(alpha: 0.5),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+                  borderSide: BorderSide(
+                    color: theme.brightness == Brightness.dark
+                        ? const Color(0xFF333333)
+                        : const Color(0xFFFFE0B2),
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: theme.brightness == Brightness.dark
+                        ? const Color(0xFF333333)
+                        : const Color(0xFFFFE0B2),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFFFB300), width: 1.5),
                 ),
               ),
               isEmpty: value == null || value.isEmpty,

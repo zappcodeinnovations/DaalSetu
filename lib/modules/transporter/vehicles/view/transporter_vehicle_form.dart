@@ -1,8 +1,8 @@
+import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../theme/glass_widgets.dart';
 import '../controller/transporter_vehicle_controller.dart';
 import '../model/vehicle_model.dart';
 import '../../../../routes/app_routes.dart';
@@ -166,26 +166,42 @@ class _TransporterVehicleFormState extends State<TransporterVehicleForm> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isEdit = widget.vehicle != null;
     final years = [for (var y = DateTime.now().year; y >= 1990; y--) y];
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: AppBarLeading(child: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: theme.iconTheme.color),
-          onPressed: () => Get.back(),
-        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-        title: Text(
-          isEdit ? "Edit Vehicle" : "Register Vehicle",
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+      appBar: HeroHeader(
+        title: isEdit ? "Edit Vehicle" : "Register Vehicle",
+        subtitle: isEdit
+            ? (widget.vehicle?.vehicleNumber ?? "Update vehicle details")
+            : "Enter transport specifications & documents",
+        leading: AppBarLeading(
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.white),
+            onPressed: () => Get.back(),
+          ),
         ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
-        child: GlassCard(
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
           padding: const EdgeInsets.all(20),
           child: Form(
             key: _formKey,
@@ -251,11 +267,29 @@ class _TransporterVehicleFormState extends State<TransporterVehicleForm> {
                     (v) => setState(() => _status = v ?? 'available')),
 
                 const SizedBox(height: 24),
-                SizedBox(
-                  height: 54,
+                Container(
+                  height: 52,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF9800), Color(0xFFE65100)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFE65100).withValues(alpha: 0.35),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
                   child: ElevatedButton(
                     onPressed: _isSubmitting ? null : _submit,
                     style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                     ),
                     child: _isSubmitting
@@ -286,20 +320,56 @@ class _TransporterVehicleFormState extends State<TransporterVehicleForm> {
     );
   }
 
-  InputDecoration _decoration(String label) => InputDecoration(
-        labelText: label,
-        counterText: "",
-        filled: true,
-        fillColor: Theme.of(context).brightness == Brightness.dark
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.black.withValues(alpha: 0.05),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-      );
+  InputDecoration _decoration(String label) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return InputDecoration(
+      labelText: label,
+      labelStyle: GoogleFonts.inter(fontSize: 13, color: Colors.grey.shade600),
+      counterText: "",
+      filled: true,
+      fillColor: isDark ? const Color(0xFF252525) : const Color(0xFFFFF8E1).withValues(alpha: 0.5),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFFFB300), width: 1.5),
+      ),
+    );
+  }
 
   Widget _sectionTitle(String title) => Padding(
-        padding: const EdgeInsets.only(bottom: 16, top: 8),
-        child: Text(title,
-            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+        padding: const EdgeInsets.only(bottom: 14, top: 8),
+        child: Row(
+          children: [
+            Container(
+              width: 4,
+              height: 14,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFB300),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFFE65100),
+              ),
+            ),
+          ],
+        ),
       );
 
   Widget _textField(String label, TextEditingController controller, {bool required = false, bool number = false}) {
@@ -339,8 +409,13 @@ class _TransporterVehicleFormState extends State<TransporterVehicleForm> {
         onTap: () => _pickDate(value, onPicked),
         borderRadius: BorderRadius.circular(12),
         child: InputDecorator(
-          decoration: _decoration(label).copyWith(suffixIcon: const Icon(Icons.calendar_month)),
-          child: Text(value == null || value.isEmpty ? 'Select date' : value),
+          decoration: _decoration(label).copyWith(
+            suffixIcon: const Icon(Icons.calendar_month, color: Color(0xFFE65100)),
+          ),
+          child: Text(
+            value == null || value.isEmpty ? 'Select date' : value,
+            style: GoogleFonts.inter(fontSize: 13),
+          ),
         ),
       ),
     );
@@ -351,10 +426,15 @@ class _TransporterVehicleFormState extends State<TransporterVehicleForm> {
       padding: const EdgeInsets.only(bottom: 16),
       child: OutlinedButton.icon(
         onPressed: onTap,
-        icon: const Icon(Icons.upload_file),
-        label: Text(text, overflow: TextOverflow.ellipsis),
+        icon: const Icon(Icons.upload_file, color: Color(0xFFE65100)),
+        label: Text(
+          text,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: Color(0xFFE65100), fontWeight: FontWeight.w600),
+        ),
         style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+          side: const BorderSide(color: Color(0xFFFFB300), width: 1.2),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),

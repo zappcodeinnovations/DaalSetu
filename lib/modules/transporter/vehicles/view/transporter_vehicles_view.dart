@@ -1,9 +1,9 @@
+import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../../routes/app_routes.dart';
-import '../../../../theme/glass_widgets.dart';
 import '../../drivers/model/driver_model.dart';
 import '../controller/transporter_vehicle_controller.dart';
 import './transporter_vehicle_form.dart';
@@ -44,75 +44,105 @@ class TransporterVehiclesView extends StatelessWidget {
     // Inside the bottom-nav shell the floating bar covers the bottom ~90px.
     final inNavShell = !Navigator.of(context).canPop();
 
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: !inNavShell,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "My Vehicles",
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                color: theme.textTheme.bodyLarge?.color,
-              ),
-            ),
-            Text(
-              "Manage your registered vehicles",
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                color: theme.textTheme.bodyMedium?.color,
-              ),
-            ),
-          ],
+      appBar: HeroHeader(
+        title: "My Vehicles",
+        subtitle: "Manage your registered fleet & drivers",
+        leading: AppBarLeading(
+          showBack: !inNavShell,
+          child: !inNavShell
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.white),
+                  onPressed: () => Get.back(),
+                )
+              : null,
         ),
-        actions: [
-          IconButton(
-            tooltip: "Notifications",
-            icon: const Icon(IconlyLight.notification),
-            onPressed: () => Get.toNamed(AppRoutes.transporterNotifications),
-          ),
-          const SizedBox(width: 4),
-        ],
+        trailing: IconButton(
+          tooltip: "Notifications",
+          icon: const Icon(IconlyLight.notification, color: Colors.white),
+          onPressed: () => Get.toNamed(AppRoutes.transporterNotifications),
+        ),
       ),
       floatingActionButton: Padding(
         padding: EdgeInsets.only(bottom: inNavShell ? 90 : 0),
-        child: FloatingActionButton.extended(
-          heroTag: null,
-          onPressed: () => _openForm(controller),
-          backgroundColor: theme.colorScheme.primary,
-          foregroundColor: Colors.white,
-          icon: const Icon(IconlyLight.plus),
-          label: const Text(
-            "Add Vehicle",
-            style: TextStyle(fontWeight: FontWeight.bold),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFF9800), Color(0xFFE65100)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFE65100).withValues(alpha: 0.35),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(30),
+              onTap: () => _openForm(controller),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(IconlyLight.plus, color: Colors.white, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      "Add Vehicle",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
             child: TextField(
               onChanged: (v) => controller.searchQuery.value = v,
               decoration: InputDecoration(
                 hintText: "Search number, brand, driver...",
-                prefixIcon: const Icon(IconlyLight.search, size: 20),
+                hintStyle: GoogleFonts.inter(fontSize: 13, color: Colors.grey),
+                prefixIcon: const Icon(IconlyLight.search, size: 20, color: Color(0xFFE65100)),
                 isDense: true,
                 filled: true,
-                fillColor: theme.colorScheme.surface,
+                fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                 contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: theme.dividerColor),
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(
+                    color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: theme.dividerColor),
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(
+                    color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFFFB300),
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -208,6 +238,7 @@ class TransporterVehiclesView extends StatelessWidget {
     String label,
   ) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isSelected = controller.selectedFilter.value == key;
     return GestureDetector(
       onTap: () => controller.selectedFilter.value = key,
@@ -216,13 +247,31 @@ class TransporterVehiclesView extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14),
         alignment: Alignment.center,
         decoration: BoxDecoration(
+          gradient: isSelected
+              ? const LinearGradient(
+                  colors: [Color(0xFFFF9800), Color(0xFFE65100)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
           color: isSelected
-              ? theme.colorScheme.primary
-              : theme.colorScheme.surface,
+              ? null
+              : (isDark ? const Color(0xFF1E1E1E) : Colors.white),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? theme.colorScheme.primary : theme.dividerColor,
+            color: isSelected
+                ? Colors.transparent
+                : (isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2)),
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFE65100).withValues(alpha: 0.3),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           "$label (${controller.getCount(key)})",
@@ -231,7 +280,7 @@ class TransporterVehiclesView extends StatelessWidget {
             fontWeight: FontWeight.bold,
             color: isSelected
                 ? Colors.white
-                : theme.textTheme.bodyMedium?.color,
+                : (isDark ? Colors.grey.shade300 : const Color(0xFF2E1500)),
           ),
         ),
       ),
@@ -244,6 +293,7 @@ class TransporterVehiclesView extends StatelessWidget {
     VehicleModel vehicle,
   ) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final color = statusColor(vehicle.vehicleStatus);
     final statusText =
         TransporterVehicleController.statusLabels[vehicle.vehicleStatus] ??
@@ -257,19 +307,44 @@ class TransporterVehiclesView extends StatelessWidget {
       vehicle.vehicleType,
     ].where((s) => s.trim().isNotEmpty).join(' • ');
 
-    return GlassCard(
-      padding: const EdgeInsets.fromLTRB(14, 12, 4, 12),
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.fromLTRB(14, 14, 8, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Image.asset(
-                'assets/images/truck.png',
-                width: 64,
-                height: 64,
-                fit: BoxFit.contain,
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFF8E1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF3D3D3D) : const Color(0xFFFFE0B2),
+                  ),
+                ),
+                child: Image.asset(
+                  'assets/images/truck.png',
+                  width: 52,
+                  height: 52,
+                  fit: BoxFit.contain,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -285,8 +360,8 @@ class TransporterVehiclesView extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              color: theme.textTheme.bodyLarge?.color,
+                              fontSize: 16,
+                              color: isDark ? Colors.white : const Color(0xFF2E1500),
                             ),
                           ),
                         ),
@@ -301,7 +376,7 @@ class TransporterVehiclesView extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         fontSize: 12,
-                        color: theme.textTheme.bodyMedium?.color,
+                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -326,54 +401,61 @@ class TransporterVehiclesView extends StatelessWidget {
             ],
           ),
           Padding(
-            padding: const EdgeInsets.only(top: 10, bottom: 10, right: 10),
+            padding: const EdgeInsets.only(top: 12, bottom: 12, right: 6),
             child: Divider(
-              color: theme.dividerColor.withValues(alpha: 0.5),
+              color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2).withValues(alpha: 0.6),
               height: 1,
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildDetailColumn(
-                    context,
-                    Icons.local_gas_station_outlined,
-                    "Fuel",
-                    _cap(vehicle.fuelType),
+            padding: const EdgeInsets.only(right: 6),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF252525) : const Color(0xFFFFF8E1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildDetailColumn(
+                      context,
+                      Icons.local_gas_station_outlined,
+                      "Fuel",
+                      _cap(vehicle.fuelType),
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: _buildDetailColumn(
-                    context,
-                    IconlyLight.calendar,
-                    "Year",
-                    "${vehicle.manufacturingYear ?? "—"}",
+                  Expanded(
+                    child: _buildDetailColumn(
+                      context,
+                      IconlyLight.calendar,
+                      "Year",
+                      "${vehicle.manufacturingYear ?? "—"}",
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: _buildDetailColumn(
-                    context,
-                    IconlyLight.shield_done,
-                    "Insurance",
-                    _formatDate(vehicle.insuranceExpiryDate),
+                  Expanded(
+                    child: _buildDetailColumn(
+                      context,
+                      IconlyLight.shield_done,
+                      "Insurance",
+                      _formatDate(vehicle.insuranceExpiryDate),
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: _buildDetailColumn(
-                    context,
-                    IconlyLight.paper,
-                    "Permit",
-                    _formatDate(vehicle.permitExpiryDate),
+                  Expanded(
+                    child: _buildDetailColumn(
+                      context,
+                      IconlyLight.paper,
+                      "Permit",
+                      _formatDate(vehicle.permitExpiryDate),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 12),
           Padding(
-            padding: const EdgeInsets.only(right: 10),
+            padding: const EdgeInsets.only(right: 6),
             child: Row(
               children: [
                 Expanded(
@@ -383,11 +465,10 @@ class TransporterVehiclesView extends StatelessWidget {
                     label: const Text("View", maxLines: 1),
                     style: _buttonStyle(
                       OutlinedButton.styleFrom(
-                        foregroundColor: theme.colorScheme.primary,
-                        side: BorderSide(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.4,
-                          ),
+                        foregroundColor: const Color(0xFFE65100),
+                        side: const BorderSide(
+                          color: Color(0xFFFFB300),
+                          width: 1.2,
                         ),
                       ),
                     ),
@@ -395,19 +476,28 @@ class TransporterVehiclesView extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () =>
-                        showAssignDriverSheet(context, controller, vehicle),
-                    icon: const Icon(IconlyLight.add_user, size: 16),
-                    label: Text(
-                      hasDriver ? "Change Driver" : "Assign Driver",
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFF9800), Color(0xFFE65100)],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    style: _buttonStyle(
-                      ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.primary,
-                        foregroundColor: Colors.white,
+                    child: ElevatedButton.icon(
+                      onPressed: () =>
+                          showAssignDriverSheet(context, controller, vehicle),
+                      icon: const Icon(IconlyLight.add_user, size: 16),
+                      label: Text(
+                        hasDriver ? "Change Driver" : "Assign Driver",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      style: _buttonStyle(
+                        ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: Colors.white,
+                          shadowColor: Colors.transparent,
+                        ),
                       ),
                     ),
                   ),

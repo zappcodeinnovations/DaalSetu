@@ -1,8 +1,8 @@
+import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
-import '../../../../theme/glass_widgets.dart';
 import '../controller/transporter_company_controller.dart';
 import '../model/company_model.dart';
 import './transporter_company_form.dart';
@@ -22,32 +22,61 @@ class TransporterCompanyView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: AppBarLeading(child: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new,
-            size: 20,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
-          onPressed: () => Get.back(),
-        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-        title: Text(
-          "My Companies",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: theme.textTheme.bodyLarge?.color,
+      appBar: HeroHeader(
+        title: "My Companies",
+        subtitle: "Manage your registered transport entities",
+        leading: AppBarLeading(
+          child: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 20,
+              color: Colors.white,
+            ),
+            onPressed: () => Get.back(),
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: null,
-        onPressed: () => Get.to(() => TransporterCompanyForm()),
-        icon: const Icon(IconlyLight.plus),
-        label: const Text("Register Company"),
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: Colors.white,
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFF9800), Color(0xFFE65100)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFE65100).withValues(alpha: 0.35),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(30),
+            onTap: () => Get.to(() => const TransporterCompanyForm()),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(IconlyLight.plus, color: Colors.white, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    "Register Company",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
       body: Obx(() {
         if (controller.isLoading.value && controller.companies.isEmpty) {
@@ -107,117 +136,156 @@ class TransporterCompanyView extends StatelessWidget {
 
   Widget _buildCompanyCard(BuildContext context, CompanyModel company) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final location = [
       company.city,
       company.state,
       company.pincode,
     ].where((value) => value != null && value.trim().isNotEmpty).join(', ');
 
-    return GlassCard(
-      onTap: () => Get.to(() => TransporterCompanyDetail(company: company)),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: .12),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  IconlyBold.work,
-                  color: theme.colorScheme.primary,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      company.legalName,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    if ((company.companyType ?? '').isNotEmpty)
-                      Text(
-                        company.companyType!,
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          color: theme.textTheme.bodyMedium?.color,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              _statusChip(
-                company.isVerified == true ? 'VERIFIED' : 'UNVERIFIED',
-                company.isVerified == true ? Colors.green : Colors.orange,
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          if ((company.gstNumber ?? '').isNotEmpty)
-            _infoRow(IconlyLight.document, 'GST', company.gstNumber!),
-          if ((company.panNumber ?? '').isNotEmpty)
-            _infoRow(IconlyLight.wallet, 'PAN', company.panNumber!),
-          if (location.isNotEmpty)
-            _infoRow(IconlyLight.location, 'Location', location),
-          if ((company.addressLine1 ?? '').isNotEmpty)
-            _infoRow(IconlyLight.home, 'Address', company.addressLine1!),
-          if (company.yearOfEstablishment != null ||
-              company.numberOfEmployees != null)
-            _infoRow(
-              Icons.business_outlined,
-              'Business',
-              [
-                if (company.yearOfEstablishment != null)
-                  'Est. ${company.yearOfEstablishment}',
-                if (company.numberOfEmployees != null)
-                  '${company.numberOfEmployees} employees',
-              ].join(' • '),
-            ),
-          const SizedBox(height: 12),
-          const Divider(height: 1),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              if (company.isPrimary)
-                _statusChip('PRIMARY', Colors.green)
-              else
-                TextButton(
-                  onPressed: () => controller.setPrimaryCompany(company.id),
-                  child: const Text('Set Primary'),
-                ),
-              const Spacer(),
-              OutlinedButton.icon(
-                onPressed: () =>
-                    Get.to(() => TransporterCompanyForm(company: company)),
-                icon: const Icon(IconlyLight.edit, size: 16),
-                label: const Text('Edit'),
-              ),
-              const SizedBox(width: 8),
-              IconButton.filledTonal(
-                tooltip: 'Delete company',
-                onPressed: () => _showDeleteConfirmDialog(context, company.id),
-                icon: const Icon(
-                  IconlyLight.delete,
-                  color: Colors.red,
-                  size: 19,
-                ),
-              ),
-            ],
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () => Get.to(() => TransporterCompanyDetail(company: company)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFB300).withValues(alpha: .15),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(
+                        IconlyBold.work,
+                        color: Color(0xFFE65100),
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            company.legalName,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: isDark ? Colors.white : const Color(0xFF2E1500),
+                            ),
+                          ),
+                          if ((company.companyType ?? '').isNotEmpty)
+                            Text(
+                              company.companyType!,
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    _statusChip(
+                      company.isVerified == true ? 'VERIFIED' : 'UNVERIFIED',
+                      company.isVerified == true ? Colors.green : Colors.orange,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                if ((company.gstNumber ?? '').isNotEmpty)
+                  _infoRow(IconlyLight.document, 'GST', company.gstNumber!),
+                if ((company.panNumber ?? '').isNotEmpty)
+                  _infoRow(IconlyLight.wallet, 'PAN', company.panNumber!),
+                if (location.isNotEmpty)
+                  _infoRow(IconlyLight.location, 'Location', location),
+                if ((company.addressLine1 ?? '').isNotEmpty)
+                  _infoRow(IconlyLight.home, 'Address', company.addressLine1!),
+                if (company.yearOfEstablishment != null ||
+                    company.numberOfEmployees != null)
+                  _infoRow(
+                    Icons.business_outlined,
+                    'Business',
+                    [
+                      if (company.yearOfEstablishment != null)
+                        'Est. ${company.yearOfEstablishment}',
+                      if (company.numberOfEmployees != null)
+                        '${company.numberOfEmployees} employees',
+                    ].join(' • '),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Divider(
+                    color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2).withValues(alpha: 0.6),
+                    height: 1,
+                  ),
+                ),
+                Row(
+                  children: [
+                    if (company.isPrimary)
+                      _statusChip('PRIMARY', Colors.green)
+                    else
+                      TextButton(
+                        onPressed: () => controller.setPrimaryCompany(company.id),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFFE65100),
+                          textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        child: const Text('Set Primary'),
+                      ),
+                    const Spacer(),
+                    OutlinedButton.icon(
+                      onPressed: () =>
+                          Get.to(() => TransporterCompanyForm(company: company)),
+                      icon: const Icon(IconlyLight.edit, size: 16),
+                      label: const Text('Edit'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFE65100),
+                        side: const BorderSide(color: Color(0xFFFFB300)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      tooltip: 'Delete company',
+                      onPressed: () => _showDeleteConfirmDialog(context, company.id),
+                      icon: const Icon(
+                        IconlyLight.delete,
+                        color: Colors.red,
+                        size: 20,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../products/controller/product_controller.dart';
 import '../../../../theme/app_theme.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class TransporterProductsView extends StatelessWidget {
   const TransporterProductsView({super.key});
@@ -18,33 +18,18 @@ class TransporterProductsView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: AppBarLeading(child: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new,
-            size: 20,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
-          onPressed: () => Get.back(),
-        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-        title: Text(
-          "Commodity Products",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
+      appBar: HeroHeader(
+        title: "Commodity Products",
+        subtitle: "Products listed in network catalog",
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(IconlyLight.swap, color: primary),
-            tooltip: "Refresh",
-            onPressed: controller.fetchProducts,
-          ),
-          const SizedBox(width: 8),
-        ],
+        trailing: IconButton(
+          icon: const Icon(IconlyLight.swap, color: Colors.white),
+          tooltip: "Refresh",
+          onPressed: controller.fetchProducts,
+        ),
       ),
       body: Stack(
         children: [
@@ -64,7 +49,7 @@ class TransporterProductsView extends StatelessWidget {
           ),
           Obx(() {
             if (controller.isLoading.value && controller.products.isEmpty) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator(color: Color(0xFFFF9800)));
             }
 
             if (controller.products.isEmpty) {
@@ -72,12 +57,19 @@ class TransporterProductsView extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(IconlyLight.bag, size: 64, color: Colors.grey.shade400),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF9800).withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(IconlyLight.bag, size: 56, color: Color(0xFFFF9800)),
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       "No products listed",
                       style: GoogleFonts.poppins(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.w600,
                         color: theme.textTheme.bodyLarge?.color,
                       ),
@@ -96,7 +88,7 @@ class TransporterProductsView extends StatelessWidget {
               onRefresh: controller.fetchProducts,
               color: primary,
               child: ListView.separated(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                 itemCount: controller.products.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
@@ -108,13 +100,16 @@ class TransporterProductsView extends StatelessWidget {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: isDark ? AppTheme.cardColor : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: isDark ? AppTheme.borderColor : AppTheme.borderLight),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: isDark ? AppTheme.borderColor : const Color(0xFFFFE0B2),
+                        width: 1.2,
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
@@ -125,45 +120,88 @@ class TransporterProductsView extends StatelessWidget {
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                            color: primary.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFF9800).withValues(alpha: 0.3),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                          child: Icon(IconlyLight.bag, color: primary, size: 24),
+                          child: const Icon(IconlyBold.bag, color: Colors.white, size: 24),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                product.title,
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                  color: theme.textTheme.bodyLarge?.color,
-                                ),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      product.title,
+                                      style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15,
+                                        color: theme.textTheme.bodyLarge?.color,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFF9800).withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: const Color(0xFFFF9800).withValues(alpha: 0.3),
+                                        width: 0.8,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      categoryName,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFFE65100),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                "Category: $categoryName",
-                                style: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade600),
-                              ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 8),
                               Row(
                                 children: [
                                   Text(
                                     "₹${product.amount}/$priceUnit",
                                     style: GoogleFonts.poppins(
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                      color: AppTheme.successGreen,
+                                      fontSize: 15,
+                                      color: const Color(0xFF2E7D32),
                                     ),
                                   ),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    "• ${product.availableQuantity} ${product.quantityUnit}",
-                                    style: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade700),
-                                  ),
+                                  const Spacer(),
+                                  if (product.availableQuantity.isNotEmpty)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: isDark ? Colors.grey.shade900 : const Color(0xFFF5F5F5),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        "${product.availableQuantity} ${product.quantityUnit}".trim(),
+                                        style: GoogleFonts.inter(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
+                                        ),
+                                      ),
+                                    ),
                                 ],
                               ),
                             ],

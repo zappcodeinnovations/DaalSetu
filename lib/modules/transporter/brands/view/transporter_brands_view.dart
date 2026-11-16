@@ -5,7 +5,7 @@ import 'package:iconly/iconly.dart';
 import '../../../../theme/app_theme.dart';
 import '../controller/transporter_brands_controller.dart';
 import '../model/transporter_brand_model.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class TransporterBrandsView extends StatelessWidget {
   TransporterBrandsView({super.key});
@@ -20,33 +20,18 @@ class TransporterBrandsView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: AppBarLeading(child: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new,
-            size: 20,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
-          onPressed: () => Get.back(),
-        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-        title: Text(
-          "Brands",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
+      appBar: HeroHeader(
+        title: "Brands",
+        subtitle: "Registered brands & catalog directory",
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(IconlyLight.swap, color: primary),
-            tooltip: "Refresh Brands",
-            onPressed: () => controller.refreshAll(),
-          ),
-          const SizedBox(width: 8),
-        ],
+        trailing: IconButton(
+          icon: const Icon(IconlyLight.swap, color: Colors.white),
+          tooltip: "Refresh Brands",
+          onPressed: () => controller.refreshAll(),
+        ),
       ),
       body: Stack(
         children: [
@@ -72,7 +57,7 @@ class TransporterBrandsView extends StatelessWidget {
             color: primary,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 40),
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 40),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -83,10 +68,10 @@ class TransporterBrandsView extends StatelessWidget {
                     icon: IconlyBold.star,
                     trailing: Obx(() {
                       if (controller.isDashboardLoading.value) {
-                        return SizedBox(
+                        return const SizedBox(
                           width: 14,
                           height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: primary),
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFFF9800)),
                         );
                       }
                       return const SizedBox.shrink();
@@ -95,7 +80,7 @@ class TransporterBrandsView extends StatelessWidget {
                   const SizedBox(height: 12),
                   _buildMetricsRow(context),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
                   // 2. SEARCH BAR
                   _buildSearchBar(context),
@@ -120,7 +105,6 @@ class TransporterBrandsView extends StatelessWidget {
     Widget? trailing,
   }) {
     final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -128,14 +112,23 @@ class TransporterBrandsView extends StatelessWidget {
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(7),
               decoration: BoxDecoration(
-                color: primary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
+                ),
+                borderRadius: BorderRadius.circular(9),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFF9800).withValues(alpha: 0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
               ),
-              child: Icon(icon, size: 16, color: primary),
+              child: Icon(icon, size: 16, color: Colors.white),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Text(
               title,
               style: GoogleFonts.poppins(
@@ -166,7 +159,7 @@ class TransporterBrandsView extends StatelessWidget {
               title: "Total Brands",
               value: total.toString(),
               icon: IconlyLight.star,
-              color: AppTheme.primaryGold,
+              color: const Color(0xFFFF9800),
             ),
           ),
           const SizedBox(width: 10),
@@ -176,7 +169,7 @@ class TransporterBrandsView extends StatelessWidget {
               title: "Active Brands",
               value: active.toString(),
               icon: Icons.verified_outlined,
-              color: AppTheme.successGreen,
+              color: const Color(0xFF2E7D32),
             ),
           ),
           const SizedBox(width: 10),
@@ -186,7 +179,7 @@ class TransporterBrandsView extends StatelessWidget {
               title: "Brands in Use",
               value: inUse.toString(),
               icon: IconlyLight.work,
-              color: AppTheme.secondaryOrange,
+              color: const Color(0xFFE65100),
             ),
           ),
         ],
@@ -210,14 +203,14 @@ class TransporterBrandsView extends StatelessWidget {
         color: isDark ? AppTheme.cardColor : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: color.withValues(alpha: 0.25),
-          width: 1,
+          color: isDark ? AppTheme.borderColor : const Color(0xFFFFE0B2),
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -264,16 +257,17 @@ class TransporterBrandsView extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.bgSecondary : Colors.white,
+        color: isDark ? AppTheme.cardColor : Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDark ? AppTheme.borderColor : AppTheme.borderLight,
+          color: isDark ? AppTheme.borderColor : const Color(0xFFFFE0B2),
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -290,10 +284,10 @@ class TransporterBrandsView extends StatelessWidget {
             fontSize: 13,
             color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
           ),
-          prefixIcon: Icon(
+          prefixIcon: const Icon(
             IconlyLight.search,
             size: 20,
-            color: theme.colorScheme.primary,
+            color: Color(0xFFFF9800),
           ),
           suffixIcon: Obx(() {
             if (controller.searchQuery.value.isNotEmpty) {
@@ -316,7 +310,6 @@ class TransporterBrandsView extends StatelessWidget {
 
   Widget _buildBrandsSection(BuildContext context) {
     final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
 
     return Obx(() {
       final brands = controller.filteredBrands;
@@ -339,15 +332,19 @@ class TransporterBrandsView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: primary.withValues(alpha: 0.12),
+                  color: const Color(0xFFFF9800).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFFFF9800).withValues(alpha: 0.3),
+                    width: 0.8,
+                  ),
                 ),
                 child: Text(
                   "${brands.length} ${brands.length == 1 ? 'Brand' : 'Brands'}",
                   style: GoogleFonts.inter(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: primary,
+                    color: const Color(0xFFE65100),
                   ),
                 ),
               ),
@@ -358,7 +355,7 @@ class TransporterBrandsView extends StatelessWidget {
           if (controller.isLoading.value && totalInList == 0)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 40),
-              child: Center(child: CircularProgressIndicator()),
+              child: Center(child: CircularProgressIndicator(color: Color(0xFFFF9800))),
             )
           else if (brands.isEmpty)
             _buildEmptyState(context)
@@ -381,143 +378,148 @@ class TransporterBrandsView extends StatelessWidget {
   Widget _buildBrandCard(BuildContext context, TransporterBrandModel brand) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final primary = theme.colorScheme.primary;
 
     return Container(
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.cardColor : Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? AppTheme.borderColor : AppTheme.borderLight,
+          color: isDark ? AppTheme.borderColor : const Color(0xFFFFE0B2),
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: InkWell(
-        onTap: () => _showBrandDetailSheet(context, brand),
-        borderRadius: BorderRadius.circular(14),
-        child: Row(
-          children: [
-            // Brand Monogram / Logo
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    primary.withValues(alpha: 0.2),
-                    primary.withValues(alpha: 0.08),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: primary.withValues(alpha: 0.35),
-                  width: 1,
-                ),
-              ),
-              child: Center(
-                child: brand.logoUrl != null && brand.logoUrl!.isNotEmpty
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          brand.logoUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _buildBrandInitial(brand),
-                        ),
-                      )
-                    : _buildBrandInitial(brand),
-              ),
-            ),
-            const SizedBox(width: 14),
-
-            // Brand Details
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    brand.name,
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: theme.textTheme.bodyLarge?.color,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showBrandDetailSheet(context, brand),
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                // Brand Monogram / Logo
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFFFF9800).withValues(alpha: 0.2),
+                        const Color(0xFFF57C00).withValues(alpha: 0.1),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: const Color(0xFFFF9800).withValues(alpha: 0.4),
+                      width: 1.2,
+                    ),
                   ),
-                  const SizedBox(height: 2),
-                  if (brand.companyName != null && brand.companyName!.isNotEmpty)
-                    Text(
-                      brand.companyName!,
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    )
-                  else if (brand.description != null && brand.description!.isNotEmpty)
-                    Text(
-                      brand.description!,
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    )
-                  else
-                    Text(
-                      brand.isActive ? "Verified Brand" : "Registered Brand",
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
-                      ),
-                    ),
-                ],
-              ),
-            ),
+                  child: Center(
+                    child: brand.logoUrl != null && brand.logoUrl!.isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(14),
+                            child: Image.network(
+                              brand.logoUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => _buildBrandInitial(brand),
+                            ),
+                          )
+                        : _buildBrandInitial(brand),
+                  ),
+                ),
+                const SizedBox(width: 14),
 
-            // Status Badge
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: brand.isActive
-                    ? AppTheme.successGreen.withValues(alpha: 0.12)
-                    : Colors.grey.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: brand.isActive
-                      ? AppTheme.successGreen.withValues(alpha: 0.3)
-                      : Colors.grey.withValues(alpha: 0.3),
-                  width: 1,
+                // Brand Details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        brand.name,
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: theme.textTheme.bodyLarge?.color,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      if (brand.companyName != null && brand.companyName!.isNotEmpty)
+                        Text(
+                          brand.companyName!,
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        )
+                      else if (brand.description != null && brand.description!.isNotEmpty)
+                        Text(
+                          brand.description!,
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        )
+                      else
+                        Text(
+                          brand.isActive ? "Verified Brand" : "Registered Brand",
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              child: Text(
-                brand.isActive ? "ACTIVE" : "INACTIVE",
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: brand.isActive ? AppTheme.successGreen : Colors.grey,
-                  letterSpacing: 0.4,
+
+                // Status Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: brand.isActive
+                        ? const Color(0xFFE8F5E9)
+                        : const Color(0xFFFFF3E0),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: brand.isActive
+                          ? const Color(0xFF81C784)
+                          : const Color(0xFFFFB74D),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Text(
+                    brand.isActive ? "ACTIVE" : "INACTIVE",
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: brand.isActive ? const Color(0xFF2E7D32) : const Color(0xFFE65100),
+                      letterSpacing: 0.4,
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right,
+                  size: 20,
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
+                ),
+              ],
             ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.chevron_right,
-              size: 20,
-              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.4),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -530,7 +532,7 @@ class TransporterBrandsView extends StatelessWidget {
       style: GoogleFonts.poppins(
         fontSize: 18,
         fontWeight: FontWeight.bold,
-        color: AppTheme.primaryGold,
+        color: const Color(0xFFE65100),
       ),
     );
   }
@@ -545,15 +547,16 @@ class TransporterBrandsView extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.cardColor : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? AppTheme.borderColor : AppTheme.borderLight,
+          color: isDark ? AppTheme.borderColor : const Color(0xFFFFE0B2),
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -564,13 +567,13 @@ class TransporterBrandsView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                color: const Color(0xFFFF9800).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 hasSearch ? IconlyLight.search : IconlyLight.star,
                 size: 40,
-                color: theme.colorScheme.primary,
+                color: const Color(0xFFFF9800),
               ),
             ),
             const SizedBox(height: 16),
@@ -601,7 +604,7 @@ class TransporterBrandsView extends StatelessWidget {
               icon: const Icon(IconlyLight.swap, size: 18),
               label: const Text("Refresh Catalog"),
               style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
+                backgroundColor: const Color(0xFFFF9800),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
@@ -615,6 +618,8 @@ class TransporterBrandsView extends StatelessWidget {
 
   void _showBrandDetailSheet(BuildContext context, TransporterBrandModel brand) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -622,7 +627,7 @@ class TransporterBrandsView extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: theme.cardColor,
+            color: isDark ? AppTheme.cardColor : Colors.white,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
@@ -646,7 +651,7 @@ class TransporterBrandsView extends StatelessWidget {
                     width: 50,
                     height: 50,
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                      color: const Color(0xFFFF9800).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Center(child: _buildBrandInitial(brand)),
@@ -675,14 +680,20 @@ class TransporterBrandsView extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: brand.isActive
-                          ? AppTheme.successGreen.withValues(alpha: 0.15)
-                          : Colors.grey.withValues(alpha: 0.15),
+                          ? const Color(0xFFE8F5E9)
+                          : const Color(0xFFFFF3E0),
                       borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: brand.isActive
+                            ? const Color(0xFF81C784)
+                            : const Color(0xFFFFB74D),
+                        width: 0.8,
+                      ),
                     ),
                     child: Text(
                       brand.isActive ? "ACTIVE" : "INACTIVE",
                       style: TextStyle(
-                        color: brand.isActive ? AppTheme.successGreen : Colors.grey,
+                        color: brand.isActive ? const Color(0xFF2E7D32) : const Color(0xFFE65100),
                         fontWeight: FontWeight.bold,
                         fontSize: 11,
                       ),

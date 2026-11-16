@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -24,33 +25,24 @@ class TransporterContractsView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: AppBarLeading(child: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new,
-            size: 20,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
-          onPressed: () => Get.back(),
-        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-        title: Text(
-          "Contracts",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-            color: theme.textTheme.bodyLarge?.color,
+      appBar: HeroHeader(
+        title: "Contracts",
+        subtitle: "Assigned transit deals & trade agreements",
+        leading: AppBarLeading(
+          child: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 20,
+              color: Colors.white,
+            ),
+            onPressed: () => Get.back(),
           ),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(IconlyLight.swap, color: primary),
-            tooltip: "Refresh",
-            onPressed: controller.fetchContracts,
-          ),
-          const SizedBox(width: 8),
-        ],
+        trailing: IconButton(
+          icon: const Icon(IconlyLight.swap, color: Colors.white),
+          tooltip: "Refresh",
+          onPressed: controller.fetchContracts,
+        ),
       ),
       body: Stack(
         children: [
@@ -118,9 +110,12 @@ class TransporterContractsView extends StatelessWidget {
                   return Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: isDark ? AppTheme.cardColor : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: isDark ? AppTheme.borderColor : AppTheme.borderLight),
+                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+                        width: 1.2,
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
@@ -135,25 +130,38 @@ class TransporterContractsView extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              contractNum,
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                                color: primary,
-                              ),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 4,
+                                  height: 16,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFB300),
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  contractNum,
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: isDark ? const Color(0xFFFFB300) : const Color(0xFFE65100),
+                                  ),
+                                ),
+                              ],
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: (isCompleted ? AppTheme.successGreen : Colors.orange)
-                                    .withValues(alpha: 0.12),
+                                color: (isCompleted ? AppTheme.successGreen : const Color(0xFFFFB300))
+                                    .withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
                                 status,
                                 style: TextStyle(
-                                  color: isCompleted ? AppTheme.successGreen : Colors.orange,
+                                  color: isCompleted ? AppTheme.successGreen : const Color(0xFFE65100),
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -184,19 +192,30 @@ class TransporterContractsView extends StatelessWidget {
                                 const SizedBox(height: 2),
                                 Text(
                                   "₹$amount",
-                                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.successGreen),
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: const Color(0xFFE65100),
+                                  ),
                                 ),
                               ],
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("Buyer: $buyer", style: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade700)),
-                            Text("Qty: $quantity Qtl", style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500)),
-                          ],
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFFF8E1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text("Buyer: $buyer", style: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade700, fontWeight: FontWeight.w500)),
+                              Text("Qty: $quantity Qtl", style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF2E1500))),
+                            ],
+                          ),
                         ),
                       ],
                     ),

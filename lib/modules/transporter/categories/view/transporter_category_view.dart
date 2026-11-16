@@ -5,7 +5,7 @@ import 'package:iconly/iconly.dart';
 import '../../../seller/categories/controller/seller_category_controller.dart';
 import '../../../seller/categories/model/seller_category_model.dart';
 import '../../../../theme/app_theme.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class TransporterCategoryView extends StatelessWidget {
   const TransporterCategoryView({super.key});
@@ -18,33 +18,18 @@ class TransporterCategoryView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: AppBarLeading(child: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new,
-            size: 20,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
-          onPressed: () => Get.back(),
-        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-        title: Text(
-          "Categories",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
+      appBar: HeroHeader(
+        title: "Categories",
+        subtitle: "Agricultural commodity taxonomy",
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(IconlyLight.swap, color: primary),
-            tooltip: "Refresh",
-            onPressed: controller.fetchAllData,
-          ),
-          const SizedBox(width: 8),
-        ],
+        trailing: IconButton(
+          icon: const Icon(IconlyLight.swap, color: Colors.white),
+          tooltip: "Refresh",
+          onPressed: controller.fetchAllData,
+        ),
       ),
       body: Stack(
         children: [
@@ -67,12 +52,12 @@ class TransporterCategoryView extends StatelessWidget {
             color: primary,
             child: Obx(() {
               if (controller.isLoading.value && controller.categoryTree.isEmpty) {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(child: CircularProgressIndicator(color: Color(0xFFFF9800)));
               }
 
               return SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -103,13 +88,16 @@ class TransporterCategoryView extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.cardColor : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? AppTheme.borderColor : AppTheme.borderLight),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? AppTheme.borderColor : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -118,21 +106,34 @@ class TransporterCategoryView extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(IconlyLight.category, color: theme.colorScheme.primary, size: 20),
-              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(IconlyBold.category, color: Colors.white, size: 16),
+              ),
+              const SizedBox(width: 10),
               Text(
                 "Category Overview",
-                style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600),
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: theme.textTheme.bodyLarge?.color,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatItem("Total Categories", data.total.toString(), AppTheme.primaryGold),
-              _buildStatItem("Root", data.root.toString(), AppTheme.successGreen),
-              _buildStatItem("Sub Categories", data.sub.toString(), AppTheme.secondaryOrange),
+              _buildStatItem("Total Categories", data.total.toString(), const Color(0xFFFF9800)),
+              _buildStatItem("Root", data.root.toString(), const Color(0xFF2E7D32)),
+              _buildStatItem("Sub Categories", data.sub.toString(), const Color(0xFFE65100)),
             ],
           ),
         ],
@@ -143,9 +144,15 @@ class TransporterCategoryView extends StatelessWidget {
   Widget _buildStatItem(String label, String count, Color color) {
     return Column(
       children: [
-        Text(count, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
+        Text(
+          count,
+          style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: color),
+        ),
         const SizedBox(height: 2),
-        Text(label, style: GoogleFonts.inter(fontSize: 11, color: Colors.grey)),
+        Text(
+          label,
+          style: GoogleFonts.inter(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+        ),
       ],
     );
   }
@@ -156,17 +163,27 @@ class TransporterCategoryView extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.bgSecondary : Colors.white,
+        color: isDark ? AppTheme.cardColor : Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: isDark ? AppTheme.borderColor : AppTheme.borderLight),
+        border: Border.all(
+          color: isDark ? AppTheme.borderColor : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: TextField(
         onChanged: controller.search,
-        style: GoogleFonts.inter(fontSize: 14),
+        style: GoogleFonts.inter(fontSize: 14, color: theme.textTheme.bodyLarge?.color),
         decoration: InputDecoration(
           hintText: "Search categories...",
-          hintStyle: GoogleFonts.inter(fontSize: 13, color: Colors.grey),
-          prefixIcon: Icon(IconlyLight.search, color: theme.colorScheme.primary, size: 20),
+          hintStyle: GoogleFonts.inter(fontSize: 13, color: Colors.grey.shade400),
+          prefixIcon: const Icon(IconlyLight.search, color: Color(0xFFFF9800), size: 20),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
@@ -221,22 +238,40 @@ class TransporterCategoryView extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppTheme.cardColor : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: isDark ? AppTheme.borderColor : AppTheme.borderLight),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppTheme.borderColor : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: CircleAvatar(
-          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
-          child: Icon(IconlyLight.category, color: theme.colorScheme.primary, size: 18),
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFF9800).withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(IconlyLight.category, color: Color(0xFFFF9800), size: 18),
         ),
         title: Text(
           node.name,
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14),
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            color: theme.textTheme.bodyLarge?.color,
+          ),
         ),
         subtitle: Text(
           "${node.childrenCount} Subcategories",
-          style: GoogleFonts.inter(fontSize: 11, color: Colors.grey),
+          style: GoogleFonts.inter(fontSize: 11, color: Colors.grey.shade600),
         ),
         children: node.children.map((child) => _buildChildNode(context, child)).toList(),
       ),
@@ -244,12 +279,11 @@ class TransporterCategoryView extends StatelessWidget {
   }
 
   Widget _buildChildNode(BuildContext context, CategoryTreeModel child) {
-    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(left: 32, right: 16, bottom: 8),
       child: Row(
         children: [
-          Icon(Icons.subdirectory_arrow_right, size: 16, color: theme.colorScheme.primary),
+          const Icon(Icons.subdirectory_arrow_right, size: 16, color: Color(0xFFFF9800)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -260,10 +294,14 @@ class TransporterCategoryView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
+              color: const Color(0xFFE8F5E9),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFF81C784), width: 0.8),
             ),
-            child: const Text("ACTIVE", style: TextStyle(color: Colors.green, fontSize: 9, fontWeight: FontWeight.bold)),
+            child: const Text(
+              "ACTIVE",
+              style: TextStyle(color: Color(0xFF2E7D32), fontSize: 9, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -278,21 +316,51 @@ class TransporterCategoryView extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.cardColor : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isDark ? AppTheme.borderColor : AppTheme.borderLight),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? AppTheme.borderColor : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          Icon(IconlyLight.category, color: theme.colorScheme.primary, size: 18),
+          const Icon(IconlyLight.category, color: Color(0xFFFF9800), size: 18),
           const SizedBox(width: 12),
-          Expanded(child: Text(name, style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 14))),
+          Expanded(
+            child: Text(
+              name,
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
+            ),
+          ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: (isActive ? Colors.green : Colors.grey).withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
+              color: isActive ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isActive ? const Color(0xFF81C784) : const Color(0xFFFFB74D),
+                width: 0.8,
+              ),
             ),
-            child: Text(isActive ? "ACTIVE" : "INACTIVE", style: TextStyle(color: isActive ? Colors.green : Colors.grey, fontSize: 9, fontWeight: FontWeight.bold)),
+            child: Text(
+              isActive ? "ACTIVE" : "INACTIVE",
+              style: TextStyle(
+                color: isActive ? const Color(0xFF2E7D32) : const Color(0xFFE65100),
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),

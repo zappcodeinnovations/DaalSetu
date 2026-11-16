@@ -1,9 +1,9 @@
+import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../seller/notifications/controller/seller_notification_controller.dart';
-import '../../../../theme/app_theme.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 
 class TransporterNotificationsView extends StatelessWidget {
@@ -18,34 +18,24 @@ class TransporterNotificationsView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: AppBarLeading(child: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new,
-            size: 20,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
-          onPressed: () => Get.back(),
-        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-        title: Text(
-          "Notifications",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-            color: theme.textTheme.bodyLarge?.color,
+      appBar: HeroHeader(
+        title: "Notifications",
+        subtitle: "Shipment alerts & trade updates",
+        leading: AppBarLeading(
+          child: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 20,
+              color: Colors.white,
+            ),
+            onPressed: () => Get.back(),
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.done_all),
-            tooltip: "Mark all as read",
-            color: primary,
-            onPressed: controller.markAllAsRead,
-          ),
-          const SizedBox(width: 8),
-        ],
+        trailing: IconButton(
+          icon: const Icon(Icons.done_all, color: Colors.white),
+          tooltip: "Mark all as read",
+          onPressed: controller.markAllAsRead,
+        ),
       ),
       body: Stack(
         children: [
@@ -107,12 +97,13 @@ class TransporterNotificationsView extends StatelessWidget {
                   return Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: isDark ? AppTheme.cardColor : Colors.white,
-                      borderRadius: BorderRadius.circular(14),
+                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isRead
-                            ? (isDark ? AppTheme.borderColor : AppTheme.borderLight)
-                            : primary.withValues(alpha: 0.4),
+                            ? (isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2))
+                            : const Color(0xFFFFB300),
+                        width: isRead ? 1.0 : 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
@@ -128,12 +119,12 @@ class TransporterNotificationsView extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: primary.withValues(alpha: isRead ? 0.08 : 0.18),
+                            color: const Color(0xFFFFB300).withValues(alpha: isRead ? 0.12 : 0.22),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             isRead ? IconlyLight.notification : IconlyBold.notification,
-                            color: primary,
+                            color: const Color(0xFFE65100),
                             size: 20,
                           ),
                         ),
@@ -174,8 +165,8 @@ class TransporterNotificationsView extends StatelessWidget {
                           Container(
                             width: 8,
                             height: 8,
-                            decoration: BoxDecoration(
-                              color: primary,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFE65100),
                               shape: BoxShape.circle,
                             ),
                           ),

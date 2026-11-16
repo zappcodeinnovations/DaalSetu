@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -18,33 +19,24 @@ class TransporterKycView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: AppBarLeading(child: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new,
-            size: 20,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
-          onPressed: () => Get.back(),
-        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-        title: Text(
-          "KYC Verification",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-            color: theme.textTheme.bodyLarge?.color,
+      appBar: HeroHeader(
+        title: "KYC Verification",
+        subtitle: "Identity verification & transport license compliance",
+        leading: AppBarLeading(
+          child: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 20,
+              color: Colors.white,
+            ),
+            onPressed: () => Get.back(),
           ),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(IconlyLight.swap, color: primary),
-            tooltip: "Refresh",
-            onPressed: controller.fetchProfile,
-          ),
-          const SizedBox(width: 8),
-        ],
+        trailing: IconButton(
+          icon: const Icon(IconlyLight.swap, color: Colors.white),
+          tooltip: "Refresh",
+          onPressed: controller.fetchProfile,
+        ),
       ),
       body: Stack(
         children: [
@@ -84,12 +76,13 @@ class TransporterKycView extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: isDark ? AppTheme.cardColor : Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                        borderRadius: BorderRadius.circular(18),
                         border: Border.all(
                           color: isApproved
-                              ? AppTheme.successGreen.withValues(alpha: 0.3)
-                              : AppTheme.primaryGold.withValues(alpha: 0.3),
+                              ? AppTheme.successGreen.withValues(alpha: 0.5)
+                              : (isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2)),
+                          width: 1.3,
                         ),
                         boxShadow: [
                           BoxShadow(
@@ -104,13 +97,13 @@ class TransporterKycView extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: (isApproved ? AppTheme.successGreen : AppTheme.primaryGold)
-                                  .withValues(alpha: 0.12),
+                              color: (isApproved ? AppTheme.successGreen : const Color(0xFFFFB300))
+                                  .withValues(alpha: 0.15),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               isApproved ? Icons.verified : IconlyBold.time_circle,
-                              color: isApproved ? AppTheme.successGreen : AppTheme.primaryGold,
+                              color: isApproved ? AppTheme.successGreen : const Color(0xFFE65100),
                               size: 32,
                             ),
                           ),
@@ -129,7 +122,7 @@ class TransporterKycView extends StatelessWidget {
                                   style: GoogleFonts.poppins(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: isApproved ? AppTheme.successGreen : AppTheme.primaryGold,
+                                    color: isApproved ? AppTheme.successGreen : const Color(0xFFE65100),
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -148,13 +141,26 @@ class TransporterKycView extends StatelessWidget {
 
                     const SizedBox(height: 24),
 
-                    Text(
-                      "Submitted KYC Documents",
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: theme.textTheme.bodyLarge?.color,
-                      ),
+                    Row(
+                      children: [
+                        Container(
+                          width: 4,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFB300),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          "Submitted KYC Documents",
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: theme.textTheme.bodyLarge?.color,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
 
@@ -216,19 +222,22 @@ class TransporterKycView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.cardColor : Colors.white,
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: isDark ? AppTheme.borderColor : AppTheme.borderLight),
+        border: Border.all(
+          color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+          width: 1.1,
+        ),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              color: const Color(0xFFFFB300).withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: theme.colorScheme.primary, size: 20),
+            child: Icon(icon, color: const Color(0xFFE65100), size: 20),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -250,13 +259,13 @@ class TransporterKycView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: (isVerified ? AppTheme.successGreen : Colors.orange).withValues(alpha: 0.12),
+              color: (isVerified ? AppTheme.successGreen : const Color(0xFFFFB300)).withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
               isVerified ? "VERIFIED" : "SUBMITTED",
               style: TextStyle(
-                color: isVerified ? AppTheme.successGreen : Colors.orange,
+                color: isVerified ? AppTheme.successGreen : const Color(0xFFE65100),
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
               ),

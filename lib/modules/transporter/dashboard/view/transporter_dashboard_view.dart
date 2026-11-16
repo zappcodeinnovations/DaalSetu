@@ -13,6 +13,7 @@ import '../../../../services/notification_services.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../../widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 /// Mirrors the web transporter dashboard: KPIs, trend, delivery status and routes.
 /// The web menu items (shipment offers, my deals, drivers, vehicles, company,
@@ -85,157 +86,223 @@ class TransporterDashboardView extends StatelessWidget {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      automaticallyImplyLeading: false,
+    return HeroHeader(
       leading: Builder(
         builder: (ctx) => IconButton(
           tooltip: 'Open navigation menu',
-          icon: const Icon(IconlyLight.filter),
+          icon: const Icon(Icons.menu_rounded, color: Colors.white),
           onPressed: () => AppShell.openDrawer(activeKey: 'dashboard'),
         ),
       ),
-      title: Image.asset(
-        'assets/images/app_name.png',
+      titleWidget: SizedBox(
+        width: 120,
         height: 32,
-        fit: BoxFit.contain,
+        child: Image.asset(
+          'assets/images/app_name.png',
+          fit: BoxFit.contain,
+          color: Colors.white,
+        ),
       ),
-      centerTitle: true,
-      actions: [
-        StatefulBuilder(
-          builder: (context, setState) => FutureBuilder<int>(
-            future: NotificationServices.getUnreadCount(
-              silent: true,
-            ).catchError((_) => 0),
-            builder: (context, snapshot) {
-              final unread = snapshot.data ?? 0;
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  IconButton(
-                    icon: const Icon(IconlyLight.notification),
-                    onPressed: () async {
-                      await Get.toNamed(AppRoutes.transporterNotifications);
-                      setState(() {});
-                    },
-                  ),
-                  if (unread > 0)
-                    Positioned(
-                      right: 10,
-                      top: 10,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.deepOrange,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          unread > 99 ? '99+' : '$unread',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 8,
-                            fontWeight: FontWeight.bold,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          StatefulBuilder(
+            builder: (context, setState) => FutureBuilder<int>(
+              future: NotificationServices.getUnreadCount(
+                silent: true,
+              ).catchError((_) => 0),
+              builder: (context, snapshot) {
+                final unread = snapshot.data ?? 0;
+                return Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(IconlyLight.notification, color: Colors.white, size: 24),
+                      onPressed: () async {
+                        await Get.toNamed(AppRoutes.transporterNotifications);
+                        setState(() {});
+                      },
+                    ),
+                    if (unread > 0)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            unread > 99 ? '99+' : '$unread',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                ],
-              );
-            },
-          ),
-        ),
-        const SizedBox(width: 8),
-        GestureDetector(
-          onTap: () => Get.toNamed(AppRoutes.profile_page),
-          child: CircleAvatar(
-            radius: 16,
-            backgroundColor: Theme.of(
-              context,
-            ).colorScheme.primary.withValues(alpha: 0.1),
-            child: Icon(
-              IconlyLight.user_1,
-              size: 16,
-              color: Theme.of(context).colorScheme.primary,
+                  ],
+                );
+              },
             ),
           ),
-        ),
-        const SizedBox(width: 16),
-      ],
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: () => Get.toNamed(AppRoutes.profile_page),
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 1.5),
+              ),
+              child: const CircleAvatar(
+                radius: 15,
+                backgroundColor: Colors.white,
+                child: Icon(
+                  IconlyLight.user_1,
+                  size: 16,
+                  color: Color(0xFFE65100),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
     );
   }
 
   Widget _buildHero(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final name = controller.username.value.isEmpty
         ? 'Transporter'
         : controller.username.value;
     final kyc = controller.kycStatus.value.trim();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              "Hello, ",
-              style: GoogleFonts.poppins(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: theme.textTheme.bodyLarge?.color,
-              ),
-            ),
-            Expanded(
-              child: Text(
-                name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            ),
-            const Text(" 👋", style: TextStyle(fontSize: 24)),
-          ],
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 4),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+          width: 1.2,
         ),
-        const SizedBox(height: 4),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(IconlyBold.home, size: 16, color: theme.colorScheme.primary),
-            const SizedBox(width: 5),
-            Expanded(
-              child: Text(
-                controller.branchCodes.isEmpty
-                    ? 'No branch assigned'
-                    : 'Branch Code: ${controller.branchCodes.join(' - ')}',
-                softWrap: true,
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          "Hello, ",
+                          style: GoogleFonts.poppins(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: theme.textTheme.titleMedium?.color,
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFFE65100),
+                            ),
+                          ),
+                        ),
+                        const Text(" 👋", style: TextStyle(fontSize: 20)),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Fleet Operations & Transit Overview",
+                      style: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade600),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            if (kyc.isNotEmpty)
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: .1),
-                  borderRadius: BorderRadius.circular(5),
+                  color: isDark ? const Color(0xFF282828) : const Color(0xFFFFF8E1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFFFB300).withValues(alpha: 0.3)),
                 ),
-                child: Text(
-                  "KYC: ${kyc.toUpperCase()}",
-                  style: GoogleFonts.inter(
-                    fontSize: 9,
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(IconlyBold.home, size: 14, color: Color(0xFFE65100)),
+                    const SizedBox(width: 5),
+                    Text(
+                      controller.branchCodes.isEmpty
+                          ? 'No branch assigned'
+                          : 'Branch: ${controller.branchCodes.join(' - ')}',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.grey.shade300 : const Color(0xFF5D4037),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              if (kyc.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: kyc.toLowerCase() == 'approved'
+                        ? const Color(0xFF2E7D32).withValues(alpha: 0.12)
+                        : const Color(0xFFE65100).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: kyc.toLowerCase() == 'approved'
+                          ? const Color(0xFF2E7D32).withValues(alpha: 0.3)
+                          : const Color(0xFFE65100).withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Text(
+                    "KYC: ${kyc.toUpperCase()}",
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      color: kyc.toLowerCase() == 'approved'
+                          ? const Color(0xFF2E7D32)
+                          : const Color(0xFFE65100),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -285,13 +352,26 @@ class TransporterDashboardView extends StatelessWidget {
   }
 
   Widget _sectionTitle(BuildContext context, String text) {
-    return Text(
-      text,
-      style: GoogleFonts.poppins(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-        color: Theme.of(context).textTheme.bodyLarge?.color,
-      ),
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 16,
+          decoration: BoxDecoration(
+            color: _gold,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: GoogleFonts.poppins(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
+          ),
+        ),
+      ],
     );
   }
 
@@ -404,51 +484,79 @@ class TransporterDashboardView extends StatelessWidget {
     VoidCallback? onTap,
   }) {
     final theme = Theme.of(context);
-    return GlassCard(
-      onTap: onTap,
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: Colors.deepOrange.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 18, color: Colors.deepOrange),
-          ),
-          const Spacer(),
-          Text(
-            title.toUpperCase(),
-            style: GoogleFonts.inter(
-              fontSize: 9,
-              fontWeight: FontWeight.w600,
-              color: theme.textTheme.bodyMedium?.color,
-            ),
-          ),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              value,
-              style: GoogleFonts.poppins(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: theme.textTheme.bodyLarge?.color,
-              ),
-            ),
-          ),
-          Text(
-            subtitle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              color: theme.textTheme.bodyMedium?.color,
-            ),
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFB300).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, size: 18, color: const Color(0xFFE65100)),
+                ),
+                const Spacer(),
+                Text(
+                  title.toUpperCase(),
+                  style: GoogleFonts.inter(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: GoogleFonts.poppins(
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : const Color(0xFF2E1500),
+                    ),
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

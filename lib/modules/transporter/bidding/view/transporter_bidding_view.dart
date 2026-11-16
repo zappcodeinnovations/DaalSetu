@@ -9,6 +9,7 @@ import '../../../../routes/app_routes.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../../utils/app_snackbar.dart';
 import 'package:daalsetu/widgets/dispatch_bills_section.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 const _gold = Color(0xFFFFB300);
 
@@ -81,17 +82,17 @@ class TransporterBiddingView extends StatelessWidget {
     if (myBidsOnly) {
       return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: AppBar(
-          leading: const AppBarLeading(),
-          leadingWidth: AppBarLeading.widthFor(context),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          title: Text(
-            "My Contract Bids",
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              color: theme.textTheme.bodyLarge?.color,
-            ),
+        appBar: HeroHeader(
+          title: "My Contract Bids",
+          subtitle: "Freight bids & submitted quotes",
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
+          trailing: IconButton(
+            tooltip: "Refresh",
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+            onPressed: controller.fetchMyBids,
           ),
         ),
         body: _MyDealsTab(controller),
@@ -102,30 +103,33 @@ class TransporterBiddingView extends StatelessWidget {
       initialIndex: initialTab,
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          title: Text(
-            "Shipments",
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              color: theme.textTheme.bodyLarge?.color,
-            ),
+        appBar: HeroHeader(
+          title: "Shipments",
+          subtitle: "Active shipment offers & live freight bids",
+          leading: const AppBarLeading(showBack: false),
+          trailing: IconButton(
+            tooltip: "Refresh",
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+            onPressed: () {
+              controller.fetchOffers();
+              controller.fetchMyBids();
+            },
           ),
           bottom: TabBar(
-            indicatorColor: _gold,
-            labelColor: _gold,
-            unselectedLabelColor: Colors.grey,
+            indicatorColor: Colors.white,
+            indicatorWeight: 3,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white.withValues(alpha: 0.75),
             isScrollable: true,
             tabAlignment: TabAlignment.start,
             labelPadding: const EdgeInsets.symmetric(horizontal: 16),
             labelStyle: GoogleFonts.poppins(
               fontWeight: FontWeight.bold,
-              fontSize: 14,
+              fontSize: 13,
             ),
             unselectedLabelStyle: GoogleFonts.poppins(
               fontWeight: FontWeight.w600,
-              fontSize: 14,
+              fontSize: 13,
             ),
             tabs: const [
               Tab(text: "Active Shipment Offers"),
@@ -510,11 +514,27 @@ class _OffersTab extends StatelessWidget {
   }
 
   Widget _offerCard(BuildContext context, ShipmentOfferModel offer) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final hasBid = offer.myBid != null;
-    return Card(
-      elevation: 3,
+
+    return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -531,20 +551,48 @@ class _OffersTab extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.bold,
-                      fontSize: 15,
+                      fontSize: 16,
+                      color: theme.textTheme.titleMedium?.color,
                     ),
                   ),
                 ),
                 if (hasBid) _statusChip(offer.myBidStatus ?? 'pending'),
               ],
             ),
+            const SizedBox(height: 4),
             Text(
               offer.productTitle,
               style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
             ),
-            const Divider(height: 18),
-            _row("Pickup", offer.pickupLocation),
-            _row("Delivery", offer.deliveryLocation),
+            const SizedBox(height: 10),
+            // Route visualization pod
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF282828) : const Color(0xFFFFF8E1).withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFFB300).withValues(alpha: 0.25)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.route_outlined, size: 16, color: Color(0xFFE65100)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      "${offer.pickupLocation} → ${offer.deliveryLocation}",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.grey.shade200 : const Color(0xFF5D4037),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 20),
             _row("Loading", offer.loadingDateRange),
             _row(
               "Quantity",
@@ -562,15 +610,15 @@ class _OffersTab extends StatelessWidget {
                 "My Bid",
                 "₹${offer.myBid}${offer.myBidPosition != null ? '  (Rank #${offer.myBidPosition})' : ''}",
               ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => _showCompetingBids(context, offer),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: _gold,
-                      side: const BorderSide(color: _gold, width: 1.5),
+                      foregroundColor: const Color(0xFFE65100),
+                      side: const BorderSide(color: Color(0xFFFFB300), width: 1.2),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -588,28 +636,45 @@ class _OffersTab extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => _showBidDialog(context, offer),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _gold,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    height: 44,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF9800).withValues(alpha: 0.35),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    child: Text(
-                      offer.hasCounterOffer
-                          ? "COUNTER ₹${offer.counterAmount}"
-                          : offer.hasAdminPrice
-                              ? "ACCEPT / NEGOTIATE"
-                              : (hasBid ? "UPDATE BID" : "PLACE BID"),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                        letterSpacing: 0.5,
+                    child: ElevatedButton(
+                      onPressed: () => _showBidDialog(context, offer),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        offer.hasCounterOffer
+                            ? "COUNTER ₹${offer.counterAmount}"
+                            : offer.hasAdminPrice
+                                ? "ACCEPT / NEGOTIATE"
+                                : (hasBid ? "UPDATE BID" : "PLACE BID"),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
                   ),
@@ -898,14 +963,30 @@ class _MyDealsTab extends StatelessWidget {
   }
 
   Widget _bidCard(BuildContext context, MyBidModel bid) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final a = bid.assignment;
     final hasAssignment =
         (a['truck_number'] ?? '').isNotEmpty ||
         (a['driver_name'] ?? '').isNotEmpty;
-    return Card(
-      elevation: 3,
+
+    return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -918,20 +999,49 @@ class _MyDealsTab extends StatelessWidget {
                     "Contract #${bid.contractId}",
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.bold,
-                      fontSize: 15,
+                      fontSize: 16,
+                      color: theme.textTheme.titleMedium?.color,
                     ),
                   ),
                 ),
                 _statusChip(bid.status),
               ],
             ),
+            const SizedBox(height: 4),
             Text(
               bid.productTitle,
               style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
             ),
-            const Divider(height: 18),
+            const SizedBox(height: 10),
+            // Route visualization pod
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF282828) : const Color(0xFFFFF8E1).withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFFB300).withValues(alpha: 0.25)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.route_outlined, size: 16, color: Color(0xFFE65100)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      "${bid.loadingFrom} → ${bid.loadingTo}",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.grey.shade200 : const Color(0xFF5D4037),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 20),
             _row("My Bid", "₹${bid.bidAmount}"),
-            _row("Route", "${bid.loadingFrom} → ${bid.loadingTo}"),
             // MoM 20: cities only until the admin accepts the bid.
             if (bid.contractData['details_after_acceptance'] == true)
               Padding(
@@ -998,33 +1108,54 @@ class _MyDealsTab extends StatelessWidget {
                     icon: const Icon(IconlyLight.show, size: 16),
                     label: const Text("VIEW DETAILS"),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: _gold,
-                      side: const BorderSide(color: _gold),
+                      foregroundColor: const Color(0xFFE65100),
+                      side: const BorderSide(color: Color(0xFFFFB300), width: 1.2),
                       padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),
                 if (bid.canAssignDriver) ...[
                   const SizedBox(width: 10),
                   Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _showAssignDialog(context, bid),
-                      icon: const Icon(
-                        Icons.local_shipping,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                      label: Text(
-                        hasAssignment ? "CHANGE FLEET" : "ASSIGN FLEET",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
+                    child: Container(
+                      height: 44,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFF9800).withValues(alpha: 0.35),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _gold,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: ElevatedButton.icon(
+                        onPressed: () => _showAssignDialog(context, bid),
+                        icon: const Icon(
+                          Icons.local_shipping,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                        label: Text(
+                          hasAssignment ? "CHANGE FLEET" : "ASSIGN FLEET",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
                       ),
                     ),
                   ),
