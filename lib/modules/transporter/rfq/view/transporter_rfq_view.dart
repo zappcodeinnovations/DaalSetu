@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../seller/rfq/controller/seller_rfq_controller.dart';
 import '../../../../theme/app_theme.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class TransporterRfqView extends StatelessWidget {
   const TransporterRfqView({super.key});
@@ -18,33 +18,18 @@ class TransporterRfqView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: AppBarLeading(child: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new,
-            size: 20,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
-          onPressed: () => Get.back(),
-        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-        title: Text(
-          "Buyer Requirements (RFQ)",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
+      appBar: HeroHeader(
+        title: "Buyer Requirements",
+        subtitle: "Active buyer procurement tenders & RFQ",
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(IconlyLight.swap, color: primary),
-            tooltip: "Refresh",
-            onPressed: controller.fetchRFQs,
-          ),
-          const SizedBox(width: 8),
-        ],
+        trailing: IconButton(
+          icon: const Icon(IconlyLight.swap, color: Colors.white),
+          tooltip: "Refresh",
+          onPressed: controller.fetchRFQs,
+        ),
       ),
       body: Stack(
         children: [
@@ -64,28 +49,46 @@ class TransporterRfqView extends StatelessWidget {
           ),
           Obx(() {
             if (controller.isLoading.value && controller.rfqList.isEmpty) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator(color: Color(0xFFFF9800)));
             }
 
             if (controller.rfqList.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+              return RefreshIndicator(
+                onRefresh: controller.fetchRFQs,
+                color: primary,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
                   children: [
-                    Icon(IconlyLight.chat, size: 64, color: Colors.grey.shade400),
-                    const SizedBox(height: 16),
-                    Text(
-                      "No buyer requirements",
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: theme.textTheme.bodyLarge?.color,
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+                    Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFF9800).withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(IconlyLight.chat, size: 56, color: Color(0xFFFF9800)),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            "No buyer requirements",
+                            style: GoogleFonts.poppins(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: theme.textTheme.bodyLarge?.color,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            "Active buyer tenders and requirements will appear here.",
+                            style: GoogleFonts.inter(fontSize: 13, color: Colors.grey),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      "Active buyer tenders and requirements will appear here.",
-                      style: GoogleFonts.inter(fontSize: 13, color: Colors.grey),
                     ),
                   ],
                 ),
@@ -96,7 +99,8 @@ class TransporterRfqView extends StatelessWidget {
               onRefresh: controller.fetchRFQs,
               color: primary,
               child: ListView.separated(
-                padding: const EdgeInsets.all(16),
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                 itemCount: controller.rfqList.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
@@ -105,20 +109,36 @@ class TransporterRfqView extends StatelessWidget {
                   final title = rfq.categoryName ?? rfq.brandName ?? "Requirement";
                   final price = rfq.targetPrice != null ? "₹${rfq.targetPrice}/${rfq.priceUnit}" : "Price on Request";
                   final qty = "${rfq.requiredQuantity ?? ''} ${rfq.quantityUnit}".trim();
-                  final status = (rfq.status ?? 'ACTIVE').toUpperCase();
+                  final status = rfq.status.toUpperCase();
                   final buyer = rfq.buyerName ?? "Buyer";
+
+                  Color statusColor = const Color(0xFF2E7D32);
+                  Color statusBg = const Color(0xFFE8F5E9);
+                  Color statusBorder = const Color(0xFF81C784);
+                  if (status == 'PENDING') {
+                    statusColor = const Color(0xFFE65100);
+                    statusBg = const Color(0xFFFFF3E0);
+                    statusBorder = const Color(0xFFFFB74D);
+                  } else if (status == 'CLOSED' || status == 'EXPIRED') {
+                    statusColor = Colors.grey.shade700;
+                    statusBg = Colors.grey.shade100;
+                    statusBorder = Colors.grey.shade300;
+                  }
 
                   return Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: isDark ? AppTheme.cardColor : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: isDark ? AppTheme.borderColor : AppTheme.borderLight),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: isDark ? AppTheme.borderColor : const Color(0xFFFFE0B2),
+                        width: 1.2,
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
@@ -128,24 +148,36 @@ class TransporterRfqView extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              rfqNumber,
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                color: primary,
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFF9800).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: const Color(0xFFFF9800).withValues(alpha: 0.3),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Text(
+                                rfqNumber,
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: const Color(0xFFE65100),
+                                ),
                               ),
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: Colors.blue.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(12),
+                                color: statusBg,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: statusBorder, width: 0.8),
                               ),
                               child: Text(
                                 status,
-                                style: const TextStyle(
-                                  color: Colors.blue,
+                                style: TextStyle(
+                                  color: statusColor,
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -153,14 +185,16 @@ class TransporterRfqView extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 10),
                         Text(
                           title,
                           style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.bold,
                             fontSize: 15,
                             color: theme.textTheme.bodyLarge?.color,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 8),
                         Row(
@@ -169,25 +203,46 @@ class TransporterRfqView extends StatelessWidget {
                               price,
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                color: AppTheme.successGreen,
+                                fontSize: 15,
+                                color: const Color(0xFF2E7D32),
                               ),
                             ),
                             const Spacer(),
                             if (qty.isNotEmpty)
-                              Text(
-                                "Req: $qty",
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: isDark ? Colors.grey.shade900 : const Color(0xFFF5F5F5),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  "Req: $qty",
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
+                                  ),
                                 ),
                               ),
                           ],
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          "Buyer: $buyer",
-                          style: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade600),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(IconlyLight.profile, size: 14, color: Colors.grey.shade500),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                "Buyer: $buyer",
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.75),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
