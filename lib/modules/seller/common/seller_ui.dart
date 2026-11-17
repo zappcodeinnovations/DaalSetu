@@ -6,10 +6,11 @@ import '../../../utils/money_format.dart';
 import '../../../widgets/app_shell.dart';
 import '../../../network/api_client.dart';
 import '../../../utils/app_snackbar.dart';
+import '../../../theme/app_theme.dart';
 
 /// Small shared pieces for the seller screens, matching the existing seller look.
 class SellerUi {
-  static const Color primary = Color(0xFFFFB300);
+  static const Color primary = AppTheme.secondaryOrange;
 
   static String errorText(Object error) =>
       ApiClient.userFriendlyErrorMessage(error.toString());

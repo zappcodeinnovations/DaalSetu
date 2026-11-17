@@ -6,6 +6,7 @@ import 'package:daalsetu/utils/tax_id_formatters.dart';
 import 'package:daalsetu/widgets/searchable_selection_sheet.dart';
 import '../controller/seller_company_controller.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/theme/app_theme.dart';
 
 class AddCompanyView extends StatefulWidget {
   const AddCompanyView({super.key});
@@ -15,7 +16,7 @@ class AddCompanyView extends StatefulWidget {
 }
 
 class _AddCompanyViewState extends State<AddCompanyView> {
-  static const Color primaryColor = Color(0xFFFFB300);
+  static const Color primaryColor = AppTheme.secondaryOrange;
   final Set<String> _customCities = {};
   late final SellerCompanyController controller;
 

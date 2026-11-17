@@ -13,6 +13,7 @@ import '../../dashboard/controller/buyer_dashboard_controller.dart';
 import '../../../../services/realtime_notification_service.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/theme/app_theme.dart';
 
 class AddBuyerOfferScreen extends StatefulWidget {
   const AddBuyerOfferScreen({super.key});
@@ -412,7 +413,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    const primaryColor = Color(0xFFFFB300);
+    const primaryColor = AppTheme.secondaryOrange;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -483,14 +484,14 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
                               fontSize: 13,
                               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                               color: isSelected
-                                  ? (isDark ? Colors.amber.shade200 : Colors.amber.shade900)
+                                  ? (isDark ? const Color(0xFFFB923C) : AppTheme.secondaryOrange)
                                   : (theme.textTheme.bodyMedium?.color ?? Colors.black87),
                             ),
                           ),
                           selected: isSelected,
-                          selectedColor: primaryColor.withValues(alpha: 0.2),
+                          selectedColor: primaryColor.withValues(alpha: isDark ? 0.22 : 0.12),
                           backgroundColor: theme.cardColor,
-                          checkmarkColor: isDark ? Colors.amber.shade200 : Colors.amber.shade900,
+                          checkmarkColor: isDark ? const Color(0xFFFB923C) : AppTheme.secondaryOrange,
                           side: BorderSide(
                             color: isSelected ? primaryColor : theme.dividerColor.withValues(alpha: 0.5),
                           ),
@@ -638,7 +639,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(
-            color: Color(0xFFFFB300),
+            color: AppTheme.secondaryOrange,
             width: 1.5,
           ),
         ),
