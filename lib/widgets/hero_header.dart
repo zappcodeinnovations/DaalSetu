@@ -48,8 +48,6 @@ class HeroHeader extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final topPadding = MediaQuery.of(context).padding.top;
 
     return AppBar(
@@ -60,45 +58,29 @@ class HeroHeader extends StatelessWidget implements PreferredSizeWidget {
       surfaceTintColor: Colors.transparent,
       toolbarHeight: preferredSize.height,
       flexibleSpace: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: isDark
-                ? const [
-                    Color(0xFF9A3412), // Deep burnt saffron
-                    Color(0xFF6A2105), // Rich cognac amber
-                    Color(0xFF1F130E), // Midnight warm espresso
-                  ]
-                : const [
-                    Color(0xFFE65100), // Deep rich saffron
-                    Color(0xFFF57C00), // Vibrant amber orange
-                    Color(0xFFFFA000), // Warm gold highlight
-                  ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: const BorderRadius.only(
-            bottomLeft: Radius.circular(28),
-            bottomRight: Radius.circular(28),
-          ),
-          border: isDark
-              ? Border(
-                  bottom: BorderSide(
-                    color: const Color(0xFFEA580C).withValues(alpha: 0.40),
-                    width: 1.2,
-                  ),
-                )
-              : null,
-          boxShadow: [
-            BoxShadow(
-              color: isDark
-                  ? const Color(0xFFEA580C).withValues(alpha: 0.16)
-                  : const Color(0xFFE65100).withValues(alpha: 0.25),
-              blurRadius: isDark ? 16 : 18,
-              offset: const Offset(0, 6),
-            ),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFFE65100), // Deep rich saffron
+            Color(0xFFF57C00), // Vibrant amber orange
+            Color(0xFFFFA000), // Warm gold highlight
           ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFE65100).withValues(alpha: 0.25),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
       padding: EdgeInsets.only(
         top: topPadding + 8,
         left: 16,
@@ -179,9 +161,7 @@ class HeroHeader extends StatelessWidget implements PreferredSizeWidget {
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.w400,
-                      color: isDark
-                          ? const Color(0xFFE2E8F0)
-                          : Colors.white.withValues(alpha: 0.92),
+                      color: Colors.white.withValues(alpha: 0.92),
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
