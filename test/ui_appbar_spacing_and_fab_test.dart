@@ -115,7 +115,7 @@ void main() {
       for (final element in tester.widgetList<Padding>(paddingFinder)) {
         if (element.padding is EdgeInsets) {
           final insets = element.padding as EdgeInsets;
-          if (insets.bottom >= 104.0) {
+          if (insets.bottom >= 76.0) {
             foundNavClearance = true;
             break;
           }
