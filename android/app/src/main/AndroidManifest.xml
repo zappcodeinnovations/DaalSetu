@@ -17,7 +17,7 @@
         <!-- Push notifications (FCM): channel and icon used when the app is closed -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="daalsetu_alerts" />
+            android:value="daalsetu_alerts_v2" />
         <!-- Status-bar icon must be a white silhouette (a coloured icon shows as a white box) -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"

@@ -32,10 +32,13 @@ class MainActivity : FlutterActivity() {
     private fun createPushChannel() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val manager = getSystemService(NotificationManager::class.java) ?: return
+        // Earlier channels (their sound is fixed once created) are removed; change the id below
+        // whenever res/raw/notification.mp3 is replaced.
         manager.deleteNotificationChannel("daalsetu_default")
+        manager.deleteNotificationChannel("daalsetu_alerts")
         val sound = Uri.parse("android.resource://" + packageName + "/" + R.raw.notification)
         val channel = NotificationChannel(
-            "daalsetu_alerts",
+            "daalsetu_alerts_v2",
             "DaalSetu notifications",
             NotificationManager.IMPORTANCE_HIGH,
         ).apply {
