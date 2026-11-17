@@ -39,6 +39,8 @@ class CategoryService {
             : (response is Map<String, dynamic> ? response : <String, dynamic>{});
 
         final allCats = data["all_categories"] is List ? (data["all_categories"] as List) : [];
+        final hasBuyerAssignments = data.containsKey('assigned_category_ids') ||
+            data.containsKey('pending_category_ids');
         final assignedIds = (data["assigned_category_ids"] is List)
             ? (data["assigned_category_ids"] as List).map((e) => int.tryParse(e.toString()) ?? 0).toSet()
             : <int>{};
@@ -81,10 +83,11 @@ class CategoryService {
                 sysCats.add(baseCat);
 
                 final rawStatus = (c["status"] ?? "").toString().trim().toLowerCase();
-                String status = "Approved";
-                if (assignedIds.contains(id) || rawStatus == "approved" || rawStatus == "active" || c["is_approved"] == true) {
+                String status = "Request";
+                if (assignedIds.contains(id) || (!hasBuyerAssignments &&
+                    (rawStatus == "approved" || c["is_approved"] == true))) {
                   status = "Approved";
-                } else if (pendingIds.contains(id) || rawStatus == "pending") {
+                } else if (pendingIds.contains(id) || (!hasBuyerAssignments && rawStatus == "pending")) {
                   status = "Pending";
                 } else if (rawStatus.isNotEmpty) {
                   status = rawStatus[0].toUpperCase() + rawStatus.substring(1);
@@ -93,13 +96,9 @@ class CategoryService {
                 }
 
                 // If assignedIds/pendingIds are specified, include assigned, pending, or approved categories
-                final bool isRelevantForBuyer = assignedIds.isEmpty && pendingIds.isEmpty
-                    ? true
-                    : (assignedIds.contains(id) ||
-                       pendingIds.contains(id) ||
-                       rawStatus == "approved" ||
-                       rawStatus == "active" ||
-                       c["is_approved"] == true);
+                final bool isRelevantForBuyer = assignedIds.contains(id) ||
+                    pendingIds.contains(id) || (!hasBuyerAssignments &&
+                    (rawStatus == "approved" || rawStatus == "pending" || c["is_approved"] == true));
 
                 if (isRelevantForBuyer) {
                   final reqCreatedAt = requestedAtMap[id] ?? c["created_at"] ?? c["requested_at"];
@@ -136,11 +135,11 @@ class CategoryService {
         }
 
         // 2. Also check requests list if buyerCats is still empty
-        if (buyerCats.isEmpty && data["requests"] is List) {
+        if (!hasBuyerAssignments && buyerCats.isEmpty && data["requests"] is List) {
           final Set<int> seenIds = {};
           for (var req in (data["requests"] as List)) {
             if (req is Map<String, dynamic> && req["categories"] is List) {
-              final reqStatus = req["status"]?.toString() ?? "Approved";
+              final reqStatus = req["status"]?.toString() ?? "Pending";
               final reqCreatedAt = req["requested_at"] ?? req["created_at"];
               for (var cat in (req["categories"] as List)) {
                 if (cat is Map<String, dynamic>) {

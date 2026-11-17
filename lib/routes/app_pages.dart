@@ -75,6 +75,7 @@ import '../modules/admin_reports/view/admin_branch_reports_view.dart';
 import '../modules/admin_reports/binding/admin_reports_binding.dart';
 import '../modules/admin_notifications/view/admin_notification_view.dart';
 import 'app_routes.dart';
+import '../modules/Auth/choose_panel/view/choose_panel_screen.dart';
 
 class AppPages {
   AppPages._();
@@ -117,6 +118,7 @@ class AppPages {
     GetPage(name: AppRoutes.dashboard, page: () => AdminDashboardScreen()),
     GetPage(name: AppRoutes.profile_page, page: () => ProfileScreen()),
     GetPage(name: AppRoutes.editProfile, page: () => const EditProfileScreen()),
+    GetPage(name: AppRoutes.choosePanel, page: () => const ChoosePanelScreen()),
     GetPage(name: AppRoutes.mainNav, page: () => MainNavigationScreen()),
     GetPage(name: AppRoutes.downloads, page: () => const DownloadsView()),
     GetPage(name: AppRoutes.myAnalytics, page: () => const MyAnalyticsScreen()),

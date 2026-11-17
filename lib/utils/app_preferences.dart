@@ -16,6 +16,11 @@ class AppPreferences {
   static const _usernameKey = "username";
   static const _activeBranchIdKey = "active_branch_id";
   static const _activeBranchCodeKey = "active_branch_code";
+  // Buyer & Seller accounts: the account's role and the panel it acts in.
+  static const _accountRoleKey = "account_role";
+  static const _activePanelKey = "active_panel";
+  static const combinedRole = 'both_sellerandbuyer';
+  static const defaultPanel = 'seller';
 
   static final FlutterSecureStorage _secureStorage =
       const FlutterSecureStorage();
@@ -48,11 +53,19 @@ class AppPreferences {
     required String username,
     String? activeBranchId,
     String? activeBranchCode,
+    String? accountRole,
+    String? activePanel,
   }) async {
     sessionVersion++;
     await _secureStorage.write(key: _accessTokenKey, value: accessToken);
     await _secureStorage.write(key: _refreshTokenKey, value: refreshToken);
     await _secureStorage.write(key: _roleKey, value: role);
+    if (accountRole != null) {
+      await _secureStorage.write(key: _accountRoleKey, value: accountRole);
+    }
+    if (activePanel != null) {
+      await _secureStorage.write(key: _activePanelKey, value: activePanel);
+    }
     await _secureStorage.write(key: _userIdKey, value: userId);
     await _secureStorage.write(key: _usernameKey, value: username);
     if (activeBranchId != null) {
@@ -86,8 +99,33 @@ class AppPreferences {
   /// ===============================
   /// GET ROLE
   /// ===============================
+  /// The role the app acts as. A Buyer & Seller account acts as its active
+  /// panel ('buyer' / 'seller'); every other account returns its own role.
   static Future<String?> getRole() async {
-    return await _secureStorage.read(key: _roleKey);
+    final role = await _secureStorage.read(key: _roleKey);
+    final account = await _secureStorage.read(key: _accountRoleKey) ?? role;
+    if (account == combinedRole) {
+      final panel = await _secureStorage.read(key: _activePanelKey);
+      return (panel == null || panel.isEmpty) ? defaultPanel : panel;
+    }
+    return role;
+  }
+
+  /// The account's own role (e.g. 'both_sellerandbuyer'), never the panel.
+  static Future<String?> getAccountRole() async {
+    return await _secureStorage.read(key: _accountRoleKey) ??
+        await _secureStorage.read(key: _roleKey);
+  }
+
+  static Future<bool> isCombinedAccount() async =>
+      (await getAccountRole()) == combinedRole;
+
+  static Future<String?> getActivePanel() async {
+    return await _secureStorage.read(key: _activePanelKey);
+  }
+
+  static Future<void> setActivePanel(String panel) async {
+    await _secureStorage.write(key: _activePanelKey, value: panel);
   }
 
   /// ===============================
@@ -126,6 +164,8 @@ class AppPreferences {
     await _secureStorage.delete(key: _accessTokenKey);
     await _secureStorage.delete(key: _refreshTokenKey);
     await _secureStorage.delete(key: _roleKey);
+    await _secureStorage.delete(key: _accountRoleKey);
+    await _secureStorage.delete(key: _activePanelKey);
     await _secureStorage.delete(key: _userIdKey);
     await _secureStorage.delete(key: _usernameKey);
     await _secureStorage.delete(key: _activeBranchIdKey);

@@ -1,22 +1,33 @@
 # Current Task State
 
 ## Current Task
-- **Goal**: Point 8 — Hide Internal Database IDs Across Transporter Brands, Dashboards, Orders, and Contract Details.
+- **Goal**: Create and verify production release APK with Bug 55 (Login TextEditingController disposed crash) and Bug 56 (Category bottom bar SafeArea, Activity FAB clearance, Settings bottom spacing, and global AppBar title spacing).
 - **Status**: Completed & Verified.
 - **Output**:
-  - `lib/modules/transporter/brands/view/transporter_brands_view.dart`: Replaced `"Brand ID: #"` with `"Verified Brand"`.
-  - `lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`: Replaced `"Order ID:"` with seller name / `'Confirmed Order'`.
-  - `lib/modules/buyer/orders/view/buyer_orders_view.dart`: Replaced `"Order ID:"` with seller name / `'Confirmed Order'`.
-  - `lib/modules/dashboard/view/dashboard_page.dart`: Replaced `"ID: "` with `"${contract.seller} → ${contract.buyer}"`.
-  - `lib/modules/seller/dashboard/view/seller_dashboard_view.dart`: Replaced `"ID: "` with Category and Brand.
-  - `lib/modules/transporter/bidding/view/transporter_bidding_view.dart`: Replaced Contract ID numbers with product/commodity title.
-  - `lib/modules/contracts/view/contract_details_view.dart`: Removed `(ID: $id)` suffix from admin detail rows.
-  - Added test suite `test/hide_database_ids_test.dart` (4/4 passed).
-- **Evidence**: `test/hide_database_ids_test.dart` (4/4 passed), `test/buyer_contract_details_offer_id_test.dart` (4/4 passed), static analysis clean.
+  - Built release binary: `build/app/outputs/flutter-apk/app-release.apk` (87,663,411 bytes / ~83.6 MB).
+  - All automated test suites passing (5/5 in `test/ui_appbar_spacing_and_fab_test.dart`, 1/1 in `test/login_controller_disposed_reproduce_test.dart`).
+  - Static analysis clean across all modified files.
+- **Evidence**:
+  - `flutter build apk --release` exited with code 0.
+  - Binary verified on disk at `P:\DaalSetu\build\app\outputs\flutter-apk\app-release.apk`.
 
 ---
 
 ## Completed Work in Current Session
+- **Release APK Generated**:
+  - `flutter build apk --release` compiled successfully in 45.6s.
+  - Final artifact: `P:\DaalSetu\build\app\outputs\flutter-apk\app-release.apk` (83.6 MB).
+- **Bug 56 Completed (Category Button Navigation Overlap, Activity FAB Clearance, Settings Bottom Spacing, Global AppBar Title Spacing)**:
+  - Added `SafeArea` to Category Page bottom bar button to prevent overlap with Android navigation buttons.
+  - Fixed Buyer Activity FAB clearance above floating `GlassNavBar`.
+  - Fixed Settings Page trailing whitespace below "Version 1.0.0".
+  - Fixed horizontal spacing across all pages between hamburger menu icon (`☰`) and page title.
+- **Bug 55 Completed (Sign In Screen TextEditingController Disposed Crash)**:
+  - Eliminated the red assertion error `"A TextEditingController was used after being disposed"` on `LoginScreen`.
+  - Converted `usernameController` and `passwordController` to self-healing getters that re-instantiate fresh controllers when accessed after disposal or route close.
+  - Added closed controller detection in `LoginScreen.initState()` to evict dead GetX instances.
+  - Enabled `fenix: true` in `AuthBinding`.
+  - Verified with automated tests and static analysis.
 - **Bug 54 Completed (Hide Internal Database IDs)**:
   - Eliminated raw database integer IDs from Transporter Brands, Dashboards, Buyer Orders, and Contract administration details.
   - Replaced IDs with meaningful business information (Seller name, Category, Brand, Product title).

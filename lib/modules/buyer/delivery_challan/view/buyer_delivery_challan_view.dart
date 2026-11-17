@@ -33,7 +33,7 @@ class BuyerDeliveryChallanView extends StatelessWidget {
                     icon: const Icon(Icons.arrow_back_ios_new, size: 20),
                     onPressed: () => Get.back(),
                   )
-                : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
+                : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: Navigator.canPop(context)),
             title: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: controller.isSearching.value

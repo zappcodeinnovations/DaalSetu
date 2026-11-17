@@ -1,5 +1,70 @@
 # Bug Log & Historical Fixes
 
+## Bug 56: Category Send For Approval Button Navigation Inset, Requirement FAB Clearance, Settings Bottom Spacing, & Global Top Spacing After Menu Icon
+- **Symptom**:
+  1. Category Page (`CategoryPageView`): "SEND FOR APPROVAL" bottom bar button was cut off and partially covered by the Android 3-button system navigation bar.
+  2. Buyer Activity (`BuyerActivityView`): "Post Requirement" FAB was submerged behind the floating `GlassNavBar` due to hardcoded `bottom: 76.0`.
+  3. Settings Page (`SettingsScreen`): Excessive empty whitespace below "Version 1.0.0" due to `const SizedBox(height: 80)` compounding with `SafeArea`.
+  4. All Pages: Excessive horizontal gap (up to 62px) between the three lines (drawer menu icon `☰`) and page title in `AppBar`.
+- **Root Cause**:
+  1. `category_page.dart`: `bottomNavigationBar` was a raw `Container` without `SafeArea` bottom padding.
+  2. `buyer_activity_view.dart`: FAB used `bottom: 76.0`, ignoring the floating `GlassNavBar` height (72px + 16px margin + safe area).
+  3. `settings_page.dart`: Had legacy `const SizedBox(height: 80)` after `Version 1.0.0`.
+  4. `app_shell.dart` & `app_theme.dart`: `AppBarLeading._hasBack` checked `hasChild` without verifying `canPop`, causing tabs to allocate 2 icon slots (92px) for a single icon, compounded by default 16px `titleSpacing`.
+- **Fix**:
+  1. `category_page.dart`: Wrapped bottom navigation bar in `SafeArea(top: false, child: ...)` to adapt dynamically to Android system navigation bar buttons.
+  2. `buyer_activity_view.dart`: Positioned FAB dynamically at `(hasBottomNav ? 88.0 : 0.0) + systemBottom + 16.0` to always float 16px above `GlassNavBar`.
+  3. `settings_page.dart`: Reduced bottom spacer from 80px to 16px and unified `appBar` leading widget.
+  4. `app_shell.dart`: Added `canPop` validation to `_hasBack` and tightened `widthFor` slot calculation (`slots * _slot + 6`).
+  5. `app_theme.dart`: Set `titleSpacing: 0` in `appBarTheme` across light and dark themes.
+  6. Added automated test suite `test/ui_appbar_spacing_and_fab_test.dart` (5/5 tests passing).
+- **Files Changed**:
+  - `lib/modules/category/view/category_page.dart`
+  - `lib/modules/buyer/offers/view/buyer_activity_view.dart`
+  - `lib/modules/settings/view/settings_page.dart`
+  - `lib/widgets/app_shell.dart`
+  - `lib/theme/app_theme.dart`
+  - `lib/modules/buyer/delivery_challan/view/buyer_delivery_challan_view.dart`
+  - `lib/modules/buyer/offers/view/buyer_offers_view.dart`
+  - `lib/modules/buyer/offers/view/buyer_my_interests_view.dart`
+  - `lib/modules/buyer/offers/view/buyer_request_management_view.dart`
+  - `lib/modules/buyer/offers/view/buyer_today_offers_view.dart`
+  - `test/ui_appbar_spacing_and_fab_test.dart`
+- **Verification**: `flutter test test/ui_appbar_spacing_and_fab_test.dart` (5/5 passed); static analysis verified.
+
+---
+
+## Bug 55: Sign In Screen "A TextEditingController was used after being disposed" Assertion Crash
+- **Symptom**: On the Sign In screen (`LoginScreen`), a red assertion error box appeared under "Mobile number" / "Sign In":
+  `"A TextEditingController was used after being disposed. Once you have called dispose() on a TextEditingController, it can no longer be used."`
+- **Root Cause**:
+  1. When logging out (`Get.offAllNamed(AppRoutes.login)`) or navigating away from the login route, GetX invoked `LoginController.onClose()`, which disposed `usernameController` and `passwordController`.
+  2. However, `LoginController` remained in GetX's dependency registry (or was registered without `fenix: true`).
+  3. When `LoginScreen` was remounted, `Get.isRegistered<LoginController>()` returned `true`, and `_LoginScreenState.initState()` called `Get.find<LoginController>()`, retrieving the stale/closed controller instance with disposed `TextEditingController` instances.
+  4. Passing the disposed `TextEditingController` into `GlassTextField` / `TextFormField` caused Flutter to throw `ChangeNotifier.debugAssertNotDisposed()` during widget tree build and render.
+- **Fix**:
+  1. `lib/modules/Auth/login/controller/login_controller.dart`:
+     - Converted `usernameController` and `passwordController` to private backing fields (`_usernameController`, `_passwordController`) with self-healing public getters.
+     - When either getter is called, if `_isDisposed` is true or if the controller is in a disposed state, it automatically creates a fresh, non-disposed `TextEditingController` instance.
+     - Added `onInit()` lifecycle guard to ensure controllers are active and reset `_isDisposed = false`.
+     - In `onClose()`, marked `_isDisposed = true` and disposed backing controllers safely.
+  2. `lib/modules/Auth/login/view/login_screen.dart`:
+     - In `_LoginScreenState.initState()`, added guard: if `Get.isRegistered<LoginController>()` is true and `controller.isClosed` is true, explicitly call `Get.delete<LoginController>(force: true)` and instantiate a fresh `LoginController` via `Get.put(LoginController())`.
+  3. `lib/bindings/auth_binding.dart`:
+     - Added `fenix: true` to `Get.lazyPut<LoginController>(() => LoginController(), fenix: true)` and `Get.lazyPut<RegisterController>(() => RegisterController(), fenix: true)`.
+  4. Added automated reproduction and verification test suite in `test/login_controller_disposed_reproduce_test.dart`.
+- **Files Changed**:
+  - `lib/modules/Auth/login/controller/login_controller.dart`
+  - `lib/modules/Auth/login/view/login_screen.dart`
+  - `lib/bindings/auth_binding.dart`
+  - `test/login_controller_disposed_reproduce_test.dart`
+- **Verification**:
+  - `test/login_controller_disposed_reproduce_test.dart`: 1/1 passed.
+  - `test/login_screen_test.dart` & `test/login_password_eye_icon_test.dart`: 4/4 passed.
+  - `flutter analyze lib/modules/Auth/login/ lib/bindings/auth_binding.dart test/login_controller_disposed_reproduce_test.dart`: 0 issues found.
+
+---
+
 ## Bug 54: Hide Raw Database IDs Across Transporter Brands, Dashboards, Orders, and Contract Details
 - **Symptom**: Raw internal database IDs were exposed to users in several areas:
   1. Transporter Brands: fallback displayed `"Brand ID: #12"`.

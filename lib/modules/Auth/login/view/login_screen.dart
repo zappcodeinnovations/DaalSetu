@@ -21,9 +21,17 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    controller = Get.isRegistered<LoginController>()
-        ? Get.find<LoginController>()
-        : Get.put(LoginController());
+    if (Get.isRegistered<LoginController>()) {
+      final existing = Get.find<LoginController>();
+      if (existing.isClosed) {
+        Get.delete<LoginController>(force: true);
+        controller = Get.put(LoginController());
+      } else {
+        controller = existing;
+      }
+    } else {
+      controller = Get.put(LoginController());
+    }
     final arguments = Get.arguments;
     if (arguments is Map && arguments['mobile'] != null) {
       controller.usernameController.text = arguments['mobile'].toString();

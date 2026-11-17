@@ -737,7 +737,7 @@ class _BuyerRequestManagementViewState
                   ),
                   onPressed: () => Get.back(),
                 )
-              : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
+              : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: Navigator.canPop(context)),
           title: Text(
             heading,
             style: GoogleFonts.poppins(

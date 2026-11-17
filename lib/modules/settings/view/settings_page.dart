@@ -17,6 +17,8 @@ import '../../../services/seller_services.dart';
 import 'package:daalsetu/theme/app_theme.dart';
 import '../../../utils/app_snackbar.dart';
 import '../../../widgets/app_shell.dart';
+import 'package:daalsetu/services/panel_service.dart';
+import 'package:daalsetu/modules/admin_catalog/view/admin_drawer.dart' show switchPanelFromMenu;
 
 class SettingsScreen extends StatelessWidget {
   SettingsScreen({super.key});
@@ -33,24 +35,8 @@ class SettingsScreen extends StatelessWidget {
         backgroundColor: theme.scaffoldBackgroundColor,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leading: Navigator.canPop(context)
-            ? IconButton(
-                icon: Icon(
-                  Icons.arrow_back_ios_new,
-                  color: theme.textTheme.bodyLarge?.color,
-                  size: 20,
-                ),
-                onPressed: () => Get.back(),
-              )
-            : Builder(
-                builder: (ctx) => IconButton(
-                  icon: Icon(
-                    Icons.menu_rounded,
-                    color: theme.textTheme.bodyLarge?.color,
-                  ),
-                  onPressed: () => AppShell.openDrawer(activeKey: 'settings'),
-                ),
-              ),
+        leading: const AppBarLeading(),
+        leadingWidth: AppBarLeading.widthFor(context),
       ),
       body: SafeArea(
         top: false,
@@ -153,6 +139,30 @@ class SettingsScreen extends StatelessWidget {
                                 ),
                               ),
                             ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  // Buyer & Seller account: switch panel without logging out.
+                  FutureBuilder<List<String?>>(
+                    future: Future.wait([AppPreferences.getAccountRole(), AppPreferences.getActivePanel()]),
+                    builder: (context, snapshot) {
+                      final data = snapshot.data;
+                      if (data == null || data[0] != AppPreferences.combinedRole) {
+                        return const SizedBox.shrink();
+                      }
+                      final current = (data[1] == null || data[1]!.isEmpty) ? AppPreferences.defaultPanel : data[1]!;
+                      final other = PanelService.other(current);
+                      return Column(
+                        children: [
+                          _glassDivider(context),
+                          _buildTile(
+                            context,
+                            icon: Icons.swap_horiz_rounded,
+                            title: "Switch to ${PanelService.label(other)} panel",
+                            subtitle: "You are in the ${PanelService.label(current)} panel",
+                            onTap: () => switchPanelFromMenu(other),
                           ),
                         ],
                       );
@@ -321,7 +331,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 80), // Space for floating nav bar
+            const SizedBox(height: 16),
           ],
         ),
       ),

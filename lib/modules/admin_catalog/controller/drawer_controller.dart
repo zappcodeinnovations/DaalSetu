@@ -21,6 +21,8 @@ class DrawerController extends GetxController {
   var offersExpanded = true.obs;
 
   var userRole = ''.obs;
+  /// Buyer & Seller account: shows the "Switch panel" item.
+  var isCombinedAccount = false.obs;
 
   /// AppPreferences.sessionVersion the role/menu were loaded for; a mismatch
   /// means someone else signed in since (show a spinner, then reload).
@@ -43,6 +45,7 @@ class DrawerController extends GetxController {
 
       final role = await AppPreferences.getRole() ?? 'buyer';
       userRole.value = role.toLowerCase();
+      isCombinedAccount.value = await AppPreferences.isCombinedAccount();
 
       final isAdmin = const ['super_admin', 'admin', 'sub_admin']
           .contains(userRole.value);

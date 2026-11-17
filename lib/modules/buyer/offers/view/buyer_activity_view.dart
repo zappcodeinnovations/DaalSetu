@@ -19,6 +19,11 @@ class BuyerActivityView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
+    final isKeyboardOpen = mediaQuery.viewInsets.bottom > 0;
+    final systemBottom = isKeyboardOpen ? 0.0 : mediaQuery.padding.bottom;
+    final hasBottomNav = Scaffold.maybeOf(context)?.widget.bottomNavigationBar != null;
+    final fabBottom = (hasBottomNav ? 88.0 : 0.0) + systemBottom + 16.0;
 
     return DefaultTabController(
       length: 2,
@@ -36,7 +41,7 @@ class BuyerActivityView extends StatelessWidget {
                   ),
                   onPressed: () => Get.back(),
                 )
-              : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
+              : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: Navigator.canPop(context)),
           title: Text(
             "My Activity",
             style: GoogleFonts.poppins(
@@ -57,8 +62,9 @@ class BuyerActivityView extends StatelessWidget {
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         floatingActionButton: Padding(
-          padding: const EdgeInsets.only(bottom: 76.0),
+          padding: EdgeInsets.only(bottom: fabBottom),
           child: FloatingActionButton.extended(
+            key: const Key('buyer_activity_post_requirement_fab'),
             heroTag: 'buyer_activity_post_requirement_fab',
             onPressed: () => Get.to(() => const AddBuyerOfferScreen()),
             icon: const Icon(IconlyLight.plus, color: Colors.white),

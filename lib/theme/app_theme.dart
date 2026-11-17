@@ -78,6 +78,7 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         iconTheme: const IconThemeData(color: primaryGold),
+        titleSpacing: 0,
         titleTextStyle: GoogleFonts.poppins(
           color: Colors.white,
           fontSize: 18,
@@ -228,6 +229,7 @@ class AppTheme {
         shadowColor: Colors.black.withValues(alpha: 0.05),
         scrolledUnderElevation: 0,
         iconTheme: const IconThemeData(color: textPrimaryLight),
+        titleSpacing: 0,
         titleTextStyle: GoogleFonts.poppins(
           color: textPrimaryLight,
           fontSize: 18,

@@ -18,6 +18,7 @@ class RegisterController {
   static const Map<String, String> roles = {
     'buyer': 'Buyer',
     'seller': 'Seller',
+    'both_sellerandbuyer': 'Buyer & Seller (both)',
     'transporter': 'Transporter',
   };
 

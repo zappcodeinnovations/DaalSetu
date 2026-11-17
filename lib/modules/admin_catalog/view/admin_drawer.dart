@@ -34,6 +34,8 @@ import 'package:daalsetu/modules/seller/contracts/view/seller_contracts_view.dar
 import 'package:daalsetu/modules/seller/branches/view/seller_branches_view.dart';
 import 'package:daalsetu/modules/seller/challans/view/seller_delivery_challan_view.dart';
 import 'package:daalsetu/modules/transporter/bidding/view/transporter_bidding_view.dart';
+import 'package:daalsetu/services/panel_service.dart';
+import 'package:daalsetu/utils/app_snackbar.dart';
 
 class AdminDrawer extends StatelessWidget {
   const AdminDrawer({super.key, this.activeKey});
@@ -102,7 +104,7 @@ class AdminDrawer extends StatelessWidget {
                                       ? 'TRANSPORTER PANEL'
                                       : 'BUYER PANEL'));
                           return Text(
-                            subtitle,
+                            controller.isCombinedAccount.value && subtitle.isNotEmpty ? '$subtitle · BUYER & SELLER' : subtitle,
                             style: theme.textTheme.labelSmall?.copyWith(
                               fontWeight: FontWeight.w600,
                               letterSpacing: 1.1,
@@ -316,6 +318,15 @@ class AdminDrawer extends StatelessWidget {
           icon: Icons.dashboard_outlined,
           onTap: _goToDashboard,
         ),
+        // Buyer & Seller account: switch to the other panel without logging out.
+        if (controller.isCombinedAccount.value)
+          _customMenuItem(
+            context: context,
+            key: 'switch_panel',
+            title: 'Switch to Seller panel',
+            icon: Icons.swap_horiz_rounded,
+            onTap: () => switchPanelFromMenu('seller'),
+          ),
         _customMenuItem(
           context: context,
           key: 'categories',
@@ -492,6 +503,15 @@ class AdminDrawer extends StatelessWidget {
           icon: Icons.dashboard_outlined,
           onTap: _goToDashboard,
         ),
+        // Buyer & Seller account: switch to the other panel without logging out.
+        if (controller.isCombinedAccount.value)
+          _customMenuItem(
+            context: context,
+            key: 'switch_panel',
+            title: 'Switch to Buyer panel',
+            icon: Icons.swap_horiz_rounded,
+            onTap: () => switchPanelFromMenu('buyer'),
+          ),
         _sectionLabel(context, 'OFFERS'),
         _customMenuItem(
           context: context,
@@ -798,5 +818,14 @@ class AdminDrawer extends StatelessWidget {
         },
       ),
     );
+  }
+}
+
+/// Drawer / settings "Switch panel" action for Buyer & Seller accounts.
+Future<void> switchPanelFromMenu(String panel) async {
+  try {
+    await PanelService.activate(panel);
+  } catch (error) {
+    AppSnackbar.showError(message: error.toString().replaceFirst('Exception: ', ''));
   }
 }

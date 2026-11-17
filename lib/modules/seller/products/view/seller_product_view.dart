@@ -29,6 +29,12 @@ class SellerProductView extends StatelessWidget {
   Widget _buildPageContent(BuildContext context) {
     final controller = Get.put(SellerProductController());
     final theme = Theme.of(context);
+    // An extendBody navigation shell includes its bar height in body padding.
+    // Reserve that space only when this screen is embedded in that shell.
+    final navigationInset =
+        Scaffold.maybeOf(context)?.widget.bottomNavigationBar != null
+        ? MediaQuery.paddingOf(context).bottom
+        : 0.0;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -85,7 +91,7 @@ class SellerProductView extends StatelessWidget {
           }
 
           return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 100 + navigationInset),
             itemCount: controller.products.length,
             separatorBuilder: (context, index) => const SizedBox(height: 16),
             itemBuilder: (context, index) {
@@ -95,14 +101,18 @@ class SellerProductView extends StatelessWidget {
           );
         }),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: null,
-        onPressed: () => Get.to(() => const AddProductView()),
-        backgroundColor: primaryColor,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text(
-          "Add Product",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(bottom: navigationInset),
+        child: FloatingActionButton.extended(
+          key: const Key('seller-add-product-button'),
+          heroTag: null,
+          onPressed: () => Get.to(() => const AddProductView()),
+          backgroundColor: primaryColor,
+          icon: const Icon(Icons.add, color: Colors.white),
+          label: const Text(
+            "Add Product",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
         ),
       ),
     );

@@ -182,10 +182,11 @@ class AdminModules {
       'Role',
       required: true,
       // Super Admin can also create admins; the backend rejects roles the caller may not create.
-      options: ['seller', 'buyer', 'transporter', 'admin'],
+      options: ['seller', 'buyer', 'both_sellerandbuyer', 'transporter', 'admin'],
       optionLabels: {
         'seller': 'Seller',
         'buyer': 'Buyer',
+        'both_sellerandbuyer': 'Buyer & Seller',
         'transporter': 'Transporter',
         'admin': 'Admin',
       },
@@ -277,7 +278,7 @@ class AdminModules {
       subtitleKeys: const ['role', 'mobile', 'email', 'kyc_status'],
       detailEndpoint: (id) => '/api/users/$id/',
       filterParameter: 'role',
-      filterOptions: const ['buyer', 'seller', 'transporter', 'admin'],
+      filterOptions: const ['buyer', 'seller', 'both_sellerandbuyer', 'transporter', 'admin'],
       createEndpoint: '/api/users/create/',
       updateEndpoint: (id) => '/api/users/$id/update/',
       deleteEndpoint: (id) => '/api/users/$id/delete/',

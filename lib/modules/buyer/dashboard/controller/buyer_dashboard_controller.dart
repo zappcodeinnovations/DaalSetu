@@ -32,6 +32,8 @@ class BuyerDashboardController extends GetxController {
   var selectedRange = '7D'.obs;
   var isRangeLoading = false.obs;
   var categories = <CategoryModel>[].obs;
+  /// False until the first category request finishes, so an empty list is not shown as an endless spinner.
+  var categoriesLoaded = false.obs;
   var activeOffers = <BuyerOfferModel>[].obs;
   var isOffersLoading = false.obs;
   var isSearching = false.obs;
@@ -148,6 +150,8 @@ class BuyerDashboardController extends GetxController {
       categories.assignAll(cats);
     } catch (_) {
       // Keep the existing category list on a transient request failure.
+    } finally {
+      categoriesLoaded(true);
     }
 
     // Load and filter valid active offers for the dashboard banner/carousel

@@ -365,7 +365,19 @@ class BuyerDashboardView extends StatelessWidget {
     List<CategoryModel> categories,
   ) {
     if (categories.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      if (!controller.categoriesLoaded.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          'No categories assigned yet. Tap View All to request categories.',
+          style: TextStyle(
+            fontSize: 12.5,
+            color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+          ),
+        ),
+      );
     }
 
     final displayCategories = categories.take(6).toList();
@@ -1223,18 +1235,19 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
               ),
             ),
             const SizedBox(height: 14),
-            // Wraps to a second line on narrow phones instead of overflowing.
-            Wrap(
-              spacing: 10,
-              runSpacing: 8,
+            // Both buttons share one row, equal width; labels shrink on very narrow phones.
+            Row(
               children: [
-                ElevatedButton.icon(
+                Expanded(child: ElevatedButton.icon(
                   onPressed: widget.onPostRequirementTap ??
                       () => Get.to(() => const AddBuyerOfferScreen()),
                   icon: const Icon(IconlyLight.plus, size: 16),
-                  label: Text(
-                    "Post Requirement",
-                    style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                  label: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      "Post Requirement",
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.primary,
@@ -1244,12 +1257,13 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
                       borderRadius: BorderRadius.circular(30),
                     ),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
+                      horizontal: 12,
                       vertical: 10,
                     ),
                   ),
-                ),
-                OutlinedButton(
+                )),
+                const SizedBox(width: 10),
+                Expanded(child: OutlinedButton(
                   onPressed: widget.onViewAllOffersTap ??
                       () =>
                           Get.to(() => const BuyerOffersView(initialIndex: 0)),
@@ -1260,15 +1274,18 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
                       borderRadius: BorderRadius.circular(30),
                     ),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
+                      horizontal: 12,
                       vertical: 10,
                     ),
                   ),
-                  child: Text(
-                    "Browse Offers",
-                    style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      "Browse Offers",
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                    ),
                   ),
-                ),
+                )),
               ],
             ),
           ],

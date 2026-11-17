@@ -6,6 +6,7 @@ abstract class AppRoutes {
 
   // AUTH
   static const login = '/login';
+  static const choosePanel = '/choose-panel'; // Buyer & Seller accounts
   static const loginWithOtp = '/login-with-otp';
   static const verifyOtp = '/verify-otp';
   static const register = '/register';

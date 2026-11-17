@@ -56,7 +56,7 @@ class BuyerOffersView extends StatelessWidget {
                   ),
                   onPressed: () => Get.back(),
                 )
-              : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
+              : null), leadingWidth: AppBarLeading.widthFor(context, hasChild: Navigator.canPop(context)),
           title: Text(
             "Offers",
             style: GoogleFonts.poppins(

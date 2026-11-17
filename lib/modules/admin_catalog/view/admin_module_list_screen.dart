@@ -995,6 +995,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
     'requested_quantity': 'Quantity',
     'page_label': 'Page',
     'is_primary': 'Primary',
+    'both_sellerandbuyer': 'Buyer & Seller',
   };
 
   String _label(String key) => _shortLabels[key] ?? key
