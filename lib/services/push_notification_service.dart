@@ -53,6 +53,10 @@ class PushNotificationService {
       FirebaseMessaging.onMessageOpenedApp.listen(_openFromPush);
       _launchMessage = await FirebaseMessaging.instance.getInitialMessage();
       _ready = true;
+      if (kDebugMode) {
+        // Debug builds only: lets a developer send a test push to this phone.
+        FirebaseMessaging.instance.getToken().then((t) => debugPrint('FCM_TOKEN=$t'));
+      }
     } catch (error) {
       debugPrint('Push notifications unavailable: $error');
     }
@@ -91,6 +95,7 @@ class PushNotificationService {
   }
 
   static Future<void> _sendToken(String token) async {
+    if (kDebugMode) debugPrint('FCM_TOKEN=$token');
     try {
       final userId = await AppPreferences.getUserId() ?? '';
       final key = '$userId|$token';
