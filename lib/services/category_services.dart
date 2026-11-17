@@ -184,7 +184,11 @@ class CategoryService {
   /// ===============================
   static Future<List<CategoryModel>> fetchBuyerCategories() async {
     final result = await fetchBuyerCategoryData();
-    return result.buyerCategories;
+    if (result.buyerCategories.isNotEmpty) {
+      return result.buyerCategories;
+    }
+    // Fallback to all available catalog categories for dashboard browsing so rounded cards always show
+    return result.systemCategories;
   }
 
   /// ===============================
