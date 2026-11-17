@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:daalsetu/modules/admin_catalog/view/offer_interests_dialog.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/network/api_client.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   /// Buyer screens pass this to show "Submit Offer" on the offer page (MoM 7);
@@ -35,7 +36,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _product = ProductService.getProductDetail(widget.productId);
+    _product = ProductService.getProductDetail(widget.productId, silent: true);
     _loadRole();
   }
 
@@ -46,9 +47,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Future<void> _refresh() async {
     setState(() {
-      _product = ProductService.getProductDetail(widget.productId);
+      _product = ProductService.getProductDetail(widget.productId, silent: true);
     });
-    await _product;
+    try {
+      await _product;
+    } catch (_) {
+      // FutureBuilder displays the request error inline, including on retry.
+    }
   }
 
   @override
@@ -62,11 +67,43 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError || snapshot.data == null) {
+            final error = snapshot.error;
+            final unavailable = error is ApiRequestException && error.statusCode == 404;
             return Center(
-              child: FilledButton.icon(
-                onPressed: _refresh,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(unavailable ? Icons.inventory_2_outlined : Icons.error_outline, size: 48),
+                    const SizedBox(height: 16),
+                    Text(
+                      unavailable ? 'Product unavailable' : 'Could not load product',
+                      style: Theme.of(context).textTheme.titleLarge,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      unavailable
+                          ? 'This product may have been removed or is not available to your current account or panel.'
+                          : 'Please check your connection and try again.',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    if (unavailable && Navigator.canPop(context))
+                      FilledButton.icon(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.arrow_back),
+                        label: const Text('Go back'),
+                      )
+                    else
+                      FilledButton.icon(
+                        onPressed: _refresh,
+                        icon: const Icon(Icons.refresh),
+                        label: Text(unavailable ? 'Check again' : 'Retry'),
+                      ),
+                  ],
+                ),
               ),
             );
           }

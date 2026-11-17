@@ -475,11 +475,11 @@ class RealtimeNotificationService extends GetxService {
       }
 
       // 2. Try to extract product/offer ID
-      int? productId = notification.relatedProduct ?? notification.referenceId;
+      int? productId = notification.productTargetId;
 
       // Check url regex
       if (productId == null && url.isNotEmpty) {
-        final match = RegExp(r'/(?:products|offers|buyer-offers|rfqs)/(\d+)').firstMatch(url);
+        final match = RegExp(r'/(?:products|offers)/(\d+)(?:/|\?|#|$)').firstMatch(url);
         if (match != null) {
           productId = int.tryParse(match.group(1)!);
         }
@@ -487,7 +487,7 @@ class RealtimeNotificationService extends GetxService {
 
       // Check message regex for ID (e.g. ID: 129 or #129)
       if (productId == null && notification.message != null) {
-        final match = RegExp(r'(?:id[:\s#]+|#)(\d+)', caseSensitive: false).firstMatch(notification.message!);
+        final match = RegExp(r'(?:product|offer)\s*(?:id)?[:\s#]+(\d+)', caseSensitive: false).firstMatch(notification.message!);
         if (match != null) {
           productId = int.tryParse(match.group(1)!);
         }
@@ -499,7 +499,7 @@ class RealtimeNotificationService extends GetxService {
           title.contains('interest') ||
           message.contains('interest');
       if (isInterest && role == 'seller') {
-        int? offerId = notification.relatedProduct;
+        int? offerId = notification.productTargetId;
         if (offerId == null && url.isNotEmpty) {
           final match = RegExp(r'[?&]manage_product=(\d+)').firstMatch(url);
           if (match != null) {

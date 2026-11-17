@@ -981,6 +981,7 @@ class BuyerOfferModel {
     ]);
 
     final isRfqItem =
+        json['source_type'] == 'rfq' ||
         json.containsKey('rfq_id') ||
         json.containsKey('required_quantity') ||
         json.containsKey('target_price') ||

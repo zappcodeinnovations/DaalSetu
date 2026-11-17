@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -9,7 +10,8 @@ import '../theme/app_theme.dart';
 class AppSnackbar {
   AppSnackbar._();
 
-  static const String _fallbackMessage = "Something went wrong. Please try again.";
+  static const String _fallbackMessage =
+      "Something went wrong. Please try again.";
 
   // Titles that carry no information on their own; never shown to the user.
   static final RegExp _genericTitle = RegExp(
@@ -26,22 +28,19 @@ class AppSnackbar {
     String? title,
     required String message,
     Duration duration = const Duration(seconds: 4),
-  }) =>
-      _show(message, isError: true, duration: duration);
+  }) => _show(message, isError: true, duration: duration);
 
   static void showSuccess({
     String? title,
     required String message,
     Duration duration = const Duration(seconds: 3),
-  }) =>
-      _show(message, isError: false, duration: duration);
+  }) => _show(message, isError: false, duration: duration);
 
   static void showWarning({
     String? title,
     required String message,
     Duration duration = const Duration(seconds: 3),
-  }) =>
-      _show(message, isError: true, duration: duration);
+  }) => _show(message, isError: true, duration: duration);
 
   static void showInfo({
     String? title,
@@ -49,8 +48,13 @@ class AppSnackbar {
     Duration duration = const Duration(seconds: 3),
     String? actionLabel,
     VoidCallback? onAction,
-  }) =>
-      _show(message, isError: false, duration: duration, actionLabel: actionLabel, onAction: onAction);
+  }) => _show(
+    message,
+    isError: false,
+    duration: duration,
+    actionLabel: actionLabel,
+    onAction: onAction,
+  );
 
   /// Drop-in replacement for `Get.snackbar`. Styling arguments are accepted
   /// for compatibility; only [backgroundColor] is used, to tell error from success.
@@ -84,7 +88,9 @@ class AppSnackbar {
     SnackStyle? snackStyle,
     void Function(GetSnackBar snack)? onTap,
   }) {
-    final heading = title.trim().isNotEmpty ? title.trim() : (_textOf(titleText) ?? '').trim();
+    final heading = title.trim().isNotEmpty
+        ? title.trim()
+        : (_textOf(titleText) ?? '').trim();
     var text = message.trim();
     if (text.isEmpty) text = _textOf(messageText) ?? '';
     if (text.isEmpty && !_genericTitle.hasMatch(heading)) text = heading;
@@ -122,7 +128,9 @@ class AppSnackbar {
           backgroundColor: isError ? AppTheme.errorRed : AppTheme.successGreen,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
       );
   }
@@ -136,46 +144,73 @@ class AppSnackbar {
   }) {
     final text = _clean(message);
 
-    Get.closeCurrentSnackbar();
-    Get.showSnackbar(
-      GetSnackBar(
-        messageText: Text(
-          text,
-          style: GoogleFonts.inter(
-            color: Colors.white,
-            fontWeight: FontWeight.w500,
-            fontSize: 13.5,
-            height: 1.35,
-          ),
-        ),
-        icon: Icon(
-          isError ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded,
-          color: Colors.white,
-          size: 24,
-        ),
-        mainButton: actionLabel == null
-            ? null
-            : TextButton(
-                onPressed: () {
-                  Get.closeCurrentSnackbar();
-                  onAction?.call();
-                },
-                child: Text(
-                  actionLabel,
-                  style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w700),
+    void show() {
+      final context = Get.key.currentContext;
+      if (context == null || !context.mounted) return;
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      if (messenger == null) return;
+      messenger
+        ..removeCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(
+                  isError
+                      ? Icons.error_outline_rounded
+                      : Icons.check_circle_outline_rounded,
+                  color: Colors.white,
+                  size: 24,
                 ),
-              ),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: isError ? AppTheme.errorRed : AppTheme.successGreen,
-        borderRadius: 14,
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        duration: duration,
-        isDismissible: true,
-        shouldIconPulse: false,
-        forwardAnimationCurve: Curves.easeOutCirc,
-      ),
-    );
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    text,
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13.5,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            action: actionLabel == null
+                ? null
+                : SnackBarAction(
+                    label: actionLabel,
+                    textColor: Colors.white,
+                    onPressed: () {
+                      messenger.hideCurrentSnackBar();
+                      onAction?.call();
+                    },
+                  ),
+            backgroundColor: isError
+                ? AppTheme.errorRed
+                : AppTheme.successGreen,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            duration: duration,
+            dismissDirection: DismissDirection.down,
+          ),
+        );
+    }
+
+    // Controller callbacks can fire during build or a route transition.
+    // Let the Scaffold register before starting its snackbar animation.
+    if (WidgetsBinding.instance.schedulerPhase ==
+            SchedulerPhase.persistentCallbacks ||
+        Get.key.currentContext == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => show());
+      WidgetsBinding.instance.ensureVisualUpdate();
+    } else {
+      show();
+    }
   }
 
   /// Decides error vs success from the old background colour, then the title,
@@ -189,7 +224,11 @@ class AppSnackbar {
       }
     }
     if (title.isNotEmpty && _errorWords.hasMatch(title)) return true;
-    if (RegExp(r'^(success|successful|done)$', caseSensitive: false).hasMatch(title)) return false;
+    if (RegExp(
+      r'^(success|successful|done)$',
+      caseSensitive: false,
+    ).hasMatch(title))
+      return false;
     return message.trim().isEmpty || _errorWords.hasMatch(message);
   }
 
@@ -199,7 +238,11 @@ class AppSnackbar {
         .replaceAll(RegExp(r'\b\w*Exception\s*:\s*'), '')
         .replaceAll(RegExp(r'\berror\s*[:\-]\s*', caseSensitive: false), '')
         .trim();
-    if (text.isEmpty || RegExp(r'^(error|null|exception)$', caseSensitive: false).hasMatch(text)) {
+    if (text.isEmpty ||
+        RegExp(
+          r'^(error|null|exception)$',
+          caseSensitive: false,
+        ).hasMatch(text)) {
       return _fallbackMessage;
     }
     return text[0].toUpperCase() + text.substring(1);
@@ -210,7 +253,10 @@ class AppSnackbar {
     if (widget is Text) return widget.data ?? widget.textSpan?.toPlainText();
     if (widget is RichText) return widget.text.toPlainText();
     if (widget is Flex) {
-      final parts = widget.children.map(_textOf).whereType<String>().where((t) => t.trim().isNotEmpty);
+      final parts = widget.children
+          .map(_textOf)
+          .whereType<String>()
+          .where((t) => t.trim().isNotEmpty);
       return parts.isEmpty ? null : parts.join(' ');
     }
     if (widget is SingleChildRenderObjectWidget) return _textOf(widget.child);

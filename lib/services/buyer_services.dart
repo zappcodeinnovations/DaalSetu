@@ -3,6 +3,16 @@ import '../comman/api_url.dart';
 import 'package:flutter/foundation.dart';
 
 class BuyerServices {
+  static Future<void> updateBuyerRequirement(dynamic id, Map<String, dynamic> values) async {
+    final response = await ApiClient.post(
+      endpoint: ApiUrls.buyerRequirementDetails(id),
+      body: {...values, 'action': 'update'},
+      requireAuth: true,
+    );
+    if (response is! Map || response['success'] != true) {
+      throw Exception(response is Map ? response['message'] ?? 'Could not update requirement' : 'Could not update requirement');
+    }
+  }
   /// ============================================================
   /// GET BUYER DASHBOARD
   /// ============================================================
@@ -255,12 +265,13 @@ class BuyerServices {
   static Future<List<dynamic>> getAllOffers({String query = "", bool silent = false}) async {
     final List<dynamic> allList = [];
     final Set<String> seenKeys = {};
+    final Set<String> visibleProductIds = {};
 
     void addUnique(dynamic item, [String prefix = '']) {
       if (item is Map) {
         final id =
-            item['id']?.toString() ??
             item['product_id']?.toString() ??
+            item['id']?.toString() ??
             item['rfq_id']?.toString() ??
             '';
         final title =
@@ -268,10 +279,11 @@ class BuyerServices {
             item['product_title']?.toString() ??
             item['commodity']?.toString() ??
             '';
-        final key = id.isNotEmpty ? id : "$prefix-$title";
+        final kind = prefix == 'rfq' ? 'rfq' : 'product';
+        final key = id.isNotEmpty ? '$kind-$id' : "$kind-$title";
         if (!seenKeys.contains(key)) {
           seenKeys.add(key);
-          allList.add(item);
+          allList.add({...item, 'source_type': kind});
         }
       }
     }
@@ -287,6 +299,9 @@ class BuyerServices {
       );
       final products = _extractList(response);
       for (var item in products) {
+        if (item is Map && item['id'] != null) {
+          visibleProductIds.add(item['id'].toString());
+        }
         addUnique(item, 'product');
       }
     } catch (e) {
@@ -315,7 +330,11 @@ class BuyerServices {
       );
       final list = _extractList(response);
       for (var item in list) {
-        addUnique(item, 'offer');
+        // This endpoint contains interest history. A historic interest must
+        // never reintroduce a product excluded by the current catalogue.
+        if (item is Map && visibleProductIds.contains(item['product_id']?.toString())) {
+          addUnique(item, 'offer');
+        }
       }
     } catch (e) {
       print("⚠️ /api/offers/list/ error in getAllOffers: $e");

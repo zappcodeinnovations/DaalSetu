@@ -14,10 +14,11 @@ import '../utils/global_error_handler.dart';
 /// leak backend-style errors into snackbars throughout the app. API failures
 /// now use this type so every panel receives one clean message.
 class ApiRequestException implements Exception {
-  const ApiRequestException(this.message, {this.fieldErrors});
+  const ApiRequestException(this.message, {this.fieldErrors, this.statusCode});
 
   final String message;
   final Map<String, String>? fieldErrors;
+  final int? statusCode;
 
   @override
   String toString() => message;
@@ -513,6 +514,7 @@ class ApiClient {
                 ? errorMessage
                 : "The requested item was not found.",
           ),
+          statusCode: statusCode,
         );
       } else {
         throw ApiRequestException(userFriendlyErrorMessage(errorMessage));
