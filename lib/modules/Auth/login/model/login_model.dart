@@ -7,6 +7,11 @@ class LoginUser {
   final String accountStatus;
   final int? activeBranchId;
   final String? activeBranchCode;
+  /// Buyer & Seller accounts (MoM combined role): the account's role, the
+  /// panel to act in, and whether the panel must be chosen now.
+  final String accountRole;
+  final String activePanel;
+  final bool requiresPanelSelection;
 
   LoginUser({
     required this.id,
@@ -17,6 +22,9 @@ class LoginUser {
     required this.accountStatus,
     this.activeBranchId,
     this.activeBranchCode,
+    this.accountRole = '',
+    this.activePanel = '',
+    this.requiresPanelSelection = false,
   });
 
   factory LoginUser.fromJson(Map<String, dynamic> json) {
@@ -29,6 +37,9 @@ class LoginUser {
       accountStatus: json["account_status"] as String? ?? "",
       activeBranchId: json["active_branch_id"] as int?,
       activeBranchCode: json["active_branch_code"] as String?,
+      accountRole: json["account_role"] as String? ?? (json["role"] as String? ?? ""),
+      activePanel: json["active_panel"] as String? ?? "",
+      requiresPanelSelection: json["requires_panel_selection"] == true,
     );
   }
 }

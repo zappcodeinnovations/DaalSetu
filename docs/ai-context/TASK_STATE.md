@@ -1,21 +1,17 @@
 # Current Task State
 
 ## Current Task
-- **Goal**: Full App UI Modernization — Admin Panel Complete, Core Tabs & Secondary Screens Modernized, Global Brand Colors Unified.
+- **Goal**: Merge `origin/rohit` (Bug 55 login crash fix, Bug 56 layout polish, combined Buyer-Seller panel switching) into `rohit_app_UI` and execute modern UI redesign of `ChoosePanelScreen` (`lib/modules/Auth/choose_panel/view/choose_panel_screen.dart`) supporting both Bright and Dark modes.
 - **Status**: 
-  - Buyer Panel: **100% COMPLETE** (25 screens)
-  - Milestone 1 (Seller Panel): **100% COMPLETE** (18/18 screens)
-  - Milestone 2 (Auth Portal): **100% COMPLETE** (4/4 screens)
-  - Milestone 3 (Transporter Panel): **100% COMPLETE** (21/21 screens)
-  - Milestone 4 (Admin Panel: Batches 4A, 4B, 4C, 4D, 4E): **100% COMPLETE** (17/17 screens).
-  - Batch 1 (Admin Core Tabs & Cards Modernization): **100% COMPLETE & VERIFIED** (3 screens).
-  - Batch 2 (User Management & Secondary Admin Screens Modernization): **100% COMPLETE & VERIFIED** (4 screens).
-  - Batch 3A (Dashboard Eye-Catching Cards, Admin Drawer, and Transport Bids Sheet): **100% COMPLETE & VERIFIED** (3 views).
-  - Batch 3B (Admin Masters List, Negotiation & Action Dialogs): **100% COMPLETE & VERIFIED** (6 views/dialogs).
-  - Onboarding Module Centralized Color Theme & Modernization: **100% COMPLETE & VERIFIED** (1 screen + centralized theme tokens).
-  - App-Wide Dark Theme Engine & Settings Toggle Activation: **100% COMPLETE & VERIFIED** (Centralized ThemeController, AppTheme darkTheme, Delete Account dialog, 39/39 passing regression tests).
-  - App-Wide Dark Theme Audit & Bright Mode Preservation across 8 Target Components: **100% COMPLETE & VERIFIED** (Adapted KPI values, Analytics charts & chips, Delivery Challan search, Profile save/camera/date picker, Admin notification sheet, Admin delete dialog, DC date picker, Seller product thumbnail; 0 analyzer warnings, 21/21 passing regression tests).
-  - Buyer Dashboard Featured Offer Banner Dark Theme Adaptation (Option 1): **100% COMPLETE & VERIFIED** (Adapted `_buildOfferCard` to Premium Dark Slate surface `#1E293B` / `#161F2E` with warm glowing orange border `#EA580C`, orange badge/price accents, and vibrant saffron CTA button while keeping Bright Mode 100% original bright saffron-orange gradient; 0 analyzer issues, 13/13 passing tests).
+  - Merge `origin/rohit` into `rohit_app_UI`: **Resolving Conflicts & Completing Merge**
+  - Bug 55 (Sign In Screen TextEditingController Disposed Crash): **Preserved & Integrated**
+  - Bug 56 (Category Button Navigation Overlap, Activity FAB Clearance, Settings Bottom Spacing, Global AppBar Title Spacing): **Preserved & Integrated**
+  - HeroHeader and Dark Theme on all Buyer/Seller views: **Preserved**
+  - ChoosePanelScreen UI Redesign: **In Progress**
+  - Full App UI Modernization: **100% COMPLETE** (Buyer, Seller, Transporter, Admin panels, Auth portal).
+  - App-Wide Dark Theme Engine & Settings Toggle Activation: **100% COMPLETE & VERIFIED**
+  - App-Wide Dark Theme Audit & Bright Mode Preservation across 8 Target Components: **100% COMPLETE & VERIFIED**
+  - Buyer Dashboard Featured Offer Banner Dark Theme Adaptation (Option 1): **100% COMPLETE & VERIFIED**
 - **Admin Redesign & Card Polish Scope (33 Total Admin Views / Modals Modernized)**:
   - **Batch 3B (Admin Masters List, Negotiation & Action Dialogs)**:
     - `lib/modules/admin_catalog/view/admin_module_list_screen.dart`: Upgraded generic catalog record cards and buyer cards to 18px rounded containers with `#FFE0B2` borders, vibrant icon pods, modern pill segments, and warm gradient FAB.
@@ -149,6 +145,17 @@
   - Added clean definition to cards and text inputs so they pop against the scaffold background.
 - **Global Typography & Contrast Enhancement**:
   - Solved faded and light text feedback across 109+ screens by centrally hardening text contrast and font weights in `lib/theme/app_theme.dart`.
+- **Bug 56 Completed (Category Button Navigation Overlap, Activity FAB Clearance, Settings Bottom Spacing, Global AppBar Title Spacing)**:
+  - Added `SafeArea` to Category Page bottom bar button to prevent overlap with Android navigation buttons.
+  - Fixed Buyer Activity FAB clearance above floating `GlassNavBar`.
+  - Fixed Settings Page trailing whitespace below "Version 1.0.0".
+  - Fixed horizontal spacing across all pages between hamburger menu icon (`☰`) and page title.
+- **Bug 55 Completed (Sign In Screen TextEditingController Disposed Crash)**:
+  - Eliminated the red assertion error `"A TextEditingController was used after being disposed"` on `LoginScreen`.
+  - Converted `usernameController` and `passwordController` to self-healing getters that re-instantiate fresh controllers when accessed after disposal or route close.
+  - Added closed controller detection in `LoginScreen.initState()` to evict dead GetX instances.
+  - Enabled `fenix: true` in `AuthBinding`.
+  - Verified with automated tests and static analysis.
 - **Bug 54 Completed (Hide Internal Database IDs)**:
   - Eliminated raw database integer IDs from Transporter Brands, Dashboards, Buyer Orders, and Contract administration details.
   - Replaced IDs with meaningful business information (Seller name, Category, Brand, Product title).

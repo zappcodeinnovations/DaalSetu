@@ -1,4 +1,4 @@
-import 'package:daalsetu/widgets/page_auto_refresh.dart';
+﻿import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
@@ -29,6 +29,12 @@ class SellerProductView extends StatelessWidget {
   Widget _buildPageContent(BuildContext context) {
     final controller = Get.put(SellerProductController());
     final theme = Theme.of(context);
+    // An extendBody navigation shell includes its bar height in body padding.
+    // Reserve that space only when this screen is embedded in that shell.
+    final navigationInset =
+        Scaffold.maybeOf(context)?.widget.bottomNavigationBar != null
+        ? MediaQuery.paddingOf(context).bottom
+        : 0.0;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -87,7 +93,7 @@ class SellerProductView extends StatelessWidget {
           }
 
           return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 100 + navigationInset),
             itemCount: controller.products.length,
             separatorBuilder: (context, index) => const SizedBox(height: 16),
             itemBuilder: (context, index) {
@@ -97,41 +103,45 @@ class SellerProductView extends StatelessWidget {
           );
         }),
       ),
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [
-              Color(0xFFE65100),
-              Color(0xFFF57C00),
-              Color(0xFFFFA000),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFE65100).withValues(alpha: 0.35),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(bottom: navigationInset),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [
+                Color(0xFFE65100),
+                Color(0xFFF57C00),
+                Color(0xFFFFA000),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-          ],
-        ),
-        child: FloatingActionButton.extended(
-          heroTag: null,
-          onPressed: () => Get.to(() => const AddProductView()),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          focusElevation: 0,
-          hoverElevation: 0,
-          highlightElevation: 0,
-          icon: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
-          label: const Text(
-            "Add Product",
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFE65100).withValues(alpha: 0.35),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: FloatingActionButton.extended(
+            key: const Key('seller-add-product-button'),
+            heroTag: null,
+            onPressed: () => Get.to(() => const AddProductView()),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            focusElevation: 0,
+            hoverElevation: 0,
+            highlightElevation: 0,
+            icon: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
+            label: const Text(
+              "Add Product",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+              ),
             ),
           ),
         ),
@@ -345,7 +355,7 @@ class SellerProductView extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "₹${product.amount} / ${product.unit}",
+                      "â‚¹${product.amount} / ${product.unit}",
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w900,
                         color: theme.colorScheme.primary,

@@ -133,7 +133,7 @@ class AuthService {
       await AppPreferences.saveLoginData(
         accessToken: newAccess,
         refreshToken: refreshToken,
-        role: await AppPreferences.getRole() ?? "",
+        role: await AppPreferences.getAccountRole() ?? "",
         userId: await AppPreferences.getUserId() ?? "",
         username: await AppPreferences.getUsername() ?? "",
       );

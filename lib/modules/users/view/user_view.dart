@@ -38,6 +38,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     switch (role.toLowerCase()) {
       case 'buyer':       return Colors.blue;
       case 'seller':      return Colors.purple;
+      case 'both_sellerandbuyer': return Colors.brown;
       case 'transporter': return Colors.teal;
       case 'admin':
       case 'sub_admin':   return Colors.deepOrange;
@@ -376,7 +377,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 ),
               ),
               child: Text(
-                role == 'all' ? 'All' : role.capitalizeFirst!,
+                UserController.roleLabel(role),
                 style: TextStyle(
                   color: isSelected ? Colors.white : theme.textTheme.bodyMedium?.color,
                   fontWeight: isSelected

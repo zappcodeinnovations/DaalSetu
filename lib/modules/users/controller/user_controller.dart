@@ -32,10 +32,25 @@ class UserController extends GetxController {
     'all',
     'buyer',
     'seller',
+    'both_sellerandbuyer',
     'transporter',
     'admin',
     'salesman',
   ];
+
+  /// Role chip / dropdown text ("both_sellerandbuyer" -> "Buyer & Seller").
+  static String roleLabel(String role) {
+    switch (role.toLowerCase()) {
+      case 'all':
+        return 'All';
+      case 'both_sellerandbuyer':
+        return 'Buyer & Seller';
+      case 'sub_admin':
+        return 'Sub Admin';
+      default:
+        return role.isEmpty ? role : '${role[0].toUpperCase()}${role.substring(1)}';
+    }
+  }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   @override

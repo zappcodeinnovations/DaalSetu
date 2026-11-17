@@ -36,6 +36,8 @@ import 'package:daalsetu/modules/seller/contracts/view/seller_contracts_view.dar
 import 'package:daalsetu/modules/seller/branches/view/seller_branches_view.dart';
 import 'package:daalsetu/modules/seller/challans/view/seller_delivery_challan_view.dart';
 import 'package:daalsetu/modules/transporter/bidding/view/transporter_bidding_view.dart';
+import 'package:daalsetu/services/panel_service.dart';
+import 'package:daalsetu/utils/app_snackbar.dart';
 
 class AdminDrawer extends StatelessWidget {
   const AdminDrawer({super.key, this.activeKey});
@@ -555,6 +557,18 @@ class AdminDrawer extends StatelessWidget {
               iconBgColor: const Color(0xFFEEF2FF),
               onTap: () => Get.to(() => const SellerCompanyView()),
             ),
+            if (controller.isCombinedAccount.value) ...[
+              _buyerDivider(context),
+              _buyerMenuItem(
+                context: context,
+                key: 'switch_panel',
+                title: 'Switch to Seller panel',
+                icon: Icons.swap_horiz_rounded,
+                iconColor: const Color(0xFFEA580C),
+                iconBgColor: const Color(0xFFFFF7ED),
+                onTap: () => switchPanelFromMenu('seller'),
+              ),
+            ],
           ],
         ),
 
@@ -854,6 +868,18 @@ class AdminDrawer extends StatelessWidget {
               iconBgColor: const Color(0xFFCCFBF1),
               onTap: () => Get.to(() => const SellerBranchesView()),
             ),
+            if (controller.isCombinedAccount.value) ...[
+              _buyerDivider(context),
+              _buyerMenuItem(
+                context: context,
+                key: 'switch_panel',
+                title: 'Switch to Buyer panel',
+                icon: Icons.swap_horiz_rounded,
+                iconColor: const Color(0xFFEA580C),
+                iconBgColor: const Color(0xFFFFF7ED),
+                onTap: () => switchPanelFromMenu('buyer'),
+              ),
+            ],
           ],
         ),
 
@@ -1391,5 +1417,14 @@ class AdminDrawer extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Drawer / settings "Switch panel" action for Buyer & Seller accounts.
+Future<void> switchPanelFromMenu(String panel) async {
+  try {
+    await PanelService.activate(panel);
+  } catch (error) {
+    AppSnackbar.showError(message: error.toString().replaceFirst('Exception: ', ''));
   }
 }

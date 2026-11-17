@@ -67,13 +67,15 @@ class AppBarLeading extends StatelessWidget {
 
   static const double _slot = 40;
 
-  static bool _hasBack(BuildContext context, {required bool hasChild, required bool showBack}) =>
-      hasChild || (showBack && (ModalRoute.of(context)?.canPop ?? false));
+  static bool _hasBack(BuildContext context, {required bool hasChild, required bool showBack}) {
+    final canPop = (ModalRoute.of(context)?.canPop ?? false) || Navigator.canPop(context);
+    return (hasChild && canPop) || (showBack && canPop);
+  }
 
   static double widthFor(BuildContext context, {bool hasChild = false, bool showBack = true}) {
     final slots = (_hasBack(context, hasChild: hasChild, showBack: showBack) ? 1 : 0) +
         (AppShell.isSignedInPage ? 1 : 0);
-    return slots == 0 ? kToolbarHeight : slots * _slot + 12;
+    return slots == 0 ? kToolbarHeight : (slots * _slot + 6);
   }
 
   void _openMenu(BuildContext context) {

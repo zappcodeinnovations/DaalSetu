@@ -28,7 +28,7 @@ class AddUserScreenState extends State<AddUserScreen> {
   final panController = TextEditingController();
   final gstController = TextEditingController();
 
-  final roles = const ["buyer", "seller", "transporter", "admin", "salesman"];
+  final roles = const ["buyer", "seller", "both_sellerandbuyer", "transporter", "admin", "salesman"];
   final genders = const ["male", "female", "other"];
 
   final selectedRole = "buyer".obs;
@@ -511,7 +511,10 @@ class AddUserScreenState extends State<AddUserScreen> {
         initialValue: selected.value.isEmpty ? null : selected.value,
         items: items
             .map(
-              (e) => DropdownMenuItem(value: e, child: Text(e.toUpperCase())),
+              (e) => DropdownMenuItem(
+                value: e,
+                child: Text(e == 'both_sellerandbuyer' ? 'BUYER & SELLER' : e.toUpperCase()),
+              ),
             )
             .toList(),
         onChanged: (val) => selected.value = val ?? "",

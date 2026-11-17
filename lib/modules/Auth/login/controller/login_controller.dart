@@ -11,8 +11,27 @@ import '../../../../utils/app_snackbar.dart';
 class LoginController extends GetxController {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
-  final TextEditingController usernameController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  TextEditingController _usernameController = TextEditingController();
+  TextEditingController _passwordController = TextEditingController();
+  bool _isDisposed = false;
+
+  TextEditingController get usernameController {
+    if (_isDisposed) {
+      _usernameController = TextEditingController();
+      _passwordController = TextEditingController();
+      _isDisposed = false;
+    }
+    return _usernameController;
+  }
+
+  TextEditingController get passwordController {
+    if (_isDisposed) {
+      _usernameController = TextEditingController();
+      _passwordController = TextEditingController();
+      _isDisposed = false;
+    }
+    return _passwordController;
+  }
 
   var isLoading = false.obs;
   final RxBool isPasswordVisible = false.obs;
@@ -159,13 +178,20 @@ class LoginController extends GetxController {
         username: response.user.username,
         activeBranchId: response.user.activeBranchId?.toString(),
         activeBranchCode: response.user.activeBranchCode,
+        accountRole: response.user.accountRole,
+        activePanel: response.user.activePanel,
       );
 
       if (Get.isRegistered<RealtimeNotificationService>()) {
         RealtimeNotificationService.to.startPolling();
       }
 
-      Get.offAllNamed(AppRoutes.mainNav);
+      // A Buyer & Seller account picks its panel on every login.
+      if (response.user.requiresPanelSelection) {
+        Get.offAllNamed(AppRoutes.choosePanel);
+      } else {
+        Get.offAllNamed(AppRoutes.mainNav);
+      }
     } catch (e) {
       _showMessage(title: "Unable to sign in", message: _friendlyError(e));
     } finally {
@@ -204,9 +230,20 @@ class LoginController extends GetxController {
   }
 
   @override
+  void onInit() {
+    super.onInit();
+    if (_isDisposed) {
+      _usernameController = TextEditingController();
+      _passwordController = TextEditingController();
+      _isDisposed = false;
+    }
+  }
+
+  @override
   void onClose() {
-    usernameController.dispose();
-    passwordController.dispose();
+    _isDisposed = true;
+    _usernameController.dispose();
+    _passwordController.dispose();
     super.onClose();
   }
 }
