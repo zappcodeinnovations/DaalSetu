@@ -1,5 +1,25 @@
 # Bug Log & Historical Fixes
 
+## Bug 57: Buyer Dashboard Active Requirements & Deals Carousel 3.0px Overflow in Dark Mode
+- **Symptom**: In Dark Mode, the Buyer Dashboard offers/requirements banner card (`BuyerOffersCarouselSlider`) threw a layout error: `BOTTOM OVERFLOWED BY 3.0 PIXELS` behind the "View Details" button.
+- **Root Cause**:
+  1. `BuyerOffersCarouselSlider` wrapped the `PageView.builder` in a rigid `SizedBox(height: 180)`.
+  2. In Dark Mode, the card added `border: Border.all(width: 1.5)`, which consumed 3.0 vertical pixels (1.5px top + 1.5px bottom), whereas Bright Mode had `border: null`.
+  3. Combined with card padding `all(18)`, the interior column space shrank from 144px to 141px, causing the bottom button to overflow by exactly 3.0 pixels.
+- **Fix**:
+  1. `lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`:
+     - Increased carousel height from `180` to `196` to provide comfortable responsive headroom.
+     - Adjusted card padding from `all(18)` to `symmetric(horizontal: 18, vertical: 14)`.
+     - Adjusted "View Details" button padding to `symmetric(horizontal: 18, vertical: 8)`.
+  2. `test/buyer_dashboard_offers_slider_test.dart`:
+     - Added automated regression test `renders multiple offers in dark mode without any layout overflow` asserting `tester.takeException()` is null on a 360x640 viewport.
+- **Files Changed**:
+  - `lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`
+  - `test/buyer_dashboard_offers_slider_test.dart`
+- **Verification**: `flutter test test/buyer_dashboard_offers_slider_test.dart` (14/14 tests passing); `flutter analyze` 0 issues.
+
+---
+
 ## Bug 56: Category Send For Approval Button Navigation Inset, Requirement FAB Clearance, Settings Bottom Spacing, & Global Top Spacing After Menu Icon
 - **Symptom**:
   1. Category Page (`CategoryPageView`): "SEND FOR APPROVAL" bottom bar button was cut off and partially covered by the Android 3-button system navigation bar.

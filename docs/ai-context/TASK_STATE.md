@@ -12,6 +12,7 @@
   - App-Wide Dark Theme Engine & Settings Toggle Activation: **100% COMPLETE & VERIFIED**
   - App-Wide Dark Theme Audit & Bright Mode Preservation across 8 Target Components: **100% COMPLETE & VERIFIED**
   - Buyer Dashboard Featured Offer Banner Dark Theme Adaptation (Option 1): **100% COMPLETE & VERIFIED**
+  - Buyer Dashboard Offers Carousel Dark Mode 3px Overflow Fix: **100% COMPLETE & VERIFIED (`82ca2c1`)** (Carousel height set to 196, padding balanced, 0 overflows across themes)
 - **Admin Redesign & Card Polish Scope (33 Total Admin Views / Modals Modernized)**:
   - **Batch 3B (Admin Masters List, Negotiation & Action Dialogs)**:
     - `lib/modules/admin_catalog/view/admin_module_list_screen.dart`: Upgraded generic catalog record cards and buyer cards to 18px rounded containers with `#FFE0B2` borders, vibrant icon pods, modern pill segments, and warm gradient FAB.
