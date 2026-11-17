@@ -188,6 +188,7 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
     final ordersMaxY = (maxOrder / ordersStep).ceil() * ordersStep;
     // The Spend axis is drawn on the bar chart's Orders scale: one Spend step there.
     final spendStepOnBars = ordersMaxY * spendStep / spendMaxY;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GlassCard(
       padding: const EdgeInsets.all(14),
@@ -233,7 +234,7 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: _range == range ? Colors.white : Colors.black87,
+                          color: _range == range ? Colors.white : (isDark ? const Color(0xFFCBD5E1) : Colors.black87),
                         ),
                       ),
                     ),
@@ -396,9 +397,9 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
                                 padding: const EdgeInsets.only(top: 6),
                                 child: Text(
                                   labels[index],
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 10,
-                                    color: Colors.black87,
+                                    color: isDark ? const Color(0xFFCBD5E1) : Colors.black87,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -526,6 +527,7 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
     String title,
     _ChartData data,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GlassCard(
       padding: const EdgeInsets.all(14),
       child: Column(
@@ -573,10 +575,10 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
                                 data.labels[i],
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
-                                  color: Colors.black87,
+                                  color: isDark ? const Color(0xFFCBD5E1) : Colors.black87,
                                 ),
                               ),
                             ),
@@ -644,7 +646,7 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
                                       : tick.toStringAsFixed(1),
                                   style: TextStyle(
                                     fontSize: 10,
-                                    color: Colors.grey[600],
+                                    color: isDark ? const Color(0xFF94A3B8) : Colors.grey[600],
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),

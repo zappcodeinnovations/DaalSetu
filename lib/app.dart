@@ -13,7 +13,7 @@ class AgroBrokerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeController = Get.put(ThemeController());
+    final themeController = Get.put(ThemeController(), permanent: true);
     Get.put(RealtimeNotificationService(), permanent: true);
 
     return Obx(

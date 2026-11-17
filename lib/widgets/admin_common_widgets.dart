@@ -125,6 +125,7 @@ class AdminErrorWidget extends StatelessWidget {
 
 Future<bool> showAdminDeleteDialog(BuildContext context) async {
   final theme = Theme.of(context);
+  final isDark = theme.brightness == Brightness.dark;
   return await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
@@ -152,10 +153,13 @@ Future<bool> showAdminDeleteDialog(BuildContext context) async {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             textAlign: TextAlign.center,
           ),
-          content: const Text(
+          content: Text(
             'Are you sure you want to delete this?',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Colors.black87),
+            style: TextStyle(
+              fontSize: 14,
+              color: isDark ? const Color(0xFFCBD5E1) : Colors.black87,
+            ),
           ),
           actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
           actions: [
@@ -166,7 +170,9 @@ Future<bool> showAdminDeleteDialog(BuildContext context) async {
                     onPressed: () => Navigator.pop(context, false),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      side: BorderSide(color: Colors.grey.shade300),
+                      side: BorderSide(
+                        color: isDark ? const Color(0xFF334155) : Colors.grey.shade300,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -174,7 +180,7 @@ Future<bool> showAdminDeleteDialog(BuildContext context) async {
                     child: Text(
                       'Cancel',
                       style: TextStyle(
-                        color: Colors.grey.shade700,
+                        color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

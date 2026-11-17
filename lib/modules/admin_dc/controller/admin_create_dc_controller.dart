@@ -369,13 +369,21 @@ class AdminCreateDCController extends GetxController {
       firstDate: DateTime(2025),
       lastDate: DateTime(2030),
       builder: (context, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFFF5B400),
-              onPrimary: Colors.black,
-              onSurface: Colors.black,
-            ),
+            colorScheme: isDark
+                ? const ColorScheme.dark(
+                    primary: Color(0xFFF5B400),
+                    onPrimary: Colors.black,
+                    surface: Color(0xFF1E293B),
+                    onSurface: Colors.white,
+                  )
+                : const ColorScheme.light(
+                    primary: Color(0xFFF5B400),
+                    onPrimary: Colors.black,
+                    onSurface: Colors.black,
+                  ),
           ),
           child: child!,
         );

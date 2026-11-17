@@ -18,6 +18,7 @@ class BuyerDeliveryChallanView extends StatelessWidget {
     // Initialize controller
     final controller = Get.put(BuyerDeliveryChallanController());
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -40,11 +41,12 @@ class BuyerDeliveryChallanView extends StatelessWidget {
                       key: const ValueKey('searchField'),
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isDark ? theme.cardColor : Colors.white,
                         borderRadius: BorderRadius.circular(20),
+                        border: isDark ? Border.all(color: const Color(0xFF2C394F)) : null,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
+                            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -64,7 +66,10 @@ class BuyerDeliveryChallanView extends StatelessWidget {
                           focusedBorder: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         ),
-                        style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF0A0F1D)),
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          color: isDark ? Colors.white : const Color(0xFF0A0F1D),
+                        ),
                       ),
                     )
                   : Align(

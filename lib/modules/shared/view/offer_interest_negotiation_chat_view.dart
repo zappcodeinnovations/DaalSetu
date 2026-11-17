@@ -1201,6 +1201,7 @@ class _OfferInterestNegotiationChatViewState
   }
 
   Widget _decisionBar(bool canAccept, bool canReject) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
       decoration: BoxDecoration(
@@ -1279,7 +1280,7 @@ class _OfferInterestNegotiationChatViewState
                       color: Color(0xFFD32F2F),
                       width: 1.5,
                     ),
-                    backgroundColor: Colors.white,
+                    backgroundColor: isDark ? Colors.transparent : Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),

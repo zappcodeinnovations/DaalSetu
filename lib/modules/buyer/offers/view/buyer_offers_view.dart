@@ -113,6 +113,7 @@ class _OfferList extends StatelessWidget {
 
   Widget _buildPageContent(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final controller = Get.put(
       BuyerOffersController(offerType: offerType),
       tag: offerType,
@@ -125,15 +126,15 @@ class _OfferList extends StatelessWidget {
           child: Container(
             height: 46,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? theme.cardColor : Colors.white,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: const Color(0xFFE2E8F0),
+                color: isDark ? const Color(0xFF2C394F) : const Color(0xFFE2E8F0),
                 width: 1.2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF0F172A).withValues(alpha: 0.05),
+                  color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
                 ),
@@ -144,7 +145,7 @@ class _OfferList extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 13.5,
                 fontWeight: FontWeight.w500,
-                color: const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF0F172A),
               ),
               decoration: InputDecoration(
                 hintText: offerType == 'requirements'
@@ -152,7 +153,7 @@ class _OfferList extends StatelessWidget {
                     : "Search offers (name, price, qty)...",
                 hintStyle: GoogleFonts.inter(
                   fontSize: 13,
-                  color: const Color(0xFF94A3B8),
+                  color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
                 ),
                 prefixIcon: const Icon(
                   IconlyLight.search,
@@ -285,6 +286,8 @@ class _OfferList extends StatelessWidget {
                 itemCount: offers.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
+                  final theme = Theme.of(context);
+                  final isDark = theme.brightness == Brightness.dark;
                   final offer = offers[index];
                   final isReq = offerType == 'requirements' || offer.isRfq;
                   final isInterestsTab = offerType == 'interests';
@@ -351,15 +354,15 @@ class _OfferList extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(15),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isDark ? theme.cardColor : Colors.white,
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(
-                          color: const Color(0xFFE2E8F0),
+                          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFE2E8F0),
                           width: 1.2,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+                            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
                             blurRadius: 14,
                             offset: const Offset(0, 4),
                           ),
@@ -379,10 +382,10 @@ class _OfferList extends StatelessWidget {
                                   width: 58,
                                   height: 58,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF8FAFC),
+                                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: const Color(0xFFE2E8F0),
+                                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
                                     ),
                                   ),
                                   child: (offer.imageUrl != null &&
@@ -418,7 +421,7 @@ class _OfferList extends StatelessWidget {
                                             style: GoogleFonts.poppins(
                                               fontWeight: FontWeight.w700,
                                               fontSize: 15,
-                                              color: const Color(0xFF0F172A),
+                                              color: isDark ? Colors.white : const Color(0xFF0F172A),
                                               height: 1.2,
                                             ),
                                           ),
@@ -426,6 +429,7 @@ class _OfferList extends StatelessWidget {
                                         const SizedBox(width: 6),
                                         _buildHeartBadge(
                                           offer.interestCount ?? '0',
+                                          isDark,
                                         ),
                                       ],
                                     ),
@@ -460,7 +464,7 @@ class _OfferList extends StatelessWidget {
                                             style: GoogleFonts.inter(
                                               fontSize: 11.5,
                                               fontWeight: FontWeight.w600,
-                                              color: const Color(0xFF475569),
+                                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
                                             ),
                                           ),
                                       ],
@@ -480,10 +484,10 @@ class _OfferList extends StatelessWidget {
                               vertical: 10,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
+                              color: isDark ? const Color(0xFF1A2235) : const Color(0xFFF8FAFC),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: const Color(0xFFE2E8F0),
+                                color: isDark ? const Color(0xFF2D3B55) : const Color(0xFFE2E8F0),
                               ),
                             ),
                             child: Row(
@@ -494,7 +498,7 @@ class _OfferList extends StatelessWidget {
                                       Container(
                                         padding: const EdgeInsets.all(6),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFFFFF7ED),
+                                          color: isDark ? const Color(0xFFEA580C).withValues(alpha: 0.15) : const Color(0xFFFFF7ED),
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                         child: const Icon(
@@ -514,7 +518,7 @@ class _OfferList extends StatelessWidget {
                                               style: GoogleFonts.inter(
                                                 fontSize: 10,
                                                 fontWeight: FontWeight.w500,
-                                                color: const Color(0xFF64748B),
+                                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                                               ),
                                             ),
                                             Text(
@@ -522,7 +526,7 @@ class _OfferList extends StatelessWidget {
                                               style: GoogleFonts.poppins(
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.w700,
-                                                color: const Color(0xFF0F172A),
+                                                color: isDark ? Colors.white : const Color(0xFF0F172A),
                                               ),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
@@ -536,7 +540,7 @@ class _OfferList extends StatelessWidget {
                                 Container(
                                   width: 1,
                                   height: 28,
-                                  color: const Color(0xFFE2E8F0),
+                                  color: isDark ? const Color(0xFF2D3B55) : const Color(0xFFE2E8F0),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -545,7 +549,7 @@ class _OfferList extends StatelessWidget {
                                       Container(
                                         padding: const EdgeInsets.all(6),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFFECFDF5),
+                                          color: isDark ? const Color(0xFF059669).withValues(alpha: 0.15) : const Color(0xFFECFDF5),
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                         child: const Icon(
@@ -565,7 +569,7 @@ class _OfferList extends StatelessWidget {
                                               style: GoogleFonts.inter(
                                                 fontSize: 10,
                                                 fontWeight: FontWeight.w500,
-                                                color: const Color(0xFF64748B),
+                                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                                               ),
                                             ),
                                             Text(
@@ -573,7 +577,7 @@ class _OfferList extends StatelessWidget {
                                               style: GoogleFonts.poppins(
                                                 fontSize: 13.5,
                                                 fontWeight: FontWeight.w700,
-                                                color: const Color(0xFFC2410C),
+                                                color: isDark ? const Color(0xFFFB923C) : const Color(0xFFC2410C),
                                               ),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
@@ -670,10 +674,13 @@ class _OfferList extends StatelessWidget {
   }
 
   Widget _buildNoMediaPlaceholder(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFFFFF7ED), Color(0xFFFFEDD5)],
+          colors: isDark
+              ? const [Color(0xFF2C394F), Color(0xFF202B3D)]
+              : const [Color(0xFFFFF7ED), Color(0xFFFFEDD5)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -693,7 +700,7 @@ class _OfferList extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 8,
                 fontWeight: FontWeight.w800,
-                color: const Color(0xFFC2410C),
+                color: isDark ? const Color(0xFFFB923C) : const Color(0xFFC2410C),
                 letterSpacing: 0.5,
               ),
             ),
@@ -703,13 +710,15 @@ class _OfferList extends StatelessWidget {
     );
   }
 
-  Widget _buildHeartBadge(String count) {
+  Widget _buildHeartBadge(String count, [bool isDark = false]) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF1F2),
+        color: isDark ? const Color(0xFFE11D48).withValues(alpha: 0.15) : const Color(0xFFFFF1F2),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFFECDD3)),
+        border: Border.all(
+          color: isDark ? const Color(0xFFE11D48).withValues(alpha: 0.35) : const Color(0xFFFECDD3),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -730,6 +739,7 @@ class _OfferList extends StatelessWidget {
   }
 
   Widget _buildStatusBadge(String status, ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
     final sUpper = status.toUpperCase().replaceAll('_', ' ');
     final isOutOfStock = sUpper.contains('OUT OF STOCK') || sUpper.contains('SOLD OUT');
     final isGood = !isOutOfStock &&
@@ -754,22 +764,28 @@ class _OfferList extends StatelessWidget {
             sUpper.contains('INTEREST'));
 
     final Color bgColor = isGood
-        ? const Color(0xFFDCFCE7)
+        ? (isDark ? const Color(0xFF059669).withValues(alpha: 0.2) : const Color(0xFFDCFCE7))
         : (isBad
-            ? const Color(0xFFFEE2E2)
-            : (isWarning ? const Color(0xFFFEF3C7) : const Color(0xFFFFEDD5)));
+            ? (isDark ? const Color(0xFFDC2626).withValues(alpha: 0.2) : const Color(0xFFFEE2E2))
+            : (isWarning
+                ? (isDark ? const Color(0xFFD97706).withValues(alpha: 0.2) : const Color(0xFFFEF3C7))
+                : (isDark ? const Color(0xFFEA580C).withValues(alpha: 0.2) : const Color(0xFFFFEDD5))));
 
     final Color textColor = isGood
-        ? const Color(0xFF15803D)
+        ? (isDark ? const Color(0xFF4ADE80) : const Color(0xFF15803D))
         : (isBad
-            ? const Color(0xFFDC2626)
-            : (isWarning ? const Color(0xFFB45309) : const Color(0xFFEA580C)));
+            ? (isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626))
+            : (isWarning
+                ? (isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309))
+                : (isDark ? const Color(0xFFFB923C) : const Color(0xFFEA580C))));
 
     final Color borderColor = isGood
-        ? const Color(0xFF86EFAC)
+        ? (isDark ? const Color(0xFF059669).withValues(alpha: 0.4) : const Color(0xFF86EFAC))
         : (isBad
-            ? const Color(0xFFFCA5A5)
-            : (isWarning ? const Color(0xFFFCD34D) : const Color(0xFFFDBA74)));
+            ? (isDark ? const Color(0xFFDC2626).withValues(alpha: 0.4) : const Color(0xFFFCA5A5))
+            : (isWarning
+                ? (isDark ? const Color(0xFFD97706).withValues(alpha: 0.4) : const Color(0xFFFCD34D))
+                : (isDark ? const Color(0xFFEA580C).withValues(alpha: 0.4) : const Color(0xFFFDBA74))));
 
     String displayStatus = status;
     if (sUpper.contains('EXPIRED')) {
@@ -802,12 +818,15 @@ class _OfferList extends StatelessWidget {
     if (text.trim().isEmpty || (text.startsWith('{') && text.endsWith('}'))) {
       return const SizedBox.shrink();
     }
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
+        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(7),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -819,7 +838,7 @@ class _OfferList extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF334155),
+              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
             ),
           ),
         ],

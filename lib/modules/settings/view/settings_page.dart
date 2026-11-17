@@ -185,6 +185,36 @@ class SettingsScreen extends StatelessWidget {
 
             const SizedBox(height: 26),
 
+            /// PREFERENCES SECTION
+            _sectionLabel(context, "PREFERENCES"),
+            const SizedBox(height: 10),
+            GlassCard(
+              padding: EdgeInsets.zero,
+              child: Obx(
+                () => _buildSwitchTile(
+                  context,
+                  icon: themeController.isDark
+                      ? Icons.dark_mode_rounded
+                      : Icons.light_mode_rounded,
+                  iconColor: AppTheme.secondaryOrange,
+                  title: "Dark Theme",
+                  subtitle: themeController.isDark
+                      ? "Dark background with high contrast"
+                      : "Light background with fresh tones",
+                  value: themeController.isDark,
+                  onChanged: (val) {
+                    if (val) {
+                      themeController.setDarkTheme();
+                    } else {
+                      themeController.setLightTheme();
+                    }
+                  },
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 26),
+
             /// APP INFO
             _sectionLabel(context, "APP INFORMATION"),
             const SizedBox(height: 10),
@@ -192,17 +222,18 @@ class SettingsScreen extends StatelessWidget {
               padding: EdgeInsets.zero,
               child: Column(
                 children: [
-                  // _buildTile(
-                  //   context,
-                  //   icon: IconlyLight.info_square,
-                  //   title: "About App",
-                  //   onTap: () => _showInfoDialog(
-                  //     context,
-                  //     "About App",
-                  //     "DaalSetu Admin v1.0",
-                  //   ),
-                  // ),
-                  // _glassDivider(context),
+                  _buildTile(
+                    context,
+                    icon: IconlyLight.info_square,
+                    title: "About App",
+                    subtitle: "DaalSetu v1.0 • Enterprise Agritech Platform",
+                    onTap: () => _showInfoDialog(
+                      context,
+                      "About App",
+                      "DaalSetu is an enterprise agritech marketplace empowering Buyers, Sellers, and Transporters with seamless commodities trading and logistics.",
+                    ),
+                  ),
+                  _glassDivider(context),
                   _buildTile(
                     context,
                     icon: IconlyLight.document,
@@ -400,6 +431,7 @@ class SettingsScreen extends StatelessWidget {
   Widget _buildSwitchTile(
     BuildContext context, {
     required IconData icon,
+    Color? iconColor,
     required String title,
     required String subtitle,
     required bool value,
@@ -415,7 +447,7 @@ class SettingsScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              GlassIconBox(icon: icon),
+              GlassIconBox(icon: icon, color: iconColor),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -442,7 +474,12 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-              Switch(value: value, onChanged: onChanged),
+              Switch(
+                value: value,
+                onChanged: onChanged,
+                activeThumbColor: AppTheme.secondaryOrange,
+                activeTrackColor: AppTheme.secondaryOrange.withValues(alpha: 0.38),
+              ),
             ],
           ),
         ),
@@ -686,11 +723,43 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return AlertDialog(
-      title: Text(
-        "Delete account?",
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+      backgroundColor: theme.cardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: isDark ? AppTheme.borderColor : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+      ),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.error.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.warning_amber_rounded,
+              color: theme.colorScheme.error,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              "Delete account?",
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                color: theme.textTheme.titleMedium?.color,
+              ),
+            ),
+          ),
+        ],
       ),
       content: SingleChildScrollView(
         child: Column(
@@ -699,7 +768,11 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
           children: [
             Text(
               "Your account will be deactivated and you will be signed out. Existing business records will be preserved for audit purposes.",
-              style: GoogleFonts.inter(height: 1.4),
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                height: 1.45,
+                color: theme.textTheme.bodyMedium?.color,
+              ),
             ),
             const SizedBox(height: 18),
             TextField(
@@ -707,6 +780,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
               obscureText: _obscurePassword,
               enabled: !_isDeleting,
               autofocus: true,
+              style: TextStyle(color: theme.textTheme.bodyLarge?.color),
               decoration: InputDecoration(
                 labelText: "Current password",
                 prefixIcon: const Icon(Icons.lock_outline_rounded),
@@ -728,12 +802,22 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
       actions: [
         TextButton(
           onPressed: _isDeleting ? null : () => Navigator.of(context).pop(),
-          child: const Text("Cancel"),
+          child: Text(
+            "Cancel",
+            style: TextStyle(
+              color: theme.textTheme.bodyMedium?.color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
         FilledButton.icon(
           style: FilledButton.styleFrom(
             backgroundColor: theme.colorScheme.error,
             foregroundColor: theme.colorScheme.onError,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
           onPressed: _isDeleting
               ? null

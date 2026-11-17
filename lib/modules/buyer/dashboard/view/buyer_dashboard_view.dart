@@ -295,6 +295,8 @@ class BuyerDashboardView extends StatelessWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final displayCategories = categories.take(6).toList();
 
     return SingleChildScrollView(
@@ -312,12 +314,15 @@ class BuyerDashboardView extends StatelessWidget {
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFF3E0),
+                      color: isDark ? const Color(0xFF202B3D) : const Color(0xFFFFF3E0),
                       shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFFFE0B2), width: 1.5),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+                        width: 1.5,
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFF57C00).withValues(alpha: 0.12),
+                          color: const Color(0xFFF57C00).withValues(alpha: isDark ? 0.08 : 0.12),
                           blurRadius: 10,
                           offset: const Offset(0, 3),
                         ),
@@ -564,28 +569,29 @@ class BuyerDashboardView extends StatelessWidget {
     VoidCallback? onTap,
   }) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     // Distinct vibrant color accents for each metric
     Color iconColor;
     Color iconBg;
     if (title.contains("SPENT")) {
       iconColor = const Color(0xFF059669); // Emerald Green
-      iconBg = const Color(0xFFECFDF5);
+      iconBg = isDark ? const Color(0xFF064E3B).withValues(alpha: 0.4) : const Color(0xFFECFDF5);
     } else if (title.contains("ACTIVE ORDERS") || title.contains("REQUIREMENT")) {
       iconColor = const Color(0xFFEA580C); // Warm Orange
-      iconBg = const Color(0xFFFFF7ED);
+      iconBg = isDark ? const Color(0xFF7C2D12).withValues(alpha: 0.4) : const Color(0xFFFFF7ED);
     } else if (title.contains("CONTRACT")) {
       iconColor = const Color(0xFF2563EB); // Royal Blue
-      iconBg = const Color(0xFFEFF6FF);
+      iconBg = isDark ? const Color(0xFF1E3A8A).withValues(alpha: 0.4) : const Color(0xFFEFF6FF);
     } else if (title.contains("TRANSIT")) {
       iconColor = const Color(0xFF7C3AED); // Purple
-      iconBg = const Color(0xFFFAF5FF);
+      iconBg = isDark ? const Color(0xFF4C1D95).withValues(alpha: 0.4) : const Color(0xFFFAF5FF);
     } else if (title.contains("PAYMENT") || title.contains("COMPLAINT") || title.contains("ISSUE")) {
       iconColor = const Color(0xFFDC2626); // Red
-      iconBg = const Color(0xFFFEF2F2);
+      iconBg = isDark ? const Color(0xFF7F1D1D).withValues(alpha: 0.4) : const Color(0xFFFEF2F2);
     } else {
       iconColor = const Color(0xFFD97706); // Amber
-      iconBg = const Color(0xFFFFFBEB);
+      iconBg = isDark ? const Color(0xFF78350F).withValues(alpha: 0.4) : const Color(0xFFFFFBEB);
     }
 
     return InkWell(
@@ -597,7 +603,7 @@ class BuyerDashboardView extends StatelessWidget {
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: const Color(0xFFE2E8F0),
+            color: isDark ? const Color(0xFF2C394F) : const Color(0xFFE2E8F0),
             width: 1.2,
           ),
           boxShadow: [
@@ -650,7 +656,7 @@ class BuyerDashboardView extends StatelessWidget {
               style: GoogleFonts.poppins(
                 fontSize: 19,
                 fontWeight: FontWeight.w800,
-                color: const Color(0xFF0A0F1D),
+                color: isDark ? Colors.white : const Color(0xFF0A0F1D),
               ),
             ),
             const SizedBox(height: 4),
@@ -659,20 +665,24 @@ class BuyerDashboardView extends StatelessWidget {
                 margin: const EdgeInsets.only(top: 2),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
+                  color: isDark ? const Color(0xFF064E3B).withValues(alpha: 0.4) : const Color(0xFFECFDF5),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.trending_up_rounded, size: 13, color: Color(0xFF059669)),
+                    Icon(
+                      Icons.trending_up_rounded,
+                      size: 13,
+                      color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       subtitle,
                       style: GoogleFonts.inter(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF059669),
+                        color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
                       ),
                     ),
                   ],
@@ -699,6 +709,7 @@ class BuyerDashboardView extends StatelessWidget {
     BuildContext context,
     List<dynamic> requirements,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (requirements.isEmpty) {
       return const Center(
         child: Text("No recent requirements or negotiations."),
@@ -858,7 +869,7 @@ class BuyerDashboardView extends StatelessWidget {
                       style: GoogleFonts.poppins(
                         fontWeight: FontWeight.w700,
                         fontSize: 12.5,
-                        color: Colors.black87,
+                        color: isDark ? Colors.white : Colors.black87,
                       ),
                     ),
                   ),
@@ -868,7 +879,7 @@ class BuyerDashboardView extends StatelessWidget {
                       updatedText,
                       style: TextStyle(
                         fontSize: 10,
-                        color: Colors.grey.shade600,
+                        color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
@@ -882,7 +893,7 @@ class BuyerDashboardView extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 11,
-                  color: Colors.grey.shade600,
+                  color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
                   fontWeight: FontWeight.w400,
                 ),
               ),
@@ -1322,6 +1333,7 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
     int index,
     int totalCount,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     String title = offer.displayTitle ?? offer.title ?? "Special Deal";
     if (title.contains("API-DOC")) {
       title = title.split(" ").skip(1).join(" ");
@@ -1364,18 +1376,35 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
           width: double.infinity,
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [
-                Color(0xFFE65100), // Deep rich saffron
-                Color(0xFFF57C00), // Vibrant amber orange
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            gradient: isDark
+                ? const LinearGradient(
+                    colors: [
+                      Color(0xFF1E293B), // Sleek Dark Slate surface
+                      Color(0xFF161F2E), // Deep Dark Navy
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : const LinearGradient(
+                    colors: [
+                      Color(0xFFE65100), // Deep rich saffron
+                      Color(0xFFF57C00), // Vibrant amber orange
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
             borderRadius: cardRadius,
+            border: isDark
+                ? Border.all(
+                    color: const Color(0xFFEA580C).withValues(alpha: 0.45),
+                    width: 1.5,
+                  )
+                : null,
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFE65100).withValues(alpha: 0.28),
+                color: isDark
+                    ? const Color(0xFFEA580C).withValues(alpha: 0.12)
+                    : const Color(0xFFE65100).withValues(alpha: 0.28),
                 blurRadius: 16,
                 offset: const Offset(0, 6),
               ),
@@ -1391,8 +1420,13 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: isDark ? const Color(0xFFEA580C).withValues(alpha: 0.15) : Colors.white,
                       borderRadius: BorderRadius.circular(20),
+                      border: isDark
+                          ? Border.all(
+                              color: const Color(0xFFEA580C).withValues(alpha: 0.4),
+                            )
+                          : null,
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -1400,7 +1434,7 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
                         Icon(
                           isRfq ? IconlyBold.document : IconlyBold.discount,
                           size: 13,
-                          color: const Color(0xFFE65100),
+                          color: isDark ? const Color(0xFFFB923C) : const Color(0xFFE65100),
                         ),
                         const SizedBox(width: 5),
                         Text(
@@ -1408,7 +1442,7 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
                           style: GoogleFonts.inter(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
-                            color: const Color(0xFFE65100),
+                            color: isDark ? const Color(0xFFFB923C) : const Color(0xFFE65100),
                             letterSpacing: 0.8,
                           ),
                         ),
@@ -1422,7 +1456,9 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.25),
+                        color: isDark
+                            ? const Color(0xFF334155)
+                            : Colors.white.withValues(alpha: 0.25),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
@@ -1430,7 +1466,7 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                          color: isDark ? const Color(0xFFCBD5E1) : Colors.white,
                         ),
                       ),
                     ),
@@ -1459,7 +1495,7 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
                       style: GoogleFonts.poppins(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
-                        color: Colors.white,
+                        color: isDark ? const Color(0xFFFB923C) : Colors.white,
                       ),
                     ),
                   if (qty.isNotEmpty) ...[
@@ -1470,7 +1506,7 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
                         style: GoogleFonts.inter(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w500,
-                          color: Colors.white.withValues(alpha: 0.9),
+                          color: isDark ? const Color(0xFF94A3B8) : Colors.white.withValues(alpha: 0.9),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1483,10 +1519,12 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
               ElevatedButton(
                 onPressed: navigateToDetails,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFFE65100),
-                  elevation: 4,
-                  shadowColor: Colors.black.withValues(alpha: 0.15),
+                  backgroundColor: isDark ? const Color(0xFFEA580C) : Colors.white,
+                  foregroundColor: isDark ? Colors.white : const Color(0xFFE65100),
+                  elevation: isDark ? 2 : 4,
+                  shadowColor: isDark
+                      ? const Color(0xFFEA580C).withValues(alpha: 0.3)
+                      : Colors.black.withValues(alpha: 0.15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
@@ -1500,18 +1538,22 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
                       style: GoogleFonts.inter(
                         fontWeight: FontWeight.w800,
                         fontSize: 13,
-                        color: const Color(0xFFE65100),
+                        color: isDark ? Colors.white : const Color(0xFFE65100),
                       ),
                     ),
                     const SizedBox(width: 6),
-                    const Icon(IconlyLight.arrow_right_2, size: 14, color: Color(0xFFE65100)),
+                    Icon(
+                      IconlyLight.arrow_right_2,
+                      size: 14,
+                      color: isDark ? Colors.white : const Color(0xFFE65100),
+                    ),
                   ],
                 ),
               ),
             ],
           ),
-    ),
-  ),
-);
+        ),
+      ),
+    );
   }
 }

@@ -383,12 +383,13 @@ class AdminNotificationController extends GetxController {
 
   Widget _buildNotificationDetailSheet(AdminNotificationModel item) {
     final offerId = extractOfferId(item);
+    final isDark = Get.isDarkMode;
 
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -399,7 +400,7 @@ class AdminNotificationController extends GetxController {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: isDark ? const Color(0xFF334155) : Colors.grey[300],
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -438,7 +439,11 @@ class AdminNotificationController extends GetxController {
           const SizedBox(height: 12),
           Text(
             item.message,
-            style: const TextStyle(fontSize: 14, height: 1.5, color: Color(0xFF334155)),
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.5,
+              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+            ),
           ),
           const SizedBox(height: 24),
 
@@ -471,7 +476,10 @@ class AdminNotificationController extends GetxController {
             width: double.infinity,
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF0F172A),
+                foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
+                side: BorderSide(
+                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                ),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),

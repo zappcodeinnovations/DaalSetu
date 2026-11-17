@@ -131,14 +131,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
       builder: (context, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: Theme.of(context).colorScheme.primary,
-              onPrimary: Colors.black,
-              surface: const Color(0xFF161C2C),
-              onSurface: Colors.white,
-            ),
+            colorScheme: isDark
+                ? ColorScheme.dark(
+                    primary: Theme.of(context).colorScheme.primary,
+                    onPrimary: Colors.white,
+                    surface: const Color(0xFF161C2C),
+                    onSurface: Colors.white,
+                  )
+                : ColorScheme.light(
+                    primary: Theme.of(context).colorScheme.primary,
+                    onPrimary: Colors.white,
+                    surface: Colors.white,
+                    onSurface: const Color(0xFF0A0F1D),
+                  ),
           ),
           child: child!,
         );
@@ -430,7 +438,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               child: const Icon(
                                 IconlyBold.camera,
                                 size: 16,
-                                color: Colors.black,
+                                color: Colors.white,
                               ),
                             ),
                           ),
@@ -665,7 +673,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: Colors.black87,
+                          color: Colors.white,
                         ),
                       ),
                     ),

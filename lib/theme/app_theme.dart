@@ -165,15 +165,34 @@ class AppTheme {
 
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return primaryGold;
+          if (states.contains(WidgetState.selected)) return secondaryOrange;
           return textMuted;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return primaryGold.withValues(alpha: 0.3);
+            return secondaryOrange.withValues(alpha: 0.38);
           }
           return borderColor;
         }),
+      ),
+
+      dialogTheme: DialogThemeData(
+        backgroundColor: cardColor,
+        surfaceTintColor: Colors.transparent,
+        elevation: 8,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: borderColor, width: 1.2),
+        ),
+      ),
+
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: cardColor,
+        surfaceTintColor: Colors.transparent,
+        elevation: 12,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
       ),
 
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
@@ -324,6 +343,25 @@ class AppTheme {
           }
           return borderLight;
         }),
+      ),
+
+      dialogTheme: DialogThemeData(
+        backgroundColor: cardLight,
+        surfaceTintColor: Colors.transparent,
+        elevation: 6,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: borderLight, width: 1.2),
+        ),
+      ),
+
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: cardLight,
+        surfaceTintColor: Colors.transparent,
+        elevation: 12,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
       ),
 
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(

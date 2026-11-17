@@ -673,7 +673,7 @@ class _AddProductViewState extends State<AddProductView> {
                             errorBuilder: (_, __, ___) => Container(
                               width: 64,
                               height: 64,
-                              color: Colors.black12,
+                              color: Get.isDarkMode ? const Color(0xFF1E293B) : Colors.black12,
                               child: const Icon(Icons.image_outlined),
                             ),
                           ),

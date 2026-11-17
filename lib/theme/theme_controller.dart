@@ -5,14 +5,26 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ThemeController extends GetxController {
   final themeMode = ThemeMode.light.obs;
 
+  /// Whether dark mode is currently active
+  bool get isDark => themeMode.value == ThemeMode.dark;
+
   @override
   void onInit() {
     super.onInit();
     loadTheme();
   }
 
+  /// Toggle between light and dark theme
+  Future<void> toggleTheme() async {
+    if (isDark) {
+      await setLightTheme();
+    } else {
+      await setDarkTheme();
+    }
+  }
+
   /// SET LIGHT THEME
-  void setLightTheme() async {
+  Future<void> setLightTheme() async {
     themeMode.value = ThemeMode.light;
 
     final prefs = await SharedPreferences.getInstance();
@@ -20,7 +32,7 @@ class ThemeController extends GetxController {
   }
 
   /// SET DARK THEME
-  void setDarkTheme() async {
+  Future<void> setDarkTheme() async {
     themeMode.value = ThemeMode.dark;
 
     final prefs = await SharedPreferences.getInstance();
@@ -28,7 +40,7 @@ class ThemeController extends GetxController {
   }
 
   /// SET SYSTEM THEME
-  void setSystemTheme() async {
+  Future<void> setSystemTheme() async {
     themeMode.value = ThemeMode.system;
 
     final prefs = await SharedPreferences.getInstance();
@@ -36,7 +48,7 @@ class ThemeController extends GetxController {
   }
 
   /// LOAD SAVED THEME
-  void loadTheme() async {
+  Future<void> loadTheme() async {
     final prefs = await SharedPreferences.getInstance();
     final savedTheme = prefs.getString("themeMode");
 
@@ -46,6 +58,9 @@ class ThemeController extends GetxController {
         break;
       case "dark":
         themeMode.value = ThemeMode.dark;
+        break;
+      case "system":
+        themeMode.value = ThemeMode.system;
         break;
       default:
         themeMode.value = ThemeMode.light;
