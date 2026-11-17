@@ -8,9 +8,6 @@
   - Bug 56 (Category Button Navigation Overlap, Activity FAB Clearance, Settings Bottom Spacing, Global AppBar Title Spacing): **Preserved & Integrated**
   - HeroHeader and Dark Theme on all Buyer/Seller views: **100% Preserved**
   - ChoosePanelScreen UI Redesign: **100% COMPLETE & VERIFIED** (0 analyzer issues, 6/6 tests passing)
-  - Color Unification (Yellow to Saffron/Orange): **100% COMPLETE & VERIFIED** (`add_buyer_offer_view.dart`, `add_company_view.dart`, `seller_ui.dart`)
-  - Buyer Activity FAB Responsive Clearance: **100% COMPLETE & VERIFIED** (4px snug clearance above floating nav bar on all devices)
-  - HeroHeader Dark Mode Modernization: **100% COMPLETE & VERIFIED across all panels** (Deep Midnight Saffron `#9A3412` -> `#1F130E` with radiant `#EA580C` bottom curved border and ambient glow)
   - Full App UI Modernization: **100% COMPLETE** (Buyer, Seller, Transporter, Admin panels, Auth portal).
   - App-Wide Dark Theme Engine & Settings Toggle Activation: **100% COMPLETE & VERIFIED**
   - App-Wide Dark Theme Audit & Bright Mode Preservation across 8 Target Components: **100% COMPLETE & VERIFIED**
