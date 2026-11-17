@@ -39,7 +39,7 @@ class TransporterUsersView extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            icon: Icon(IconlyLight.swap, color: primary),
+            icon: Icon(Icons.refresh_rounded, color: primary),
             tooltip: "Refresh",
             onPressed: controller.fetchUsers,
           ),

@@ -206,14 +206,16 @@ class TransporterCompanyView extends StatelessWidget {
                 label: const Text('Edit'),
               ),
               const SizedBox(width: 8),
-              IconButton.filledTonal(
+              IconButton(
                 tooltip: 'Delete company',
                 onPressed: () => _showDeleteConfirmDialog(context, company.id),
-                icon: const Icon(
-                  IconlyLight.delete,
-                  color: Colors.red,
-                  size: 19,
+                // Dark red icon on a light red tile: clearly visible on any theme colour.
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFFFDE8E8),
+                  foregroundColor: const Color(0xFFB91C1C),
+                  side: const BorderSide(color: Color(0xFFF8B4B4)),
                 ),
+                icon: const Icon(IconlyBold.delete, size: 19),
               ),
             ],
           ),
