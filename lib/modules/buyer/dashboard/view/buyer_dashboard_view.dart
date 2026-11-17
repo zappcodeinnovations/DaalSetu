@@ -1296,7 +1296,7 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
       mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(
-          height: 180,
+          height: 196,
           // Pause auto-slide while the user is touching the carousel.
           child: Listener(
             onPointerDown: (_) => _autoSlideTimer?.cancel(),
@@ -1391,7 +1391,7 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
         onTap: navigateToDetails,
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           decoration: BoxDecoration(
             gradient: isDark
                 ? const LinearGradient(
@@ -1545,7 +1545,7 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,

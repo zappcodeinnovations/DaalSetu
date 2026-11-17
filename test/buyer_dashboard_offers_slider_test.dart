@@ -439,6 +439,59 @@ void main() {
 
       expect(find.byType(BuyerActivityView), findsOneWidget);
     });
+
+    testWidgets('renders multiple offers in dark mode without any layout overflow', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final offers = [
+        BuyerOfferModel(
+          id: 801,
+          isRfq: true,
+          title: 'toor daal',
+          displayTitle: 'toor daal',
+          displayPrice: '₹120.00/QTL',
+          displayQuantity: '120.000 QTL',
+          status: 'open',
+          isActive: true,
+        ),
+        BuyerOfferModel(
+          id: 802,
+          isRfq: false,
+          title: 'masoor dal',
+          displayTitle: 'masoor dal',
+          displayPrice: '₹50.0/QTL',
+          displayQuantity: '50.000 QTL',
+          status: 'active',
+          isActive: true,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        GetMaterialApp(
+          theme: ThemeData.dark(),
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: BuyerOffersCarouselSlider(
+                offers: offers,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('ACTIVE REQUIREMENT'), findsOneWidget);
+      expect(find.text('toor daal'), findsOneWidget);
+      expect(find.text('View Details'), findsOneWidget);
+    });
   });
 
   group('BuyerDashboardController offers loading integration', () {
