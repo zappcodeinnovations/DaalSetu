@@ -256,7 +256,7 @@ class _EditOfferViewState extends State<EditOfferView> {
                         label: "Delivery Period",
                         from: _deliveryFrom,
                         to: _deliveryTo,
-                        hint: "Shown to buyers; they can negotiate it.",
+                        hint: "This delivery period is visible to buyers, and they can negotiate it",
                         onChanged: (from, to) => setState(() {
                           _deliveryFrom = from;
                           _deliveryTo = to;
@@ -265,7 +265,7 @@ class _EditOfferViewState extends State<EditOfferView> {
                     ),
                     _dateTile("Deal Expiry", _dealExpiry == null ? '' : SellerUi.date(_dealExpiry!.toIso8601String()), _pickExpiry),
                     _field(_location, "Loading Location"),
-                    _field(_remark, "Remark", lines: 2),
+                    _field(_remark, "Add Remark", lines: 2),
                     Text(
                       "To change bags / quantity use the Stock button on the offer card.",
                       style: TextStyle(fontSize: 12, color: Colors.grey.shade600),

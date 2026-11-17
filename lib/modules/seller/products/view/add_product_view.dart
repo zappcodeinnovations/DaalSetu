@@ -277,7 +277,7 @@ class _AddProductViewState extends State<AddProductView> {
               DeliveryPeriodPicker(
                 from: controller.deliveryFrom.value,
                 to: controller.deliveryTo.value,
-                hint: "Shown to buyers; they can negotiate it.",
+                hint: "This delivery period is visible to buyers, and they can negotiate it",
                 onChanged: (from, to) {
                   controller.deliveryFrom.value = from;
                   controller.deliveryTo.value = to;
@@ -290,7 +290,7 @@ class _AddProductViewState extends State<AddProductView> {
                 builder: (context, value, _) {
                   return _buildTextField(
                     controller.locationController,
-                    "Search or enter loading location",
+                    "Enter Loading Location",
                     IconlyLight.location,
                     minLines: 1,
                     maxLines: 2,
@@ -304,18 +304,13 @@ class _AddProductViewState extends State<AddProductView> {
                             onPressed: () =>
                                 controller.locationController.clear(),
                           )
-                        : Icon(
-                            Icons.search,
-                            key: const Key('search_location_icon'),
-                            size: 20,
-                            color: Get.theme.disabledColor,
-                          ),
+                        : null,
                   );
                 },
               ),
               _buildTextField(
                 controller.remarkController,
-                "Remark",
+                "Add Remark",
                 IconlyLight.edit,
                 maxLines: 2,
               ),

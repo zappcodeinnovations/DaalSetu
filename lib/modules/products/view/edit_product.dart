@@ -304,16 +304,16 @@ class _EditProductScreenState extends State<EditProductScreen> {
                                 label: 'Delivery Period',
                                 from: _deliveryFrom,
                                 to: _deliveryTo,
-                                hint: 'Shown to buyers; they can negotiate it.',
+                                hint: 'This delivery period is visible to buyers, and they can negotiate it',
                                 onChanged: (from, to) => setState(() {
                                   _deliveryFrom = from;
                                   _deliveryTo = to;
                                 }),
                               ),
                             ),
-                            _field(_location, 'Loading location', IconlyLight.location),
+                            _field(_location, 'Enter Loading Location', IconlyLight.location),
                             _dateTile('Deal expiry', _show(_dealExpiry, time: true), _pickExpiry),
-                            _field(_remark, 'Remark', IconlyLight.paper, maxLines: 2),
+                            _field(_remark, 'Add Remark', IconlyLight.paper, maxLines: 2),
                             SwitchListTile(
                               contentPadding: EdgeInsets.zero,
                               title: const Text('Offer active'),

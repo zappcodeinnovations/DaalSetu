@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../seller/notifications/controller/seller_notification_controller.dart';
+import '../../../../services/realtime_notification_service.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 
@@ -104,7 +105,15 @@ class TransporterNotificationsView extends StatelessWidget {
                   final notif = controller.notificationsList[index];
                   final isRead = notif.isRead == true;
 
-                  return Container(
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () {
+                      if (notif.id != null && !isRead) {
+                        controller.markAsRead(notif.id!);
+                      }
+                      RealtimeNotificationService.navigateToTarget(notif);
+                    },
+                    child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: isDark ? AppTheme.cardColor : Colors.white,
@@ -181,7 +190,7 @@ class TransporterNotificationsView extends StatelessWidget {
                           ),
                       ],
                     ),
-                  );
+                  ));
                 },
               ),
             );

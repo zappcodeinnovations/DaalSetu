@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:daalsetu/network/api_client.dart';
+import 'package:daalsetu/utils/live_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:daalsetu/modules/products/model/product_model.dart';
 import 'package:daalsetu/services/product_services.dart';
@@ -14,10 +16,20 @@ class AdminOffersController extends GetxController {
   var offers = <ProductModel>[].obs;
   bool _fetchingOffers = false;
 
+  Timer? _liveTimer;
+
   @override
   void onInit() {
     super.onInit();
     fetchOffers();
+    // Keep interest counts (heart badge) live without a manual refresh.
+    _liveTimer = startLiveRefresh(() => fetchOffers(silent: true));
+  }
+
+  @override
+  void onClose() {
+    _liveTimer?.cancel();
+    super.onClose();
   }
 
   Future<void> fetchOffers({bool silent = false}) async {

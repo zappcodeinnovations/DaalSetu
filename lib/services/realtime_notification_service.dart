@@ -1,3 +1,4 @@
+import 'package:daalsetu/modules/transporter/bidding/view/transporter_bidding_view.dart';
 import 'dart:async';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,6 +22,7 @@ import '../services/product_services.dart';
 import '../utils/app_preferences.dart';
 import 'notification_services.dart';
 import 'package:daalsetu/utils/global_error_handler.dart';
+import 'package:daalsetu/services/push_notification_service.dart';
 import '../modules/buyer/branch/controller/buyer_branch_controller.dart';
 import '../modules/seller/branches/controller/seller_branch_controller.dart';
 import '../modules/branches/controller/branch_controller.dart';
@@ -74,6 +76,8 @@ class RealtimeNotificationService extends GetxService {
   /// Start polling every 5 seconds for responsive real-time notifications
   void startPolling() {
     stopPolling();
+    // Signed in: make sure this phone receives push notifications even when the app is closed.
+    PushNotificationService.registerForCurrentUser();
     isPolling.value = true;
     _checkNotifications(); // Immediate initial check
     _pollingTimer = Timer.periodic(const Duration(seconds: 5), (_) {
@@ -411,6 +415,22 @@ class RealtimeNotificationService extends GetxService {
         } else {
           Get.toNamed(AppRoutes.adminDCDetails, arguments: challanId);
         }
+        return;
+      }
+
+      // Transporters cannot open contract details. Freight notifications (price set,
+      // counter offer, bid update, dispatch bill) open their bidding screen instead.
+      if (role == 'transporter' &&
+          (url.contains('/transporter/') ||
+              title.contains('transport') ||
+              title.contains('dispatch bill'))) {
+        final goesToMyDeals = url.contains('my-bids') ||
+            title.contains('bid update') ||
+            title.contains('dispatch bill');
+        Get.to(
+          () => TransporterBiddingView(initialTab: goesToMyDeals ? 1 : 0),
+          preventDuplicates: false,
+        );
         return;
       }
 

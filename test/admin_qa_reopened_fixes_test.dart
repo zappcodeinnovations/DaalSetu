@@ -127,7 +127,7 @@ void main() {
 
       // Verify card content renders cleanly
       expect(find.text('URADDAAL'), findsOneWidget);
-      expect(find.text('Tap to view complete details  ›'), findsOneWidget);
+      expect(find.text('Tap to view complete details'), findsOneWidget);
     });
   });
 

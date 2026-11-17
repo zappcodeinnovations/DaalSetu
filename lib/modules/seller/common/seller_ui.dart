@@ -137,7 +137,8 @@ class SellerUi {
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
         elevation: 0,
-        minimumSize: const Size(96, 44),
+        minimumSize: const Size(0, 44),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
@@ -145,8 +146,12 @@ class SellerUi {
       onPressed: () => Get.back(result: true),
       child: Text(
         confirmText,
-        style: const TextStyle(
-          color: Colors.white,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          // Dark text on light buttons (amber), white on dark ones.
+          color: ThemeData.estimateBrightnessForColor(color) == Brightness.light
+              ? Colors.black87
+              : Colors.white,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -156,7 +161,8 @@ class SellerUi {
       style: OutlinedButton.styleFrom(
         foregroundColor: Get.theme.colorScheme.onSurface,
         side: BorderSide(color: Get.theme.colorScheme.outline),
-        minimumSize: const Size(96, 44),
+        minimumSize: const Size(0, 44),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
@@ -175,7 +181,8 @@ class SellerUi {
           style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         content: Text(message),
-        actionsOverflowDirection: VerticalDirection.down,
+        // Compact buttons so both always fit on one row (they only stack on very narrow dialogs).
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: primaryFirst
             ? [confirmButton, cancelButton]
             : [cancelButton, confirmButton],

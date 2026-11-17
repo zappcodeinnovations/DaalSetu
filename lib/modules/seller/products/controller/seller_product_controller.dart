@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:daalsetu/utils/live_refresh.dart';
 import '../../categories/model/seller_category_model.dart';
 import '../../company/model/seller_company_model.dart';
 import '../../branches/model/seller_branch_model.dart';
@@ -217,7 +219,11 @@ class SellerProductController extends GetxController {
 
     fetchProducts();
     fetchSupportData();
+    // Keep interest counts (heart badge) live without a manual refresh.
+    _liveTimer = startLiveRefresh(() => fetchProducts(silent: true));
   }
+
+  Timer? _liveTimer;
 
   bool _fetchInProgress = false;
 
@@ -613,6 +619,7 @@ class SellerProductController extends GetxController {
 
   @override
   void onClose() {
+    _liveTimer?.cancel();
     for (final c in [
       titleController,
       descController,

@@ -358,7 +358,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 child: DeliveryPeriodPicker(
                   from: deliveryFrom,
                   to: deliveryTo,
-                  hint: 'Shown to buyers; they can negotiate it.',
+                  hint: 'This delivery period is visible to buyers, and they can negotiate it',
                   onChanged: (from, to) => setState(() {
                     deliveryFrom = from;
                     deliveryTo = to;
@@ -388,7 +388,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   ),
                 ],
               ),
-              _text(_location, 'Loading location', required: true),
+              _text(_location, 'Enter Loading Location', required: true),
             ]),
             _section('Offer media (optional)', [
               _mediaTile(
@@ -419,7 +419,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
             ]),
             _section('Notes', [
               _text(_description, 'Description', maxLines: 3),
-              _text(_remark, 'Remark', maxLines: 3),
+              _text(_remark, 'Add Remark', maxLines: 3),
             ]),
             const SizedBox(height: 8),
             SizedBox(

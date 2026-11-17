@@ -1,3 +1,4 @@
+import '../../../network/api_client.dart';
 import '../../../services/profile_services.dart';
 import '../../../services/buyer_services.dart';
 import '../../../comman/api_url.dart';
@@ -108,6 +109,27 @@ class ProfileController extends GetxController {
       );
       imageRevision.value = DateTime.now().millisecondsSinceEpoch;
       AppSnackbar.snackbar("Success", "Profile updated successfully");
+      return true;
+    } catch (e) {
+      AppSnackbar.snackbar("Error", e.toString().replaceFirst('Exception: ', ''));
+      return false;
+    } finally {
+      isUpdating.value = false;
+    }
+  }
+
+  /// Deletes the stored profile picture and reloads the profile.
+  Future<bool> removeProfilePhoto() async {
+    try {
+      isUpdating.value = true;
+      await ApiClient.post(
+        endpoint: ApiUrls.profilePhotoDelete,
+        body: {},
+        requireAuth: true,
+      );
+      await fetchProfile(silent: true);
+      imageRevision.value = DateTime.now().millisecondsSinceEpoch;
+      AppSnackbar.snackbar("Success", "Profile photo removed");
       return true;
     } catch (e) {
       AppSnackbar.snackbar("Error", e.toString().replaceFirst('Exception: ', ''));

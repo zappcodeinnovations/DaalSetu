@@ -52,8 +52,14 @@ class _SellerAddBrandDialogState extends State<SellerAddBrandDialog> {
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Get.back(), child: const Text("CANCEL")),
-        ElevatedButton(
+        Row(children: [
+          Expanded(child: OutlinedButton(
+            onPressed: () => Get.back(),
+            style: OutlinedButton.styleFrom(minimumSize: const Size(0, 44), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+            child: const Text("CANCEL"),
+          )),
+          const SizedBox(width: 10),
+          Expanded(child: ElevatedButton(
           onPressed: () {
             if (_nameController.text.trim().isEmpty) {
               AppSnackbar.snackbar("Error", "Brand name is required", snackPosition: SnackPosition.BOTTOM);
@@ -67,10 +73,12 @@ class _SellerAddBrandDialogState extends State<SellerAddBrandDialog> {
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: primaryColor,
+            minimumSize: const Size(0, 44),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
-          child: const Text("CREATE BRAND", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        ),
+          child: FittedBox(fit: BoxFit.scaleDown, child: const Text("CREATE BRAND", style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold))),
+        )),
+        ]),
       ],
     );
   }

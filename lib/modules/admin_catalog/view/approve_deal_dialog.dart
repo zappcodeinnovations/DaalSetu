@@ -229,7 +229,7 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
 
               // ── Admin Remark Field ────────────────────────────────────────
               Text(
-                "Seller Remark",
+                "Admin Remark",
                 style: TextStyle(
                   color: textDark,
                   fontSize: 13,

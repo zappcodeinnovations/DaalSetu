@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:daalsetu/utils/live_refresh.dart';
 import '../model/buyer_offer_model.dart';
 import '../../../../services/buyer_services.dart';
 import '../../../../services/product_services.dart';
@@ -21,10 +23,20 @@ class BuyerOffersController extends GetxController {
 
   BuyerOffersController({required this.offerType});
 
+  Timer? _liveTimer;
+
   @override
   void onInit() {
     super.onInit();
     fetchOffers();
+    // Keep interest counts (heart badge) live without a manual refresh.
+    _liveTimer = startLiveRefresh(() => fetchOffers(silent: true));
+  }
+
+  @override
+  void onClose() {
+    _liveTimer?.cancel();
+    super.onClose();
   }
 
   void searchOffers(String query) {

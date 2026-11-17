@@ -18,11 +18,23 @@ class TagService {
         throw Exception("Invalid Tag List response");
       }
 
-      final tagListResponse = TagListResponse.fromJson(
-        Map<String, dynamic>.from(response),
-      );
-
-      return tagListResponse.results;
+      // The API wraps the list as {success, message, data: {results|list}}.
+      final body = Map<String, dynamic>.from(response);
+      final data = body['data'];
+      final List<dynamic> rows;
+      if (data is List) {
+        rows = data;
+      } else if (data is Map && data['results'] is List) {
+        rows = data['results'] as List;
+      } else if (body['results'] is List) {
+        rows = body['results'] as List;
+      } else {
+        rows = const [];
+      }
+      return rows
+          .whereType<Map>()
+          .map((e) => Tag.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
     } catch (e) {
       print("❌ Fetch Tags Error: $e");
       rethrow;

@@ -30,12 +30,12 @@ class UserController extends GetxController {
 
   static const roleFilters = [
     'all',
+    'admin',
+    'sub_admin',
     'buyer',
     'seller',
-    'both_sellerandbuyer',
     'transporter',
-    'admin',
-    'salesman',
+    'both_sellerandbuyer',
   ];
 
   /// Role chip / dropdown text ("both_sellerandbuyer" -> "Buyer & Seller").
@@ -97,7 +97,7 @@ class UserController extends GetxController {
     if (selectedRole.value != 'all') {
       final sel = selectedRole.value.toLowerCase().trim();
       result = result.where((u) {
-        if (sel == 'salesman') {
+        if (sel == 'salesman' || sel == 'sub_admin') {
           return _isSalesman(u.role);
         }
         return u.role.toLowerCase().trim() == sel;
