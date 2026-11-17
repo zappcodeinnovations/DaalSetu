@@ -288,13 +288,16 @@ class GlassNavBar extends StatelessWidget {
                         const Color(0xFF0D1117),
                       ]
                     : [
-                        const Color(0xFFFFF8E1),
-                        const Color(0xFFFFFCF5),
+                        Colors.white,
+                        const Color(0xFFFFFDF9),
                         Colors.white,
                       ],
               ),
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: theme.dividerColor, width: 1),
+              border: Border.all(
+                color: isDark ? theme.dividerColor : const Color(0xFFFFE0B2),
+                width: 1.2,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: isDark

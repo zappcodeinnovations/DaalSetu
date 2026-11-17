@@ -97,7 +97,13 @@ class _AdminRolesScreenState extends State<AdminRolesScreen> {
         : null,
     appBar: HeroHeader(
       leading: widget.showAdminDrawer
-          ? const AppBarLeading()
+          ? Builder(
+              builder: (ctx) => IconButton(
+                icon: const Icon(Icons.menu, color: Colors.white),
+                tooltip: 'Open navigation menu',
+                onPressed: () => Scaffold.of(ctx).openDrawer(),
+              ),
+            )
           : IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
               onPressed: () => Navigator.of(context).maybePop(),
@@ -110,10 +116,51 @@ class _AdminRolesScreenState extends State<AdminRolesScreen> {
         icon: const Icon(Icons.refresh_rounded, color: Colors.white),
       ),
     ),
-    floatingActionButton: FloatingActionButton.extended(
-      onPressed: _loading ? null : () => _openEditor(),
-      icon: const Icon(Icons.add),
-      label: const Text('Add Role'),
+    floatingActionButton: Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFFE65100),
+            Color(0xFFF57C00),
+            Color(0xFFFFA000),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFE65100).withValues(alpha: 0.35),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(30),
+          onTap: _loading ? null : () => _openEditor(),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.add, color: Colors.white, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'Add Role',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     ),
     body: _loading
         ? const Center(child: CircularProgressIndicator())
@@ -165,13 +212,36 @@ class _AdminRolesScreenState extends State<AdminRolesScreen> {
         ? (role['permission_ids'] as List).length
         : 0;
     final system = role['is_system'] == true;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Card(
-      child: ListTile(
-        onTap: () => _openEditor(role),
-        leading: CircleAvatar(
-          child: Icon(system ? Icons.lock_outline : Icons.badge_outlined),
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+          width: 1.2,
         ),
-        title: Text(name),
+      ),
+      child: ListTile(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        onTap: () => _openEditor(role),
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: system
+                ? Colors.purple.withValues(alpha: 0.12)
+                : const Color(0xFFE65100).withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            system ? Icons.lock_outline : Icons.badge_outlined,
+            color: system ? Colors.purple : const Color(0xFFE65100),
+            size: 22,
+          ),
+        ),
+        title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -180,6 +250,10 @@ class _AdminRolesScreenState extends State<AdminRolesScreen> {
             const SizedBox(height: 4),
             Text(
               '$permissions permission${permissions == 1 ? '' : 's'}${system ? ' • System role' : ''}',
+              style: TextStyle(
+                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                fontSize: 12,
+              ),
             ),
           ],
         ),

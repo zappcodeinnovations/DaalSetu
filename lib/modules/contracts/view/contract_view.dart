@@ -228,6 +228,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
 
   Widget _contractCard(ContractModel contract) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Obx(() {
       final selected = selectedContracts.contains(contract.id);
       return InkWell(
@@ -254,8 +255,16 @@ class _ContractsScreenState extends State<ContractsScreen> {
             border: Border.all(
               color: selected
                   ? theme.colorScheme.primary
-                  : theme.dividerColor.withValues(alpha: .25),
+                  : (isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2)),
+              width: 1.2,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

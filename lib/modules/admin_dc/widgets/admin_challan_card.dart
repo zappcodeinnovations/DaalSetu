@@ -19,27 +19,25 @@ class AdminChallanCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     final cardBg = isDark ? const Color(0xFF1E2638) : Colors.white;
-    final borderColor = isDark ? const Color(0xFF2C394F) : const Color(0xFFE2E8F0);
+    final borderColor = isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2);
     final textMuted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(18),
       child: Container(
         margin: const EdgeInsets.only(bottom: 14),
         decoration: BoxDecoration(
           color: cardBg,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(color: borderColor, width: 1.2),
-          boxShadow: isDark
-              ? []
-              : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -56,7 +54,7 @@ class AdminChallanCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryGold.withOpacity(0.15),
+                            color: AppTheme.primaryGold.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(
@@ -98,11 +96,11 @@ class AdminChallanCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? challan.statusColor.withOpacity(0.18)
+                          ? challan.statusColor.withValues(alpha: 0.18)
                           : challan.statusBgColor,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: challan.statusColor.withOpacity(0.3),
+                        color: challan.statusColor.withValues(alpha: 0.3),
                         width: 1,
                       ),
                     ),
@@ -210,7 +208,7 @@ class AdminChallanCard extends StatelessWidget {
                   color: isDark ? const Color(0xFF161D2B) : const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFEDF2F7),
+                    color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFEDF2F7),
                   ),
                 ),
                 child: Row(

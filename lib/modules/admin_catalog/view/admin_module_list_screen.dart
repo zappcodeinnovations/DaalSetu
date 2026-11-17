@@ -174,11 +174,45 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
             widget.moduleKey != 'brands' &&
             (widget.moduleKey != 'category_requests' ||
                 _activeCategoryRequestTab == 0)
-        ? FloatingActionButton.extended(
-            heroTag: null,
-            onPressed: _openForm,
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Create'),
+        ? Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFF57C00), Color(0xFFFF9800)],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFF57C00).withValues(alpha: 0.35),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: _openForm,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        'Create',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           )
         : null,
     body: Column(
@@ -286,13 +320,22 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
 
   Widget _buildCategoryRequestsSegment() {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
       child: Container(
+        padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: theme.cardColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: theme.dividerColor),
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFFFE0B2), width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
@@ -302,10 +345,12 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   decoration: BoxDecoration(
-                    color: _activeCategoryRequestTab == 0
-                        ? theme.colorScheme.primary
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(11),
+                    gradient: _activeCategoryRequestTab == 0
+                        ? const LinearGradient(
+                            colors: [Color(0xFFF57C00), Color(0xFFFF9800)],
+                          )
+                        : null,
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   alignment: Alignment.center,
                   child: Row(
@@ -334,6 +379,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
                 ),
               ),
             ),
+            const SizedBox(width: 6),
             Expanded(
               child: GestureDetector(
                 onTap: () {
@@ -343,10 +389,12 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   decoration: BoxDecoration(
-                    color: _activeCategoryRequestTab == 1
-                        ? theme.colorScheme.primary
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(11),
+                    gradient: _activeCategoryRequestTab == 1
+                        ? const LinearGradient(
+                            colors: [Color(0xFFF57C00), Color(0xFFFF9800)],
+                          )
+                        : null,
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   alignment: Alignment.center,
                   child: Row(
@@ -440,6 +488,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
 
   Widget _buyerCard(Map<String, dynamic> buyer) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final rawName = (buyer['name'] ?? '').toString().trim();
     final firstLast = '${buyer['first_name'] ?? ''} ${buyer['last_name'] ?? ''}'.trim();
     final username = (buyer['username'] ?? '').toString().trim();
@@ -466,11 +515,21 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
 
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'B';
 
-    return Card(
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.4)),
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -479,13 +538,31 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFEA580C), Color(0xFFF57C00)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFF57C00).withValues(alpha: 0.25),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  alignment: Alignment.center,
                   child: Text(
                     initial,
-                    style: TextStyle(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.bold,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
                     ),
                   ),
                 ),
@@ -515,8 +592,8 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
                   icon: const Icon(Icons.edit_outlined, size: 16),
                   label: const Text('Manage'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: theme.colorScheme.primary,
-                    side: BorderSide(color: theme.colorScheme.primary),
+                    foregroundColor: const Color(0xFFF57C00),
+                    side: const BorderSide(color: Color(0xFFF57C00)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -530,22 +607,25 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: theme.scaffoldBackgroundColor,
-                borderRadius: BorderRadius.circular(10),
+                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFFFF7ED),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFFFFE0B2).withValues(alpha: 0.6),
+                ),
               ),
               child: Row(
                 children: [
                   const Icon(Icons.phone_outlined,
-                      size: 14, color: Colors.grey),
+                      size: 14, color: Color(0xFFD97706)),
                   const SizedBox(width: 6),
                   Text(
                     mobile.isNotEmpty ? mobile : '-',
                     style: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w500),
+                        fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(width: 16),
                   const Icon(Icons.category_outlined,
-                      size: 14, color: Colors.grey),
+                      size: 14, color: Color(0xFFEA580C)),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -554,8 +634,8 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
                         fontSize: 12,
                         color: assignedStr == 'No categories assigned'
                             ? Colors.grey
-                            : theme.colorScheme.primary,
-                        fontWeight: FontWeight.w500,
+                            : const Color(0xFFEA580C),
+                        fontWeight: FontWeight.w600,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -712,43 +792,64 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
 
   Widget _recordCard(AdminRecord record) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final title = _first(record, config.titleKeys);
     final subtitles = config.subtitleKeys
         .map((key) => MapEntry(key, _display(record[key], key: key)))
         .where((entry) => entry.value.isNotEmpty)
         .take(4)
         .toList();
-    return Card(
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => _view(record),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: theme.colorScheme.primary.withValues(
-                      alpha: .13,
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () => _view(record),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF7ED),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFFFE0B2)),
+                      ),
+                      child: Icon(config.icon, color: const Color(0xFFEA580C), size: 22),
                     ),
-                    child: Icon(config.icon, color: theme.colorScheme.primary),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      title.isEmpty ? config.title : title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        title.isEmpty ? config.title : title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
               const SizedBox(height: 12),
               ...subtitles.map(
                 (entry) => Padding(
@@ -927,8 +1028,9 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _loadMoreIndicator() => Obx(
     () => controller.isLoadingMore.value

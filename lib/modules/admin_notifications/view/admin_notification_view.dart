@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../theme/app_theme.dart';
 import '../controller/admin_notification_controller.dart';
 import '../model/admin_notification_model.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class AdminNotificationView extends StatelessWidget {
   const AdminNotificationView({super.key});
@@ -12,22 +13,31 @@ class AdminNotificationView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(AdminNotificationController());
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
 
-    final bgColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final borderColor = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+    final cardBg = isDark ? AppTheme.cardColor : Colors.white;
+    final borderColor = isDark ? AppTheme.borderColor : const Color(0xFFFFE0B2);
 
     return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-        title: Row(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: HeroHeader(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        titleWidget: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               "Notifications",
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(width: 8),
             Obx(() {
@@ -36,13 +46,13 @@ class AdminNotificationView extends StatelessWidget {
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryGold,
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   count > 99 ? '99+' : '$count',
                   style: const TextStyle(
-                    color: Colors.black,
+                    color: Color(0xFFE65100),
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                   ),
@@ -51,19 +61,22 @@ class AdminNotificationView extends StatelessWidget {
             }),
           ],
         ),
-        actions: [
-          IconButton(
-            tooltip: "Mark all as read",
-            icon: const Icon(Icons.done_all_rounded),
-            onPressed: controller.markAllAsRead,
-          ),
-          IconButton(
-            tooltip: "Refresh",
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: () => controller.fetchNotifications(isRefresh: true),
-          ),
-          const SizedBox(width: 4),
-        ],
+        subtitle: "Platform alerts & operational notices",
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              tooltip: "Mark all as read",
+              icon: const Icon(Icons.done_all_rounded, color: Colors.white),
+              onPressed: controller.markAllAsRead,
+            ),
+            IconButton(
+              tooltip: "Refresh",
+              icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+              onPressed: () => controller.fetchNotifications(isRefresh: true),
+            ),
+          ],
+        ),
       ),
       body: Center(
         child: ConstrainedBox(
@@ -78,7 +91,7 @@ class AdminNotificationView extends StatelessWidget {
                 child: Obx(() {
                   if (controller.isLoading.value) {
                     return const Center(
-                      child: CircularProgressIndicator(color: AppTheme.primaryGold),
+                      child: CircularProgressIndicator(color: Color(0xFFFF9800)),
                     );
                   }
 
@@ -87,11 +100,11 @@ class AdminNotificationView extends StatelessWidget {
                   }
 
                   return RefreshIndicator(
-                    color: AppTheme.primaryGold,
+                    color: const Color(0xFFFF9800),
                     onRefresh: () => controller.fetchNotifications(isRefresh: true),
                     child: ListView.separated(
                       controller: controller.scrollController,
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                       itemCount: controller.filteredNotifications.length +
                           (controller.isLoadingMore.value ? 1 : 0),
                       separatorBuilder: (_, __) => const SizedBox(height: 10),
@@ -105,7 +118,7 @@ class AdminNotificationView extends StatelessWidget {
                                 height: 24,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2.5,
-                                  color: AppTheme.primaryGold,
+                                  color: Color(0xFFFF9800),
                                 ),
                               ),
                             ),
@@ -154,7 +167,8 @@ class AdminNotificationView extends StatelessWidget {
             onChanged: controller.onSearchChanged,
             decoration: InputDecoration(
               hintText: "Search notifications...",
-              prefixIcon: const Icon(IconlyLight.search, size: 18),
+              hintStyle: GoogleFonts.inter(fontSize: 13, color: Colors.grey.shade400),
+              prefixIcon: const Icon(IconlyLight.search, color: Color(0xFFFF9800), size: 18),
               suffixIcon: Obx(() => controller.searchQuery.value.isNotEmpty
                   ? IconButton(
                       icon: const Icon(Icons.clear, size: 16),
@@ -162,10 +176,18 @@ class AdminNotificationView extends StatelessWidget {
                     )
                   : const SizedBox.shrink()),
               filled: true,
-              fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+              fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFFAFAFA),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: borderColor),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: borderColor),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Color(0xFFFF9800), width: 1.8),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
@@ -228,52 +250,74 @@ class AdminNotificationView extends StatelessWidget {
     required bool isDark,
     bool highlightBadge = false,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppTheme.primaryGold
-              : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? Colors.black : (isDark ? Colors.white70 : Colors.black87),
-              ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          decoration: BoxDecoration(
+            gradient: isSelected
+                ? const LinearGradient(
+                    colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
+                  )
+                : null,
+            color: isSelected
+                ? null
+                : (isDark ? AppTheme.cardColor : Colors.white),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected
+                  ? Colors.transparent
+                  : (isDark ? AppTheme.borderColor : const Color(0xFFFFE0B2)),
             ),
-            if (count != null && count > 0) ...[
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? Colors.black.withValues(alpha: 0.15)
-                      : (highlightBadge ? AppTheme.primaryGold : (isDark ? Colors.black26 : Colors.white)),
-                  borderRadius: BorderRadius.circular(10),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFFFF9800).withValues(alpha: 0.3),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
                 ),
-                child: Text(
-                  count > 99 ? '99+' : '$count',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
+              ),
+              if (count != null && count > 0) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                  decoration: BoxDecoration(
                     color: isSelected
-                        ? Colors.black
-                        : (highlightBadge ? Colors.black : (isDark ? Colors.white70 : Colors.black87)),
+                        ? Colors.white.withValues(alpha: 0.25)
+                        : (highlightBadge ? const Color(0xFFFF9800) : (isDark ? Colors.black26 : const Color(0xFFFFF3E0))),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    count > 99 ? '99+' : '$count',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected
+                          ? Colors.white
+                          : (highlightBadge ? Colors.white : const Color(0xFFE65100)),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -290,44 +334,47 @@ class AdminNotificationView extends StatelessWidget {
   ) {
     final isUnread = !item.isRead;
     final itemBg = isUnread
-        ? (isDark ? const Color(0xFF1E293B) : const Color(0xFFFFFBEB)) // Soft amber tint for unread
+        ? (isDark ? const Color(0xFF2A2118) : const Color(0xFFFFFBEB))
         : cardBg;
 
     return InkWell(
       onTap: () => controller.handleNotificationTap(item),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: itemBg,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isUnread ? AppTheme.primaryGold.withValues(alpha: 0.5) : borderColor,
+            color: isUnread ? const Color(0xFFFF9800) : borderColor,
             width: isUnread ? 1.4 : 1.0,
           ),
-          boxShadow: isUnread
-              ? [
-                  BoxShadow(
-                    color: AppTheme.primaryGold.withValues(alpha: 0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Category Icon
+            // Icon
             Container(
-              padding: const EdgeInsets.all(10),
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
                 color: item.accentColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(item.iconData, color: item.accentColor, size: 22),
+              child: Icon(
+                item.iconData,
+                color: item.accentColor,
+                size: 20,
+              ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
 
             // Content
             Expanded(
@@ -335,88 +382,77 @@ class AdminNotificationView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         child: Text(
                           item.title,
-                          style: TextStyle(
-                            fontWeight: isUnread ? FontWeight.w700 : FontWeight.w600,
+                          style: GoogleFonts.poppins(
                             fontSize: 14,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            fontWeight: isUnread ? FontWeight.w700 : FontWeight.w600,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
                           ),
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        item.displayTime,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      if (isUnread) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFF9800),
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     item.message,
-                    style: TextStyle(
-                      fontSize: 13,
-                      height: 1.4,
-                      color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                    style: GoogleFonts.inter(
+                      fontSize: 12.5,
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
+                      height: 1.35,
                     ),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (controller.extractOfferId(item) != null) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF58220).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: const Color(0xFFF58220).withValues(alpha: 0.4),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: item.accentColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          item.type.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            color: item.accentColor,
+                            letterSpacing: 0.3,
+                          ),
                         ),
                       ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.handshake_outlined, size: 12, color: Color(0xFFF58220)),
-                          SizedBox(width: 4),
-                          Text(
-                            "Manage Offer & Actions",
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFFF58220),
-                            ),
-                          ),
-                          SizedBox(width: 2),
-                          Icon(Icons.chevron_right, size: 12, color: Color(0xFFF58220)),
-                        ],
+                      Text(
+                        item.displayTime,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ],
               ),
             ),
-
-            // Unread Dot Indicator
-            if (isUnread) ...[
-              const SizedBox(width: 8),
-              Container(
-                margin: const EdgeInsets.only(top: 4),
-                width: 9,
-                height: 9,
-                decoration: const BoxDecoration(
-                  color: AppTheme.primaryGold,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ],
           ],
         ),
       ),
@@ -426,7 +462,7 @@ class AdminNotificationView extends StatelessWidget {
   // ── Empty State ──────────────────────────────────────────────────────────
   Widget _buildEmptyState(AdminNotificationController controller, bool isDark) {
     return Center(
-      child: SingleChildScrollView(
+      child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -434,48 +470,35 @@ class AdminNotificationView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                color: const Color(0xFFFF9800).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
+              child: const Icon(
                 IconlyLight.notification,
-                size: 56,
-                color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                size: 48,
+                color: Color(0xFFFF9800),
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 16),
             Text(
               controller.searchQuery.value.isNotEmpty
-                  ? "No matching notifications found"
-                  : (controller.selectedFilter.value == 'Unread'
-                      ? "You're all caught up!"
-                      : "No notifications yet"),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ? "No matching notifications"
+                  : "No notifications yet",
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
               controller.searchQuery.value.isNotEmpty
-                  ? "Try checking for typos or searching a different term."
-                  : (controller.selectedFilter.value == 'Unread'
-                      ? "There are no unread notifications right now."
-                      : "New contracts, dispatches, and deal alerts will appear here."),
-              textAlign: TextAlign.center,
+                  ? "Try adjusting your search or filters"
+                  : "All caught up! New alerts will appear here.",
               style: TextStyle(
                 fontSize: 13,
-                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                color: Colors.grey.shade500,
               ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryGold,
-                foregroundColor: Colors.black,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-              ),
-              icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text("Refresh", style: TextStyle(fontWeight: FontWeight.w700)),
-              onPressed: () => controller.fetchNotifications(isRefresh: true),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

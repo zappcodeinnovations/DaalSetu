@@ -235,6 +235,86 @@ class AdminDrawer extends StatelessWidget {
     });
   }
 
+  ({Color color, Color bg}) _adminIconPalette(String key) {
+    switch (key.toLowerCase()) {
+      case 'dashboard':
+        return (color: const Color(0xFFD97706), bg: const Color(0xFFFEF3C7));
+      case 'notifications':
+        return (color: const Color(0xFFEA580C), bg: const Color(0xFFFFF7ED));
+      case 'complaints':
+        return (color: const Color(0xFFDC2626), bg: const Color(0xFFFEF2F2));
+      case 'registered_company':
+        return (color: const Color(0xFF4F46E5), bg: const Color(0xFFEEF2FF));
+      case 'users':
+        return (color: const Color(0xFF0284C7), bg: const Color(0xFFE0F2FE));
+      case 'kyc':
+        return (color: const Color(0xFF059669), bg: const Color(0xFFECFDF5));
+      case 'category_requests':
+        return (color: const Color(0xFF7C3AED), bg: const Color(0xFFF5F3FF));
+      case 'categories':
+        return (color: const Color(0xFF0891B2), bg: const Color(0xFFECFEFF));
+      case 'sub_categories':
+        return (color: const Color(0xFF2563EB), bg: const Color(0xFFEFF6FF));
+      case 'brands':
+        return (color: const Color(0xFFD97706), bg: const Color(0xFFFEF3C7));
+      case 'tags':
+        return (color: const Color(0xFF9333EA), bg: const Color(0xFFFAF5FF));
+      case 'drivers':
+        return (color: const Color(0xFF0D9488), bg: const Color(0xFFF0FDFA));
+      case 'vehicles':
+        return (color: const Color(0xFF4338CA), bg: const Color(0xFFEEF2FF));
+      case 'branch_requests':
+      case 'branches':
+      case 'branch_settings':
+        return (color: const Color(0xFF0F766E), bg: const Color(0xFFCCFBF1));
+      case 'offers':
+      case 'products':
+        return (color: const Color(0xFFE65100), bg: const Color(0xFFFFF7ED));
+      case 'delivery_challans':
+      case 'challans':
+        return (color: const Color(0xFF2563EB), bg: const Color(0xFFEFF6FF));
+      case 'brokerage_bills':
+      case 'bills':
+        return (color: const Color(0xFF059669), bg: const Color(0xFFECFDF5));
+      case 'branch_reports':
+      case 'reports':
+        return (color: const Color(0xFF0284C7), bg: const Color(0xFFE0F2FE));
+      case 'roles':
+      case 'permissions':
+      case 'sub_admin_permissions':
+        return (color: const Color(0xFF7C3AED), bg: const Color(0xFFF5F3FF));
+      case 'downloads':
+        return (color: const Color(0xFF475569), bg: const Color(0xFFF1F5F9));
+      case 'settings':
+        return (color: const Color(0xFF64748B), bg: const Color(0xFFF1F5F9));
+      case 'logout':
+        return (color: const Color(0xFFDC2626), bg: const Color(0xFFFEF2F2));
+      default:
+        return (color: const Color(0xFFEA580C), bg: const Color(0xFFFFF7ED));
+    }
+  }
+
+  IconData _sectionIcon(String title) {
+    switch (title.toUpperCase()) {
+      case 'GENERAL':
+        return Icons.dashboard_customize_outlined;
+      case 'MASTERS':
+        return Icons.folder_shared_outlined;
+      case 'BRANCHES':
+        return Icons.store_mall_directory_outlined;
+      case 'OFFER':
+        return Icons.local_offer_outlined;
+      case 'DELIVERY CHALLAN':
+        return Icons.local_shipping_outlined;
+      case 'BILLING & REPORTS':
+        return Icons.receipt_long_outlined;
+      case 'GOVERNANCE':
+        return Icons.security_outlined;
+      default:
+        return Icons.category_outlined;
+    }
+  }
+
   // ── ADMIN MENU ─────────────────────────────────────────────────────────────
   Widget _buildAdminMenu(
       BuildContext context, admin.DrawerController controller) {
@@ -260,19 +340,66 @@ class AdminDrawer extends StatelessWidget {
     }
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(12, 14, 12, 24),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 28),
       children: [
-        _customMenuItem(
-          context: context,
-          key: 'dashboard',
-          title: 'Dashboard',
-          icon: Icons.dashboard_outlined,
-          onTap: _goToDashboard,
+        // ── Overview ───────────────────────────────────────────
+        _buyerSectionHeader(context, 'OVERVIEW', Icons.home_outlined),
+        _buyerCardGroup(
+          context,
+          children: [
+            _buyerMenuItem(
+              context: context,
+              key: 'dashboard',
+              title: 'Dashboard',
+              icon: Icons.dashboard_outlined,
+              iconColor: const Color(0xFFD97706),
+              iconBgColor: const Color(0xFFFEF3C7),
+              onTap: _goToDashboard,
+            ),
+          ],
         ),
+        const SizedBox(height: 12),
+
+        // ── Dynamic Admin Sections ─────────────────────────────
         for (var section in controller.menuSections)
           _buildSection(context, section, controller),
-        _sectionLabel(context, 'FILES'),
-        _downloadsMenuItem(context),
+
+        // ── Files & System ─────────────────────────────────────
+        _buyerSectionHeader(context, 'FILES & SYSTEM', Icons.settings_outlined),
+        _buyerCardGroup(
+          context,
+          children: [
+            _buyerMenuItem(
+              context: context,
+              key: 'downloads',
+              title: 'Downloads',
+              icon: Icons.download_rounded,
+              iconColor: const Color(0xFF475569),
+              iconBgColor: const Color(0xFFF1F5F9),
+              onTap: () => Get.toNamed(AppRoutes.downloads),
+            ),
+            _buyerDivider(context),
+            _buyerMenuItem(
+              context: context,
+              key: 'settings',
+              title: 'Settings',
+              icon: Icons.settings_outlined,
+              iconColor: const Color(0xFF64748B),
+              iconBgColor: const Color(0xFFF1F5F9),
+              onTap: () => Get.to(() => SettingsScreen()),
+            ),
+            _buyerDivider(context),
+            _buyerMenuItem(
+              context: context,
+              key: 'logout',
+              title: 'Log Out',
+              icon: Icons.logout_rounded,
+              iconColor: const Color(0xFFDC2626),
+              iconBgColor: const Color(0xFFFEF2F2),
+              onTap: _logout,
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -288,96 +415,102 @@ class AdminDrawer extends StatelessWidget {
 
     if (visibleItems.isEmpty) return const SizedBox.shrink();
 
-    final isExpanded = section.sectionTitle == 'MASTERS'
+    final isMasters = section.sectionTitle == 'MASTERS';
+    final isOffers = section.sectionTitle == 'OFFER';
+    final isCollapsible = isMasters || isOffers;
+    final isExpanded = isMasters
         ? controller.mastersExpanded.value
-        : section.sectionTitle == 'OFFER'
+        : isOffers
             ? controller.offersExpanded.value
             : true;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ListTile(
-          dense: true,
-          onTap: () {
-            if (section.sectionTitle == 'MASTERS') {
-              controller.toggleMasters();
-            } else if (section.sectionTitle == 'OFFER') {
-              controller.toggleOffers();
-            }
-          },
-          title: Text(
-            section.sectionTitle,
-            style: TextStyle(
-              fontSize: 11,
-              letterSpacing: 1.5,
-              fontWeight: FontWeight.w800,
-              color: Theme.of(context).textTheme.bodySmall?.color,
+        if (isCollapsible)
+          InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () {
+              if (isMasters) controller.toggleMasters();
+              if (isOffers) controller.toggleOffers();
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              child: Row(
+                children: [
+                  Icon(
+                    _sectionIcon(section.sectionTitle),
+                    size: 15,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF94A3B8)
+                        : const Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      section.sectionTitle,
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        letterSpacing: 1.3,
+                        fontWeight: FontWeight.w800,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF94A3B8)
+                            : const Color(0xFF64748B),
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    isExpanded
+                        ? Icons.expand_less_rounded
+                        : Icons.expand_more_rounded,
+                    size: 18,
+                    color: Theme.of(context).iconTheme.color,
+                  ),
+                ],
+              ),
             ),
+          )
+        else
+          _buyerSectionHeader(
+            context,
+            section.sectionTitle,
+            _sectionIcon(section.sectionTitle),
           ),
-          trailing: Icon(
-            isExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
-            color: Theme.of(context).iconTheme.color,
-          ),
-        ),
         AnimatedCrossFade(
           duration: const Duration(milliseconds: 180),
           crossFadeState: isExpanded
               ? CrossFadeState.showFirst
               : CrossFadeState.showSecond,
-          firstChild: Column(
-            children: visibleItems
-                .map((item) => _menuItem(context, item, controller))
-                .toList(),
+          firstChild: _buyerCardGroup(
+            context,
+            children: [
+              for (int i = 0; i < visibleItems.length; i++) ...[
+                if (i > 0) _buyerDivider(context),
+                _adminMenuItemWidget(context, visibleItems[i], controller),
+              ],
+            ],
           ),
           secondChild: const SizedBox(width: double.infinity),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
       ],
     );
   }
 
-  Widget _menuItem(BuildContext context, DrawerMenuItem item,
-      admin.DrawerController controller) {
-    final active = activeKey == item.key;
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 3),
-      child: ListTile(
-        selected: active,
-        selectedTileColor: AppTheme.primaryGold.withValues(alpha: .13),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        leading: Icon(
-          item.icon,
-          size: 21,
-          color: active ? AppTheme.primaryGold : theme.iconTheme.color,
-        ),
-        title: Text(
-          item.title,
-          style: TextStyle(
-            fontSize: 14,
-            color: active
-                ? AppTheme.primaryGold
-                : theme.textTheme.bodyMedium?.color,
-            fontWeight: active ? FontWeight.w800 : FontWeight.w500,
-          ),
-        ),
-        trailing: active
-            ? Container(
-                width: 5,
-                height: 22,
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryGold,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              )
-            : null,
-        onTap: () {
-          _closeDrawer(context);
-          controller.handleNavigation(item.route);
-        },
-      ),
+  Widget _adminMenuItemWidget(
+    BuildContext context,
+    DrawerMenuItem item,
+    admin.DrawerController controller,
+  ) {
+    final palette = _adminIconPalette(item.key);
+    return _buyerMenuItem(
+      context: context,
+      key: item.key,
+      title: item.title,
+      icon: item.icon,
+      iconColor: palette.color,
+      iconBgColor: palette.bg,
+      onTap: () => controller.handleNavigation(item.route),
     );
   }
 

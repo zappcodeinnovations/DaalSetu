@@ -16,6 +16,8 @@ import '../../contracts/view/contract_view.dart';
 import 'admin_overview_kpis_view.dart';
 import '../../../utils/money_format.dart';
 import '../../../widgets/app_shell.dart';
+import '../../../widgets/hero_header.dart';
+import '../../../theme/app_theme.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   AdminDashboardScreen({super.key});
@@ -26,7 +28,7 @@ class AdminDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       resizeToAvoidBottomInset: false,
       appBar: _buildAppBar(context),
       body: Obx(() {
@@ -112,85 +114,93 @@ class AdminDashboardScreen extends StatelessWidget {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
+    return HeroHeader(
       leading: Builder(
         builder: (ctx) => IconButton(
-          icon: const Icon(IconlyLight.filter),
+          tooltip: 'Open navigation menu',
+          icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 24),
           onPressed: () => AppShell.openDrawer(activeKey: 'dashboard'),
         ),
       ),
-      title: Image.asset(
-        'assets/images/app_name.png',
+      titleWidget: SizedBox(
+        width: 120,
         height: 32,
-        fit: BoxFit.contain,
+        child: Image.asset(
+          'assets/images/app_name.png',
+          fit: BoxFit.contain,
+          color: Colors.white,
+        ),
       ),
-      centerTitle: true,
-      actions: [
-        GetBuilder<AdminNotificationController>(
-          init: AdminNotificationController(),
-          builder: (notifCtrl) {
-            return Stack(
-              alignment: Alignment.center,
-              children: [
-                IconButton(
-                  tooltip: 'Notifications',
-                  icon: const Icon(IconlyLight.notification),
-                  onPressed: () => Get.toNamed(AppRoutes.notifications),
-                ),
-                Obx(() {
-                  final count = notifCtrl.unreadCount.value;
-                  if (count <= 0) return const SizedBox.shrink();
-                  return Positioned(
-                    right: 8,
-                    top: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 5,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.deepOrange,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        count > 99 ? '99+' : '$count',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GetBuilder<AdminNotificationController>(
+            init: AdminNotificationController(),
+            builder: (notifCtrl) {
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    tooltip: 'Notifications',
+                    icon: const Icon(IconlyLight.notification, color: Colors.white),
+                    onPressed: () => Get.toNamed(AppRoutes.notifications),
+                  ),
+                  Obx(() {
+                    final count = notifCtrl.unreadCount.value;
+                    if (count <= 0) return const SizedBox.shrink();
+                    return Positioned(
+                      right: 6,
+                      top: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          count > 99 ? '99+' : '$count',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                }),
-              ],
-            );
-          },
-        ),
-        const SizedBox(width: 8),
-        GestureDetector(
-          onTap: () => Get.toNamed(AppRoutes.profile_page),
-          child: CircleAvatar(
-            radius: 16,
-            backgroundColor: Theme.of(
-              context,
-            ).colorScheme.primary.withOpacity(0.1),
-            child: Icon(
-              IconlyLight.user_1,
-              size: 16,
-              color: Theme.of(context).colorScheme.primary,
+                    );
+                  }),
+                ],
+              );
+            },
+          ),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: () => Get.toNamed(AppRoutes.profile_page),
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 1.5),
+              ),
+              child: const CircleAvatar(
+                radius: 14,
+                backgroundColor: Colors.white24,
+                child: Icon(IconlyLight.user_1, size: 16, color: Colors.white),
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 16),
-      ],
+          const SizedBox(width: 8),
+        ],
+      ),
     );
   }
 
   Widget _buildHeroSection(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Obx(() {
       final profile = profileController.profile.value;
       final name = profile == null
@@ -206,50 +216,87 @@ class AdminDashboardScreen extends StatelessWidget {
       final accessLabel = normalizedRole == 'super_admin'
           ? 'Super Admin Access'
           : 'Admin Access';
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                "Hello, ",
-                style: GoogleFonts.poppins(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: theme.textTheme.bodyLarge?.color,
-                ),
-              ),
-              Text(
-                name,
-                style: GoogleFonts.poppins(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-              const Text(" 👋", style: TextStyle(fontSize: 24)),
-            ],
+
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: isDark ? AppTheme.cardColor : Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isDark ? AppTheme.borderColor : const Color(0xFFFFE0B2),
+            width: 1.2,
           ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Icon(
-                IconlyBold.shield_done,
-                size: 16,
-                color: theme.colorScheme.primary,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                accessLabel,
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: theme.textTheme.bodyLarge?.color,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
                 ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFF9800).withValues(alpha: 0.3),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ],
+              child: const Icon(IconlyBold.shield_done, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        "Hello, ",
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: theme.textTheme.bodyLarge?.color,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          name,
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFFE65100),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const Text(" 👋", style: TextStyle(fontSize: 16)),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    accessLabel,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       );
     });
   }
@@ -427,8 +474,8 @@ class AdminDashboardScreen extends StatelessWidget {
             crossAxisCount: columns,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            // Fixed height that fits the card's content, so no empty band below it.
-            mainAxisExtent: 136,
+            // Fixed height that fits the modernized card's content comfortably
+            mainAxisExtent: 144,
           ),
           itemBuilder: (context, index) {
             final metric = metrics[index];
@@ -588,6 +635,44 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
+  ({Color color, Color bg}) _getKpiPalette(String title) {
+    final t = title.toLowerCase();
+    if (t.contains('contract')) {
+      return (color: const Color(0xFFEA580C), bg: const Color(0xFFFFF7ED));
+    }
+    if (t.contains('gross') || t.contains('gtv') || t.contains('trade')) {
+      return (color: const Color(0xFFD97706), bg: const Color(0xFFFEF3C7));
+    }
+    if (t.contains('brokerage')) {
+      return (color: const Color(0xFF059669), bg: const Color(0xFFECFDF5));
+    }
+    if (t.contains('dispatch') || t.contains('delivery')) {
+      return (color: const Color(0xFF2563EB), bg: const Color(0xFFEFF6FF));
+    }
+    if (t.contains('seller')) {
+      return (color: const Color(0xFF7C3AED), bg: const Color(0xFFF5F3FF));
+    }
+    if (t.contains('buyer')) {
+      return (color: const Color(0xFF0D9488), bg: const Color(0xFFF0FDFA));
+    }
+    if (t.contains('complaint') || t.contains('issue')) {
+      return (color: const Color(0xFFDC2626), bg: const Color(0xFFFEF2F2));
+    }
+    if (t.contains('payment') || t.contains('overdue') || t.contains('risk')) {
+      return (color: const Color(0xFFE11D48), bg: const Color(0xFFFFF1F2));
+    }
+    if (t.contains('transporter')) {
+      return (color: const Color(0xFF4F46E5), bg: const Color(0xFFEEF2FF));
+    }
+    if (t.contains('branch')) {
+      return (color: const Color(0xFF0F766E), bg: const Color(0xFFCCFBF1));
+    }
+    if (t.contains('negotiation')) {
+      return (color: const Color(0xFFF57C00), bg: const Color(0xFFFFF7ED));
+    }
+    return (color: const Color(0xFFEA580C), bg: const Color(0xFFFFF7ED));
+  }
+
   Widget _buildDynamicMetricCard(
     BuildContext context,
     String title,
@@ -598,66 +683,123 @@ class AdminDashboardScreen extends StatelessWidget {
     VoidCallback? onTap,
   }) {
     final theme = Theme.of(context);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: GlassCard(
-        padding: const EdgeInsets.all(12),
-        child: SizedBox(
+    final isDark = theme.brightness == Brightness.dark;
+    final palette = _getKpiPalette(title);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
           width: width,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          decoration: BoxDecoration(
+            color: isDark ? AppTheme.cardColor : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(6),
+                    width: 34,
+                    height: 34,
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
+                      color: isDark
+                          ? palette.bg.withValues(alpha: 0.15)
+                          : palette.bg,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: palette.color.withValues(alpha: 0.25),
+                        width: 1,
+                      ),
                     ),
                     child: Icon(
                       icon,
-                      size: 16,
-                      color: theme.colorScheme.primary,
+                      size: 18,
+                      color: palette.color,
                     ),
                   ),
                   if (onTap != null)
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 10,
-                      color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF1E293B)
+                            : palette.bg.withValues(alpha: 0.7),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 9,
+                        color: palette.color,
+                      ),
                     ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 6),
               Text(
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
-                  fontSize: 10,
-                  color: theme.textTheme.bodyMedium?.color,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 value,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: theme.textTheme.bodyLarge?.color,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  fontSize: 8,
-                  color: theme.textTheme.bodyMedium?.color,
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFF334155)
+                        : const Color(0xFFE2E8F0),
+                    width: 0.8,
+                  ),
+                ),
+                child: Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? const Color(0xFFCBD5E1)
+                        : const Color(0xFF64748B),
+                  ),
                 ),
               ),
             ],

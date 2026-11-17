@@ -1,4 +1,5 @@
 import 'package:daalsetu/theme/app_theme.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 
@@ -117,20 +118,23 @@ class _AdminComplaintsViewState extends State<AdminComplaintsView> {
     final openCount = widget.initialOpenCount ?? _complaints.where((c) => c['status'] != 'Resolved').length;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Complaints & Issues'),
-        actions: [
-          IconButton(
-            tooltip: 'Refresh',
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: () {
-              setState(() {});
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Complaints list updated.')),
-              );
-            },
-          ),
-        ],
+      appBar: HeroHeader(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        title: 'Complaints & Issues',
+        subtitle: 'Platform trade dispute management & audit logs',
+        trailing: IconButton(
+          tooltip: 'Refresh',
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+          onPressed: () {
+            setState(() {});
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Complaints list updated.')),
+            );
+          },
+        ),
       ),
       body: Column(
         children: [
@@ -267,12 +271,23 @@ class _AdminComplaintsViewState extends State<AdminComplaintsView> {
     required IconData icon,
   }) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.25)),
+        color: isDark ? const Color(0xFF1E2638) : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -305,51 +320,66 @@ class _AdminComplaintsViewState extends State<AdminComplaintsView> {
 
   Widget _complaintCard(BuildContext context, Map<String, dynamic> item) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final statusColor = _statusColor(item['status'] as String);
     final sevColor = _severityColor(item['severity'] as String);
 
     return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              alignment: WrapAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    item['id'] as String,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        item['id'] as String,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: sevColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    '${item['severity']} Priority',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: sevColor,
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: sevColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '${item['severity']} Priority',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: sevColor,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-                const Spacer(),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
@@ -382,19 +412,27 @@ class _AdminComplaintsViewState extends State<AdminComplaintsView> {
               ),
             ),
             const Divider(height: 20),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Icon(Icons.description_outlined, size: 14, color: theme.colorScheme.primary),
-                const SizedBox(width: 4),
-                Text(
-                  'Contract: ${item['contract_id']}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.primary,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.description_outlined, size: 14, color: theme.colorScheme.primary),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Contract: ${item['contract_id']}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ],
                 ),
-                const Spacer(),
                 Text(
                   item['created_at'] as String,
                   style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),

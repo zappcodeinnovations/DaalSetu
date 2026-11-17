@@ -4,7 +4,7 @@ import 'package:iconly/iconly.dart';
 import '../../../theme/app_theme.dart';
 import '../controller/admin_reports_controller.dart';
 import '../widgets/branch_report_card.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class AdminBranchReportsView extends StatelessWidget {
   const AdminBranchReportsView({super.key});
@@ -26,53 +26,49 @@ class AdminBranchReportsView extends StatelessWidget {
         child: Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
           resizeToAvoidBottomInset: false,
-          appBar: AppBar(
-            titleSpacing: 0,
-            leading: AppBarLeading(child: IconButton(
-              icon: const Icon(Icons.arrow_back),
+          appBar: HeroHeader(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
               onPressed: () {
                 controller.searchFocusNode.unfocus();
                 Get.back();
               },
-            )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-            title: Text(
-              "Branch Reports",
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-            actions: [
-              // Export Action Button
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-                child: ElevatedButton.icon(
-                  onPressed: () => _openExportBottomSheet(context, controller, isDark),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryGold,
-                    foregroundColor: Colors.black,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  icon: const Icon(Icons.file_download_outlined, size: 16),
-                  label: const Text(
-                    "Export",
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+            title: "Branch Reports",
+            subtitle: "Branch analytics, GTV & fulfillment metrics",
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InkWell(
+                  onTap: () => _openExportBottomSheet(context, controller, isDark),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.file_download_outlined, size: 16, color: Colors.white),
+                        SizedBox(width: 4),
+                        Text(
+                          "Export",
+                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Colors.white),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              IconButton(
-                tooltip: "Refresh Data",
-                icon: const Icon(Icons.refresh_rounded),
-                onPressed: () => controller.fetchReports(isRefresh: true),
-              ),
-              const SizedBox(width: 4),
-            ],
+                IconButton(
+                  tooltip: "Refresh Data",
+                  icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+                  onPressed: () => controller.fetchReports(isRefresh: true),
+                ),
+              ],
+            ),
           ),
           body: LayoutBuilder(
             builder: (context, constraints) {
@@ -226,10 +222,18 @@ class AdminBranchReportsView extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E2638) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isDark ? const Color(0xFF2C394F) : const Color(0xFFE2E8F0),
+            color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+            width: 1.2,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -313,13 +317,20 @@ class AdminBranchReportsView extends StatelessWidget {
     bool isDark,
   ) {
     final searchBg = isDark ? const Color(0xFF1E2638) : Colors.white;
-    final borderColor = isDark ? const Color(0xFF2C394F) : const Color(0xFFE2E8F0);
+    final borderColor = isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2);
 
     return Container(
       decoration: BoxDecoration(
         color: searchBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: borderColor, width: 1.1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: TextField(
         controller: controller.searchController,

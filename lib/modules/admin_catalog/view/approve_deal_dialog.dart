@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:daalsetu/modules/admin_catalog/config/admin_actions.dart';
 import 'package:daalsetu/network/api_client.dart';
-import 'package:daalsetu/theme/app_theme.dart';
 import '../../../utils/app_snackbar.dart';
 
 class ApproveDealResult {
@@ -112,21 +111,27 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: cardColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: Color(0xFFFFE0B2), width: 1.2),
+      ),
       title: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppTheme.successGreen.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
+              color: const Color(0xFFECFDF5),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFA7F3D0)),
             ),
-            child: const Icon(Icons.check_circle_outline, color: AppTheme.successGreen, size: 22),
+            child: const Icon(Icons.check_circle_outline, color: Color(0xFF059669), size: 22),
           ),
           const SizedBox(width: 12),
-          Text(
-            "Approve Deal",
-            style: TextStyle(color: textDark, fontWeight: FontWeight.bold),
+          Expanded(
+            child: Text(
+              "Approve Deal",
+              style: TextStyle(color: textDark, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -154,20 +159,24 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    "Assign Contract Under Sub Admin *",
-                    style: TextStyle(
-                      color: textDark,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+                  Expanded(
+                    child: Text(
+                      "Assign Contract Under Sub Admin *",
+                      style: TextStyle(
+                        color: textDark,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                  if (_isLoadingSubAdmins)
+                  if (_isLoadingSubAdmins) ...[
+                    const SizedBox(width: 8),
                     const SizedBox(
                       width: 14,
                       height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryGold),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFF57C00)),
                     ),
+                  ],
                 ],
               ),
               const SizedBox(height: 6),
@@ -188,7 +197,7 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppTheme.primaryGold, width: 1.5),
+                    borderSide: const BorderSide(color: Color(0xFFF57C00), width: 1.5),
                   ),
                 ),
                 validator: (value) => value == null || value.isEmpty ? 'Please select a Sub Admin before approval' : null,
@@ -250,7 +259,7 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppTheme.primaryGold, width: 1.5),
+                    borderSide: const BorderSide(color: Color(0xFFF57C00), width: 1.5),
                   ),
                 ),
                 maxLines: 2,
@@ -260,6 +269,7 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
         ),
       ),
       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      actionsOverflowButtonSpacing: 8,
       actions: [
         FilledButton(
           onPressed: () {
@@ -281,9 +291,9 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
             Navigator.pop(context, result);
           },
           style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFFC2410C),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            backgroundColor: const Color(0xFFF57C00),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           ),
           child: const Text("Accept Interest", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ),

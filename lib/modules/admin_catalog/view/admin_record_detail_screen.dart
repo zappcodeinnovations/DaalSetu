@@ -12,6 +12,8 @@ import 'package:daalsetu/widgets/authenticated_video_player.dart';
 import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:daalsetu/modules/downloads/service/downloads_service.dart';
+import 'package:daalsetu/theme/app_theme.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
@@ -141,7 +143,14 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text('${widget.config.title} Details')),
+    appBar: HeroHeader(
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+        onPressed: () => Navigator.of(context).maybePop(),
+      ),
+      title: '${widget.config.title} Details',
+      subtitle: 'Inspect catalog record fields & metadata',
+    ),
     body: FutureBuilder<AdminRecord>(
       future: detail,
       builder: (context, snapshot) {
@@ -249,9 +258,16 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
   }
 
   Widget _buildSection(AdminDetailSection section, Map<String, dynamic> data) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: isDark ? AppTheme.borderColor : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+      ),
       clipBehavior: Clip.antiAlias,
       elevation: 2,
       child: Column(
@@ -259,15 +275,15 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
         children: [
           Container(
             width: double.infinity,
-            color: Theme.of(
-              context,
-            ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            color: isDark
+                ? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
+                : const Color(0xFFFFF8E1),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Text(
               section.title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
+                color: isDark ? AppTheme.primaryGold : const Color(0xFFE65100),
               ),
             ),
           ),
@@ -755,23 +771,33 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
     return _fallbackTextCard(_label(key), text);
   }
 
-  Widget _fallbackTextCard(String label, String value) => Card(
-    margin: const EdgeInsets.only(bottom: 10),
-    child: Padding(
-      padding: const EdgeInsets.all(15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: Theme.of(context).textTheme.labelMedium),
-          const SizedBox(height: 5),
-          SelectableText(
-            value.isEmpty ? '—' : value,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-        ],
+  Widget _fallbackTextCard(String label, String value) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: isDark ? AppTheme.borderColor : const Color(0xFFFFE0B2),
+          width: 1.0,
+        ),
       ),
-    ),
-  );
+      child: Padding(
+        padding: const EdgeInsets.all(15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: Theme.of(context).textTheme.labelMedium),
+            const SizedBox(height: 5),
+            SelectableText(
+              value.isEmpty ? '—' : value,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   String _label(String key) => key
       .split('_')

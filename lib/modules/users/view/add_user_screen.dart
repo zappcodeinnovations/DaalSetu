@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../controller/add_user_controller.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/utils/input_validators.dart';
 
@@ -87,15 +87,16 @@ class AddUserScreenState extends State<AddUserScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        leading: const AppBarLeading(),
-        leadingWidth: AppBarLeading.widthFor(context),
-        elevation: 0,
-        title: const Text("Add User"),
-        centerTitle: true,
+      appBar: HeroHeader(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        title: "Add User",
+        subtitle: "Register platform member & assign permissions",
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Column(
           children: [
             /// 🔥 HEADER CARD
@@ -106,14 +107,36 @@ class AddUserScreenState extends State<AddUserScreen> {
             /// 🔥 FORM CARD
             _formCard(context),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 24),
 
             /// 🔥 SUBMIT BUTTON
             Obx(() => controller.isLoading.value
-                ? const CircularProgressIndicator()
-                : SizedBox(
+                ? const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(12),
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                : Container(
                     width: double.infinity,
                     height: 50,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFFE65100),
+                          Color(0xFFF57C00),
+                          Color(0xFFFFA000),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFE65100).withValues(alpha: 0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
                     child: ElevatedButton(
                       onPressed: () {
                         final mobile = mobileController.text.trim();
@@ -213,6 +236,8 @@ class AddUserScreenState extends State<AddUserScreen> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -222,6 +247,7 @@ class AddUserScreenState extends State<AddUserScreen> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -237,41 +263,70 @@ class AddUserScreenState extends State<AddUserScreen> {
   /// ===============================
   Widget _headerCard(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: theme.brightness == Brightness.dark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.grey.withValues(alpha: 0.08),
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 3),
           ),
         ],
       ),
-      child: Column(
+      child: Row(
         children: [
-          Icon(
-            IconlyLight.add_user,
-            size: 40,
-            color: theme.colorScheme.primary,
-          ),
-          const SizedBox(height: 10),
-          Text(
-            "Create New User",
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFE65100), Color(0xFFF57C00)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFF57C00).withValues(alpha: 0.25),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Icon(
+              IconlyLight.add_user,
+              size: 24,
+              color: Colors.white,
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            "Fill the details below to register a new user",
-            style: theme.textTheme.bodySmall,
-            textAlign: TextAlign.center,
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Create Platform User",
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  "Enter contact, credentials & identity details",
+                  style: theme.textTheme.bodySmall?.copyWith(fontSize: 12),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -283,14 +338,27 @@ class AddUserScreenState extends State<AddUserScreen> {
       padding: const EdgeInsets.only(top: 8, bottom: 12),
       child: Align(
         alignment: Alignment.centerLeft,
-        child: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFFF58220),
-            letterSpacing: 0.3,
-          ),
+        child: Row(
+          children: [
+            Container(
+              width: 4,
+              height: 16,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF57C00),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFE65100),
+                letterSpacing: 0.3,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -301,13 +369,24 @@ class AddUserScreenState extends State<AddUserScreen> {
   /// ===============================
   Widget _formCard(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.dividerColor),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

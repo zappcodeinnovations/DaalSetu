@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:iconly/iconly.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -5,7 +6,6 @@ import 'package:intl/intl.dart';
 import '../controller/kyc_user_controller.dart';
 import '../model/kyc_user_model.dart';
 import 'package:daalsetu/theme/app_theme.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../utils/app_snackbar.dart';
 
 class KycUsersScreen extends StatelessWidget {
@@ -20,7 +20,7 @@ class KycUsersScreen extends StatelessWidget {
   Color get textLight => Get.theme.textTheme.bodySmall?.color ?? Colors.grey;
   
   // Status colors
-  Color get colorPending => AppTheme.primaryGold; 
+  Color get colorPending => AppTheme.secondaryOrange; 
   Color get colorApproved => AppTheme.successGreen; 
   Color get colorRejected => AppTheme.errorRed; 
   Color get colorTotal => AppTheme.secondaryOrange; 
@@ -33,23 +33,28 @@ class KycUsersScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-        backgroundColor: bgColor,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("KYC Users", style: TextStyle(color: textDark, fontWeight: FontWeight.bold, fontSize: 18)),
-            Text("Manage KYC verification and approvals", style: TextStyle(color: textLight, fontSize: 12)),
-          ],
+      appBar: HeroHeader(
+        title: "KYC Users",
+        subtitle: "Manage KYC verification and approvals",
+        leading: Builder(
+          builder: (ctx) {
+            final canPop = Navigator.of(ctx).canPop();
+            if (canPop) {
+              return IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                onPressed: () => Navigator.of(ctx).maybePop(),
+              );
+            }
+            return IconButton(
+              icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 24),
+              onPressed: () => Scaffold.of(ctx).openDrawer(),
+            );
+          },
         ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh, color: Get.theme.iconTheme.color),
-            onPressed: () => controller.fetchUsers(),
-          )
-        ],
+        trailing: IconButton(
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+          onPressed: () => controller.fetchUsers(),
+        ),
       ),
       body: Column(
         children: [
@@ -140,12 +145,24 @@ class KycUsersScreen extends StatelessWidget {
   }
 
   Widget _buildSummaryCard(String title, String count, String subtitle, Color color, IconData icon) {
+    final theme = Theme.of(Get.context!);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.35), width: 1),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -153,7 +170,7 @@ class KycUsersScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: color, size: 20),
@@ -199,6 +216,8 @@ class KycUsersScreen extends StatelessWidget {
   }
 
   Widget _buildSearchAndFilter(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Obx(() {
@@ -225,9 +244,24 @@ class KycUsersScreen extends StatelessWidget {
                   filled: true,
                   fillColor: cardColor,
                   contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: textLight.withOpacity(0.2))),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: textLight.withOpacity(0.2))),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: colorTotal)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+                      width: 1.2,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+                      width: 1.2,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: colorTotal, width: 1.8),
+                  ),
                 ),
               ),
             ),
@@ -239,11 +273,13 @@ class KycUsersScreen extends StatelessWidget {
                 height: 48,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: hasActiveFilter ? colorTotal.withOpacity(0.12) : cardColor,
+                  color: hasActiveFilter ? colorTotal.withValues(alpha: 0.12) : cardColor,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: hasActiveFilter ? colorTotal : textLight.withOpacity(0.2),
-                    width: hasActiveFilter ? 1.5 : 1,
+                    color: hasActiveFilter
+                        ? colorTotal
+                        : (isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2)),
+                    width: hasActiveFilter ? 1.5 : 1.2,
                   ),
                 ),
                 child: Row(
@@ -418,12 +454,17 @@ class KycUsersScreen extends StatelessWidget {
   }
 
   Widget _buildTabs() {
+    final theme = Theme.of(Get.context!);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: textLight.withOpacity(0.2)),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
       ),
       child: Obx(() => Row(
         children: [
@@ -465,6 +506,8 @@ class KycUsersScreen extends StatelessWidget {
   }
 
   Widget _buildUserCard(BuildContext context, KycUserModel user) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isPending = user.kycStatus.toLowerCase() == "pending";
     final isApproved = user.kycStatus.toLowerCase() == "approved";
     final isRejected = user.kycStatus.toLowerCase() == "rejected";
@@ -492,8 +535,18 @@ class KycUsersScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: textLight.withOpacity(0.15)),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -504,13 +557,24 @@ class KycUsersScreen extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Avatar
+                // Avatar with Saffron Gradient
                 Container(
                   width: 46,
                   height: 46,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF78350F), // Dark orange/amber
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFE65100), Color(0xFFF57C00)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFE65100).withValues(alpha: 0.25),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Center(
                     child: Text(
@@ -535,9 +599,9 @@ class KycUsersScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: roleColor.withOpacity(0.15),
+                          color: roleColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: roleColor.withOpacity(0.3), width: 0.8),
+                          border: Border.all(color: roleColor.withValues(alpha: 0.3), width: 0.8),
                         ),
                         child: Text(
                           user.role.toUpperCase(),
@@ -552,9 +616,9 @@ class KycUsersScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: statusColor.withOpacity(0.35)),
+                    color: statusColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: statusColor.withValues(alpha: 0.35)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -582,9 +646,12 @@ class KycUsersScreen extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: bgColor.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: textLight.withOpacity(0.08)),
+                color: isDark ? const Color(0xFF17202E) : const Color(0xFFFFFDF9),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+                  width: 1,
+                ),
               ),
               child: Column(
                 children: [

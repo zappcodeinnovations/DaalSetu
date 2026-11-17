@@ -9,7 +9,7 @@ import 'package:daalsetu/widgets/authenticated_network_image.dart';
 import 'package:daalsetu/theme/app_theme.dart';
 import 'package:daalsetu/modules/products/view/edit_product.dart';
 import 'package:daalsetu/modules/products/view/product_detail.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class AdminOffersListScreen extends StatefulWidget {
   const AdminOffersListScreen({super.key});
@@ -38,25 +38,19 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
 
   Widget _buildPageContent(BuildContext context) {
     return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-        title: Text(
-          'Admin Offers',
-          style: TextStyle(
-            color: textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: HeroHeader(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
-        backgroundColor: bgColor,
-        iconTheme: IconThemeData(color: textPrimary),
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh, color: textPrimary),
-            onPressed: controller.fetchOffers,
-          ),
-          const SizedBox(width: 8),
-        ],
+        title: 'Admin Offers',
+        subtitle: 'Live commodity trading offers & deal approvals',
+        trailing: IconButton(
+          icon: const Icon(Icons.refresh, color: Colors.white),
+          tooltip: 'Refresh',
+          onPressed: controller.fetchOffers,
+        ),
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
@@ -98,10 +92,10 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
   }
 
   Widget _buildOfferCard(ProductModel offer) {
-    final cardRadius = BorderRadius.circular(16);
+    final cardRadius = BorderRadius.circular(18);
 
     return Material(
-      color: cardColor,
+      color: isDark ? AppTheme.cardColor : Colors.white,
       borderRadius: cardRadius,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -111,16 +105,17 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: cardRadius,
-            border: Border.all(color: borderColor),
-            boxShadow: isDark
-                ? null
-                : [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+            border: Border.all(
+              color: isDark ? AppTheme.borderColor : const Color(0xFFFFE0B2),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           padding: const EdgeInsets.all(16),
           child: Column(

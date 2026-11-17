@@ -541,12 +541,12 @@ class SettingsScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                          color: AppTheme.secondaryOrange.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           IconlyLight.document,
-                          color: theme.colorScheme.primary,
+                          color: AppTheme.secondaryOrange,
                           size: 22,
                         ),
                       ),
@@ -577,18 +577,19 @@ class SettingsScreen extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     decoration: BoxDecoration(
-                      color: isDark ? AppTheme.bgSecondary : const Color(0xFFF1F5F9),
+                      color: isDark ? AppTheme.bgSecondary : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: isDark ? AppTheme.borderColor : AppTheme.borderLight,
+                        color: isDark ? AppTheme.borderColor : const Color(0xFFFFE0B2),
+                        width: 1.2,
                       ),
                     ),
                     child: Text(
                       url,
                       style: GoogleFonts.inter(
                         fontSize: 12,
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w500,
+                        color: AppTheme.secondaryOrange,
+                        fontWeight: FontWeight.w600,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -611,12 +612,13 @@ class SettingsScreen extends StatelessWidget {
                       const SizedBox(width: 8),
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.primary,
+                          backgroundColor: AppTheme.secondaryOrange,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
+                          elevation: 2,
                         ),
                         onPressed: () {
                           Get.back();

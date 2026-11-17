@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
 import 'package:daalsetu/modules/downloads/service/downloads_service.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../utils/app_snackbar.dart';
@@ -311,22 +312,69 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
   Widget build(BuildContext context) {
     final visible = _visibleRecords;
     return Scaffold(
-    drawer: const AdminDrawer(activeKey: 'brokerage_bills'),
-    appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-      title: const Text('Brokerage Bills'),
-      actions: [
-        IconButton(
+      drawer: const AdminDrawer(activeKey: 'brokerage_bills'),
+      appBar: HeroHeader(
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            tooltip: 'Open navigation menu',
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
+          ),
+        ),
+        title: 'Brokerage Bills',
+        subtitle: 'Commercial brokerage settlement invoices',
+        trailing: IconButton(
           tooltip: 'Refresh',
           onPressed: _loading ? null : () => _loadInitial(clearFilters: true),
-          icon: const Icon(Icons.refresh_rounded),
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
         ),
-      ],
-    ),
-    floatingActionButton: FloatingActionButton.extended(
-      onPressed: _openCreate,
-      icon: const Icon(Icons.add_rounded),
-      label: const Text('Create Bill'),
-    ),
+      ),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFFE65100),
+              Color(0xFFF57C00),
+              Color(0xFFFFA000),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFE65100).withValues(alpha: 0.35),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(30),
+            onTap: _openCreate,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add_rounded, color: Colors.white, size: 22),
+                  SizedBox(width: 8),
+                  Text(
+                    'Create Bill',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     body: _loading && visible.isEmpty
         ? const Center(child: CircularProgressIndicator())
         : RefreshIndicator(
@@ -620,10 +668,19 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
       'CANCELLED' => Colors.red,
       _ => Colors.orange,
     };
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+      ),
+      elevation: 2,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(18),
         onTap: () => _openDetail(bill),
         child: Padding(
           padding: const EdgeInsets.all(16),

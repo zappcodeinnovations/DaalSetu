@@ -1,8 +1,8 @@
 import 'package:daalsetu/modules/admin_catalog/view/admin_drawer.dart';
 import 'package:daalsetu/modules/admin_catalog/view/admin_permission_toggle_panel.dart';
 import 'package:daalsetu/network/api_client.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:flutter/material.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../utils/app_snackbar.dart';
 
 class AdminSubAdminPermissionsScreen extends StatefulWidget {
@@ -109,96 +109,176 @@ class _AdminSubAdminPermissionsScreenState
   );
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    drawer: const AdminDrawer(activeKey: 'sub_admins'),
-    appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), title: const Text('Sub Admin Permissions')),
-    body: _loading
-        ? const Center(child: CircularProgressIndicator())
-        : _error != null
-        ? _FailureState(message: _error!, onRetry: _load)
-        : SafeArea(
-            child: Column(
-              children: [
-                _header(context),
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: _load,
-                    child: ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 104),
-                      children: [
-                        const Text(
-                          'Extra access for this Sub Admin',
-                          style: TextStyle(fontWeight: FontWeight.w700),
+  Widget build(BuildContext context) {
+    return Scaffold(
+      drawer: const AdminDrawer(activeKey: 'sub_admins'),
+      appBar: HeroHeader(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        title: 'Sub Admin Permissions',
+        subtitle: 'Granular access overrides for ${_displayName()}',
+        trailing: IconButton(
+          tooltip: 'Refresh',
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+          onPressed: _load,
+        ),
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+          ? _FailureState(message: _error!, onRetry: _load)
+          : SafeArea(
+              child: Column(
+                children: [
+                  _header(context),
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: _load,
+                      child: ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 104),
+                        children: [
+                          const Text(
+                            'Extra access for this Sub Admin',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Permissions supplied by an assigned role stay on here and cannot be removed from this screen.',
+                          ),
+                          const SizedBox(height: 12),
+                          AdminPermissionTogglePanel(
+                            categories: _categories,
+                            selectedIds: _overrideIds,
+                            inheritedIds: _roleIds,
+                            selectionLabel: 'Extra permission',
+                            disabledLabel: 'Not granted',
+                            onChanged: (ids) =>
+                                setState(() => _overrideIds = ids),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+      bottomNavigationBar: !_loading && _error == null
+          ? SafeArea(
+              minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: Container(
+                height: 52,
+                decoration: BoxDecoration(
+                  gradient: _saving
+                      ? null
+                      : const LinearGradient(
+                          colors: [
+                            Color(0xFFE65100),
+                            Color(0xFFF57C00),
+                            Color(0xFFFFA000),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Permissions supplied by an assigned role stay on here and cannot be removed from this screen.',
-                        ),
-                        const SizedBox(height: 12),
-                        AdminPermissionTogglePanel(
-                          categories: _categories,
-                          selectedIds: _overrideIds,
-                          inheritedIds: _roleIds,
-                          selectionLabel: 'Extra permission',
-                          disabledLabel: 'Not granted',
-                          onChanged: (ids) =>
-                              setState(() => _overrideIds = ids),
-                        ),
-                      ],
+                  color: _saving ? Colors.grey : null,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: _saving
+                      ? null
+                      : [
+                          BoxShadow(
+                            color: const Color(0xFFE65100).withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: _saving ? null : _save,
+                    child: Center(
+                      child: _saving
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.save_outlined, color: Colors.white, size: 20),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Save Permissions',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
                     ),
                   ),
                 ),
-              ],
-            ),
-          ),
-    bottomNavigationBar: !_loading && _error == null
-        ? SafeArea(
-            minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            child: FilledButton.icon(
-              onPressed: _saving ? null : _save,
-              icon: _saving
-                  ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.save_outlined),
-              label: Text(_saving ? 'Saving...' : 'Save Permissions'),
-            ),
-          )
-        : null,
-  );
+              ),
+            )
+          : null,
+    );
+  }
 
-  Widget _header(BuildContext context) => Container(
-    width: double.infinity,
-    color: Theme.of(context).colorScheme.primaryContainer,
-    padding: const EdgeInsets.all(16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          _displayName(),
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
+  Widget _header(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E2638) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+          width: 1.2,
         ),
-        if (permissionText(_user['email']).isNotEmpty)
-          Text(
-            permissionText(_user['email']),
-            style: const TextStyle(color: Colors.black87),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
-        const SizedBox(height: 4),
-        Text(
-          '${_overrideIds.length} extra permission${_overrideIds.length == 1 ? '' : 's'} • ${_roleIds.length} from roles',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.black87.withValues(alpha: 0.85),
-                fontWeight: FontWeight.w600,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _displayName(),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          if (permissionText(_user['email']).isNotEmpty)
+            Text(
+              permissionText(_user['email']),
+              style: TextStyle(
+                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
               ),
-        ),
-      ],
-    ),
-  );
+            ),
+          const SizedBox(height: 6),
+          Text(
+            '${_overrideIds.length} extra permission${_overrideIds.length == 1 ? '' : 's'} • ${_roleIds.length} from roles',
+            style: const TextStyle(
+              color: Color(0xFFE65100),
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _FailureState extends StatelessWidget {

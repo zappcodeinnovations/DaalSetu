@@ -38,7 +38,10 @@ class _StockHistoryDialogState extends State<StockHistoryDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: Color(0xFFFFE0B2), width: 1.2),
+      ),
       child: Container(
         width: MediaQuery.of(context).size.width * 0.9,
         constraints: const BoxConstraints(maxWidth: 1000, maxHeight: 600),
@@ -50,19 +53,38 @@ class _StockHistoryDialogState extends State<StockHistoryDialog> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Stock History",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Text("${mockHistory.length} record(s)", style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-                    ],
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF7ED),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFFFE0B2)),
+                          ),
+                          child: const Icon(Icons.inventory_2_outlined, color: Color(0xFFEA580C), size: 22),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Stock History",
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text("${mockHistory.length} record(s)", style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: const Icon(Icons.close_rounded),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
@@ -76,8 +98,9 @@ class _StockHistoryDialogState extends State<StockHistoryDialog> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppTheme.borderColor),
-                  borderRadius: BorderRadius.circular(8),
+                  color: const Color(0xFFFFF7ED).withValues(alpha: 0.5),
+                  border: Border.all(color: const Color(0xFFFFE0B2)),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,8 +212,11 @@ class _StockHistoryDialogState extends State<StockHistoryDialog> {
             // Footer Actions
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   FilledButton(
                     onPressed: () {
@@ -208,12 +234,18 @@ class _StockHistoryDialogState extends State<StockHistoryDialog> {
                         ),
                       );
                     },
-                    style: FilledButton.styleFrom(backgroundColor: AppTheme.primaryGold),
-                    child: const Text("Open Full Page", style: TextStyle(color: Colors.black)),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFF57C00),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text("Open Full Page", style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
-                  const SizedBox(width: 12),
                   OutlinedButton(
                     onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
                     child: const Text("Close"),
                   ),
                 ],

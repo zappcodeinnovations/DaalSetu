@@ -197,32 +197,52 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
     final maxBid = contract['max_bid'];
     final canSet = contract['can_set_max_bid'] == true;
     if (maxBid == null && !canSet) return const SizedBox.shrink();
-    return Card(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            const Icon(Icons.price_change_outlined),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                maxBid == null
-                    ? 'No admin price: transporters bid freely.'
-                    : 'Admin price: ₹$maxBid (accept or negotiate)',
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
-            if (canSet) ...[
-              TextButton(onPressed: processingBidId != null ? null : setMaxBid, child: Text(maxBid == null ? 'Set Price' : 'Change')),
-              if (maxBid != null)
-                TextButton(
-                  onPressed: processingBidId != null ? null : () => setMaxBid(clear: true),
-                  child: const Text('Open Bidding'),
-                ),
-            ],
-          ],
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+          width: 1.2,
         ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF57C00).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.price_change_outlined, size: 18, color: Color(0xFFE65100)),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              maxBid == null
+                  ? 'No admin price: transporters bid freely.'
+                  : 'Admin price: ₹$maxBid (accept or negotiate)',
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            ),
+          ),
+          if (canSet) ...[
+            TextButton(
+              onPressed: processingBidId != null ? null : setMaxBid,
+              child: Text(maxBid == null ? 'Set Price' : 'Change',
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFE65100))),
+            ),
+            if (maxBid != null)
+              TextButton(
+                onPressed: processingBidId != null ? null : () => setMaxBid(clear: true),
+                child: const Text('Open Bidding'),
+              ),
+          ],
+        ],
       ),
     );
   }
@@ -302,22 +322,40 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 12, 12),
+              padding: const EdgeInsets.fromLTRB(16, 4, 12, 12),
               child: Row(
                 children: [
-                  const Icon(Icons.gavel_outlined),
-                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFE65100), Color(0xFFF57C00)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.local_shipping_outlined, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Transport Bids',
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.w800),
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                          ),
                         ),
+                        const SizedBox(height: 2),
                         Text(
                           '$title${contract['product_title'] == null ? '' : ' • ${contract['product_title']}'}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).textTheme.bodySmall?.color,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -400,7 +438,26 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
     final history = (bid['negotiation_history'] is List ? bid['negotiation_history'] as List : const [])
         .whereType<Map>()
         .toList();
-    return Card(
+
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -408,18 +465,37 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
           children: [
             Row(
               children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF2563EB), Color(0xFF3B82F6)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.local_shipping_rounded, color: Colors.white, size: 20),
+                  ),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         company.isNotEmpty ? company : '${bid['transporter_unique_id'] ?? 'Transporter'}',
-                        style: const TextStyle(fontWeight: FontWeight.w800),
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                       ),
                       if (person.isNotEmpty || mobile.isNotEmpty)
                         Text(
                           [person, mobile].where((part) => part.isNotEmpty).join(' • '),
-                          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.textTheme.bodySmall?.color,
+                          ),
                         ),
                     ],
                   ),
@@ -427,46 +503,107 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
                 _status(status),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Bid amount: ₹${bid['bid_amount'] ?? '—'}',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            const SizedBox(height: 12),
+            const Divider(height: 1),
+            const SizedBox(height: 10),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      'Bid amount: ',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: theme.textTheme.bodySmall?.color,
+                      ),
+                    ),
+                    Text(
+                      '₹${bid['bid_amount'] ?? '—'}',
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFFE65100),
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  '${bid['bid_date'] ?? ''}',
+                  style: TextStyle(fontSize: 11, color: theme.textTheme.bodySmall?.color),
+                ),
+              ],
             ),
-            if (bidType != 'bid' && '${bid['bid_type_label'] ?? ''}'.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Chip(
-                  label: Text('${bid['bid_type_label']}'),
-                  visualDensity: VisualDensity.compact,
-                  backgroundColor: bidType == 'negotiation' ? Colors.orange.shade50 : Colors.blue.shade50,
+
+            if (bidType != 'bid' && '${bid['bid_type_label'] ?? ''}'.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: (bidType == 'negotiation' ? Colors.orange : Colors.blue).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: (bidType == 'negotiation' ? Colors.orange : Colors.blue).withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Text(
+                  '${bid['bid_type_label']}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: bidType == 'negotiation' ? Colors.orange.shade800 : Colors.blue.shade800,
+                  ),
                 ),
               ),
-            if ('${bid['transporter_note'] ?? ''}'.isNotEmpty)
-              Text('Note: ${bid['transporter_note']}', style: const TextStyle(fontStyle: FontStyle.italic)),
-            if (bid['admin_counter_amount'] != null)
-              Text('Your counter: ₹${bid['admin_counter_amount']} (awaiting transporter)',
-                  style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Text('Submitted: ${bid['bid_date'] ?? '—'}'),
+            ],
+
+            if ('${bid['transporter_note'] ?? ''}'.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Note: ${bid['transporter_note']}',
+                style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
+              ),
+            ],
+
+            if (bid['admin_counter_amount'] != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Your counter: ₹${bid['admin_counter_amount']} (awaiting transporter)',
+                style: TextStyle(
+                  color: Colors.blue.shade700,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+
             if (history.length > 1)
               ExpansionTile(
                 tilePadding: EdgeInsets.zero,
-                title: Text('Negotiation history (${history.length})', style: const TextStyle(fontSize: 13)),
+                title: Text('Negotiation history (${history.length})', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                 children: history
                     .map((step) => Align(
                           alignment: Alignment.centerLeft,
-                          child: Text(
-                            '${step['at'] ?? ''} • ${step['by'] == 'admin' ? 'Admin' : 'Transporter'}: '
-                            '${'${step['action'] ?? ''}'.replaceAll('_', ' ')} '
-                            '${'${step['amount'] ?? ''}'.isEmpty ? '' : '₹${step['amount']}'}'
-                            '${'${step['note'] ?? ''}'.isEmpty ? '' : ' – ${step['note']}'}',
-                            style: const TextStyle(fontSize: 12),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: Text(
+                              '${step['at'] ?? ''} • ${step['by'] == 'admin' ? 'Admin' : 'Transporter'}: '
+                              '${'${step['action'] ?? ''}'.replaceAll('_', ' ')} '
+                              '${'${step['amount'] ?? ''}'.isEmpty ? '' : '₹${step['amount']}'}'
+                              '${'${step['note'] ?? ''}'.isEmpty ? '' : ' – ${step['note']}'}',
+                              style: const TextStyle(fontSize: 12),
+                            ),
                           ),
                         ))
                     .toList(),
               ),
+
             if (canAccept || canReject || canCounter) ...[
               const SizedBox(height: 12),
               if (isProcessing)
@@ -484,8 +621,9 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
                       FilledButton.icon(
                         onPressed: () => runAction(bid, 'accept'),
                         style: FilledButton.styleFrom(
-                          backgroundColor: Colors.green.shade600,
+                          backgroundColor: const Color(0xFF2E7D32),
                           foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         icon: const Icon(Icons.check_circle_outline, size: 18),
                         label: const Text('Accept', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -493,6 +631,9 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
                     if (canCounter)
                       OutlinedButton.icon(
                         onPressed: () => counterBid(bid),
+                        style: OutlinedButton.styleFrom(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
                         icon: const Icon(Icons.swap_horiz_rounded, size: 18),
                         label: const Text('Counter'),
                       ),
@@ -500,8 +641,9 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
                       OutlinedButton.icon(
                         onPressed: () => runAction(bid, 'reject'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Theme.of(context).colorScheme.error,
-                          side: BorderSide(color: Theme.of(context).colorScheme.error),
+                          foregroundColor: const Color(0xFFD32F2F),
+                          side: const BorderSide(color: Color(0xFFD32F2F)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         icon: const Icon(Icons.cancel_outlined, size: 18),
                         label: const Text('Reject', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -516,21 +658,27 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
   }
 
   Widget _status(String value) {
-    final color = switch (value.toLowerCase()) {
-      'accepted' => Colors.green,
-      'rejected' => Colors.red,
-      _ => Colors.orange,
+    final (Color color, Color bg) = switch (value.toLowerCase()) {
+      'accepted' => (const Color(0xFF2E7D32), const Color(0xFFE8F5E9)),
+      'rejected' => (const Color(0xFFD32F2F), const Color(0xFFFFEBEE)),
+      _ => (const Color(0xFFF57C00), const Color(0xFFFFF3E0)),
     };
-    return Chip(
-      label: Text(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark ? color.withValues(alpha: 0.15) : bg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Text(
         value.replaceFirst(
           value.isEmpty ? '' : value[0],
           value.isEmpty ? '' : value[0].toUpperCase(),
         ),
+        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 11),
       ),
-      labelStyle: TextStyle(color: color, fontWeight: FontWeight.w700),
-      side: BorderSide(color: color.withValues(alpha: .35)),
-      backgroundColor: color.withValues(alpha: .10),
     );
   }
 }

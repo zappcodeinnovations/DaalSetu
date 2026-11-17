@@ -16,15 +16,15 @@ class BranchReportCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     final cardBg = isDark ? const Color(0xFF1E2638) : Colors.white;
-    final borderColor = isDark ? const Color(0xFF2C394F) : const Color(0xFFE2E8F0);
+    final borderColor = isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2);
     final textMuted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: borderColor, width: 1.2),
         boxShadow: [
           BoxShadow(
             color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.04),

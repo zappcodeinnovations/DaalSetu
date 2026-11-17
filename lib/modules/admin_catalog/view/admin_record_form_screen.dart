@@ -8,8 +8,10 @@ import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:daalsetu/theme/app_theme.dart';
 import 'package:daalsetu/utils/input_validators.dart';
 import 'package:daalsetu/utils/tax_id_formatters.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
 
 class AdminRecordFormScreen extends StatefulWidget {
@@ -223,40 +225,97 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Text('${editing ? 'Edit' : 'Create'} ${widget.config.title}'),
-    ),
-    body: Form(
-      key: formKey,
-      child: ListView(
-        padding: const EdgeInsets.all(18),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(children: visibleFields.map(_field).toList()),
-            ),
-          ),
-          const SizedBox(height: 18),
-          SizedBox(
-            height: 52,
-            child: FilledButton.icon(
-              onPressed: saving ? null : save,
-              icon: saving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.save_outlined),
-              label: Text(editing ? 'Save changes' : 'Create'),
-            ),
-          ),
-        ],
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Scaffold(
+      appBar: HeroHeader(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        title: '${editing ? 'Edit' : 'Create'} ${widget.config.title}',
+        subtitle: 'Configure catalog and system parameters',
       ),
-    ),
-  );
+      body: Form(
+        key: formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(18),
+          children: [
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+                side: BorderSide(
+                  color: isDark ? AppTheme.borderColor : const Color(0xFFFFE0B2),
+                  width: 1.2,
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(children: visibleFields.map(_field).toList()),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              height: 52,
+              decoration: BoxDecoration(
+                gradient: saving ? null : const LinearGradient(
+                  colors: [
+                    Color(0xFFE65100),
+                    Color(0xFFF57C00),
+                    Color(0xFFFFA000),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                color: saving ? Colors.grey : null,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: saving ? null : [
+                  BoxShadow(
+                    color: const Color(0xFFE65100).withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: saving ? null : save,
+                  child: Center(
+                    child: saving
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.save_outlined, color: Colors.white, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                editing ? 'Save changes' : 'Create',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
 
   String _label(AdminFieldConfig field) =>
       '${field.label}${_isRequired(field) ? ' *' : ''}';

@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -5,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 
 import '../../../theme/app_theme.dart';
-import '../../../theme/glass_widgets.dart';
 import '../../../widgets/authenticated_network_image.dart';
 import '../../admin_catalog/view/offer_interests_dialog.dart';
 import '../controller/product_controller.dart';
@@ -13,7 +13,6 @@ import '../model/product_model.dart';
 import './add_product.dart';
 import './edit_product.dart';
 import './product_detail.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
 
 class ProductScreen extends StatelessWidget {
   ProductScreen({super.key});
@@ -30,26 +29,79 @@ class ProductScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-        title: Text(
-          "Products",
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: HeroHeader(
+        title: "Products",
+        subtitle: "Live trading offers & catalog management",
+        leading: Builder(
+          builder: (ctx) {
+            final canPop = Navigator.of(ctx).canPop();
+            if (canPop) {
+              return IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                onPressed: () => Navigator.of(ctx).maybePop(),
+              );
+            }
+            return IconButton(
+              icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 24),
+              onPressed: () => Scaffold.of(ctx).openDrawer(),
+            );
+          },
+        ),
+        trailing: IconButton(
+          tooltip: 'Refresh',
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+          onPressed: () => controller.fetchProducts(),
         ),
       ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: SizedBox(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Container(
               width: double.infinity,
               height: 52,
-              child: FilledButton.icon(
-                onPressed: () => Get.to(() => const AddProductScreen()),
-                icon: const Icon(Icons.add_business_rounded),
-                label: const Text(
-                  'Create Offer',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFFE65100),
+                    Color(0xFFF57C00),
+                    Color(0xFFFFA000),
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFF57C00).withValues(alpha: 0.35),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () => Get.to(() => const AddProductScreen()),
+                  child: const Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add_business_rounded, color: Colors.white, size: 22),
+                        SizedBox(width: 8),
+                        Text(
+                          'Create Offer',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -109,6 +161,7 @@ class ProductScreen extends StatelessWidget {
 
   Widget _buildProductCard(BuildContext context, ProductModel product) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final imageUrl = product.images.isNotEmpty
         ? product.images.first.imageUrl
         : null;
@@ -119,9 +172,22 @@ class ProductScreen extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => Get.to(() => ProductDetailScreen(productId: product.id)),
-        child: GlassCard(
-          padding: EdgeInsets.zero,
-          glowColor: isAvailable ? AppTheme.successGreen : AppTheme.errorRed,
+        child: Container(
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -130,7 +196,7 @@ class ProductScreen extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(20),
+                      top: Radius.circular(18),
                     ),
                     child: imageUrl != null
                         ? ColoredBox(

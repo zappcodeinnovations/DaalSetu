@@ -4,7 +4,7 @@ import 'package:daalsetu/widgets/authenticated_network_image.dart';
 import '../controller/admin_category_master_controller.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:daalsetu/theme/app_theme.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class AdminCategoryMasterScreen extends StatefulWidget {
   const AdminCategoryMasterScreen({super.key});
@@ -27,23 +27,18 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: colorBg,
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-        backgroundColor: colorSurface,
-        elevation: 0,
-        iconTheme: IconThemeData(color: colorTextDark),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Category Master', style: TextStyle(color: colorTextDark, fontWeight: FontWeight.bold, fontSize: 18)),
-            Text('Manage Categories', style: TextStyle(color: colorTextLight, fontSize: 13, fontWeight: FontWeight.w400)),
-          ],
+      appBar: HeroHeader(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => controller.fetchData(),
-          )
-        ],
+        title: 'Category Master',
+        subtitle: 'Manage agricultural commodity categories & hierarchy',
+        trailing: IconButton(
+          icon: const Icon(Icons.refresh, color: Colors.white),
+          tooltip: 'Refresh',
+          onPressed: () => controller.fetchData(),
+        ),
       ),
       body: Column(
         children: [
@@ -69,17 +64,57 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: null,
-        backgroundColor: colorPrimary,
-        onPressed: () => _showFormSheet(context),
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Add Category', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFFE65100),
+              Color(0xFFF57C00),
+              Color(0xFFFFA000),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFE65100).withValues(alpha: 0.35),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(30),
+            onTap: () => _showFormSheet(context),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add, color: Colors.white, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Add Category',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildSearchAndFilter() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       color: colorSurface,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -87,10 +122,14 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
         children: [
           Expanded(
             child: Container(
-              height: 44,
+              height: 46,
               decoration: BoxDecoration(
-                color: colorBg,
-                borderRadius: BorderRadius.circular(12),
+                color: isDark ? colorBg : const Color(0xFFFBFBFC),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isDark ? colorBorder : const Color(0xFFFFE0B2),
+                  width: 1.0,
+                ),
               ),
               child: TextField(
                 onChanged: (v) => controller.searchQuery.value = v,
@@ -107,14 +146,17 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
           const SizedBox(width: 12),
           InkWell(
             onTap: () => _showFilterSheet(context),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             child: Container(
-              height: 44,
-              width: 44,
+              height: 46,
+              width: 46,
               decoration: BoxDecoration(
-                color: colorBg,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: colorBorder),
+                color: isDark ? colorBg : const Color(0xFFFBFBFC),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isDark ? colorBorder : const Color(0xFFFFE0B2),
+                  width: 1.0,
+                ),
               ),
               child: Icon(Icons.tune, color: colorTextDark, size: 20),
             ),
@@ -149,9 +191,9 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 4),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.25), width: 1.2),
       ),
       child: FittedBox(
         fit: BoxFit.scaleDown,
@@ -178,16 +220,24 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
   Widget _buildCategoryCard(CategoryTreeModel node, int depth) {
     bool hasChildren = node.children.isNotEmpty;
     bool isActive = node.status.toLowerCase() == 'active';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     Widget cardContent = Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: colorSurface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
-        border: Border.all(color: colorBorder.withOpacity(0.5)),
+        border: Border.all(
+          color: isDark ? colorBorder : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -289,9 +339,9 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Text(text, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
     );
@@ -340,9 +390,7 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
                 spacing: 8,
                 runSpacing: 8,
                 children: node.brands.map((b) {
-                  final brandName = b is Map
-                      ? (b['brand_name'] ?? b['name'] ?? '').toString()
-                      : b.toString();
+                  final brandName = (b['brand_name'] ?? b['name'] ?? '').toString();
                   return Chip(
                     backgroundColor: AppTheme.primaryGold.withValues(alpha: 0.12),
                     side: BorderSide(color: AppTheme.primaryGold.withValues(alpha: 0.3)),
@@ -495,7 +543,7 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
       label: Text(label),
       selected: isSelected,
       onSelected: (_) => onTap(),
-      selectedColor: colorPrimary.withOpacity(0.1),
+      selectedColor: colorPrimary.withValues(alpha: 0.1),
       labelStyle: TextStyle(color: isSelected ? colorPrimary : colorTextDark, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       side: BorderSide(color: isSelected ? colorPrimary : colorBorder),
@@ -616,10 +664,10 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
                               runSpacing: 8,
                               children: selectedBrands.map((b) => InputChip(
                                 label: Text(b['brand_name'] ?? '', style: TextStyle(fontSize: 12, color: colorPrimary)),
-                                backgroundColor: colorPrimary.withOpacity(0.1),
+                                backgroundColor: colorPrimary.withValues(alpha: 0.1),
                                 deleteIconColor: colorPrimary,
                                 onDeleted: () => controller.toggleBrandSelection(b['id']),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: colorPrimary.withOpacity(0.3))),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: colorPrimary.withValues(alpha: 0.3))),
                               )).toList(),
                             )
                           else
@@ -715,7 +763,7 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 color: colorSurface,
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -4))],
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -4))],
               ),
               child: Row(
                 children: [
@@ -927,7 +975,7 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(color: colorTextLight.withOpacity(0.5)),
+      hintStyle: TextStyle(color: colorTextLight.withValues(alpha: 0.5)),
       filled: true,
       fillColor: colorBg,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

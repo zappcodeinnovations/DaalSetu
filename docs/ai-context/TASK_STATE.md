@@ -1,23 +1,84 @@
 # Current Task State
 
 ## Current Task
-- **Goal**: Full App UI Modernization — Milestone 3 (Transporter Panel: 100% COMPLETE & VERIFIED).
+- **Goal**: Full App UI Modernization — Admin Panel Complete, Core Tabs & Secondary Screens Modernized, Global Brand Colors Unified.
 - **Status**: 
   - Buyer Panel: **100% COMPLETE** (25 screens)
   - Milestone 1 (Seller Panel): **100% COMPLETE** (18/18 screens)
   - Milestone 2 (Auth Portal): **100% COMPLETE** (4/4 screens)
   - Milestone 3 (Transporter Panel): **100% COMPLETE** (21/21 screens)
-  - **NEXT**: Milestone 4 (Admin Panel Modernization — 17 screens).
-- **Milestone 3 Summary (21/21 screens complete)**:
-  - **Batch 3A (5 screens)**: `TransporterDashboardView`, `TransporterBiddingView`, `TransporterContractsView`, `TransporterNotificationsView`, `TransporterKycView`.
-  - **Batch 3B (6 screens)**: `TransporterVehiclesView`, `TransporterVehicleDetail`, `TransporterVehicleForm`, `TransporterDriversView`, `TransporterDriverDetail`, `TransporterDriverForm`.
-  - **Batch 3C (5 screens)**: `TransporterCompanyView`, `TransporterCompanyDetail`, `TransporterCompanyForm`, `TransporterBranchView`, `TransporterUsersView`.
-  - **Batch 3D (5 screens)**: `TransporterBrandsView`, `TransporterCategoryView`, `TransporterProductsView`, `TransporterOffersView`, `TransporterRfqView`.
-- **Evidence**: `flutter analyze` 0 errors on modified views; automated test suites (22/22 tests across 9 suites) passed (`test/transporter_batch_3a_step1_test.dart`, `test/transporter_batch_3a_step2_test.dart`, `test/transporter_batch_3b_step1_test.dart`, `test/transporter_batch_3b_step2_test.dart`, `test/transporter_batch_3c_step1_test.dart`, `test/transporter_batch_3c_step2_test.dart`, `test/transporter_batch_3d_step1_test.dart`, `test/transporter_batch_3d_step2_test.dart`, `test/transporter_dashboard_drawer_test.dart`).
+  - Milestone 4 (Admin Panel: Batches 4A, 4B, 4C, 4D, 4E): **100% COMPLETE** (17/17 screens).
+  - Batch 1 (Admin Core Tabs & Cards Modernization): **100% COMPLETE & VERIFIED** (3 screens).
+  - Batch 2 (User Management & Secondary Admin Screens Modernization): **100% COMPLETE & VERIFIED** (4 screens).
+  - Batch 3A (Dashboard Eye-Catching Cards, Admin Drawer, and Transport Bids Sheet): **100% COMPLETE & VERIFIED** (3 views).
+  - Batch 3B (Admin Masters List, Negotiation & Action Dialogs): **100% COMPLETE & VERIFIED** (6 views/dialogs).
+- **Admin Redesign & Card Polish Scope (33 Total Admin Views / Modals Modernized)**:
+  - **Batch 3B (Admin Masters List, Negotiation & Action Dialogs)**:
+    - `lib/modules/admin_catalog/view/admin_module_list_screen.dart`: Upgraded generic catalog record cards and buyer cards to 18px rounded containers with `#FFE0B2` borders, vibrant icon pods, modern pill segments, and warm gradient FAB.
+    - `lib/modules/admin_catalog/view/negotiation_page.dart`: Upgraded to `HeroHeader` ("Negotiation: ${offerTitle}" • "Live negotiation · auto-refresh"), 18px rounded cards with `#FFE0B2` borders, and saffron gradient submit button.
+    - `lib/modules/admin_catalog/view/assign_driver_dialog.dart`: Upgraded to modern curved bottom sheet with top drag handle, curved saffron banner header, badge icon pod, and 16px rounded driver cards with `#FFE0B2` borders.
+    - `lib/modules/admin_catalog/view/assign_vehicle_dialog.dart`: Upgraded to modern curved bottom sheet with top drag handle, curved saffron banner header, vehicle icon pod, and 16px rounded vehicle cards with `#FFE0B2` borders and saffron action buttons.
+    - `lib/modules/admin_catalog/view/approve_deal_dialog.dart`: Upgraded to 20px rounded dialog with `#FFE0B2` border, emerald success pod, saffron-accented sub-admin selector, and warm gradient accept button.
+    - `lib/modules/admin_catalog/view/stock_history_dialog.dart`: Upgraded to 20px rounded dialog with `#FFE0B2` border, saffron inventory pod, responsive `Wrap` actions preventing overflow, and warm gradient button.
+  - **Batch 3A (Dashboard Eye-Catching Cards, Admin Drawer, and Transport Bids Sheet)**:
+    - `lib/modules/dashboard/view/dashboard_page.dart`: Upgraded KPI cards from dull `GlassCard` with grey borders to 18px rounded containers with `#FFE0B2` borders, rich category color palettes (Saffron `#EA580C`, Amber `#D97706`, Emerald `#059669`, Blue `#2563EB`, Red `#DC2626`), high-contrast typography, and depth shadows.
+    - `lib/modules/admin_catalog/view/admin_drawer.dart`: Refactored to match Buyer/Seller drawer design language using `_buyerSectionHeader`, `_buyerCardGroup`, and `_buyerMenuItem` with colorful rounded icon pods and collapsible Masters/Offers groups.
+    - `lib/modules/admin_catalog/view/transport_bids_sheet.dart`: Converted raw unstyled modal into a modern curved sheet with warm saffron top banner, shipping icon pod, 18px rounded bid cards with `#FFE0B2` borders, vibrant status pills, and rounded action buttons.
+  - **Batch 1 (Admin Core Tabs & Cards)**:
+    - `lib/modules/kyc_users/view/kyc_user_view.dart` (`KycUsersScreen`): Upgraded from flat AppBar to `HeroHeader` + 14px KPI pods + 18px eye-catching user cards with `#FFE0B2` borders, Saffron avatar gradient, depth shadows, and refined action buttons.
+    - `lib/modules/products/view/product_view.dart` (`ProductScreen`): Upgraded from flat AppBar to `HeroHeader` + warm gradient "Create Offer" CTA + 18px rounded product cards with `#FFE0B2` borders and vibrant badges.
+    - `lib/modules/contracts/view/contract_view.dart` (`ContractsScreen`): Upgraded card border from dull dividerColor to 18px radius with `#FFE0B2` borders and depth shadows.
+  - **Batch 2 (User Management & Secondary Admin Screens)**:
+    - `lib/modules/users/view/user_view.dart` (`UserManagementScreen`): Upgraded to `HeroHeader` + 14px metric pods (`#FFE0B2` borders) + 18px eye-catching user cards with Saffron avatar, `#FFE0B2` borders, depth shadows, and warm gradient FAB.
+    - `lib/modules/users/view/user_detail_screen.dart` (`UserDetailScreen`): Upgraded to `HeroHeader` + 18px profile header card + 18px info/security pods with `#FFE0B2` borders and Saffron accent icons.
+    - `lib/modules/users/view/add_user_screen.dart` (`AddUserScreen`): Upgraded to `HeroHeader` + 18px header pod + 18px form pod with `#FFE0B2` border + warm Saffron-to-Amber gradient CTA button.
+    - `lib/modules/contracts/view/contract_edit_view.dart` (`ContractEditView`): Upgraded to `HeroHeader` + 3 organized 18px pods (Deal Parameters, Locations & Schedule, Status & Remarks) with `#FFE0B2` borders + warm gradient CTA button.
+  - **Batch 4A (Core Admin & Dashboard — 3/3 screens)**:
+    - `lib/modules/dashboard/view/dashboard_page.dart` (`AdminDashboardScreen`)
+    - `lib/modules/admin_catalog/view/admin_drawer.dart` (`AdminDrawer`)
+    - `lib/modules/admin_notifications/view/admin_notification_view.dart` (`AdminNotificationView`)
+  - **Batch 4B (Catalog, Deals & Offers — 4/4 screens)**:
+    - `lib/modules/admin_catalog/view/admin_offers_list_screen.dart` (`AdminOffersListScreen`)
+    - `lib/modules/admin_catalog/view/admin_category_master_screen.dart` (`AdminCategoryMasterScreen`)
+    - `lib/modules/admin_catalog/view/admin_record_detail_screen.dart` (`AdminRecordDetailScreen`)
+    - `lib/modules/admin_catalog/view/admin_record_form_screen.dart` (`AdminRecordFormScreen`)
+  - **Batch 4C (Delivery Challans & Logistics Operations — 3/3 screens + Challan Card)**:
+    - `lib/modules/admin_dc/view/admin_dc_list_view.dart` (`AdminChallanListView`)
+    - `lib/modules/admin_dc/view/admin_create_dc_view.dart` (`AdminCreateChallanView`)
+    - `lib/modules/admin_dc/view/admin_dc_details_view.dart` (`AdminChallanDetailsView`)
+    - `lib/modules/admin_dc/widgets/admin_challan_card.dart` (`AdminChallanCard`)
+  - **Batch 4D (Branch Performance & Financial Reports — 3/3 screens + Report Card)**:
+    - `lib/modules/admin_reports/view/admin_branch_reports_view.dart` (`AdminBranchReportsView`)
+    - `lib/modules/admin_catalog/view/admin_branch_settings_screen.dart` (`AdminBranchSettingsScreen`)
+    - `lib/modules/admin_catalog/view/admin_brokerage_bills_screen.dart` (`AdminBrokerageBillsScreen`)
+    - `lib/modules/admin_reports/widgets/branch_report_card.dart` (`BranchReportCard`)
+  - **Batch 4E (Governance, Roles & Compliance — 4/4 screens)**:
+    - `lib/modules/admin_catalog/view/admin_roles_screen.dart` (`AdminRolesScreen`)
+    - `lib/modules/admin_catalog/view/admin_permissions_matrix_screen.dart` (`AdminPermissionsMatrixScreen`)
+    - `lib/modules/admin_catalog/view/admin_sub_admin_permissions_screen.dart` (`AdminSubAdminPermissionsScreen`)
+    - `lib/modules/admin_catalog/view/admin_complaints_view.dart` (`AdminComplaintsView`)
+- **Global Brand Color Unification & Polish**:
+  - `lib/theme/app_theme.dart`: Aligned `colorScheme.primary` and `primaryColor` to brand `secondaryOrange` (`#F57C00`), eliminating lingering mustard-yellow tints from buttons, active chips, dialog icons, and focus borders app-wide.
+  - `lib/modules/nav_bar/view/nav_page.dart`: Upgraded `GlassNavBar` background from `#FFF8E1` pale yellow gradient to clean white surface with warm `#FFE0B2` border.
+  - `lib/modules/settings/view/settings_page.dart`: Upgraded Privacy Policy/URL dialog with high-contrast saffron URL text and vibrant `secondaryOrange` "Open" button.
+- **Evidence**: `flutter analyze` 0 errors, 0 warnings on modified files; automated regression test suites (8 test files, 31/31 tests passing) all green. Zero breaking changes.
 
 ---
 
 ## Completed Work in Current Session
+- **Milestone 4 — Batch 4E (Governance, Roles & Compliance — 4/4 Screens) Completed & Verified**:
+  - `AdminRolesScreen`: Modernized with `HeroHeader`, drawer toggle, 18px role cards with `#FFE0B2` borders, and saffron gradient FAB.
+  - `AdminPermissionsMatrixScreen`: Modernized with `HeroHeader`, drawer toggle, role selector pill, and 18px rounded matrix container with `#FFE0B2` borders.
+  - `AdminSubAdminPermissionsScreen`: Modernized with `HeroHeader`, sub-admin profile pod with `#FFE0B2` border, module toggles, and warm gradient save button.
+  - `AdminComplaintsView`: Modernized with `HeroHeader`, 14px KPI pods with `#FFE0B2` borders, responsive `Wrap` layouts preventing RenderFlex overflows, and dispute resolution cards.
+- **Milestone 4 — Batch 4D (Branch Performance & Financial Reports — 3/3 Screens) Completed & Verified**:
+  - `AdminBranchReportsView`, `AdminBranchSettingsScreen`, and `AdminBrokerageBillsScreen` modernized with unified agritech design system and 100% backward compatibility.
+- **Milestone 4 — Batch 4C (Delivery Challans & Logistics Operations — 3/3 Screens) Completed & Verified**:
+  - `AdminChallanListView`, `AdminCreateChallanView`, and `AdminChallanDetailsView` modernized with unified agritech design system and 100% backward compatibility.
+- **Milestone 4 — Batch 4B (Catalog, Deals & Offers — 4/4 Screens) Completed & Verified**:
+  - `AdminOffersListScreen`, `AdminCategoryMasterScreen`, `AdminRecordDetailScreen`, and `AdminRecordFormScreen` modernized with unified agritech design system and 100% backward compatibility.
+- **Milestone 4 — Batch 4A (Core Admin & Dashboard — 3/3 Screens) Completed & Verified**:
+  - `AdminDashboardScreen`, `AdminDrawer`, and `AdminNotificationView` modernized with unified agritech design system and 100% backward compatibility.
 - **Milestone 3 — Batch 3D Step 3D.2 (Marketplace Demand & Offers — 2/2 Screens) Completed & Verified**:
   - `TransporterOffersView` modernized with `HeroHeader` + TabBar (4 tabs: Offers, Today, Pending, Previous) + 18px rounded cards with `#FFE0B2` borders, high-contrast price, quantity pills, and status tags.
   - `TransporterRfqView` modernized with `HeroHeader` + 18px rounded RFQ tender cards with RFQ badge, category title, target price, required quantity, buyer name, and status pills.

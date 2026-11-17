@@ -1,7 +1,8 @@
 import 'package:daalsetu/modules/admin_catalog/view/admin_drawer.dart';
 import 'package:daalsetu/network/api_client.dart';
+import 'package:daalsetu/theme/app_theme.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:flutter/material.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../utils/app_snackbar.dart';
 
 class AdminBranchSettingsScreen extends StatefulWidget {
@@ -96,73 +97,88 @@ class _AdminBranchSettingsScreenState extends State<AdminBranchSettingsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    drawer: const AdminDrawer(activeKey: 'branch_settings'),
-    appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-      title: const Text(
-        'Branch Settings',
-        style: TextStyle(fontWeight: FontWeight.w800),
-      ),
-      actions: [
-        IconButton(
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBorder = isDark ? AppTheme.borderColor : const Color(0xFFFFE0B2);
+
+    return Scaffold(
+      drawer: const AdminDrawer(activeKey: 'branch_settings'),
+      appBar: HeroHeader(
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            tooltip: 'Open navigation menu',
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
+          ),
+        ),
+        title: 'Branch Settings',
+        subtitle: 'Configure enterprise cross-branch permissions',
+        trailing: IconButton(
           tooltip: 'Refresh',
           onPressed: loading || savingKey != null ? null : loadSettings,
-          icon: const Icon(Icons.refresh_rounded),
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
         ),
-      ],
-    ),
-    body: loading
-        ? const Center(child: CircularProgressIndicator())
-        : error != null
-        ? _errorView()
-        : RefreshIndicator(
-            onRefresh: loadSettings,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              children: [
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.admin_panel_settings_outlined,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Text(
-                            'These global controls affect buyers and transporters across every branch. Only a Super Admin can change them.',
+      ),
+      body: loading
+          ? const Center(child: CircularProgressIndicator())
+          : error != null
+          ? _errorView()
+          : RefreshIndicator(
+              onRefresh: loadSettings,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                children: [
+                  Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      side: BorderSide(color: cardBorder, width: 1.2),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.admin_panel_settings_outlined,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Text(
+                              'These global controls affect buyers and transporters across every branch. Only a Super Admin can change them.',
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _settingCard(
-                  keyName: 'buyer_cross_branch_access',
-                  icon: Icons.shopping_cart_checkout_outlined,
-                  title: 'Buyer Cross-Branch Access',
-                  subtitle:
-                      'Allow buyers to view offers outside their own branch.',
-                  value: buyerCrossBranchAccess,
-                ),
-                const SizedBox(height: 12),
-                _settingCard(
-                  keyName: 'transporter_cross_branch_bidding',
-                  icon: Icons.local_shipping_outlined,
-                  title: 'Transporter Cross-Branch Bidding',
-                  subtitle:
-                      'Allow transporters to bid on contracts from other branches.',
-                  value: transporterCrossBranchBidding,
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  _settingCard(
+                    keyName: 'buyer_cross_branch_access',
+                    icon: Icons.shopping_cart_checkout_outlined,
+                    title: 'Buyer Cross-Branch Access',
+                    subtitle:
+                        'Allow buyers to view offers outside their own branch.',
+                    value: buyerCrossBranchAccess,
+                    cardBorder: cardBorder,
+                  ),
+                  const SizedBox(height: 12),
+                  _settingCard(
+                    keyName: 'transporter_cross_branch_bidding',
+                    icon: Icons.local_shipping_outlined,
+                    title: 'Transporter Cross-Branch Bidding',
+                    subtitle:
+                        'Allow transporters to bid on contracts from other branches.',
+                    value: transporterCrossBranchBidding,
+                    cardBorder: cardBorder,
+                  ),
+                ],
+              ),
             ),
-          ),
-  );
+    );
+  }
 
   Widget _errorView() => Center(
     child: Padding(
@@ -190,10 +206,16 @@ class _AdminBranchSettingsScreenState extends State<AdminBranchSettingsScreen> {
     required String title,
     required String subtitle,
     required bool value,
+    required Color cardBorder,
   }) {
     final saving = savingKey == keyName;
     return Card(
+      elevation: 2,
       clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: cardBorder, width: 1.2),
+      ),
       child: SwitchListTile(
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,

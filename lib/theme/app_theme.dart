@@ -58,13 +58,13 @@ class AppTheme {
 
     return ThemeData(
       brightness: Brightness.dark,
-      primaryColor: primaryGold,
+      primaryColor: secondaryOrange,
       scaffoldBackgroundColor: bgDarkNavy,
       textTheme: textTheme,
       
       colorScheme: const ColorScheme.dark(
-        primary: primaryGold,
-        onPrimary: bgDarkNavy,
+        primary: secondaryOrange,
+        onPrimary: Colors.white,
         secondary: secondaryOrange,
         onSecondary: Colors.white,
         error: errorRed,
@@ -128,10 +128,10 @@ class AppTheme {
 
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryGold,
+          backgroundColor: secondaryOrange,
           foregroundColor: Colors.white,
           elevation: 4,
-          shadowColor: primaryGold.withValues(alpha: 0.3),
+          shadowColor: secondaryOrange.withValues(alpha: 0.3),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16),
@@ -140,7 +140,7 @@ class AppTheme {
 
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: primaryGold,
+          foregroundColor: secondaryOrange,
           textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
         ),
       ),
@@ -207,12 +207,12 @@ class AppTheme {
 
     return ThemeData(
       brightness: Brightness.light,
-      primaryColor: primaryGold,
+      primaryColor: secondaryOrange,
       scaffoldBackgroundColor: bgLight,
       textTheme: textTheme,
       
       colorScheme: const ColorScheme.light(
-        primary: primaryGold,
+        primary: secondaryOrange,
         onPrimary: Colors.white,
         secondary: secondaryOrange,
         onSecondary: Colors.white,

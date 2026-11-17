@@ -4,11 +4,12 @@ import 'package:get/get.dart';
 import '../model/user_model.dart';
 import '../../../services/users_services.dart';
 import '../../../comman/api_url.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
 
 class UserDetailScreen extends StatefulWidget {
-  const UserDetailScreen({super.key});
+  final UserModel? initialUser;
+  const UserDetailScreen({super.key, this.initialUser});
 
   @override
   State<UserDetailScreen> createState() => _UserDetailScreenState();
@@ -22,8 +23,8 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize user from arguments
-    final args = Get.arguments;
+    // Initialize user from arguments or constructor
+    final args = widget.initialUser ?? Get.arguments;
     if (args is UserModel) {
       user = args;
     } else if (args is Map<String, dynamic>) {
@@ -41,7 +42,9 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       );
     }
 
-    _fetchDetailedData();
+    if (widget.initialUser == null) {
+      _fetchDetailedData();
+    }
   }
 
   Future<void> _fetchDetailedData() async {
@@ -65,46 +68,46 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-        elevation: 0,
-        title: const Text("User Details"),
-        centerTitle: true,
-        actions: [
-          if (_isLoadingDetails)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
+      appBar: HeroHeader(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        title: user.fullName.isNotEmpty
+            ? user.fullName
+            : (user.username.isNotEmpty ? user.username : "User Details"),
+        subtitle: "Profile, permissions & KYC verification",
+        trailing: _isLoadingDetails
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              )
+            : IconButton(
+                icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+                onPressed: _fetchDetailedData,
+                tooltip: "Refresh Details",
               ),
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.refresh_rounded),
-              onPressed: _fetchDetailedData,
-              tooltip: "Refresh Details",
-            ),
-        ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Column(
           children: [
             /// 🔥 HEADER CARD
-            _buildHeaderCard(context),
+            _buildHeaderCard(context, isDark: isDark),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
             /// 🔥 BASIC INFO CARD
             _buildInfoCard(
               context,
+              isDark: isDark,
               title: "Basic Information",
+              icon: Icons.person_outline_rounded,
               children: [
                 _infoRow("Full Name", user.fullName.isNotEmpty ? user.fullName : "-"),
                 _infoRow("Username", user.username.isNotEmpty ? user.username : "-"),
@@ -115,12 +118,14 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             /// 🔥 COMPANY & ASSIGNMENT CARD
             _buildInfoCard(
               context,
+              isDark: isDark,
               title: "Company & Assignment",
+              icon: Icons.business_outlined,
               children: [
                 _infoRow("Company Name", user.companyName ?? "-"),
                 _infoRow("Brand", user.brand ?? "-"),
@@ -130,12 +135,14 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             /// 🔥 ACCOUNT & SECURITY DETAILS CARD
             _buildInfoCard(
               context,
+              isDark: isDark,
               title: "Account & System Details",
+              icon: Icons.security_rounded,
               children: [
                 _passwordRow(context),
                 _infoRow("Registration Reason", user.registrationReason ?? "-"),
@@ -143,17 +150,19 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             /// 🔥 TAGS CARD
-            _buildTagsCard(context),
+            _buildTagsCard(context, isDark: isDark),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             /// 🔥 KYC INFO CARD
             _buildInfoCard(
               context,
+              isDark: isDark,
               title: "KYC Details",
+              icon: Icons.verified_user_outlined,
               children: [
                 _infoRow("PAN Number", user.panNumber ?? "-"),
                 _infoRow("GST Number", user.gstNumber ?? "-"),
@@ -165,12 +174,12 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             /// 🔥 DOCUMENTS CARD (Always rendered for complete parity)
-            _buildDocumentsCard(context),
+            _buildDocumentsCard(context, isDark: isDark),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -180,19 +189,19 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   /// ================================
   /// HEADER CARD
   /// ================================
-  Widget _buildHeaderCard(BuildContext context) {
+  Widget _buildHeaderCard(BuildContext context, {required bool isDark}) {
     final theme = Theme.of(context);
 
     Color kycColor;
     switch (user.kycStatus.toLowerCase()) {
       case "approved":
-        kycColor = Colors.green;
+        kycColor = const Color(0xFF2E7D32);
         break;
       case "pending":
-        kycColor = Colors.orange;
+        kycColor = const Color(0xFFF57C00);
         break;
       case "rejected":
-        kycColor = Colors.red;
+        kycColor = const Color(0xFFD32F2F);
         break;
       default:
         kycColor = Colors.grey;
@@ -201,87 +210,134 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     final avatarUrl = _resolveUrl(user.profileImage);
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: theme.brightness == Brightness.dark
-                ? Colors.black.withOpacity(0.4)
-                : Colors.grey.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Column(
         children: [
-          CircleAvatar(
-            radius: 46,
-            backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-            backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-            child: avatarUrl == null
-                ? Text(
-                    user.fullName.isNotEmpty
-                        ? user.fullName[0].toUpperCase()
-                        : (user.username.isNotEmpty
-                            ? user.username[0].toUpperCase()
-                            : "?"),
-                    style: theme.textTheme.headlineMedium,
-                  )
-                : null,
+          Container(
+            width: 84,
+            height: 84,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [Color(0xFFE65100), Color(0xFFF57C00)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFF57C00).withValues(alpha: 0.25),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: ClipOval(
+              child: avatarUrl != null
+                  ? Image.network(
+                      avatarUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _avatarFallback(),
+                    )
+                  : _avatarFallback(),
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
           Text(
             user.fullName.isEmpty ? user.username : user.fullName,
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
+              fontSize: 20,
             ),
             textAlign: TextAlign.center,
           ),
 
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
 
-          /// ROLE CHIP
-          if (user.role.isNotEmpty)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: Text(
-                user.role.toUpperCase(),
-                style: TextStyle(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              /// ROLE CHIP
+              if (user.role.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF57C00).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: const Color(0xFFF57C00).withValues(alpha: 0.35),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    user.role.toUpperCase(),
+                    style: const TextStyle(
+                      color: Color(0xFFE65100),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
                 ),
-              ),
-            ),
 
-          if (user.kycStatus.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            /// KYC BADGE
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: kycColor.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: Text(
-                "KYC ${user.kycStatus.toUpperCase()}",
-                style: TextStyle(
-                  color: kycColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+              if (user.kycStatus.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: kycColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: kycColor.withValues(alpha: 0.35),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    "KYC ${user.kycStatus.toUpperCase()}",
+                    style: TextStyle(
+                      color: kycColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _avatarFallback() {
+    final letter = user.fullName.isNotEmpty
+        ? user.fullName[0].toUpperCase()
+        : (user.username.isNotEmpty ? user.username[0].toUpperCase() : "?");
+    return Center(
+      child: Text(
+        letter,
+        style: const TextStyle(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
       ),
     );
   }
@@ -291,29 +347,61 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   /// ================================
   Widget _buildInfoCard(
     BuildContext context, {
+    required bool isDark,
     required String title,
+    IconData? icon,
     required List<Widget> children,
   }) {
     final theme = Theme.of(context);
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.dividerColor),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            children: [
+              if (icon != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF57C00).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, size: 16, color: const Color(0xFFE65100)),
+                ),
+                const SizedBox(width: 10),
+              ],
+              Expanded(
+                child: Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
+          const Divider(height: 1),
+          const SizedBox(height: 14),
           ...children,
         ],
       ),
@@ -413,31 +501,59 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     );
   }
 
-  Widget _buildTagsCard(BuildContext context) {
+  Widget _buildTagsCard(BuildContext context, {required bool isDark}) {
     final theme = Theme.of(context);
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.dividerColor),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "Tags",
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF57C00).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.label_outline_rounded, size: 16, color: Color(0xFFE65100)),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  "Assigned Tags",
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
+          const Divider(height: 1),
+          const SizedBox(height: 14),
           if (user.tags.isEmpty)
             const Text(
               "No tags assigned",
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(color: Colors.grey, fontSize: 13),
             )
           else
             Wrap(
@@ -445,12 +561,20 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               runSpacing: 8,
               children: user.tags.map((tag) {
                 final color = Colors.primaries[tag.id % Colors.primaries.length];
-                return Chip(
-                  label: Text(tag.tagName),
-                  backgroundColor: color.withOpacity(0.15),
-                  labelStyle: TextStyle(
-                    color: color,
-                    fontWeight: FontWeight.w600,
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: color.withValues(alpha: 0.3)),
+                  ),
+                  child: Text(
+                    tag.tagName,
+                    style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
                   ),
                 );
               }).toList(),
@@ -463,48 +587,64 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   /// ================================
   /// DOCUMENTS CARD (Full Web Parity)
   /// ================================
-  Widget _buildDocumentsCard(BuildContext context) {
+  Widget _buildDocumentsCard(BuildContext context, {required bool isDark}) {
     final theme = Theme.of(context);
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.dividerColor),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF57C00).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.folder_shared_outlined, size: 16, color: Color(0xFFE65100)),
+              ),
+              const SizedBox(width: 10),
               Text(
                 "Uploaded Documents",
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
+                  fontSize: 15,
                 ),
-              ),
-              Icon(
-                Icons.folder_shared_outlined,
-                color: theme.colorScheme.primary,
-                size: 20,
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
+          const Divider(height: 1),
+          const SizedBox(height: 14),
 
-          _documentRow(context, "PAN Card", user.panImage),
-          _documentRow(context, "GST Certificate", user.gstImage),
-          _documentRow(context, "Aadhaar Card (Front)", user.aadharFrontImage),
-          _documentRow(context, "Aadhaar Card (Back)", user.aadharBackImage),
+          _documentRow(context, "PAN Card", user.panImage, isDark: isDark),
+          _documentRow(context, "GST Certificate", user.gstImage, isDark: isDark),
+          _documentRow(context, "Aadhaar Card (Front)", user.aadharFrontImage, isDark: isDark),
+          _documentRow(context, "Aadhaar Card (Back)", user.aadharBackImage, isDark: isDark),
         ],
       ),
     );
   }
 
-  Widget _documentRow(BuildContext context, String title, String? rawUrl) {
+  Widget _documentRow(BuildContext context, String title, String? rawUrl, {required bool isDark}) {
     final theme = Theme.of(context);
     final resolvedUrl = _resolveUrl(rawUrl);
     final hasDoc = resolvedUrl != null;
@@ -515,7 +655,9 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.6)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2).withValues(alpha: 0.6),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -523,22 +665,25 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: hasDoc
-                      ? Colors.green.withOpacity(0.12)
-                      : Colors.grey.withOpacity(0.12),
+                      ? const Color(0xFF2E7D32).withValues(alpha: 0.12)
+                      : Colors.grey.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   hasDoc ? "Uploaded" : "Not Uploaded",
                   style: TextStyle(
-                    color: hasDoc ? Colors.green : Colors.grey,
+                    color: hasDoc ? const Color(0xFF2E7D32) : Colors.grey,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),

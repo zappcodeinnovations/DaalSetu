@@ -115,37 +115,91 @@ class _AssignVehicleDialogState extends State<AssignVehicleDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      height: MediaQuery.sizeOf(context).height * 0.7,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.78,
+      ),
       decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
+        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFFFFDF8),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
+          // Drag handle
+          Container(
+            margin: const EdgeInsets.only(top: 10, bottom: 6),
+            width: 44,
+            height: 4,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          // Saffron Header
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFEA580C), Color(0xFFF57C00)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.local_shipping_outlined, color: Color(0xFFEA580C), size: 22),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    "Assign Vehicle to ${widget.driverName}",
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Assign Vehicle",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.2,
                         ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        "Driver: ${widget.driverName}",
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
                 ),
                 IconButton(
                   onPressed: () => Navigator.pop(context, false),
-                  icon: const Icon(Icons.close_rounded),
+                  icon: const Icon(Icons.close_rounded, color: Colors.white),
                 ),
               ],
             ),
           ),
-          const Divider(height: 1),
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -156,38 +210,66 @@ class _AssignVehicleDialogState extends State<AssignVehicleDialog> {
                         : ListView.separated(
                             padding: const EdgeInsets.all(16),
                             itemCount: _vehicles.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 10),
+                            separatorBuilder: (_, __) => const SizedBox(height: 12),
                             itemBuilder: (context, index) {
                               final v = _vehicles[index];
-                              return ListTile(
-                                tileColor: Theme.of(context).cardColor,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side: BorderSide(
-                                    color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
+                              return Container(
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: const Color(0xFFFFE0B2),
+                                    width: 1.2,
                                   ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
-                                leading: const CircleAvatar(
-                                  child: Icon(Icons.local_shipping_outlined),
+                                child: ListTile(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  leading: Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFFF7ED),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: const Color(0xFFFFE0B2)),
+                                    ),
+                                    child: const Icon(Icons.local_shipping_outlined, color: Color(0xFFEA580C), size: 20),
+                                  ),
+                                  title: Text(
+                                    v['vehicle_number']?.toString() ?? 'Unknown',
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  subtitle: Text(
+                                    "${v['vehicle_brand_display'] ?? ''} ${v['vehicle_type'] ?? ''}".trim(),
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                  trailing: _isAssigning
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                        )
+                                      : FilledButton(
+                                          onPressed: _isAssigning ? null : () => _assignVehicle(v),
+                                          style: FilledButton.styleFrom(
+                                            backgroundColor: const Color(0xFFF57C00),
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                          child: const Text("Select"),
+                                        ),
                                 ),
-                                title: Text(
-                                  v['vehicle_number']?.toString() ?? 'Unknown',
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                subtitle: Text(
-                                  "${v['vehicle_brand_display'] ?? ''} ${v['vehicle_type'] ?? ''}".trim(),
-                                ),
-                                trailing: _isAssigning
-                                    ? const SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
-                                      )
-                                    : FilledButton(
-                                        onPressed: _isAssigning ? null : () => _assignVehicle(v),
-                                        style: _primaryAction,
-                                        child: const Text("Select"),
-                                      ),
                               );
                             },
                           ),

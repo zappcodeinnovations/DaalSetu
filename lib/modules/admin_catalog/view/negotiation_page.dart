@@ -11,7 +11,7 @@ import 'package:daalsetu/theme/app_theme.dart';
 import 'package:daalsetu/utils/global_error_handler.dart';
 
 import 'approve_deal_dialog.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:daalsetu/widgets/delivery_period_picker.dart';
 import '../../../utils/app_snackbar.dart';
 
@@ -117,10 +117,11 @@ class _NegotiationPageState extends State<NegotiationPage> {
             remark: result.remark,
             subAdminId: result.subAdminId,
           );
-          if (response['success'] != true)
+          if (response['success'] != true) {
             throw Exception(
               response['message'] ?? 'Could not accept interest.',
             );
+          }
         } else {
           await ProductService.confirmOfferDeal(
             productId: int.parse(widget.offerId),
@@ -288,10 +289,11 @@ class _NegotiationPageState extends State<NegotiationPage> {
             widget.interest.interestId,
             remark: '$selectedReason. ${remarkCtrl.text}'.trim(),
           );
-          if (response['success'] != true)
+          if (response['success'] != true) {
             throw Exception(
               response['message'] ?? 'Could not reject interest.',
             );
+          }
         } else {
           await ProductService.confirmOfferDeal(
             productId: int.parse(widget.offerId),
@@ -395,32 +397,18 @@ class _NegotiationPageState extends State<NegotiationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
-        leading: const AppBarLeading(),
-        leadingWidth: AppBarLeading.widthFor(context),
-        titleSpacing: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Negotiation: ${widget.offerTitle}",
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-            const Text(
-              'Live negotiation • auto-refresh',
-              style: TextStyle(fontSize: 11, color: Colors.green),
-            ),
-          ],
+      appBar: HeroHeader(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
-        backgroundColor: bgColor,
-        surfaceTintColor: Colors.transparent,
-        actions: [
-          IconButton(
-            onPressed: _isLoading ? null : _loadThread,
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Refresh negotiation',
-          ),
-        ],
+        title: "Negotiation: ${widget.offerTitle}",
+        subtitle: 'Live negotiation • auto-refresh',
+        trailing: IconButton(
+          tooltip: 'Refresh negotiation',
+          onPressed: _isLoading ? null : _loadThread,
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -481,14 +469,14 @@ class _NegotiationPageState extends State<NegotiationPage> {
 
     return Container(
       decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: textLight.withValues(alpha: 0.15)),
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFFFE0B2), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -501,7 +489,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
             decoration: BoxDecoration(
               color: headerBg,
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(12),
+                top: Radius.circular(18),
               ),
               border: Border(
                 bottom: BorderSide(color: headerBorder, width: 1.5),
@@ -510,31 +498,34 @@ class _NegotiationPageState extends State<NegotiationPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  "Negotiation Summary",
-                  style: TextStyle(
-                    color: textDark,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                Expanded(
+                  child: Text(
+                    "Negotiation Summary",
+                    style: TextStyle(
+                      color: textDark,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryGold.withValues(alpha: 0.2),
+                    color: const Color(0xFFFFF7ED),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppTheme.primaryGold.withValues(alpha: 0.4),
+                      color: const Color(0xFFFFE0B2),
                     ),
                   ),
                   child: Text(
                     (widget.interest.status ?? 'Interested').toUpperCase(),
                     style: const TextStyle(
                       fontSize: 11,
-                      color: AppTheme.primaryGold,
+                      color: Color(0xFFEA580C),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -825,20 +816,20 @@ class _NegotiationPageState extends State<NegotiationPage> {
   }
 
   Widget _buildNegotiationLog() {
-    const logHeaderBg = Color(0xFFF58220); // Signature web orange header banner
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final messages = (_thread?['messages'] as List?) ?? [];
 
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: textLight.withValues(alpha: 0.15)),
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFFFE0B2), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -848,16 +839,12 @@ class _NegotiationPageState extends State<NegotiationPage> {
           // ── Highlighted Header (Web Parity Orange Header with Bottom Border)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-            decoration: BoxDecoration(
-              color: logHeaderBg,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(12),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFEA580C), Color(0xFFF57C00)],
               ),
-              border: Border(
-                bottom: BorderSide(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  width: 1.5,
-                ),
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(18),
               ),
             ),
             child: Row(
@@ -1338,16 +1325,17 @@ class _NegotiationPageState extends State<NegotiationPage> {
         ),
       );
     }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final priceUnit = _thread?['price_unit']?.toString().toUpperCase() ?? 'QTL';
     return Container(
       decoration: BoxDecoration(
-        color: cardColor,
-        border: Border(
-          top: BorderSide(color: textLight.withValues(alpha: 0.15), width: 1),
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        border: const Border(
+          top: BorderSide(color: Color(0xFFFFE0B2), width: 1.2),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
             blurRadius: 10,
             offset: const Offset(0, -3),
           ),
@@ -1432,22 +1420,44 @@ class _NegotiationPageState extends State<NegotiationPage> {
             ),
           ),
           const SizedBox(height: 10),
-          // Submit Negotiation Button (Signature Web Orange)
-          SizedBox(
+          // Submit Negotiation Button (Signature Saffron)
+          Container(
             width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: _isLoading ? null : _submitNegotiation,
-              icon: const Icon(Icons.send_rounded, size: 18),
-              label: const Text(
-                "Submit Negotiation",
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFEA580C), Color(0xFFF57C00)],
               ),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFF58220),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFF57C00).withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: _isLoading ? null : _submitNegotiation,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 14),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.send_rounded, size: 18, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        "Submit Negotiation",
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

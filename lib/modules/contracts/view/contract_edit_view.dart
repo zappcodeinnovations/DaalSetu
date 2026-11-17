@@ -4,7 +4,7 @@ import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
 
 /// Web "Edit Contract" modal: deal values, locations, dates, remarks and status.
@@ -112,69 +112,192 @@ class _ContractEditViewState extends State<ContractEditView> {
   @override
   Widget build(BuildContext context) {
     final c = widget.contract;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), title: Text('Edit ${c.contractId}')),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: HeroHeader(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        title: 'Edit ${c.contractId}',
+        subtitle: 'Modify deal metrics, locations, schedule & remarks',
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           children: [
-            _section('Deal'),
-            Row(children: [
-              Expanded(flex: 3, child: _number('deal_amount', 'Rate / Price', decimal: true)),
-              const SizedBox(width: 10),
-              Expanded(flex: 2, child: _readOnly('Per', c.amountUnit.toUpperCase())),
-            ]),
-            Row(children: [
-              Expanded(flex: 3, child: _number('deal_quantity', 'Quantity', decimal: true)),
-              const SizedBox(width: 10),
-              Expanded(flex: 2, child: _readOnly('Unit', c.quantityUnit.toUpperCase())),
-            ]),
-            Row(children: [
-              Expanded(child: _number('bag_count', 'Bags')),
-              const SizedBox(width: 10),
-              Expanded(child: _number('packing_weight_kg', 'Packing weight (KG)', decimal: true)),
-            ]),
-            _section('Locations & Dates'),
-            _textField('pickup_location', 'Pickup location', required: true),
-            _textField('delivery_location', 'Delivery location', required: true),
-            _dateField('loading_from_date', 'Loading from date'),
-            _dateField('loading_to_date', 'Loading to date'),
-            _dateField('delivery_date', 'Delivery from date'),
-            _dateField('delivery_date_to', 'Delivery to date'),
-            _section('Status & Remarks'),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: DropdownButtonFormField<String>(
-                initialValue: _status,
-                decoration: const InputDecoration(labelText: 'Status'),
-                items: _statuses.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
-                onChanged: (value) => _status = value ?? _status,
+            // ── Card 1: Deal Parameters ──
+            _cardContainer(
+              context: context,
+              isDark: isDark,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _section('Deal Parameters', Icons.payments_outlined),
+                  const SizedBox(height: 12),
+                  Row(children: [
+                    Expanded(flex: 3, child: _number('deal_amount', 'Rate / Price', decimal: true)),
+                    const SizedBox(width: 10),
+                    Expanded(flex: 2, child: _readOnly('Per', c.amountUnit.toUpperCase())),
+                  ]),
+                  Row(children: [
+                    Expanded(flex: 3, child: _number('deal_quantity', 'Quantity', decimal: true)),
+                    const SizedBox(width: 10),
+                    Expanded(flex: 2, child: _readOnly('Unit', c.quantityUnit.toUpperCase())),
+                  ]),
+                  Row(children: [
+                    Expanded(child: _number('bag_count', 'Bags')),
+                    const SizedBox(width: 10),
+                    Expanded(child: _number('packing_weight_kg', 'Packing weight (KG)', decimal: true)),
+                  ]),
+                ],
               ),
             ),
-            _textField('buyer_remark', 'Buyer remark', maxLines: 2),
-            _textField('seller_remark', 'Seller remark', maxLines: 2),
-            _textField('admin_remark', 'Admin remark', maxLines: 2),
+
+            // ── Card 2: Locations & Dates ──
+            _cardContainer(
+              context: context,
+              isDark: isDark,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _section('Locations & Schedule', Icons.local_shipping_outlined),
+                  const SizedBox(height: 12),
+                  _textField('pickup_location', 'Pickup location', required: true),
+                  _textField('delivery_location', 'Delivery location', required: true),
+                  _dateField('loading_from_date', 'Loading from date'),
+                  _dateField('loading_to_date', 'Loading to date'),
+                  _dateField('delivery_date', 'Delivery from date'),
+                  _dateField('delivery_date_to', 'Delivery to date'),
+                ],
+              ),
+            ),
+
+            // ── Card 3: Status & Remarks ──
+            _cardContainer(
+              context: context,
+              isDark: isDark,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _section('Status & Remarks', Icons.fact_check_outlined),
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: DropdownButtonFormField<String>(
+                      initialValue: _status,
+                      decoration: const InputDecoration(labelText: 'Status'),
+                      items: _statuses.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
+                      onChanged: (value) => _status = value ?? _status,
+                    ),
+                  ),
+                  _textField('buyer_remark', 'Buyer remark', maxLines: 2),
+                  _textField('seller_remark', 'Seller remark', maxLines: 2),
+                  _textField('admin_remark', 'Admin remark', maxLines: 2),
+                ],
+              ),
+            ),
+
             const SizedBox(height: 8),
-            SizedBox(
+
+            Container(
               height: 52,
-              child: FilledButton.icon(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFFE65100),
+                    Color(0xFFF57C00),
+                    Color(0xFFFFA000),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFE65100).withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ElevatedButton.icon(
                 onPressed: _saving ? null : _save,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
                 icon: _saving
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.save_outlined),
-                label: const Text('Save changes'),
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Icon(Icons.save_outlined, color: Colors.white),
+                label: const Text(
+                  'Save changes',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
 
-  Widget _section(String title) => Padding(
-        padding: const EdgeInsets.only(top: 6, bottom: 12),
-        child: Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+  Widget _cardContainer({required BuildContext context, required bool isDark, required Widget child}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  Widget _section(String title, IconData icon) => Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF57C00).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 16, color: const Color(0xFFE65100)),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+          ),
+        ],
       );
 
   Widget _readOnly(String label, String value) => Padding(

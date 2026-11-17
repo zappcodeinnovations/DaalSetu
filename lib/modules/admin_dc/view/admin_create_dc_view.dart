@@ -4,7 +4,7 @@ import 'package:iconly/iconly.dart';
 import '../../../theme/app_theme.dart';
 import '../../contracts/model/contract_model.dart';
 import '../controller/admin_create_dc_controller.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class AdminCreateChallanView extends StatelessWidget {
   const AdminCreateChallanView({super.key});
@@ -17,17 +17,13 @@ class AdminCreateChallanView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(
-          "Create Delivery Challan",
-          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        leading: AppBarLeading(child: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+      appBar: HeroHeader(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
           onPressed: () => Get.back(),
-        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
+        ),
+        title: "Create Delivery Challan",
+        subtitle: "Generate official dispatch note from contract",
       ),
       bottomNavigationBar: _buildBottomSubmitBar(context, controller, isDark),
       body: LayoutBuilder(
@@ -95,12 +91,14 @@ class AdminCreateChallanView extends StatelessWidget {
       children: [
         Icon(icon, size: 18, color: AppTheme.primaryGold),
         const SizedBox(width: 8),
-        Text(
-          title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-              ),
+        Expanded(
+          child: Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+          ),
         ),
       ],
     );
@@ -113,7 +111,7 @@ class AdminCreateChallanView extends StatelessWidget {
     bool isDark,
   ) {
     final cardBg = isDark ? const Color(0xFF1E2638) : Colors.white;
-    final borderColor = isDark ? const Color(0xFF2C394F) : const Color(0xFFE2E8F0);
+    final borderColor = isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2);
 
     return Obx(() {
       final contract = controller.selectedContract.value;
@@ -121,12 +119,12 @@ class AdminCreateChallanView extends StatelessWidget {
       if (contract == null) {
         return InkWell(
           onTap: () => _openContractPickerSheet(context, controller, isDark),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
             decoration: BoxDecoration(
               color: cardBg,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(18),
               border: Border.all(color: borderColor, width: 1.3),
             ),
             child: Row(
@@ -134,7 +132,7 @@ class AdminCreateChallanView extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryGold.withOpacity(0.15),
+                    color: AppTheme.primaryGold.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(IconlyLight.paper, color: AppTheme.primaryGold, size: 24),
@@ -585,7 +583,7 @@ class AdminCreateChallanView extends StatelessWidget {
     bool isDark,
   ) {
     final barBg = isDark ? const Color(0xFF1E2638) : Colors.white;
-    final borderColor = isDark ? const Color(0xFF2C394F) : const Color(0xFFE2E8F0);
+    final borderColor = isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
@@ -594,46 +592,73 @@ class AdminCreateChallanView extends StatelessWidget {
         border: Border(top: BorderSide(color: borderColor)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -4),
           ),
         ],
       ),
       child: Obx(() {
-        return SizedBox(
+        final isSubmitting = controller.isSubmitting.value;
+        return Container(
           width: double.infinity,
           height: 52,
-          child: ElevatedButton(
-            onPressed: controller.isSubmitting.value
+          decoration: BoxDecoration(
+            gradient: isSubmitting
                 ? null
-                : controller.submitDeliveryChallan,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryGold,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              elevation: 0,
-            ),
-            child: controller.isSubmitting.value
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2.5),
-                  )
-                : const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.check_circle_rounded, color: Colors.black, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        "Generate Delivery Challan",
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
-                        ),
-                      ),
+                : const LinearGradient(
+                    colors: [
+                      Color(0xFFE65100),
+                      Color(0xFFF57C00),
+                      Color(0xFFFFA000),
                     ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
+            color: isSubmitting ? Colors.grey : null,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: isSubmitting
+                ? null
+                : [
+                    BoxShadow(
+                      color: const Color(0xFFE65100).withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: isSubmitting ? null : controller.submitDeliveryChallan,
+              child: Center(
+                child: isSubmitting
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                      )
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                          SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              "Generate Delivery Challan",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
           ),
         );
       }),
@@ -845,10 +870,18 @@ class AdminCreateChallanView extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E2638) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+          width: 1.2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: child,
     );

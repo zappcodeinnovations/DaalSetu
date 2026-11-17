@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:iconly/iconly.dart';
 import '../model/user_model.dart';
 import './add_user_screen.dart';
@@ -5,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/user_controller.dart';
 import 'package:daalsetu/theme/app_theme.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // USER MANAGEMENT SCREEN
@@ -50,7 +50,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     switch (status.toLowerCase()) {
       case 'approved': return AppTheme.successGreen;
       case 'rejected': return AppTheme.errorRed;
-      default:         return AppTheme.primaryGold;
+      default:         return AppTheme.secondaryOrange;
     }
   }
 
@@ -66,82 +66,95 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
 
-      // ── AppBar ──────────────────────────────────────────────────────────
-      appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        leading: AppBarLeading(child: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          onPressed: () => Get.back(),
-        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-        titleSpacing: 0,
-        title: _showSearch
-            ? Container(
-                height: 40,
-                decoration: BoxDecoration(
-                  color: theme.cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: theme.dividerColor),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: TextField(
-                  controller: _searchCtrl,
-                  autofocus: true,
-                  style: theme.textTheme.bodyMedium,
-                  decoration: InputDecoration(
-                    hintText: 'Search by name, mobile, email…',
-                    hintStyle: theme.textTheme.bodySmall,
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                  ),
-                  onChanged: controller.setSearch,
-                ),
-              )
-            : Text(
-                'User Management',
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold, fontSize: 18),
-              ),
-        actions: [
-          IconButton(
-            icon: Icon(
-                _showSearch ? Icons.close_rounded : Icons.search_rounded),
-            onPressed: () {
-              setState(() => _showSearch = !_showSearch);
-              if (!_showSearch) {
-                _searchCtrl.clear();
-                controller.clearSearch();
-              }
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: controller.fetchUsers,
-          ),
-          const SizedBox(width: 4),
-        ],
+      // ── HeroHeader ────────────────────────────────────────────────────────
+      appBar: HeroHeader(
+        title: 'User Management',
+        subtitle: 'Manage platform users, roles & KYC',
+        leading: Builder(
+          builder: (ctx) {
+            final canPop = Navigator.of(ctx).canPop();
+            if (canPop) {
+              return IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                onPressed: () => Navigator.of(ctx).maybePop(),
+              );
+            }
+            return IconButton(
+              icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 24),
+              onPressed: () => Scaffold.of(ctx).openDrawer(),
+            );
+          },
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: Icon(_showSearch ? Icons.close_rounded : Icons.search_rounded, color: Colors.white),
+              onPressed: () {
+                setState(() => _showSearch = !_showSearch);
+                if (!_showSearch) {
+                  _searchCtrl.clear();
+                  controller.clearSearch();
+                }
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+              onPressed: controller.fetchUsers,
+            ),
+          ],
+        ),
       ),
 
       // ── FAB ─────────────────────────────────────────────────────────────
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: null,
-        onPressed: () async {
-          final result = await Get.to(() => AddUserScreen());
-          if (result == true) {
-            await controller.fetchUsers();
-          }
-        },
-        icon: const Icon(IconlyLight.add_user),
-        label: const Text('Add User'),
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: Colors.white,
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFFE65100),
+              Color(0xFFF57C00),
+              Color(0xFFFFA000),
+            ],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFF57C00).withValues(alpha: 0.35),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () async {
+              final result = await Get.to(() => const AddUserScreen());
+              if (result == true) {
+                await controller.fetchUsers();
+              }
+            },
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(IconlyLight.add_user, color: Colors.white, size: 20),
+                  SizedBox(width: 8),
+                  Text('Add User', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
 
       // ── Body: single Obx wrapping everything that depends on Rx ─────────
@@ -163,15 +176,47 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (_showSearch)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                  child: Container(
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: theme.cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+                        width: 1.2,
+                      ),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: TextField(
+                      controller: _searchCtrl,
+                      autofocus: true,
+                      style: theme.textTheme.bodyMedium,
+                      decoration: InputDecoration(
+                        hintText: 'Search by name, mobile, email…',
+                        hintStyle: theme.textTheme.bodySmall,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                      onChanged: controller.setSearch,
+                    ),
+                  ),
+                ),
+
               // ── Stats Section ────────────────────────────────────────
               _buildStatsSection(context),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               // ── Role Filter Chips ─────────────────────────────────────
               _buildRoleFilters(context),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
 
               // ── Results count ─────────────────────────────────────────
               Padding(
@@ -193,7 +238,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                               Icons.people_outline_rounded,
                               size: 60,
                               color:
-                                  theme.iconTheme.color?.withOpacity(0.3),
+                                  theme.iconTheme.color?.withValues(alpha: 0.3),
                             ),
                             const SizedBox(height: 16),
                             Text(
@@ -239,9 +284,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     ];
 
     return SizedBox(
-      height: 100,
+      height: 106,
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
         scrollDirection: Axis.horizontal,
         itemCount: stats.length,
         separatorBuilder: (_, __) => const SizedBox(width: 10),
@@ -252,13 +297,24 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
   Widget _statCard(BuildContext context, _StatData s) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
-      width: 88,
-      padding: const EdgeInsets.all(10),
+      width: 92,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: s.color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: s.color.withOpacity(0.2)),
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,13 +326,13 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             style: TextStyle(
               color: s.color,
               fontWeight: FontWeight.w900,
-              fontSize: 20,
+              fontSize: 18,
             ),
           ),
           Text(
             s.label,
             style:
-                theme.textTheme.bodySmall?.copyWith(fontSize: 10),
+                theme.textTheme.bodySmall?.copyWith(fontSize: 10, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -286,10 +342,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   // ── Role Filter Chips ──────────────────────────────────────────────────────
   Widget _buildRoleFilters(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final selectedRole = controller.selectedRole.value;
 
     return SizedBox(
-      height: 44,
+      height: 40,
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         scrollDirection: Axis.horizontal,
@@ -305,26 +362,27 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               duration: const Duration(milliseconds: 200),
               alignment: Alignment.center,
               padding: const EdgeInsets.symmetric(
-                  horizontal: 14, vertical: 8),
+                  horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? theme.colorScheme.primary
+                    ? AppTheme.secondaryOrange
                     : theme.cardColor,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isSelected
-                      ? theme.colorScheme.primary
-                      : theme.dividerColor,
+                      ? AppTheme.secondaryOrange
+                      : (isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2)),
+                  width: isSelected ? 1.5 : 1.2,
                 ),
               ),
               child: Text(
                 role == 'all' ? 'All' : role.capitalizeFirst!,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : null,
+                  color: isSelected ? Colors.white : theme.textTheme.bodyMedium?.color,
                   fontWeight: isSelected
                       ? FontWeight.w700
                       : FontWeight.w500,
-                  fontSize: 13,
+                  fontSize: 12,
                 ),
               ),
             ),
@@ -337,6 +395,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   // ── User Card ──────────────────────────────────────────────────────────────
   Widget _buildUserCard(BuildContext context, UserModel user) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final roleColor = _roleColor(user.role);
     final kycColor = _kycColor(user.kycStatus);
 
@@ -348,17 +407,18 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         .toUpperCase();
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.6)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: theme.brightness == Brightness.dark
-                ? Colors.black.withOpacity(0.2)
-                : Colors.grey.withOpacity(0.06),
-            blurRadius: 8,
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+            blurRadius: 10,
             offset: const Offset(0, 3),
           ),
         ],
@@ -375,7 +435,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 children: [
                   CircleAvatar(
                     radius: 26,
-                    backgroundColor: roleColor.withOpacity(0.15),
+                    backgroundColor: roleColor.withValues(alpha: 0.15),
                     backgroundImage: user.profileImage != null
                         ? NetworkImage(user.profileImage!)
                         : null,
@@ -472,7 +532,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               PopupMenuButton<String>(
                 icon: Icon(
                   Icons.more_vert_rounded,
-                  color: theme.iconTheme.color?.withOpacity(0.6),
+                  color: theme.iconTheme.color?.withValues(alpha: 0.6),
                   size: 20,
                 ),
                 shape: RoundedRectangleBorder(
@@ -530,7 +590,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         padding:
             const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
+          color: color.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
@@ -645,9 +705,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 }
 
 // ── Legacy alias — keeps old routes/code working ──────────────────────────────
-// ignore: must_be_immutable
 class UserScreen extends StatelessWidget {
-  UserScreen({super.key});
+  const UserScreen({super.key});
   @override
   Widget build(BuildContext context) => const UserManagementScreen();
 }

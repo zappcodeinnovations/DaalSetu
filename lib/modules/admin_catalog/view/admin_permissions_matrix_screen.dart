@@ -1,7 +1,7 @@
 import 'package:daalsetu/modules/admin_catalog/view/admin_drawer.dart';
 import 'package:daalsetu/network/api_client.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:flutter/material.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../utils/app_snackbar.dart';
 
 const _matrixRoles = <String>[
@@ -152,44 +152,68 @@ class _AdminPermissionsMatrixScreenState
       .join(' ');
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    drawer: const AdminDrawer(activeKey: 'permissions_matrix'),
-    appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), title: const Text('Permissions Matrix')),
-    body: _loading
-        ? const Center(child: CircularProgressIndicator())
-        : _error != null
-        ? _MatrixFailure(message: _error!, onRetry: _load)
-        : RefreshIndicator(
-            onRefresh: _load,
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                const Text(
-                  'Set module access by role',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Each change is saved immediately. The server remains the final authority for access checks.',
-                ),
-                const SizedBox(height: 16),
-                _selector(
-                  label: 'Role',
-                  value: _role,
-                  values: _matrixRoles,
-                  onChanged: (value) => setState(() => _role = value),
-                ),
-                const SizedBox(height: 12),
-                _selector(
-                  label: 'Module',
-                  value: _module,
-                  values: _matrixModules,
-                  onChanged: (value) => setState(() => _module = value),
-                ),
-                const SizedBox(height: 18),
-                Card(
-                  clipBehavior: Clip.antiAlias,
-                  child: Column(
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBorder = isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2);
+
+    return Scaffold(
+      drawer: const AdminDrawer(activeKey: 'permissions_matrix'),
+      appBar: HeroHeader(
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            tooltip: 'Open navigation menu',
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
+          ),
+        ),
+        title: 'Permissions Matrix',
+        subtitle: 'Global role-based access control rules',
+        trailing: IconButton(
+          tooltip: 'Refresh',
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+          onPressed: _load,
+        ),
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+          ? _MatrixFailure(message: _error!, onRetry: _load)
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  const Text(
+                    'Set module access by role',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Each change is saved immediately. The server remains the final authority for access checks.',
+                  ),
+                  const SizedBox(height: 16),
+                  _selector(
+                    label: 'Role',
+                    value: _role,
+                    values: _matrixRoles,
+                    onChanged: (value) => setState(() => _role = value),
+                  ),
+                  const SizedBox(height: 12),
+                  _selector(
+                    label: 'Module',
+                    value: _module,
+                    values: _matrixModules,
+                    onChanged: (value) => setState(() => _module = value),
+                  ),
+                  const SizedBox(height: 18),
+                  Card(
+                    elevation: 2,
+                    clipBehavior: Clip.antiAlias,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      side: BorderSide(color: cardBorder, width: 1.2),
+                    ),
+                    child: Column(
                     children: _matrixActions.map((action) {
                       final key = _key(_role, _module, action);
                       final allowed = _rules[key] ?? false;
@@ -232,7 +256,8 @@ class _AdminPermissionsMatrixScreenState
               ],
             ),
           ),
-  );
+    );
+  }
 
   Widget _selector({
     required String label,

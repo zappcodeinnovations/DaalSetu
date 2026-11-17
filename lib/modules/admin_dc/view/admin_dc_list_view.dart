@@ -5,7 +5,7 @@ import '../../../routes/app_routes.dart';
 import '../../../theme/app_theme.dart';
 import '../controller/admin_dc_list_controller.dart';
 import '../widgets/admin_challan_card.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 
 class AdminChallanListView extends StatelessWidget {
   const AdminChallanListView({super.key});
@@ -18,41 +18,70 @@ class AdminChallanListView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(leading: const AppBarLeading(), leadingWidth: AppBarLeading.widthFor(context), 
-        title: Text(
-          "Delivery Challans",
-          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+      appBar: HeroHeader(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        actions: [
-          IconButton(
-            tooltip: "Refresh List",
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: () => controller.fetchChallans(isRefresh: true),
-          ),
-          const SizedBox(width: 8),
-        ],
+        title: "Delivery Challans",
+        subtitle: "Freight dispatch tracking & documentation",
+        trailing: IconButton(
+          tooltip: "Refresh List",
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+          onPressed: () => controller.fetchChallans(isRefresh: true),
+        ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppTheme.primaryGold,
-        elevation: 4,
-        icon: const Icon(Icons.add_rounded, color: Colors.black, size: 22),
-        label: const Text(
-          "Create DC",
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.w700,
-            fontSize: 14,
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFFE65100),
+              Color(0xFFF57C00),
+              Color(0xFFFFA000),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFE65100).withValues(alpha: 0.35),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(30),
+            onTap: () {
+              Get.toNamed(AppRoutes.adminCreateDC)?.then((value) {
+                if (value == true) {
+                  controller.fetchChallans(isRefresh: true);
+                }
+              });
+            },
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add_rounded, color: Colors.white, size: 22),
+                  SizedBox(width: 8),
+                  Text(
+                    "Create DC",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
-        onPressed: () {
-          Get.toNamed(AppRoutes.adminCreateDC)?.then((value) {
-            if (value == true) {
-              controller.fetchChallans(isRefresh: true);
-            }
-          });
-        },
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -196,10 +225,18 @@ class AdminChallanListView extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E2638) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isDark ? const Color(0xFF2C394F) : const Color(0xFFE2E8F0),
+            color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+            width: 1.2,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -235,13 +272,20 @@ class AdminChallanListView extends StatelessWidget {
     bool isDark,
   ) {
     final searchBg = isDark ? const Color(0xFF1E2638) : Colors.white;
-    final borderColor = isDark ? const Color(0xFF2C394F) : const Color(0xFFE2E8F0);
+    final borderColor = isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2);
 
     return Container(
       decoration: BoxDecoration(
         color: searchBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: borderColor),
+        border: Border.all(color: borderColor, width: 1.1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: TextField(
         controller: controller.searchController,

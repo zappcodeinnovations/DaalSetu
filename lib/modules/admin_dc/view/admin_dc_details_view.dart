@@ -6,7 +6,7 @@ import '../../../theme/app_theme.dart';
 import '../controller/admin_dc_details_controller.dart';
 import '../model/admin_challan_model.dart';
 import '../service/admin_challan_pdf_service.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/widgets/dispatch_bills_section.dart';
 
@@ -21,48 +21,46 @@ class AdminChallanDetailsView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text(
-          "Delivery Challan Slip",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        leading: AppBarLeading(child: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+      appBar: HeroHeader(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
           onPressed: () => Get.back(),
-        )), leadingWidth: AppBarLeading.widthFor(context, hasChild: true),
-        actions: [
-          Obx(() {
-            final challan = controller.challan.value;
-            if (challan == null) return const SizedBox.shrink();
-            return Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  tooltip: "Download PDF",
-                  icon: const Icon(Icons.picture_as_pdf_outlined, color: AppTheme.primaryGold),
-                  onPressed: () => _downloadPdf(context, challan),
-                ),
-                IconButton(
-                  tooltip: "Share PDF",
-                  icon: const Icon(Icons.share_outlined),
-                  onPressed: () => _sharePdf(context, challan),
-                ),
-              ],
-            );
-          }),
-          IconButton(
-            tooltip: "Refresh Details",
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: () {
-              if (controller.challanId.value > 0) {
-                controller.fetchDetails(controller.challanId.value, isRefresh: true);
-              }
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
+        ),
+        title: "Delivery Challan Slip",
+        subtitle: "Consignment dispatch tracking & documentation",
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Obx(() {
+              final challan = controller.challan.value;
+              if (challan == null) return const SizedBox.shrink();
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: "Download PDF",
+                    icon: const Icon(Icons.picture_as_pdf_outlined, color: Colors.white),
+                    onPressed: () => _downloadPdf(context, challan),
+                  ),
+                  IconButton(
+                    tooltip: "Share PDF",
+                    icon: const Icon(Icons.share_outlined, color: Colors.white),
+                    onPressed: () => _sharePdf(context, challan),
+                  ),
+                ],
+              );
+            }),
+            IconButton(
+              tooltip: "Refresh Details",
+              icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+              onPressed: () {
+                if (controller.challanId.value > 0) {
+                  controller.fetchDetails(controller.challanId.value, isRefresh: true);
+                }
+              },
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: _buildBottomActionBar(context, controller, isDark),
       body: LayoutBuilder(
@@ -118,7 +116,7 @@ class AdminChallanDetailsView extends StatelessWidget {
                         // ── Dispatch Bills ─────────────────────────────────
                         DispatchBillsSection(
                           key: ValueKey('bills-${controller.challanId.value}-${challan.status}'),
-                          challanId: controller.challanId.value,
+                          challanId: controller.challanId.value > 0 ? controller.challanId.value : null,
                         ),
 
                         // ── Remarks / Instructions ────────────────────────
@@ -142,9 +140,9 @@ class AdminChallanDetailsView extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: isDark ? challan.statusColor.withOpacity(0.18) : challan.statusBgColor,
+        color: isDark ? challan.statusColor.withValues(alpha: 0.18) : challan.statusBgColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: challan.statusColor.withOpacity(0.35)),
+        border: Border.all(color: challan.statusColor.withValues(alpha: 0.35)),
       ),
       child: Row(
         children: [
@@ -152,7 +150,7 @@ class AdminChallanDetailsView extends StatelessWidget {
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: challan.statusColor.withOpacity(0.2),
+              color: challan.statusColor.withValues(alpha: 0.2),
             ),
             child: Icon(Icons.local_shipping_rounded, color: challan.statusColor, size: 20),
           ),
@@ -394,7 +392,7 @@ class AdminChallanDetailsView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryGold.withOpacity(0.15),
+                  color: AppTheme.primaryGold.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -418,7 +416,7 @@ class AdminChallanDetailsView extends StatelessWidget {
                   color: isDark ? const Color(0xFF161D2B) : const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFE2E8F0),
+                    color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFE2E8F0),
                   ),
                 ),
                 child: Row(
@@ -836,10 +834,18 @@ class AdminChallanDetailsView extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E2638) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF2C394F) : const Color(0xFFFFE0B2),
+          width: 1.2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: child,
     );
