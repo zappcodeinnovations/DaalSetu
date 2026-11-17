@@ -1,23 +1,5 @@
 # Bug Log & Historical Fixes
 
-## Bug 57: Buyer Dashboard "Shop by Category" Rounded Cards Missing for Buyers with No Pre-assigned Categories
-- **Symptom**: On the Buyer Dashboard screen (`BuyerDashboardView`), the rounded circle category cards (e.g. Basmati Rice, Chana, Masoor, etc.) were not displaying. Instead, the screen showed `"No categories assigned yet. Tap View All to request categories."`, whereas in older APKs, the category cards always appeared.
-- **Root Cause**:
-  1. In commit `3288fa5` by Prem Verma, `CategoryService.fetchBuyerCategoryData()` was modified to strictly populate `buyerCategories` only from IDs present in `assigned_category_ids`. If a buyer account had `assigned_category_ids: []`, `result.buyerCategories` returned empty `[]`.
-  2. In `lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`, a conditional check was added: if `controller.categories.isEmpty`, it displayed the placeholder message `"No categories assigned yet. Tap View All to request categories."` instead of the 60x60 circular cards in `_buildCategoriesList`.
-  3. `fetchBuyerCategories()` was returning `result.buyerCategories` unconditionally, leaving the dashboard categories list empty for any buyer who hadn't requested or been assigned custom categories yet.
-- **Fix**:
-  1. `lib/services/category_services.dart`:
-     - In `CategoryService.fetchBuyerCategories()`, added a fallback: if `result.buyerCategories` is not empty, return it; otherwise, return `result.systemCategories` (the global catalog categories).
-     - This allows newly registered and unassigned buyers to browse all catalog categories from the dashboard rounded cards, matching the old APK behavior, while preserving strict category approval checks on the dedicated `CategoryPageView`.
-- **Files Changed**:
-  - `lib/services/category_services.dart`
-- **Verification**:
-  - `flutter analyze lib/services/category_services.dart` (0 errors, 0 warnings).
-  - `flutter test test/buyer_category_access_test.dart test/buyer_dashboard_offers_slider_test.dart` (17/17 tests passing).
-
----
-
 ## Bug 56: Category Send For Approval Button Navigation Inset, Requirement FAB Clearance, Settings Bottom Spacing, & Global Top Spacing After Menu Icon
 - **Symptom**:
   1. Category Page (`CategoryPageView`): "SEND FOR APPROVAL" bottom bar button was cut off and partially covered by the Android 3-button system navigation bar.
