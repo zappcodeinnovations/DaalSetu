@@ -12,6 +12,7 @@
   - Batch 2 (User Management & Secondary Admin Screens Modernization): **100% COMPLETE & VERIFIED** (4 screens).
   - Batch 3A (Dashboard Eye-Catching Cards, Admin Drawer, and Transport Bids Sheet): **100% COMPLETE & VERIFIED** (3 views).
   - Batch 3B (Admin Masters List, Negotiation & Action Dialogs): **100% COMPLETE & VERIFIED** (6 views/dialogs).
+  - Onboarding Module Centralized Color Theme & Modernization: **100% COMPLETE & VERIFIED** (1 screen + centralized theme tokens).
 - **Admin Redesign & Card Polish Scope (33 Total Admin Views / Modals Modernized)**:
   - **Batch 3B (Admin Masters List, Negotiation & Action Dialogs)**:
     - `lib/modules/admin_catalog/view/admin_module_list_screen.dart`: Upgraded generic catalog record cards and buyer cards to 18px rounded containers with `#FFE0B2` borders, vibrant icon pods, modern pill segments, and warm gradient FAB.
@@ -61,7 +62,7 @@
   - `lib/theme/app_theme.dart`: Aligned `colorScheme.primary` and `primaryColor` to brand `secondaryOrange` (`#F57C00`), eliminating lingering mustard-yellow tints from buttons, active chips, dialog icons, and focus borders app-wide.
   - `lib/modules/nav_bar/view/nav_page.dart`: Upgraded `GlassNavBar` background from `#FFF8E1` pale yellow gradient to clean white surface with warm `#FFE0B2` border.
   - `lib/modules/settings/view/settings_page.dart`: Upgraded Privacy Policy/URL dialog with high-contrast saffron URL text and vibrant `secondaryOrange` "Open" button.
-- **Evidence**: `flutter analyze` 0 errors, 0 warnings on modified files; automated regression test suites (8 test files, 31/31 tests passing) all green. Zero breaking changes.
+- **Evidence**: `flutter analyze` 0 errors, 0 warnings on modified files; automated regression test suites (9 test files, 36/36 tests passing: `test/onboarding_screen_test.dart`, `test/admin_batch_3b_test.dart`, `test/admin_secondary_screens_test.dart`, `test/admin_core_tabs_test.dart`, `test/admin_batch_4a_test.dart`, `test/admin_batch_4b_test.dart`, `test/admin_batch_4c_test.dart`, `test/admin_batch_4d_test.dart`, `test/admin_batch_4e_test.dart`) all green. Zero breaking changes.
 
 ---
 
