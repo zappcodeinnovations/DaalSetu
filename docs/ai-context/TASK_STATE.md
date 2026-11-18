@@ -3,22 +3,17 @@
 ## Current Task
 - **Goal**: Merge `origin/rohit` (Bug 55 login crash fix, Bug 56 layout polish, combined Buyer-Seller panel switching) into `rohit_app_UI` and execute modern UI redesign of `ChoosePanelScreen` (`lib/modules/Auth/choose_panel/view/choose_panel_screen.dart`) supporting both Bright and Dark modes.
 - **Status**: 
-  - Merge `origin/rohit` into `rohit_app_UI`: **100% COMPLETE & COMMITTED (`dc58f1e`)**
-  - Bug 55 (Sign In Screen TextEditingController Disposed Crash): **Preserved & Integrated**
-  - Bug 56 (Category Button Navigation Overlap, Activity FAB Clearance, Settings Bottom Spacing, Global AppBar Title Spacing): **Preserved & Integrated**
-  - HeroHeader and Dark Theme on all Buyer/Seller views: **100% Preserved**
-  - ChoosePanelScreen UI Redesign: **100% COMPLETE & VERIFIED** (0 analyzer issues, 6/6 tests passing)
-  - Full App UI Modernization: **100% COMPLETE** (Buyer, Seller, Transporter, Admin panels, Auth portal).
-  - App-Wide Dark Theme Engine & Settings Toggle Activation: **100% COMPLETE & VERIFIED**
-  - App-Wide Dark Theme Audit & Bright Mode Preservation across 8 Target Components: **100% COMPLETE & VERIFIED**
-  - Buyer Dashboard Featured Offer Banner Dark Theme Adaptation (Option 1): **100% COMPLETE & VERIFIED**
-  - Buyer Dashboard Offers Carousel Dark Mode 3px Overflow Fix: **100% COMPLETE & VERIFIED (`82ca2c1`)** (Carousel height set to 196, padding balanced, 0 overflows across themes)
-  - Buyer Dashboard Bottom Padding & Spacing Polish: **100% COMPLETE & VERIFIED (Uncommitted)**:
-    - Added `padding: EdgeInsets.zero` to `_buildRecentRequirementsList` and `_buildRecentOrdersList` `ListView.separated`, eliminating 48px system padding at list bottoms and 24-32px at tops.
-    - Set section spacing between Requirements and Deals to 16px.
-    - Added Settings icon to Buyer Dashboard header beside notification bell.
-    - Reduced Buyer bottom navigation tabs to 5 tabs, preventing "Dashboard" truncation.
-    - Maintained uncommitted state per user order ("commit mat krna").
+  - Merge `origin/rohit` into `rohit_app_UI`: **100% COMPLETE & COMMITTED (`d89a8b8`)**
+  - All 6 commits from `rohit` successfully integrated:
+    - FCM Push Notifications on Android & iOS (`push_notification_service.dart`, sound channel, icon silhouette)
+    - Buyer Requirement Editing (`edit_buyer_requirement_view.dart`) modernized with HeroHeader & dual theme
+    - Profile Photo Cropper (`profile_photo_cropper.dart`), DOB validation, and legal policy links
+    - Stock History Dialog connected with real API data inside modernized 20px rounded dialog
+    - Contract PDF generator (`contract_pdf.dart`) and negotiation chat parameter highlights
+    - Transporter delete company button and network users refresh icon
+  - App-Wide Dark & Bright Themes: **100% Preserved & Verified across all screens**
+  - Automated Tests: **28/28 Passing**
+  - Analyzer: **0 errors in `lib/`**
 - **Admin Redesign & Card Polish Scope (33 Total Admin Views / Modals Modernized)**:
   - **Batch 3B (Admin Masters List, Negotiation & Action Dialogs)**:
     - `lib/modules/admin_catalog/view/admin_module_list_screen.dart`: Upgraded generic catalog record cards and buyer cards to 18px rounded containers with `#FFE0B2` borders, vibrant icon pods, modern pill segments, and warm gradient FAB.
