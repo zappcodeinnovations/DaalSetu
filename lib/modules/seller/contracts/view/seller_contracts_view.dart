@@ -308,6 +308,28 @@ class SellerContractsView extends StatelessWidget {
                                 color: Colors.grey,
                               ),
                             ),
+                            const Spacer(),
+                            // Visible affordance: the whole card opens the contract, and this says so.
+                            OutlinedButton.icon(
+                              key: Key('contract-view-${item.id}'),
+                              onPressed: item.id == null
+                                  ? null
+                                  : () => Get.to(
+                                      () => SellerContractDetailView(contractId: item.id!),
+                                    ),
+                              icon: const Icon(Icons.visibility_outlined, size: 16),
+                              label: const Text('View'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: primaryColor,
+                                side: const BorderSide(color: primaryColor),
+                                minimumSize: const Size(0, 34),
+                                padding: const EdgeInsets.symmetric(horizontal: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                              ),
+                            ),
                           ],
                         ),
                       ],

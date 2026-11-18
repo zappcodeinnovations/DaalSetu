@@ -1,6 +1,9 @@
 import 'package:daalsetu/modules/seller/challans/controller/seller_challan_controller.dart';
 import 'package:daalsetu/modules/seller/challans/model/seller_challan_model.dart';
 import 'package:daalsetu/modules/seller/challans/view/seller_delivery_challan_view.dart';
+import 'package:daalsetu/modules/seller/contracts/controller/seller_contract_controller.dart';
+import 'package:daalsetu/modules/seller/contracts/model/seller_contract_model.dart';
+import 'package:daalsetu/modules/seller/contracts/view/seller_contracts_view.dart';
 import 'package:daalsetu/modules/seller/dashboard/view/seller_dashboard_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -18,6 +21,16 @@ class _FakeChallanController extends SellerChallanController {
 
   @override
   Future<void> fetchChallans() async {}
+}
+
+class _FakeContractController extends SellerContractController {
+  @override
+  void onInit() {
+    contractsList.assignAll([SellerContractModel(id: 7, contractId: 'C-7', status: 'active', dealAmount: '100')]);
+  }
+
+  @override
+  Future<void> fetchContracts({bool silent = false}) async {}
 }
 
 void main() {
@@ -50,5 +63,14 @@ void main() {
 
     expect(find.textContaining('CH-TRANSIT-1'), findsWidgets);
     expect(find.textContaining('CH-DONE-2'), findsWidgets);
+  });
+
+  testWidgets('Deal Contracts cards show a View button', (tester) async {
+    Get.put<SellerContractController>(_FakeContractController());
+    await tester.pumpWidget(const GetMaterialApp(home: SellerContractsView()));
+    await tester.pump();
+
+    expect(find.byKey(const Key('contract-view-7')), findsOneWidget);
+    expect(find.text('View'), findsOneWidget);
   });
 }
