@@ -63,6 +63,15 @@ PreferredSizeWidget _blackHeader(String title, {List<Widget>? actions}) => AppBa
   actionsIconTheme: const IconThemeData(color: Colors.white),
   titleTextStyle: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
   systemOverlayStyle: SystemUiOverlayStyle.light,
+  // Always shown, always white: the page can be left from the top-left corner.
+  leading: Builder(
+    builder: (context) => IconButton(
+      key: const Key('media-back-button'),
+      tooltip: 'Back',
+      icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+      onPressed: () => Navigator.of(context).maybePop(),
+    ),
+  ),
   title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
   actions: actions,
 );

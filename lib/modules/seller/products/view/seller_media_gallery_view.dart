@@ -195,24 +195,32 @@ class _SellerMediaGalleryViewState extends State<SellerMediaGalleryView> {
                             final item = controller.imagesList[index];
                             return Stack(
                               children: [
+                                // The tile is filled and bordered, so the delete badge sits inside its corner.
                                 Positioned.fill(
                                   child: InkWell(
                                     onTap: () => _previewImage(
                                       context,
                                       _url(item.imageUrl),
                                     ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: AuthenticatedNetworkImage(
-                                        url: _url(item.imageUrl),
-                                        fit: BoxFit.contain,
-                                        width: double.infinity,
-                                        height: double.infinity,
-                                        fallback: Container(
-                                          color: Colors.grey.shade300,
-                                          child: const Icon(
-                                            IconlyLight.image,
-                                            size: 40,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: theme.cardColor,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: theme.dividerColor),
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(11),
+                                        child: AuthenticatedNetworkImage(
+                                          url: _url(item.imageUrl),
+                                          fit: BoxFit.cover,
+                                          width: double.infinity,
+                                          height: double.infinity,
+                                          fallback: Container(
+                                            color: Colors.grey.shade300,
+                                            child: const Icon(
+                                              IconlyLight.image,
+                                              size: 40,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -220,15 +228,25 @@ class _SellerMediaGalleryViewState extends State<SellerMediaGalleryView> {
                                   ),
                                 ),
                                 Positioned(
-                                  top: 8,
-                                  right: 8,
-                                  child: IconButton(
-                                    icon: const Icon(
-                                      Icons.delete,
-                                      color: Colors.red,
+                                  top: 6,
+                                  right: 6,
+                                  child: Material(
+                                    color: Colors.white,
+                                    elevation: 2,
+                                    shape: const CircleBorder(),
+                                    child: InkWell(
+                                      key: Key('media-delete-image-${item.id}'),
+                                      customBorder: const CircleBorder(),
+                                      onTap: () => controller.deleteImage(item.id!),
+                                      child: const Padding(
+                                        padding: EdgeInsets.all(7),
+                                        child: Icon(
+                                          Icons.delete_outline_rounded,
+                                          color: Colors.red,
+                                          size: 18,
+                                        ),
+                                      ),
                                     ),
-                                    onPressed: () =>
-                                        controller.deleteImage(item.id!),
                                   ),
                                 ),
                                 if (item.isPrimary == true)

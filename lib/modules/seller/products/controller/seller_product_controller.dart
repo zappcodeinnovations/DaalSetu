@@ -235,12 +235,8 @@ class SellerProductController extends GetxController {
       if (!silent) isLoading(true);
       final data = await SellerServices.getProducts(silent: silent);
       if (isClosed) return;
-      products.assignAll(
-        data
-            .map((e) => SellerProductModel.fromJson(e))
-            .where((p) => !p.isBuyerOffer)
-            .toList(),
-      );
+      // Every product: Total Listings counts them all and the web list shows them all.
+      products.assignAll(data.map((e) => SellerProductModel.fromJson(e)).toList());
     } catch (e) {
       if (!silent) SellerUi.error(e);
     } finally {

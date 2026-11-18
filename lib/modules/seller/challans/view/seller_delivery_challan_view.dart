@@ -10,7 +10,10 @@ import '../../delivery/view/seller_challan_details_view.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 
 class SellerDeliveryChallanView extends StatelessWidget {
-  const SellerDeliveryChallanView({super.key});
+  const SellerDeliveryChallanView({super.key, this.statusFilter});
+
+  /// Show only challans with this status (e.g. 'dispatched' for the In Transit KPI).
+  final String? statusFilter;
 
   @override
   Widget build(BuildContext context) {
@@ -22,8 +25,10 @@ class SellerDeliveryChallanView extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: HeroHeader(
-        title: "Delivery Challans",
-        subtitle: "Dispatched shipments & transit tracking",
+        title: statusFilter == 'dispatched' ? "In Transit" : "Delivery Challans",
+        subtitle: statusFilter == 'dispatched'
+            ? "Dispatched shipments on the way"
+            : "Dispatched shipments & transit tracking",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
           onPressed: () => Navigator.of(context).maybePop(),
@@ -38,8 +43,13 @@ class SellerDeliveryChallanView extends StatelessWidget {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator(color: primaryColor));
         }
+        final visible = statusFilter == null
+            ? controller.challansList.toList()
+            : controller.challansList
+                  .where((c) => (c.status ?? 'draft').toLowerCase() == statusFilter)
+                  .toList();
 
-        if (controller.challansList.isEmpty) {
+        if (visible.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -73,9 +83,9 @@ class SellerDeliveryChallanView extends StatelessWidget {
           color: primaryColor,
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            itemCount: controller.challansList.length,
+            itemCount: visible.length,
             itemBuilder: (context, index) {
-              final item = controller.challansList[index];
+              final item = visible[index];
               final status = (item.status ?? 'draft').toLowerCase();
               // Only draft challans can be dispatched (same rule as the backend).
               final canDispatch = status == 'draft' || status == 'pending';

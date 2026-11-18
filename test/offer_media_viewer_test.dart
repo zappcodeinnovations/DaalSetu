@@ -92,7 +92,9 @@ void main() {
     final title = find.text('arhar daal');
     expect(title, findsOneWidget);
     expect(DefaultTextStyle.of(tester.element(title)).style.color, Colors.white);
-    expect(IconTheme.of(tester.element(find.byType(BackButton))).color, Colors.white);
+    final back = find.byKey(const Key('media-back-button'));
+    expect(back, findsOneWidget);
+    expect(tester.widget<Icon>(find.descendant(of: back, matching: find.byType(Icon))).color, Colors.white);
     expect(find.byKey(const Key('video-rotate-button')), findsOneWidget);
     expect(find.byKey(const Key('video-pinch-zoom')), findsOneWidget);
     expect(tester.takeException(), isNull);
