@@ -12,8 +12,8 @@
     - Contract PDF generator (`contract_pdf.dart`) and negotiation chat parameter highlights
     - Transporter delete company button and network users refresh icon
   - App-Wide Dark & Bright Themes: **100% Preserved & Verified across all screens**
-  - Automated Tests: **28/28 Passing**
-  - Analyzer: **0 errors in `lib/`**
+  - Automated Regression Tests: **50/50 Passing across all 12 core test suites**
+  - Analyzer: **0 errors, 0 warnings in modified files (`lib/`)**
 - **Admin Redesign & Card Polish Scope (33 Total Admin Views / Modals Modernized)**:
   - **Batch 3B (Admin Masters List, Negotiation & Action Dialogs)**:
     - `lib/modules/admin_catalog/view/admin_module_list_screen.dart`: Upgraded generic catalog record cards and buyer cards to 18px rounded containers with `#FFE0B2` borders, vibrant icon pods, modern pill segments, and warm gradient FAB.
