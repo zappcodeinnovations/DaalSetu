@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/offer_media_viewer.dart';
 import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -87,6 +88,18 @@ class _OfferList extends StatelessWidget {
   final String offerType;
 
   const _OfferList({required this.offerType});
+
+  /// Thumbnail tap: show the offer's photo / video right away (both: split screen).
+  /// Requirements and offers without media still open the details page.
+  Future<void> _openMediaThenDetails(BuyerOfferModel offer, String type) async {
+    final productId = offer.productId;
+    final isRequirement = type == 'requirements' || offer.isRfq;
+    if (!isRequirement && productId != null && productId > 0) {
+      final opened = await openOfferMediaForProduct(productId, title: offer.displayTitle ?? 'Offer');
+      if (opened) return;
+    }
+    _openDetails(offer, type);
+  }
 
   void _openDetails(BuyerOfferModel offer, String type) {
     if ((type == 'requirements' || offer.isRfq) && offer.id != null) {
@@ -375,8 +388,12 @@ class _OfferList extends StatelessWidget {
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Image thumbnail / NO MEDIA box
-                              ClipRRect(
+                              // Image thumbnail / NO MEDIA box. Tap = open the photo / video right away.
+                              GestureDetector(
+                                key: Key('buyer_offer_media_${offer.id}'),
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () => _openMediaThenDetails(offer, offerType),
+                                child: ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
                                 child: Container(
                                   width: 58,
@@ -400,6 +417,7 @@ class _OfferList extends StatelessWidget {
                                         )
                                       : _buildNoMediaPlaceholder(theme),
                                 ),
+                              ),
                               ),
                               const SizedBox(width: 12),
 

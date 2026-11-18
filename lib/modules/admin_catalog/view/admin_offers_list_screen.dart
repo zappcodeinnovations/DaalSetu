@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/offer_media_viewer.dart';
 import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -152,7 +153,16 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
               ),
               const SizedBox(width: 12),
               if (offer.images.isNotEmpty)
-                ClipRRect(
+                GestureDetector(
+                  key: Key('admin_offer_media_${offer.id}'),
+                  behavior: HitTestBehavior.opaque,
+                  // Tap = open the photo / video right away (both: split screen).
+                  onTap: () => openOfferMedia(
+                    imageUrls: offer.images.map((i) => i.imageUrl).toList(),
+                    videoUrls: offer.videos.map((v) => v.videoUrl).toList(),
+                    title: offer.title,
+                  ),
+                  child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: AuthenticatedNetworkImage(
                     url: offer.images.first.imageUrl,
@@ -166,6 +176,7 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
                       child: Icon(Icons.broken_image, color: textMuted),
                     ),
                   ),
+                ),
                 )
               else
                 Container(

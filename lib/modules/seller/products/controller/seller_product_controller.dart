@@ -564,6 +564,8 @@ class SellerProductController extends GetxController {
           videoUrls: current.videoUrls,
           createdAt: current.createdAt,
           isBuyerOffer: current.isBuyerOffer,
+          quantity: current.quantity,
+          quantityUnit: current.quantityUnit,
         );
       }
       fetchProducts();

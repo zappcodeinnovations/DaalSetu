@@ -637,18 +637,8 @@ class _MobileBrandHeader extends StatelessWidget {
             children: [
               const Icon(Icons.verified_rounded, size: 13, color: Color(0xFFE65100)),
               const SizedBox(width: 4),
-              const Text(
-                "KISOR",
-                style: TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                  color: Color(0xFFE65100),
-                ),
-              ),
-              const SizedBox(width: 4),
               Text(
-                "• Pulse Trading Platform",
+                "Pulse Trading Platform",
                 style: TextStyle(
                   fontSize: 9.5,
                   color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
@@ -722,18 +712,8 @@ class _BrandPanel extends StatelessWidget {
               children: [
                 const Icon(Icons.verified_rounded, size: 14, color: Color(0xFFE65100)),
                 const SizedBox(width: 5),
-                const Text(
-                  "KISOR",
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                    color: Color(0xFFE65100),
-                  ),
-                ),
-                const SizedBox(width: 4),
                 Text(
-                  "• Pulse Trading Platform",
+                  "Pulse Trading Platform",
                   style: TextStyle(
                     fontSize: 10,
                     color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,

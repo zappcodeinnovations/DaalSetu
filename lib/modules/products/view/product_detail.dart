@@ -1,7 +1,7 @@
+import 'package:daalsetu/widgets/offer_media_viewer.dart';
 import 'package:daalsetu/modules/products/model/product_model.dart';
 import 'package:daalsetu/services/product_services.dart';
 import 'package:daalsetu/widgets/authenticated_network_image.dart';
-import 'package:daalsetu/widgets/authenticated_video_player.dart';
 import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -258,32 +258,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _openVideo(ProductVideo video) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => OrientationBuilder(
-          builder: (context, orientation) => Scaffold(
-            backgroundColor: Colors.black,
-            // Sideways the video needs the whole height, so the header is hidden.
-            appBar: orientation == Orientation.landscape
-                ? null
-                : AppBar(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
-                    title: Text(video.title.trim().isEmpty ? 'Offer video' : video.title),
-                  ),
-            // All controls: play, skip, volume, speed, size, zoom and rotate (pinch zoom too).
-            body: SafeArea(
-              top: orientation == Orientation.landscape,
-              child: AuthenticatedVideoPlayer(
-                url: video.videoUrl,
-                enableFullscreen: false,
-                fullControls: true,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+    // Full-screen player with every control and a white title / back arrow on black.
+    openOfferVideoPage(video.videoUrl, title: video.title.trim().isEmpty ? 'Offer video' : video.title);
   }
 
   Widget _images(ProductModel product) {

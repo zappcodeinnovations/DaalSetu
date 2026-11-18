@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/offer_media_viewer.dart';
 import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -128,6 +129,15 @@ class BuyerTodayOffersView extends StatelessWidget {
     );
   }
 
+  Future<void> _openMediaThenDetails(BuyerOfferModel offer) async {
+    final productId = offer.productId;
+    if (!offer.isRfq && productId != null && productId > 0) {
+      final opened = await openOfferMediaForProduct(productId, title: offer.displayTitle ?? 'Offer');
+      if (opened) return;
+    }
+    _openDetails(offer);
+  }
+
   void _openDetails(BuyerOfferModel offer) {
     final pId = offer.productId ?? offer.id;
     if (pId != null) {
@@ -237,8 +247,12 @@ class BuyerTodayOffersView extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Image thumbnail / NO MEDIA box
-                        Container(
+                        // Image thumbnail / NO MEDIA box. Tap = open the photo / video right away.
+                        GestureDetector(
+                          key: Key('buyer_today_offer_media_${offer.id}'),
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => _openMediaThenDetails(offer),
+                          child: Container(
                           width: 54,
                           height: 54,
                           decoration: BoxDecoration(
@@ -258,6 +272,7 @@ class BuyerTodayOffersView extends StatelessWidget {
                                   ),
                                 )
                               : _buildNoMediaPlaceholder(theme),
+                        ),
                         ),
                         const SizedBox(width: 12),
 
