@@ -3,7 +3,18 @@
 ## Current Task
 - **Goal**: Implement safe whole-card tap navigation across Buyer panel cards (`BuyerMyInterestsView`, `BuyerRequestManagementView`, `BuyerDashboardView`, `BuyerOrdersView`) without breaking any existing inner action buttons or modifying unrelated features.
 - **Status**:
-  - **Batch 12 Brokerage Billing Companies Filter, Validation Toast Visibility, Dialog Navigation, & Activity View Border**: **100% Implemented & Verified (Uncommitted)**
+  - **Remote Branch Integration & Merge Status**: **100% Merged & Verified (Branch: rohit_app_UI, Commits: 42efe0b, ab81dfb)**
+    1. Committed all uncommitted fixes from Batches 1 through 12 under commit `42efe0b` (`feat: ui and functional bug fixes for admin, buyer, seller and dashboard`).
+    2. Created safety backup branch `backup/our_fixes_42efe0b`.
+    3. Merged 18 incoming remote commits from `origin/rohit_app_UI` (`bae822c`) under merge commit `ab81dfb`.
+    4. Resolved 3 merge conflicts cleanly:
+       - `lib/modules/buyer/offers/view/buyer_offers_view.dart`: Primary "Submit Offer" first, followed by styled "Cancel" button second (44px height, matching borders).
+       - `lib/modules/buyer/offers/view/buyer_today_offers_view.dart`: Primary "Submit Offer" first, followed by styled "Cancel" button second.
+       - `lib/modules/kyc_users/view/kyc_user_view.dart`: Adopted `AppDate.dateTime` with safe fallback.
+       - Aligned Delete dialog buttons in `admin_roles_screen.dart` and `profile_page.dart` to adhere to app-wide primary-action-first policy.
+    5. All automated test suites passing: `batch_12_fixes_test.dart` (6/6), `batch_11_fixes_test.dart` (8/8), `dialog_button_order_test.dart` (3/3), `cancel_outline_test.dart`, `app_date_test.dart`, `buyer_offers_tabs_and_interest_buttons_test.dart`.
+    6. `flutter analyze lib/` verified with 0 errors.
+  - **Batch 12 Brokerage Billing Companies Filter, Validation Toast Visibility, Dialog Navigation, & Activity View Border**: **100% Implemented & Verified**
     1. **Bug 1 (Brokerage Bills - Billing Company Filter Inconsistency)**:
        - In `lib/modules/admin_catalog/view/admin_brokerage_bills_screen.dart`, removed `?? data['companies']` fallback and used exclusively `_companies = _billingMaps(data['billing_companies']);`.
        - Non-billing company (`abc company`) is completely excluded from the Billing Company dropdown, matching the web portal parity (`daalsetu.zappcode.in/accounting/brokerage-bills/`).
