@@ -954,9 +954,9 @@ class _BuyerRequestManagementViewState
                 label: const Text('History'),
               ),
               if (canCancel)
-                TextButton(
+                OutlinedButton(
                   onPressed: () => _cancelBuyerOffer(item),
-                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
                   child: const Text('Cancel'),
                 ),
               if (canClose)

@@ -230,7 +230,7 @@ class SellerUi {
               style: const TextStyle(color: Colors.white),
             ),
           ),
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
+          OutlinedButton(onPressed: () => Get.back(), child: const Text("Cancel")),
         ],
       ),
     );

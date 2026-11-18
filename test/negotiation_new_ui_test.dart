@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:daalsetu/modules/shared/view/offer_interest_negotiation_chat_view.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
@@ -235,5 +236,36 @@ void main() {
     expect(find.byKey(const Key('counter-error')), findsOneWidget);
     expect(find.textContaining('up to 80.000'), findsWidgets);
     expect(posts, isEmpty);
+  });
+
+  testWidgets('one buyer confirmation logged twice shows one banner', (tester) async {
+    final body = {
+      ...thread(messages: 0),
+      'messages': [
+        {'actor_role': 'buyer', 'action': 'status_changed_to_buyer_confirmed', 'to_status': 'buyer_confirmed', 'timestamp': '2026-11-18T18:57:10'},
+        {'actor_role': 'buyer', 'action': 'status_changed_to_buyer_confirmed', 'timestamp': '2026-11-18T18:57:41'},
+      ],
+    };
+    await pump(tester, body);
+    expect(find.text('Buyer Confirmed the Deal'), findsOneWidget);
+  });
+
+  testWidgets('the status badge is not cut short in the collapsed or the expanded summary', (tester) async {
+    // The test font is wider than the real one, so use a wider screen with the same proportions.
+    await pump(tester, {...thread(), 'status': 'buyer_confirmed'}, size: const Size(600, 800));
+    final badge = find.text('Buyer confirmed');
+    expect(badge, findsOneWidget);
+    expect(tester.renderObject<RenderParagraph>(badge).didExceedMaxLines, isFalse);
+    await tester.tap(find.byKey(const Key('negotiation-snapshot-toggle')));
+    await tester.pumpAndSettle();
+    expect(tester.renderObject<RenderParagraph>(find.text('Buyer confirmed').first).didExceedMaxLines, isFalse);
+  });
+
+  testWidgets('the Accept dialog has Accept first and an outlined Cancel', (tester) async {
+    await pump(tester, thread());
+    await tester.tap(find.text('Accept Interest'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(OutlinedButton, 'Cancel'), findsOneWidget);
+    expect(find.widgetWithText(TextButton, 'Cancel'), findsNothing);
   });
 }

@@ -697,7 +697,7 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
             },
             child: const Text("Select"),
           ),
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
+          OutlinedButton(onPressed: () => Get.back(), child: const Text("Cancel")),
         ],
       ),
     );

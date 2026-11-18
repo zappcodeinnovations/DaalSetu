@@ -79,7 +79,7 @@ class _AssignVehicleDialogState extends State<AssignVehicleDialog> {
             style: _primaryAction,
             child: const Text("Assign"),
           ),
-          TextButton(
+          OutlinedButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text("Cancel"),
           ),

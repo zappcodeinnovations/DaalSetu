@@ -977,7 +977,7 @@ class KycUsersScreen extends StatelessWidget {
             },
             child: const Text('Approve'),
           ),
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          OutlinedButton(onPressed: () => Get.back(), child: const Text('Cancel')),
         ],
       ),
     );
@@ -1029,7 +1029,7 @@ class KycUsersScreen extends StatelessWidget {
             },
             child: const Text("Reject", style: TextStyle(color: Colors.white)),
           ),
-          TextButton(onPressed: () => Get.back(), child: Text("Cancel", style: TextStyle(color: textLight))),
+          OutlinedButton(onPressed: () => Get.back(), child: Text("Cancel", style: TextStyle(color: textLight))),
         ],
       ),
     );

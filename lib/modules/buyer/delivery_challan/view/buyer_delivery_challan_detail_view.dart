@@ -202,7 +202,7 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
             },
             child: const Text("Confirm"),
           ),
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
+          OutlinedButton(onPressed: () => Get.back(), child: const Text("Cancel")),
         ],
       ),
     );

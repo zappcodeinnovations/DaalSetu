@@ -1326,7 +1326,7 @@ class _MyDealsTab extends StatelessWidget {
                 style: TextStyle(color: Colors.white),
               ),
             ),
-            TextButton(
+            OutlinedButton(
               onPressed: () => Get.back(),
               child: const Text("CANCEL"),
             ),

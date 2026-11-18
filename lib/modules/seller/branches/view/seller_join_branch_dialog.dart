@@ -61,7 +61,7 @@ class _SellerJoinBranchDialogState extends State<SellerJoinBranchDialog> {
           ),
           child: const Text("SUBMIT REQUEST", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ),
-        TextButton(onPressed: () => Get.back(), child: const Text("CANCEL")),
+        OutlinedButton(onPressed: () => Get.back(), child: const Text("CANCEL")),
       ],
     );
   }

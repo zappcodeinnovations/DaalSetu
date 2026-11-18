@@ -667,7 +667,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             child: Text(
                 newStatus == 'active' ? 'Activate' : 'Deactivate'),
           ),
-          TextButton(
+          OutlinedButton(
               onPressed: () => Get.back(),
               child: const Text('Cancel')),
         ],
@@ -696,7 +696,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             },
             child: const Text('Delete'),
           ),
-          TextButton(
+          OutlinedButton(
               onPressed: () => Get.back(),
               child: const Text('Cancel')),
         ],

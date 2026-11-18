@@ -556,7 +556,7 @@ class TransporterDriversView extends StatelessWidget {
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text("Delete"),
           ),
-          TextButton(
+          OutlinedButton(
             onPressed: () => Get.back(result: false),
             child: const Text("Cancel"),
           ),

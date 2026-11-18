@@ -153,6 +153,15 @@ class AppTheme {
         ),
       ),
 
+      // Secondary / Cancel actions: outlined in the brand orange, brand orange border.
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: secondaryOrange,
+          side: const BorderSide(color: secondaryOrange, width: 1.2),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
+
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: secondaryOrange,
         foregroundColor: Colors.white,
@@ -327,6 +336,15 @@ class AppTheme {
         style: TextButton.styleFrom(
           foregroundColor: secondaryOrange,
           textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
+        ),
+      ),
+
+      // Secondary / Cancel actions: outlined in the brand orange, brand orange border.
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: secondaryOrange,
+          side: const BorderSide(color: secondaryOrange, width: 1.2),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
 

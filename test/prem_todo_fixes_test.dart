@@ -4,6 +4,7 @@ import 'package:daalsetu/modules/seller/challans/view/seller_delivery_challan_vi
 import 'package:daalsetu/modules/seller/contracts/controller/seller_contract_controller.dart';
 import 'package:daalsetu/modules/seller/contracts/model/seller_contract_model.dart';
 import 'package:daalsetu/modules/seller/contracts/view/seller_contracts_view.dart';
+import 'package:daalsetu/modules/dashboard/view/dashboard_page.dart';
 import 'package:daalsetu/modules/seller/dashboard/view/seller_dashboard_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -72,5 +73,19 @@ void main() {
 
     expect(find.byKey(const Key('contract-view-7')), findsOneWidget);
     expect(find.text('View'), findsOneWidget);
+  });
+
+  test('the four pipeline stages each have their own colour, the same as the web dashboard', () {
+    final colors = [
+      for (final (i, label) in ['Negotiation', 'Seller Confirmed', 'Buyer Confirmed', 'Deal Confirmed'].indexed)
+        AdminDashboardScreen.resolvePipelineStageColor(label, i),
+    ];
+    expect(colors, [
+      const Color(0xFFF4B400),
+      const Color(0xFFF05A28),
+      const Color(0xFF8B5CF6),
+      const Color(0xFF3BAA4A),
+    ]);
+    expect(colors.toSet().length, 4); // Seller Confirmed is no longer a green copy of Deal Confirmed
   });
 }

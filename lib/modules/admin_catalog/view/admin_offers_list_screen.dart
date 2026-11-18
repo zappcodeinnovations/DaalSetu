@@ -569,7 +569,7 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
             style: FilledButton.styleFrom(backgroundColor: AppTheme.errorRed),
             child: const Text("Delete"),
           ),
-          TextButton(
+          OutlinedButton(
             onPressed: () => Navigator.pop(context),
             child: Text("Cancel", style: TextStyle(color: textSecondary)),
           ),

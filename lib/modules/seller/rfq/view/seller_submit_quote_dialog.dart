@@ -126,7 +126,7 @@ class SellerSubmitQuoteDialog {
               ),
             ),
           ),
-          TextButton(onPressed: () => Get.back(), child: const Text("CANCEL")),
+          OutlinedButton(onPressed: () => Get.back(), child: const Text("CANCEL")),
         ],
       ),
     );
@@ -233,7 +233,7 @@ class SellerSubmitQuoteDialog {
               ),
             ),
           ),
-          TextButton(onPressed: () => Get.back(), child: const Text("CANCEL")),
+          OutlinedButton(onPressed: () => Get.back(), child: const Text("CANCEL")),
         ],
       ),
     );

@@ -390,7 +390,7 @@ class _BuyerBranchViewState extends State<BuyerBranchView> {
                               ),
                             ),
                             if (req.id != null)
-                              TextButton(
+                              OutlinedButton(
                                 onPressed: () => controller.cancelRequest(
                                   req.id!,
                                   branchId: req.branchId,

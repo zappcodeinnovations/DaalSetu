@@ -2133,8 +2133,15 @@ class AdminDashboardScreen extends StatelessWidget {
 
   static Color resolvePipelineStageColor(String label, int index) {
     final lower = label.toLowerCase().trim();
+    // The four admin pipeline stages use the web dashboard's colours, so both match.
     if (lower.contains('negotiat')) {
-      return const Color(0xFFF59E0B); // Warm Amber Gold
+      return const Color(0xFFF4B400); // Amber
+    } else if (lower.contains('seller') && lower.contains('confirm')) {
+      return const Color(0xFFF05A28); // Orange-red (was green, a copy of Deal Confirmed)
+    } else if (lower.contains('buyer') && lower.contains('confirm')) {
+      return const Color(0xFF8B5CF6); // Violet
+    } else if (lower == 'deal confirmed') {
+      return const Color(0xFF3BAA4A); // Green
     } else if (lower.contains('sign') || lower.contains('contract')) {
       return const Color(0xFF2563EB); // Royal Blue
     } else if (lower.contains('buyer') || lower.contains('pending')) {
@@ -2504,6 +2511,8 @@ child: Text(
     );
   }
 
+  static Widget _emptyAxisLabel(double value, TitleMeta meta) => const SizedBox.shrink();
+
   Widget _buildWebGtvDealsChart(
     BuildContext context,
     GtvDealsChart data,
@@ -2527,8 +2536,13 @@ child: Text(
     final labels = data.labels.take(count).toList();
     final gtvLakhs = data.gtvValues.take(count).map((value) => value / 100000).toList();
     final deals = data.dealsValues.take(count).map((value) => value.toDouble()).toList();
-    final gtvMax = gtvLakhs.fold<double>(1, (max, value) => math.max(max, value));
-    final dealsMax = deals.fold<double>(1, (max, value) => math.max(max, value));
+    // Scale to the data, like the web chart (a week of ~0.07 Lakhs must not sit on a 0-1.2 axis).
+    final gtvPeak = gtvLakhs.fold<double>(0, (max, value) => math.max(max, value));
+    final gtvTop = (gtvPeak <= 0 ? 1.0 : gtvPeak) * 1.2;
+    // Whole deals only: 0, 1, 2 ... with no repeated labels.
+    final dealsTop = math.max(1, deals.fold<double>(0, (max, value) => math.max(max, value)).ceil()).toDouble();
+    final dealsStep = math.max(1, (dealsTop / 5).ceil()).toDouble();
+    String lakhsLabel(double v) => v == 0 ? '0' : v.toStringAsFixed(gtvTop < 1 ? 3 : (gtvTop < 10 ? 2 : 0));
     const gtvColor = Color(0xFFEA7C1C);
     const dealsColor = Color(0xFF4CC9A6);
 
@@ -2608,7 +2622,7 @@ child: Text(
               children: [
                 BarChart(
                   BarChartData(
-                    maxY: dealsMax * 1.2,
+                    maxY: dealsTop,
                     alignment: BarChartAlignment.spaceAround,
                     barTouchData: BarTouchData(
                       touchTooltipData: BarTouchTooltipData(
@@ -2630,8 +2644,14 @@ child: Text(
                       topTitles: const AxisTitles(
                         sideTitles: SideTitles(showTitles: false),
                       ),
+                      // Same left room as the line chart's GTV axis, so bars and line share one plot area.
                       leftTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
+                        axisNameWidget: SizedBox.shrink(),
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 32,
+                          getTitlesWidget: _emptyAxisLabel,
+                        ),
                       ),
                       rightTitles: AxisTitles(
                         axisNameWidget: Text(
@@ -2641,7 +2661,10 @@ child: Text(
                         sideTitles: SideTitles(
                           showTitles: true,
                           reservedSize: 30,
-                          getTitlesWidget: (value, meta) => Text(
+                          interval: dealsStep,
+                          getTitlesWidget: (value, meta) => value % 1 != 0
+                              ? const SizedBox.shrink()
+                              : Text(
                             value.toInt().toString(),
                             style: GoogleFonts.inter(
                               fontSize: 8,
@@ -2691,13 +2714,18 @@ child: Text(
                   ),
                 ),
                 Positioned.fill(
-                  right: 30,
+                  // The bar chart's right axis: 30 for the labels + 16 for the "Deals" name.
+                  right: 46,
                   bottom: 28,
                   child: IgnorePointer(
                     child: LineChart(
                       LineChartData(
                         minY: 0,
-                        maxY: gtvMax * 1.2,
+                        maxY: gtvTop,
+                        // Bars sit in the middle of equal slots, so the line's points do too:
+                        // otherwise the GTV peak lands one day away from its deals bar.
+                        minX: -0.5,
+                        maxX: count - 0.5,
                         lineTouchData: const LineTouchData(enabled: false),
                         borderData: FlBorderData(show: false),
                         titlesData: FlTitlesData(
@@ -2719,7 +2747,7 @@ child: Text(
                               showTitles: true,
                               reservedSize: 32,
                               getTitlesWidget: (value, meta) => Text(
-                                value.toStringAsFixed(value % 1 == 0 ? 0 : 1),
+                                lakhsLabel(value),
                                 style: GoogleFonts.inter(
                                   fontSize: 8,
                                   color: theme.textTheme.bodySmall?.color,

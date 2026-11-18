@@ -1473,7 +1473,7 @@ DeliveryPeriodPicker(
                           child: const Text("Submit Offer"),
                         ),
                         const SizedBox(width: 8),
-                        TextButton(
+                        OutlinedButton(
                           onPressed: () => Get.back(),
                           child: const Text("Cancel"),
                         ),
@@ -1552,7 +1552,7 @@ DeliveryPeriodPicker(
                     },
                     child: Text(isConfirm ? "Confirm" : "Reject"),
                   ),
-                  TextButton(
+                  OutlinedButton(
                     onPressed: () => Get.back(),
                     child: const Text("Cancel"),
                   ),

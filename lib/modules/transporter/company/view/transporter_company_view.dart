@@ -365,7 +365,7 @@ class TransporterCompanyView extends StatelessWidget {
             },
             child: const Text("Delete", style: TextStyle(color: Colors.red)),
           ),
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
+          OutlinedButton(onPressed: () => Get.back(), child: const Text("Cancel")),
         ],
       ),
     );

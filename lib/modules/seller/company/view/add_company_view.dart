@@ -110,7 +110,7 @@ class _AddCompanyViewState extends State<AddCompanyView> {
             },
             child: const Text("Select"),
           ),
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
+          OutlinedButton(onPressed: () => Get.back(), child: const Text("Cancel")),
         ],
       ),
     );

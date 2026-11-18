@@ -666,7 +666,7 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      TextButton(
+                      OutlinedButton(
                         onPressed: () => Get.back(),
                         child: Text(
                           "Cancel",
@@ -860,7 +860,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
               : const Icon(Icons.delete_outline_rounded, size: 18),
           label: Text(_isDeleting ? "Deleting..." : "Delete Account"),
         ),
-        TextButton(
+        OutlinedButton(
           onPressed: _isDeleting ? null : () => Navigator.of(context).pop(),
           child: Text(
             "Cancel",

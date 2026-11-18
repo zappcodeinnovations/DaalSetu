@@ -1875,7 +1875,7 @@ class _AdminBrokerageBillDetailScreenState
               }),
               child: const Text('Save'),
             ),
-            TextButton(
+            OutlinedButton(
               onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Cancel'),
             ),

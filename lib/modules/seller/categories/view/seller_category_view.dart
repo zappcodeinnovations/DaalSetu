@@ -861,9 +861,9 @@ class SellerCategoryView extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      TextButton(
+                      OutlinedButton(
                         onPressed: () => Get.back(),
-                        style: TextButton.styleFrom(
+                        style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 10,

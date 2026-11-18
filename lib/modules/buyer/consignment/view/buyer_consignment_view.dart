@@ -103,7 +103,7 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
             onPressed: () => Get.back(result: true),
             child: const Text('Confirm'),
           ),
-          TextButton(
+          OutlinedButton(
             onPressed: () => Get.back(result: false),
             child: const Text('Cancel'),
           ),

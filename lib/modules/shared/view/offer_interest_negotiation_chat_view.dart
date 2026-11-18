@@ -324,7 +324,7 @@ class _OfferInterestNegotiationChatViewState
             onPressed: () => Get.back(result: true),
             child: Text(accept ? 'Accept' : 'Reject'),
           ),
-          TextButton(
+          OutlinedButton(
             onPressed: () => Get.back(result: false),
             child: const Text('Cancel'),
           ),
@@ -664,8 +664,12 @@ class _OfferInterestNegotiationChatViewState
               padding: const EdgeInsets.fromLTRB(12, 10, 8, 6),
               child: Row(
                 children: [
+                  // The title and status badge share the room left of "Details"; the badge used to be
+                  // squeezed to a quarter of it ("Interest...") because a Spacer competed for the space.
+                  Expanded(
+                    child: Row(
+                      children: [
                   Flexible(
-                    flex: 2,
                     child: Text(
                       'Deal summary',
                       maxLines: 1,
@@ -690,7 +694,9 @@ class _OfferInterestNegotiationChatViewState
                       ),
                     ),
                   ),
-                  const Spacer(),
+                      ],
+                    ),
+                  ),
                   Text(
                     _snapshotOpen ? 'Less' : 'Details',
                     style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: mutedColor),
@@ -1388,9 +1394,11 @@ class _OfferInterestNegotiationChatViewState
               : msg['created_at'],
         );
         final statusDesc = status.isNotEmpty ? status : action;
-        final currentKey = "${statusDesc.toLowerCase()}_$timeRaw";
+        // One confirmation event can be logged twice with slightly different seconds / wording
+        // ("buyer confirmed" status + "status changed to buyer confirmed" action). Same banner
+        // text at the same displayed minute is the same event, so it is shown once.
+        final currentKey = "${statusBannerTitle(role: role, status: status, action: action)}_${_formatNegotiationDateTime(timeRaw)}";
 
-        // Deduplicate consecutive identical status updates at the same timestamp
         if (currentKey == lastStatusKey && statusDesc.isNotEmpty) {
           continue;
         }
@@ -1409,6 +1417,26 @@ class _OfferInterestNegotiationChatViewState
     }
 
     return widgets;
+  }
+
+  /// The banner text of a status event ("Buyer Confirmed the Deal", ...).
+  static String statusBannerTitle({required String role, required String status, required String action}) {
+    final cleanStatus = status.isNotEmpty ? status : action;
+    final lower = cleanStatus.toLowerCase();
+    if (lower.contains('confirm') || lower.contains('approv') || lower.contains('accept') || lower.contains('won')) {
+      if (lower.contains('buyer') || role == 'buyer') return 'Buyer Confirmed the Deal';
+      if (lower.contains('seller') || role == 'seller') return 'Seller Confirmed the Deal';
+      return 'Deal Confirmed';
+    }
+    if (lower.contains('reject') || lower.contains('cancel') || lower.contains('lost')) {
+      if (lower.contains('buyer') || role == 'buyer') return 'Buyer Rejected Negotiation';
+      if (lower.contains('seller') || role == 'seller') return 'Seller Rejected Negotiation';
+      return 'Negotiation Closed';
+    }
+    if (lower.contains('negotiat') || lower.contains('counter') || lower.contains('pend')) {
+      return 'Negotiation In Progress';
+    }
+    return cleanStatus.isNotEmpty ? cleanStatus[0].toUpperCase() + cleanStatus.substring(1) : 'System Notification';
   }
 
   Widget _statusEventBanner(

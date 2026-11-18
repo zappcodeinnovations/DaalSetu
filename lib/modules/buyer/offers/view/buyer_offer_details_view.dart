@@ -794,7 +794,7 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
             onPressed: () => Get.back(result: true),
             child: Text(confirmLabel),
           ),
-          TextButton(
+          OutlinedButton(
             onPressed: () => Get.back(result: false),
             child: const Text('Cancel'),
           ),
@@ -882,7 +882,7 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
             },
             child: const Text('Send counter'),
           ),
-          TextButton(onPressed: Get.back, child: const Text('Cancel')),
+          OutlinedButton(onPressed: Get.back, child: const Text('Cancel')),
         ],
       ),
     );
@@ -1040,7 +1040,7 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                       child: const Text("Send Proposal"),
                     ),
                     const SizedBox(width: 8),
-                    TextButton(
+                    OutlinedButton(
                       onPressed: () => Get.back(),
                       child: const Text("Cancel"),
                     ),
@@ -1078,7 +1078,7 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
             onPressed: () => Get.back(result: true),
             child: Text(accept ? 'Accept offer' : 'Reject quotation'),
           ),
-          TextButton(
+          OutlinedButton(
             onPressed: () => Get.back(result: false),
             child: const Text('Cancel'),
           ),
@@ -1674,7 +1674,7 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
             onPressed: () => Get.back(result: true),
             child: Text(accept ? 'Confirm Deal' : 'Reject'),
           ),
-          TextButton(
+          OutlinedButton(
             onPressed: () => Get.back(result: false),
             child: const Text('Cancel'),
           ),

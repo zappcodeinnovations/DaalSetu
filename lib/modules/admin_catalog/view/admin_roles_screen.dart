@@ -357,7 +357,7 @@ class _AdminRoleEditorScreenState extends State<AdminRoleEditorScreen> {
             onPressed: () => Navigator.pop(dialogContext, true),
             child: const Text('Delete'),
           ),
-          TextButton(
+          OutlinedButton(
             onPressed: () => Navigator.pop(dialogContext, false),
             child: const Text('Cancel'),
           ),

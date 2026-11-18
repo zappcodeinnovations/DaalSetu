@@ -438,7 +438,7 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
             },
             child: const Text('Delete'),
           ),
-          TextButton(
+          OutlinedButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),

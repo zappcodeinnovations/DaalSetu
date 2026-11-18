@@ -25,7 +25,7 @@ Future<List<String>?> askDispatchBills() async {
           onPressed: () => Get.back(result: const <String>[]),
           child: const Text('Dispatch without bill'),
         ),
-        TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+        OutlinedButton(onPressed: () => Get.back(), child: const Text('Cancel')),
       ],
     ),
   );

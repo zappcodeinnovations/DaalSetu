@@ -505,7 +505,7 @@ class ProductScreen extends StatelessWidget {
             icon: const Icon(Icons.delete_outline_rounded),
             label: const Text('Delete'),
           ),
-          TextButton(
+          OutlinedButton(
             onPressed: () => Get.back(result: false),
             child: const Text('Cancel'),
           ),

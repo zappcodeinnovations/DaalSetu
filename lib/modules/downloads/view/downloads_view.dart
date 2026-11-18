@@ -95,7 +95,7 @@ class _DownloadsViewState extends State<DownloadsView> {
                 onPressed: () => Navigator.pop(context, true),
                 child: const Text('Delete'),
               ),
-              TextButton(
+              OutlinedButton(
                 onPressed: () => Navigator.pop(context, false),
                 child: const Text('Cancel'),
               ),

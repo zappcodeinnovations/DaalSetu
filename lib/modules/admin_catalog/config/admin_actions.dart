@@ -263,7 +263,7 @@ AdminCustomAction userStatusAction() => AdminCustomAction(
               ),
               actions: [
                 FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Save')),
-                TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+                OutlinedButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
               ],
             ),
           ),
@@ -340,7 +340,7 @@ Future<bool> adminConfirmAndRun(
               },
               child: Text(confirmText),
             ),
-            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+            OutlinedButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
           ],
         ),
       );
@@ -439,7 +439,7 @@ Future<bool> confirmBuyerOffer(BuildContext context, Map<String, dynamic> record
       ),
       actions: [
         FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Confirm Deal')),
-        TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+        OutlinedButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
       ],
     ),
   );

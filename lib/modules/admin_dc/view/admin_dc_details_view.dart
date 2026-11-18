@@ -810,7 +810,7 @@ class AdminChallanDetailsView extends StatelessWidget {
               },
               child: const Text("Yes, Dispatch", style: TextStyle(color: Colors.white)),
             ),
-            TextButton(
+            OutlinedButton(
               onPressed: () => Navigator.pop(context),
               child: const Text("Cancel"),
             ),

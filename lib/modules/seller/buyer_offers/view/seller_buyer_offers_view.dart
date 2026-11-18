@@ -375,7 +375,7 @@ class _SellerBuyerOfferDetailViewState
             },
             child: const Text("SEND", style: TextStyle(color: Colors.white)),
           ),
-          TextButton(
+          OutlinedButton(
             onPressed: () => Get.back(result: false),
             child: const Text("CANCEL"),
           ),

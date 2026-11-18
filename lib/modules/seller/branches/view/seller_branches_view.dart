@@ -344,7 +344,7 @@ class SellerBranchesView extends StatelessWidget {
                         child: ListTile(
                           title: Text(req.locationName ?? "Branch Request", style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14)),
                           subtitle: Text("Code: ${req.branchCode ?? 'N/A'} • Status: Pending Approval", style: const TextStyle(fontSize: 12)),
-                          trailing: TextButton(
+                          trailing: OutlinedButton(
                             onPressed: () => controller.cancelRequest(req.branchId ?? req.id!),
                             child: const Text("CANCEL", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
                           ),

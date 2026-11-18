@@ -97,7 +97,7 @@ class _AssignDriverDialogState extends State<AssignDriverDialog> {
             onPressed: () => Navigator.pop(dialogContext, true),
             child: const Text('Confirm'),
           ),
-          TextButton(
+          OutlinedButton(
             onPressed: () => Navigator.pop(dialogContext, false),
             child: const Text('Cancel'),
           ),

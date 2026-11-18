@@ -54,31 +54,27 @@ pw.Document buildContractPdf(ContractDetailModel contract, String contractNumber
           ),
         );
 
-    // Rows of two equal cells.
+    // Rows of two equal cells. A Table keeps both cells of a row the same height; a Row with
+    // CrossAxisAlignment.stretch inside the page's unbounded-height Column made the whole body
+    // silently disappear (blank PDF), so it must not be used here.
     pw.Widget grid(List<List<String>> items) {
-      final rows = <pw.Widget>[];
+      final rows = <pw.TableRow>[];
       for (var i = 0; i < items.length; i += 2) {
         final left = items[i];
         final right = i + 1 < items.length ? items[i + 1] : null;
         rows.add(
-          pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+          pw.TableRow(
             children: [
-              pw.Expanded(child: cell(left[0], left[1])),
-              pw.Expanded(
-                child: right == null
-                    ? pw.Container(
-                        decoration: pw.BoxDecoration(
-                          border: pw.Border.all(color: line, width: 0.6),
-                        ),
-                      )
-                    : cell(right[0], right[1]),
-              ),
+              cell(left[0], left[1]),
+              right == null ? cell('', '') : cell(right[0], right[1]),
             ],
           ),
         );
       }
-      return pw.Column(children: rows);
+      return pw.Table(
+        columnWidths: const {0: pw.FlexColumnWidth(), 1: pw.FlexColumnWidth()},
+        children: rows,
+      );
     }
 
     pw.Widget partyCard(String title, List<List<String>> items) => pw.Container(

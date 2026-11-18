@@ -815,7 +815,7 @@ class BuyerTodayOffersView extends StatelessWidget {
                           child: const Text("Submit Offer"),
                         ),
                         const SizedBox(width: 8),
-                        TextButton(
+                        OutlinedButton(
                           onPressed: () => Get.back(),
                           child: const Text("Cancel"),
                         ),
