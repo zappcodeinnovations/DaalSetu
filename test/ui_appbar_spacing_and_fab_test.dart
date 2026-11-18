@@ -83,6 +83,64 @@ void main() {
       final titleTopLeft = tester.getTopLeft(find.text('Tab Title'));
       expect(titleTopLeft.dx, equals(46.0));
     });
+
+    testWidgets('AppBarLeading shows only Drawer Menu on root screen and only Back button on inner screen',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        GetMaterialApp(
+          theme: AppTheme.lightTheme,
+          home: Scaffold(
+            appBar: AppBar(
+              leading: const AppBarLeading(),
+              leadingWidth: 46.0,
+              title: const Text('Root Dashboard'),
+            ),
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => Scaffold(
+                        appBar: AppBar(
+                          leading: const AppBarLeading(),
+                          leadingWidth: 46.0,
+                          title: const Text('Inner Detail Screen'),
+                        ),
+                        body: const SizedBox(),
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('Go to Details'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // On Root Screen: Menu icon exists, Back button does NOT exist
+      expect(find.byIcon(Icons.menu_rounded), findsOneWidget);
+      expect(find.byType(BackButtonIcon), findsNothing);
+
+      // Navigate to Inner Screen
+      await tester.tap(find.text('Go to Details'));
+      await tester.pumpAndSettle();
+
+      // On Inner Screen: ONLY Back button exists, Drawer Menu does NOT exist
+      expect(find.text('Inner Detail Screen'), findsOneWidget);
+      expect(find.byType(BackButtonIcon), findsOneWidget);
+      expect(find.byIcon(Icons.menu_rounded), findsNothing);
+
+      // Tap Back button to pop back to root
+      await tester.tap(find.byType(BackButtonIcon));
+      await tester.pumpAndSettle();
+
+      // Back on Root Screen: Menu icon is restored, Back button gone
+      expect(find.text('Root Dashboard'), findsOneWidget);
+      expect(find.byIcon(Icons.menu_rounded), findsOneWidget);
+      expect(find.byType(BackButtonIcon), findsNothing);
+    });
   });
 
   group('Buyer Activity Post Requirement Button Tests', () {
@@ -91,9 +149,9 @@ void main() {
       await tester.pumpWidget(
         GetMaterialApp(
           theme: AppTheme.lightTheme,
-          home: const Scaffold(
-            bottomNavigationBar: SizedBox(height: 72),
-            body: BuyerActivityView(),
+          home: const MediaQuery(
+            data: MediaQueryData(padding: EdgeInsets.only(bottom: 48)),
+            child: BuyerActivityView(),
           ),
         ),
       );
@@ -104,7 +162,7 @@ void main() {
       expect(fabFinder, findsOneWidget);
       expect(find.text('Post Requirement'), findsOneWidget);
 
-      // Verify FAB has bottom padding reserving space for navigation bar
+      // Verify FAB has responsive bottom padding based on system safe insets
       final paddingFinder = find.ancestor(
         of: find.text('Post Requirement'),
         matching: find.byType(Padding),
@@ -115,7 +173,7 @@ void main() {
       for (final element in tester.widgetList<Padding>(paddingFinder)) {
         if (element.padding is EdgeInsets) {
           final insets = element.padding as EdgeInsets;
-          if (insets.bottom >= 76.0) {
+          if (insets.bottom >= 48.0) {
             foundNavClearance = true;
             break;
           }

@@ -73,8 +73,10 @@ class AppBarLeading extends StatelessWidget {
   }
 
   static double widthFor(BuildContext context, {bool hasChild = false, bool showBack = true}) {
-    final slots = (_hasBack(context, hasChild: hasChild, showBack: showBack) ? 1 : 0) +
-        (AppShell.isSignedInPage ? 1 : 0);
+    final hasBack = _hasBack(context, hasChild: hasChild, showBack: showBack);
+    // On inner screens where back is active, show only 1 slot (46px).
+    // On root tab screens, show 1 slot for drawer menu if signed in (46px).
+    final slots = hasBack ? 1 : (AppShell.isSignedInPage ? 1 : 0);
     return slots == 0 ? kToolbarHeight : (slots * _slot + 6);
   }
 
@@ -101,25 +103,30 @@ class AppBarLeading extends StatelessWidget {
                 ),
               )
             : null);
+
+    // Standard mobile UX:
+    // If the screen can go back (or provides its own back/close button), show ONLY the back button.
+    // Drawer menu is shown only on root/main tabs where there is no previous route to pop.
+    final Widget? leadingWidget = back ??
+        (AppShell.isSignedInPage
+            ? SizedBox.square(
+                dimension: _slot,
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  tooltip: 'Open menu',
+                  icon: const Icon(Icons.menu_rounded),
+                  onPressed: () => _openMenu(context),
+                ),
+              )
+            : null);
+
+    if (leadingWidget == null) {
+      return const SizedBox.shrink();
+    }
+
     return Padding(
       padding: const EdgeInsets.only(left: 6),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (AppShell.isSignedInPage)
-            // Fixed 40px slots: an IconButton alone keeps a 48px tap target and overflows.
-            SizedBox.square(
-              dimension: _slot,
-              child: IconButton(
-                padding: EdgeInsets.zero,
-                tooltip: 'Open menu',
-                icon: const Icon(Icons.menu_rounded),
-                onPressed: () => _openMenu(context),
-              ),
-            ),
-          if (back != null) back,
-        ],
-      ),
+      child: leadingWidget,
     );
   }
 }

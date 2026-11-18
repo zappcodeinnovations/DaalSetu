@@ -25,6 +25,7 @@ import '../../offers/model/buyer_offer_model.dart';
 import '../../offers/view/add_buyer_offer_view.dart';
 import '../../offers/view/buyer_offer_details_view.dart';
 import '../../../products/view/product_detail.dart';
+import '../../../settings/view/settings_page.dart';
 
 class BuyerDashboardView extends StatelessWidget {
   BuyerDashboardView({super.key});
@@ -105,7 +106,7 @@ class BuyerDashboardView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildBannerSlider(context, data.recentRfqs),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 16),
                       _buildSectionHeader(
                         context,
                         "Shop by Category",
@@ -114,11 +115,11 @@ class BuyerDashboardView extends StatelessWidget {
                           Get.to(() => CategoryPageView());
                         },
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
                       _buildCategoriesList(context, controller.categories),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 16),
                       _buildKPIGrid(context, data.kpis),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 20),
                       Obx(
                         () => BuyerDashboardAnalytics(
                           charts: data.charts,
@@ -128,7 +129,7 @@ class BuyerDashboardView extends StatelessWidget {
                           onRangeChanged: controller.setRange,
                         ),
                       ),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 20),
                       _buildSectionHeader(
                         context,
                         "Recent Requirements & Negotiations",
@@ -137,9 +138,9 @@ class BuyerDashboardView extends StatelessWidget {
                           Get.to(() => const BuyerActivityView(initialIndex: 0));
                         },
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
                       _buildRecentRequirementsList(context, data.recentRfqs),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 16),
                       _buildSectionHeader(
                         context,
                         "Recent Deals & Orders",
@@ -148,9 +149,9 @@ class BuyerDashboardView extends StatelessWidget {
                           Get.to(() => const BuyerOrdersView());
                         },
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
                       _buildRecentOrdersList(context, data.recentOrders),
-                      const SizedBox(height: 100),
+                      const SizedBox(height: 60),
                     ],
                   ),
                 ),
@@ -184,41 +185,51 @@ class BuyerDashboardView extends StatelessWidget {
             color: Colors.white,
           ),
         ),
-        trailing: Stack(
-          alignment: Alignment.center,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(IconlyLight.notification, size: 26, color: Colors.white),
-              onPressed: () => Get.to(() => const SellerNotificationView()),
+              tooltip: 'Settings',
+              icon: const Icon(IconlyLight.setting, size: 24, color: Colors.white),
+              onPressed: () => Get.to(() => SettingsScreen()),
             ),
-            if (count > 0)
-              Positioned(
-                right: 6,
-                top: 6,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 2,
-                  ),
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
-                  ),
-                  constraints: const BoxConstraints(
-                    minWidth: 16,
-                    minHeight: 16,
-                  ),
-                  child: Text(
-                    count > 99 ? '99+' : '$count',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 8.5,
-                      fontWeight: FontWeight.bold,
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(IconlyLight.notification, size: 26, color: Colors.white),
+                  onPressed: () => Get.to(() => const SellerNotificationView()),
+                ),
+                if (count > 0)
+                  Positioned(
+                    right: 6,
+                    top: 6,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        count > 99 ? '99+' : '$count',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
+              ],
+            ),
           ],
         ),
         title: "Hello, $name 👋",
@@ -728,6 +739,7 @@ class BuyerDashboardView extends StatelessWidget {
       );
     }
     return ListView.separated(
+      padding: EdgeInsets.zero,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: requirements.length > 5 ? 5 : requirements.length,
@@ -956,6 +968,7 @@ class BuyerDashboardView extends StatelessWidget {
     }
 
     return ListView.separated(
+      padding: EdgeInsets.zero,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: orders.length > 5 ? 5 : orders.length,
@@ -1200,13 +1213,17 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
                   color: theme.colorScheme.primary,
                 ),
                 const SizedBox(width: 6),
-                Text(
-                  "ACTIVE REQUIREMENTS & DEALS",
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                    letterSpacing: 1.0,
+                Expanded(
+                  child: Text(
+                    "ACTIVE REQUIREMENTS & DEALS",
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
+                      letterSpacing: 1.0,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

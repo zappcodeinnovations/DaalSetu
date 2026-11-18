@@ -55,13 +55,12 @@ class MainNavigationScreen extends StatelessWidget {
         role == 'buyer_seller' ||
         role == 'both') {
       return [
-            BuyerDashboardView(),
-            const BuyerOffersView(),
-            const BuyerActivityView(),
-            const BuyerDeliveryChallanView(),
-            const BuyerBranchView(),
-          ] +
-          [SettingsScreen()];
+        BuyerDashboardView(),
+        const BuyerOffersView(),
+        const BuyerActivityView(),
+        const BuyerDeliveryChallanView(),
+        const BuyerBranchView(),
+      ];
     }
     return [
       AdminDashboardScreen(),
@@ -221,11 +220,6 @@ class GlassNavBar extends StatelessWidget {
           icon: IconlyLight.location,
           activeIcon: IconlyBold.location,
           label: 'Branch',
-        ),
-        _NavItem(
-          icon: IconlyLight.setting,
-          activeIcon: IconlyBold.setting,
-          label: 'Settings',
         ),
       ];
     }

@@ -22,11 +22,7 @@ class BuyerActivityView extends StatelessWidget {
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
     final isKeyboardOpen = mediaQuery.viewInsets.bottom > 0;
-    final systemBottom = isKeyboardOpen ? 0.0 : mediaQuery.padding.bottom;
-    final hasBottomNav = Scaffold.maybeOf(context)?.widget.bottomNavigationBar != null;
-    final fabBottom = hasBottomNav
-        ? (76.0 + systemBottom)
-        : systemBottom;
+    final fabBottom = isKeyboardOpen ? 0.0 : mediaQuery.padding.bottom;
 
     return DefaultTabController(
       length: 2,

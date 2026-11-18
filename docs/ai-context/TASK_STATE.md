@@ -13,6 +13,12 @@
   - App-Wide Dark Theme Audit & Bright Mode Preservation across 8 Target Components: **100% COMPLETE & VERIFIED**
   - Buyer Dashboard Featured Offer Banner Dark Theme Adaptation (Option 1): **100% COMPLETE & VERIFIED**
   - Buyer Dashboard Offers Carousel Dark Mode 3px Overflow Fix: **100% COMPLETE & VERIFIED (`82ca2c1`)** (Carousel height set to 196, padding balanced, 0 overflows across themes)
+  - Buyer Dashboard Bottom Padding & Spacing Polish: **100% COMPLETE & VERIFIED (Uncommitted)**:
+    - Added `padding: EdgeInsets.zero` to `_buildRecentRequirementsList` and `_buildRecentOrdersList` `ListView.separated`, eliminating 48px system padding at list bottoms and 24-32px at tops.
+    - Set section spacing between Requirements and Deals to 16px.
+    - Added Settings icon to Buyer Dashboard header beside notification bell.
+    - Reduced Buyer bottom navigation tabs to 5 tabs, preventing "Dashboard" truncation.
+    - Maintained uncommitted state per user order ("commit mat krna").
 - **Admin Redesign & Card Polish Scope (33 Total Admin Views / Modals Modernized)**:
   - **Batch 3B (Admin Masters List, Negotiation & Action Dialogs)**:
     - `lib/modules/admin_catalog/view/admin_module_list_screen.dart`: Upgraded generic catalog record cards and buyer cards to 18px rounded containers with `#FFE0B2` borders, vibrant icon pods, modern pill segments, and warm gradient FAB.
