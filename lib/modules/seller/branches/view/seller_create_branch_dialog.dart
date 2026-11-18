@@ -61,7 +61,6 @@ class _SellerCreateBranchDialogState extends State<SellerCreateBranchDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Get.back(), child: const Text("CANCEL")),
         ElevatedButton(
           onPressed: () {
             if (_nameController.text.trim().isEmpty || _cityController.text.trim().isEmpty) {
@@ -82,6 +81,7 @@ class _SellerCreateBranchDialogState extends State<SellerCreateBranchDialog> {
           ),
           child: const Text("CREATE BRANCH", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ),
+        TextButton(onPressed: () => Get.back(), child: const Text("CANCEL")),
       ],
     );
   }

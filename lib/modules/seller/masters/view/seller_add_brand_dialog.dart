@@ -53,12 +53,6 @@ class _SellerAddBrandDialogState extends State<SellerAddBrandDialog> {
       ),
       actions: [
         Row(children: [
-          Expanded(child: OutlinedButton(
-            onPressed: () => Get.back(),
-            style: OutlinedButton.styleFrom(minimumSize: const Size(0, 44), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-            child: const Text("CANCEL"),
-          )),
-          const SizedBox(width: 10),
           Expanded(child: ElevatedButton(
           onPressed: () {
             if (_nameController.text.trim().isEmpty) {
@@ -78,6 +72,12 @@ class _SellerAddBrandDialogState extends State<SellerAddBrandDialog> {
           ),
           child: FittedBox(fit: BoxFit.scaleDown, child: const Text("CREATE BRAND", style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold))),
         )),
+          const SizedBox(width: 10),
+          Expanded(child: OutlinedButton(
+            onPressed: () => Get.back(),
+            style: OutlinedButton.styleFrom(minimumSize: const Size(0, 44), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+            child: const Text("CANCEL"),
+          )),
         ]),
       ],
     );

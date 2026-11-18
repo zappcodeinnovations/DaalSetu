@@ -216,7 +216,6 @@ class SellerUi {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: color),
             onPressed: () {
@@ -231,6 +230,7 @@ class SellerUi {
               style: const TextStyle(color: Colors.white),
             ),
           ),
+          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
         ],
       ),
     );

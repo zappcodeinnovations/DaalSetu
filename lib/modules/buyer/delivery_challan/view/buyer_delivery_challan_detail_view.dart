@@ -191,7 +191,6 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
@@ -203,6 +202,7 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
             },
             child: const Text("Confirm"),
           ),
+          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
         ],
       ),
     );

@@ -786,10 +786,6 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
         title: Text(title),
         content: const Text('This action will update the live negotiation.'),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
-          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: color,
@@ -797,6 +793,10 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
             ),
             onPressed: () => Get.back(result: true),
             child: Text(confirmLabel),
+          ),
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
           ),
         ],
       ),
@@ -858,7 +858,6 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
           ),
         ),
         actions: [
-          TextButton(onPressed: Get.back, child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () {
               final price = priceController.text.trim();
@@ -883,6 +882,7 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
             },
             child: const Text('Send counter'),
           ),
+          TextButton(onPressed: Get.back, child: const Text('Cancel')),
         ],
       ),
     );
@@ -1006,11 +1006,6 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    TextButton(
-                      onPressed: () => Get.back(),
-                      child: const Text("Cancel"),
-                    ),
-                    const SizedBox(width: 8),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFE65100),
@@ -1043,6 +1038,11 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                         );
                       },
                       child: const Text("Send Proposal"),
+                    ),
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: () => Get.back(),
+                      child: const Text("Cancel"),
                     ),
                   ],
                 ),
@@ -1809,30 +1809,6 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        side: BorderSide(
-                          color: theme.dividerColor.withValues(alpha: 0.6),
-                          width: 1.2,
-                        ),
-                        foregroundColor: theme.textTheme.bodyLarge?.color,
-                      ),
-                      onPressed: () => Get.back(),
-                      child: Text(
-                        "No",
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red.shade600,
@@ -1874,6 +1850,30 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                       },
                       child: Text(
                         "Yes, Cancel",
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        side: BorderSide(
+                          color: theme.dividerColor.withValues(alpha: 0.6),
+                          width: 1.2,
+                        ),
+                        foregroundColor: theme.textTheme.bodyLarge?.color,
+                      ),
+                      onPressed: () => Get.back(),
+                      child: Text(
+                        "No",
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,

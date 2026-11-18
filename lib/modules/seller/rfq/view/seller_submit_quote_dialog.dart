@@ -98,7 +98,6 @@ class SellerSubmitQuoteDialog {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("CANCEL")),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: SellerUi.primary),
             onPressed: () {
@@ -127,6 +126,7 @@ class SellerSubmitQuoteDialog {
               ),
             ),
           ),
+          TextButton(onPressed: () => Get.back(), child: const Text("CANCEL")),
         ],
       ),
     );
@@ -206,7 +206,6 @@ class SellerSubmitQuoteDialog {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("CANCEL")),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: SellerUi.primary),
             onPressed: () {
@@ -234,6 +233,7 @@ class SellerSubmitQuoteDialog {
               ),
             ),
           ),
+          TextButton(onPressed: () => Get.back(), child: const Text("CANCEL")),
         ],
       ),
     );

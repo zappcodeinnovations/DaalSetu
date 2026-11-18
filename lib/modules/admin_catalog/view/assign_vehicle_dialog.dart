@@ -74,14 +74,14 @@ class _AssignVehicleDialogState extends State<AssignVehicleDialog> {
         title: const Text("Confirm Assignment"),
         content: Text("Assign ${vehicle['vehicle_number']} to ${widget.driverName}?"),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text("Cancel"),
-          ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: _primaryAction,
             child: const Text("Assign"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Cancel"),
           ),
         ],
       ),

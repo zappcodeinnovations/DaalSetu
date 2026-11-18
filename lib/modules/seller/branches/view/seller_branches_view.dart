@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/confirm_actions.dart';
 import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -405,13 +406,14 @@ class SellerBranchesView extends StatelessWidget {
                                   onPressed: () => Get.defaultDialog(
                                     title: "Make Primary",
                                     middleText: "Make ${b.branchCode ?? 'this branch'} your primary branch?",
-                                    textConfirm: "YES",
-                                    textCancel: "CANCEL",
-                                    confirmTextColor: Colors.white,
-                                    onConfirm: () {
+                                    actions: confirmActions(
+                                      confirmText: "YES",
+                                      onConfirm: () {
                                       Get.back();
                                       controller.makePrimaryBranch(b.branchId ?? b.id!);
                                     },
+                                      cancelText: "CANCEL",
+                                    ),
                                   ),
                                   tooltip: "Make Primary",
                                 ),

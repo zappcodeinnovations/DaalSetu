@@ -775,11 +775,6 @@ class BuyerTodayOffersView extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        TextButton(
-                          onPressed: () => Get.back(),
-                          child: const Text("Cancel"),
-                        ),
-                        const SizedBox(width: 8),
                         ElevatedButton(
                           onPressed: () async {
                             if (qtyCtrl.text.trim().isEmpty || priceCtrl.text.trim().isEmpty) {
@@ -803,6 +798,11 @@ class BuyerTodayOffersView extends StatelessWidget {
                             );
                           },
                           child: const Text("Submit Offer"),
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton(
+                          onPressed: () => Get.back(),
+                          child: const Text("Cancel"),
                         ),
                       ],
                     ),

@@ -430,10 +430,6 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
         title: const Text('Delete Category?'),
         content: Text('Are you sure you want to delete "${node.name}"?\nDeleting this category may affect child categories.'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppTheme.errorRed, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
             onPressed: () {
@@ -441,6 +437,10 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
               controller.deleteCategory(node.id);
             },
             child: const Text('Delete'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
           ),
         ],
       ),
@@ -768,18 +768,6 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        side: BorderSide(color: colorBorder),
-                      ),
-                      child: Text('Cancel', style: TextStyle(color: colorTextDark)),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
                     flex: 2,
                     child: Obx(() => FilledButton(
                       onPressed: controller.isSubmitting.value ? null : () => controller.submitCategory(),
@@ -792,6 +780,18 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
                         ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                         : Text(category != null ? 'Update Category' : 'Save Category', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     )),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        side: BorderSide(color: colorBorder),
+                      ),
+                      child: Text('Cancel', style: TextStyle(color: colorTextDark)),
+                    ),
                   ),
                 ],
               ),

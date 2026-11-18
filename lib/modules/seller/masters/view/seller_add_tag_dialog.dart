@@ -42,7 +42,6 @@ class _SellerAddTagDialogState extends State<SellerAddTagDialog> {
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Get.back(), child: const Text("CANCEL")),
         ElevatedButton(
           onPressed: () {
             if (_nameController.text.trim().isEmpty) {
@@ -58,6 +57,7 @@ class _SellerAddTagDialogState extends State<SellerAddTagDialog> {
           ),
           child: const Text("CREATE TAG", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ),
+        TextButton(onPressed: () => Get.back(), child: const Text("CANCEL")),
       ],
     );
   }

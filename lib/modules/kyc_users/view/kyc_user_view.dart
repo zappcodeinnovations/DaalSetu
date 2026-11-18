@@ -970,7 +970,6 @@ class KycUsersScreen extends StatelessWidget {
         title: const Text('Approve KYC'),
         content: Text('Approve KYC for ${user.name}?'),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           FilledButton(
             onPressed: () {
               Get.back();
@@ -978,6 +977,7 @@ class KycUsersScreen extends StatelessWidget {
             },
             child: const Text('Approve'),
           ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
         ],
       ),
     );
@@ -1016,7 +1016,6 @@ class KycUsersScreen extends StatelessWidget {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: Text("Cancel", style: TextStyle(color: textLight))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: colorRejected, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
             onPressed: () {
@@ -1030,6 +1029,7 @@ class KycUsersScreen extends StatelessWidget {
             },
             child: const Text("Reject", style: TextStyle(color: Colors.white)),
           ),
+          TextButton(onPressed: () => Get.back(), child: Text("Cancel", style: TextStyle(color: textLight))),
         ],
       ),
     );

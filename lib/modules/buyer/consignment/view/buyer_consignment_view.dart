@@ -99,13 +99,13 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
         ),
         content: Text('Do you want to $actionLabel for this consignment?'),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
-          ),
           ElevatedButton(
             onPressed: () => Get.back(result: true),
             child: const Text('Confirm'),
+          ),
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
           ),
         ],
       ),

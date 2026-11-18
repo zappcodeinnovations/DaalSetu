@@ -356,31 +356,6 @@ class TransporterBiddingView extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        OutlinedButton(
-                          onPressed: () => Get.back(),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor:
-                                isDark ? Colors.white70 : Colors.grey.shade700,
-                            side: BorderSide(
-                              color: isDark ? Colors.white24 : Colors.grey.shade300,
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 10,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                          child: const Text(
-                            "Cancel",
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _gold,
@@ -417,6 +392,31 @@ class TransporterBiddingView extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        OutlinedButton(
+                          onPressed: () => Get.back(),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor:
+                                isDark ? Colors.white70 : Colors.grey.shade700,
+                            side: BorderSide(
+                              color: isDark ? Colors.white24 : Colors.grey.shade300,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 10,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          child: const Text(
+                            "Cancel",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
@@ -1307,10 +1307,6 @@ class _MyDealsTab extends StatelessWidget {
           ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: const Text("CANCEL"),
-            ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: _gold),
               onPressed: () {
@@ -1329,6 +1325,10 @@ class _MyDealsTab extends StatelessWidget {
                 "ASSIGN",
                 style: TextStyle(color: Colors.white),
               ),
+            ),
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text("CANCEL"),
             ),
           ],
         ),
