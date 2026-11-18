@@ -33,6 +33,35 @@ void main() {
     expect(confirmPos.dx, lessThan(cancelPos.dx));
   });
 
+  testWidgets('confirmActions: both buttons are exactly the same size and Cancel is a boxed button', (tester) async {
+    await tester.pumpWidget(
+      GetMaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () => Get.defaultDialog(
+                title: 'Accept buyer interest?',
+                middleText: 'This will move the negotiation to the next step.',
+                actions: confirmActions(confirmText: 'ACCEPT', onConfirm: () {}),
+              ),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    final confirm = tester.getSize(find.widgetWithText(FilledButton, 'ACCEPT'));
+    final cancel = tester.getSize(find.widgetWithText(OutlinedButton, 'CANCEL'));
+    expect(cancel, confirm);
+    expect(confirm.height, greaterThanOrEqualTo(44));
+    // Even gap between the two, not touching and not far apart.
+    final gap = tester.getTopLeft(find.widgetWithText(OutlinedButton, 'CANCEL')).dx -
+        tester.getTopRight(find.widgetWithText(FilledButton, 'ACCEPT')).dx;
+    expect(gap, inInclusiveRange(8, 14));
+  });
+
   test('no dialog in lib/ lists Cancel before its primary action', () {
     final offenders = <String>[];
     final listStart = RegExp(

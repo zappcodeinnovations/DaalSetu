@@ -140,9 +140,11 @@ class AppTheme {
           foregroundColor: Colors.white,
           elevation: 4,
           shadowColor: secondaryOrange.withValues(alpha: 0.3),
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16),
+          // Primary and secondary buttons share one size, so a pair (Accept / Cancel) is level.
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          minimumSize: const Size(112, 46),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
         ),
       ),
 
@@ -154,11 +156,25 @@ class AppTheme {
       ),
 
       // Secondary / Cancel actions: outlined in the brand orange, brand orange border.
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: secondaryOrange,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          minimumSize: const Size(112, 46),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
+        ),
+      ),
+
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: secondaryOrange,
           side: const BorderSide(color: secondaryOrange, width: 1.2),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          minimumSize: const Size(112, 46),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
         ),
       ),
 
@@ -194,6 +210,8 @@ class AppTheme {
       ),
 
       dialogTheme: DialogThemeData(
+        // Even room around the Accept / Cancel pair.
+        actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
         backgroundColor: cardColor,
         surfaceTintColor: Colors.transparent,
         elevation: 8,
@@ -326,9 +344,11 @@ class AppTheme {
           foregroundColor: Colors.white,
           elevation: 4,
           shadowColor: secondaryOrange.withValues(alpha: 0.35),
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16),
+          // Primary and secondary buttons share one size, so a pair (Accept / Cancel) is level.
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          minimumSize: const Size(112, 46),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
         ),
       ),
 
@@ -340,11 +360,25 @@ class AppTheme {
       ),
 
       // Secondary / Cancel actions: outlined in the brand orange, brand orange border.
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: secondaryOrange,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          minimumSize: const Size(112, 46),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
+        ),
+      ),
+
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: secondaryOrange,
           side: const BorderSide(color: secondaryOrange, width: 1.2),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          minimumSize: const Size(112, 46),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
         ),
       ),
 
@@ -380,6 +414,8 @@ class AppTheme {
       ),
 
       dialogTheme: DialogThemeData(
+        // Even room around the Accept / Cancel pair.
+        actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
         backgroundColor: cardLight,
         surfaceTintColor: Colors.transparent,
         elevation: 6,

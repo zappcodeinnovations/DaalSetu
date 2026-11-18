@@ -15,24 +15,39 @@ List<Widget> confirmActions({
   final onPrimary = ThemeData.estimateBrightnessForColor(primary) == Brightness.light
       ? Colors.black87
       : Colors.white;
+  // One row, both buttons exactly the same size (the width of the longer label), same height.
   return [
-    FilledButton(
-      onPressed: onConfirm,
-      style: FilledButton.styleFrom(
-        backgroundColor: primary,
-        foregroundColor: onPrimary,
-        minimumSize: const Size(0, 42),
-        padding: const EdgeInsets.symmetric(horizontal: 18),
+    IntrinsicWidth(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Expanded(
+            child: FilledButton(
+              onPressed: onConfirm,
+              style: FilledButton.styleFrom(
+                backgroundColor: primary,
+                foregroundColor: onPrimary,
+                minimumSize: const Size(96, 46),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text(confirmText, style: const TextStyle(fontWeight: FontWeight.w700)),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: OutlinedButton(
+              onPressed: onCancel ?? () => Get.back(),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(96, 46),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text(cancelText),
+            ),
+          ),
+        ],
       ),
-      child: Text(confirmText, style: const TextStyle(fontWeight: FontWeight.w700)),
-    ),
-    OutlinedButton(
-      onPressed: onCancel ?? () => Get.back(),
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size(0, 42),
-        padding: const EdgeInsets.symmetric(horizontal: 18),
-      ),
-      child: Text(cancelText),
     ),
   ];
 }

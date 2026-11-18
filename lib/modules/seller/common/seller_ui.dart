@@ -138,10 +138,10 @@ class SellerUi {
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
         elevation: 0,
-        minimumSize: const Size(0, 44),
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        minimumSize: const Size(96, 46),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
       onPressed: () => Get.back(result: true),
@@ -160,12 +160,13 @@ class SellerUi {
 
     final cancelButton = OutlinedButton(
       style: OutlinedButton.styleFrom(
-        foregroundColor: Get.theme.colorScheme.onSurface,
-        side: BorderSide(color: Get.theme.colorScheme.outline),
-        minimumSize: const Size(0, 44),
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        // Same box as the other button, in the brand colour.
+        foregroundColor: Get.theme.colorScheme.primary,
+        side: BorderSide(color: Get.theme.colorScheme.primary, width: 1.2),
+        minimumSize: const Size(96, 46),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
       onPressed: () => Get.back(result: false),
@@ -184,9 +185,19 @@ class SellerUi {
         content: Text(message),
         // Compact buttons so both always fit on one row (they only stack on very narrow dialogs).
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        actions: primaryFirst
-            ? [confirmButton, cancelButton]
-            : [cancelButton, confirmButton],
+        // Both buttons the same size, side by side, with even room between them.
+        actions: [
+          IntrinsicWidth(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Expanded(child: primaryFirst ? confirmButton : cancelButton),
+                const SizedBox(width: 10),
+                Expanded(child: primaryFirst ? cancelButton : confirmButton),
+              ],
+            ),
+          ),
+        ],
       ),
     );
     return result == true;
