@@ -140,8 +140,9 @@ class AdminDrawer extends StatelessWidget {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFFF59E0B), // Warm amber gold
-              Color(0xFFE37400), // Deep secondary orange
+              Color(0xFFE65100), // Deep rich saffron
+              Color(0xFFF57C00), // Vibrant amber orange
+              Color(0xFFFFA000), // Warm gold highlight
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -597,7 +598,7 @@ class AdminDrawer extends StatelessWidget {
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(
-                            Icons.local_offer_rounded,
+                            Icons.layers_rounded,
                             size: 19,
                             color: Color(0xFFEA580C),
                           ),

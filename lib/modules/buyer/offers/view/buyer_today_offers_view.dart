@@ -193,6 +193,7 @@ class BuyerTodayOffersView extends StatelessWidget {
           itemCount: offers.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
+            final isDark = theme.brightness == Brightness.dark;
             final offer = offers[index];
             final num? availNum = num.tryParse(
               (offer.availableQuantity ?? '').replaceAll(RegExp(r'[^\d.]'), ''),
@@ -432,100 +433,122 @@ class BuyerTodayOffersView extends StatelessWidget {
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () => _openDetails(offer),
-                            icon: const Icon(IconlyLight.show, size: 16),
-                            label: const Text(
+                            icon: Icon(
+                              IconlyLight.show,
+                              size: 15,
+                              color: theme.textTheme.bodyLarge?.color,
+                            ),
+                            label: Text(
                               "View Details",
                               maxLines: 1,
                               softWrap: false,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: theme.textTheme.bodyLarge?.color,
+                              ),
                             ),
                             style: OutlinedButton.styleFrom(
-                              minimumSize: const Size.fromHeight(48),
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              minimumSize: const Size.fromHeight(40),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              side: BorderSide(
+                                color: isDark
+                                    ? const Color(0xFF334155)
+                                    : const Color(0xFFFFE0B2),
+                                width: 1.2,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
                           ),
                         ),
                         // Expired / out of stock is already in the status badge: no second copy.
                         if (!offer.isExpired && !offer.isOutOfStock) ...[
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: offer.isExpired
-                                ? () {
-                                    AppSnackbar.showError(
-                                      message: "Deal has expired. You cannot show interest.",
-                                    );
-                                  }
-                                : (offer.isOutOfStock
-                                    ? () {
-                                        AppSnackbar.showWarning(
-                                          title: "Out of Stock",
-                                          message:
-                                              "This item is currently out of stock. You cannot submit an offer.",
-                                        );
-                                      }
-                                    : (!offer.isActive
-                                        ? () {
-                                            AppSnackbar.showWarning(
-                                              title: "Unavailable",
-                                              message:
-                                                  "This offer is no longer active.",
-                                            );
-                                          }
-                                        : (offer.canSubmitOffer
-                                            ? () => _showInterestDialog(
-                                                context,
-                                                controller,
-                                                offer.productId ?? offer.id ?? 0,
-                                                offer)
-                                            : null))),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: offer.canSubmitOffer
-                                  ? theme.colorScheme.primary
-                                  : Colors.grey.shade300,
-                              foregroundColor: offer.canSubmitOffer
-                                  ? Colors.white
-                                  : Colors.grey.shade600,
-                              disabledBackgroundColor: Colors.grey.shade200,
-                              disabledForegroundColor: Colors.grey.shade500,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                              minimumSize: const Size.fromHeight(48),
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: offer.isExpired
+                                  ? () {
+                                      AppSnackbar.showError(
+                                        message: "Deal has expired. You cannot show interest.",
+                                      );
+                                    }
+                                  : (offer.isOutOfStock
+                                      ? () {
+                                          AppSnackbar.showWarning(
+                                            title: "Out of Stock",
+                                            message:
+                                                "This item is currently out of stock. You cannot submit an offer.",
+                                          );
+                                        }
+                                      : (!offer.isActive
+                                          ? () {
+                                              AppSnackbar.showWarning(
+                                                title: "Unavailable",
+                                                message:
+                                                    "This offer is no longer active.",
+                                              );
+                                            }
+                                          : (offer.canSubmitOffer
+                                              ? () => _showInterestDialog(
+                                                  context,
+                                                  controller,
+                                                  offer.productId ?? offer.id ?? 0,
+                                                  offer)
+                                              : null))),
+                              icon: Icon(
+                                offer.isExpired
+                                    ? Icons.timer_off_outlined
+                                    : (offer.isOutOfStock
+                                        ? Icons.remove_shopping_cart_outlined
+                                        : (!offer.isActive
+                                            ? Icons.block
+                                            : IconlyLight.send)),
+                                size: 15,
+                                color: Colors.white,
+                              ),
+                              label: Obx(() {
+                                final pId = offer.productId ?? offer.id ?? 0;
+                                final isSubmitted =
+                                    controller.isOfferSubmitted(pId, offer: offer);
+                                return Text(
                                   offer.isExpired
-                                      ? Icons.timer_off_outlined
+                                      ? "Deal Expired"
                                       : (offer.isOutOfStock
-                                          ? Icons.remove_shopping_cart_outlined
+                                          ? "Out of Stock"
                                           : (!offer.isActive
-                                              ? Icons.block
-                                              : IconlyLight.send)),
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 8),
-                                Flexible(
-                                  child: Text(
-                                    offer.isExpired
-                                        ? "Deal Expired"
-                                        : (offer.isOutOfStock
-                                            ? "Out of Stock"
-                                            : (!offer.isActive
-                                                ? "Unavailable"
-                                                : "Submit Offer")),
-                                    maxLines: 1,
-                                    softWrap: false,
-                                    overflow: TextOverflow.fade,
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                              ? "Unavailable"
+                                              : (isSubmitted
+                                                  ? "Resubmit"
+                                                  : "Submit Offer"))),
+                                  maxLines: 1,
+                                  softWrap: false,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
                                   ),
+                                );
+                              }),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: offer.canSubmitOffer
+                                    ? const Color(0xFFE65100)
+                                    : Colors.grey.shade400,
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: Colors.grey.shade300,
+                                disabledForegroundColor: Colors.grey.shade500,
+                                elevation: 1,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                              ],
+                                minimumSize: const Size.fromHeight(40),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              ),
                             ),
                           ),
-                        ),
                         ],
                       ],
                     ),
@@ -610,6 +633,8 @@ class BuyerTodayOffersView extends StatelessWidget {
         child: StatefulBuilder(
           builder: (dialogContext, setDialogState) {
             final theme = Theme.of(dialogContext);
+            final isSubmitted =
+                controller.isOfferSubmitted(productId, offer: offer);
             return GlassCard(
               padding: const EdgeInsets.all(20),
               child: SingleChildScrollView(
@@ -618,7 +643,7 @@ class BuyerTodayOffersView extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Submit Offer",
+                      isSubmitted ? "Resubmit Offer" : "Submit Offer",
                       style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18),
                     ),
                     const SizedBox(height: 2),
@@ -774,13 +799,51 @@ class BuyerTodayOffersView extends StatelessWidget {
 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        TextButton(
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: theme.brightness == Brightness.dark
+                                ? const Color(0xFFCBD5E1)
+                                : const Color(0xFFE65100),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                            minimumSize: const Size(0, 44),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            side: BorderSide(
+                              color: theme.brightness == Brightness.dark
+                                  ? const Color(0xFF475569)
+                                  : const Color(0xFFFFB74D),
+                              width: 1.2,
+                            ),
+                          ),
                           onPressed: () => Get.back(),
-                          child: const Text("Cancel"),
+                          child: Text(
+                            "Cancel",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: theme.brightness == Brightness.dark
+                                  ? const Color(0xFFCBD5E1)
+                                  : const Color(0xFFE65100),
+                            ),
+                          ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFF7A00),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 12),
+                            minimumSize: const Size(0, 44),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            elevation: 2,
+                          ),
                           onPressed: () async {
                             if (qtyCtrl.text.trim().isEmpty || priceCtrl.text.trim().isEmpty) {
                               AppSnackbar.showWarning(title: "Required Fields", message: "Please enter both quantity and price");
@@ -802,7 +865,14 @@ class BuyerTodayOffersView extends StatelessWidget {
                               interestId: offer.interestId,
                             );
                           },
-                          child: const Text("Submit Offer"),
+                          child: Text(
+                            isSubmitted ? "Resubmit" : "Submit Offer",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ],
                     ),

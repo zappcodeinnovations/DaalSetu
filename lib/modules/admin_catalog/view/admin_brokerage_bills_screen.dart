@@ -13,6 +13,7 @@ import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:intl/intl.dart';
 
 const _billingEndpoint = '/api/admin/brokerage-bills/';
 
@@ -86,6 +87,23 @@ String _money(Object? value) {
   return text.isEmpty ? '—' : '₹$text';
 }
 
+String _formatDate(dynamic dateStr) {
+  if (dateStr == null) return '—';
+  final str = dateStr.toString().trim();
+  if (str.isEmpty || str == '—') return '—';
+  try {
+    final parsed = DateTime.tryParse(str);
+    if (parsed != null) {
+      return DateFormat('dd/MM/yyyy').format(parsed);
+    }
+  } catch (_) {}
+  final match = RegExp(r'^(\d{4})-(\d{2})-(\d{2})').firstMatch(str);
+  if (match != null) {
+    return '${match.group(3)}/${match.group(2)}/${match.group(1)}';
+  }
+  return str;
+}
+
 class AdminBrokerageBillsScreen extends StatefulWidget {
   const AdminBrokerageBillsScreen({super.key});
 
@@ -102,6 +120,7 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
   String _seller = '';
   String _buyer = '';
   String _billingCompany = '';
+  String _assignedSubAdmin = '';
   DateTime? _billDateFrom;
   DateTime? _billDateTo;
   int _page = 1;
@@ -112,6 +131,7 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
   List<Map<String, dynamic>> _sellers = const [];
   List<Map<String, dynamic>> _buyers = const [];
   List<Map<String, dynamic>> _companies = const [];
+  List<Map<String, dynamic>> _subAdmins = const [];
 
   @override
   void initState() {
@@ -133,6 +153,7 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
         _seller = '';
         _buyer = '';
         _billingCompany = '';
+        _assignedSubAdmin = '';
         _billDateFrom = null;
         _billDateTo = null;
       });
@@ -151,10 +172,26 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
         _statuses = _billingMaps(data['statuses']);
         _sellers = _billingMaps(data['sellers']);
         _buyers = _billingMaps(data['buyers']);
-        _companies = _billingMaps(data['billing_companies'] ?? data['companies']);
+        _companies = _billingMaps(data['billing_companies']);
+        _subAdmins = _billingMaps(data['sub_admins']);
       }
     } catch (_) {
       // The bill list remains usable when optional filter choices cannot load.
+    }
+
+    if (_subAdmins.isEmpty) {
+      try {
+        final subResponse = await ApiClient.get(
+          endpoint: '/api/admin/salesmen/',
+          requireAuth: true,
+        );
+        if (subResponse is Map) {
+          final subList = subResponse['results'] ?? subResponse['data'];
+          if (subList is List && subList.isNotEmpty) {
+            _subAdmins = _billingMaps(subList);
+          }
+        }
+      } catch (_) {}
     }
 
     if (_companies.isEmpty) {
@@ -194,6 +231,7 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
       if (_seller.isNotEmpty) 'seller': _seller,
       if (_buyer.isNotEmpty) 'buyer': _buyer,
       if (_billingCompany.isNotEmpty) 'billing_company': _billingCompany,
+      if (_assignedSubAdmin.isNotEmpty) 'assigned_sub_admin': _assignedSubAdmin,
       if (_billDateFrom != null) 'bill_date_from': _dateValue(_billDateFrom!),
       if (_billDateTo != null) 'bill_date_to': _dateValue(_billDateTo!),
     };
@@ -253,6 +291,7 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
       _seller = '';
       _buyer = '';
       _billingCompany = '';
+      _assignedSubAdmin = '';
       _billDateFrom = null;
       _billDateTo = null;
     });
@@ -400,6 +439,10 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
                 ),
                 const SizedBox(height: 10),
                 _filters(),
+                if (_activeFilterCount > 0) ...[
+                  const SizedBox(height: 8),
+                  _activeFilterChips(),
+                ],
                 const SizedBox(height: 18),
                 Text(
                   'Bills',
@@ -418,12 +461,224 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
   );
   }
 
+  int get _activeFilterCount {
+    int count = 0;
+    if (_status.isNotEmpty) count++;
+    if (_seller.isNotEmpty) count++;
+    if (_buyer.isNotEmpty) count++;
+    if (_billingCompany.isNotEmpty) count++;
+    if (_assignedSubAdmin.isNotEmpty) count++;
+    if (_billDateFrom != null) count++;
+    if (_billDateTo != null) count++;
+    return count;
+  }
+
+  String _subAdminName(String id) {
+    final found = _subAdmins.firstWhere(
+      (s) => _billingText(s['id'] ?? s['value']) == id,
+      orElse: () => const {},
+    );
+    final user = _billingUser(found);
+    return user.isNotEmpty
+        ? user
+        : (_billingText(found['name'] ?? found['label']).isNotEmpty
+            ? _billingText(found['name'] ?? found['label'])
+            : 'Sub Admin #$id');
+  }
+
+  String _sellerName(String id) {
+    final found = _sellers.firstWhere(
+      (s) => _billingText(s['id']) == id,
+      orElse: () => const {},
+    );
+    final user = _billingUser(found);
+    return user.isNotEmpty ? user : 'Seller #$id';
+  }
+
+  String _buyerName(String id) {
+    final found = _buyers.firstWhere(
+      (b) => _billingText(b['id']) == id,
+      orElse: () => const {},
+    );
+    final user = _billingUser(found);
+    return user.isNotEmpty ? user : 'Buyer #$id';
+  }
+
+  String _companyName(String id) {
+    final found = _companies.firstWhere(
+      (c) => _billingText(c['id'] ?? c['value']) == id,
+      orElse: () => const {},
+    );
+    final name = _billingText(
+        found['label'] ?? found['company_name'] ?? found['name'] ?? found['legal_name']);
+    return name.isNotEmpty ? name : 'Company #$id';
+  }
+
+  Widget _activeFilterChips() {
+    final chips = <Widget>[];
+
+    if (_status.isNotEmpty) {
+      chips.add(_filterChip(
+        label: 'Status: ${_status.toUpperCase()}',
+        onDeleted: () {
+          setState(() => _status = '');
+          _loadBills(reset: true);
+        },
+      ));
+    }
+    if (_seller.isNotEmpty) {
+      chips.add(_filterChip(
+        label: 'Seller: ${_sellerName(_seller)}',
+        onDeleted: () {
+          setState(() => _seller = '');
+          _loadBills(reset: true);
+        },
+      ));
+    }
+    if (_buyer.isNotEmpty) {
+      chips.add(_filterChip(
+        label: 'Buyer: ${_buyerName(_buyer)}',
+        onDeleted: () {
+          setState(() => _buyer = '');
+          _loadBills(reset: true);
+        },
+      ));
+    }
+    if (_billingCompany.isNotEmpty) {
+      chips.add(_filterChip(
+        label: 'Billing: ${_companyName(_billingCompany)}',
+        onDeleted: () {
+          setState(() => _billingCompany = '');
+          _loadBills(reset: true);
+        },
+      ));
+    }
+    if (_assignedSubAdmin.isNotEmpty) {
+      chips.add(_filterChip(
+        label: 'Sub Admin: ${_subAdminName(_assignedSubAdmin)}',
+        onDeleted: () {
+          setState(() => _assignedSubAdmin = '');
+          _loadBills(reset: true);
+        },
+      ));
+    }
+    if (_billDateFrom != null) {
+      chips.add(_filterChip(
+        label: 'From: ${_formatDate(_billDateFrom)}',
+        onDeleted: () {
+          setState(() => _billDateFrom = null);
+          _loadBills(reset: true);
+        },
+      ));
+    }
+    if (_billDateTo != null) {
+      chips.add(_filterChip(
+        label: 'To: ${_formatDate(_billDateTo)}',
+        onDeleted: () {
+          setState(() => _billDateTo = null);
+          _loadBills(reset: true);
+        },
+      ));
+    }
+
+    if (chips.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 6,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          ...chips,
+          InkWell(
+            onTap: _resetFilters,
+            borderRadius: BorderRadius.circular(12),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Text(
+                'Clear all',
+                style: TextStyle(
+                  color: Color(0xFFFF7A00),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _filterChip({required String label, required VoidCallback onDeleted}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFFF3E0),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFFF9800).withValues(alpha: 0.4),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFFE65100),
+            ),
+          ),
+          const SizedBox(width: 4),
+          InkWell(
+            onTap: onDeleted,
+            borderRadius: BorderRadius.circular(10),
+            child: Icon(
+              Icons.close_rounded,
+              size: 14,
+              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFFE65100),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _filters() => Card(
     child: ExpansionTile(
       leading: const Icon(Icons.tune_rounded),
-      title: const Text(
-        'Filters',
-        style: TextStyle(fontWeight: FontWeight.w700),
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Filters',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          if (_activeFilterCount > 0) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFF7A00),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '$_activeFilterCount',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
       childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       children: [
@@ -463,6 +718,20 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
           labelOf: (item) =>
               _billingText(item['label'] ?? item['company_name'] ?? item['name'] ?? item['legal_name']),
           onChanged: (value) => setState(() => _billingCompany = value),
+        ),
+        const SizedBox(height: 12),
+        _dropdown(
+          label: 'Assigned Sub Admin',
+          value: _assignedSubAdmin,
+          options: _subAdmins,
+          valueOf: (item) => _billingText(item['id'] ?? item['value']),
+          labelOf: (item) {
+            final user = _billingUser(item);
+            return user.isNotEmpty
+                ? user
+                : _billingText(item['name'] ?? item['label'] ?? item['username']);
+          },
+          onChanged: (value) => setState(() => _assignedSubAdmin = value),
         ),
         const SizedBox(height: 8),
         LayoutBuilder(
@@ -722,7 +991,7 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
               ),
               _billLine(
                 Icons.calendar_today_outlined,
-                'Bill date: ${_billingText(bill['bill_date'])}',
+                'Bill date: ${_formatDate(bill['bill_date'])}',
               ),
               const Divider(height: 20),
               Row(
@@ -1606,11 +1875,28 @@ class _AdminBrokerageBillDetailScreenState
             child: const Text('Back'),
           ),
           FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFFF7A00),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              alignment: Alignment.center,
+            ),
             onPressed: () {
               if (needsReason && reason.text.trim().isEmpty) return;
               Navigator.pop(dialogContext, true);
             },
-            child: Text(confirmLabel),
+            child: Text(
+              confirmLabel,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+                height: 1.0,
+              ),
+            ),
           ),
         ],
       ),
@@ -2348,6 +2634,19 @@ class _AdminBrokerageBillDetailScreenState
     );
   }
 
+  String _formatAuditTimestamp(dynamic dateStr) {
+    if (dateStr == null) return '—';
+    final str = dateStr.toString().trim();
+    if (str.isEmpty || str == '—') return '—';
+    try {
+      final parsed = DateTime.tryParse(str);
+      if (parsed != null) {
+        return DateFormat('dd MMM yyyy, hh:mm a').format(parsed.toLocal());
+      }
+    } catch (_) {}
+    return str;
+  }
+
   Widget _content(Map<String, dynamic> bill) => RefreshIndicator(
     onRefresh: _load,
     child: ListView(
@@ -2357,6 +2656,7 @@ class _AdminBrokerageBillDetailScreenState
         _summary(bill),
         const SizedBox(height: 12),
         _actions(bill),
+        _auditTrailCard(bill),
         const SizedBox(height: 18),
         Text(
           'Bill Lines',
@@ -2404,10 +2704,10 @@ class _AdminBrokerageBillDetailScreenState
               'Assigned sub admin',
               _billingUser(bill['assigned_sub_admin']),
             ),
-            _summaryRow('Bill date', _billingText(bill['bill_date'])),
+            _summaryRow('Bill date', _formatDate(bill['bill_date'])),
             _summaryRow(
               'Period',
-              '${_billingText(bill['period_from'])} — ${_billingText(bill['period_to'])}',
+              '${_formatDate(bill['period_from'])} — ${_formatDate(bill['period_to'])}',
             ),
             _summaryRow(
               'Commission',
@@ -2523,6 +2823,109 @@ class _AdminBrokerageBillDetailScreenState
       ),
     ),
   );
+
+  Widget _auditTrailCard(Map<String, dynamic> bill) {
+    final createdAt = bill['created_at']?.toString();
+    final issuedAt = bill['issued_at']?.toString();
+    final defaultAuthor = _billingText(bill['billing_company_name']).isNotEmpty
+        ? _billingText(bill['billing_company_name'])
+        : _billingUser(bill['assigned_sub_admin']);
+    final createdBy = _billingUser(bill['created_by']).isNotEmpty
+        ? _billingUser(bill['created_by'])
+        : defaultAuthor;
+    final issuedBy = _billingUser(bill['issued_by']).isNotEmpty
+        ? _billingUser(bill['issued_by'])
+        : defaultAuthor;
+
+    final auditList =
+        bill['audit_trail'] is List ? (bill['audit_trail'] as List) : null;
+
+    if (createdAt == null &&
+        issuedAt == null &&
+        (auditList == null || auditList.isEmpty)) {
+      return const SizedBox.shrink();
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Audit Trail',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            const Divider(height: 20),
+            if (auditList != null && auditList.isNotEmpty) ...[
+              for (final entry in auditList)
+                if (entry is Map)
+                  _auditEntry(
+                    title: _billingText(
+                        entry['action'] ?? entry['title'] ?? 'Action'),
+                    timestamp: _formatAuditTimestamp(
+                        entry['timestamp'] ?? entry['created_at']),
+                    author:
+                        _billingText(entry['by'] ?? entry['user'] ?? defaultAuthor),
+                  ),
+            ] else ...[
+              if (createdAt != null && createdAt.isNotEmpty)
+                _auditEntry(
+                  title: 'Created',
+                  timestamp: _formatAuditTimestamp(createdAt),
+                  author: createdBy,
+                ),
+              if (issuedAt != null && issuedAt.isNotEmpty)
+                _auditEntry(
+                  title: 'Issued',
+                  timestamp: _formatAuditTimestamp(issuedAt),
+                  author: issuedBy,
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _auditEntry({
+    required String title,
+    required String timestamp,
+    required String author,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            timestamp,
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).textTheme.bodySmall?.color,
+            ),
+          ),
+          if (author.isNotEmpty) ...[
+            const SizedBox(height: 1),
+            Text(
+              'by $author',
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.8),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 
   Widget _lineCard(Map<String, dynamic> line) => Card(
     margin: const EdgeInsets.only(bottom: 10),

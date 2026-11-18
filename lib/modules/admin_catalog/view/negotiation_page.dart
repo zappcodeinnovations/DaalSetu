@@ -442,11 +442,24 @@ class _NegotiationPageState extends State<NegotiationPage> {
     );
   }
 
-  String _formatPrice(String? raw) {
+  String get _currentPriceUnit {
+    final raw = _thread?['price_unit']?.toString().toUpperCase();
+    if (raw != null && raw.isNotEmpty) return raw;
+    final offerAmt = widget.sellerOfferAmount ?? '';
+    if (offerAmt.contains('/')) {
+      return offerAmt.split('/').last.trim();
+    }
+    return 'QTL';
+  }
+
+  String _formatPrice(String? raw, {String? unit}) {
     if (raw == null || raw.trim().isEmpty || raw == '-') return '-';
     var clean = raw.trim();
     if (!clean.startsWith('₹')) clean = '₹$clean';
-    if (!clean.contains('/')) clean = '$clean/TON';
+    if (!clean.contains('/')) {
+      final u = unit ?? _currentPriceUnit;
+      clean = '$clean/$u';
+    }
     return clean;
   }
 
@@ -1326,7 +1339,7 @@ class _NegotiationPageState extends State<NegotiationPage> {
       );
     }
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final priceUnit = _thread?['price_unit']?.toString().toUpperCase() ?? 'QTL';
+    final priceUnit = _currentPriceUnit;
     return Container(
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,

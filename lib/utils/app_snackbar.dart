@@ -145,6 +145,56 @@ class AppSnackbar {
     final text = _clean(message);
 
     void show() {
+      if (Get.isDialogOpen == true || Get.isBottomSheetOpen == true) {
+        if (Get.isSnackbarOpen == true) {
+          Get.closeCurrentSnackbar();
+        }
+        Get.rawSnackbar(
+          messageText: Row(
+            children: [
+              Icon(
+                isError
+                    ? Icons.error_outline_rounded
+                    : Icons.check_circle_outline_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  text,
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 13.5,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor:
+              isError ? AppTheme.errorRed : AppTheme.successGreen,
+          snackPosition: SnackPosition.TOP,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          borderRadius: 14,
+          duration: duration,
+          mainButton: actionLabel == null
+              ? null
+              : TextButton(
+                  onPressed: () {
+                    Get.closeCurrentSnackbar();
+                    onAction?.call();
+                  },
+                  child: Text(
+                    actionLabel,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+        );
+        return;
+      }
+
       final context = Get.key.currentContext;
       if (context == null || !context.mounted) return;
       final messenger = ScaffoldMessenger.maybeOf(context);

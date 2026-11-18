@@ -58,7 +58,13 @@ class KycUserModel {
     final mobile = (json['mobile'] ?? userObj?['mobile'] ?? '').toString().trim();
     final email = (json['email'] ?? userObj?['email'] ?? '').toString().trim();
     final role = (json['role'] ?? userObj?['role'] ?? '').toString().trim();
-    final dateJoined = (json['date_joined'] ?? json['created_at'] ?? userObj?['date_joined'])?.toString();
+    final dateJoined = (json['date_joined'] ??
+            json['created_at'] ??
+            userObj?['date_joined'] ??
+            userObj?['created_at'] ??
+            json['kyc_submitted_at'] ??
+            json['submitted_at'])
+        ?.toString();
 
     return KycUserModel(
       id: json['id'] is int ? json['id'] : int.tryParse('${json['id'] ?? ''}') ?? 0,

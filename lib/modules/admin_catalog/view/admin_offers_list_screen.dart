@@ -600,7 +600,7 @@ class _ManageStockRowState extends State<_ManageStockRow> {
   @override
   void initState() {
     super.initState();
-    _isExpanded = true; 
+    _isExpanded = false; 
     if (widget.initialPackingKg > 0) {
       final val = widget.initialPackingKg;
       _packingKgCtrl.text = val == val.toInt() ? val.toInt().toString() : val.toString();

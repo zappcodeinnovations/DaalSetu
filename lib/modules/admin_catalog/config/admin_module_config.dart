@@ -320,6 +320,10 @@ class AdminModules {
           createOnly: true,
         ),
         AdminFieldConfig(
+          'branch_ref_code',
+          'Branch Ref Code',
+        ),
+        AdminFieldConfig(
           'company_id',
           'Company',
           required: true,

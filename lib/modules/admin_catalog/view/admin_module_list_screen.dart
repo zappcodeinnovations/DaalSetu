@@ -15,6 +15,7 @@ import 'package:get/get.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/utils/app_preferences.dart';
 
 class AdminModuleListScreen extends StatefulWidget {
   const AdminModuleListScreen({
@@ -42,10 +43,13 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
   List<Map<String, dynamic>> _buyers = [];
   bool _isLoadingBuyers = false;
   String _buyerSearch = '';
+  String _userRole = '';
+  bool get _isSuperAdmin => _userRole == 'super_admin';
 
   @override
   void initState() {
     super.initState();
+    _loadUserRole();
     _searchController = TextEditingController();
     config = AdminModules.byKey(widget.moduleKey);
     controller = Get.put(
@@ -57,6 +61,15 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
     if (widget.moduleKey == 'category_requests') {
       _fetchBuyers();
     }
+  }
+
+  Future<void> _loadUserRole() async {
+    try {
+      final role = await AppPreferences.getRole();
+      if (mounted) {
+        setState(() => _userRole = (role ?? '').trim().toLowerCase());
+      }
+    } catch (_) {}
   }
 
   Future<void> _fetchBuyers() async {
@@ -1000,7 +1013,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
                         visualDensity: VisualDensity.compact,
                       ),
                     ),
-                  if (config.canDelete)
+                  if (config.canDelete && (widget.moduleKey != 'salesman' || _isSuperAdmin))
                     OutlinedButton.icon(
                       onPressed: () => _delete(record),
                       style: OutlinedButton.styleFrom(
@@ -1049,6 +1062,10 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
   );
 
   Future<void> _delete(AdminRecord record) async {
+    if (widget.moduleKey == 'salesman' && !_isSuperAdmin) {
+      AppSnackbar.showError(message: 'Only Super Admin can delete sub admins.');
+      return;
+    }
     if (await showAdminDeleteDialog(context)) {
       await controller.delete(record);
     }

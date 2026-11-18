@@ -837,8 +837,19 @@ class _BuyerRequestManagementViewState
       }
     }
 
-    return GlassCard(
-      padding: const EdgeInsets.all(14),
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: numericId == null
+          ? null
+          : () => Get.to(
+              () => BuyerOfferDetailsView(
+                offerId: numericId,
+                preferBuyerOffer: !_isRequirement,
+                preferBuyerRequirement: _isRequirement,
+              ),
+            ),
+      child: GlassCard(
+        padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -969,7 +980,8 @@ class _BuyerRequestManagementViewState
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 
   Widget _statusBadge(String status, ThemeData theme) {

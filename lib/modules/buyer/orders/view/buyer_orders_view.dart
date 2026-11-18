@@ -146,8 +146,11 @@ class _BuyerOrdersViewState extends State<BuyerOrdersView> {
                         statusColor = Colors.green;
                       }
 
-                      return GlassCard(
-                        padding: const EdgeInsets.all(16),
+                      return InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () => _showOrderDetails(context, order, statusColor),
+                        child: GlassCard(
+                          padding: const EdgeInsets.all(16),
                         child: Row(
                           children: [
                             CircleAvatar(
@@ -238,10 +241,143 @@ class _BuyerOrdersViewState extends State<BuyerOrdersView> {
                             ),
                           ],
                         ),
-                      );
+                      ),
+                    );
                     },
                   ),
       ),
+    );
+  }
+
+  void _showOrderDetails(BuildContext context, Map<String, dynamic> order, Color statusColor) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = theme.colorScheme.primary;
+    final status = order['transport_status']?.toString() ?? 'Pending';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF162032) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          border: Border.all(
+            color: isDark ? const Color(0xFF2C394F) : const Color(0xFFE2E8F0),
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade400,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      order['commodity']?.toString() ?? "Order Details",
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: theme.textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      status,
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: statusColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                order['seller_name']?.toString() ??
+                    order['brand']?.toString() ??
+                    order['contract_number']?.toString() ??
+                    'Confirmed Deal',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700,
+                ),
+              ),
+              const Divider(height: 28),
+              _detailRow(Icons.inventory_2_outlined, "Quantity", order['quantity']?.toString() ?? "-", isDark),
+              const SizedBox(height: 12),
+              _detailRow(Icons.currency_rupee_rounded, "Price", "₹${order['value'] ?? '0'} per Qtl", isDark),
+              const SizedBox(height: 12),
+              _detailRow(Icons.calendar_today_outlined, "Order Date", order['created_at']?.toString() ?? "Today", isDark),
+              if (order['id'] != null && order['id'].toString().isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _detailRow(Icons.tag_rounded, "Order ID", order['id'].toString(), isDark),
+              ],
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: Text(
+                    "Close",
+                    style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _detailRow(IconData icon, String label, String value, bool isDark) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: Colors.grey),
+        const SizedBox(width: 10),
+        Text(
+          label,
+          style: GoogleFonts.inter(fontSize: 13, color: Colors.grey),
+        ),
+        const Spacer(),
+        Text(
+          value,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: isDark ? Colors.white : Colors.black87,
+          ),
+        ),
+      ],
     );
   }
 }

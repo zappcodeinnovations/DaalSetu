@@ -591,6 +591,7 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
   }
 
   Widget _buildNarration(BuildContext context, String narration) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GlassCard(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -606,7 +607,12 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             narration,
-            style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[700]),
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              height: 1.5,
+              fontWeight: FontWeight.w500,
+              color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+            ),
           ),
         ],
       ),

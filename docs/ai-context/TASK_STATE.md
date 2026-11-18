@@ -1,9 +1,108 @@
 # Current Task State
 
 ## Current Task
-- **Goal**: Merge `origin/rohit` (Bug 55 login crash fix, Bug 56 layout polish, combined Buyer-Seller panel switching) into `rohit_app_UI` and execute modern UI redesign of `ChoosePanelScreen` (`lib/modules/Auth/choose_panel/view/choose_panel_screen.dart`) supporting both Bright and Dark modes.
-- **Status**: 
-  - Merge `origin/rohit` into `rohit_app_UI`: **100% COMPLETE & COMMITTED (`d89a8b8`)**
+- **Goal**: Implement safe whole-card tap navigation across Buyer panel cards (`BuyerMyInterestsView`, `BuyerRequestManagementView`, `BuyerDashboardView`, `BuyerOrdersView`) without breaking any existing inner action buttons or modifying unrelated features.
+- **Status**:
+  - **Batch 12 Brokerage Billing Companies Filter, Validation Toast Visibility, Dialog Navigation, & Activity View Border**: **100% Implemented & Verified (Uncommitted)**
+    1. **Bug 1 (Brokerage Bills - Billing Company Filter Inconsistency)**:
+       - In `lib/modules/admin_catalog/view/admin_brokerage_bills_screen.dart`, removed `?? data['companies']` fallback and used exclusively `_companies = _billingMaps(data['billing_companies']);`.
+       - Non-billing company (`abc company`) is completely excluded from the Billing Company dropdown, matching the web portal parity (`daalsetu.zappcode.in/accounting/brokerage-bills/`).
+    2. **Bug 2 (Submit Offer Modal & Validation Banners Behind Dialog Container)**:
+       - In `lib/utils/app_snackbar.dart`, added check `if (Get.isDialogOpen == true || Get.isBottomSheetOpen == true)` to show notifications via `Get.rawSnackbar(snackPosition: SnackPosition.TOP, ...)`.
+       - When validation fails inside any dialog (such as "Please select a preferred delivery date"), the warning toast displays directly on the top overlay above dialog containers and buttons instead of being obscured behind the modal barrier.
+    3. **Bug 3 (Admin Manage Offer Modal - Negotiation Button Navigation)**:
+       - In `lib/modules/admin_catalog/view/offer_interests_dialog.dart`, replaced `Get.to` with `Navigator.of(context).push(MaterialPageRoute(builder: (_) => ...))` in `_openNegotiationPage`.
+       - Eliminates GetX route deduplication suppression inside `showDialog` modal routes. Tapping Negotiation repeatedly after counter-proposals reliably pushes `NegotiationPage` every time without flashing and prematurely reloading the modal.
+    4. **Bug 4 (Buyer My Activity Screen - "View" Action Button Outline Border)**:
+       - In `lib/modules/buyer/offers/view/buyer_my_interests_view.dart`, upgraded the `View` button `side` border from faint colors to `isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)` with `width: 1.2`.
+       - The `View` button now has a clean, crisp, visible outline border matching adjacent `Edit` and `Cancel` buttons.
+    5. **Bug 5 (Negotiation Page Current Offer Unit Hardcoded TON -> Dynamic QTL)**:
+       - In `lib/modules/admin_catalog/view/negotiation_page.dart`, replaced hardcoded `'$clean/TON'` in `_formatPrice` with dynamic `_currentPriceUnit` (`_thread?['price_unit'] ?? 'QTL'`). Current offer price now cleanly displays `₹25.00/QTL` instead of erroneous `₹25.00/TON`.
+    6. **Bug 6 (Profile Photo Cropper Blank Image Display & Decoding Failure)**:
+       - In `lib/widgets/profile_photo_cropper.dart`, added `progressIndicator: const Center(child: CircularProgressIndicator(color: Color(0xFFFF7A00)))`, theme-aware `baseColor`, and non-empty byte validation so that image loading is clearly indicated and empty states don't cause blank screens.
+       - In `lib/modules/profile/view/edit_profile_page.dart`, enforced `maxWidth: 1200` and `maxHeight: 1200` on `_picker.pickImage` and validated downloaded image bytes (`bytes.length >= 50`), ensuring fast and reliable isolate decoding without memory stalls.
+  - **Batch 11 Brokerage Sub Admin Filter, Nav Bar Dynamic Insets, Date Input dd/mm/yyyy & Button Symmetry**: **100% Implemented & Verified (Uncommitted)**
+    1. **Bug 1 (Brokerage Bills Filters Assigned Sub Admin Dropdown)**:
+       - Added `_assignedSubAdmin` state variable, `_subAdmins` list, and options loader fetching from options or `/api/admin/salesmen/`.
+       - Rendered `Assigned Sub Admin` dropdown in `_filters()` accordion, wired query parameter `'assigned_sub_admin'` to `_loadBills()`, and included sub-admin in active filter counter and removable chips (`_activeFilterChips`). Matches web portal parity (`daalsetu.zappcode.in/accounting/brokerage-bills/`).
+    2. **Bug 2 (Bottom Navigation Bar Dynamic Viewport Adjustment & Containment)**:
+       - In `lib/modules/nav_bar/view/nav_page.dart`, set `resizeToAvoidBottomInset: false` on `MainNavigationScreen` for all roles (including seller and buyer), preventing the root scaffold from shoving the floating navbar into the middle of the screen when the keyboard triggers.
+    3. **Bug 3 (Delivery Period Date Selection Input Placeholder dd/mm/yyyy)**:
+       - In `lib/widgets/delivery_period_picker.dart`, passed `locale: const Locale('en', 'GB')` to `showDatePicker()`. When switching to keyboard entry mode, placeholder displays standard `dd/mm/yyyy` and accepts Indian/UK date format without "Invalid format" errors.
+    4. **Bug 4 (Buyer Submit Offer & Cancel Symmetrical Button Styling)**:
+       - In `lib/modules/buyer/offers/view/buyer_offers_view.dart` and `buyer_today_offers_view.dart`, upgraded secondary "Cancel" button from bare text to a styled `OutlinedButton` with identical height (`Size(0, 44)`), border radius (`14px`), and vertical padding (`12px`), cleanly aligned with the primary "Submit Offer" / "Resubmit" `ElevatedButton`.
+  - **Batch 10 Brokerage Bills List Date, Active Filter Chips, Cancel Bill Alignment & Buyer Cancel Button Fixes**: **100% Implemented & Verified (Uncommitted)**
+    1. **Bug 1 (Brokerage Bills List "Bill date" Format)**:
+       - In `lib/modules/admin_catalog/view/admin_brokerage_bills_screen.dart`, formatted `bill_date` on bill listing cards using top-level `_formatDate(bill['bill_date'])` to render clean `dd/MM/yyyy` format (`05/11/2026`) instead of raw ISO `2026-11-05`.
+    2. **Bug 2 (Brokerage Bills Filter Accordion Badge Counter & Active Filter Chips)**:
+       - In `lib/modules/admin_catalog/view/admin_brokerage_bills_screen.dart`, added `_activeFilterCount` getter and displayed an active counter badge pill `Filters (N)` on the accordion header.
+       - Implemented `_activeFilterChips()` displaying removable chips for each active criterion (Status, Seller, Buyer, Billing Company, Date From, Date To) with single-tap removal and `Clear all` action.
+    3. **Bug 3 ("Cancel issued bill" Button Text Alignment)**:
+       - In `lib/modules/admin_catalog/view/admin_brokerage_bills_screen.dart`, styled the `FilledButton` in `_confirm()` dialog with explicit `padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12)`, `alignment: Alignment.center`, and text `height: 1.0` with `textAlign: TextAlign.center`, eliminating vertical text misalignment.
+    4. **Bug 4 (Buyer My Interests Remove Cancel Button when Status is INTERESTED)**:
+       - In `lib/modules/buyer/offers/model/buyer_offer_model.dart`, defaulted `canCancelInterest` fallback to `false`.
+       - In `lib/modules/buyer/offers/view/buyer_my_interests_view.dart`, added `isInterestedStatus` check and guarded Cancel button with `if (offer.canCancelInterest && !isInterestedStatus)`. When status badge reads "INTERESTED", the Cancel button is cleanly removed while keeping View, Edit, and Negotiation buttons intact.
+  - **Batch 9 Admin KYC, Dashboard Activity & Brokerage Audit Trail Fixes**: **100% Implemented & Verified (Uncommitted)**
+    1. **Bug 1 (KYC Users Details Modal Empty Fields & Date Joined)**:
+       - In `lib/modules/kyc_users/model/kyc_user_model.dart`, expanded `dateJoined` fallback to read `userObj?['date_joined']`, `userObj?['created_at']`, and `json['kyc_submitted_at'] ?? json['submitted_at']`.
+       - In `lib/modules/kyc_users/view/kyc_user_view.dart`, updated `formatTimestamp` and string display helpers to render clean dash (`-`) instead of `"N/A"` for null/empty values (matching web admin portal `/kyc/`). Passed `user.dateJoined ?? user.kycSubmittedAt` so the exact registration date (`2026-11-05 12:29:14`) is properly displayed.
+    2. **Bug 2 (Dashboard Recent Activities Redirections & Ellipses Removal)**:
+       - In `lib/modules/dashboard/view/dashboard_page.dart`, removed `trailingText: "View All"` and its navigation to `AdminNotificationView`, preventing unwanted redirection.
+       - Sanitized activity description strings with `.replaceAll(RegExp(r'\.{2,}\s*•'), ' •')` to strip artificial trailing ellipses from commodity names (`arhar daal`, `mix daal`, `pkrj`, `pukhraj`, `masoor dal`). Increased font size to `11.5px` and ensured cards do not trigger unwanted redirections.
+    3. **Bug 3 (Brokerage Bill Detail Audit Trail & Date Formatting)**:
+       - In `lib/modules/admin_catalog/view/admin_brokerage_bills_screen.dart`, added `_formatDate` to format `bill_date` and `period_from — period_to` in clean `dd/MM/yyyy` format (`05/11/2026`, `06/11/2026 — 07/11/2026`) instead of raw ISO `YYYY-MM-DD`.
+       - Implemented `_auditTrailCard(bill)` with `_auditEntry` displaying creation and issuance history (`Created 05 Nov 2026, 06:11 PM by FARMLAND`, `Issued 05 Nov 2026, 06:12 PM by FARMLAND`), matching web admin portal `/accounting/brokerage-bills/22/`.
+  - **Batch 8 Buyer & Admin UX/Functional Bug Fixes (Submit Offer vs Resubmit, GTV MTD Navigation, Manage Stock Default State, Narration Contrast)**: **100% Implemented & Verified (Uncommitted)**
+    1. **Bug 1 (Buyer Panel Offers "Submit Offer" vs "Resubmit" Button Labeling)**:
+       - In `lib/modules/buyer/offers/model/buyer_offer_model.dart`, added `hasSubmittedOffer` detection from `has_submitted_offer`, `has_interest`, `my_interest`, and `parsedInterestId`.
+       - In `lib/modules/buyer/offers/controller/buyer_offers_controller.dart`, added `RxSet<int> submittedProductIds` and `isOfferSubmitted(productId, offer: offer)`. Updated `fetchOffers` and `submitInterest` to track submitted products.
+       - In `lib/modules/buyer/offers/view/buyer_offers_view.dart` and `buyer_today_offers_view.dart`, replaced hardcoded "Submit Offer" with dynamic `isSubmitted ? "Resubmit" : "Submit Offer"` on both cards and dialog headers/buttons to match web platform behavior.
+    2. **Bug 2 (Admin Dashboard Gross Trade Value (MTD) Navigation to Contracts)**:
+       - In `lib/modules/dashboard/view/dashboard_page.dart` (line 408), changed Gross Trade Value (MTD) KPI card `onTap` from `AppRoutes.adminBranchReports` to `Get.to(() => const ContractsScreen())`, matching the web portal (`/contracts/`). Also aligned `admin_overview_kpis_view.dart`.
+    3. **Bug 3 (Admin Offers "Manage Stock" Collapsed by Default)**:
+       - In `lib/modules/admin_catalog/view/admin_offers_list_screen.dart`, initialized `_isExpanded = false;` in `initState()` so the Manage Stock section loads cleanly collapsed by default, eliminating visual clutter.
+    4. **Bug 4 (Buyer Challan Details "Narration / Details" Text Contrast)**:
+       - In `lib/modules/buyer/delivery_challan/view/buyer_delivery_challan_detail_view.dart`, replaced faint `Colors.grey[700]` with high-contrast theme-aware color (`isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155)`), `height: 1.5`, and `FontWeight.w500` for clear readability on dark backgrounds.
+  - **Batch 7 Admin Security & UI Bug Fixes (Sub Admin Delete Restriction, Contract Unique IDs, Delivery Period Layout, Header Avatar)**: **100% Implemented & Verified (Uncommitted)**
+    1. **Bug 1 (Sub Admins Delete Button Restricted to Super Admin)**:
+       - In `lib/modules/admin_catalog/view/admin_module_list_screen.dart`, loaded user role from `AppPreferences.getRole()` and restricted sub-admin card delete button to `_isSuperAdmin`. Regular Admin no longer sees or accesses the red Delete button.
+    2. **Bug 2 (Contract Details Buyer & Seller Entity IDs and Company/Name Alignment)**:
+       - In `lib/modules/contracts/view/contract_details_view.dart`, updated `_partySection` to show party name as main title, entity unique IDs (`ID: 166 | BUY8855C2A68` / `ID: 165 | SEL1433F6F61F`) without restrictive checks, and cleanly labeled company rows (`Company: Test company` / `Company: Agrotech`), exactly matching the web admin portal.
+    3. **Bug 3 (Negotiation Delivery Period Single Horizontal Row Layout)**:
+       - Refactored `DeliveryPeriodPicker` in `lib/widgets/delivery_period_picker.dart` from vertical `Column` stacking to compact single horizontal `Row` (`From: dd-mm-yyyy [calendar]` and `To: dd-mm-yyyy [calendar]`), reducing box height and keeping alignment clean.
+    4. **Bug 4 (Admin Dashboard Header & Greeting Avatar Photo Binding)**:
+       - In `lib/modules/dashboard/view/dashboard_page.dart`, bound top-right AppBar avatar and greeting card avatar to `profileController.profileImageUrl(profile?.profileImage)`. Uploaded profile photos now display dynamically with fallback to icons.
+  - **Batch 6 Admin & UI Bug Fixes (Roles, Photo Cropper, Contract Total Price)**: **100% Implemented & Verified (Uncommitted)**
+    1. **Bug 1 (Roles Screen Edit & Delete Action Buttons)**:
+       - Upgraded `_roleCard` in `lib/modules/admin_catalog/view/admin_roles_screen.dart` to include dedicated `[Edit]` and `[Delete]` buttons matching the web admin portal (`/rbac/roles/`).
+       - Wired direct role editing via `_openEditor(role)` and deletion with a confirmation dialog triggering `ApiClient.delete('/api/admin/roles/$id/')` with automatic reload. System roles safely hide the delete action.
+    2. **Bug 2 (Photo Cropper Button Text Cut Off Fixed)**:
+       - Adjusted the button container in `lib/widgets/profile_photo_cropper.dart` with height 54 and vertical padding 12, giving full breathing room to Poppins font descenders ('p', 'y') and eliminating text clipping.
+    3. **Bug 3 (Contract Details Total Deal Price Added)**:
+       - Integrated calculated total deal price ($\text{Rate} \times \text{Quantity}$) using `formatInr` into both the top summary banner card (`Total: ₹2,500.00`) and the `Product & deal` card (`Total deal price`) in `lib/modules/contracts/view/contract_details_view.dart`, exactly matching the web admin portal (`/contracts/?status=active`).
+  - **Admin QA Bug Fixes (Bugs 1-4)**: **100% Implemented & Verified (Uncommitted)**
+    1. **Bug 1 (Admin Registered Company "Set Primary" Access)**:
+       - Enabled `admin` and `super_admin` in `_hasCompanyManagement` within `lib/modules/profile/view/profile_page.dart`. Admin profile screen now displays the "Manage Company" card navigating to company management.
+       - Hardened `isPrimary` parsing in `lib/modules/seller/company/model/seller_company_model.dart` to cleanly handle boolean, integer (`1`), and string (`"true"`).
+    2. **Bug 2 (Admin Profile KYC Documents Delete Button & In-App Viewer with Back Button)**:
+       - Added red-tinted Delete button (`Icons.delete_outline_rounded`) with confirmation dialog in `_buildDocumentRow` (`lib/modules/profile/view/profile_page.dart`) to remove uploaded KYC documents (PAN, GST, Aadhaar) calling `controller.updateProfile({fieldKey: ''})`.
+       - Updated `_openDocument` with dedicated in-app viewer `Scaffold` featuring a prominent Top AppBar Back button (`IconButton(icon: Icon(Icons.arrow_back), onPressed: () => Get.back())`), interactive zoomable image viewer (`InteractiveViewer`), and "Open in external app" action button.
+       - Updated `_openLegal` to open an in-app dialog with an explicit Back button.
+    3. **Bug 3 (Edit Profile Date Picker Allows Today's Date)**:
+       - Removed `.subtract(const Duration(days: 1))` from `lib/modules/profile/view/edit_profile_page.dart:129`. `lastAllowed` is now set to `DateTime(today.year, today.month, today.day)`, allowing users to select today's date while correctly disabling future dates.
+    4. **Bug 4 (Sub Admins Form "Branch Ref Code" Input Field)**:
+       - Added `AdminFieldConfig('branch_ref_code', 'Branch Ref Code')` to the `salesman` module configuration in `lib/modules/admin_catalog/config/admin_module_config.dart`, matching the web admin portal form.
+  - **Static Analysis**: 0 errors across all modified files (`flutter analyze`).
+  - **Automated Tests**: 100% passing (`flutter test test/buyer_offers_tabs_and_interest_buttons_test.dart`, `flutter test test/batch_9_fixes_test.dart`).
+  - **Git State**: All changes strictly uncommitted as instructed by user.
+  - **Phase 1 (Buyer Module Navigation)**: **100% Implemented & Verified (Uncommitted)**
+    1. `lib/modules/buyer/offers/view/buyer_my_interests_view.dart`: Wrapped interest card `GlassCard` with `InkWell(borderRadius: BorderRadius.circular(16), onTap: () => _openDetails(offer))`. Clicking anywhere on the card now opens `BuyerOfferDetailsView`. Inner buttons (View, Edit, Negotiation, Cancel) remain fully independent and clickable without conflicts.
+    2. `lib/modules/buyer/offers/view/buyer_request_management_view.dart`: Wrapped requirement card `GlassCard` with `InkWell(borderRadius: BorderRadius.circular(16), onTap: numericId == null ? null : () => Get.to(...))`. Tapping anywhere on the card navigates directly to `BuyerOfferDetailsView`.
+    3. `lib/modules/buyer/dashboard/view/buyer_dashboard_view.dart`: Wrapped Recent Requirements cards with `InkWell` to navigate to `BuyerOfferDetailsView` (or Activity View) and Recent Orders cards to navigate to `BuyerOrdersView`.
+    4. `lib/modules/buyer/orders/view/buyer_orders_view.dart`: Wrapped order `GlassCard` with `InkWell` and connected to a comprehensive order details modal bottom sheet `_showOrderDetails` displaying commodity, seller/brand, quantity, price, dates, and order status.
+  - **Static Analysis**: 0 errors across all 4 files (`flutter analyze`).
+  - **Automated Tests**: 100% passing (`flutter test test/buyer_offers_tabs_and_interest_buttons_test.dart`, `flutter test test/batch_9_fixes_test.dart`).
+  - **Git State**: All changes uncommitted as requested by user.
   - All 6 commits from `rohit` successfully integrated:
     - FCM Push Notifications on Android & iOS (`push_notification_service.dart`, sound channel, icon silhouette)
     - Buyer Requirement Editing (`edit_buyer_requirement_view.dart`) modernized with HeroHeader & dual theme

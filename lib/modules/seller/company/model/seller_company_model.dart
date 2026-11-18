@@ -42,7 +42,9 @@ class SellerCompanyModel {
   factory SellerCompanyModel.fromJson(Map<String, dynamic> json) {
     return SellerCompanyModel(
       id: json['id'],
-      isPrimary: json['is_primary'] ?? false,
+      isPrimary: json['is_primary'] == true ||
+          json['is_primary'] == 1 ||
+          json['is_primary'] == 'true',
       legalName: json['legal_name'] ?? "",
       companyType: json['company_type'] ?? "",
       yearOfEstablishment: json['year_of_establishment'] ?? 0,

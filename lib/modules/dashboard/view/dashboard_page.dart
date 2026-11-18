@@ -11,8 +11,8 @@ import '../../profile/controller/profile_controller.dart';
 import '../../../theme/glass_widgets.dart';
 import '../../../routes/app_routes.dart';
 import '../../admin_notifications/controller/admin_notification_controller.dart';
-import '../../admin_notifications/view/admin_notification_view.dart';
 import '../../contracts/view/contract_view.dart';
+import '../../nav_bar/controller/nav_controller.dart';
 import 'admin_overview_kpis_view.dart';
 import '../../../utils/money_format.dart';
 import '../../../widgets/app_shell.dart';
@@ -24,6 +24,14 @@ class AdminDashboardScreen extends StatelessWidget {
 
   final DashboardController controller = Get.put(DashboardController());
   final ProfileController profileController = Get.put(ProfileController());
+
+  static void _navigateToContracts() {
+    if (Get.isRegistered<BottomNavController>()) {
+      Get.find<BottomNavController>().changeIndex(1);
+    } else {
+      Get.to(() => const ContractsScreen());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,9 +83,6 @@ class AdminDashboardScreen extends StatelessWidget {
                 _buildSectionHeader(
                   context,
                   "Recent Activities",
-                  trailingText: "View All",
-                  onTrailingTap: () =>
-                      Get.to(() => const AdminNotificationView()),
                 ),
                 const SizedBox(height: 16),
                 _buildRecentActivity(context, data.recentActivities),
@@ -99,7 +104,7 @@ class AdminDashboardScreen extends StatelessWidget {
                   context,
                   "Recent Contracts",
                   trailingText: "View All",
-                  onTrailingTap: () => Get.to(() => const ContractsScreen()),
+                  onTrailingTap: _navigateToContracts,
                 ),
                 const SizedBox(height: 16),
                 _buildRecentContracts(context, data.recentContracts),
@@ -178,18 +183,28 @@ class AdminDashboardScreen extends StatelessWidget {
           const SizedBox(width: 4),
           GestureDetector(
             onTap: () => Get.toNamed(AppRoutes.profile_page),
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 1.5),
-              ),
-              child: const CircleAvatar(
-                radius: 14,
-                backgroundColor: Colors.white24,
-                child: Icon(IconlyLight.user_1, size: 16, color: Colors.white),
-              ),
-            ),
+            child: Obx(() {
+              final profile = profileController.profile.value;
+              final imgUrl = profile != null
+                  ? profileController.profileImageUrl(profile.profileImage)
+                  : '';
+              return Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 1.5),
+                ),
+                child: CircleAvatar(
+                  radius: 14,
+                  backgroundColor: Colors.white24,
+                  backgroundImage:
+                      imgUrl.isNotEmpty ? NetworkImage(imgUrl) : null,
+                  child: imgUrl.isEmpty
+                      ? const Icon(IconlyLight.user_1, size: 16, color: Colors.white)
+                      : null,
+                ),
+              );
+            }),
           ),
           const SizedBox(width: 8),
         ],
@@ -236,23 +251,49 @@ class AdminDashboardScreen extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFFF9800).withValues(alpha: 0.3),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
+            Builder(builder: (context) {
+              final imgUrl = profile != null
+                  ? profileController.profileImageUrl(profile.profileImage)
+                  : '';
+              if (imgUrl.isNotEmpty) {
+                return Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFFF9800), width: 2),
+                    image: DecorationImage(
+                      image: NetworkImage(imgUrl),
+                      fit: BoxFit.cover,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF9800).withValues(alpha: 0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: const Icon(IconlyBold.shield_done, color: Colors.white, size: 20),
-            ),
+                );
+              }
+              return Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF9800).withValues(alpha: 0.3),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(IconlyBold.shield_done, color: Colors.white, size: 20),
+              );
+            }),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -362,14 +403,14 @@ class AdminDashboardScreen extends StatelessWidget {
             value: '${kpis.activeContracts}',
             subtitle: '↑ —',
             icon: IconlyLight.document,
-            onTap: () => Get.to(() => const ContractsScreen()),
+            onTap: _navigateToContracts,
           ),
           (
             title: 'Gross Trade Value (MTD)',
             value: formatInr(kpis.gtvMtd),
             subtitle: '↑ —',
             icon: IconlyLight.graph,
-            onTap: () => Get.toNamed(AppRoutes.adminBranchReports),
+            onTap: _navigateToContracts,
           ),
           (
             title: 'Brokerage Earned (MTD)',
@@ -3130,6 +3171,11 @@ child: Text(
       itemBuilder: (context, index) {
         final activity = activities[index];
         final theme = Theme.of(context);
+        final cleanedDesc = activity.description
+            .replaceAll(RegExp(r'\.{2,}\s*•'), ' •')
+            .replaceAll(RegExp(r'\.{2,}$'), '')
+            .replaceAll('  ', ' ')
+            .trim();
 
         return GlassCard(
           padding: const EdgeInsets.all(12),
@@ -3162,21 +3208,23 @@ child: Text(
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      activity.description,
+                      cleanedDesc,
                       style: GoogleFonts.inter(
-                        fontSize: 10,
+                        fontSize: 11,
+                        height: 1.4,
                         color: theme.textTheme.bodyMedium?.color,
                       ),
-                      maxLines: 2,
+                      maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               Text(
                 activity.time,
                 style: GoogleFonts.inter(
-                  fontSize: 8,
+                  fontSize: 10,
                   color: theme.textTheme.bodyMedium?.color,
                 ),
               ),

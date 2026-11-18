@@ -833,12 +833,17 @@ class KycUsersScreen extends StatelessWidget {
 
   void _showViewDialog(BuildContext context, KycUserModel user) {
     String formatTimestamp(String? iso) {
-      if (iso == null || iso.trim().isEmpty) return "N/A";
+      if (iso == null || iso.trim().isEmpty || iso == 'null' || iso == 'N/A') return "-";
       try {
         return DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.parse(iso).toLocal());
       } catch (_) {
         return iso;
       }
+    }
+
+    String formatVal(String? val) {
+      if (val == null || val.trim().isEmpty || val == 'null' || val == 'N/A') return "-";
+      return val;
     }
 
     Get.dialog(
@@ -853,21 +858,21 @@ class KycUsersScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _detailRow("Name", user.name),
-                _detailRow("Email", user.email.isNotEmpty ? user.email : "N/A"),
-                _detailRow("Mobile", user.mobile.isNotEmpty ? user.mobile : "N/A"),
-                _detailRow("Role", user.role.isNotEmpty ? user.role : "N/A"),
-                _detailRow("First Name", (user.firstName != null && user.firstName!.isNotEmpty) ? user.firstName! : "N/A"),
-                _detailRow("Last Name", (user.lastName != null && user.lastName!.isNotEmpty) ? user.lastName! : "N/A"),
-                _detailRow("PAN Number", user.panNumber != null && user.panNumber!.isNotEmpty ? user.panNumber! : "N/A"),
-                _detailRow("GST Number", user.gstNumber != null && user.gstNumber!.isNotEmpty ? user.gstNumber! : "N/A"),
+                _detailRow("Name", formatVal(user.name)),
+                _detailRow("Email", formatVal(user.email)),
+                _detailRow("Mobile", formatVal(user.mobile)),
+                _detailRow("Role", formatVal(user.role)),
+                _detailRow("First Name", formatVal(user.firstName)),
+                _detailRow("Last Name", formatVal(user.lastName)),
+                _detailRow("PAN Number", formatVal(user.panNumber)),
+                _detailRow("GST Number", formatVal(user.gstNumber)),
                 _detailRow("Account Status", user.accountStatus.isNotEmpty ? user.accountStatus : "active"),
                 _detailRow("KYC Status", user.kycStatus.isNotEmpty ? user.kycStatus : "pending"),
                 _detailRow("Submitted At", formatTimestamp(user.kycSubmittedAt)),
                 _detailRow("Approved At", formatTimestamp(user.kycApprovedAt)),
                 _detailRow("Rejected At", formatTimestamp(user.kycRejectedAt)),
-                _detailRow("Rejection Reason", (user.kycRejectionReason != null && user.kycRejectionReason!.isNotEmpty) ? user.kycRejectionReason! : "N/A"),
-                _detailRow("Date Joined", formatTimestamp(user.dateJoined)),
+                _detailRow("Rejection Reason", formatVal(user.kycRejectionReason)),
+                _detailRow("Date Joined", formatTimestamp(user.dateJoined ?? user.kycSubmittedAt)),
               ],
             ),
           ),

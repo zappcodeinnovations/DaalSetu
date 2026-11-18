@@ -879,8 +879,20 @@ class BuyerDashboardView extends StatelessWidget {
           }
         }
 
-        return GlassCard(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        final rawId = item['id'] ?? item['requirement_id'] ?? item['rfq_id'] ?? item['offer_id'];
+        final reqId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
+
+        return InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            if (reqId != null) {
+              Get.to(() => BuyerOfferDetailsView(offerId: reqId, preferBuyerRequirement: true));
+            } else {
+              Get.to(() => const BuyerActivityView(initialIndex: 0));
+            }
+          },
+          child: GlassCard(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -957,7 +969,8 @@ class BuyerDashboardView extends StatelessWidget {
               ),
             ],
           ),
-        );
+        ),
+      );
       },
     );
   }
@@ -987,8 +1000,11 @@ class BuyerDashboardView extends StatelessWidget {
           statusColor = Colors.green;
         }
 
-        return GlassCard(
-          padding: const EdgeInsets.all(16),
+        return InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => Get.to(() => const BuyerOrdersView()),
+          child: GlassCard(
+            padding: const EdgeInsets.all(16),
           child: Row(
             children: [
               CircleAvatar(
@@ -1108,7 +1124,8 @@ class BuyerDashboardView extends StatelessWidget {
               ),
             ],
           ),
-        );
+        ),
+      );
       },
     );
   }

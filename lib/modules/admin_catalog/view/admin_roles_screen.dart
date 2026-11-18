@@ -258,9 +258,117 @@ class _AdminRolesScreenState extends State<AdminRolesScreen> {
           ],
         ),
         isThreeLine: permissionText(role['description']).isNotEmpty,
-        trailing: const Icon(Icons.chevron_right),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            InkWell(
+              onTap: () => _openEditor(role),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                  ),
+                ),
+                child: Text(
+                  'Edit',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+            ),
+            if (!system) ...[
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: () => _confirmDeleteRole(role),
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.red.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: const Text(
+                    'Delete',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.redAccent,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
+  }
+
+  Future<void> _confirmDeleteRole(Map<String, dynamic> role) async {
+    final roleId = permissionText(role['id']);
+    final roleName = permissionText(role['name']).isNotEmpty
+        ? permissionText(role['name'])
+        : permissionText(role['slug']);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Delete $roleName?'),
+        content: const Text('Users assigned to it will lose this role.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      AppSnackbar.showInfo(
+        message: 'Deleting $roleName...',
+        duration: const Duration(seconds: 1),
+      );
+      await ApiClient.delete(
+        endpoint: '/api/admin/roles/${Uri.encodeComponent(roleId)}/',
+        requireAuth: true,
+      );
+      AppSnackbar.snackbar(
+        'Success',
+        'Role "$roleName" deleted successfully.',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+      _load();
+    } catch (error) {
+      AppSnackbar.snackbar(
+        'Error',
+        error.toString().replaceFirst('Exception: ', ''),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 }
 

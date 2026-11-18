@@ -308,24 +308,26 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
   }
 
   void _openNegotiationPage(OfferInterestModel interest) async {
-    await Get.to(
-      () => _isAdminRole
-          ? NegotiationPage(
-              offerId: widget.offerId,
-              offerTitle: displayTitle,
-              availableStock: displayStock,
-              sellerOfferAmount: displayPrice,
-              interest: interest,
-            )
-          : OfferInterestNegotiationChatView(
-              productId: int.parse(widget.offerId),
-              interestId: interest.interestId,
-              isBuyer: false,
-              isAdmin: _isAdminRole,
-              title: displayTitle,
-              onAdminAccept: _isAdminRole ? () => _approveDeal(interest) : null,
-              onAdminReject: _isAdminRole ? () => _rejectDeal(interest) : null,
-            ),
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _isAdminRole
+            ? NegotiationPage(
+                offerId: widget.offerId,
+                offerTitle: displayTitle,
+                availableStock: displayStock,
+                sellerOfferAmount: displayPrice,
+                interest: interest,
+              )
+            : OfferInterestNegotiationChatView(
+                productId: int.parse(widget.offerId),
+                interestId: interest.interestId,
+                isBuyer: false,
+                isAdmin: _isAdminRole,
+                title: displayTitle,
+                onAdminAccept: _isAdminRole ? () => _approveDeal(interest) : null,
+                onAdminReject: _isAdminRole ? () => _rejectDeal(interest) : null,
+              ),
+      ),
     );
 
     // Reload after returning, including decisions made through the shared chat.
