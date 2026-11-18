@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import '../../../seller/notifications/controller/seller_notification_controller.dart';
 import '../../../../services/realtime_notification_service.dart';
-import '../../../../theme/app_theme.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 
 class TransporterNotificationsView extends StatelessWidget {

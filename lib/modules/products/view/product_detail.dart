@@ -6,7 +6,6 @@ import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:daalsetu/modules/admin_catalog/view/offer_interests_dialog.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:daalsetu/network/api_client.dart';
 

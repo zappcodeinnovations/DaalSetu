@@ -12,7 +12,6 @@ import '../../../theme/glass_widgets.dart';
 import '../../../utils/tax_id_formatters.dart';
 import '../controller/profile_controller.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/profile_photo_cropper.dart';
 import 'package:http/http.dart' as http;
 import '../../../utils/app_snackbar.dart';
