@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,6 +8,20 @@ import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/app_snackbar.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+
+/// The one stage a consignment is in: Received > Dispatch > Ready > Pending. (`received_label`
+/// is never empty - it says "Pending" until delivery - so reading it first hid every Ready and
+/// Dispatched shipment behind "Pending".)
+@visibleForTesting
+String consignmentStageLabel(Map<String, dynamic> item) {
+  if (item['is_delivered'] == true || item['status'] == 'received') return 'Consignment Received';
+  if (item['is_dispatched'] == true) return 'Dispatch';
+  final visibleAt = item['transporter_visible_at'];
+  if (visibleAt != null && visibleAt.toString().isNotEmpty && visibleAt.toString() != 'null') {
+    return 'Consignment Ready';
+  }
+  return 'Pending';
+}
 
 class BuyerConsignmentView extends StatefulWidget {
   const BuyerConsignmentView({super.key});
@@ -50,7 +65,11 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
     super.dispose();
   }
 
+  /// Only the latest request may fill the list (an older, slower answer must not overwrite it).
+  int _requestId = 0;
+
   Future<void> _load() async {
+    final requestId = ++_requestId;
     setState(() {
       _loading = true;
       _error = '';
@@ -61,7 +80,7 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
         search: _searchController.text,
       );
       final raw = response['results'];
-      if (mounted) {
+      if (mounted && requestId == _requestId) {
         setState(() {
           _items
             ..clear()
@@ -75,12 +94,13 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
         });
       }
     } catch (error) {
-      if (mounted)
+      if (mounted && requestId == _requestId) {
         setState(
           () => _error = error.toString().replaceFirst('Exception: ', ''),
         );
+      }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted && requestId == _requestId) setState(() => _loading = false);
     }
   }
 
@@ -231,11 +251,7 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
   Widget _card(ThemeData theme, Map<String, dynamic> item) {
     final title = item['product_title'] ?? item['title'] ?? 'Consignment';
     final contract = item['contract_id'] ?? item['id'] ?? '-';
-    final status =
-        item['received_label'] ??
-        item['ready_label'] ??
-        item['status'] ??
-        'Pending';
+    final status = consignmentStageLabel(item);
     final route =
         '${item['loading_from'] ?? '-'} → ${item['loading_to'] ?? '-'}';
     final canReady = item['can_mark_ready'] == true;
