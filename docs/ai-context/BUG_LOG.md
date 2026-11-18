@@ -1,5 +1,16 @@
 # Bug Log & Historical Fixes
 
+## Bug 58: Notifications Screen White Text on Light Cream Card in Dark Mode
+- **Symptom**: In Buyer and Seller accounts under Dark Theme, opening Notifications (`SellerNotificationView`) rendered unread cards with a bright cream background (`Colors.amber.shade50`) while text defaulted to `Colors.white`, causing title and message text to be washed out / invisible.
+- **Root Cause**: `lib/modules/seller/notifications/view/seller_notification_view.dart` had a hardcoded `color: item.isRead == true ? null : Colors.amber.shade50` without checking `isDark`, combined with default unstyled Material `Card` + `ListTile`.
+- **Fix**: Upgraded `SellerNotificationView` to use our standard 16px rounded agritech card with dual-theme surface (`#162032` unread / `#1E293B` read in dark mode, `#FFFBF2` unread / `#FFFFFF` read in light mode), high-contrast `theme.textTheme.bodyLarge` typography, vibrant saffron unread indicator, and rounded bell pod.
+- **Files Changed**:
+  - `lib/modules/seller/notifications/view/seller_notification_view.dart`
+  - `test/seller_notification_theme_test.dart`
+- **Verification**: `flutter test test/seller_notification_theme_test.dart` passing; `flutter analyze` 0 issues.
+
+---
+
 ## Bug 57: Buyer Dashboard Active Requirements & Deals Carousel 3.0px Overflow in Dark Mode
 - **Symptom**: In Dark Mode, the Buyer Dashboard offers/requirements banner card (`BuyerOffersCarouselSlider`) threw a layout error: `BOTTOM OVERFLOWED BY 3.0 PIXELS` behind the "View Details" button.
 - **Root Cause**:

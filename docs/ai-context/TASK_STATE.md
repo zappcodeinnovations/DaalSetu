@@ -12,7 +12,8 @@
     - Contract PDF generator (`contract_pdf.dart`) and negotiation chat parameter highlights
     - Transporter delete company button and network users refresh icon
   - App-Wide Dark & Bright Themes: **100% Preserved & Verified across all screens**
-  - Automated Regression Tests: **50/50 Passing across all 12 core test suites**
+  - Bug 58 (Notifications Dark Mode White-on-Cream Contrast): **Fixed & Verified**
+  - Automated Regression Tests: **51/51 Passing across test suites**
   - Analyzer: **0 errors, 0 warnings in modified files (`lib/`)**
 - **Admin Redesign & Card Polish Scope (33 Total Admin Views / Modals Modernized)**:
   - **Batch 3B (Admin Masters List, Negotiation & Action Dialogs)**:
