@@ -1243,7 +1243,10 @@ class _OfferInterestNegotiationChatViewState
                     style: GoogleFonts.inter(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFFB45309),
+                      // Dark amber on light cards, light amber on dark ones.
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFFFB366)
+                          : const Color(0xFFB45309),
                     ),
                   ),
                   const SizedBox(width: 8),

@@ -211,9 +211,17 @@ class TransporterCompanyView extends StatelessWidget {
                 onPressed: () => _showDeleteConfirmDialog(context, company.id),
                 // Dark red icon on a light red tile: clearly visible on any theme colour.
                 style: IconButton.styleFrom(
-                  backgroundColor: const Color(0xFFFDE8E8),
-                  foregroundColor: const Color(0xFFB91C1C),
-                  side: const BorderSide(color: Color(0xFFF8B4B4)),
+                  backgroundColor: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFEF4444).withValues(alpha: 0.18)
+                      : const Color(0xFFFDE8E8),
+                  foregroundColor: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFFFF8A80)
+                      : const Color(0xFFB91C1C),
+                  side: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFFEF4444).withValues(alpha: 0.5)
+                        : const Color(0xFFF8B4B4),
+                  ),
                 ),
                 icon: const Icon(IconlyBold.delete, size: 19),
               ),
