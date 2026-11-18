@@ -88,16 +88,16 @@ class _DownloadsViewState extends State<DownloadsView> {
               '“${file.name}” will be permanently removed from Downloads.',
             ),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
-              ),
               FilledButton(
                 style: FilledButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.error,
                 ),
                 onPressed: () => Navigator.pop(context, true),
                 child: const Text('Delete'),
+              ),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
               ),
             ],
           ),

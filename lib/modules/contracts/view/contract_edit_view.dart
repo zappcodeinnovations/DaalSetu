@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 /// Web "Edit Contract" modal: deal values, locations, dates, remarks and status.
 /// Only changed fields are sent, so a closed contract can still get a status/remark update.
@@ -350,7 +351,7 @@ class _ContractEditViewState extends State<ContractEditView> {
                 ? const Icon(Icons.calendar_month)
                 : IconButton(icon: const Icon(Icons.clear), onPressed: () => setState(() => _dates[key] = null)),
           ),
-          child: Text(value == null ? 'Select date' : _ymd(value)),
+          child: Text(value == null ? 'Select date' : AppDate.fromDateTime(value)),
         ),
       ),
     );

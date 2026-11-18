@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/confirm_actions.dart';
 import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -343,7 +344,7 @@ class SellerBranchesView extends StatelessWidget {
                         child: ListTile(
                           title: Text(req.locationName ?? "Branch Request", style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14)),
                           subtitle: Text("Code: ${req.branchCode ?? 'N/A'} • Status: Pending Approval", style: const TextStyle(fontSize: 12)),
-                          trailing: TextButton(
+                          trailing: OutlinedButton(
                             onPressed: () => controller.cancelRequest(req.branchId ?? req.id!),
                             child: const Text("CANCEL", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
                           ),
@@ -405,13 +406,14 @@ class SellerBranchesView extends StatelessWidget {
                                   onPressed: () => Get.defaultDialog(
                                     title: "Make Primary",
                                     middleText: "Make ${b.branchCode ?? 'this branch'} your primary branch?",
-                                    textConfirm: "YES",
-                                    textCancel: "CANCEL",
-                                    confirmTextColor: Colors.white,
-                                    onConfirm: () {
+                                    actions: confirmActions(
+                                      confirmText: "YES",
+                                      onConfirm: () {
                                       Get.back();
                                       controller.makePrimaryBranch(b.branchId ?? b.id!);
                                     },
+                                      cancelText: "CANCEL",
+                                    ),
                                   ),
                                   tooltip: "Make Primary",
                                 ),

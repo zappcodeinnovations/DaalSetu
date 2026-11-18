@@ -46,7 +46,6 @@ class _SellerJoinBranchDialogState extends State<SellerJoinBranchDialog> {
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Get.back(), child: const Text("CANCEL")),
         ElevatedButton(
           onPressed: () {
             if (_codeController.text.trim().isEmpty) {
@@ -62,6 +61,7 @@ class _SellerJoinBranchDialogState extends State<SellerJoinBranchDialog> {
           ),
           child: const Text("SUBMIT REQUEST", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ),
+        OutlinedButton(onPressed: () => Get.back(), child: const Text("CANCEL")),
       ],
     );
   }

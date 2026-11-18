@@ -137,8 +137,8 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
           FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Save')),
+          OutlinedButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
         ],
       ),
     );
@@ -272,7 +272,7 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
             onPressed: () => Navigator.pop(dialogContext, true),
             child: Text(isAccept ? 'Accept' : 'Reject'),
           ),
-          TextButton(
+          OutlinedButton(
             onPressed: () => Navigator.pop(dialogContext, false),
             child: const Text('Cancel'),
           ),

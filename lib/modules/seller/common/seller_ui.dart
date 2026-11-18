@@ -7,6 +7,7 @@ import '../../../widgets/app_shell.dart';
 import '../../../network/api_client.dart';
 import '../../../utils/app_snackbar.dart';
 import '../../../theme/app_theme.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 /// Small shared pieces for the seller screens, matching the existing seller look.
 class SellerUi {
@@ -138,10 +139,10 @@ class SellerUi {
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
         elevation: 0,
-        minimumSize: const Size(0, 44),
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        minimumSize: const Size(96, 46),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
       onPressed: () => Get.back(result: true),
@@ -160,12 +161,13 @@ class SellerUi {
 
     final cancelButton = OutlinedButton(
       style: OutlinedButton.styleFrom(
-        foregroundColor: Get.theme.colorScheme.onSurface,
-        side: BorderSide(color: Get.theme.colorScheme.outline),
-        minimumSize: const Size(0, 44),
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        // Same box as the other button, in the brand colour.
+        foregroundColor: Get.theme.colorScheme.primary,
+        side: BorderSide(color: Get.theme.colorScheme.primary, width: 1.2),
+        minimumSize: const Size(96, 46),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
       onPressed: () => Get.back(result: false),
@@ -184,9 +186,19 @@ class SellerUi {
         content: Text(message),
         // Compact buttons so both always fit on one row (they only stack on very narrow dialogs).
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        actions: primaryFirst
-            ? [confirmButton, cancelButton]
-            : [cancelButton, confirmButton],
+        // Both buttons the same size, side by side, with even room between them.
+        actions: [
+          IntrinsicWidth(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Expanded(child: primaryFirst ? confirmButton : cancelButton),
+                const SizedBox(width: 10),
+                Expanded(child: primaryFirst ? cancelButton : confirmButton),
+              ],
+            ),
+          ),
+        ],
       ),
     );
     return result == true;
@@ -216,7 +228,6 @@ class SellerUi {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: color),
             onPressed: () {
@@ -231,6 +242,7 @@ class SellerUi {
               style: const TextStyle(color: Colors.white),
             ),
           ),
+          OutlinedButton(onPressed: () => Get.back(), child: const Text("Cancel")),
         ],
       ),
     );
@@ -388,19 +400,6 @@ class SellerUi {
   /// "4950.00000" -> "₹4,950.00"; anything unparsable is shown as-is.
   static String money(dynamic value) => formatInr(value);
 
-  /// "2026-10-05T19:23:00+05:30" -> "05-10-2026 07:23 PM"; anything unparsable is shown as-is.
-  static String date(dynamic value) {
-    if (value == null || value.toString().isEmpty) return '-';
-    final parsed = DateTime.tryParse(value.toString());
-    if (parsed == null) return value.toString();
-    final local = parsed.toLocal();
-    final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
-    String two(int n) => n.toString().padLeft(2, '0');
-    final hasTime =
-        value.toString().contains('T') || value.toString().contains(' ');
-    final day = "${two(local.day)}-${two(local.month)}-${local.year}";
-    return hasTime
-        ? "$day ${two(hour)}:${two(local.minute)} ${local.hour >= 12 ? 'PM' : 'AM'}"
-        : day;
-  }
+  /// "2026-10-05T19:23:00+05:30" -> "05/10/2026 07:23 PM"; anything unparsable is shown as-is.
+  static String date(dynamic value) => AppDate.dateTime(value);
 }

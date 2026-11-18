@@ -12,7 +12,7 @@ void main() {
     Get.reset();
   });
 
-  testWidgets('ForgotPasswordScreen renders branding, KISOR badge, and form cleanly', (tester) async {
+  testWidgets('ForgotPasswordScreen renders branding, Pulse Trading Platform badge, and form cleanly', (tester) async {
     await tester.pumpWidget(
       GetMaterialApp(
         home: ForgotPasswordScreen(),
@@ -21,13 +21,13 @@ void main() {
     await tester.pump();
 
     expect(find.text("DaalSetu"), findsOneWidget);
-    expect(find.text("KISOR"), findsOneWidget);
+    expect(find.text("Pulse Trading Platform"), findsOneWidget);
     expect(find.text("Reset Password"), findsOneWidget);
     expect(find.text("SEND PASSWORD"), findsOneWidget);
     expect(find.text("Back to Sign In"), findsOneWidget);
   });
 
-  testWidgets('RegisterScreen renders branding, KISOR badge, and registration fields', (tester) async {
+  testWidgets('RegisterScreen renders branding, Pulse Trading Platform badge, and registration fields', (tester) async {
     await tester.pumpWidget(
       const GetMaterialApp(
         home: RegisterScreen(),
@@ -36,7 +36,7 @@ void main() {
     await tester.pump();
 
     expect(find.text("DaalSetu"), findsWidgets);
-    expect(find.text("KISOR"), findsWidgets);
+    expect(find.text("Pulse Trading Platform"), findsWidgets);
     expect(find.text("Create Account"), findsWidgets);
     expect(find.textContaining("First Name"), findsOneWidget);
     expect(find.textContaining("Last Name"), findsOneWidget);

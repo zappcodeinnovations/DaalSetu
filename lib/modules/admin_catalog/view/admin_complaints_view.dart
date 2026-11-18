@@ -517,7 +517,7 @@ class _AdminComplaintsViewState extends State<AdminComplaintsView> {
           ],
         ),
         actions: [
-          TextButton(
+          OutlinedButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel'),
           ),

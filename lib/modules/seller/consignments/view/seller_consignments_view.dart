@@ -21,23 +21,47 @@ class SellerConsignmentController extends GetxController {
     debounce(search, (_) => fetch(), time: const Duration(milliseconds: 400));
   }
 
+  /// Counts requests: only the latest one may fill the list. Without this a slower, older
+  /// response (for the previous filter) could land last and show the wrong cards.
+  int _requestId = 0;
+
+  /// The stage a consignment card shows (and the filter it belongs to).
+  static String stageOf(Map<String, dynamic> row) {
+    // Delivered counts as received even while the contract itself is still Active.
+    if (row['status'] == 'received' || row['is_delivered'] == true) return 'received';
+    if (row['is_dispatched'] == true) return 'dispatched';
+    if (row['transporter_visible_at'] != null) return 'ready';
+    return 'pending';
+  }
+
+  /// Filter key -> the stage its cards must have.
+  static const _stageOfFilter = {'pending': 'pending', 'ready': 'ready', 'dispatch': 'dispatched', 'received': 'received'};
+
   Future<void> fetch() async {
+    final requestId = ++_requestId;
+    final filter = workflowStatus.value;
     try {
       isLoading(true);
       final data = await SellerServices.getConsignments(
-        workflowStatus: workflowStatus.value == 'all' ? null : workflowStatus.value,
+        workflowStatus: filter == 'all' ? null : filter,
         search: search.value,
       );
-      rows.value = (data['results'] as List? ?? []).whereType<Map<String, dynamic>>().toList();
+      if (requestId != _requestId) return; // a newer filter / search took over
+      final all = (data['results'] as List? ?? []).whereType<Map<String, dynamic>>().toList();
+      final stage = _stageOfFilter[filter];
+      // Safety net: whatever the server sends, a filter only shows cards of its own stage.
+      rows.value = stage == null ? all : all.where((row) => stageOf(row) == stage).toList();
     } catch (e) {
-      SellerUi.error(e);
+      if (requestId == _requestId) SellerUi.error(e);
     } finally {
-      isLoading(false);
+      if (requestId == _requestId) isLoading(false);
     }
   }
 
   void setStatus(String status) {
+    if (workflowStatus.value == status) return;
     workflowStatus.value = status;
+    rows.clear(); // never leave the previous filter's cards on screen while loading
     fetch();
   }
 
@@ -202,13 +226,7 @@ class SellerConsignmentsView extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final stage = row['status'] == 'received'
-        ? 'received'
-        : row['is_dispatched'] == true
-            ? 'dispatched'
-            : row['transporter_visible_at'] != null
-                ? 'ready'
-                : 'pending';
+    final stage = SellerConsignmentController.stageOf(row);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),

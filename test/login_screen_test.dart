@@ -34,7 +34,7 @@ void main() {
     expect(paddingWidget.padding, const EdgeInsets.all(10));
   });
 
-  testWidgets('LoginScreen displays updated branding KISOR beneath DaalSetu title',
+  testWidgets('LoginScreen shows the tagline and Pulse Trading Platform beneath the title (no KISOR)',
       (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -43,9 +43,9 @@ void main() {
     );
     await tester.pump();
 
-    // Verify 'KISOR' branding text is rendered
-    expect(find.text('KISOR'), findsOneWidget);
-    // Verify old branding text is no longer present
+    expect(find.text('Smarter Trading. Stronger Connections.'), findsOneWidget);
+    expect(find.text('Pulse Trading Platform'), findsOneWidget);
+    expect(find.text('KISOR'), findsNothing);
     expect(find.text('Operations control centre'), findsNothing);
   });
 }

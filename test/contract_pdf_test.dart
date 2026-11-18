@@ -24,7 +24,9 @@ void main() {
       'confirmed_at': '17-11-2026 13:54',
     });
     final bytes = await buildContractPdf(contract, 'JBC2611171685').save();
-    expect(bytes.length, greaterThan(1500));
+    // The body (deal grid, Buyer / Seller cards, route) is there, not just the header band:
+    // a header-only PDF was ~2.3 KB and opened as a blank page.
+    expect(bytes.length, greaterThan(4100));
     // A real PDF file.
     expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
   });

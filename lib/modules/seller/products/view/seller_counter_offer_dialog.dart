@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/confirm_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/seller_negotiation_controller.dart';
@@ -95,22 +96,20 @@ class SellerCounterOfferDialog {
           ),
         ),
       ),
-      textConfirm: "SEND COUNTER",
-      textCancel: "CANCEL",
-      buttonColor: Colors.amber.shade700,
-      onConfirm: () {
+      actions: confirmActions(
+        confirmText: "SEND COUNTER",
+        color: Colors.amber.shade700,
+        onConfirm: () {
         final priceText = priceCtrl.text.trim();
         final qtyText = qtyCtrl.text.trim();
         final bagText = bagCtrl.text.trim();
         final weightText = weightCtrl.text.trim();
-
         if (priceText.isEmpty && qtyText.isEmpty && bagText.isEmpty && deliveryFrom == null) {
           SellerUi.error(
             "Please enter a Counter Price, Quantity, Packing details or Delivery Period.",
           );
           return;
         }
-
         if ((bagText.isNotEmpty && weightText.isEmpty) ||
             (weightText.isNotEmpty && bagText.isEmpty)) {
           SellerUi.error(
@@ -118,7 +117,6 @@ class SellerCounterOfferDialog {
           );
           return;
         }
-
         Get.back();
         controller.sendCounterOffer(
           interestId: interest.id!,
@@ -130,6 +128,8 @@ class SellerCounterOfferDialog {
           counterDeliveryTo: deliveryFrom == null ? null : DeliveryPeriodPicker.apiDate(deliveryTo ?? deliveryFrom!),
         );
       },
+        cancelText: "CANCEL",
+      ),
     );
   }
 }

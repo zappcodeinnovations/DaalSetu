@@ -21,6 +21,10 @@ class SellerProductModel {
   final DateTime createdAt;
   final bool isBuyerOffer;
 
+  /// Stock still available (the server's remaining quantity) and its unit, e.g. "16.700" / "qtl".
+  final String quantity;
+  final String quantityUnit;
+
   SellerProductModel({
     required this.id,
     required this.title,
@@ -41,6 +45,8 @@ class SellerProductModel {
     this.videoUrls = const [],
     required this.createdAt,
     this.isBuyerOffer = false,
+    this.quantity = '',
+    this.quantityUnit = 'qtl',
   });
 
   String? get primaryImageUrl => imageUrls.isNotEmpty ? imageUrls.first : null;
@@ -184,6 +190,9 @@ class SellerProductModel {
           DateTime.tryParse(json['created_at']?.toString() ?? '') ??
           DateTime.now(),
       isBuyerOffer: isBuyerOfferFlag,
+      quantity: (json['remaining_quantity'] ?? json['available_quantity'] ?? json['original_quantity'] ?? '')
+          .toString(),
+      quantityUnit: (json['quantity_unit'] ?? 'qtl').toString(),
     );
   }
 

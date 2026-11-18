@@ -11,6 +11,7 @@ import 'package:iconly/iconly.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/delivery_period_picker.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 /// Admin "Edit Offer": same fields as the web edit form (category, brand, price unit,
 /// loading dates, deal expiry, remark, active). Stock is changed from "Update Stock".
@@ -97,8 +98,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
   String _show(DateTime? d, {bool time = false}) {
     if (d == null) return '';
-    final date = "${d.day.toString().padLeft(2, '0')}-${d.month.toString().padLeft(2, '0')}-${d.year}";
-    return time ? "$date ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}" : date;
+    return time ? AppDate.dateTime(d.toIso8601String()) : AppDate.fromDateTime(d);
   }
 
   Future<DateTime?> _pickDate(DateTime? current) {

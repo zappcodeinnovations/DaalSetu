@@ -684,7 +684,6 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
           ElevatedButton(
             onPressed: () {
               final newCity = textController.text.trim();
@@ -698,6 +697,7 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
             },
             child: const Text("Select"),
           ),
+          OutlinedButton(onPressed: () => Get.back(), child: const Text("Cancel")),
         ],
       ),
     );

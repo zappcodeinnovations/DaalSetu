@@ -14,11 +14,6 @@ Future<List<String>?> askDispatchBills() async {
         'Attach the bill (PDF or image)? It is shared with the buyer, transporter and admin.',
       ),
       actions: [
-        TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
-        TextButton(
-          onPressed: () => Get.back(result: const <String>[]),
-          child: const Text('Dispatch without bill'),
-        ),
         FilledButton(
           onPressed: () async {
             final paths = await DispatchBillServices.pickBillFiles();
@@ -26,6 +21,11 @@ Future<List<String>?> askDispatchBills() async {
           },
           child: const Text('Choose Files'),
         ),
+        TextButton(
+          onPressed: () => Get.back(result: const <String>[]),
+          child: const Text('Dispatch without bill'),
+        ),
+        OutlinedButton(onPressed: () => Get.back(), child: const Text('Cancel')),
       ],
     ),
   );

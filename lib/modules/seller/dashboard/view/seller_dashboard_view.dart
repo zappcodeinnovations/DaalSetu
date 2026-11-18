@@ -1,3 +1,4 @@
+import '../../challans/view/seller_delivery_challan_view.dart';
 import 'package:flutter/material.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:get/get.dart';
@@ -449,8 +450,20 @@ class SellerDashboardView extends StatelessWidget {
     );
   }
 
+  /// A count as a clean whole number ("4"), whether the server sent 4, 4.0 or "4.0".
+  @visibleForTesting
+  static String countText(dynamic value) {
+    final number = value is num ? value : num.tryParse('${value ?? ''}'.trim());
+    if (number == null) return '${value ?? 0}';
+    return number == number.roundToDouble() ? number.toInt().toString() : number.toString();
+  }
+
   void _openKpi(String screen) {
     switch (screen) {
+      case 'challans':
+        // In Transit: the dispatched, not yet delivered shipments (the same ones the count shows).
+        Get.to(() => const SellerDeliveryChallanView(statusFilter: 'dispatched'));
+        return;
       case 'buyer_offers':
         Get.to(() => const SellerBuyerOffersView());
         return;
@@ -561,7 +574,7 @@ class SellerDashboardView extends StatelessWidget {
                   (entry) => ListTile(
                     contentPadding: EdgeInsets.zero,
                     title: Text(entry.key.replaceAll('_', ' ')),
-                    trailing: Text('${entry.value}'),
+                    trailing: Text(countText(entry.value)),
                   ),
                 ),
               const Divider(height: 28),

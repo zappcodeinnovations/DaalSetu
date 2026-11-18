@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/offer_media_viewer.dart';
 import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -99,6 +100,18 @@ class _OfferList extends StatelessWidget {
   final String offerType;
 
   const _OfferList({required this.offerType});
+
+  /// Thumbnail tap: show the offer's photo / video right away (both: split screen).
+  /// Requirements and offers without media still open the details page.
+  Future<void> _openMediaThenDetails(BuyerOfferModel offer, String type) async {
+    final productId = offer.productId;
+    final isRequirement = type == 'requirements' || offer.isRfq;
+    if (!isRequirement && productId != null && productId > 0) {
+      final opened = await openOfferMediaForProduct(productId, title: offer.displayTitle ?? 'Offer');
+      if (opened) return;
+    }
+    _openDetails(offer, type);
+  }
 
   void _openDetails(BuyerOfferModel offer, String type) {
     if ((type == 'requirements' || offer.isRfq) && offer.id != null) {
@@ -387,8 +400,12 @@ class _OfferList extends StatelessWidget {
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Image thumbnail / NO MEDIA box
-                              ClipRRect(
+                              // Image thumbnail / NO MEDIA box. Tap = open the photo / video right away.
+                              GestureDetector(
+                                key: Key('buyer_offer_media_${offer.id}'),
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () => _openMediaThenDetails(offer, offerType),
+                                child: ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
                                 child: Container(
                                   width: 58,
@@ -412,6 +429,7 @@ class _OfferList extends StatelessWidget {
                                         )
                                       : _buildNoMediaPlaceholder(theme),
                                 ),
+                              ),
                               ),
                               const SizedBox(width: 12),
 
@@ -1437,37 +1455,6 @@ DeliveryPeriodPicker(
                       mainAxisAlignment: MainAxisAlignment.end,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: theme.brightness == Brightness.dark
-                                ? const Color(0xFFCBD5E1)
-                                : const Color(0xFFE65100),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 12),
-                            minimumSize: const Size(0, 44),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            side: BorderSide(
-                              color: theme.brightness == Brightness.dark
-                                  ? const Color(0xFF475569)
-                                  : const Color(0xFFFFB74D),
-                              width: 1.2,
-                            ),
-                          ),
-                          onPressed: () => Get.back(),
-                          child: Text(
-                            "Cancel",
-                            style: GoogleFonts.inter(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              color: theme.brightness == Brightness.dark
-                                  ? const Color(0xFFCBD5E1)
-                                  : const Color(0xFFE65100),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFF7A00),
@@ -1519,6 +1506,37 @@ DeliveryPeriodPicker(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
                               color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: theme.brightness == Brightness.dark
+                                ? const Color(0xFFCBD5E1)
+                                : const Color(0xFFE65100),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                            minimumSize: const Size(0, 44),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            side: BorderSide(
+                              color: theme.brightness == Brightness.dark
+                                  ? const Color(0xFF475569)
+                                  : const Color(0xFFFFB74D),
+                              width: 1.2,
+                            ),
+                          ),
+                          onPressed: () => Get.back(),
+                          child: Text(
+                            "Cancel",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: theme.brightness == Brightness.dark
+                                  ? const Color(0xFFCBD5E1)
+                                  : const Color(0xFFE65100),
                             ),
                           ),
                         ),
@@ -1578,10 +1596,6 @@ DeliveryPeriodPicker(
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(
-                    onPressed: () => Get.back(),
-                    child: const Text("Cancel"),
-                  ),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isConfirm ? Colors.green : Colors.red,
@@ -1600,6 +1614,10 @@ DeliveryPeriodPicker(
                       });
                     },
                     child: Text(isConfirm ? "Confirm" : "Reject"),
+                  ),
+                  OutlinedButton(
+                    onPressed: () => Get.back(),
+                    child: const Text("Cancel"),
                   ),
                 ],
               ),

@@ -658,9 +658,6 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           ],
         ),
         actions: [
-          TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () {
               Get.back();
@@ -670,6 +667,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             child: Text(
                 newStatus == 'active' ? 'Activate' : 'Deactivate'),
           ),
+          OutlinedButton(
+              onPressed: () => Get.back(),
+              child: const Text('Cancel')),
         ],
       ),
     );
@@ -685,9 +685,6 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           'Are you sure you want to delete\n"${user.fullName.isNotEmpty ? user.fullName : user.username}"?\n\nThis cannot be undone.',
         ),
         actions: [
-          TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('Cancel')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -699,6 +696,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             },
             child: const Text('Delete'),
           ),
+          OutlinedButton(
+              onPressed: () => Get.back(),
+              child: const Text('Cancel')),
         ],
       ),
     );

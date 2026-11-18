@@ -297,7 +297,7 @@ class _ApproveDealDialogState extends State<ApproveDealDialog> {
           ),
           child: const Text("Accept Interest", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ),
-        TextButton(
+        OutlinedButton(
           onPressed: () => Navigator.pop(context, null),
           child: Text("Cancel", style: TextStyle(color: textLight)),
         ),

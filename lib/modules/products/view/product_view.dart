@@ -499,15 +499,15 @@ class ProductScreen extends StatelessWidget {
           '“${product.title}” will be permanently removed. This action cannot be undone.',
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
-          ),
           FilledButton.icon(
             onPressed: () => Get.back(result: true),
             style: FilledButton.styleFrom(backgroundColor: AppTheme.errorRed),
             icon: const Icon(Icons.delete_outline_rounded),
             label: const Text('Delete'),
+          ),
+          OutlinedButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
           ),
         ],
       ),

@@ -9,6 +9,7 @@ import '../controller/buyer_delivery_challan_controller.dart';
 import '../model/buyer_delivery_challan_model.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 class BuyerDeliveryChallanView extends StatelessWidget {
   const BuyerDeliveryChallanView({super.key});
@@ -432,17 +433,6 @@ class BuyerDeliveryChallanView extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          child: Text("Cancel", style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
                         flex: 2,
                         child: ElevatedButton(
                           onPressed: () {
@@ -456,6 +446,17 @@ class BuyerDeliveryChallanView extends StatelessWidget {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                           child: Text("Apply Filter", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: Text("Cancel", style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
                         ),
                       ),
                     ],
@@ -639,20 +640,5 @@ class BuyerDeliveryChallanView extends StatelessWidget {
     );
   }
 
-  String _formatDateTime(String? dateStr) {
-    if (dateStr == null || dateStr.trim().isEmpty) return "N/A";
-    try {
-      final date = DateTime.parse(dateStr).toLocal();
-      final day = date.day.toString().padLeft(2, '0');
-      final month = date.month.toString().padLeft(2, '0');
-      final year = date.year.toString();
-      final h = date.hour;
-      final hour12 = (h % 12 == 0 ? 12 : h % 12).toString().padLeft(2, '0');
-      final minute = date.minute.toString().padLeft(2, '0');
-      final amPm = h >= 12 ? 'PM' : 'AM';
-      return "$day-$month-$year $hour12:$minute $amPm";
-    } catch (_) {
-      return dateStr;
-    }
-  }
+  String _formatDateTime(String? dateStr) => AppDate.dateTime(dateStr, empty: "N/A");
 }

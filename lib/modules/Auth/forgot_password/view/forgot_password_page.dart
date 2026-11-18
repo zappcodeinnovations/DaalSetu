@@ -141,17 +141,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                             const Icon(Icons.verified_rounded, size: 13, color: Color(0xFFE65100)),
                             const SizedBox(width: 4),
                             Text(
-                              "KISOR",
-                              style: GoogleFonts.inter(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                                color: const Color(0xFFE65100),
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              "• Pulse Trading Platform",
+                              "Pulse Trading Platform",
                               style: GoogleFonts.inter(
                                 fontSize: 9.5,
                                 color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,

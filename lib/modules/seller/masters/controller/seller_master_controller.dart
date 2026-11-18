@@ -100,12 +100,12 @@ class SellerMasterController extends GetxController {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: SellerUi.primary),
             onPressed: () => Get.back(result: controller.text.trim()),
             child: const Text("Save", style: TextStyle(color: Colors.white)),
           ),
+          OutlinedButton(onPressed: () => Get.back(), child: const Text("Cancel")),
         ],
       ),
     );
@@ -148,12 +148,12 @@ class SellerMasterController extends GetxController {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: SellerUi.primary),
             onPressed: () => Get.back(result: controller.text.trim()),
             child: const Text("Save", style: TextStyle(color: Colors.white)),
           ),
+          OutlinedButton(onPressed: () => Get.back(), child: const Text("Cancel")),
         ],
       ),
     );

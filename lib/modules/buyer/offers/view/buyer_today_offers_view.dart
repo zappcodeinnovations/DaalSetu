@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/offer_media_viewer.dart';
 import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -13,6 +14,7 @@ import 'buyer_offer_details_view.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:daalsetu/modules/buyer/offers/view/buyer_offers_view.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 class BuyerTodayOffersView extends StatelessWidget {
   const BuyerTodayOffersView({super.key});
@@ -128,6 +130,15 @@ class BuyerTodayOffersView extends StatelessWidget {
     );
   }
 
+  Future<void> _openMediaThenDetails(BuyerOfferModel offer) async {
+    final productId = offer.productId;
+    if (!offer.isRfq && productId != null && productId > 0) {
+      final opened = await openOfferMediaForProduct(productId, title: offer.displayTitle ?? 'Offer');
+      if (opened) return;
+    }
+    _openDetails(offer);
+  }
+
   void _openDetails(BuyerOfferModel offer) {
     final pId = offer.productId ?? offer.id;
     if (pId != null) {
@@ -238,8 +249,12 @@ class BuyerTodayOffersView extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Image thumbnail / NO MEDIA box
-                        Container(
+                        // Image thumbnail / NO MEDIA box. Tap = open the photo / video right away.
+                        GestureDetector(
+                          key: Key('buyer_today_offer_media_${offer.id}'),
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => _openMediaThenDetails(offer),
+                          child: Container(
                           width: 54,
                           height: 54,
                           decoration: BoxDecoration(
@@ -259,6 +274,7 @@ class BuyerTodayOffersView extends StatelessWidget {
                                   ),
                                 )
                               : _buildNoMediaPlaceholder(theme),
+                        ),
                         ),
                         const SizedBox(width: 12),
 
@@ -750,7 +766,7 @@ class BuyerTodayOffersView extends StatelessWidget {
                           setDialogState(() {
                             selectedDeliveryDate = picked;
                             formattedDeliveryDate =
-                                "${picked.day.toString().padLeft(2, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.year.toString().padLeft(4, '0')}";
+                                AppDate.fromDateTime(picked);
                           });
                         }
                       },
@@ -766,7 +782,7 @@ class BuyerTodayOffersView extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              formattedDeliveryDate ?? "dd-mm-yyyy",
+                              formattedDeliveryDate ?? "dd/mm/yyyy",
                               style: GoogleFonts.inter(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
@@ -801,37 +817,6 @@ class BuyerTodayOffersView extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.end,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: theme.brightness == Brightness.dark
-                                ? const Color(0xFFCBD5E1)
-                                : const Color(0xFFE65100),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 12),
-                            minimumSize: const Size(0, 44),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            side: BorderSide(
-                              color: theme.brightness == Brightness.dark
-                                  ? const Color(0xFF475569)
-                                  : const Color(0xFFFFB74D),
-                              width: 1.2,
-                            ),
-                          ),
-                          onPressed: () => Get.back(),
-                          child: Text(
-                            "Cancel",
-                            style: GoogleFonts.inter(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              color: theme.brightness == Brightness.dark
-                                  ? const Color(0xFFCBD5E1)
-                                  : const Color(0xFFE65100),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFF7A00),
@@ -871,6 +856,37 @@ class BuyerTodayOffersView extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
                               color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: theme.brightness == Brightness.dark
+                                ? const Color(0xFFCBD5E1)
+                                : const Color(0xFFE65100),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                            minimumSize: const Size(0, 44),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            side: BorderSide(
+                              color: theme.brightness == Brightness.dark
+                                  ? const Color(0xFF475569)
+                                  : const Color(0xFFFFB74D),
+                              width: 1.2,
+                            ),
+                          ),
+                          onPressed: () => Get.back(),
+                          child: Text(
+                            "Cancel",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: theme.brightness == Brightness.dark
+                                  ? const Color(0xFFCBD5E1)
+                                  : const Color(0xFFE65100),
                             ),
                           ),
                         ),

@@ -1870,10 +1870,6 @@ class _AdminBrokerageBillDetailScreenState
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Back'),
-          ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFFF7A00),
@@ -1897,6 +1893,10 @@ class _AdminBrokerageBillDetailScreenState
                 height: 1.0,
               ),
             ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Back'),
           ),
         ],
       ),
@@ -2147,10 +2147,6 @@ class _AdminBrokerageBillDetailScreenState
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext, {
                 if (billingCompany.isNotEmpty)
@@ -2164,6 +2160,10 @@ class _AdminBrokerageBillDetailScreenState
                 'default_brokerage_rate': rate.text.trim(),
               }),
               child: const Text('Save'),
+            ),
+            OutlinedButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
             ),
           ],
         ),

@@ -11,6 +11,7 @@ import 'package:daalsetu/modules/shared/view/offer_interest_negotiation_chat_vie
 import 'approve_deal_dialog.dart';
 import 'negotiation_page.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 class OfferInterestsDialog extends StatefulWidget {
   final String offerId;
@@ -487,20 +488,6 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                   Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(ctx, false),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: textDark,
-                            side: BorderSide(
-                              color: textLight.withValues(alpha: 0.3),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          child: const Text("Cancel"),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
                         child: FilledButton(
                           onPressed: () => Navigator.pop(ctx, true),
                           style: FilledButton.styleFrom(
@@ -511,6 +498,20 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                             "Reject",
                             style: TextStyle(color: Colors.white),
                           ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: textDark,
+                            side: BorderSide(
+                              color: textLight.withValues(alpha: 0.3),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: const Text("Cancel"),
                         ),
                       ),
                     ],
@@ -945,9 +946,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                     if (interest.createdAt != null &&
                         interest.createdAt!.isNotEmpty)
                       Text(
-                        interest.createdAt!.length >= 10
-                            ? interest.createdAt!.substring(0, 10)
-                            : interest.createdAt!,
+                        AppDate.date(interest.createdAt),
                         style: TextStyle(color: textLight, fontSize: 10),
                       ),
                   ],
@@ -1283,9 +1282,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                 if (interest.createdAt != null &&
                     interest.createdAt!.isNotEmpty)
                   Text(
-                    interest.createdAt!.length >= 10
-                        ? interest.createdAt!.substring(0, 10)
-                        : interest.createdAt!,
+                    AppDate.date(interest.createdAt),
                     style: TextStyle(color: textLight, fontSize: 10),
                   ),
               ],

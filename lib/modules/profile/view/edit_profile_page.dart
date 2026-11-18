@@ -204,8 +204,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         title: const Text('Remove profile photo?'),
         content: const Text('Your photo will be deleted from your profile.'),
         actions: [
-          TextButton(onPressed: () => Get.back(result: false), child: const Text('Cancel')),
           TextButton(onPressed: () => Get.back(result: true), child: const Text('Remove')),
+          OutlinedButton(onPressed: () => Get.back(result: false), child: const Text('Cancel')),
         ],
       ),
     );

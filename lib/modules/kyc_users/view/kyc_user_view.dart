@@ -7,6 +7,7 @@ import '../controller/kyc_user_controller.dart';
 import '../model/kyc_user_model.dart';
 import 'package:daalsetu/theme/app_theme.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 class KycUsersScreen extends StatelessWidget {
   KycUsersScreen({super.key});
@@ -833,12 +834,7 @@ class KycUsersScreen extends StatelessWidget {
 
   void _showViewDialog(BuildContext context, KycUserModel user) {
     String formatTimestamp(String? iso) {
-      if (iso == null || iso.trim().isEmpty || iso == 'null' || iso == 'N/A') return "-";
-      try {
-        return DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.parse(iso).toLocal());
-      } catch (_) {
-        return iso;
-      }
+      return AppDate.dateTime(iso, empty: "-");
     }
 
     String formatVal(String? val) {
@@ -975,7 +971,6 @@ class KycUsersScreen extends StatelessWidget {
         title: const Text('Approve KYC'),
         content: Text('Approve KYC for ${user.name}?'),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           FilledButton(
             onPressed: () {
               Get.back();
@@ -983,6 +978,7 @@ class KycUsersScreen extends StatelessWidget {
             },
             child: const Text('Approve'),
           ),
+          OutlinedButton(onPressed: () => Get.back(), child: const Text('Cancel')),
         ],
       ),
     );
@@ -1021,7 +1017,6 @@ class KycUsersScreen extends StatelessWidget {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: Text("Cancel", style: TextStyle(color: textLight))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: colorRejected, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
             onPressed: () {
@@ -1035,6 +1030,7 @@ class KycUsersScreen extends StatelessWidget {
             },
             child: const Text("Reject", style: TextStyle(color: Colors.white)),
           ),
+          OutlinedButton(onPressed: () => Get.back(), child: Text("Cancel", style: TextStyle(color: textLight))),
         ],
       ),
     );

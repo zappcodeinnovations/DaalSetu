@@ -1,7 +1,9 @@
+import 'package:video_player/video_player.dart';
+import 'package:daalsetu/widgets/media_url.dart';
+import 'package:daalsetu/widgets/offer_media_viewer.dart';
 import 'package:daalsetu/modules/products/model/product_model.dart';
 import 'package:daalsetu/services/product_services.dart';
 import 'package:daalsetu/widgets/authenticated_network_image.dart';
-import 'package:daalsetu/widgets/authenticated_video_player.dart';
 import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -223,6 +225,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           final Widget slide = index < product.images.length
               ? _imageSlide(product.images[index].imageUrl)
               : OfferVideoSlide(
+                  posterUrl: product.images.isNotEmpty ? product.images.first.imageUrl : null,
                   video: product.videos[index - product.images.length],
                   onTap: () => _openVideo(product.videos[index - product.images.length]),
                 );
@@ -258,23 +261,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _openVideo(ProductVideo video) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(
-            backgroundColor: Colors.black,
-            foregroundColor: Colors.white,
-            title: Text(video.title.trim().isEmpty ? 'Offer video' : video.title),
-          ),
-          body: SafeArea(
-            child: Center(
-              child: AuthenticatedVideoPlayer(url: video.videoUrl, enableFullscreen: false),
-            ),
-          ),
-        ),
-      ),
-    );
+    // Full-screen player with every control and a white title / back arrow on black.
+    openOfferVideoPage(video.videoUrl, title: video.title.trim().isEmpty ? 'Offer video' : video.title);
   }
 
   Widget _images(ProductModel product) {
@@ -638,15 +626,86 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 }
 
-/// A video in the offer's top media bar (MoM 6): play button + title; tap opens it.
-class OfferVideoSlide extends StatelessWidget {
-  const OfferVideoSlide({super.key, required this.video, required this.onTap});
+/// A video in the offer's top media bar (MoM 6): a frame of the video as its poster, a play
+/// button and the title; tap opens it. While the frame loads (or when it cannot), the offer's first
+/// photo is shown instead, and a dark gradient only as the last fallback.
+class OfferVideoSlide extends StatefulWidget {
+  const OfferVideoSlide({super.key, required this.video, required this.onTap, this.posterUrl});
 
   final ProductVideo video;
   final VoidCallback onTap;
+  final String? posterUrl;
+
+  @override
+  State<OfferVideoSlide> createState() => _OfferVideoSlideState();
+}
+
+class _OfferVideoSlideState extends State<OfferVideoSlide> {
+  VideoPlayerController? _frame;
+  bool _frameReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFrame();
+  }
+
+  /// Opens the video muted and paused just after the start, so its first picture is the poster.
+  Future<void> _loadFrame() async {
+    try {
+      final token = await AppPreferences.getAccessToken();
+      final hasToken = token != null && token.isNotEmpty;
+      final uri = resolveMediaUri(widget.video.videoUrl);
+      final controller = VideoPlayerController.networkUrl(
+        hasToken ? uri.replace(queryParameters: {...uri.queryParameters, 'token': token}) : uri,
+        httpHeaders: hasToken ? {'Authorization': 'Bearer $token'} : const {},
+        videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+      );
+      _frame = controller;
+      await controller.initialize();
+      await controller.setVolume(0);
+      await controller.seekTo(const Duration(milliseconds: 300));
+      if (mounted) setState(() => _frameReady = true);
+    } catch (_) {
+      // No frame (offline, unsupported format ...): the photo / gradient poster stays.
+    }
+  }
+
+  @override
+  void dispose() {
+    _frame?.dispose();
+    super.dispose();
+  }
+
+  Widget _poster() {
+    final frame = _frame;
+    if (_frameReady && frame != null && frame.value.isInitialized) {
+      return FittedBox(
+        key: const Key('offer-video-poster-frame'),
+        fit: BoxFit.cover,
+        clipBehavior: Clip.hardEdge,
+        child: SizedBox(
+          width: frame.value.size.width,
+          height: frame.value.size.height,
+          child: VideoPlayer(frame),
+        ),
+      );
+    }
+    final photo = widget.posterUrl;
+    if (photo != null && photo.trim().isNotEmpty) {
+      return AuthenticatedNetworkImage(
+        key: const Key('offer-video-poster-photo'),
+        url: photo,
+        fit: BoxFit.cover,
+        fallback: const _PosterGradient(),
+      );
+    }
+    return const _PosterGradient();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final video = widget.video;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ClipRRect(
@@ -655,14 +714,27 @@ class OfferVideoSlide extends StatelessWidget {
           color: Colors.black,
           child: InkWell(
             key: Key('product-video-slide-${video.videoUrl.hashCode}'),
-            onTap: onTap,
+            onTap: widget.onTap,
             child: Stack(
               fit: StackFit.expand,
               children: [
+                Positioned.fill(child: _poster()),
+                // Darken the bottom so the title stays readable on any picture.
+                const Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Color(0x22000000), Color(0x99000000)],
+                      ),
+                    ),
+                  ),
+                ),
                 const Center(
                   child: CircleAvatar(
                     radius: 30,
-                    backgroundColor: Colors.white24,
+                    backgroundColor: Colors.black54,
                     child: Icon(Icons.play_arrow_rounded, color: Colors.white, size: 42),
                   ),
                 ),
@@ -689,6 +761,23 @@ class OfferVideoSlide extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PosterGradient extends StatelessWidget {
+  const _PosterGradient();
+
+  @override
+  Widget build(BuildContext context) {
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF334155), Color(0xFF0B0F19)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
       ),
     );

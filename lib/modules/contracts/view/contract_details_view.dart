@@ -836,8 +836,8 @@ class _BillCompanyCardState extends State<BillCompanyCard> {
         title: const Text('Confirm bill company'),
         content: Text('Print "${selected['legal_name']}" on the bill for this deal? This cannot be changed later.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
           FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Confirm')),
+          OutlinedButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
         ],
       ),
     );

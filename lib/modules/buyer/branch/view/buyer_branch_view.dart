@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/confirm_actions.dart';
 import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -389,7 +390,7 @@ class _BuyerBranchViewState extends State<BuyerBranchView> {
                               ),
                             ),
                             if (req.id != null)
-                              TextButton(
+                              OutlinedButton(
                                 onPressed: () => controller.cancelRequest(
                                   req.id!,
                                   branchId: req.branchId,
@@ -596,13 +597,14 @@ class _BuyerBranchViewState extends State<BuyerBranchView> {
     Get.defaultDialog(
       title: "Make Primary",
       middleText: "Make ${branchCode ?? 'this branch'} your primary branch?",
-      textConfirm: "YES",
-      confirmTextColor: Colors.white,
-      onConfirm: () {
+      actions: confirmActions(
+        confirmText: "YES",
+        onConfirm: () {
         Get.back();
         controller.makePrimaryBranch(branchId);
       },
-      textCancel: "CANCEL",
+        cancelText: "CANCEL",
+      ),
     );
   }
 
@@ -610,14 +612,15 @@ class _BuyerBranchViewState extends State<BuyerBranchView> {
     Get.defaultDialog(
       title: "Leave Branch",
       middleText: "Are you sure you want to leave this branch?",
-      textConfirm: "YES, LEAVE",
-      confirmTextColor: Colors.white,
-      buttonColor: Colors.red,
-      onConfirm: () {
+      actions: confirmActions(
+        confirmText: "YES, LEAVE",
+        color: Colors.red,
+        onConfirm: () {
         Get.back();
         controller.leaveBranch(branchId, branchCode: branchCode);
       },
-      textCancel: "CANCEL",
+        cancelText: "CANCEL",
+      ),
     );
   }
 

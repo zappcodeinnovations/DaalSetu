@@ -244,20 +244,6 @@ class _NegotiationPageState extends State<NegotiationPage> {
                   Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(ctx, false),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: textDark,
-                            side: BorderSide(
-                              color: textLight.withValues(alpha: 0.3),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          child: const Text("Cancel"),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
                         child: FilledButton(
                           onPressed: () => Navigator.pop(ctx, true),
                           style: FilledButton.styleFrom(
@@ -268,6 +254,20 @@ class _NegotiationPageState extends State<NegotiationPage> {
                             "Reject",
                             style: TextStyle(color: Colors.white),
                           ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: textDark,
+                            side: BorderSide(
+                              color: textLight.withValues(alpha: 0.3),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: const Text("Cancel"),
                         ),
                       ),
                     ],
@@ -788,9 +788,11 @@ class _NegotiationPageState extends State<NegotiationPage> {
         DateFormat('d MMM yyyy, hh:mm a'),
         DateFormat('dd MMM yyyy, hh:mm a'),
         DateFormat('dd-MM-yyyy hh:mm a'),
+        DateFormat('dd/MM/yyyy hh:mm a'),
         DateFormat('yyyy-MM-dd HH:mm:ss'),
         DateFormat('yyyy-MM-dd HH:mm'),
         DateFormat('dd-MM-yyyy HH:mm'),
+        DateFormat('dd/MM/yyyy HH:mm'),
         DateFormat('d MMM HH:mm'),
         DateFormat('dd MMM HH:mm'),
         DateFormat('d MMM, HH:mm'),

@@ -275,9 +275,15 @@ class TransporterCompanyView extends StatelessWidget {
                       tooltip: 'Delete company',
                       onPressed: () => _showDeleteConfirmDialog(context, company.id),
                       style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xFFFDE8E8),
-                        foregroundColor: const Color(0xFFB91C1C),
-                        side: const BorderSide(color: Color(0xFFF8B4B4)),
+                        backgroundColor: isDark
+                            ? const Color(0xFFEF4444).withValues(alpha: 0.18)
+                            : const Color(0xFFFDE8E8),
+                        foregroundColor: isDark ? const Color(0xFFFF8A80) : const Color(0xFFB91C1C),
+                        side: BorderSide(
+                          color: isDark
+                              ? const Color(0xFFEF4444).withValues(alpha: 0.5)
+                              : const Color(0xFFF8B4B4),
+                        ),
                       ),
                       icon: const Icon(
                         IconlyBold.delete,
@@ -352,7 +358,6 @@ class TransporterCompanyView extends StatelessWidget {
           "Are you sure you want to delete this company? This action cannot be undone.",
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
           TextButton(
             onPressed: () {
               Get.back();
@@ -360,6 +365,7 @@ class TransporterCompanyView extends StatelessWidget {
             },
             child: const Text("Delete", style: TextStyle(color: Colors.red)),
           ),
+          OutlinedButton(onPressed: () => Get.back(), child: const Text("Cancel")),
         ],
       ),
     );

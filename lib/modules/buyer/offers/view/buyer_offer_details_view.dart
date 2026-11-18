@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -13,6 +14,58 @@ import '../../../../services/buyer_services.dart';
 import 'edit_buyer_requirement_view.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+
+/// "18 Nov 13:10" in local time; empty when there is nothing usable.
+String _logTime(dynamic raw) {
+  final text = raw?.toString().trim() ?? '';
+  if (text.isEmpty || text == 'null') return '';
+  final parsed = DateTime.tryParse(text);
+  if (parsed == null) return text;
+  return DateFormat('dd MMM HH:mm').format(parsed.toLocal());
+}
+
+/// What the negotiation log shows for each stored event: real counter offers, and status
+/// changes in plain words. Events with nothing to say, and the internal system actor, are
+/// dropped instead of showing an empty SYSTEM card.
+@visibleForTesting
+List<({Map<String, dynamic> message, String heading, String time})> negotiationLogEntries(List<dynamic> messages) {
+  String clean(dynamic v) {
+    final s = v?.toString().trim() ?? '';
+    return s == 'null' ? '' : s;
+  }
+
+  String title(String s) => s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
+  final entries = <({Map<String, dynamic> message, String heading, String time})>[];
+  String? lastKey;
+  for (final raw in messages) {
+    if (raw is! Map) continue;
+    final m = Map<String, dynamic>.from(raw);
+    final role = clean(m['actor_role'] ?? m['sender_role']).toLowerCase();
+    final who = (role == 'system' || role.isEmpty) ? '' : title(role);
+    final hasCounter = clean(m['counter_price']).isNotEmpty || clean(m['counter_quantity']).isNotEmpty;
+    final remark = clean(m['remark'] ?? m['comment'] ?? m['message']);
+    final status = clean(m['to_status']).replaceAll('_', ' ');
+    final action = clean(m['action']).replaceAll('_', ' ').replaceFirst(RegExp('^status changed to '), '');
+    final event = status.isNotEmpty ? status : action;
+    String heading;
+    if (hasCounter) {
+      heading = who.isEmpty ? 'Counter offer' : '$who counter offer';
+    } else if (event.isNotEmpty && !event.toLowerCase().contains('negotiation message')) {
+      heading = title(event);
+      if (who.isNotEmpty && !event.toLowerCase().contains(role)) heading = '$heading ($who)';
+    } else if (remark.isNotEmpty) {
+      heading = who.isEmpty ? remark : '$who: $remark';
+    } else {
+      continue; // nothing to show
+    }
+    final time = _logTime(m['timestamp'] ?? m['created_at']);
+    final key = '$heading|$time';
+    if (key == lastKey) continue; // the same event logged twice
+    lastKey = key;
+    entries.add((message: m, heading: heading, time: time));
+  }
+  return entries;
+}
 
 class BuyerOfferDetailsView extends StatefulWidget {
   final int offerId;
@@ -786,10 +839,6 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
         title: Text(title),
         content: const Text('This action will update the live negotiation.'),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
-          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: color,
@@ -797,6 +846,10 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
             ),
             onPressed: () => Get.back(result: true),
             child: Text(confirmLabel),
+          ),
+          OutlinedButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
           ),
         ],
       ),
@@ -858,7 +911,6 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
           ),
         ),
         actions: [
-          TextButton(onPressed: Get.back, child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () {
               final price = priceController.text.trim();
@@ -883,6 +935,7 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
             },
             child: const Text('Send counter'),
           ),
+          OutlinedButton(onPressed: Get.back, child: const Text('Cancel')),
         ],
       ),
     );
@@ -1006,11 +1059,6 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    TextButton(
-                      onPressed: () => Get.back(),
-                      child: const Text("Cancel"),
-                    ),
-                    const SizedBox(width: 8),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFE65100),
@@ -1043,6 +1091,11 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                         );
                       },
                       child: const Text("Send Proposal"),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton(
+                      onPressed: () => Get.back(),
+                      child: const Text("Cancel"),
                     ),
                   ],
                 ),
@@ -1078,7 +1131,7 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
             onPressed: () => Get.back(result: true),
             child: Text(accept ? 'Accept offer' : 'Reject quotation'),
           ),
-          TextButton(
+          OutlinedButton(
             onPressed: () => Get.back(result: false),
             child: const Text('Cancel'),
           ),
@@ -1340,6 +1393,7 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
         .whereType<Map>()
         .map(Map<String, dynamic>.from)
         .toList();
+    final logEntries = negotiationLogEntries(messages);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1484,7 +1538,7 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            "Price: ₹${thread['offered_amount'] ?? currentOffer}/${thread['price_unit'] ?? priceUnit}",
+                            "Price: ₹${thread['initial_offered_amount'] ?? thread['offered_amount'] ?? currentOffer}/${thread['price_unit'] ?? priceUnit}",
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -1492,13 +1546,13 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                             ),
                           ),
                           Text(
-                            "Requested: ${thread['required_quantity'] ?? currentQty} ${thread['quantity_unit'] ?? qtyUnit}",
+                            "Requested: ${thread['initial_required_quantity'] ?? thread['required_quantity'] ?? currentQty} ${thread['quantity_unit'] ?? qtyUnit}",
                             style: GoogleFonts.inter(fontSize: 12),
                           ),
                           if (thread['created_at'] != null) ...[
                             const SizedBox(height: 4),
                             Text(
-                              thread['created_at'].toString(),
+                              _logTime(thread['created_at']),
                               style: GoogleFonts.inter(
                                 fontSize: 10,
                                 color: Colors.grey,
@@ -1508,13 +1562,11 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                         ],
                       ),
                     ),
-                    if (messages.isNotEmpty) ...[
+                    if (logEntries.isNotEmpty) ...[
                       const SizedBox(height: 10),
-                      ...messages.map((m) {
-                        final role =
-                            m['actor_role']?.toString().toUpperCase() ??
-                            m['sender_role']?.toString().toUpperCase() ??
-                            'PROPOSAL';
+                      ...logEntries.map((entry) {
+                        final m = entry.message;
+                        final role = entry.heading;
                         final p = m['counter_price'] ?? '';
                         final q = m['counter_quantity'] ?? '';
                         return Container(
@@ -1534,10 +1586,17 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                               Text(
                                 role,
                                 style: GoogleFonts.inter(
-                                  fontSize: 11,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
+                              if (entry.time.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  entry.time,
+                                  style: GoogleFonts.inter(fontSize: 10, color: Colors.grey),
+                                ),
+                              ],
                               if (p.toString().isNotEmpty ||
                                   q.toString().isNotEmpty) ...[
                                 const SizedBox(height: 3),
@@ -1674,7 +1733,7 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
             onPressed: () => Get.back(result: true),
             child: Text(accept ? 'Confirm Deal' : 'Reject'),
           ),
-          TextButton(
+          OutlinedButton(
             onPressed: () => Get.back(result: false),
             child: const Text('Cancel'),
           ),
@@ -1809,30 +1868,6 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        side: BorderSide(
-                          color: theme.dividerColor.withValues(alpha: 0.6),
-                          width: 1.2,
-                        ),
-                        foregroundColor: theme.textTheme.bodyLarge?.color,
-                      ),
-                      onPressed: () => Get.back(),
-                      child: Text(
-                        "No",
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red.shade600,
@@ -1874,6 +1909,30 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                       },
                       child: Text(
                         "Yes, Cancel",
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        side: BorderSide(
+                          color: theme.dividerColor.withValues(alpha: 0.6),
+                          width: 1.2,
+                        ),
+                        foregroundColor: theme.textTheme.bodyLarge?.color,
+                      ),
+                      onPressed: () => Get.back(),
+                      child: Text(
+                        "No",
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,

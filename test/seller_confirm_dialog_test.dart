@@ -32,25 +32,14 @@ void main() {
     final dialogFinder = find.byType(AlertDialog);
     expect(dialogFinder, findsOneWidget);
 
-    final dialog = tester.widget<AlertDialog>(dialogFinder);
-    expect(dialog.actions, isNotNull);
-    expect(dialog.actions!.length, equals(2));
-
-    // Confirm that the first action is the primary "Accept" button
-    final firstAction = dialog.actions![0];
-    expect(firstAction, isA<ElevatedButton>());
-    expect(find.descendant(of: find.byWidget(firstAction), matching: find.text('Accept')),
-        findsOneWidget);
-
-    // Confirm that the second action is the "Cancel" button
-    final secondAction = dialog.actions![1];
-    expect(secondAction, isA<OutlinedButton>());
-    final cancelButton = secondAction as OutlinedButton;
-    expect(cancelButton.style!.side!.resolve({})!.width, greaterThan(0));
-    expect(tester.getSize(find.byWidget(firstAction)).height,
-        tester.getSize(find.byWidget(secondAction)).height);
-    expect(find.descendant(of: find.byWidget(secondAction), matching: find.text('Cancel')),
-        findsOneWidget);
+    // Both buttons are one row: Accept (ElevatedButton) first, Cancel (boxed OutlinedButton) second,
+    // exactly the same size.
+    final accept = find.widgetWithText(ElevatedButton, 'Accept');
+    final cancel = find.widgetWithText(OutlinedButton, 'Cancel');
+    expect(accept, findsOneWidget);
+    expect(cancel, findsOneWidget);
+    expect(tester.widget<OutlinedButton>(cancel).style!.side!.resolve({})!.width, greaterThan(0));
+    expect(tester.getSize(accept), tester.getSize(cancel));
 
     // Verify visual order on screen (Accept on left, Cancel on right)
     final acceptPos = tester.getTopLeft(find.text('Accept'));

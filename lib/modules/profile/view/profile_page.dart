@@ -824,10 +824,6 @@ class ProfileScreen extends StatelessWidget {
         ),
         content: Text('Are you sure you want to remove your uploaded $title?'),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
-          ),
           ElevatedButton(
             onPressed: () => Get.back(result: true),
             style: ElevatedButton.styleFrom(
@@ -836,6 +832,10 @@ class ProfileScreen extends StatelessWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             child: const Text('Delete'),
+          ),
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
           ),
         ],
       ),

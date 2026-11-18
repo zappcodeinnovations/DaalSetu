@@ -12,27 +12,13 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../utils/app_preferences.dart';
 import '../../../profile/controller/profile_controller.dart';
 import '../model/buyer_delivery_challan_model.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 class BuyerChallanPdfService {
   const BuyerChallanPdfService._();
 
 
-  static String _formatDate(String? raw) {
-    if (raw == null || raw.trim().isEmpty) return '-';
-    try {
-      final parsed = DateTime.parse(raw.trim());
-      return DateFormat('dd/MM/yyyy').format(parsed);
-    } catch (_) {
-      final match = RegExp(r'^(\d{4})-(\d{1,2})-(\d{1,2})').firstMatch(raw.trim());
-      if (match != null) {
-        final y = match.group(1);
-        final m = match.group(2)!.padLeft(2, '0');
-        final d = match.group(3)!.padLeft(2, '0');
-        return '$d/$m/$y';
-      }
-      return raw.trim();
-    }
-  }
+  static String _formatDate(String? raw) => AppDate.date(raw);
 
   static const _rupeeSvg = '''
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="7" height="7">

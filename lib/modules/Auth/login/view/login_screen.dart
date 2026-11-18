@@ -415,39 +415,35 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
         const SizedBox(height: 6),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE65100).withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: const Color(0xFFE65100).withValues(alpha: 0.25),
-                  width: 1,
-                ),
-              ),
-              child: const Text(
-                'KISOR',
-                style: TextStyle(
-                  color: Color(0xFFE65100),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
-                ),
-              ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE65100).withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: const Color(0xFFE65100).withValues(alpha: 0.25),
+              width: 1,
             ),
-            const SizedBox(width: 8),
-            Text(
-              'Pulse Trading Platform',
-              style: TextStyle(
-                color: subtextColor,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
+          ),
+          child: const Text(
+            'Smarter Trading. Stronger Connections.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Color(0xFFE65100),
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.3,
             ),
-          ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Pulse Trading Platform',
+          style: TextStyle(
+            color: subtextColor,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
     );

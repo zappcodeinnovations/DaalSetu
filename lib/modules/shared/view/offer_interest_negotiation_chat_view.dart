@@ -77,6 +77,24 @@ class _OfferInterestNegotiationChatViewState
   bool _loadingInBackground = false;
   bool _showPacking = false;
   int _decisionRevision = 0;
+  // The counter-offer form lives in a bottom sheet; _tick makes it rebuild with the page.
+  final ValueNotifier<int> _tick = ValueNotifier<int>(0);
+  bool _composerOpen = false;
+  /// Why the last counter was refused; shown inside the counter sheet, where it cannot be missed.
+  String? _composerError;
+
+  void _setComposerError(String? message) {
+    if (!mounted) return;
+    setState(() => _composerError = message);
+    _tick.value++;
+  }
+  bool _snapshotOpen = false;
+
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    _tick.value++;
+  }
 
   @override
   void initState() {
@@ -109,6 +127,7 @@ class _OfferInterestNegotiationChatViewState
     _bagsController.dispose();
     _packingController.dispose();
     _scrollController.dispose();
+    _tick.dispose();
     super.dispose();
   }
 
@@ -235,6 +254,16 @@ class _OfferInterestNegotiationChatViewState
       return;
     }
 
+    // A buyer may ask for up to twice the available quantity: say so before sending.
+    final maxQty = double.tryParse('${_thread?['max_quantity'] ?? ''}');
+    final askedQty = double.tryParse(quantity);
+    if (widget.isBuyer && maxQty != null && maxQty > 0 && askedQty != null && askedQty > maxQty) {
+      _setComposerError(
+        'You can ask for up to ${_thread?['max_quantity']} (twice the available quantity). Please enter a smaller quantity.',
+      );
+      return;
+    }
+    _setComposerError(null);
     setState(() => _sending = true);
     try {
       await BuyerServices.sendOfferInterestMessage(
@@ -250,6 +279,9 @@ class _OfferInterestNegotiationChatViewState
       _priceController.clear();
       _quantityController.clear();
       _bagsController.clear();
+      if (_composerOpen && mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
       if (mounted) {
         setState(() {
           _showPacking = false;
@@ -260,10 +292,13 @@ class _OfferInterestNegotiationChatViewState
       await _load(silent: true);
       _scrollToLatest();
     } catch (error) {
-      AppSnackbar.showError(
-        title: 'Could not send counter',
-        message: error.toString().replaceFirst('Exception: ', ''),
-      );
+      final reason = error.toString().replaceFirst('Exception: ', '');
+      if (_composerOpen) {
+        // The sheet covers the snackbar, so the reason is shown inside the sheet.
+        _setComposerError(reason);
+      } else {
+        AppSnackbar.showError(title: 'Could not send counter', message: reason);
+      }
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -289,7 +324,7 @@ class _OfferInterestNegotiationChatViewState
             onPressed: () => Get.back(result: true),
             child: Text(accept ? 'Accept' : 'Reject'),
           ),
-          TextButton(
+          OutlinedButton(
             onPressed: () => Get.back(result: false),
             child: const Text('Cancel'),
           ),
@@ -441,13 +476,8 @@ class _OfferInterestNegotiationChatViewState
           ? const Center(child: Text('Negotiation is not available.'))
           : Column(
               children: [
-                // Summary and composer are capped, so the chat history always keeps room.
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height * 0.28,
-                  ),
-                  child: SingleChildScrollView(child: _summary(context, thread)),
-                ),
+                // Compact deal summary (tap to see every detail); the chat keeps all the room.
+                _dealSnapshot(context, thread),
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: _load,
@@ -472,14 +502,12 @@ class _OfferInterestNegotiationChatViewState
                 ),
                 if (thread['deal_expired'] == true)
                   _waitingBar(thread['blocked_reason']?.toString()),
-                if (canAccept || canReject) _decisionBar(canAccept, canReject),
-                if (canReply)
-                  ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight: MediaQuery.of(context).size.height * 0.4,
-                    ),
-                    child: SingleChildScrollView(child: _composer(context)),
-                  ),
+                if (MediaQuery.of(context).size.height < 680 && (canAccept || canReject || canReply))
+                  _compactActionBar(canAccept, canReject, canReply)
+                else ...[
+                  if (canAccept || canReject) _decisionBar(canAccept, canReject),
+                  if (canReply) _counterBar(),
+                ],
                 if (!isReadOnly &&
                     !canAccept &&
                     !canReject &&
@@ -491,29 +519,404 @@ class _OfferInterestNegotiationChatViewState
     );
   }
 
+  /// Price, quantity and delivery at a glance: the current offer big, the seller's side small.
+  /// Tap the header to open the full details.
+  Widget _dealSnapshot(BuildContext context, Map<String, dynamic> thread) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final status = (thread['status']?.toString() ?? 'pending').replaceAll('_', ' ');
+    final priceUnit = (thread['price_unit'] ?? thread['amount_unit'] ?? 'TON').toString().toUpperCase();
+    final qtyUnit = (thread['quantity_unit'] ?? 'QTL').toString().toUpperCase();
+
+    String money(dynamic raw) {
+      final clean = (raw ?? '').toString().replaceAll('\u20b9', '').replaceAll(',', '').trim();
+      if (clean.isEmpty || clean == '-') return '-';
+      final value = double.tryParse(clean);
+      return value == null ? clean : '\u20b9${NumberFormat('#,##0.00', 'en_IN').format(value)}';
+    }
+
+    String qty(dynamic raw) {
+      final clean = (raw ?? '').toString().replaceAll(',', '').trim();
+      if (clean.isEmpty || clean == '-') return '-';
+      final value = double.tryParse(clean);
+      return value == null ? clean : value.toStringAsFixed(3);
+    }
+
+    final agreed = thread['deal_agreed'] == true;
+    final sellerPrice = money(
+      thread['seller_offer_amount'] ?? thread['seller_price'] ?? thread['seller_amount'] ?? thread['product_amount'],
+    );
+    // Agreed deal terms once someone accepted; otherwise the latest proposal.
+    final currentPrice = money(
+      (agreed ? thread['agreed_amount'] : null) ??
+          thread['latest_offered_amount'] ??
+          thread['offered_amount'] ??
+          thread['buyer_offered_amount'] ??
+          thread['amount'],
+    );
+    final sellerQtyRaw = thread['seller_offer_quantity'];
+    final hasSellerQty = sellerQtyRaw != null && sellerQtyRaw.toString().trim().isNotEmpty;
+    final available = qty(
+      hasSellerQty ? sellerQtyRaw : (thread['available_quantity'] ?? thread['available_stock']),
+    );
+    final currentQty = qty(
+      (agreed ? thread['agreed_quantity'] : null) ??
+          thread['latest_offered_quantity'] ??
+          thread['buyer_required_quantity'] ??
+          thread['required_quantity'] ??
+          thread['quantity'],
+    );
+    final sellerDelivery = DeliveryPeriodPicker.periodText(
+      thread['offer_delivery_from']?.toString(),
+      thread['offer_delivery_to']?.toString(),
+    );
+    final currentDelivery = DeliveryPeriodPicker.periodText(
+      (agreed ? thread['agreed_delivery_date'] : thread['delivery_date'])?.toString(),
+      (agreed ? thread['agreed_delivery_date_to'] : thread['delivery_date_to'])?.toString(),
+    );
+
+    final mutedColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final inkColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    const accent = Color(0xFFEA580C);
+
+    Widget tile({
+      required IconData icon,
+      required String label,
+      required String value,
+      required String reference,
+      required bool changed,
+    }) {
+      return Expanded(
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1A2235) : const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: changed
+                  ? accent.withValues(alpha: 0.55)
+                  : (isDark ? const Color(0xFF2D3B55) : const Color(0xFFE2E8F0)),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, size: 13, color: accent),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: mutedColor),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w800,
+                  height: 1.2,
+                  color: changed ? accent : inkColor,
+                ),
+              ),
+              if (reference.isNotEmpty) ...[
+                const SizedBox(height: 3),
+                Text(
+                  reference,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 10, color: mutedColor),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    final deliveryValue = currentDelivery.isNotEmpty ? currentDelivery : (sellerDelivery.isNotEmpty ? sellerDelivery : '-');
+    return Container(
+      key: const Key('negotiation-snapshot'),
+      margin: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+      decoration: BoxDecoration(
+        color: isDark ? theme.cardColor : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? const Color(0xFF2C394F) : const Color(0xFFE2E8F0), width: 1.2),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05), blurRadius: 10, offset: const Offset(0, 3)),
+        ],
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            key: const Key('negotiation-snapshot-toggle'),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            onTap: () => setState(() => _snapshotOpen = !_snapshotOpen),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 8, 6),
+              child: Row(
+                children: [
+                  // The title and status badge share the room left of "Details"; the badge used to be
+                  // squeezed to a quarter of it ("Interest...") because a Spacer competed for the space.
+                  Expanded(
+                    child: Row(
+                      children: [
+                  Flexible(
+                    child: Text(
+                      'Deal summary',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: inkColor),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                      ),
+                      child: Text(
+                        status.isEmpty ? 'Pending' : '${status[0].toUpperCase()}${status.substring(1)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.green),
+                      ),
+                    ),
+                  ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    _snapshotOpen ? 'Less' : 'Details',
+                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: mutedColor),
+                  ),
+                  Icon(_snapshotOpen ? Icons.expand_less_rounded : Icons.expand_more_rounded, color: mutedColor),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  tile(
+                    icon: Icons.payments_outlined,
+                    label: agreed ? 'Agreed price / $priceUnit' : 'Offer price / $priceUnit',
+                    value: currentPrice,
+                    reference: sellerPrice == '-' ? '' : 'Seller $sellerPrice',
+                    changed: currentPrice != '-' && sellerPrice != '-' && currentPrice != sellerPrice,
+                  ),
+                  const SizedBox(width: 8),
+                  tile(
+                    icon: Icons.inventory_2_outlined,
+                    label: agreed ? 'Agreed quantity' : 'Quantity',
+                    value: currentQty == '-' ? '-' : '$currentQty $qtyUnit',
+                    reference: available == '-' ? '' : (hasSellerQty ? 'Seller offered $available' : 'Available $available'),
+                    changed: false,
+                  ),
+                  const SizedBox(width: 8),
+                  tile(
+                    icon: Icons.event_outlined,
+                    label: agreed ? 'Agreed delivery' : 'Delivery',
+                    value: deliveryValue,
+                    reference: sellerDelivery.isNotEmpty && sellerDelivery != deliveryValue ? 'Seller $sellerDelivery' : '',
+                    changed: currentDelivery.isNotEmpty && sellerDelivery.isNotEmpty && currentDelivery != sellerDelivery,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_snapshotOpen)
+            ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),
+              child: SingleChildScrollView(child: _summary(context, thread)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Accept / Reject / Counter in one slim row (used on short phones).
+  Widget _compactActionBar(bool canAccept, bool canReject, bool canReply) {
+    final theme = Theme.of(context);
+    Widget slot(Widget child) => Expanded(child: SizedBox(height: 44, child: child));
+    final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(10));
+    final buttons = <Widget>[
+      if (canAccept)
+        slot(
+          FilledButton(
+            key: const Key('compact-accept'),
+            onPressed: _sending ? null : () => _decide(accept: true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF2E7D32),
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.zero,
+              shape: shape,
+            ),
+            child: Text(widget.isAdmin ? 'Approve' : 'Accept', style: const TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ),
+      if (canReject)
+        slot(
+          OutlinedButton(
+            key: const Key('compact-reject'),
+            onPressed: _sending ? null : () => _decide(accept: false),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFFD32F2F),
+              side: const BorderSide(color: Color(0xFFD32F2F), width: 1.4),
+              padding: EdgeInsets.zero,
+              shape: shape,
+            ),
+            child: const Text('Reject', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ),
+      if (canReply)
+        slot(
+          FilledButton(
+            key: const Key('open-counter-sheet'),
+            onPressed: _sending ? null : _openCounterSheet,
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFF58220),
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.zero,
+              shape: shape,
+            ),
+            child: const Text('Counter', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ),
+    ];
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          border: Border(top: BorderSide(color: theme.dividerColor.withValues(alpha: 0.5))),
+        ),
+        child: Row(
+          children: [
+            for (var i = 0; i < buttons.length; i++) ...[
+              if (i > 0) const SizedBox(width: 8),
+              buttons[i],
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// One button at the bottom opens the counter-offer form, so the chat is never squeezed by it.
+  Widget _counterBar() {
+    final theme = Theme.of(context);
+    return SafeArea(
+      top: false,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          border: Border(top: BorderSide(color: theme.dividerColor.withValues(alpha: 0.5))),
+        ),
+        child: SizedBox(
+          height: 48,
+          child: FilledButton.icon(
+            key: const Key('open-counter-sheet'),
+            onPressed: _sending ? null : _openCounterSheet,
+            icon: const Icon(Icons.swap_horiz_rounded, size: 20),
+            label: const Text('Make a counter offer', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFF58220),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openCounterSheet() async {
+    final theme = Theme.of(context);
+    _composerOpen = true;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: theme.scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (sheetContext) => ValueListenableBuilder<int>(
+        valueListenable: _tick,
+        builder: (context, _, __) => Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 4),
+                  child: Text(
+                    'Counter offer',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: theme.textTheme.bodyLarge?.color),
+                  ),
+                ),
+                _composer(context),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    _composerOpen = false;
+    _composerError = null;
+  }
+
   Widget _summary(BuildContext context, Map<String, dynamic> thread) {
     final status =
         thread['status']?.toString().replaceAll('_', ' ') ?? 'Pending';
+    final agreed = thread['deal_agreed'] == true;
     final sellerPrice =
+        thread['seller_offer_amount'] ??
         thread['seller_price'] ??
         thread['seller_amount'] ??
         thread['amount'] ??
         thread['product_amount'] ??
         '-';
+    final sellerOfferedQty = thread['seller_offer_quantity'];
+    final hasSellerOfferedQty =
+        sellerOfferedQty != null && sellerOfferedQty.toString().trim().isNotEmpty;
     final priceUnit = (thread['price_unit'] ?? thread['amount_unit'] ?? 'TON')
         .toString()
         .toUpperCase();
     final availableQty =
+        (hasSellerOfferedQty ? sellerOfferedQty : null) ??
         thread['available_quantity'] ??
         thread['available_stock'] ??
         thread['quantity'] ??
         '-';
+    // Once someone accepted, the accepted proposal is the deal: show its price, quantity and date.
     final currentOffer =
+        (agreed ? thread['agreed_amount'] : null) ??
         thread['latest_offered_amount'] ??
         thread['offered_amount'] ??
         thread['amount'] ??
         '-';
     final currentQty =
+        (agreed ? thread['agreed_quantity'] : null) ??
         thread['latest_offered_quantity'] ??
         thread['buyer_required_quantity'] ??
         thread['required_quantity'] ??
@@ -584,19 +987,26 @@ class _OfferInterestNegotiationChatViewState
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                color: Colors.grey.shade600,
+            // Label and value both wrap, so large text sizes never overflow the row.
+            Flexible(
+              child: Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                ),
               ),
             ),
-            Text(
-              value,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: bold ? FontWeight.bold : FontWeight.w500,
-                color: valueColor,
+            const SizedBox(width: 12),
+            Flexible(
+              child: Text(
+                value,
+                textAlign: TextAlign.end,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: bold ? FontWeight.bold : FontWeight.w500,
+                  color: valueColor,
+                ),
               ),
             ),
           ],
@@ -626,13 +1036,18 @@ class _OfferInterestNegotiationChatViewState
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                "Negotiation Summary",
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
+              Flexible(
+                child: Text(
+                  "Negotiation Summary",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
@@ -661,19 +1076,27 @@ class _OfferInterestNegotiationChatViewState
             "Seller Price:",
             pSeller == '-' ? '₹-' : "₹$pSeller / $priceUnit",
           ),
-          row("Available Qty:", qAvail == '-' ? '-' : "$qAvail $qtyUnit"),
-          row("Current Offer:", pOffer == '-' ? '₹-' : "₹$pOffer / $priceUnit"),
-          row("Current Qty:", qOffer == '-' ? '-' : "$qOffer $qtyUnit"),
+          row(hasSellerOfferedQty ? "Seller Offered Qty:" : "Available Qty:", qAvail == '-' ? '-' : "$qAvail $qtyUnit"),
           if (DeliveryPeriodPicker.periodText(thread['offer_delivery_from']?.toString(), thread['offer_delivery_to']?.toString()).isNotEmpty)
             row(
               "Seller Delivery:",
               DeliveryPeriodPicker.periodText(thread['offer_delivery_from']?.toString(), thread['offer_delivery_to']?.toString()),
             ),
-          if (DeliveryPeriodPicker.periodText(thread['delivery_date']?.toString(), thread['delivery_date_to']?.toString()).isNotEmpty)
+          row(agreed ? "Agreed Price:" : "Current Offer:", pOffer == '-' ? '₹-' : "₹$pOffer / $priceUnit"),
+          row(agreed ? "Agreed Qty:" : "Current Qty:", qOffer == '-' ? '-' : "$qOffer $qtyUnit"),
+          if (DeliveryPeriodPicker.periodText(
+            (agreed ? thread['agreed_delivery_date'] : thread['delivery_date'])?.toString(),
+            (agreed ? thread['agreed_delivery_date_to'] : thread['delivery_date_to'])?.toString(),
+          ).isNotEmpty)
             row(
-              "Current Delivery:",
-              DeliveryPeriodPicker.periodText(thread['delivery_date']?.toString(), thread['delivery_date_to']?.toString()),
+              agreed ? "Agreed Delivery:" : "Current Delivery:",
+              DeliveryPeriodPicker.periodText(
+                (agreed ? thread['agreed_delivery_date'] : thread['delivery_date'])?.toString(),
+                (agreed ? thread['agreed_delivery_date_to'] : thread['delivery_date_to'])?.toString(),
+              ),
             ),
+          if (agreed && (thread['agreed_by']?.toString() ?? '').isNotEmpty)
+            row("Accepted by:", titleCase(thread['agreed_by'].toString()), bold: false),
           if (buyerRemark != null &&
               buyerRemark.toString().trim().isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -730,9 +1153,9 @@ class _OfferInterestNegotiationChatViewState
         .toString()
         .toUpperCase();
     final rawQuantity =
-        thread['buyer_required_quantity'] ??
         thread['initial_required_quantity'] ??
         thread['initial_quantity'] ??
+        thread['buyer_required_quantity'] ??
         thread['requested_quantity'] ??
         thread['required_quantity'] ??
         '-';
@@ -829,6 +1252,19 @@ class _OfferInterestNegotiationChatViewState
                 ),
               ),
             ],
+            if (DeliveryPeriodPicker.periodText(
+              thread['initial_delivery_date']?.toString(),
+              thread['initial_delivery_date_to']?.toString(),
+            ).isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                'Delivery: ${DeliveryPeriodPicker.periodText(thread['initial_delivery_date']?.toString(), thread['initial_delivery_date_to']?.toString())}',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                ),
+              ),
+            ],
             if (timestamp.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
@@ -893,6 +1329,7 @@ class _OfferInterestNegotiationChatViewState
         DateFormat('yyyy-MM-dd HH:mm:ss'),
         DateFormat('yyyy-MM-dd HH:mm'),
         DateFormat('dd-MM-yyyy HH:mm'),
+        DateFormat('dd/MM/yyyy HH:mm'),
       ];
       for (final fmt in formats) {
         try {
@@ -958,9 +1395,11 @@ class _OfferInterestNegotiationChatViewState
               : msg['created_at'],
         );
         final statusDesc = status.isNotEmpty ? status : action;
-        final currentKey = "${statusDesc.toLowerCase()}_$timeRaw";
+        // One confirmation event can be logged twice with slightly different seconds / wording
+        // ("buyer confirmed" status + "status changed to buyer confirmed" action). Same banner
+        // text at the same displayed minute is the same event, so it is shown once.
+        final currentKey = "${statusBannerTitle(role: role, status: status, action: action)}_${_formatNegotiationDateTime(timeRaw)}";
 
-        // Deduplicate consecutive identical status updates at the same timestamp
         if (currentKey == lastStatusKey && statusDesc.isNotEmpty) {
           continue;
         }
@@ -979,6 +1418,26 @@ class _OfferInterestNegotiationChatViewState
     }
 
     return widgets;
+  }
+
+  /// The banner text of a status event ("Buyer Confirmed the Deal", ...).
+  static String statusBannerTitle({required String role, required String status, required String action}) {
+    final cleanStatus = status.isNotEmpty ? status : action;
+    final lower = cleanStatus.toLowerCase();
+    if (lower.contains('confirm') || lower.contains('approv') || lower.contains('accept') || lower.contains('won')) {
+      if (lower.contains('buyer') || role == 'buyer') return 'Buyer Confirmed the Deal';
+      if (lower.contains('seller') || role == 'seller') return 'Seller Confirmed the Deal';
+      return 'Deal Confirmed';
+    }
+    if (lower.contains('reject') || lower.contains('cancel') || lower.contains('lost')) {
+      if (lower.contains('buyer') || role == 'buyer') return 'Buyer Rejected Negotiation';
+      if (lower.contains('seller') || role == 'seller') return 'Seller Rejected Negotiation';
+      return 'Negotiation Closed';
+    }
+    if (lower.contains('negotiat') || lower.contains('counter') || lower.contains('pend')) {
+      return 'Negotiation In Progress';
+    }
+    return cleanStatus.isNotEmpty ? cleanStatus[0].toUpperCase() + cleanStatus.substring(1) : 'System Notification';
   }
 
   Widget _statusEventBanner(
@@ -1092,8 +1551,9 @@ class _OfferInterestNegotiationChatViewState
 
   /// "Bags: 1,800 × 25 kg" from the thread's requested bags and packing weight.
   static String _packingLine(Map<String, dynamic> thread) {
-    final bags = int.tryParse('${thread['required_bag_count'] ?? ''}');
-    final packing = double.tryParse('${thread['packing_weight_kg'] ?? ''}');
+    // The first offer's bags and packing (later counters change the live ones).
+    final bags = int.tryParse('${thread['initial_required_bag_count'] ?? thread['required_bag_count'] ?? ''}');
+    final packing = double.tryParse('${thread['initial_packing_weight_kg'] ?? thread['packing_weight_kg'] ?? ''}');
     if (bags == null || bags <= 0) return '';
     final bagsText = NumberFormat('#,##0', 'en_IN').format(bags);
     if (packing == null || packing <= 0) return 'Bags: $bagsText';
@@ -1228,7 +1688,10 @@ class _OfferInterestNegotiationChatViewState
                     style: GoogleFonts.inter(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFFB45309),
+                      // Dark amber on light cards, light amber on dark ones.
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFFFB366)
+                          : const Color(0xFFB45309),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -1512,6 +1975,9 @@ class _OfferInterestNegotiationChatViewState
                       decimal: true,
                     ),
                     maxLength: 10,
+                    onChanged: (_) {
+                      if (_composerError != null) _setComposerError(null);
+                    },
                     decoration: inputDecoration(
                       label: 'Counter Qty',
                       hint: 'Optional',
@@ -1557,6 +2023,31 @@ class _OfferInterestNegotiationChatViewState
                 ],
               ),
             ),
+            if (_composerError != null)
+              Container(
+                key: const Key('counter-error'),
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.error_outline, size: 16, color: Colors.red),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _composerError!,
+                        style: GoogleFonts.inter(fontSize: 12, color: Colors.red.shade800, height: 1.3),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             SizedBox(
               width: double.infinity,
               height: 50,

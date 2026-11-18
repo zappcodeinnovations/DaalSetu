@@ -9,6 +9,7 @@ import '../model/driver_model.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../nav_bar/controller/nav_controller.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 /// Same fields as the web "Register Driver" form, including the license upload.
 class TransporterDriverForm extends StatefulWidget {
@@ -172,7 +173,7 @@ class _TransporterDriverFormState extends State<TransporterDriverForm> {
                         suffixIcon: const Icon(Icons.calendar_month, color: Color(0xFFE65100)),
                       ),
                       child: Text(
-                        _licenseExpiry ?? 'Select date',
+                        AppDate.date(_licenseExpiry, empty: 'Select date'),
                         style: GoogleFonts.inter(fontSize: 13),
                       ),
                     ),

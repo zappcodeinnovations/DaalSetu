@@ -645,17 +645,6 @@ class SettingsScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      TextButton(
-                        onPressed: () => Get.back(),
-                        child: Text(
-                          "Cancel",
-                          style: GoogleFonts.inter(
-                            color: theme.textTheme.bodyMedium?.color,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.secondaryOrange,
@@ -674,6 +663,17 @@ class SettingsScreen extends StatelessWidget {
                         label: const Text(
                           "Open",
                           style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      OutlinedButton(
+                        onPressed: () => Get.back(),
+                        child: Text(
+                          "Cancel",
+                          style: GoogleFonts.inter(
+                            color: theme.textTheme.bodyMedium?.color,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
@@ -809,16 +809,6 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: _isDeleting ? null : () => Navigator.of(context).pop(),
-          child: Text(
-            "Cancel",
-            style: TextStyle(
-              color: theme.textTheme.bodyMedium?.color,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
         FilledButton.icon(
           style: FilledButton.styleFrom(
             backgroundColor: theme.colorScheme.error,
@@ -869,6 +859,16 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
                 )
               : const Icon(Icons.delete_outline_rounded, size: 18),
           label: Text(_isDeleting ? "Deleting..." : "Delete Account"),
+        ),
+        OutlinedButton(
+          onPressed: _isDeleting ? null : () => Navigator.of(context).pop(),
+          child: Text(
+            "Cancel",
+            style: TextStyle(
+              color: theme.textTheme.bodyMedium?.color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
       ],
     );

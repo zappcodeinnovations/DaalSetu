@@ -794,7 +794,7 @@ class AdminDrawer extends StatelessWidget {
         const SizedBox(height: 10),
         Center(
           child: Text(
-            'DaalSetu • KISOR Platform',
+            'DaalSetu • Pulse Trading Platform',
             style: GoogleFonts.inter(
               fontSize: 11,
               fontWeight: FontWeight.w500,

@@ -9,6 +9,7 @@ import '../service/admin_challan_pdf_service.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/widgets/dispatch_bills_section.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 class AdminChallanDetailsView extends StatelessWidget {
   const AdminChallanDetailsView({super.key});
@@ -687,7 +688,6 @@ class AdminChallanDetailsView extends StatelessWidget {
         content: Text(message),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Back')),
           FilledButton(
             onPressed: () {
               Navigator.pop(dialogContext);
@@ -695,6 +695,7 @@ class AdminChallanDetailsView extends StatelessWidget {
             },
             child: Text(confirmText),
           ),
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Back')),
         ],
       ),
     );
@@ -799,10 +800,6 @@ class AdminChallanDetailsView extends StatelessWidget {
           ),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2563EB),
@@ -813,6 +810,10 @@ class AdminChallanDetailsView extends StatelessWidget {
                 controller.dispatchShipment();
               },
               child: const Text("Yes, Dispatch", style: TextStyle(color: Colors.white)),
+            ),
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
             ),
           ],
         );
@@ -941,13 +942,5 @@ class AdminChallanDetailsView extends StatelessWidget {
     }
   }
 
-  String _formatDate(String? raw) {
-    if (raw == null || raw.isEmpty) return "";
-    try {
-      final parsed = DateTime.parse(raw);
-      return "${parsed.day.toString().padLeft(2, '0')}/${parsed.month.toString().padLeft(2, '0')}/${parsed.year}";
-    } catch (_) {
-      return raw.split('T').first;
-    }
-  }
+  String _formatDate(String? raw) => AppDate.date(raw, empty: "");
 }
