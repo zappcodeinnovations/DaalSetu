@@ -355,7 +355,7 @@ class SellerProductView extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "â‚¹${product.amount} / ${product.unit}",
+                      "₹${product.amount} / ${product.unit}",
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w900,
                         color: theme.colorScheme.primary,
