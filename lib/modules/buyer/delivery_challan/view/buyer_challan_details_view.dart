@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/confirm_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
@@ -214,14 +215,15 @@ class BuyerChallanDetailsView extends StatelessWidget {
           ),
         ),
       ),
-      textConfirm: "CONFIRM",
-      confirmTextColor: Colors.white,
-      buttonColor: Colors.green,
-      onConfirm: () {
+      actions: confirmActions(
+        confirmText: "CONFIRM",
+        color: Colors.green,
+        onConfirm: () {
         Get.back();
         controller.markAsReceived(id, remarksController.text.trim());
       },
-      textCancel: "CANCEL",
+        cancelText: "CANCEL",
+      ),
     );
   }
 }

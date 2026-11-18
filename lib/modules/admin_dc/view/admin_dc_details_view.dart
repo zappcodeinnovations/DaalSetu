@@ -689,7 +689,6 @@ class AdminChallanDetailsView extends StatelessWidget {
         content: Text(message),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Back')),
           FilledButton(
             onPressed: () {
               Navigator.pop(dialogContext);
@@ -697,6 +696,7 @@ class AdminChallanDetailsView extends StatelessWidget {
             },
             child: Text(confirmText),
           ),
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Back')),
         ],
       ),
     );
@@ -801,10 +801,6 @@ class AdminChallanDetailsView extends StatelessWidget {
           ),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2563EB),
@@ -815,6 +811,10 @@ class AdminChallanDetailsView extends StatelessWidget {
                 controller.dispatchShipment();
               },
               child: const Text("Yes, Dispatch", style: TextStyle(color: Colors.white)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
             ),
           ],
         );

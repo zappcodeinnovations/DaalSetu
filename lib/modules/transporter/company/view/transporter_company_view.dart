@@ -290,7 +290,6 @@ class TransporterCompanyView extends StatelessWidget {
           "Are you sure you want to delete this company? This action cannot be undone.",
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
           TextButton(
             onPressed: () {
               Get.back();
@@ -298,6 +297,7 @@ class TransporterCompanyView extends StatelessWidget {
             },
             child: const Text("Delete", style: TextStyle(color: Colors.red)),
           ),
+          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
         ],
       ),
     );

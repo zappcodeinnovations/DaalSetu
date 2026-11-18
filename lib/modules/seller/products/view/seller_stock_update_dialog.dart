@@ -110,19 +110,6 @@ class SellerStockUpdateDialog {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Expanded(
-                          child: OutlinedButton(
-                            onPressed: Get.back,
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
-                              foregroundColor: Colors.amber.shade800,
-                              side: BorderSide(color: Colors.amber.shade700),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                            child: const _OneLine("CANCEL"),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
                           child: ElevatedButton(
                             onPressed: submit,
                             style: ElevatedButton.styleFrom(
@@ -133,6 +120,19 @@ class SellerStockUpdateDialog {
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
                             child: const _OneLine("UPDATE STOCK"),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: Get.back,
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              foregroundColor: Colors.amber.shade800,
+                              side: BorderSide(color: Colors.amber.shade700),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            child: const _OneLine("CANCEL"),
                           ),
                         ),
                       ],

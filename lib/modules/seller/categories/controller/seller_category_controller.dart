@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/confirm_actions.dart';
 import '../model/category_dashboard_model.dart';
 import '../model/seller_category_model.dart';
 import '../../../../services/seller_services.dart';
@@ -243,14 +244,15 @@ class SellerCategoryController extends GetxController {
       title: "Confirm Full Delete",
       middleText:
           "This category has sub-categories. Do you want to delete the full category tree?",
-      textConfirm: "DELETE ALL",
-      confirmTextColor: Colors.white,
-      buttonColor: Colors.red,
-      onConfirm: () {
+      actions: confirmActions(
+        confirmText: "DELETE ALL",
+        color: Colors.red,
+        onConfirm: () {
         Get.back();
         deleteCategory(id, force: true);
       },
-      textCancel: "CANCEL",
+        cancelText: "CANCEL",
+      ),
     );
   }
 

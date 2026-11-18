@@ -96,7 +96,6 @@ class _AddCompanyViewState extends State<AddCompanyView> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
           ElevatedButton(
             onPressed: () {
               final newCity = textController.text.trim();
@@ -110,6 +109,7 @@ class _AddCompanyViewState extends State<AddCompanyView> {
             },
             child: const Text("Select"),
           ),
+          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
         ],
       ),
     );

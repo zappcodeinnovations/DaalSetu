@@ -309,10 +309,6 @@ class _SellerBuyerOfferDetailViewState
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text("CANCEL"),
-          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: SellerUi.primary),
             onPressed: () {
@@ -323,6 +319,10 @@ class _SellerBuyerOfferDetailViewState
               Get.back(result: true);
             },
             child: const Text("SEND", style: TextStyle(color: Colors.white)),
+          ),
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text("CANCEL"),
           ),
         ],
       ),

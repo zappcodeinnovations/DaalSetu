@@ -1347,11 +1347,6 @@ DeliveryPeriodPicker(
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        TextButton(
-                          onPressed: () => Get.back(),
-                          child: const Text("Cancel"),
-                        ),
-                        const SizedBox(width: 8),
                         ElevatedButton(
                           onPressed: () async {
                             if (qtyCtrl.text.trim().isEmpty ||
@@ -1387,6 +1382,11 @@ DeliveryPeriodPicker(
                             );
                           },
                           child: const Text("Submit Offer"),
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton(
+                          onPressed: () => Get.back(),
+                          child: const Text("Cancel"),
                         ),
                       ],
                     ),
@@ -1444,10 +1444,6 @@ DeliveryPeriodPicker(
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(
-                    onPressed: () => Get.back(),
-                    child: const Text("Cancel"),
-                  ),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isConfirm ? Colors.green : Colors.red,
@@ -1466,6 +1462,10 @@ DeliveryPeriodPicker(
                       });
                     },
                     child: Text(isConfirm ? "Confirm" : "Reject"),
+                  ),
+                  TextButton(
+                    onPressed: () => Get.back(),
+                    child: const Text("Cancel"),
                   ),
                 ],
               ),

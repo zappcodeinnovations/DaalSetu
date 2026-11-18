@@ -523,13 +523,13 @@ class TransporterVehiclesView extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
             onPressed: () => Get.back(result: true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text("Delete"),
+          ),
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text("Cancel"),
           ),
         ],
       ),

@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/confirm_actions.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -838,23 +839,6 @@ class SellerCategoryView extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      TextButton(
-                        onPressed: () => Get.back(),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
-                          ),
-                        ),
-                        child: Text(
-                          "CANCEL",
-                          style: TextStyle(
-                            color: theme.disabledColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
                       ElevatedButton(
                         onPressed: onConfirm,
                         style: ElevatedButton.styleFrom(
@@ -876,6 +860,23 @@ class SellerCategoryView extends StatelessWidget {
                           ),
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      TextButton(
+                        onPressed: () => Get.back(),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                        ),
+                        child: Text(
+                          "CANCEL",
+                          style: TextStyle(
+                            color: theme.disabledColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -892,14 +893,15 @@ class SellerCategoryView extends StatelessWidget {
       title: "Delete Category",
       middleText:
           "Are you sure you want to delete this category? This action cannot be undone.",
-      textConfirm: "DELETE",
-      confirmTextColor: Colors.white,
-      buttonColor: Colors.red,
-      onConfirm: () {
+      actions: confirmActions(
+        confirmText: "DELETE",
+        color: Colors.red,
+        onConfirm: () {
         Get.back();
         Get.find<SellerCategoryController>().deleteCategory(id);
       },
-      textCancel: "CANCEL",
+        cancelText: "CANCEL",
+      ),
     );
   }
 }

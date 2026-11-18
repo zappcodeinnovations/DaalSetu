@@ -264,13 +264,13 @@ class _AdminRoleEditorScreenState extends State<AdminRoleEditorScreen> {
         title: const Text('Delete role?'),
         content: const Text('Users assigned to it will lose this role.'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
           FilledButton.tonal(
             onPressed: () => Navigator.pop(dialogContext, true),
             child: const Text('Delete'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
           ),
         ],
       ),

@@ -308,20 +308,6 @@ class BuyerMyInterestsView extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
-                                OutlinedButton(
-                                  onPressed: () => Get.back(),
-                                  style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                      vertical: 12,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  child: const Text("Cancel"),
-                                ),
-                                const SizedBox(width: 12),
                                 ElevatedButton(
                                   onPressed: () async {
                                     if (qtyCtrl.text.trim().isEmpty ||
@@ -373,6 +359,20 @@ class BuyerMyInterestsView extends StatelessWidget {
                                     ),
                                   ),
                                   child: const Text("Save Changes"),
+                                ),
+                                const SizedBox(width: 12),
+                                OutlinedButton(
+                                  onPressed: () => Get.back(),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: const Text("Cancel"),
                                 ),
                               ],
                             ),

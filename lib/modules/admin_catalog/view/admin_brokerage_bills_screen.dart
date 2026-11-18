@@ -1544,16 +1544,16 @@ class _AdminBrokerageBillDetailScreenState
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Back'),
-          ),
           FilledButton(
             onPressed: () {
               if (needsReason && reason.text.trim().isEmpty) return;
               Navigator.pop(dialogContext, true);
             },
             child: Text(confirmLabel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Back'),
           ),
         ],
       ),
@@ -1804,10 +1804,6 @@ class _AdminBrokerageBillDetailScreenState
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext, {
                 if (billingCompany.isNotEmpty)
@@ -1821,6 +1817,10 @@ class _AdminBrokerageBillDetailScreenState
                 'default_brokerage_rate': rate.text.trim(),
               }),
               child: const Text('Save'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
             ),
           ],
         ),
