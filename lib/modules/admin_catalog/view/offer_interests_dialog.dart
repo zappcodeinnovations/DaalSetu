@@ -816,7 +816,9 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
 
     // ── On Mobile Phones: Responsive Card Layout (Zero Horizontal Scroll, Zero Overflow)
     if (isMobile) {
+      // shrinkWrap: the dialog is only as tall as its cards (no empty space under a single card).
       return ListView.separated(
+        shrinkWrap: true,
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
         itemCount: interests.length,
         separatorBuilder: (_, __) => const SizedBox(height: 10),

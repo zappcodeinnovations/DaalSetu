@@ -6,6 +6,8 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../controller/add_user_controller.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import '../controller/user_controller.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/utils/input_validators.dart';
 
@@ -28,7 +30,8 @@ class AddUserScreenState extends State<AddUserScreen> {
   final panController = TextEditingController();
   final gstController = TextEditingController();
 
-  final roles = const ["buyer", "seller", "both_sellerandbuyer", "transporter", "admin", "salesman"];
+  // Same options and order as the web Create New User form.
+  final roles = const ["admin", "sub_admin", "buyer", "seller", "transporter", "both_sellerandbuyer"];
   final genders = const ["male", "female", "other"];
 
   final selectedRole = "buyer".obs;
@@ -513,7 +516,7 @@ class AddUserScreenState extends State<AddUserScreen> {
             .map(
               (e) => DropdownMenuItem(
                 value: e,
-                child: Text(e == 'both_sellerandbuyer' ? 'BUYER & SELLER' : e.toUpperCase()),
+                child: Text(items == roles ? UserController.roleLabel(e) : e.toUpperCase()),
               ),
             )
             .toList(),

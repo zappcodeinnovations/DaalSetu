@@ -351,22 +351,34 @@ class _SellerContractDetailViewState extends State<SellerContractDetailView> {
                           SellerUi.infoRow('Dispatched', consignment['is_dispatched'] == true ? 'Yes' : 'No'),
                           SellerUi.infoRow('Received', _text(consignment['received_label'])),
                         ]),
-                        if (consignment['can_mark_ready'] == true)
+                        if (consignment['can_mark_ready'] == true) ...[
+                          const SizedBox(height: 8),
                           SizedBox(
-                            height: 50,
+                            width: double.infinity,
                             child: ElevatedButton.icon(
                               onPressed: _markReady,
-                              icon: const Icon(Icons.local_shipping, color: Colors.white),
+                              icon: const Icon(Icons.local_shipping, size: 20, color: Colors.black87),
                               label: const Text(
                                 'MARK READY FOR LOADING',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.2,
+                                ),
                               ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: SellerUi.primary,
+                                minimumSize: const Size.fromHeight(52),
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                alignment: Alignment.center,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),
                             ),
                           ),
+                          // Keep the button clear of the phone's gesture / 3-button bar.
+                          SizedBox(height: 24 + MediaQuery.of(context).padding.bottom),
+                        ],
                       ],
                     ],
                   ),

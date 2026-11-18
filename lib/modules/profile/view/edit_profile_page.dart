@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,6 +12,9 @@ import '../../../theme/glass_widgets.dart';
 import '../../../utils/tax_id_formatters.dart';
 import '../controller/profile_controller.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/widgets/profile_photo_cropper.dart';
+import 'package:http/http.dart' as http;
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/utils/input_validators.dart';
 
@@ -120,16 +125,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       } catch (_) {}
     }
 
-    final now = DateTime.now();
-    if (initial.isAfter(now)) {
-      initial = now;
+    // Date of birth must be a past date: today and future dates are not allowed.
+    final today = DateTime.now();
+    final lastAllowed = DateTime(today.year, today.month, today.day).subtract(const Duration(days: 1));
+    if (initial.isAfter(lastAllowed)) {
+      initial = lastAllowed;
     }
 
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: initial,
       firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
+      lastDate: lastAllowed,
       builder: (context, child) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return Theme(
@@ -157,6 +164,55 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _dobController.text = DateFormat('dd/MM/yyyy').format(picked);
       });
     }
+  }
+
+  /// Crops the chosen photo, or the one already on the profile.
+  Future<void> _cropProfilePhoto() async {
+    Uint8List? bytes;
+    try {
+      if (_profileImage != null) {
+        bytes = await _profileImage!.readAsBytes();
+      } else {
+        final current = controller.profile.value?.profileImage;
+        if (current != null && current.isNotEmpty) {
+          final response = await http.get(Uri.parse(controller.profileImageUrl(current)));
+          if (response.statusCode == 200) bytes = response.bodyBytes;
+        }
+      }
+    } catch (_) {}
+    if (bytes == null) {
+      AppSnackbar.showError(message: 'Choose a photo first, then crop it.');
+      return;
+    }
+    final cropped = await showProfilePhotoCropper(bytes);
+    if (cropped == null || !mounted) return;
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/profile-${DateTime.now().millisecondsSinceEpoch}.jpg');
+    await file.writeAsBytes(cropped);
+    if (!mounted) return;
+    setState(() => _profileImage = XFile(file.path));
+  }
+
+  Future<void> _removeProfilePhoto() async {
+    final hasPicked = _profileImage != null;
+    final hasStored = (controller.profile.value?.profileImage ?? '').isNotEmpty;
+    if (hasPicked && !hasStored) {
+      setState(() => _profileImage = null);
+      return;
+    }
+    final ok = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('Remove profile photo?'),
+        content: const Text('Your photo will be deleted from your profile.'),
+        actions: [
+          TextButton(onPressed: () => Get.back(result: false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Get.back(result: true), child: const Text('Remove')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final removed = await controller.removeProfilePhoto();
+    if (removed && mounted) setState(() => _profileImage = null);
   }
 
   Future<void> _pickImage(String type) async {
@@ -446,7 +502,36 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 10),
+                  // Photo actions: change, crop and delete.
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton.icon(
+                        key: const Key('profile-photo-change'),
+                        onPressed: () => _pickImage('profile'),
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                        label: const Text('Change'),
+                      ),
+                      TextButton.icon(
+                        key: const Key('profile-photo-crop-btn'),
+                        onPressed: _cropProfilePhoto,
+                        icon: const Icon(Icons.crop_rounded, size: 18),
+                        label: const Text('Crop'),
+                      ),
+                      Obx(() {
+                        final stored = (controller.profile.value?.profileImage ?? '').isNotEmpty;
+                        if (!stored && _profileImage == null) return const SizedBox.shrink();
+                        return TextButton.icon(
+                          key: const Key('profile-photo-remove'),
+                          onPressed: _removeProfilePhoto,
+                          icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.redAccent),
+                          label: const Text('Remove', style: TextStyle(color: Colors.redAccent)),
+                        );
+                      }),
+                    ],
+                  ),
+                  const SizedBox(height: 22),
 
                   _buildLabel("First Name"),
                   GlassTextField(

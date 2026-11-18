@@ -1,6 +1,42 @@
-
 import 'package:flutter/material.dart';
+import 'package:daalsetu/services/seller_services.dart';
 import 'package:daalsetu/theme/app_theme.dart';
+
+/// One stock movement from `/api/offers/<id>/stock-history/`, shaped for the cards below.
+Map<String, dynamic> _stockRow(Map<String, dynamic> row) {
+  String text(dynamic v) => v == null || v.toString() == 'null' ? '' : v.toString();
+  final unit = text(row['quantity_unit']).toUpperCase();
+  final change = text(row['quantity_change_display']).isNotEmpty
+      ? text(row['quantity_change_display'])
+      : '${text(row['quantity_change'])} $unit'.trim();
+  final bags = row['updated_bag_count'] ?? row['previous_bag_count'];
+  final performer = row['performed_by'];
+  return {
+    'actionType': text(row['action_label']).isNotEmpty
+        ? text(row['action_label'])
+        : text(row['action_type']),
+    'bags': text(bags).isEmpty ? '-' : text(bags),
+    'packingKg': text(row['packing_weight_kg']).isEmpty ? '-' : text(row['packing_weight_kg']),
+    'quantityChange': change,
+    'previousStock': '${text(row['previous_stock'])} $unit'.trim(),
+    'updatedStock': '${text(row['updated_stock'])} $unit'.trim(),
+    'dateTime': text(row['created_at_display']).isNotEmpty
+        ? text(row['created_at_display'])
+        : text(row['created_at']),
+    'performedBy': text(performer is Map ? performer['name'] : performer),
+  };
+}
+
+/// Loads the real stock history of an offer (the same API the seller screen uses).
+Future<List<Map<String, dynamic>>> loadStockHistory(String productId) async {
+  final id = int.tryParse(productId);
+  if (id == null) return [];
+  final data = await SellerServices.getOfferStockHistory(id);
+  return (data['results'] as List? ?? const [])
+      .whereType<Map>()
+      .map((e) => _stockRow(Map<String, dynamic>.from(e)))
+      .toList();
+}
 
 class StockHistoryDialog extends StatefulWidget {
   final String productId;
@@ -21,37 +57,74 @@ class StockHistoryDialog extends StatefulWidget {
 }
 
 class _StockHistoryDialogState extends State<StockHistoryDialog> {
-  // Mock data since API endpoint for Stock History wasn't explicitly provided
-  final List<Map<String, dynamic>> mockHistory = [
-    {
-      'actionType': 'Stock Added',
-      'bags': 400,
-      'packingKg': '30.000',
-      'quantityChange': '+120.000 QTL',
-      'previousStock': '0.000 QTL',
-      'updatedStock': '120.000 QTL',
-      'dateTime': '28-07-2026 07:26 PM',
-      'performedBy': 'MUKESH',
+  List<Map<String, dynamic>> _history = [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final rows = await loadStockHistory(widget.productId);
+      if (!mounted) return;
+      setState(() => _history = rows);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
-  ];
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 104,
+            child: Text(label, style: TextStyle(fontSize: 12.5, color: AppTheme.textMuted)),
+          ),
+          Expanded(
+            child: Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: Color(0xFFFFE0B2), width: 1.2),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+          width: 1.2,
+        ),
       ),
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.9,
-        constraints: const BoxConstraints(maxWidth: 1000, maxHeight: 600),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 560, maxHeight: size.height * 0.85),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Header
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(18, 14, 8, 10),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: Row(
@@ -59,9 +132,11 @@ class _StockHistoryDialogState extends State<StockHistoryDialog> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFF7ED),
+                            color: isDark ? const Color(0xFF2C241B) : const Color(0xFFFFF7ED),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFFFE0B2)),
+                            border: Border.all(
+                              color: isDark ? const Color(0xFF4A3828) : const Color(0xFFFFE0B2),
+                            ),
                           ),
                           child: const Icon(Icons.inventory_2_outlined, color: Color(0xFFEA580C), size: 22),
                         ),
@@ -76,7 +151,10 @@ class _StockHistoryDialogState extends State<StockHistoryDialog> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                               const SizedBox(height: 2),
-                              Text("${mockHistory.length} record(s)", style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                              Text(
+                                _loading ? "Loading..." : "${_history.length} record(s)",
+                                style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                              ),
                             ],
                           ),
                         ),
@@ -91,165 +169,180 @@ class _StockHistoryDialogState extends State<StockHistoryDialog> {
               ),
             ),
             const Divider(height: 1),
-            
-            // Product Info Box
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Container(
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF7ED).withValues(alpha: 0.5),
-                  border: Border.all(color: const Color(0xFFFFE0B2)),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: Text.rich(
-                        TextSpan(
-                          children: [
-                            const TextSpan(text: "Product: ", style: TextStyle(fontWeight: FontWeight.bold)),
-                            TextSpan(text: widget.productTitle),
-                          ]
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 1,
-                      child: Text.rich(
-                        TextSpan(
-                          children: [
-                            const TextSpan(text: "Seller: ", style: TextStyle(fontWeight: FontWeight.bold)),
-                            TextSpan(text: widget.sellerName),
-                          ]
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 1,
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: Text.rich(
-                          TextSpan(
-                            children: [
-                              const TextSpan(text: "Current Stock: ", style: TextStyle(fontWeight: FontWeight.bold)),
-                              TextSpan(text: widget.currentStock),
-                            ]
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Columns Button Placeholder
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.view_column, size: 16),
-                  label: const Text("Columns"),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // Data Table
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppTheme.borderColor),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.vertical,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                        headingRowColor: WidgetStateProperty.all(Theme.of(context).cardColor),
-                        columns: [
-                          DataColumn(label: Text('ACTION TYPE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.textMuted))),
-                          DataColumn(label: Text('BAGS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.textMuted))),
-                          DataColumn(label: Text('PACKING KG', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.textMuted))),
-                          DataColumn(label: Text('QUANTITY CHANGE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.textMuted))),
-                          DataColumn(label: Text('PREVIOUS STOCK', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.textMuted))),
-                          DataColumn(label: Text('UPDATED STOCK', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.textMuted))),
-                          DataColumn(label: Text('DATE & TIME', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.textMuted))),
-                          DataColumn(label: Text('PERFORMED BY', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.textMuted))),
-                        ],
-                        rows: mockHistory.map((h) => DataRow(
-                          cells: [
-                            DataCell(Text(h['actionType'].toString())),
-                            DataCell(Text(h['bags'].toString())),
-                            DataCell(Text(h['packingKg'].toString())),
-                            DataCell(Text(h['quantityChange'].toString())),
-                            DataCell(Text(h['previousStock'].toString())),
-                            DataCell(Text(h['updatedStock'].toString())),
-                            DataCell(Text(h['dateTime'].toString())),
-                            DataCell(Text(h['performedBy'].toString())),
-                          ],
-                        )).toList(),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            const Divider(height: 1),
-            // Footer Actions
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Wrap(
-                spacing: 12,
-                runSpacing: 8,
-                alignment: WrapAlignment.end,
-                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  FilledButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => StockHistoryFullScreen(
-                            productId: widget.productId,
-                            productTitle: widget.productTitle,
-                            sellerName: widget.sellerName,
-                            currentStock: widget.currentStock,
-                            history: mockHistory,
-                          ),
-                        ),
-                      );
-                    },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFF57C00),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFFF7ED),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF333333) : const Color(0xFFFFE0B2),
+                      ),
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Text("Open Full Page", style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: Column(
+                      children: [
+                        _infoRow('Product', widget.productTitle),
+                        _infoRow('Seller', widget.sellerName),
+                        _infoRow('Current Stock', widget.currentStock),
+                      ],
+                    ),
                   ),
-                  OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  const SizedBox(height: 14),
+                  if (_loading)
+                    const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (_error != null)
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          Text(_error!, textAlign: TextAlign.center),
+                          TextButton(onPressed: _load, child: const Text('Retry')),
+                        ],
+                      ),
+                    )
+                  else if (_history.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Center(child: Text('No stock movements yet.')),
+                    )
+                  else
+                    for (final record in _history) StockHistoryRecordCard(record: record),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => StockHistoryFullScreen(
+                              productId: widget.productId,
+                              productTitle: widget.productTitle,
+                              sellerName: widget.sellerName,
+                              currentStock: widget.currentStock,
+                              history: _history,
+                            ),
+                          ),
+                        );
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFFF57C00),
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(0, 46),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text(
+                        'Open Full Page',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
-                    child: const Text("Close"),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 46),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('Close'),
+                    ),
                   ),
                 ],
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One stock movement as a card (shared by the dialog and the full page).
+class StockHistoryRecordCard extends StatelessWidget {
+  const StockHistoryRecordCard({super.key, required this.record});
+
+  final Map<String, dynamic> record;
+
+  Widget _detailItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+        const SizedBox(height: 2),
+        Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      record['actionType']?.toString() ?? '',
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  record['dateTime']?.toString() ?? '',
+                  style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(child: _detailItem('Quantity Change', record['quantityChange']?.toString() ?? '')),
+                Expanded(
+                  child: _detailItem('Bags / Packing', '${record['bags']} / ${record['packingKg']} kg'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(child: _detailItem('Previous Stock', record['previousStock']?.toString() ?? '')),
+                Expanded(child: _detailItem('Updated Stock', record['updatedStock']?.toString() ?? '')),
+              ],
+            ),
+            const Divider(height: 16),
+            Text(
+              'Performed by: ${record['performedBy'] ?? ''}',
+              style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
             ),
           ],
         ),
@@ -279,14 +372,13 @@ class StockHistoryFullScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Stock History: $productTitle",
+          'Stock History: $productTitle',
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Info Card
           Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: Padding(
@@ -307,96 +399,28 @@ class StockHistoryFullScreen extends StatelessWidget {
                     ],
                   ),
                   const Divider(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Seller: $sellerName", style: TextStyle(color: AppTheme.textMuted)),
-                      Text("Current Stock: $currentStock", style: const TextStyle(fontWeight: FontWeight.bold)),
-                    ],
-                  ),
+                  Text('Seller: $sellerName', style: TextStyle(color: AppTheme.textMuted)),
+                  const SizedBox(height: 4),
+                  Text('Current Stock: $currentStock', style: const TextStyle(fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 16),
-          // History Records
           Text(
-            "Transaction Records (${history.length})",
+            'Transaction Records (${history.length})',
             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          ...history.map((record) => Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.green.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              record['actionType'] ?? '',
-                              style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12),
-                            ),
-                          ),
-                          Text(
-                            record['dateTime'] ?? '',
-                            style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _detailItem("Quantity Change", record['quantityChange'] ?? ''),
-                          ),
-                          Expanded(
-                            child: _detailItem("Bags / Packing", "${record['bags']} / ${record['packingKg']} kg"),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _detailItem("Previous Stock", record['previousStock'] ?? ''),
-                          ),
-                          Expanded(
-                            child: _detailItem("Updated Stock", record['updatedStock'] ?? ''),
-                          ),
-                        ],
-                      ),
-                      const Divider(height: 16),
-                      Text(
-                        "Performed by: ${record['performedBy'] ?? ''}",
-                        style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
-                      ),
-                    ],
-                  ),
-                ),
-              )),
+          if (history.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: Text('No stock movements yet.')),
+            )
+          else
+            for (final record in history) StockHistoryRecordCard(record: record),
         ],
       ),
-    );
-  }
-
-  Widget _detailItem(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
-        const SizedBox(height: 2),
-        Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-      ],
     );
   }
 }

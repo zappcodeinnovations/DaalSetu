@@ -27,7 +27,7 @@ class TransporterUsersView extends StatelessWidget {
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         trailing: IconButton(
-          icon: const Icon(IconlyLight.swap, color: Colors.white),
+          icon: const Icon(Icons.refresh_rounded, color: Colors.white),
           tooltip: "Refresh",
           onPressed: controller.fetchUsers,
         ),

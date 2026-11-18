@@ -9,6 +9,7 @@ import '../../../../services/seller_services.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/app_snackbar.dart';
 import 'buyer_offer_details_view.dart';
+import 'edit_buyer_requirement_view.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 
@@ -782,6 +783,8 @@ class _BuyerRequestManagementViewState
         !_isRequirement && actionPermissions['can_buyer_cancel'] == true;
     final canClose =
         _isRequirement && actionPermissions['can_close'] == true;
+    final permissions = item['permissions'] is Map ? item['permissions'] as Map : actionPermissions;
+    final canEdit = _isRequirement && permissions['can_edit'] == true;
 
     final rfqCode = item['buyer_id'] ??
         item['rfq_code'] ??
@@ -914,8 +917,24 @@ class _BuyerRequestManagementViewState
             ),
           ],
           const Divider(height: 22),
-          Row(
+          Wrap(
+            spacing: 4,
             children: [
+              if (canEdit)
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.edit_outlined, size: 17),
+                  label: const Text('Edit'),
+                  onPressed: () async {
+                    try {
+                      final details = await BuyerServices.getBuyerRequirementDetails(item['id']);
+                      if (!mounted) return;
+                      final saved = await Get.to<bool>(() => EditBuyerRequirementView(requirement: details));
+                      if (saved == true && mounted) await _refreshVisibleRows();
+                    } catch (error) {
+                      AppSnackbar.showError(message: error.toString());
+                    }
+                  },
+                ),
               TextButton.icon(
                 onPressed: numericId == null
                     ? null
@@ -934,7 +953,6 @@ class _BuyerRequestManagementViewState
                 icon: const Icon(Icons.history_rounded, size: 17),
                 label: const Text('History'),
               ),
-              const Spacer(),
               if (canCancel)
                 TextButton(
                   onPressed: () => _cancelBuyerOffer(item),

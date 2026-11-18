@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Android 13+: needed to show push notifications -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
 
     <!-- Prevent dependencies from injecting broad media permissions rejected by Google Play -->
@@ -12,6 +14,17 @@
         android:label="Daal Setu"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
+        <!-- Push notifications (FCM): channel and icon used when the app is closed -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="daalsetu_alerts_v2" />
+        <!-- Status-bar icon must be a white silhouette (a coloured icon shows as a white box) -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_daalsetu" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/push_accent" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

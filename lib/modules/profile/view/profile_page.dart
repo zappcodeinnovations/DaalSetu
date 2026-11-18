@@ -68,6 +68,24 @@ class ProfileScreen extends StatelessWidget {
           ),
         ),
         subtitle: "Account credentials & KYC verification",
+        trailing: PopupMenuButton<String>(
+          tooltip: 'More options',
+          icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
+          onSelected: (value) {
+            if (value == 'edit') {
+              Get.toNamed(AppRoutes.editProfile);
+            } else if (value == 'terms') {
+              _openLegal('https://www.daall-setu.com/terms-and-conditions/');
+            } else if (value == 'privacy') {
+              _openLegal('https://www.daall-setu.com/privacy-policy/');
+            }
+          },
+          itemBuilder: (context) => const [
+            PopupMenuItem(value: 'edit', child: Text('Edit Profile')),
+            PopupMenuItem(value: 'terms', child: Text('Terms & Conditions')),
+            PopupMenuItem(value: 'privacy', child: Text('Privacy Policy')),
+          ],
+        ),
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
@@ -179,6 +197,23 @@ class ProfileScreen extends StatelessWidget {
                   iconColor: const Color(0xFF8B5CF6),
                   iconText: "ID",
                   documentUrl: user.aadhaarImage,
+                ),
+
+                const SizedBox(height: 28),
+                _buildSectionTitle(context, Icons.gavel_rounded, "LEGAL"),
+                const SizedBox(height: 16),
+                _legalRow(
+                  context,
+                  icon: IconlyLight.document,
+                  title: "Terms & Conditions",
+                  url: 'https://www.daall-setu.com/terms-and-conditions/',
+                ),
+                const SizedBox(height: 12),
+                _legalRow(
+                  context,
+                  icon: IconlyLight.shield_done,
+                  title: "Privacy Policy",
+                  url: 'https://www.daall-setu.com/privacy-policy/',
                 ),
 
                 const SizedBox(height: 40),
@@ -357,6 +392,46 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _openLegal(String url) async {
+    final opened = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    if (!opened) {
+      AppSnackbar.showError(message: 'Could not open the page.');
+    }
+  }
+
+  Widget _legalRow(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String url,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () => _openLegal(url),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Get.theme.dividerColor.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: accentGold, size: 22),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(color: textDark, fontWeight: FontWeight.w600, fontSize: 14),
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: textLight),
+          ],
+        ),
       ),
     );
   }

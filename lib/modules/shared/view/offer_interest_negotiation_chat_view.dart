@@ -441,7 +441,13 @@ class _OfferInterestNegotiationChatViewState
           ? const Center(child: Text('Negotiation is not available.'))
           : Column(
               children: [
-                _summary(context, thread),
+                // Summary and composer are capped, so the chat history always keeps room.
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.28,
+                  ),
+                  child: SingleChildScrollView(child: _summary(context, thread)),
+                ),
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: _load,
@@ -467,7 +473,13 @@ class _OfferInterestNegotiationChatViewState
                 if (thread['deal_expired'] == true)
                   _waitingBar(thread['blocked_reason']?.toString()),
                 if (canAccept || canReject) _decisionBar(canAccept, canReject),
-                if (canReply) _composer(context),
+                if (canReply)
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.of(context).size.height * 0.4,
+                    ),
+                    child: SingleChildScrollView(child: _composer(context)),
+                  ),
                 if (!isReadOnly &&
                     !canAccept &&
                     !canReject &&
@@ -1115,13 +1127,23 @@ class _OfferInterestNegotiationChatViewState
     );
     final action = text(message['action']).replaceAll('_', ' ');
     final status = text(message['to_status']).replaceAll('_', ' ');
-    final body = <String>[
-      if (price.isNotEmpty) 'Price: ₹$price / ${message['price_unit'] ?? ''}',
+    // Every changed parameter is shown as its own labelled, highlighted row.
+    final changes = <MapEntry<String, String>>[
+      if (price.isNotEmpty)
+        MapEntry('Target Price', '₹$price / ${message['price_unit'] ?? ''}'),
       if (quantity.isNotEmpty)
-        'Quantity: $quantity ${message['quantity_unit'] ?? ''}',
-      if (bags.isNotEmpty) 'Bags: $bags × $packing kg',
+        MapEntry('Quantity', '$quantity ${message['quantity_unit'] ?? ''}'),
+      if (bags.isNotEmpty) MapEntry('Bags', '$bags × $packing kg'),
       if (text(message['counter_delivery_from']).isNotEmpty)
-        'Delivery: ${DeliveryPeriodPicker.periodText(text(message['counter_delivery_from']), text(message['counter_delivery_to']))}',
+        MapEntry(
+          'Delivery Date',
+          DeliveryPeriodPicker.periodText(
+            text(message['counter_delivery_from']),
+            text(message['counter_delivery_to']),
+          ),
+        ),
+    ];
+    final body = <String>[
       if (remark.isNotEmpty) remark,
       if (status.isNotEmpty && (price.isNotEmpty || quantity.isNotEmpty))
         'Status: $status',
@@ -1136,7 +1158,8 @@ class _OfferInterestNegotiationChatViewState
             : role.isEmpty
             ? 'System'
             : role[0].toUpperCase() + role.substring(1),
-        body: body.isEmpty ? action : body,
+        body: body.isEmpty && changes.isEmpty ? action : body,
+        changes: changes,
         time:
             message['timestamp']?.toString() ??
             message['created_at']?.toString(),
@@ -1150,6 +1173,7 @@ class _OfferInterestNegotiationChatViewState
     required String title,
     required String body,
     required String? time,
+    List<MapEntry<String, String>> changes = const [],
   }) {
     final formattedTime = _formatNegotiationDateTime(time);
     return Container(
@@ -1184,8 +1208,45 @@ class _OfferInterestNegotiationChatViewState
               fontWeight: FontWeight.w700,
             ),
           ),
+          for (final change in changes) ...[
+            const SizedBox(height: 6),
+            Container(
+              key: Key('negotiation-change-${change.key}'),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF58220).withValues(alpha: .14),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: const Color(0xFFF58220).withValues(alpha: .45),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    change.key,
+                    style: GoogleFonts.inter(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFFB45309),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      change.value,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (body.isNotEmpty) ...[
-            const SizedBox(height: 3),
+            const SizedBox(height: 6),
             Text(body, style: GoogleFonts.inter(fontSize: 13, height: 1.35)),
           ],
           if (formattedTime.isNotEmpty) ...[

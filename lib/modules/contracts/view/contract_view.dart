@@ -413,13 +413,35 @@ class _ContractsScreenState extends State<ContractsScreen> {
                     const SizedBox(width: 8),
                   ],
                   Expanded(
-                    child: Text(
-                      'Tap to view complete details  ›',
-                      textAlign: _isSuperAdmin ? TextAlign.end : TextAlign.start,
-                      style: TextStyle(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
+                    child: Align(
+                      alignment: _isSuperAdmin ? Alignment.centerRight : Alignment.centerLeft,
+                      // Pill-shaped button; the whole card is tappable, this makes the action visible.
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(color: theme.colorScheme.primary),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                'Tap to view complete details',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(Icons.chevron_right_rounded, size: 16, color: theme.colorScheme.primary),
+                          ],
+                        ),
                       ),
                     ),
                   ),

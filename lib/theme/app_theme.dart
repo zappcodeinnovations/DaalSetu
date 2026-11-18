@@ -73,6 +73,13 @@ class AppTheme {
         onSurface: Colors.white,
       ),
 
+      // Chips (filter tabs): selected and unselected labels keep a high-contrast colour.
+      chipTheme: ChipThemeData(
+        labelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        secondaryLabelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        checkmarkColor: Colors.white,
+      ),
+
       appBarTheme: AppBarTheme(
         backgroundColor: bgDarkNavy,
         elevation: 0,
@@ -240,6 +247,13 @@ class AppTheme {
         onError: Colors.white,
         surface: cardLight,
         onSurface: textPrimaryLight,
+      ),
+
+      // Chips (filter tabs): selected and unselected labels keep a high-contrast colour.
+      chipTheme: ChipThemeData(
+        labelStyle: const TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w600),
+        secondaryLabelStyle: const TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w700),
+        checkmarkColor: const Color(0xFF0F172A),
       ),
 
       appBarTheme: AppBarTheme(

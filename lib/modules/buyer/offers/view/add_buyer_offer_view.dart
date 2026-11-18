@@ -24,6 +24,9 @@ class AddBuyerOfferScreen extends StatefulWidget {
 
 class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
   final titleController = TextEditingController();
+  final descriptionController = TextEditingController();
+  final deliveryTermsController = TextEditingController();
+  final remarkController = TextEditingController();
   final quantityController = TextEditingController();
   final amountController = TextEditingController();
   final bagCountController = TextEditingController();
@@ -33,6 +36,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
   int? selectedBrandId;
   String selectedUnit = "qtl";
   String selectedAmountUnit = "qtl";
+  int selectedValidityDays = 7;
 
   List<OfferOption> categories = [];
   List<BrandModel> brands = [];
@@ -54,6 +58,9 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
     quantityController.removeListener(_calculateBags);
     packingController.removeListener(_calculateBags);
     titleController.dispose();
+    descriptionController.dispose();
+    deliveryTermsController.dispose();
+    remarkController.dispose();
     quantityController.dispose();
     amountController.dispose();
     bagCountController.dispose();
@@ -347,7 +354,9 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
 
       final body = <String, dynamic>{
         "title": titleController.text.trim(),
-        "description": titleController.text.trim(),
+        "description": descriptionController.text.trim(),
+        "delivery_terms": deliveryTermsController.text.trim(),
+        "buyer_remark": remarkController.text.trim(),
         "category": selectedCategoryId.toString(),
         "category_id": selectedCategoryId,
         if (selectedBrandId != null && selectedBrandId! > 0)
@@ -367,7 +376,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
         "requested_bag_count": bagCount,
         "bag_count": bagCount,
         if (packingKg != null) "packing_weight_kg": packingKg.toString(),
-        "expiry_days": "7",
+        "expiry_days": selectedValidityDays.toString(),
         "target_branches": targetBranches,
         "branches": targetBranches,
         "visible_branches": targetBranches,
@@ -440,6 +449,8 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildTextField(titleController, "Requirement Title (e.g. Need Toor Dal)", IconlyLight.edit),
+                  const SizedBox(height: 16),
+                  _buildTextField(descriptionController, "Description (Optional)", Icons.description_outlined, maxLines: 3),
                   const SizedBox(height: 16),
 
                   _buildDropdown<int>(
@@ -569,6 +580,20 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
                     ],
                   ),
 
+                  const SizedBox(height: 16),
+                  _buildTextField(deliveryTermsController, "Delivery Terms (Optional)", Icons.local_shipping_outlined, maxLines: 3),
+                  const SizedBox(height: 16),
+                  _buildTextField(remarkController, "Remark (Optional)", Icons.notes_outlined, maxLines: 3),
+                  const SizedBox(height: 16),
+                  Text("Validity from today", style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  _buildDropdown<int>(
+                    hint: "Select Validity",
+                    value: selectedValidityDays,
+                    items: [1, 3, 7, 14, 30].map((days) => DropdownMenuItem(value: days, child: Text('$days days'))).toList(),
+                    onChanged: (value) => setState(() => selectedValidityDays = value ?? 7),
+                    icon: Icons.schedule,
+                  ),
                   const SizedBox(height: 32),
                   SizedBox(
                     width: double.infinity,
@@ -595,6 +620,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
     String hint,
     IconData icon, {
     TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
     ValueChanged<String>? onChanged,
   }) {
     final theme = Theme.of(context);
@@ -605,6 +631,7 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
+      maxLines: maxLines,
       onChanged: onChanged,
       style: GoogleFonts.inter(
         fontSize: 14,

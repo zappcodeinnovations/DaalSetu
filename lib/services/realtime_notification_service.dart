@@ -1,3 +1,4 @@
+import 'package:daalsetu/modules/transporter/bidding/view/transporter_bidding_view.dart';
 import 'dart:async';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,6 +22,7 @@ import '../services/product_services.dart';
 import '../utils/app_preferences.dart';
 import 'notification_services.dart';
 import 'package:daalsetu/utils/global_error_handler.dart';
+import 'package:daalsetu/services/push_notification_service.dart';
 import '../modules/buyer/branch/controller/buyer_branch_controller.dart';
 import '../modules/seller/branches/controller/seller_branch_controller.dart';
 import '../modules/branches/controller/branch_controller.dart';
@@ -74,6 +76,8 @@ class RealtimeNotificationService extends GetxService {
   /// Start polling every 5 seconds for responsive real-time notifications
   void startPolling() {
     stopPolling();
+    // Signed in: make sure this phone receives push notifications even when the app is closed.
+    PushNotificationService.registerForCurrentUser();
     isPolling.value = true;
     _checkNotifications(); // Immediate initial check
     _pollingTimer = Timer.periodic(const Duration(seconds: 5), (_) {
@@ -414,6 +418,22 @@ class RealtimeNotificationService extends GetxService {
         return;
       }
 
+      // Transporters cannot open contract details. Freight notifications (price set,
+      // counter offer, bid update, dispatch bill) open their bidding screen instead.
+      if (role == 'transporter' &&
+          (url.contains('/transporter/') ||
+              title.contains('transport') ||
+              title.contains('dispatch bill'))) {
+        final goesToMyDeals = url.contains('my-bids') ||
+            title.contains('bid update') ||
+            title.contains('dispatch bill');
+        Get.to(
+          () => TransporterBiddingView(initialTab: goesToMyDeals ? 1 : 0),
+          preventDuplicates: false,
+        );
+        return;
+      }
+
       // 1. Try to extract contract or deal ID first if notification relates to contract, deal, or accepted offer
       final isContractOrDeal = type.contains('contract') ||
           type.contains('deal') ||
@@ -475,11 +495,11 @@ class RealtimeNotificationService extends GetxService {
       }
 
       // 2. Try to extract product/offer ID
-      int? productId = notification.relatedProduct ?? notification.referenceId;
+      int? productId = notification.productTargetId;
 
       // Check url regex
       if (productId == null && url.isNotEmpty) {
-        final match = RegExp(r'/(?:products|offers|buyer-offers|rfqs)/(\d+)').firstMatch(url);
+        final match = RegExp(r'/(?:products|offers)/(\d+)(?:/|\?|#|$)').firstMatch(url);
         if (match != null) {
           productId = int.tryParse(match.group(1)!);
         }
@@ -487,7 +507,7 @@ class RealtimeNotificationService extends GetxService {
 
       // Check message regex for ID (e.g. ID: 129 or #129)
       if (productId == null && notification.message != null) {
-        final match = RegExp(r'(?:id[:\s#]+|#)(\d+)', caseSensitive: false).firstMatch(notification.message!);
+        final match = RegExp(r'(?:product|offer)\s*(?:id)?[:\s#]+(\d+)', caseSensitive: false).firstMatch(notification.message!);
         if (match != null) {
           productId = int.tryParse(match.group(1)!);
         }
@@ -499,7 +519,7 @@ class RealtimeNotificationService extends GetxService {
           title.contains('interest') ||
           message.contains('interest');
       if (isInterest && role == 'seller') {
-        int? offerId = notification.relatedProduct;
+        int? offerId = notification.productTargetId;
         if (offerId == null && url.isNotEmpty) {
           final match = RegExp(r'[?&]manage_product=(\d+)').firstMatch(url);
           if (match != null) {

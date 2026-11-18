@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:daalsetu/modules/buyer/offers/controller/buyer_offer_detail_controller.dart';
@@ -50,6 +51,22 @@ void main() {
   });
 
   group('Buyer Requirement Details Screen Tests', () {
+    testWidgets('own expired requirement shows edit without interest warning', (tester) async {
+      Get.put<BuyerOfferDetailController>(MockBuyerOfferDetailController({
+        'id': 101, 'title': 'My expired requirement', 'status': 'expired',
+        'expiry_datetime': '2020-01-01T00:00:00Z',
+        'permissions': {'is_buyer': true, 'can_edit': true},
+      }));
+      await tester.pumpWidget(const GetMaterialApp(home: BuyerOfferDetailsView(
+        offerId: 101, preferBuyerRequirement: true,
+      )));
+      await tester.pump();
+      expect(find.text('STATUS: Requirement Expired'), findsOneWidget);
+      expect(find.text('Edit Requirement'), findsOneWidget);
+      expect(find.text('Deal has expired. You cannot show interest.'), findsNothing);
+      await tester.pumpWidget(const SizedBox.shrink());
+      Get.reset();
+    });
     testWidgets('renders Broadcast Expiry row in Requirement Details view', (tester) async {
       final mockData = {
         'id': 101,

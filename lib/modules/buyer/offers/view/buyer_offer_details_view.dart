@@ -10,6 +10,7 @@ import '../controller/buyer_offer_detail_controller.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../../utils/app_snackbar.dart';
 import '../../../../services/buyer_services.dart';
+import 'edit_buyer_requirement_view.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 
@@ -165,6 +166,8 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                 (data['product'] is Map ? (data['product']['deal_expiry_datetime'] ?? data['product']['expiry_datetime']) : null))
             ?.toString();
         final formattedExpiry = _formatExpiry(rawExpiry);
+        final isOwnRequirement = permissions['is_buyer'] == true ||
+            (widget.preferBuyerRequirement && permissions['is_buyer'] != false);
         bool isDealExpired = data['is_expired'] == true ||
             rawStatus.toLowerCase().contains('expire') ||
             (rawExpiry != null && DateTime.tryParse(rawExpiry)?.toLocal().isBefore(DateTime.now()) == true);
@@ -185,9 +188,23 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
               children: [
                 _buildStatusHeader(
                   isDealExpired ? 'deal_expired' : rawStatus,
-                  displayLabel: isDealExpired ? 'Deal Expired' : displayStatus,
+                  displayLabel: isDealExpired ? (isOwnRequirement ? 'Requirement Expired' : 'Deal Expired') : displayStatus,
                 ),
-                if (isDealExpired) ...[
+                if (permissions['can_edit'] == true)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.edit_outlined),
+                      label: const Text('Edit Requirement'),
+                      onPressed: () async {
+                        final saved = await Get.to<bool>(() => EditBuyerRequirementView(requirement: data));
+                        if (saved == true && mounted) {
+                          await controller.fetchDetails(widget.offerId, preferBuyerRequirement: true);
+                        }
+                      },
+                    ),
+                  ),
+                if (isDealExpired && !isOwnRequirement) ...[
                   const SizedBox(height: 16),
                   Container(
                     width: double.infinity,

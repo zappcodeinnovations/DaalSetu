@@ -89,7 +89,7 @@ class AppBarLeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final own = child;
+    final own = _hasBack(context, hasChild: child != null, showBack: showBack) ? child : null;
     final back = own != null
         ? SizedBox.square(dimension: _slot, child: own)
         : (_hasBack(context, hasChild: false, showBack: showBack)

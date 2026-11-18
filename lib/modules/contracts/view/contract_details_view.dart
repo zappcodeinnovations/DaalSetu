@@ -2,8 +2,6 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
 import 'package:daalsetu/modules/downloads/service/downloads_service.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 import 'package:daalsetu/comman/api_url.dart';
 import 'package:daalsetu/utils/app_preferences.dart';
@@ -17,6 +15,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../controller/contract_controller.dart';
 import 'package:daalsetu/modules/admin_catalog/view/transport_bids_sheet.dart';
 import 'contract_edit_view.dart';
+import '../services/contract_pdf.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
@@ -368,6 +367,18 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
       if (displayPartyId.isNotEmpty) headingName = displayPartyId;
     }
 
+    // The heading is the company (the name that is billed); the person becomes a "Contact" line.
+    final companyName = (company ?? '').trim();
+    String? contactName;
+    if (companyName.isNotEmpty) {
+      if (headingName.isNotEmpty &&
+          headingName.toLowerCase() != companyName.toLowerCase() &&
+          !RegExp(r'^\+?[0-9]{7,15}$').hasMatch(headingName)) {
+        contactName = headingName;
+      }
+      headingName = companyName;
+    }
+
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
       child: Padding(
@@ -417,10 +428,10 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                           ),
                         ),
                       ],
-                      if (company != null && company.isNotEmpty) ...[
+                      if (contactName != null) ...[
                         const SizedBox(height: 3),
                         Text(
-                          'Company: $company',
+                          'Contact: $contactName',
                           style: TextStyle(
                             color: Colors.grey.shade700,
                             fontSize: 12,
@@ -683,116 +694,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
 
       // 2. Client-side fallback generator if backend has no direct PDF endpoint
       if (!downloaded) {
-        final doc = pw.Document();
-        doc.addPage(
-          pw.Page(
-            pageFormat: PdfPageFormat.a4,
-            build: (pw.Context ctx) {
-              return pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    children: [
-                      pw.Text(
-                        'DAALSETU CONTRACT',
-                        style: pw.TextStyle(
-                          fontSize: 20,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.amber800,
-                        ),
-                      ),
-                      pw.Text(
-                        'Contract #: $contractNumber',
-                        style: pw.TextStyle(
-                          fontSize: 12,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  pw.Divider(thickness: 1.5, color: PdfColors.amber800),
-                  pw.SizedBox(height: 12),
-                  pw.Text(
-                    'Deal & Commodity Details',
-                    style: pw.TextStyle(
-                      fontSize: 13,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                  pw.SizedBox(height: 4),
-                  _pdfRow('Product', contract.productTitle),
-                  _pdfRow(
-                    'Quantity',
-                    '${contract.dealQuantity} ${contract.quantityUnit}',
-                  ),
-                  _pdfRow(
-                    'Deal Rate',
-                    'Rs ${contract.dealAmount} ${contract.amountUnit}',
-                  ),
-                  _pdfRow('Status', contract.status.toUpperCase()),
-                  pw.SizedBox(height: 10),
-                  pw.Text(
-                    'Buyer Details',
-                    style: pw.TextStyle(
-                      fontSize: 13,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                  pw.SizedBox(height: 4),
-                  _pdfRow('Buyer', contract.displayBuyerId.isNotEmpty ? contract.displayBuyerId : contract.buyerName),
-                  _pdfRow('Name', contract.buyerName),
-                  _pdfRow('Company', contract.buyerCompany ?? '-'),
-                  _pdfRow('Email', contract.buyerEmail ?? '-'),
-                  pw.SizedBox(height: 10),
-                  pw.Text(
-                    'Seller Details',
-                    style: pw.TextStyle(
-                      fontSize: 13,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                  pw.SizedBox(height: 4),
-                  _pdfRow('Seller', contract.displaySellerId.isNotEmpty ? contract.displaySellerId : contract.sellerName),
-                  _pdfRow('Name', contract.sellerName),
-                  _pdfRow('Company', contract.sellerCompany ?? '-'),
-                  _pdfRow('Email', contract.sellerEmail ?? '-'),
-                  pw.SizedBox(height: 10),
-                  pw.Text(
-                    'Logistics & Route',
-                    style: pw.TextStyle(
-                      fontSize: 13,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                  pw.SizedBox(height: 4),
-                  _pdfRow('Loading From', contract.loadingFrom),
-                  _pdfRow('Loading To', contract.loadingTo),
-                  _pdfRow(
-                    'Ready For Loading',
-                    contract.readyForLoadingAt.isNotEmpty ? contract.readyForLoadingAt : '-',
-                  ),
-                  _pdfRow(
-                    'Confirmed At',
-                    contract.confirmedAt.isNotEmpty ? contract.confirmedAt : '-',
-                  ),
-                  pw.Spacer(),
-                  pw.Divider(thickness: 0.5),
-                  pw.Align(
-                    alignment: pw.Alignment.center,
-                    child: pw.Text(
-                      'Generated securely via DaalSetu Platform',
-                      style: const pw.TextStyle(
-                        fontSize: 9,
-                        color: PdfColors.grey600,
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        );
+        final doc = buildContractPdf(contract, contractNumber);
         await file.writeAsBytes(await doc.save(), flush: true);
       }
 
@@ -837,34 +739,6 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     }
   }
 
-  static pw.Widget _pdfRow(String label, String value) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(vertical: 2),
-      child: pw.Row(
-        children: [
-          pw.SizedBox(
-            width: 120,
-            child: pw.Text(
-              label,
-              style: const pw.TextStyle(
-                fontSize: 9,
-                color: PdfColors.grey700,
-              ),
-            ),
-          ),
-          pw.Expanded(
-            child: pw.Text(
-              value.isEmpty ? '-' : value,
-              style: pw.TextStyle(
-                fontSize: 9,
-                fontWeight: pw.FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 /// Lets the buyer / seller choose, once, which of their companies is printed on

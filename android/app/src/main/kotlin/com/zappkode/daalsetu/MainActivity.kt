@@ -1,10 +1,14 @@
 package com.zappkode.daalsetu
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.ContentValues
 import android.content.Intent
+import android.media.AudioAttributes
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import io.flutter.embedding.android.FlutterActivity
@@ -15,6 +19,40 @@ import java.io.FileOutputStream
 
 class MainActivity : FlutterActivity() {
     private val downloadsChannel = "com.zappkode.daalsetu/downloads"
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        createPushChannel()
+    }
+
+    // Push notifications (FCM) use this high-importance channel, so they pop up and play
+    // our own tone (res/raw/notification.mp3) even when the app is closed. The id matches
+    // the manifest's default channel. A channel's sound cannot change after it is created,
+    // so a new sound needs a new id (the old silent-default channel is removed).
+    private fun createPushChannel() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        val manager = getSystemService(NotificationManager::class.java) ?: return
+        // Earlier channels (their sound is fixed once created) are removed; change the id below
+        // whenever res/raw/notification.mp3 is replaced.
+        manager.deleteNotificationChannel("daalsetu_default")
+        manager.deleteNotificationChannel("daalsetu_alerts")
+        val sound = Uri.parse("android.resource://" + packageName + "/" + R.raw.notification)
+        val channel = NotificationChannel(
+            "daalsetu_alerts_v2",
+            "DaalSetu notifications",
+            NotificationManager.IMPORTANCE_HIGH,
+        ).apply {
+            description = "Deals, offers, contracts, bids and account updates"
+            setSound(
+                sound,
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build(),
+            )
+        }
+        manager.createNotificationChannel(channel)
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)

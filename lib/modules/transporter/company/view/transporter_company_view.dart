@@ -274,10 +274,14 @@ class TransporterCompanyView extends StatelessWidget {
                     IconButton(
                       tooltip: 'Delete company',
                       onPressed: () => _showDeleteConfirmDialog(context, company.id),
+                      style: IconButton.styleFrom(
+                        backgroundColor: const Color(0xFFFDE8E8),
+                        foregroundColor: const Color(0xFFB91C1C),
+                        side: const BorderSide(color: Color(0xFFF8B4B4)),
+                      ),
                       icon: const Icon(
-                        IconlyLight.delete,
-                        color: Colors.red,
-                        size: 20,
+                        IconlyBold.delete,
+                        size: 19,
                       ),
                     ),
                   ],
