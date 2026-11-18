@@ -27,7 +27,8 @@ class SellerConsignmentController extends GetxController {
 
   /// The stage a consignment card shows (and the filter it belongs to).
   static String stageOf(Map<String, dynamic> row) {
-    if (row['status'] == 'received') return 'received';
+    // Delivered counts as received even while the contract itself is still Active.
+    if (row['status'] == 'received' || row['is_delivered'] == true) return 'received';
     if (row['is_dispatched'] == true) return 'dispatched';
     if (row['transporter_visible_at'] != null) return 'ready';
     return 'pending';

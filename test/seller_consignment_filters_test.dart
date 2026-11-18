@@ -34,6 +34,7 @@ void main() {
     expect(s(row(2, visibleAt: '2026-11-18')), 'ready');
     expect(s(row(3, dispatched: true, visibleAt: '2026-11-18')), 'dispatched');
     expect(s(row(4, status: 'received', dispatched: true)), 'received');
+    expect(s({...row(5, visibleAt: 'x', dispatched: true), 'is_delivered': true}), 'received');
   });
 
   test('the Ready filter never shows a Dispatched or Pending card, even if the server sends one', () async {

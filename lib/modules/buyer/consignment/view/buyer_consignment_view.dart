@@ -45,6 +45,13 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
     'received',
   ];
 
+  static const _stageOfFilter = <String, String>{
+    'pending': 'Pending',
+    'ready': 'Consignment Ready',
+    'dispatch': 'Dispatch',
+    'received': 'Consignment Received',
+  };
+
   static const _workflowLabels = <String, String>{
     'all': 'All Status',
     'pending': 'Pending',
@@ -85,11 +92,16 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
           _items
             ..clear()
             ..addAll(
-              raw is List
-                  ? raw.whereType<Map>().map(
-                      (item) => Map<String, dynamic>.from(item),
-                    )
-                  : const <Map<String, dynamic>>[],
+              (raw is List
+                      ? raw.whereType<Map>().map(
+                          (item) => Map<String, dynamic>.from(item),
+                        )
+                      : const <Map<String, dynamic>>[])
+                  // A filter only shows cards of its own stage, whatever the server sends.
+                  .where((item) {
+                    final stage = _stageOfFilter[_workflow];
+                    return stage == null || consignmentStageLabel(item) == stage;
+                  }),
             );
         });
       }
