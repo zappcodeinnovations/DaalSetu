@@ -80,6 +80,14 @@ class _OfferInterestNegotiationChatViewState
   // The counter-offer form lives in a bottom sheet; _tick makes it rebuild with the page.
   final ValueNotifier<int> _tick = ValueNotifier<int>(0);
   bool _composerOpen = false;
+  /// Why the last counter was refused; shown inside the counter sheet, where it cannot be missed.
+  String? _composerError;
+
+  void _setComposerError(String? message) {
+    if (!mounted) return;
+    setState(() => _composerError = message);
+    _tick.value++;
+  }
   bool _snapshotOpen = false;
 
   @override
@@ -246,6 +254,16 @@ class _OfferInterestNegotiationChatViewState
       return;
     }
 
+    // A buyer may ask for up to twice the available quantity: say so before sending.
+    final maxQty = double.tryParse('${_thread?['max_quantity'] ?? ''}');
+    final askedQty = double.tryParse(quantity);
+    if (widget.isBuyer && maxQty != null && maxQty > 0 && askedQty != null && askedQty > maxQty) {
+      _setComposerError(
+        'You can ask for up to ${_thread?['max_quantity']} (twice the available quantity). Please enter a smaller quantity.',
+      );
+      return;
+    }
+    _setComposerError(null);
     setState(() => _sending = true);
     try {
       await BuyerServices.sendOfferInterestMessage(
@@ -274,10 +292,13 @@ class _OfferInterestNegotiationChatViewState
       await _load(silent: true);
       _scrollToLatest();
     } catch (error) {
-      AppSnackbar.showError(
-        title: 'Could not send counter',
-        message: error.toString().replaceFirst('Exception: ', ''),
-      );
+      final reason = error.toString().replaceFirst('Exception: ', '');
+      if (_composerOpen) {
+        // The sheet covers the snackbar, so the reason is shown inside the sheet.
+        _setComposerError(reason);
+      } else {
+        AppSnackbar.showError(title: 'Could not send counter', message: reason);
+      }
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -855,6 +876,7 @@ class _OfferInterestNegotiationChatViewState
       ),
     );
     _composerOpen = false;
+    _composerError = null;
   }
 
   Widget _summary(BuildContext context, Map<String, dynamic> thread) {
@@ -1924,6 +1946,9 @@ class _OfferInterestNegotiationChatViewState
                       decimal: true,
                     ),
                     maxLength: 10,
+                    onChanged: (_) {
+                      if (_composerError != null) _setComposerError(null);
+                    },
                     decoration: inputDecoration(
                       label: 'Counter Qty',
                       hint: 'Optional',
@@ -1969,6 +1994,31 @@ class _OfferInterestNegotiationChatViewState
                 ],
               ),
             ),
+            if (_composerError != null)
+              Container(
+                key: const Key('counter-error'),
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.error_outline, size: 16, color: Colors.red),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _composerError!,
+                        style: GoogleFonts.inter(fontSize: 12, color: Colors.red.shade800, height: 1.3),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             SizedBox(
               width: double.infinity,
               height: 50,

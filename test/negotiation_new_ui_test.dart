@@ -203,4 +203,37 @@ void main() {
     expect(find.text('Accepted by:'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('a buyer asking for more than twice the quantity sees why, inside the counter sheet', (tester) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final posts = <http.Request>[];
+    final body = {...thread(), 'max_quantity': '80.000'};
+    await http.runWithClient(() async {
+      await tester.pumpWidget(
+        const GetMaterialApp(
+          home: OfferInterestNegotiationChatView(productId: 7, interestId: 9, isBuyer: true),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('Make a counter offer'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.widgetWithText(TextField, 'Counter Qty').first, '1400');
+      await tester.tap(find.text('Submit Negotiation'));
+      await tester.pumpAndSettle();
+    }, () => MockClient((request) async {
+      if (request.method == 'POST') posts.add(request);
+      return http.Response(
+        jsonEncode({'success': true, 'data': body, 'message': 'ok'}),
+        200,
+        headers: {'content-type': 'application/json'},
+      );
+    }));
+    expect(find.byKey(const Key('counter-error')), findsOneWidget);
+    expect(find.textContaining('up to 80.000'), findsWidgets);
+    expect(posts, isEmpty);
+  });
 }
