@@ -9,6 +9,7 @@ import '../service/admin_challan_pdf_service.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/widgets/dispatch_bills_section.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 class AdminChallanDetailsView extends StatelessWidget {
   const AdminChallanDetailsView({super.key});
@@ -941,13 +942,5 @@ class AdminChallanDetailsView extends StatelessWidget {
     }
   }
 
-  String _formatDate(String? raw) {
-    if (raw == null || raw.isEmpty) return "";
-    try {
-      final parsed = DateTime.parse(raw);
-      return "${parsed.day.toString().padLeft(2, '0')}/${parsed.month.toString().padLeft(2, '0')}/${parsed.year}";
-    } catch (_) {
-      return raw.split('T').first;
-    }
-  }
+  String _formatDate(String? raw) => AppDate.date(raw, empty: "");
 }

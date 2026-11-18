@@ -7,6 +7,7 @@ import '../controller/kyc_user_controller.dart';
 import '../model/kyc_user_model.dart';
 import 'package:daalsetu/theme/app_theme.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 class KycUsersScreen extends StatelessWidget {
   KycUsersScreen({super.key});
@@ -833,12 +834,7 @@ class KycUsersScreen extends StatelessWidget {
 
   void _showViewDialog(BuildContext context, KycUserModel user) {
     String formatTimestamp(String? iso) {
-      if (iso == null || iso.trim().isEmpty) return "N/A";
-      try {
-        return DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.parse(iso).toLocal());
-      } catch (_) {
-        return iso;
-      }
+      return AppDate.dateTime(iso, empty: "N/A");
     }
 
     Get.dialog(

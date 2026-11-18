@@ -7,6 +7,7 @@ import '../../../widgets/app_shell.dart';
 import '../../../network/api_client.dart';
 import '../../../utils/app_snackbar.dart';
 import '../../../theme/app_theme.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 /// Small shared pieces for the seller screens, matching the existing seller look.
 class SellerUi {
@@ -399,19 +400,6 @@ class SellerUi {
   /// "4950.00000" -> "₹4,950.00"; anything unparsable is shown as-is.
   static String money(dynamic value) => formatInr(value);
 
-  /// "2026-10-05T19:23:00+05:30" -> "05-10-2026 07:23 PM"; anything unparsable is shown as-is.
-  static String date(dynamic value) {
-    if (value == null || value.toString().isEmpty) return '-';
-    final parsed = DateTime.tryParse(value.toString());
-    if (parsed == null) return value.toString();
-    final local = parsed.toLocal();
-    final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
-    String two(int n) => n.toString().padLeft(2, '0');
-    final hasTime =
-        value.toString().contains('T') || value.toString().contains(' ');
-    final day = "${two(local.day)}-${two(local.month)}-${local.year}";
-    return hasTime
-        ? "$day ${two(hour)}:${two(local.minute)} ${local.hour >= 12 ? 'PM' : 'AM'}"
-        : day;
-  }
+  /// "2026-10-05T19:23:00+05:30" -> "05/10/2026 07:23 PM"; anything unparsable is shown as-is.
+  static String date(dynamic value) => AppDate.dateTime(value);
 }

@@ -9,6 +9,7 @@ import '../service/admin_dc_service.dart';
 import 'admin_dc_list_controller.dart';
 import '../../../routes/app_routes.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 class AdminCreateDCController extends GetxController {
   final isLoadingContracts = false.obs;
@@ -50,7 +51,7 @@ class AdminCreateDCController extends GetxController {
   void onInit() {
     super.onInit();
     // Default dispatch date is today
-    dispatchDateController.text = DateFormat('yyyy-MM-dd').format(selectedDispatchDate);
+    dispatchDateController.text = AppDate.fromDateTime(selectedDispatchDate);
     fetchContracts();
 
     // If a contract ID was passed as argument (e.g. from ContractDetailScreen)
@@ -392,7 +393,7 @@ class AdminCreateDCController extends GetxController {
 
     if (picked != null) {
       selectedDispatchDate = picked;
-      dispatchDateController.text = DateFormat('yyyy-MM-dd').format(picked);
+      dispatchDateController.text = AppDate.fromDateTime(picked);
     }
   }
 
@@ -458,7 +459,11 @@ class AdminCreateDCController extends GetxController {
       "driver_phone": driverPhoneController.text.trim(),
       "driver_license_number": driverLicenseController.text.trim(),
       "driver_license": driverLicenseController.text.trim(),
-      "dispatch_date": dispatchDateController.text.trim(),
+      // Shown as dd/MM/yyyy, sent as yyyy-MM-dd.
+      "dispatch_date": () {
+        final shown = AppDate.parse(dispatchDateController.text);
+        return shown == null ? dispatchDateController.text.trim() : AppDate.apiDate(shown);
+      }(),
       // Backend rule: bags (x packing weight) set the quantity; without bags the quantity is required.
       if (bags > 0) ...{
         "bag_count": bags,

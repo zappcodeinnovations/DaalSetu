@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../controller/seller_delivery_controller.dart';
 import 'package:daalsetu/widgets/dispatch_bills_section.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 /// Full seller-facing delivery challan. The API returns the same snapshot-rich
 /// document used by the web panel, so every available party, transport, charge
@@ -76,39 +77,9 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
     return text.isEmpty || text == 'null' ? '—' : formatInr(text);
   }
 
-  String _formatDate(Object? value) {
-    if (value == null) return '—';
-    final str = value.toString().trim();
-    if (str.isEmpty || str == 'null') return '—';
-    try {
-      final dt = DateTime.parse(str);
-      final day = dt.day.toString().padLeft(2, '0');
-      final month = dt.month.toString().padLeft(2, '0');
-      final year = dt.year.toString();
-      return '$day-$month-$year';
-    } catch (_) {
-      return str;
-    }
-  }
+  String _formatDate(Object? value) => AppDate.date(value, empty: '—');
 
-  String _formatDateTime(Object? value) {
-    if (value == null) return '—';
-    final str = value.toString().trim();
-    if (str.isEmpty || str == 'null') return '—';
-    try {
-      final dt = DateTime.parse(str).toLocal();
-      final day = dt.day.toString().padLeft(2, '0');
-      final month = dt.month.toString().padLeft(2, '0');
-      final year = dt.year.toString();
-      final hour12 = dt.hour == 0 ? 12 : (dt.hour > 12 ? dt.hour - 12 : dt.hour);
-      final hour = hour12.toString().padLeft(2, '0');
-      final minute = dt.minute.toString().padLeft(2, '0');
-      final period = dt.hour >= 12 ? 'PM' : 'AM';
-      return '$day-$month-$year $hour:$minute $period';
-    } catch (_) {
-      return str;
-    }
-  }
+  String _formatDateTime(Object? value) => AppDate.dateTime(value, empty: '—');
 
   @override
   Widget build(BuildContext context) {

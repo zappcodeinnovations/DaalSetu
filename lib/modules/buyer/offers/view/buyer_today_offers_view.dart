@@ -14,6 +14,7 @@ import 'buyer_offer_details_view.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:daalsetu/modules/buyer/offers/view/buyer_offers_view.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 class BuyerTodayOffersView extends StatelessWidget {
   const BuyerTodayOffersView({super.key});
@@ -740,7 +741,7 @@ class BuyerTodayOffersView extends StatelessWidget {
                           setDialogState(() {
                             selectedDeliveryDate = picked;
                             formattedDeliveryDate =
-                                "${picked.day.toString().padLeft(2, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.year.toString().padLeft(4, '0')}";
+                                AppDate.fromDateTime(picked);
                           });
                         }
                       },
@@ -756,7 +757,7 @@ class BuyerTodayOffersView extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              formattedDeliveryDate ?? "dd-mm-yyyy",
+                              formattedDeliveryDate ?? "dd/mm/yyyy",
                               style: GoogleFonts.inter(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,

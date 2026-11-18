@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 /// "Delivery Period" (MoM point 8): two date tiles, From and To.
 /// Past dates cannot be picked and To never falls before From.
@@ -31,9 +32,9 @@ class DeliveryPeriodPicker extends StatelessWidget {
   static String apiDate(DateTime value) =>
       '${value.year.toString().padLeft(4, '0')}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
 
-  /// dd-MM-yyyy for display.
+  /// dd/MM/yyyy for display.
   static String displayDate(DateTime value) =>
-      '${value.day.toString().padLeft(2, '0')}-${value.month.toString().padLeft(2, '0')}-${value.year}';
+      AppDate.fromDateTime(value);
 
   /// Parses an ISO date; past dates come back null so a stale period is not reused.
   static DateTime? parseUpcoming(String? iso) {
@@ -43,7 +44,7 @@ class DeliveryPeriodPicker extends StatelessWidget {
     return day.isBefore(_today) ? null : day;
   }
 
-  /// "12-11-2026 to 15-11-2026" (or one date), '' when not set.
+  /// "12/11/2026 to 15/11/2026" (or one date), '' when not set.
   static String periodText(String? fromIso, String? toIso) {
     final start = DateTime.tryParse(fromIso ?? '');
     final end = DateTime.tryParse(toIso ?? '') ?? start;

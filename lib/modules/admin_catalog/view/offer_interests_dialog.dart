@@ -11,6 +11,7 @@ import 'package:daalsetu/modules/shared/view/offer_interest_negotiation_chat_vie
 import 'approve_deal_dialog.dart';
 import 'negotiation_page.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 class OfferInterestsDialog extends StatefulWidget {
   final String offerId;
@@ -943,9 +944,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                     if (interest.createdAt != null &&
                         interest.createdAt!.isNotEmpty)
                       Text(
-                        interest.createdAt!.length >= 10
-                            ? interest.createdAt!.substring(0, 10)
-                            : interest.createdAt!,
+                        AppDate.date(interest.createdAt),
                         style: TextStyle(color: textLight, fontSize: 10),
                       ),
                   ],
@@ -1281,9 +1280,7 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
                 if (interest.createdAt != null &&
                     interest.createdAt!.isNotEmpty)
                   Text(
-                    interest.createdAt!.length >= 10
-                        ? interest.createdAt!.substring(0, 10)
-                        : interest.createdAt!,
+                    AppDate.date(interest.createdAt),
                     style: TextStyle(color: textLight, fontSize: 10),
                   ),
               ],

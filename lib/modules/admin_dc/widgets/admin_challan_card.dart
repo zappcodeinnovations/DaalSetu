@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 import '../../../theme/app_theme.dart';
 import '../model/admin_challan_model.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 class AdminChallanCard extends StatelessWidget {
   final AdminChallanModel challan;
@@ -314,13 +315,5 @@ class AdminChallanCard extends StatelessWidget {
     );
   }
 
-  String _formatDate(String? raw) {
-    if (raw == null || raw.isEmpty) return "";
-    try {
-      final parsed = DateTime.parse(raw);
-      return "${parsed.day.toString().padLeft(2, '0')}/${parsed.month.toString().padLeft(2, '0')}/${parsed.year}";
-    } catch (_) {
-      return raw.split('T').first;
-    }
-  }
+  String _formatDate(String? raw) => AppDate.date(raw, empty: "");
 }

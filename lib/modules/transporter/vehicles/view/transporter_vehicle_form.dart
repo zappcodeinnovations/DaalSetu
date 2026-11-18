@@ -8,6 +8,7 @@ import '../model/vehicle_model.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../nav_bar/controller/nav_controller.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 /// Same fields as the web "Register Vehicle" form. Dropdown values are the backend choices,
 /// so editing a vehicle never hits a value the dropdown does not know.
@@ -413,7 +414,7 @@ class _TransporterVehicleFormState extends State<TransporterVehicleForm> {
             suffixIcon: const Icon(Icons.calendar_month, color: Color(0xFFE65100)),
           ),
           child: Text(
-            value == null || value.isEmpty ? 'Select date' : value,
+            AppDate.date(value, empty: 'Select date'),
             style: GoogleFonts.inter(fontSize: 13),
           ),
         ),

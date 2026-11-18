@@ -1329,6 +1329,7 @@ class _OfferInterestNegotiationChatViewState
         DateFormat('yyyy-MM-dd HH:mm:ss'),
         DateFormat('yyyy-MM-dd HH:mm'),
         DateFormat('dd-MM-yyyy HH:mm'),
+        DateFormat('dd/MM/yyyy HH:mm'),
       ];
       for (final fmt in formats) {
         try {

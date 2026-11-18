@@ -11,6 +11,7 @@ import '../service/buyer_challan_pdf_service.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/dispatch_bills_section.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 class BuyerDeliveryChallanDetailView extends StatelessWidget {
   BuyerDeliveryChallanDetailView({super.key});
@@ -752,33 +753,7 @@ class BuyerDeliveryChallanDetailView extends StatelessWidget {
     return Colors.orange;
   }
 
-  String _formatDateOnly(String? dateStr) {
-    if (dateStr == null || dateStr.trim().isEmpty) return "N/A";
-    try {
-      final date = DateTime.parse(dateStr).toLocal();
-      final day = date.day.toString().padLeft(2, '0');
-      final month = date.month.toString().padLeft(2, '0');
-      final year = date.year.toString();
-      return "$day-$month-$year";
-    } catch (_) {
-      return dateStr;
-    }
-  }
+  String _formatDateOnly(String? dateStr) => AppDate.date(dateStr, empty: "N/A");
 
-  String _formatDateTime(String? dateStr) {
-    if (dateStr == null || dateStr.trim().isEmpty) return "N/A";
-    try {
-      final date = DateTime.parse(dateStr).toLocal();
-      final day = date.day.toString().padLeft(2, '0');
-      final month = date.month.toString().padLeft(2, '0');
-      final year = date.year.toString();
-      final h = date.hour;
-      final hour12 = (h % 12 == 0 ? 12 : h % 12).toString().padLeft(2, '0');
-      final minute = date.minute.toString().padLeft(2, '0');
-      final amPm = h >= 12 ? 'PM' : 'AM';
-      return "$day-$month-$year $hour12:$minute $amPm";
-    } catch (_) {
-      return dateStr;
-    }
-  }
+  String _formatDateTime(String? dateStr) => AppDate.dateTime(dateStr, empty: "N/A");
 }

@@ -13,6 +13,7 @@ import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/widgets/delivery_period_picker.dart';
 import 'package:daalsetu/widgets/offer_image_picker.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -579,8 +580,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
           date == null
               ? 'Select date${showTime ? ' and time' : ''}'
               : showTime
-                  ? _apiDateTime(date).replaceFirst('T', ' ')
-                  : _apiDate(date),
+                  ? AppDate.dateTime(_apiDateTime(date))
+                  : AppDate.fromDateTime(date),
         ),
         trailing: const Icon(Icons.calendar_month_outlined),
         onTap: onTap,

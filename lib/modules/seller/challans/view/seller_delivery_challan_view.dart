@@ -8,6 +8,7 @@ import '../../common/seller_ui.dart';
 import '../../delivery/controller/seller_delivery_controller.dart';
 import '../../delivery/view/seller_challan_details_view.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 class SellerDeliveryChallanView extends StatelessWidget {
   const SellerDeliveryChallanView({super.key, this.statusFilter});
@@ -149,7 +150,7 @@ class SellerDeliveryChallanView extends StatelessWidget {
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
-                                  "Buyer: ${item.buyerName ?? 'Buyer'} • ${item.challanDate ?? 'Date not available'}",
+                                  "Buyer: ${item.buyerName ?? 'Buyer'} • ${AppDate.date(item.challanDate, empty: 'Date not available')}",
                                   style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                                 ),
                               ),

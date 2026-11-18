@@ -9,6 +9,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 
 import '../model/admin_challan_model.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 class ChallanPdfResult {
   final String filePath;
@@ -158,7 +159,7 @@ class AdminChallanPdfService {
                     style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
                   ),
                   pw.Text(
-                    'Date: ${challan.challanDate ?? challan.createdAt?.split('T').first ?? '-'}',
+                    'Date: ${AppDate.date(challan.challanDate ?? challan.createdAt)}',
                     style: const pw.TextStyle(fontSize: 9),
                   ),
                   pw.Text(
