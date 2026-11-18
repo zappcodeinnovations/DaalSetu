@@ -248,16 +248,25 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   void _openVideo(ProductVideo video) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(
+        builder: (_) => OrientationBuilder(
+          builder: (context, orientation) => Scaffold(
             backgroundColor: Colors.black,
-            foregroundColor: Colors.white,
-            title: Text(video.title.trim().isEmpty ? 'Offer video' : video.title),
-          ),
-          body: SafeArea(
-            child: Center(
-              child: AuthenticatedVideoPlayer(url: video.videoUrl, enableFullscreen: false),
+            // Sideways the video needs the whole height, so the header is hidden.
+            appBar: orientation == Orientation.landscape
+                ? null
+                : AppBar(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    title: Text(video.title.trim().isEmpty ? 'Offer video' : video.title),
+                  ),
+            // All controls: play, skip, volume, speed, size, zoom and rotate (pinch zoom too).
+            body: SafeArea(
+              top: orientation == Orientation.landscape,
+              child: AuthenticatedVideoPlayer(
+                url: video.videoUrl,
+                enableFullscreen: false,
+                fullControls: true,
+              ),
             ),
           ),
         ),
