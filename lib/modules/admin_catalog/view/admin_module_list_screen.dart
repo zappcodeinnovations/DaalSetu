@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/dashboard_period_bar.dart';
 import 'dart:async';
 
 import 'package:daalsetu/modules/admin_catalog/config/admin_actions.dart';
@@ -243,6 +244,11 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
               },
             ),
           ),
+          // One date filter (From - To / presets) on every list panel.
+          Obx(() => ListDateFilterBar(
+                value: controller.dateFilter.value,
+                onChanged: controller.setDateFilter,
+              )),
           if (config.filterOptions.isNotEmpty)
             SizedBox(
               height: 44,

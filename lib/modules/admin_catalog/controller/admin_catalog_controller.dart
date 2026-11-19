@@ -1,3 +1,5 @@
+import '../../../utils/app_date.dart';
+import '../../../utils/dashboard_filter.dart';
 import 'package:daalsetu/modules/admin_catalog/model/admin_record.dart';
 import 'package:daalsetu/modules/admin_catalog/repository/admin_catalog_repository.dart';
 import 'package:get/get.dart';
@@ -14,6 +16,55 @@ class AdminCatalogController extends GetxController {
   final search = ''.obs;
   final selectedFilter = ''.obs;
   final total = RxnInt();
+
+  /// The list's date filter (From - To, or a preset). No filter = every record.
+  final dateFilter = DashboardFilterValue.none.obs;
+
+  /// The record's own date: the first of these keys that holds a readable date.
+  static const dateKeys = [
+    'created_at',
+    'requested_at',
+    'confirmed_at',
+    'date_joined',
+    'bill_date',
+    'delivery_date',
+    'challan_date',
+    'updated_at',
+  ];
+
+  static DateTime? recordDate(AdminRecord record) {
+    for (final key in dateKeys) {
+      final parsed = AppDate.parse(record[key]);
+      if (parsed != null) return DateTime(parsed.year, parsed.month, parsed.day);
+    }
+    return null;
+  }
+
+  /// A record is kept when it falls inside the chosen days (a record without any date is kept).
+  bool _inRange(AdminRecord record) {
+    final (from, to) = dateFilter.value.toRange();
+    if (from == null || to == null) return true;
+    final date = recordDate(record);
+    if (date == null) return true;
+    final start = DateTime(from.year, from.month, from.day);
+    final end = DateTime(to.year, to.month, to.day);
+    return !date.isBefore(start) && !date.isAfter(end);
+  }
+
+  String get _dateFromParam {
+    final (from, _) = dateFilter.value.toRange();
+    return from == null ? '' : AppDate.apiDate(from);
+  }
+
+  String get _dateToParam {
+    final (_, to) = dateFilter.value.toRange();
+    return to == null ? '' : AppDate.apiDate(to);
+  }
+
+  Future<void> setDateFilter(DashboardFilterValue value) async {
+    dateFilter.value = value;
+    await load(refresh: true);
+  }
   int _page = 1;
   bool _hasNext = true;
   static const _pageSize = 20;
@@ -41,16 +92,35 @@ class AdminCatalogController extends GetxController {
     isLoading.value = true;
     error.value = null;
     try {
-      final result = await repository.fetch(
+      var result = await repository.fetch(
         page: 1,
         pageSize: _pageSize,
         search: search.value,
         filter: selectedFilter.value,
+        dateFrom: _dateFromParam,
+        dateTo: _dateToParam,
       );
-      records.assignAll(result.records);
-      total.value = result.total;
-      _hasNext = result.hasNext || (result.total == null && result.records.length == _pageSize);
-      _page = 1;
+      var kept = result.records.where(_inRange).toList();
+      var hasNext = result.hasNext || (result.total == null && result.records.length == _pageSize);
+      var page = 1;
+      // With a date filter some pages can be mostly outside the range: read on (a few pages) until it is full.
+      while (dateFilter.value.isActive && hasNext && kept.length < _pageSize && page < 10) {
+        page += 1;
+        result = await repository.fetch(
+          page: page,
+          pageSize: _pageSize,
+          search: search.value,
+          filter: selectedFilter.value,
+          dateFrom: _dateFromParam,
+          dateTo: _dateToParam,
+        );
+        kept.addAll(result.records.where(_inRange));
+        hasNext = result.hasNext || (result.total == null && result.records.length == _pageSize);
+      }
+      records.assignAll(kept);
+      total.value = dateFilter.value.isActive ? null : result.total;
+      _hasNext = hasNext;
+      _page = page;
     } catch (exception) {
       error.value = _message(exception);
     } finally {
@@ -68,8 +138,10 @@ class AdminCatalogController extends GetxController {
         pageSize: _pageSize,
         search: search.value,
         filter: selectedFilter.value,
+        dateFrom: _dateFromParam,
+        dateTo: _dateToParam,
       );
-      records.addAll(result.records);
+      records.addAll(result.records.where(_inRange));
       _page = nextPage;
       _hasNext = result.hasNext || (result.total == null && result.records.length == _pageSize);
     } catch (exception) {

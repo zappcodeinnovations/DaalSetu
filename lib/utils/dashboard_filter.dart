@@ -42,6 +42,38 @@ class DashboardFilterValue {
     return quickRanges[period] ?? 'All time';
   }
 
+  /// The from / to dates this filter stands for (null, null = no filter). Weeks start on Monday.
+  (DateTime?, DateTime?) toRange([DateTime? now]) {
+    final today = DateTime((now ?? DateTime.now()).year, (now ?? DateTime.now()).month, (now ?? DateTime.now()).day);
+    if (from != null && to != null) return (from, to);
+    if (month != null) {
+      final parts = month!.split('-');
+      final year = int.tryParse(parts.first) ?? today.year;
+      final monthNumber = parts.length == 2 ? int.tryParse(parts[1]) ?? today.month : today.month;
+      return (DateTime(year, monthNumber, 1), DateTime(year, monthNumber + 1, 0));
+    }
+    switch (period) {
+      case 'today':
+        return (today, today);
+      case 'yesterday':
+        final day = today.subtract(const Duration(days: 1));
+        return (day, day);
+      case 'this_week':
+        return (today.subtract(Duration(days: today.weekday - 1)), today);
+      case 'last_7_days':
+        return (today.subtract(const Duration(days: 6)), today);
+      case 'last_30_days':
+        return (today.subtract(const Duration(days: 29)), today);
+      case 'this_month':
+        return (DateTime(today.year, today.month, 1), today);
+      case 'last_month':
+        return (DateTime(today.year, today.month - 1, 1), DateTime(today.year, today.month, 0));
+      case 'this_year':
+        return (DateTime(today.year, 1, 1), today);
+    }
+    return (null, null);
+  }
+
   static const quickRanges = <String, String>{
     'today': 'Today',
     'yesterday': 'Yesterday',

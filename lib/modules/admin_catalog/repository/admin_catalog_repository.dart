@@ -24,9 +24,14 @@ class AdminCatalogRepository {
     required int pageSize,
     String search = '',
     String filter = '',
+    String dateFrom = '',
+    String dateTo = '',
   }) async {
     final query = <String, String>{
       ...config.staticQuery,
+      // Servers that know these filter by them; the app also filters what it got, so every list agrees.
+      if (dateFrom.isNotEmpty) 'date_from': dateFrom,
+      if (dateTo.isNotEmpty) 'date_to': dateTo,
       'page': '$page',
       'page_size': '$pageSize',
       if (search.isNotEmpty && config.searchParameter != null)

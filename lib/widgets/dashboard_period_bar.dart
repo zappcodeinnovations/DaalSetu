@@ -10,12 +10,7 @@ class DashboardPeriodBar extends StatelessWidget {
   final VoidCallback onChanged;
 
   Future<void> _open(BuildContext context) async {
-    final picked = await showModalBottomSheet<DashboardFilterValue>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (sheetContext) => const _PeriodSheet(),
-    );
+    final picked = await showPeriodSheet(context, DashboardFilter.current.value);
     if (picked == null) return;
     DashboardFilter.set(picked);
     onChanged();
@@ -72,8 +67,73 @@ class DashboardPeriodBar extends StatelessWidget {
   }
 }
 
+/// Opens the period sheet; returns the chosen value, or null when it was dismissed.
+Future<DashboardFilterValue?> showPeriodSheet(BuildContext context, DashboardFilterValue current) {
+  return showModalBottomSheet<DashboardFilterValue>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (_) => _PeriodSheet(current: current),
+  );
+}
+
+/// A list screen's own date bar (admin lists): the period, Change and clear. Does not touch the dashboards' filter.
+class ListDateFilterBar extends StatelessWidget {
+  const ListDateFilterBar({super.key, required this.value, required this.onChanged});
+
+  final DashboardFilterValue value;
+  final ValueChanged<DashboardFilterValue> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.primary;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 2, 2, 2),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: value.isActive ? color.withValues(alpha: 0.6) : theme.dividerColor.withValues(alpha: 0.5)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_month_outlined, size: 18, color: color),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                value.isActive ? 'Date: ${value.label}' : 'Date: all dates',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
+            ),
+            if (value.isActive)
+              IconButton(
+                tooltip: 'Clear the date filter',
+                visualDensity: VisualDensity.compact,
+                icon: const Icon(Icons.close, size: 18),
+                onPressed: () => onChanged(DashboardFilterValue.none),
+              ),
+            TextButton(
+              onPressed: () async {
+                final picked = await showPeriodSheet(context, value);
+                if (picked != null) onChanged(picked);
+              },
+              child: const Text('Change'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _PeriodSheet extends StatelessWidget {
-  const _PeriodSheet();
+  const _PeriodSheet({required this.current});
+
+  final DashboardFilterValue current;
 
   List<String> get _recentMonths {
     final now = DateTime.now();
@@ -102,7 +162,6 @@ class _PeriodSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final current = DashboardFilter.current.value;
     Widget chip(String label, DashboardFilterValue value, {bool selected = false}) => ChoiceChip(
           label: Text(label),
           selected: selected,

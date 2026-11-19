@@ -196,6 +196,8 @@ void main() {
     // Scroll to bottom to verify Files & System section
     await tester.scrollUntilVisible(find.text('FILES & SYSTEM'), 200);
     expect(find.text('FILES & SYSTEM'), findsOneWidget);
+    // The menu is a lazy list: scroll to its last item so everything above it is on screen too.
+    await tester.scrollUntilVisible(find.text('Log Out'), 100);
     expect(find.text('Downloads'), findsOneWidget);
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('Log Out'), findsOneWidget);
