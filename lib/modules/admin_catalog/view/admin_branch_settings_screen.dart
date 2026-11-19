@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/modules/admin_catalog/view/admin_drawer.dart';
 import 'package:daalsetu/network/api_client.dart';
 import 'package:daalsetu/theme/app_theme.dart';
@@ -108,7 +109,7 @@ class _AdminBranchSettingsScreenState extends State<AdminBranchSettingsScreen> {
           builder: (ctx) => IconButton(
             icon: const Icon(Icons.menu, color: Colors.white),
             tooltip: 'Open navigation menu',
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
+            onPressed: () => AppShell.openDrawer(activeKey: 'branch_settings'),
           ),
         ),
         title: 'Branch Settings',

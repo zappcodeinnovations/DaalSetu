@@ -102,7 +102,7 @@ class _AdminRolesScreenState extends State<AdminRolesScreen> {
               builder: (ctx) => IconButton(
                 icon: const Icon(Icons.menu, color: Colors.white),
                 tooltip: 'Open navigation menu',
-                onPressed: () => Scaffold.of(ctx).openDrawer(),
+                onPressed: () => AppShell.openDrawer(activeKey: 'roles'),
               ),
             )
           : IconButton(

@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/modules/admin_catalog/view/admin_drawer.dart';
 import 'package:daalsetu/network/api_client.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
@@ -163,7 +164,7 @@ class _AdminPermissionsMatrixScreenState
           builder: (ctx) => IconButton(
             icon: const Icon(Icons.menu, color: Colors.white),
             tooltip: 'Open navigation menu',
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
+            onPressed: () => AppShell.openDrawer(activeKey: 'permissions_matrix'),
           ),
         ),
         title: 'Permissions Matrix',

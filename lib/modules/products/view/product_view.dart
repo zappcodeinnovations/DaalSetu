@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:flutter/material.dart';
@@ -44,7 +45,7 @@ class ProductScreen extends StatelessWidget {
             }
             return IconButton(
               icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 24),
-              onPressed: () => Scaffold.of(ctx).openDrawer(),
+              onPressed: () => AppShell.openDrawer(activeKey: 'offers'),
             );
           },
         ),
