@@ -694,7 +694,11 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           ),
           if (hasDoc) ...[
             const SizedBox(height: 10),
-            ClipRRect(
+            // Tap the preview to open it full screen: pinch / double-tap to zoom, back button to close.
+            InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () => _openDocumentViewer(context, title, resolvedUrl),
+              child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: Image.network(
                 resolvedUrl,
@@ -719,8 +723,18 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 ),
               ),
             ),
+            ),
           ],
         ],
+      ),
+    );
+  }
+
+  void _openDocumentViewer(BuildContext context, String title, String url) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => _DocumentViewer(title: title, url: url),
       ),
     );
   }
@@ -733,5 +747,41 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       return trimmed;
     }
     return '${ApiUrls.baseUrl}${trimmed.startsWith('/') ? '' : '/'}$trimmed';
+  }
+}
+
+/// Full-screen document preview with zoom and a back button.
+class _DocumentViewer extends StatelessWidget {
+  const _DocumentViewer({required this.title, required this.url});
+
+  final String title;
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text(title, style: const TextStyle(fontSize: 16)),
+        leading: IconButton(
+          tooltip: 'Back',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+      ),
+      body: InteractiveViewer(
+        minScale: 0.8,
+        maxScale: 6,
+        child: Center(
+          child: Image.network(
+            url,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => const Icon(Icons.broken_image_outlined, color: Colors.white, size: 60),
+          ),
+        ),
+      ),
+    );
   }
 }
