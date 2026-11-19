@@ -1,3 +1,4 @@
+import '../../../../utils/dashboard_filter.dart';
 import '../../../../comman/api_url.dart';
 import '../../../../network/api_client.dart';
 import '../../../../services/seller_services.dart';
@@ -63,7 +64,7 @@ class TransporterDashboardController extends GetxController {
       isLoading(true);
       errorMessage('');
       final response = await ApiClient.get(
-        endpoint: ApiUrls.transporterDashboardOverview,
+        endpoint: DashboardFilter.apply(ApiUrls.transporterDashboardOverview),
         requireAuth: true,
       );
       final data = response is Map && response['data'] is Map

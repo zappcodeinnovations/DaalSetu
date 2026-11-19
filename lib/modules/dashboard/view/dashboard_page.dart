@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/dashboard_period_bar.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -48,7 +49,9 @@ class AdminDashboardScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeroSection(context),
-                const SizedBox(height: 24),
+                const SizedBox(height: 14),
+                DashboardPeriodBar(onChanged: controller.fetchDashboard),
+                const SizedBox(height: 10),
 
                 _buildSectionHeader(context, "Dashboard KPIs"),
                 const SizedBox(height: 16),
@@ -394,14 +397,14 @@ class AdminDashboardScreen extends StatelessWidget {
           (
             title: 'Active Contracts',
             value: '${kpis.activeContracts}',
-            subtitle: '↑ —',
+            subtitle: 'In negotiation: ${kpis.dealsInNegotiation}',
             icon: IconlyLight.document,
             onTap: () => Get.to(() => const ContractsScreen()),
           ),
           (
             title: 'Gross Trade Value (MTD)',
             value: formatInr(kpis.gtvMtd),
-            subtitle: '↑ —',
+            subtitle: 'Finalized deals: ${kpis.finalDealsMtd}',
             icon: IconlyLight.graph,
             onTap: () => Get.toNamed(AppRoutes.adminBranchReports),
           ),
@@ -415,7 +418,7 @@ class AdminDashboardScreen extends StatelessWidget {
           (
             title: 'Pending Dispatches',
             value: '${kpis.pendingDispatches}',
-            subtitle: '↓ —',
+            subtitle: 'On-time delivery: ${_webNum(kpis.otdPercent)}%',
             icon: IconlyLight.time_circle,
             onTap: () => Get.toNamed(AppRoutes.adminDeliveryChallans),
           ),
@@ -442,7 +445,7 @@ class AdminDashboardScreen extends StatelessWidget {
           (
             title: 'Open Complaints',
             value: '${kpis.openComplaints}',
-            subtitle: 'Escalations: 0',
+            subtitle: 'Escalations: ${kpis.escalations}',
             icon: IconlyLight.info_circle,
             onTap: () => Get.toNamed(AppRoutes.adminComplaints),
           ),

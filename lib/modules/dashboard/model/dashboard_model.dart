@@ -71,6 +71,7 @@ class KpiModel {
   final int activeBuyers;
   final int finalDealsMtd;
   final int openComplaints;
+  final int escalations;
   final double otdPercent;
   final double avgTransitDays;
   final int paymentsOverdue;
@@ -93,6 +94,7 @@ class KpiModel {
     required this.activeBuyers,
     required this.finalDealsMtd,
     required this.openComplaints,
+    this.escalations = 0,
     required this.otdPercent,
     required this.avgTransitDays,
     required this.paymentsOverdue,
@@ -119,6 +121,7 @@ class KpiModel {
       activeBuyers: _parseInt(json['active_buyers']),
       finalDealsMtd: _parseInt(json['final_deals_mtd']),
       openComplaints: _parseInt(json['open_complaints']),
+      escalations: _parseInt(json['escalations']),
       otdPercent: _parseDouble(json['otd_percent']),
       avgTransitDays: _parseDouble(json['avg_transit_days']),
       paymentsOverdue: _parseInt(json['payments_overdue']),
