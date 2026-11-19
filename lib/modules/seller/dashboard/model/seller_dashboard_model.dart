@@ -33,6 +33,11 @@ class SellerDashboardModel {
       kpis:
           (json['kpis'] as List?)
               ?.map((x) => SellerKpi.fromJson(_dashboardMap(x)))
+              // "Issues / Returns" and "Complaints" cards are switched off (the server still sends them).
+              .where((kpi) {
+                final title = kpi.title.toLowerCase();
+                return !title.contains('issue') && !title.contains('complaint');
+              })
               .toList() ??
           [],
       charts: SellerCharts.fromJson(_dashboardMap(json['charts'])),

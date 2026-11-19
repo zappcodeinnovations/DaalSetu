@@ -442,13 +442,14 @@ class AdminDashboardScreen extends StatelessWidget {
                   AdminOverviewKpisView(kpis: kpis, initialCategory: 'Network'),
             ),
           ),
-          (
-            title: 'Open Complaints',
-            value: '${kpis.openComplaints}',
-            subtitle: 'Escalations: ${kpis.escalations}',
-            icon: IconlyLight.info_circle,
-            onTap: () => Get.toNamed(AppRoutes.adminComplaints),
-          ),
+          // Open Complaints is switched off (kept, commented out, in case it comes back).
+          // (
+          //   title: 'Open Complaints',
+          //   value: '${kpis.openComplaints}',
+          //   subtitle: 'Escalations: ${kpis.escalations}',
+          //   icon: IconlyLight.info_circle,
+          //   onTap: () => Get.toNamed(AppRoutes.adminComplaints),
+          // ),
           (
             title: 'On-time Delivery %',
             value: '${_webNum(kpis.otdPercent)}%',

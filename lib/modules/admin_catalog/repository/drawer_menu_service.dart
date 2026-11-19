@@ -18,12 +18,13 @@ class DrawerMenuService {
             icon: Icons.notifications_none_rounded,
             route: AppRoutes.notifications,
           ),
-          DrawerMenuItem(
-            key: 'complaints',
-            title: 'Complaints & Issues',
-            icon: Icons.report_problem_outlined,
-            route: AppRoutes.adminComplaints,
-          ),
+          // Complaints & Issues is switched off (kept, commented out, in case it comes back).
+          // DrawerMenuItem(
+          //   key: 'complaints',
+          //   title: 'Complaints & Issues',
+          //   icon: Icons.report_problem_outlined,
+          //   route: AppRoutes.adminComplaints,
+          // ),
           DrawerMenuItem(
             key: 'registered_company',
             title: 'Registered Company',
