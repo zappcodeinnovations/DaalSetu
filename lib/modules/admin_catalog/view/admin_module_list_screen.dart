@@ -1,4 +1,5 @@
 import 'package:daalsetu/widgets/dashboard_period_bar.dart';
+import 'package:daalsetu/utils/app_preferences.dart';
 import 'dart:async';
 
 import 'package:daalsetu/modules/admin_catalog/config/admin_actions.dart';
@@ -39,6 +40,9 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
   late final TextEditingController _searchController;
   Timer? debounce;
 
+  // Only a super admin creates branches (the server refuses everybody else), so the + stays hidden until we know.
+  bool _isSuperAdmin = false;
+
   // Parity state for Category Requests module ("Approval Queue" vs "All Buyers")
   int _activeCategoryRequestTab = 0; // 0 = Approval Queue, 1 = All Buyers
   List<Map<String, dynamic>> _buyers = [];
@@ -58,6 +62,11 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
     scrollController = ScrollController()..addListener(_onScroll);
     if (widget.moduleKey == 'category_requests') {
       _fetchBuyers();
+    }
+    if (widget.moduleKey == 'branches') {
+      AppPreferences.getRole().then((role) {
+        if (mounted) setState(() => _isSuperAdmin = (role ?? '').toLowerCase() == 'super_admin');
+      });
     }
   }
 
@@ -180,6 +189,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
     // Only sellers add brands now (MoM point 26); admins review and edit them.
     floatingActionButton: config.canCreate &&
             widget.moduleKey != 'brands' &&
+            (widget.moduleKey != 'branches' || _isSuperAdmin) &&
             (widget.moduleKey != 'category_requests' ||
                 _activeCategoryRequestTab == 0)
         ? Container(
