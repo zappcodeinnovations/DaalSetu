@@ -1,6 +1,40 @@
 class InputValidators {
   InputValidators._();
 
+  /// Indian vehicle registration (and RC) number: MH 12 AB 1234 -> state (2 letters), district (1-2 digits),
+  /// series (1-3 letters), number (4 digits). Spaces are ignored; "BH" series plates (22BH1234AB) also pass.
+  static final RegExp _vehicleNumberPattern = RegExp(
+    r'^(?:[A-Z]{2}[0-9]{1,2}[A-Z]{1,3}[0-9]{4}|[0-9]{2}BH[0-9]{4}[A-Z]{1,2})$',
+  );
+
+  /// Upper-case without spaces or dashes: "mh 12-ab 1234" -> "MH12AB1234".
+  static String compactVehicleNumber(String? value) =>
+      (value ?? '').toUpperCase().replaceAll(RegExp(r'[\s-]'), '');
+
+  static String? vehicleNumber(String? value, {String label = 'Vehicle number', bool required = false}) {
+    final number = compactVehicleNumber(value);
+    if (number.isEmpty) return required ? '$label is required' : null;
+    if (!_vehicleNumberPattern.hasMatch(number)) {
+      return 'Enter a valid $label like MH12AB1234';
+    }
+    return null;
+  }
+
+  /// Indian driving licence number: 2 letters + 13 digits (15 characters), e.g. MH1220110062821.
+  static final RegExp _licenseNumberPattern = RegExp(r'^[A-Z]{2}[0-9]{13}$');
+
+  static String compactLicenseNumber(String? value) =>
+      (value ?? '').toUpperCase().replaceAll(RegExp(r'[\s-]'), '');
+
+  static String? licenseNumber(String? value, {bool required = false}) {
+    final number = compactLicenseNumber(value);
+    if (number.isEmpty) return required ? 'License number is required' : null;
+    if (!_licenseNumberPattern.hasMatch(number)) {
+      return 'License number must be 2 letters followed by 13 digits (15 characters)';
+    }
+    return null;
+  }
+
   static final RegExp _emailPattern = RegExp(
     r'^[A-Z0-9._%+-]+@[A-Z0-9-]+(?:\.[A-Z0-9-]+)*\.[A-Z]{2,63}$',
     caseSensitive: false,

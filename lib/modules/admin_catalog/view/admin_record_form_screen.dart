@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:daalsetu/theme/app_theme.dart';
+import 'package:daalsetu/utils/app_date.dart';
 import 'package:daalsetu/utils/input_validators.dart';
 import 'package:daalsetu/utils/tax_id_formatters.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
@@ -167,6 +168,14 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
         } else {
           body[field.key] = int.tryParse('$raw') ?? raw;
         }
+        continue;
+      }
+      if (field.key == 'vehicle_number' || field.key == 'rc_number') {
+        body[field.key] = InputValidators.compactVehicleNumber(raw.toString());
+        continue;
+      }
+      if (field.key == 'license_number') {
+        body[field.key] = InputValidators.compactLicenseNumber(raw.toString());
         continue;
       }
       body[field.key] = raw;
@@ -433,8 +442,13 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
           : field.key == 'gst_number'
           ? const TaxIdInputFormatter.gst()
           : null;
+      final isVehicleNumberField = field.key == 'vehicle_number' || field.key == 'rc_number';
+      final isLicenseField = field.key == 'license_number';
       child = TextFormField(
         controller: controllers[field.key],
+        textCapitalization: isVehicleNumberField || isLicenseField
+            ? TextCapitalization.characters
+            : TextCapitalization.none,
         maxLines: field.multiline ? 4 : 1,
         keyboardType: field.numeric
             ? TextInputType.number
@@ -446,6 +460,18 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
             ? [taxFormatter]
             : field.numeric
             ? [FilteringTextInputFormatter.digitsOnly]
+            : isVehicleNumberField
+            ? [
+                FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9 -]')),
+                const _UpperCaseFormatter(),
+                LengthLimitingTextInputFormatter(13),
+              ]
+            : isLicenseField
+            ? [
+                FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9 -]')),
+                const _UpperCaseFormatter(),
+                LengthLimitingTextInputFormatter(17),
+              ]
             : null,
         maxLength: field.key == 'gst_number'
             ? 15
@@ -495,9 +521,15 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
           final nameError = field.key == 'first_name' || field.key == 'last_name'
               ? InputValidators.personName(value, label: field.label)
               : null;
+          final formatError = isVehicleNumberField
+              ? InputValidators.vehicleNumber(value, label: field.label, required: _isRequired(field))
+              : isLicenseField
+              ? InputValidators.licenseNumber(value, required: _isRequired(field))
+              : null;
           return emailError ??
               taxError ??
               nameError ??
+              formatError ??
               (_isRequired(field) && (value == null || value.trim().isEmpty)
                   ? '${field.label} is required'
                   : null);
@@ -640,7 +672,7 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final first = field.key.contains('expiry') ? today : DateTime(1950);
-      final existing = DateTime.tryParse(controller.text);
+      final existing = AppDate.parse(controller.text);
       final picked = await showDatePicker(
         context: context,
         initialDate: existing != null && !existing.isBefore(first)
@@ -650,15 +682,14 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
         lastDate: DateTime(now.year + 25),
       );
       if (picked != null) {
-        setState(
-          () => controller.text =
-              '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}',
-        );
+        // The controller keeps the API format (yyyy-MM-dd); the field shows dd/MM/yyyy.
+        setState(() => controller.text = AppDate.apiDate(picked));
       }
     }
 
     return TextFormField(
-      controller: controller,
+      key: ValueKey('${field.key}-${controller.text}'),
+      initialValue: AppDate.date(controller.text, empty: ''),
       readOnly: true,
       onTap: pick,
       decoration: InputDecoration(
@@ -688,4 +719,13 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
       },
     );
   }
+}
+
+/// Upper-cases what is typed (vehicle and licence numbers).
+class _UpperCaseFormatter extends TextInputFormatter {
+  const _UpperCaseFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) =>
+      newValue.copyWith(text: newValue.text.toUpperCase());
 }

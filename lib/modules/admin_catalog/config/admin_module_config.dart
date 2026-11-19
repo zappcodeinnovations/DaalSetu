@@ -142,6 +142,13 @@ class AdminModuleConfig {
   bool get canDelete => deleteEndpoint != null;
 }
 
+/// The driver a vehicle is assigned to (for the edit form).
+Object? assignedDriverIdOf(Map<String, dynamic> record) {
+  final raw = record['assigned_driver'] ?? record['assigned_driver_id'];
+  if (raw is Map) return raw['id'];
+  return raw;
+}
+
 Object? transporterIdOf(Map<String, dynamic> record) =>
     record['transporter'] is Map
     ? (record['transporter'] as Map)['id']
@@ -1373,6 +1380,10 @@ class AdminModules {
               'Assigned Vehicle Number',
             ),
             AdminDetailField(
+              'assigned_vehicle.vehicle_type',
+              'Assigned Vehicle Type',
+            ),
+            AdminDetailField(
               'assigned_vehicle.vehicle_status_display',
               'Vehicle Status',
               type: AdminDetailFieldType.status,
@@ -1399,7 +1410,6 @@ class AdminModules {
         AdminCustomAction(
           title: 'Assign Vehicle',
           icon: Icons.local_shipping_outlined,
-          isVisible: (record) => record['assigned_vehicle'] == null,
           onPressed: (context, record) async {
             final result = await showModalBottomSheet<bool>(
               context: context,
@@ -1408,6 +1418,10 @@ class AdminModules {
               builder: (_) => AssignVehicleDialog(
                 driverId: record['id'].toString(),
                 driverName: (record['driver_name'] ?? 'Driver').toString(),
+                assignedVehicleNumber: record['assigned_vehicle'] is Map
+                    ? (record['assigned_vehicle'] as Map)['vehicle_number']?.toString()
+                    : null,
+                transporterId: transporterIdOf(record)?.toString(),
               ),
             );
             return result == true;
@@ -1563,6 +1577,12 @@ class AdminModules {
           'Permit name (when Permit type is Other)',
         ),
         AdminFieldConfig('permit_expiry_date', 'Permit expiry', isDate: true),
+        AdminFieldConfig(
+          'assigned_driver_id',
+          'Assign driver (optional)',
+          optionsLoader: loadDriverOptions,
+          initialValue: assignedDriverIdOf,
+        ),
         AdminFieldConfig(
           'vehicle_status',
           'Status',

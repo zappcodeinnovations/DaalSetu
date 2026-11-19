@@ -144,14 +144,6 @@ class AdminCatalogRepository {
 
   Future<void> delete(String id) async {
     final endpoint = config.deleteEndpoint!(id);
-    if (config.key == 'tags') {
-      await ApiClient.post(
-        endpoint: endpoint,
-        body: const {'confirm': true},
-        requireAuth: true,
-      );
-      return;
-    }
     if (config.key == 'users') {
       await ApiClient.post(
         endpoint: endpoint,

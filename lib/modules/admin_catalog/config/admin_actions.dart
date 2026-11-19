@@ -152,7 +152,7 @@ List<AdminOption> transporterOptionsFromUsers(Iterable<Map<String, dynamic>> use
       final kycStatus = (user['kyc_status'] ?? '').toString().trim().toLowerCase();
       return role == 'transporter' && user['is_active'] != false && kycStatus == 'approved';
     })
-    .map((user) => AdminOption('${user['id'] ?? ''}', _partyLabel(user)))
+    .map((user) => AdminOption('${user['id'] ?? ''}', _userLabel(user)))
     .where((option) => option.value.isNotEmpty)
     .toList();
 
@@ -160,6 +160,19 @@ Future<List<AdminOption>> loadTransporterOptions() async {
   final response = await ApiClient.get(endpoint: '/api/users/?role=transporter', requireAuth: true);
   return transporterOptionsFromUsers(adminListFrom(response));
 }
+
+/// Drivers a vehicle can be assigned to (Assign Driver on Create / Edit Registered Vehicle). The server
+/// only accepts drivers of the vehicle's own transporter.
+Future<List<AdminOption>> loadDriverOptions() => _load(
+      '/api/drivers/',
+      (d) {
+        final name = (d['driver_name'] ?? d['name'] ?? '').toString().trim();
+        final license = (d['license_number'] ?? '').toString().trim();
+        final phone = (d['phone_number'] ?? '').toString().trim();
+        final detail = [license, phone].where((part) => part.isNotEmpty).join(' / ');
+        return AdminOption('${d['id'] ?? ''}', detail.isEmpty ? name : '$name ($detail)');
+      },
+    );
 
 Future<List<AdminOption>> loadCategoryOptions() => _load(
       '/api/categories/',
