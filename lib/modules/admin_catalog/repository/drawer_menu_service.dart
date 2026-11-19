@@ -43,6 +43,13 @@ class DrawerMenuService {
             route: AppRoutes.users,
           ),
           DrawerMenuItem(
+            key: 'sub_admins',
+            title: AdminModules.byKey('salesman').title,
+            icon: AdminModules.byKey('salesman').icon,
+            route: AppRoutes.adminModule('salesman'),
+            requiredRoles: const ['super_admin', 'admin'],
+          ),
+          DrawerMenuItem(
             key: 'kyc',
             title: AdminModules.byKey('kyc').title,
             icon: AdminModules.byKey('kyc').icon,
@@ -228,13 +235,6 @@ class DrawerMenuService {
       DrawerMenuSection(
         sectionTitle: 'SETTINGS',
         items: [
-          DrawerMenuItem(
-            key: 'sub_admins',
-            title: AdminModules.byKey('salesman').title,
-            icon: AdminModules.byKey('salesman').icon,
-            route: AppRoutes.adminModule('salesman'),
-            requiredRoles: const ['super_admin', 'admin'],
-          ),
           DrawerMenuItem(
             key: 'roles',
             title: 'Roles',

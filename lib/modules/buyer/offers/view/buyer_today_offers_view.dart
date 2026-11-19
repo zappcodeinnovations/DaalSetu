@@ -609,10 +609,8 @@ class BuyerTodayOffersView extends StatelessWidget {
     final priceCtrl = TextEditingController(text: initialPrice);
 
     // 3. Prefill delivery destination matching web portal
-    final defaultLocation = (offer.location != null && offer.location!.isNotEmpty)
-        ? offer.location!
-        : "AMR158M, Amalner, Maharashtra, India";
-    final locationCtrl = TextEditingController(text: defaultLocation);
+    // The buyer enters their own delivery destination: never the seller's loading location.
+    final locationCtrl = TextEditingController(text: buyerDeliveryLocationDefault(offer));
     final remarkCtrl = TextEditingController();
 
     DateTime? selectedDeliveryDate;
@@ -799,6 +797,10 @@ class BuyerTodayOffersView extends StatelessWidget {
                             }
                             if (formattedDeliveryDate == null || formattedDeliveryDate!.isEmpty) {
                               AppSnackbar.showWarning(title: "Required Field", message: "Please select a preferred delivery date");
+                              return;
+                            }
+                            if (locationCtrl.text.trim().isEmpty) {
+                              AppSnackbar.showWarning(title: "Required Field", message: "Please enter your delivery location");
                               return;
                             }
                             Get.back();

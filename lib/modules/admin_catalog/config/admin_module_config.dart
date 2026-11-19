@@ -980,10 +980,9 @@ class AdminModules {
           endpoint: (record) =>
               '/api/buyer-categories/requests/${record['id']}/',
           action: 'approve',
+          // The web "Approve" asks for nothing but a confirmation, so the app does not ask for a comment either.
           confirmMessage:
               'The buyer will be able to deal in the requested categories.',
-          noteKey: 'comment',
-          noteLabel: 'Comment',
           isVisible: (record) => recordStatus(record) == 'pending',
         ),
         adminPostAction(
@@ -1172,7 +1171,7 @@ class AdminModules {
           'category_ids',
           'Categories',
           multiSelect: true,
-          optionsLoader: loadCategoryOptions,
+          optionsLoader: loadParentCategoryOptions,
         ),
       ],
       detailSections: [
@@ -1185,7 +1184,7 @@ class AdminModules {
               'Status',
               type: AdminDetailFieldType.status,
             ),
-            AdminDetailField('product_count', 'Offers Using It'),
+            AdminDetailField('product_count', 'Products'),
             AdminDetailField('created_by_name', 'Created By'),
             AdminDetailField(
               'created_at',

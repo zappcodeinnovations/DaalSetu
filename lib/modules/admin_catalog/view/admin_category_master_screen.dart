@@ -646,6 +646,7 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
                             DropdownMenuItem(value: 'active', child: Text('Active')),
                             DropdownMenuItem(value: 'pending', child: Text('Pending')),
                             DropdownMenuItem(value: 'inactive', child: Text('Inactive')),
+                            DropdownMenuItem(value: 'rejected', child: Text('Rejected')),
                           ],
                           onChanged: (v) => controller.selectedStatus.value = v!,
                         ),

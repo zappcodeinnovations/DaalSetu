@@ -167,7 +167,10 @@ void main() {
     final sections = await DrawerMenuService().fetchMenu();
     final settings = sections.singleWhere((section) => section.sectionTitle == 'SETTINGS');
     final items = {for (final item in settings.items) item.key: item};
-    expect(items['sub_admins']!.route, AppRoutes.adminModule('salesman'));
+    // Salesman lives under MASTERS, like the web sidebar.
+    final masters = sections.singleWhere((section) => section.sectionTitle == 'MASTERS');
+    expect(masters.items.any((item) => item.key == 'sub_admins' && item.route == AppRoutes.adminModule('salesman')), isTrue);
+    expect(items.containsKey('sub_admins'), isFalse);
     expect(items['roles']!.route, AppRoutes.adminRoles);
     expect(items['permissions_matrix']!.route, AppRoutes.adminPermissionsMatrix);
     expect(items['permissions_matrix']!.isVisibleFor('super_admin'), isTrue);

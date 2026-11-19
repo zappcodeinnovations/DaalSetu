@@ -448,7 +448,8 @@ class AdminDashboardScreen extends StatelessWidget {
             value: '${kpis.branches}',
             subtitle: 'Admins active: ${kpis.adminsActive}',
             icon: IconlyLight.category,
-            onTap: () => Get.toNamed(AppRoutes.adminBranchReports),
+            // Same as the web card: the branch requests page.
+            onTap: () => Get.toNamed(AppRoutes.adminModule('branch_requests')),
           ),
           (
             title: 'Deals in Negotiation',

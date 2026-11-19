@@ -117,9 +117,11 @@ class AdminCategoryMasterController extends GetxController {
         for (var node in nodes) {
           total++;
           if (node.level > 0) sub++;
-          if (node.status.toLowerCase() == 'active') {
+          final nodeStatus = node.status.toLowerCase();
+          if (nodeStatus == 'active') {
             active++;
-          } else {
+          } else if (nodeStatus != 'pending') {
+            // Inactive and rejected both count here, and the Inactive filter matches the same two.
             inactive++;
           }
           countNodes(node.children);
@@ -191,8 +193,13 @@ class AdminCategoryMasterController extends GetxController {
           matches = false;
         }
 
-        if (filterStatus.value != null && filterStatus.value != 'All' && node.status.toLowerCase() != filterStatus.value!.toLowerCase()) {
-          matches = false;
+        if (filterStatus.value != null && filterStatus.value != 'All') {
+          final nodeStatus = node.status.toLowerCase();
+          final wanted = filterStatus.value!.toLowerCase();
+          final ok = wanted == 'inactive'
+              ? (nodeStatus == 'inactive' || nodeStatus == 'rejected')
+              : nodeStatus == wanted;
+          if (!ok) matches = false;
         }
 
         if (filterHasImage.value != null) {
@@ -280,7 +287,8 @@ class AdminCategoryMasterController extends GetxController {
     try {
       final body = {
         'category_name': nameCtrl.text.trim(),
-        'is_active': selectedStatus.value.toLowerCase() == 'active',
+        // The server derives is_active from the status (Pending / Inactive / Rejected are not active).
+        'status': selectedStatus.value.toLowerCase(),
         if (selectedParentId.value != null) 'parent': selectedParentId.value,
         // The backend links brand_ids to top-level categories only (same as the web form).
         if (selectedParentId.value == null) 'brand_ids': selectedBrandIds.toList(),

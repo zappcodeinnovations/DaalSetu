@@ -102,6 +102,9 @@ class BuyerOffersController extends GetxController {
       final mapped = data
           .map((e) => BuyerOfferModel.fromJson(e))
           .where((offer) {
+            // Buyer requirements (RFQs) belong to the Requirements screen only; the Offers screens
+            // list seller offers and the buyer's own interests.
+            if ((offerType == 'today' || offerType == 'all' || offerType == 'previous') && offer.isRfq) return false;
             // 1. When an offer's visibility is turned off from the panel or backend,
             //    it should be immediately excluded from the public/buyer offers list ('today', 'all').
             // 2. Under the active 'today' feed, out-of-stock and expired items are excluded

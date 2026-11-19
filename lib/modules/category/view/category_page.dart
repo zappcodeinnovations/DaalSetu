@@ -612,9 +612,10 @@ class CategoryPageView extends StatelessWidget {
         ? Colors.green
         : (isPending ? Colors.orange : Colors.red);
 
+    // The category name is the card's title, so a newly sent category is recognisable at a glance.
     final title = req.categoryNames.isNotEmpty
         ? req.categoryNames.join(', ')
-        : "Category Request";
+        : ((req.requestNote ?? '').trim().isNotEmpty ? req.requestNote!.trim() : "Category Request");
 
     return Material(
       color: theme.cardColor,
@@ -650,9 +651,11 @@ class CategoryPageView extends StatelessWidget {
                     children: [
                       Text(
                         title,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
                         ),
                       ),
                       const SizedBox(height: 4),
