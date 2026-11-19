@@ -9,9 +9,13 @@ class ContractService {
   /// ===============================
   /// FETCH CONTRACT LIST
   /// ===============================
-  static Future<List<ContractModel>> fetchContracts({bool silent = false}) async {
+  /// [delivery] = "in_transit" / "completed" asks the server for contracts by their challan's delivery
+  /// status: the same rule the dashboard cards count with.
+  static Future<List<ContractModel>> fetchContracts({bool silent = false, String? delivery}) async {
     final response = await ApiClient.get(
-      endpoint: ApiUrls.contracts,
+      endpoint: (delivery ?? '').isEmpty
+          ? ApiUrls.contracts
+          : '${ApiUrls.contracts}?delivery=${Uri.encodeQueryComponent(delivery!)}',
       requireAuth: true,
       suppressErrorDialog: silent,
     );

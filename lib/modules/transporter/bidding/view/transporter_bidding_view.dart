@@ -345,6 +345,8 @@ class TransporterBiddingView extends StatelessWidget {
                       TextField(
                         controller: note,
                         maxLength: 500,
+                        // The limit still applies; the "n/500" counter under the field is not shown.
+                        buildCounter: (context, {required currentLength, required isFocused, required maxLength}) => null,
                         maxLines: 2,
                         decoration: const InputDecoration(
                           labelText: "Note for admin (optional)",

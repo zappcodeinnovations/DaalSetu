@@ -154,8 +154,14 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
         ? AdminDrawer(activeKey: widget.moduleKey)
         : null,
     appBar: HeroHeader(
+      // Screens reached from the side menu show the menu button itself (it opens the menu every time);
+      // system back still returns to the previous page.
       leading: widget.showAdminDrawer
-          ? const AppBarLeading()
+          ? IconButton(
+              tooltip: 'Open menu',
+              icon: const Icon(Icons.menu_rounded, color: Colors.white),
+              onPressed: () => AppShell.openDrawer(activeKey: widget.moduleKey),
+            )
           : IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
               onPressed: () => goBackOrHome(context),

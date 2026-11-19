@@ -614,11 +614,11 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
                   ),
                 )
               else
-                Wrap(
-                  spacing: 8,
+                // One horizontal row: the buttons share the width equally and never wrap.
+                Row(
                   children: [
                     if (canAccept)
-                      FilledButton.icon(
+                      Expanded(child: FilledButton.icon(
                         onPressed: () => runAction(bid, 'accept'),
                         style: FilledButton.styleFrom(
                           backgroundColor: const Color(0xFF2E7D32),
@@ -626,19 +626,21 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         icon: const Icon(Icons.check_circle_outline, size: 18),
-                        label: const Text('Accept', style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
+                        label: const FittedBox(fit: BoxFit.scaleDown, child: Text('Accept', style: TextStyle(fontWeight: FontWeight.bold))),
+                      )),
+                    if (canAccept && (canCounter || canReject)) const SizedBox(width: 8),
                     if (canCounter)
-                      OutlinedButton.icon(
+                      Expanded(child: OutlinedButton.icon(
                         onPressed: () => counterBid(bid),
                         style: OutlinedButton.styleFrom(
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         icon: const Icon(Icons.swap_horiz_rounded, size: 18),
-                        label: const Text('Counter'),
-                      ),
+                        label: const FittedBox(fit: BoxFit.scaleDown, child: Text('Counter')),
+                      )),
+                    if (canCounter && canReject) const SizedBox(width: 8),
                     if (canReject)
-                      OutlinedButton.icon(
+                      Expanded(child: OutlinedButton.icon(
                         onPressed: () => runAction(bid, 'reject'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFFD32F2F),
@@ -646,8 +648,8 @@ class _TransportBidsSheetState extends State<TransportBidsSheet> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         icon: const Icon(Icons.cancel_outlined, size: 18),
-                        label: const Text('Reject', style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
+                        label: const FittedBox(fit: BoxFit.scaleDown, child: Text('Reject', style: TextStyle(fontWeight: FontWeight.bold))),
+                      )),
                   ],
                 ),
             ],

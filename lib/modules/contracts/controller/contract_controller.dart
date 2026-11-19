@@ -40,13 +40,24 @@ class ContractController extends GetxController {
   /// ===============================
   /// FETCH CONTRACT LIST
   /// ===============================
+  /// "in_transit" while the In Transit tab is open (the server applies the dashboard's rule), else null.
+  String? deliveryFilter;
+
+  bool _refetchAfter = false;
+
   Future<void> fetchContracts({bool silent = false}) async {
-    if (_fetchingContracts || isClosed || (silent && isLoading.value)) return;
+    if (isClosed) return;
+    if (_fetchingContracts) {
+      // A filter change while a load is running must not be dropped: load again once it is done.
+      if (!silent) _refetchAfter = true;
+      return;
+    }
+    if (silent && isLoading.value) return;
     _fetchingContracts = true;
     try {
       if (!silent) isLoading.value = true;
 
-      final result = await ContractService.fetchContracts(silent: silent);
+      final result = await ContractService.fetchContracts(silent: silent, delivery: deliveryFilter);
 
       if (!isClosed) contracts.assignAll(result);
     } catch (e) {
@@ -54,6 +65,10 @@ class ContractController extends GetxController {
     } finally {
       _fetchingContracts = false;
       if (!isClosed && !silent) isLoading.value = false;
+      if (_refetchAfter && !isClosed) {
+        _refetchAfter = false;
+        fetchContracts();
+      }
     }
   }
 

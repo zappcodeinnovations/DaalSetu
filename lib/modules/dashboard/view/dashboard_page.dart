@@ -292,6 +292,8 @@ class AdminDashboardScreen extends StatelessWidget {
                       color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                     ),
                   ),
+                  // Same identity line as the web dashboard: Name, Branch Code and Location.
+                  ..._identityLines(context, controller.dashboardData.value, fallbackName: name),
                 ],
               ),
             ),
@@ -299,6 +301,38 @@ class AdminDashboardScreen extends StatelessWidget {
         ),
       );
     });
+  }
+
+  List<Widget> _identityLines(BuildContext context, DashboardModel? data, {required String fallbackName}) {
+    final theme = Theme.of(context);
+    final style = GoogleFonts.inter(
+      fontSize: 12,
+      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.75),
+    );
+    final name = (data?.identityName ?? '').isNotEmpty ? data!.identityName : fallbackName;
+    final rows = <(String, String)>[
+      ('Name', name),
+      ('Branch Code', (data?.branchCode ?? '').isNotEmpty ? data!.branchCode : 'N/A'),
+      ('Location', (data?.branchLocation ?? '').isNotEmpty ? data!.branchLocation : 'N/A'),
+    ];
+    return [
+      const SizedBox(height: 6),
+      for (final row in rows)
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Text.rich(
+            TextSpan(
+              style: style,
+              children: [
+                TextSpan(text: '${row.$1}: '),
+                TextSpan(text: row.$2, style: const TextStyle(fontWeight: FontWeight.w700)),
+              ],
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+    ];
   }
 
   Widget _buildSectionHeader(
