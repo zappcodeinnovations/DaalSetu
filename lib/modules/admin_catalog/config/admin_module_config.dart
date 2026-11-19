@@ -1014,11 +1014,16 @@ class AdminModules {
           optionsLoader: loadParentCategoryOptions,
         ),
         AdminFieldConfig(
-          'is_active',
+          'status',
           'Status',
-          options: ['true', 'false'],
-          optionLabels: {'true': 'Active', 'false': 'Inactive'},
-          defaultValue: 'true',
+          options: ['active', 'pending', 'inactive', 'rejected'],
+          optionLabels: {
+            'active': 'Active',
+            'pending': 'Pending',
+            'inactive': 'Inactive',
+            'rejected': 'Rejected',
+          },
+          defaultValue: 'active',
         ),
         AdminFieldConfig('image', 'Image', isFile: true),
       ],
@@ -1068,6 +1073,18 @@ class AdminModules {
       fields: const [
         AdminFieldConfig('name', 'Category name', required: true),
         AdminFieldConfig('description', 'Description', multiline: true),
+        AdminFieldConfig(
+          'status',
+          'Status',
+          options: ['active', 'pending', 'inactive', 'rejected'],
+          optionLabels: {
+            'active': 'Active',
+            'pending': 'Pending',
+            'inactive': 'Inactive',
+            'rejected': 'Rejected',
+          },
+          defaultValue: 'active',
+        ),
       ],
       detailSections: [
         const AdminDetailSection(

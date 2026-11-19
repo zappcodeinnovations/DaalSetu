@@ -312,14 +312,10 @@ class SellerCategoryView extends StatelessWidget {
               theme,
             ),
             _categoryInfoRow(
-              category.status.toLowerCase() == 'active'
-                  ? Icons.check_circle_outline
-                  : Icons.pending_actions,
+              categoryStatusIcon(category.status),
               "Status: ${category.status.toUpperCase()}",
               theme,
-              textColor: category.status.toLowerCase() == 'active'
-                  ? Colors.green
-                  : Colors.orange,
+              textColor: categoryStatusColor(category.status),
             ),
           ],
         ),
@@ -493,14 +489,10 @@ class SellerCategoryView extends StatelessWidget {
                 theme,
               ),
               _categoryInfoRow(
-                node.status == 'active'
-                    ? Icons.check_circle_outline
-                    : Icons.pending_actions,
+                categoryStatusIcon(node.status),
                 "Status: ${node.status.toUpperCase()}",
                 theme,
-                textColor: node.status == 'active'
-                    ? Colors.green
-                    : Colors.orange,
+                textColor: categoryStatusColor(node.status),
               ),
             ],
           ),
@@ -1003,5 +995,31 @@ class SellerCategoryView extends StatelessWidget {
         cancelText: "CANCEL",
       ),
     );
+  }
+}
+
+/// Icon for a category status: active ticked, inactive / rejected blocked, anything else waiting.
+IconData categoryStatusIcon(String status) {
+  switch (status.toLowerCase()) {
+    case 'active':
+      return Icons.check_circle_outline;
+    case 'inactive':
+    case 'rejected':
+      return Icons.block;
+    default:
+      return Icons.pending_actions;
+  }
+}
+
+Color categoryStatusColor(String status) {
+  switch (status.toLowerCase()) {
+    case 'active':
+      return Colors.green;
+    case 'inactive':
+      return Colors.grey;
+    case 'rejected':
+      return Colors.red;
+    default:
+      return Colors.orange;
   }
 }
