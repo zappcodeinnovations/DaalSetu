@@ -247,7 +247,7 @@ class SellerMasterManagementView extends StatelessWidget {
                                     children: [
                                       ListTile(
                                         leading: const Icon(IconlyLight.edit),
-                                        title: const Text("Edit Tag"),
+                                        title: const Text("Edit Quality Tag"),
                                         onTap: () {
                                           Get.back();
                                           controller.editTag(tag);
@@ -255,7 +255,7 @@ class SellerMasterManagementView extends StatelessWidget {
                                       ),
                                       ListTile(
                                         leading: const Icon(IconlyLight.delete, color: Colors.red),
-                                        title: const Text("Delete Tag", style: TextStyle(color: Colors.red)),
+                                        title: const Text("Delete Quality Tag", style: TextStyle(color: Colors.red)),
                                         onTap: () {
                                           Get.back();
                                           controller.deleteTag(tag);

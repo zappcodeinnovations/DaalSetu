@@ -145,19 +145,19 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
               _partySection(
                 title: 'Buyer',
                 displayPartyId: contract.displayBuyerId,
-                name: contract.buyerName,
+                name: contractPersonName(contract.buyerPersonName, contract.buyerName),
                 mobile: contract.buyerMobile,
                 email: contract.buyerEmail,
-                company: contract.buyerCompany,
+                company: contractCompanyName(contract.buyerCompany, contract.buyerName, contract.buyerPersonName),
                 uniqueId: contract.buyerUniqueId,
               ),
               _partySection(
                 title: 'Seller',
                 displayPartyId: contract.displaySellerId,
-                name: contract.sellerName,
+                name: contractPersonName(contract.sellerPersonName, contract.sellerName),
                 mobile: contract.sellerMobile,
                 email: contract.sellerEmail,
-                company: contract.sellerCompany,
+                company: contractCompanyName(contract.sellerCompany, contract.sellerName, contract.sellerPersonName),
                 mappedId: contract.sellerMappedId,
               ),
               if (contract.loadingFrom.isNotEmpty || contract.loadingTo.isNotEmpty)

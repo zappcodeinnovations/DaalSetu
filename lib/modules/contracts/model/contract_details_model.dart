@@ -55,6 +55,9 @@ class ContractDetailModel {
   final String assignedSubAdminName;
   final String? buyerEmail;
   final String? sellerEmail;
+  /// The person's own name (buyer_name / seller_name are the company display names).
+  final String? buyerPersonName;
+  final String? sellerPersonName;
   final String? buyerCompany;
   final String? sellerCompany;
   final String? buyerMobile;
@@ -124,6 +127,8 @@ class ContractDetailModel {
     this.assignedSubAdminName = '',
     this.buyerEmail,
     this.sellerEmail,
+    this.buyerPersonName,
+    this.sellerPersonName,
     this.buyerCompany,
     this.sellerCompany,
     this.buyerMobile,
@@ -244,6 +249,8 @@ class ContractDetailModel {
       confirmedBranchName: text('confirmed_branch_name'),
       createdByUserName: text('created_by_user_name'),
       assignedSubAdminName: text('assigned_sub_admin_name'),
+      buyerPersonName: _extractField(json, 'buyer', ['person_name']),
+      sellerPersonName: _extractField(json, 'seller', ['person_name']),
       buyerEmail: _extractField(json, 'buyer', ['email', 'email_id', 'user_email']),
       sellerEmail: _extractField(json, 'seller', ['email', 'email_id', 'user_email']),
       buyerCompany: _extractField(json, 'buyer', ['company', 'company_name', 'business_name', 'org_name']),
@@ -354,4 +361,18 @@ class ContractDetailModel {
       deliveryChallanNumber: null,
     );
   }
+}
+
+/// The person's name for a party; falls back to the display name when the API sent no person.
+String contractPersonName(String? person, String? displayName) {
+  final p = (person ?? '').trim();
+  return p.isNotEmpty ? p : (displayName ?? '').trim();
+}
+
+/// The registered company: the company field, else the display name unless that is just the person.
+String contractCompanyName(String? company, String? displayName, String? person) {
+  final c = (company ?? '').trim();
+  if (c.isNotEmpty) return c;
+  final d = (displayName ?? '').trim();
+  return d == (person ?? '').trim() ? '' : d;
 }

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:daalsetu/widgets/confirm_actions.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -609,12 +610,11 @@ class SellerCategoryView extends StatelessWidget {
 
   void _showAddRootDialog(BuildContext context) {
     final controller = Get.find<SellerCategoryController>();
-    controller.categoryNameController.clear();
-    controller.selectedBrandIds.clear();
+    controller.resetAddForm();
 
     _showGlossyDialog(
       context: context,
-      title: "Add Root Category",
+      title: "Add Category",
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -631,16 +631,116 @@ class SellerCategoryView extends StatelessWidget {
               prefixIcon: const Icon(IconlyLight.category),
             ),
           ),
-          const SizedBox(height: 20),
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              "Select Brands",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          const SizedBox(height: 14),
+          Obx(() {
+            final roots = controller.categoryTree;
+            return DropdownButtonFormField<int?>(
+              key: ValueKey('parent-${controller.selectedParentId.value}'),
+              initialValue: controller.selectedParentId.value,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: "Parent Category",
+                filled: true,
+                fillColor: Theme.of(context).cardColor.withOpacity(0.5),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              items: [
+                const DropdownMenuItem<int?>(
+                  value: null,
+                  child: Text("None (Root Category)"),
+                ),
+                ...roots.map(
+                  (c) => DropdownMenuItem<int?>(
+                    value: c.id,
+                    child: Text(c.name, overflow: TextOverflow.ellipsis),
+                  ),
+                ),
+              ],
+              onChanged: (v) => controller.selectedParentId.value = v,
+            );
+          }),
+          const SizedBox(height: 14),
+          InputDecorator(
+            decoration: InputDecoration(
+              labelText: "Status",
+              filled: true,
+              fillColor: Theme.of(context).cardColor.withOpacity(0.5),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            child: const Text(
+              "Pending - active once the admin approves",
+              style: TextStyle(fontSize: 14),
             ),
           ),
+          const SizedBox(height: 14),
+          Obx(() {
+            final path = controller.pickedImagePath.value;
+            return Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    width: 52,
+                    height: 52,
+                    color: Colors.grey.withOpacity(0.15),
+                    child: path == null
+                        ? const Icon(Icons.image_outlined, color: Colors.grey)
+                        : Image.file(File(path), fit: BoxFit.cover),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: controller.pickCategoryImage,
+                        icon: const Icon(Icons.upload_outlined, size: 18),
+                        label: Text(path == null ? "Category Image" : "Change Image"),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        "Optional. JPG, PNG or WEBP, max 2MB.",
+                        style: TextStyle(fontSize: 11, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+                if (path != null)
+                  IconButton(
+                    onPressed: () => controller.pickedImagePath.value = null,
+                    icon: const Icon(Icons.close, color: Colors.red),
+                  ),
+              ],
+            );
+          }),
+          const SizedBox(height: 20),
+          Obx(() => controller.selectedParentId.value != null
+              ? const Padding(
+                  padding: EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    "Brands are mapped on the parent category. A sub-category uses the parent mapping automatically.",
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                )
+              : const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "Select Brands",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                )),
           const SizedBox(height: 8),
           Obx(() {
+            if (controller.selectedParentId.value != null) {
+              return const SizedBox.shrink();
+            }
             if (controller.isBrandsLoading.value) {
               return const Padding(
                 padding: EdgeInsets.symmetric(vertical: 28),
