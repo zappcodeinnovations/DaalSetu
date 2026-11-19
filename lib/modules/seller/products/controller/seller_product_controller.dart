@@ -283,6 +283,9 @@ class SellerProductController extends GetxController {
       final labels = <int, String>{};
       void addNodes(List<CategoryTreeModel> nodes, String parentPath) {
         for (final node in nodes) {
+          // Only approved categories can carry an offer: Pending / Rejected / Inactive ones (and what is
+          // under them) stay out of the picker until an admin approves them.
+          if (node.status.toLowerCase() != 'active') continue;
           final path = parentPath.isEmpty
               ? node.name
               : '$parentPath > ${node.name}';
