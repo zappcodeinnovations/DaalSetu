@@ -7,6 +7,7 @@ import '../../../comman/api_url.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/widgets/back_navigation.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 class UserDetailScreen extends StatefulWidget {
   final UserModel? initialUser;
@@ -115,7 +116,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 _infoRow("Mobile", user.mobile.isNotEmpty ? user.mobile : "-"),
                 _infoRow("Email", user.email ?? "-"),
                 _infoRow("Gender", user.gender ?? "-"),
-                _infoRow("DOB", user.dob ?? "-"),
+                _infoRow("DOB", AppDate.date(user.dob)),
               ],
             ),
 
@@ -147,7 +148,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               children: [
                 _passwordRow(context),
                 _infoRow("Registration Reason", user.registrationReason ?? "-"),
-                _infoRow("Date Joined", user.dateJoined ?? "-"),
+                _infoRow("Date Joined", AppDate.dateTime(user.dateJoined)),
               ],
             ),
 

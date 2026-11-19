@@ -787,7 +787,7 @@ class KycUsersScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
               children: [
-                Expanded(child: _buildActionButton(IconlyLight.show, "View", colorTotal, () => _showViewDialog(context, user))),
+                Expanded(child: _buildActionButton(IconlyLight.show, "Review", colorTotal, () => _showViewDialog(context, user))),
                 if (!isApproved) ...[
                   const SizedBox(width: 6),
                   Expanded(child: _buildActionButton(IconlyLight.tick_square, "Approve", colorApproved, () => _confirmApprove(user))),

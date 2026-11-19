@@ -871,6 +871,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     charts.commodityMix.labels,
                     charts.commodityMix.volumes,
                     colorResolver: resolveCommodityColor,
+                    showValues: true,
                   ),
                 ],
               );
@@ -897,6 +898,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     charts.commodityMix.labels,
                     charts.commodityMix.volumes,
                     colorResolver: resolveCommodityColor,
+                    showValues: true,
                   ),
                 ),
               ],
@@ -2241,6 +2243,8 @@ class AdminDashboardScreen extends StatelessWidget {
     List<int> values, {
     List<Color>? customColors,
     Color Function(String label, int index)? colorResolver,
+    // true: the legend shows each slice's real figure (e.g. 327), like the web card, not its percentage.
+    bool showValues = false,
   }) {
     final theme = Theme.of(context);
     final fallbackColors = customColors ?? [
@@ -2330,7 +2334,7 @@ child: Text(
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            "${percent.toStringAsFixed(0)}%",
+                            showValues ? '${values[index]}' : "${percent.toStringAsFixed(0)}%",
                             style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: itemColor),
                           ),
                         ],

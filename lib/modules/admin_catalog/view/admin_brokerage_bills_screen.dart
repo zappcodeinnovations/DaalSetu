@@ -2454,75 +2454,101 @@ class _AdminBrokerageBillDetailScreenState
         ),
       );
 
-  Widget _actions(Map<String, dynamic> bill) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(12),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          if (_isDraft) ...[
-            OutlinedButton.icon(
-              onPressed: _editHeader,
-              icon: const Icon(Icons.edit_outlined),
-              label: const Text('Edit Header'),
-            ),
-            OutlinedButton.icon(
-              onPressed: _addChallans,
-              icon: const Icon(Icons.add_link_outlined),
-              label: const Text('Add Challans'),
-            ),
-            FilledButton.icon(
-              onPressed: () => _runAction('issue'),
-              icon: const Icon(Icons.publish_outlined),
-              label: const Text('Issue Bill'),
-            ),
-            OutlinedButton.icon(
-              onPressed: _deleteDraft,
-              icon: const Icon(Icons.delete_outline),
-              label: const Text('Delete'),
-            ),
-          ],
-          if (_isIssued) ...[
-            if (bill['has_pdf'] == true) ...[
-              OutlinedButton.icon(
-                onPressed: _downloadPdf,
-                icon: const Icon(Icons.picture_as_pdf_outlined),
-                label: const Text('Download / View PDF'),
-              ),
-              OutlinedButton.icon(
-                onPressed: () => _runAction('generate_pdf'),
-                icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Re-generate PDF'),
-              ),
-            ] else ...[
-              OutlinedButton.icon(
-                onPressed: () => _runAction('generate_pdf'),
-                icon: const Icon(Icons.picture_as_pdf_outlined),
-                label: const Text('Generate PDF'),
-              ),
-            ],
-            FilledButton.tonalIcon(
-              onPressed: () => _confirm(
-                title: 'Cancel issued bill',
-                message: 'The bill will be cancelled. Please record why.',
-                confirmLabel: 'Cancel Bill',
-                needsReason: true,
-              ),
-              icon: const Icon(Icons.cancel_outlined),
-              label: const Text('Cancel Bill'),
-            ),
-          ],
-          if (!_isDraft && bill['has_pdf'] == true && !_isIssued)
-            OutlinedButton.icon(
-              onPressed: _downloadPdf,
-              icon: const Icon(Icons.download_outlined),
-              label: const Text('Download PDF'),
-            ),
-        ],
+  /// One full-width action: same height, same corners, same spacing.
+  Widget _action({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+    bool filled = false,
+    bool destructive = false,
+  }) {
+    final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
+    const size = Size.fromHeight(48);
+    if (filled) {
+      return FilledButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon),
+        label: Text(label),
+        style: FilledButton.styleFrom(minimumSize: size, shape: shape),
+      );
+    }
+    if (destructive) {
+      return OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon),
+        label: Text(label),
+        style: OutlinedButton.styleFrom(
+          minimumSize: size,
+          shape: shape,
+          foregroundColor: const Color(0xFFD32F2F),
+          side: const BorderSide(color: Color(0xFFD32F2F)),
+        ),
+      );
+    }
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(minimumSize: size, shape: shape),
+    );
+  }
+
+  Widget _actions(Map<String, dynamic> bill) {
+    final primary = <Widget>[
+      if (_isDraft) ...[
+        _action(icon: Icons.edit_outlined, label: 'Edit Header', onPressed: _editHeader),
+        _action(icon: Icons.add_link_outlined, label: 'Add Challans', onPressed: _addChallans),
+        _action(icon: Icons.publish_outlined, label: 'Issue Bill', onPressed: () => _runAction('issue'), filled: true),
+      ],
+      if (_isIssued)
+        if (bill['has_pdf'] == true) ...[
+          _action(icon: Icons.picture_as_pdf_outlined, label: 'Download / View PDF', onPressed: _downloadPdf),
+          _action(icon: Icons.refresh_rounded, label: 'Re-generate PDF', onPressed: () => _runAction('generate_pdf')),
+        ] else
+          _action(icon: Icons.picture_as_pdf_outlined, label: 'Generate PDF', onPressed: () => _runAction('generate_pdf')),
+      if (!_isDraft && bill['has_pdf'] == true && !_isIssued)
+        _action(icon: Icons.download_outlined, label: 'Download PDF', onPressed: _downloadPdf),
+    ];
+    // Destructive actions sit apart, below the normal ones.
+    final destructive = <Widget>[
+      if (_isDraft) _action(icon: Icons.delete_outline, label: 'Delete', onPressed: _deleteDraft, destructive: true),
+      if (_isIssued)
+        _action(
+          icon: Icons.cancel_outlined,
+          label: 'Cancel Bill',
+          destructive: true,
+          onPressed: () => _confirm(
+            title: 'Cancel issued bill',
+            message: 'The bill will be cancelled. Please record why.',
+            confirmLabel: 'Cancel Bill',
+            needsReason: true,
+          ),
+        ),
+    ];
+    final children = <Widget>[];
+    for (final button in primary) {
+      if (children.isNotEmpty) children.add(const SizedBox(height: 10));
+      children.add(button);
+    }
+    if (destructive.isNotEmpty) {
+      if (children.isNotEmpty) {
+        children
+          ..add(const SizedBox(height: 14))
+          ..add(const Divider(height: 1))
+          ..add(const SizedBox(height: 14));
+      }
+      for (var i = 0; i < destructive.length; i++) {
+        if (i > 0) children.add(const SizedBox(height: 10));
+        children.add(destructive[i]);
+      }
+    }
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
       ),
-    ),
-  );
+    );
+  }
 
   Widget _lineCard(Map<String, dynamic> line) => Card(
     margin: const EdgeInsets.only(bottom: 10),
