@@ -10,6 +10,7 @@ import '../controller/user_controller.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/utils/input_validators.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class AddUserScreen extends StatefulWidget {
   const AddUserScreen({super.key});
@@ -93,7 +94,7 @@ class AddUserScreenState extends State<AddUserScreen> {
       appBar: HeroHeader(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         title: "Add User",
         subtitle: "Register platform member & assign permissions",

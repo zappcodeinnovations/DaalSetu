@@ -5,6 +5,7 @@ import 'package:iconly/iconly.dart';
 import '../../../products/controller/product_controller.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class TransporterProductsView extends StatelessWidget {
   const TransporterProductsView({super.key});
@@ -23,7 +24,7 @@ class TransporterProductsView extends StatelessWidget {
         subtitle: "Products listed in network catalog",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           icon: const Icon(IconlyLight.swap, color: Colors.white),

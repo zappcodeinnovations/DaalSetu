@@ -7,6 +7,7 @@ import 'package:daalsetu/widgets/searchable_selection_sheet.dart';
 import '../controller/seller_company_controller.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:daalsetu/theme/app_theme.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class AddCompanyView extends StatefulWidget {
   const AddCompanyView({super.key});
@@ -127,7 +128,7 @@ class _AddCompanyViewState extends State<AddCompanyView> {
         subtitle: "Enterprise identity, GST & branch details",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
       ),
       body: SafeArea(

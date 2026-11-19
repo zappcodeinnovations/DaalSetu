@@ -6,6 +6,7 @@ import '../../../services/users_services.dart';
 import '../../../comman/api_url.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class UserDetailScreen extends StatefulWidget {
   final UserModel? initialUser;
@@ -75,7 +76,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       appBar: HeroHeader(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         title: user.fullName.isNotEmpty
             ? user.fullName

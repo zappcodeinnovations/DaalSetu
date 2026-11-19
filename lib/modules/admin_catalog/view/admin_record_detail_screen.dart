@@ -18,6 +18,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class AdminRecordDetailScreen extends StatefulWidget {
   const AdminRecordDetailScreen({
@@ -146,7 +147,7 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
     appBar: HeroHeader(
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-        onPressed: () => Navigator.of(context).maybePop(),
+        onPressed: () => goBackOrHome(context),
       ),
       title: '${widget.config.title} Details',
       subtitle: 'Inspect catalog record fields & metadata',

@@ -13,6 +13,7 @@ import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/utils/global_error_handler.dart';
 import 'package:daalsetu/widgets/delivery_period_picker.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 /// One live chat for a ProductInterest.  It intentionally powers both the
 /// buyer's My Interests route and the seller's Buyer Interests route so the
@@ -462,7 +463,7 @@ class _OfferInterestNegotiationChatViewState
         subtitle: 'Live negotiation · auto-refresh',
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           onPressed: _sending ? null : _load,

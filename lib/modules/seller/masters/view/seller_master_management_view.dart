@@ -6,6 +6,7 @@ import '../controller/seller_master_controller.dart';
 import 'seller_add_brand_dialog.dart';
 import 'seller_add_tag_dialog.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class SellerMasterManagementView extends StatelessWidget {
   const SellerMasterManagementView({super.key});
@@ -26,7 +27,7 @@ class SellerMasterManagementView extends StatelessWidget {
           subtitle: "Registered brands & commodity quality tags",
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-            onPressed: () => Navigator.of(context).maybePop(),
+            onPressed: () => goBackOrHome(context),
           ),
           trailing: IconButton(
             tooltip: 'Refresh',

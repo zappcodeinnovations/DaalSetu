@@ -6,6 +6,7 @@ import '../../../theme/app_theme.dart';
 import '../controller/admin_dc_list_controller.dart';
 import '../widgets/admin_challan_card.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class AdminChallanListView extends StatelessWidget {
   const AdminChallanListView({super.key});
@@ -21,7 +22,7 @@ class AdminChallanListView extends StatelessWidget {
       appBar: HeroHeader(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         title: "Delivery Challans",
         subtitle: "Freight dispatch tracking & documentation",

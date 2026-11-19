@@ -4,6 +4,7 @@ import 'package:daalsetu/network/api_client.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:flutter/material.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class AdminSubAdminPermissionsScreen extends StatefulWidget {
   const AdminSubAdminPermissionsScreen({
@@ -115,7 +116,7 @@ class _AdminSubAdminPermissionsScreenState
       appBar: HeroHeader(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         title: 'Sub Admin Permissions',
         subtitle: 'Granular access overrides for ${_displayName()}',

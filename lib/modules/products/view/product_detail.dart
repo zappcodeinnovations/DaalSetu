@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:daalsetu/modules/admin_catalog/view/offer_interests_dialog.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:daalsetu/network/api_client.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   /// Buyer screens pass this to show "Submit Offer" on the offer page (MoM 7);
@@ -66,7 +67,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         subtitle: 'Commodity specifications & seller terms',
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           icon: const Icon(Icons.refresh_rounded, color: Colors.white),

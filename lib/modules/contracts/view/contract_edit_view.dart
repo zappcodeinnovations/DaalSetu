@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/utils/app_date.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 /// Web "Edit Contract" modal: deal values, locations, dates, remarks and status.
 /// Only changed fields are sent, so a closed contract can still get a status/remark update.
@@ -121,7 +122,7 @@ class _ContractEditViewState extends State<ContractEditView> {
       appBar: HeroHeader(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         title: 'Edit ${c.contractId}',
         subtitle: 'Modify deal metrics, locations, schedule & remarks',

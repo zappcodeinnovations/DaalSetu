@@ -6,6 +6,7 @@ import '../../../../services/seller_services.dart';
 import '../../common/seller_ui.dart';
 import '../../contracts/view/seller_contract_detail_view.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 /// Consignment management (single API: /api/consignments/).
 class SellerConsignmentController extends GetxController {
@@ -101,7 +102,7 @@ class SellerConsignmentsView extends StatelessWidget {
         subtitle: "Stock consignments & warehouse dispatch tracking",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           tooltip: 'Refresh',
@@ -322,7 +323,7 @@ class SellerConsignmentsView extends StatelessWidget {
                   const SizedBox(height: 14),
                   Container(
                     width: double.infinity,
-                    height: 44,
+                    height: 48,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
@@ -343,11 +344,16 @@ class SellerConsignmentsView extends StatelessWidget {
                       icon: const Icon(Icons.local_shipping, size: 16, color: Colors.white),
                       label: Text(
                         "MARK READY FOR LOADING",
+                        maxLines: 1,
                         style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
+                        elevation: 0,
+                        // Fills the 48 high gradient box with no extra padding: label centred, never clipped.
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        minimumSize: const Size.fromHeight(48),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     ),

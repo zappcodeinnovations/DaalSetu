@@ -10,6 +10,7 @@ import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../../utils/app_snackbar.dart';
 import 'package:daalsetu/widgets/dispatch_bills_section.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 const _gold = Color(0xFFFFB300);
 
@@ -87,7 +88,7 @@ class TransporterBiddingView extends StatelessWidget {
           subtitle: "Freight bids & submitted quotes",
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-            onPressed: () => Navigator.of(context).maybePop(),
+            onPressed: () => goBackOrHome(context),
           ),
           trailing: IconButton(
             tooltip: "Refresh",

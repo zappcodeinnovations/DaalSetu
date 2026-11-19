@@ -6,6 +6,7 @@ import '../controller/seller_negotiation_controller.dart';
 import '../../common/seller_ui.dart';
 import 'seller_interest_thread_view.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class SellerOfferInterestsView extends StatefulWidget {
   const SellerOfferInterestsView({super.key});
@@ -39,7 +40,7 @@ class _SellerOfferInterestsViewState extends State<SellerOfferInterestsView> {
         subtitle: "Live negotiation • auto-refresh",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           onPressed: controller.fetchInterests,

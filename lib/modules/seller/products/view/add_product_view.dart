@@ -7,6 +7,7 @@ import 'package:daalsetu/widgets/delivery_period_picker.dart';
 import 'package:daalsetu/widgets/offer_image_picker.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import 'dart:io';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class AddProductView extends StatefulWidget {
   const AddProductView({super.key});
@@ -40,7 +41,7 @@ class _AddProductViewState extends State<AddProductView> {
         subtitle: "Commodity pricing, stock quantity & terms",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           key: const Key('refresh_button'),

@@ -15,6 +15,7 @@ import 'package:get/get.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class AdminModuleListScreen extends StatefulWidget {
   const AdminModuleListScreen({
@@ -157,7 +158,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
           ? const AppBarLeading()
           : IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-              onPressed: () => Navigator.of(context).maybePop(),
+              onPressed: () => goBackOrHome(context),
             ),
       title: widget.moduleKey == 'category_requests'
           ? 'Category Requests'

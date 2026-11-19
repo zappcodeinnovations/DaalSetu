@@ -2,6 +2,7 @@ import 'package:daalsetu/theme/app_theme.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class AdminComplaintsView extends StatefulWidget {
   final int? initialOpenCount;
@@ -121,7 +122,7 @@ class _AdminComplaintsViewState extends State<AdminComplaintsView> {
       appBar: HeroHeader(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         title: 'Complaints & Issues',
         subtitle: 'Platform trade dispute management & audit logs',

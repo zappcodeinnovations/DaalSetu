@@ -6,6 +6,7 @@ import '../controller/seller_notification_controller.dart';
 import '../../../../services/realtime_notification_service.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class SellerNotificationView extends StatelessWidget {
   const SellerNotificationView({super.key});
@@ -23,7 +24,7 @@ class SellerNotificationView extends StatelessWidget {
         subtitle: "Realtime updates & deal alerts",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           icon: const Icon(Icons.done_all_rounded, color: Colors.white),

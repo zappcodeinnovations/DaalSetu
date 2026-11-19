@@ -13,6 +13,7 @@ import 'package:daalsetu/utils/input_validators.dart';
 import 'package:daalsetu/utils/tax_id_formatters.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class AdminRecordFormScreen extends StatefulWidget {
   const AdminRecordFormScreen({super.key, required this.config, this.record});
@@ -232,7 +233,7 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
       appBar: HeroHeader(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         title: '${editing ? 'Edit' : 'Create'} ${widget.config.title}',
         subtitle: 'Configure catalog and system parameters',

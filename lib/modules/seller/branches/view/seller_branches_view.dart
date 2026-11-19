@@ -8,6 +8,7 @@ import '../controller/seller_branch_controller.dart';
 import 'seller_join_branch_dialog.dart';
 import '../../../../services/seller_services.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class SellerBranchesView extends StatelessWidget {
   const SellerBranchesView({super.key});
@@ -96,7 +97,7 @@ class SellerBranchesView extends StatelessWidget {
         subtitle: "Warehouse branches & network directory",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           icon: const Icon(IconlyLight.search, color: Colors.white),

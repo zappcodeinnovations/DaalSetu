@@ -4,6 +4,7 @@ import 'package:iconly/iconly.dart';
 import '../../../../services/seller_services.dart';
 import '../../common/seller_ui.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class OfferStockHistoryView extends StatefulWidget {
   final int productId;
@@ -59,7 +60,7 @@ class _OfferStockHistoryViewState extends State<OfferStockHistoryView> {
         subtitle: "Inventory movement & bag ledger",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           tooltip: 'Refresh',

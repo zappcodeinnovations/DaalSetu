@@ -6,6 +6,7 @@ import '../../../../theme/app_theme.dart';
 import '../controller/transporter_brands_controller.dart';
 import '../model/transporter_brand_model.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class TransporterBrandsView extends StatelessWidget {
   TransporterBrandsView({super.key});
@@ -25,7 +26,7 @@ class TransporterBrandsView extends StatelessWidget {
         subtitle: "Registered brands & catalog directory",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           icon: const Icon(IconlyLight.swap, color: Colors.white),

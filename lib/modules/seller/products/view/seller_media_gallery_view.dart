@@ -12,6 +12,7 @@ import '../../../../widgets/media_url.dart';
 import '../../../../utils/app_preferences.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:daalsetu/widgets/offer_image_picker.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class SellerMediaGalleryView extends StatefulWidget {
   final int? productId;
@@ -152,7 +153,7 @@ class _SellerMediaGalleryViewState extends State<SellerMediaGalleryView> {
           subtitle: "Product images & videos gallery",
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-            onPressed: () => Navigator.of(context).maybePop(),
+            onPressed: () => goBackOrHome(context),
           ),
           bottom: TabBar(
             indicatorColor: Colors.white,

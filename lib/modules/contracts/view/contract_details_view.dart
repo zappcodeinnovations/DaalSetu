@@ -20,6 +20,7 @@ import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/services/contract_services.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class ContractDetailScreen extends StatefulWidget {
   const ContractDetailScreen({super.key});
@@ -75,7 +76,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
         subtitle: 'Deal summary & legal agreement',
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           tooltip: 'Download PDF',

@@ -5,6 +5,7 @@ import 'package:iconly/iconly.dart';
 import '../../../users/controller/user_controller.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class TransporterUsersView extends StatelessWidget {
   const TransporterUsersView({super.key});
@@ -24,7 +25,7 @@ class TransporterUsersView extends StatelessWidget {
         subtitle: "Associated team & staff directory",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           icon: const Icon(Icons.refresh_rounded, color: Colors.white),

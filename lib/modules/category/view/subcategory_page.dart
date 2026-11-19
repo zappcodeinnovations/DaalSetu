@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/subcategory_controller.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class SubCategoryScreen extends StatelessWidget {
   SubCategoryScreen({super.key});
@@ -24,7 +25,7 @@ class SubCategoryScreen extends StatelessWidget {
         subtitle: "Browse commodities & varieties",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           icon: const Icon(Icons.refresh_rounded, color: Colors.white),
