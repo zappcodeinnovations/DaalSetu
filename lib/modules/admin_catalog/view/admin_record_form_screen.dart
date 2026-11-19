@@ -472,17 +472,9 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
             : field.numeric
             ? [FilteringTextInputFormatter.digitsOnly]
             : isVehicleNumberField
-            ? [
-                FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9 -]')),
-                const _UpperCaseFormatter(),
-                LengthLimitingTextInputFormatter(13),
-              ]
+            ? [IndianIdInputFormatter.vehicle()]
             : isLicenseField
-            ? [
-                FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9 -]')),
-                const _UpperCaseFormatter(),
-                LengthLimitingTextInputFormatter(17),
-              ]
+            ? [IndianIdInputFormatter.license()]
             : null,
         maxLength: field.key == 'gst_number'
             ? 15
@@ -501,6 +493,8 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
           alignLabelWithHint: field.multiline,
           counterText: '',
           errorText: serverErrors[field.key],
+          // Show the whole message, never "...".
+          errorMaxLines: 3,
         ),
         onChanged: (val) {
           if (serverErrors.containsKey(field.key)) {
@@ -533,7 +527,11 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
               ? InputValidators.personName(value, label: field.label)
               : null;
           final formatError = isVehicleNumberField
-              ? InputValidators.vehicleNumber(value, label: field.label, required: _isRequired(field))
+              ? InputValidators.vehicleNumber(
+                  value,
+                  label: field.label.split('(').first.trim(),
+                  required: _isRequired(field),
+                )
               : isLicenseField
               ? InputValidators.licenseNumber(value, required: _isRequired(field))
               : null;
