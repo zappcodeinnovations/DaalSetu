@@ -6,10 +6,14 @@ import '../../../utils/app_snackbar.dart';
 
 /// A choice for a dropdown field: what is sent ([value]) and what is shown ([label]).
 class AdminOption {
-  const AdminOption(this.value, this.label);
+  const AdminOption(this.value, this.label, {this.extras = const {}});
 
   final String value;
   final String label;
+
+  /// Extra details that other (read-only) fields of the form show once this option is picked,
+  /// e.g. a driver's phone number and licence number.
+  final Map<String, String> extras;
 }
 
 /// Readable text for any API value: nested objects show their name, lists are joined.
@@ -169,8 +173,12 @@ Future<List<AdminOption>> loadDriverOptions() => _load(
         final name = (d['driver_name'] ?? d['name'] ?? '').toString().trim();
         final license = (d['license_number'] ?? '').toString().trim();
         final phone = (d['phone_number'] ?? '').toString().trim();
-        final detail = [license, phone].where((part) => part.isNotEmpty).join(' / ');
-        return AdminOption('${d['id'] ?? ''}', detail.isEmpty ? name : '$name ($detail)');
+        return AdminOption(
+          '${d['id'] ?? ''}',
+          // The web shows "Name (phone)"; the other details fill their own fields below.
+          phone.isEmpty ? name : '$name ($phone)',
+          extras: {'phone': phone, 'license': license},
+        );
       },
     );
 

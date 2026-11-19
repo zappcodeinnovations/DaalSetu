@@ -130,7 +130,7 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
     });
     final body = <String, dynamic>{};
     for (final field in widget.config.fields) {
-      if (field.isFile || (editing && field.createOnly)) continue;
+      if (field.isFile || field.derivedFrom != null || (editing && field.createOnly)) continue;
       if (field.multiSelect) {
         body[field.key] = (multiValues[field.key] ?? {})
             .map((id) => int.tryParse(id) ?? id)
@@ -379,6 +379,17 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
     final Widget child;
     if (field.isFile) {
       child = _fileField(field);
+    } else if (field.derivedFrom != null) {
+      // Filled automatically from the driver picked above (same as the web form); not editable.
+      child = TextFormField(
+        controller: controllers[field.key],
+        readOnly: true,
+        decoration: InputDecoration(
+          labelText: field.label,
+          hintText: 'Auto-filled from the selected driver',
+          filled: true,
+        ),
+      );
     } else if (field.optionsLoader != null) {
       child = FutureBuilder<List<AdminOption>>(
         future: optionFutures[field.key],
@@ -560,9 +571,17 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
           .toList(),
       onChanged: (value) {
         controllers[field.key]!.text = value ?? '';
-        if (serverErrors.containsKey(field.key)) {
-          setState(() => serverErrors.remove(field.key));
+        // Fields that mirror this choice (e.g. the driver's phone and licence number) follow it.
+        final picked = options.where((option) => option.value == value);
+        final extras = picked.isEmpty ? const <String, String>{} : picked.first.extras;
+        for (final other in widget.config.fields) {
+          if (other.derivedFrom == field.key) {
+            controllers[other.key]?.text = extras[other.derivedKey] ?? '';
+          }
         }
+        setState(() {
+          serverErrors.remove(field.key);
+        });
       },
       validator: (value) {
         if (serverErrors[field.key] != null) {

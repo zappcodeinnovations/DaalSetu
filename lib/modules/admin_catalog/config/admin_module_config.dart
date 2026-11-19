@@ -46,9 +46,16 @@ class AdminFieldConfig {
     this.singleSelectAsList = false,
     this.sendAsBoolean = false,
     this.requiredOnEdit = true,
+    this.derivedFrom,
+    this.derivedKey,
   });
 
   final String key;
+
+  /// A read-only field filled from the option chosen in the field [derivedFrom] (its [AdminOption.extras]
+  /// entry [derivedKey]); never sent to the server.
+  final String? derivedFrom;
+  final String? derivedKey;
 
   /// False when the field may stay empty on edit (the server keeps its value),
   /// e.g. a branch's admin when only the status changes.
@@ -1581,6 +1588,18 @@ class AdminModules {
           'Assign driver (optional)',
           optionsLoader: loadDriverOptions,
           initialValue: assignedDriverIdOf,
+        ),
+        AdminFieldConfig(
+          'driver_phone_number',
+          'Driver phone number',
+          derivedFrom: 'assigned_driver_id',
+          derivedKey: 'phone',
+        ),
+        AdminFieldConfig(
+          'driver_license_number',
+          'Driver license number',
+          derivedFrom: 'assigned_driver_id',
+          derivedKey: 'license',
         ),
         AdminFieldConfig(
           'vehicle_status',
