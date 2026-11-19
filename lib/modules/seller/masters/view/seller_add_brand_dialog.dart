@@ -93,9 +93,10 @@ class _SellerAddBrandDialogState extends State<SellerAddBrandDialog> {
                 border: Border.all(color: Colors.grey.shade300),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: ListView(
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
+              // A Column in a scroll view (not a ListView): the dialog measures its content's intrinsic
+              // size, which a shrink-wrapped ListView cannot answer (the dialog then fails to open).
+              child: SingleChildScrollView(
+                child: Column(
                 children: roots.map((c) {
                   final id = int.tryParse(c['id'].toString());
                   final name = (c['category_name'] ?? c['name'] ?? '').toString();
@@ -112,7 +113,7 @@ class _SellerAddBrandDialogState extends State<SellerAddBrandDialog> {
                             }),
                   );
                 }).toList(),
-              ),
+              )),
             );
           }),
         ],
