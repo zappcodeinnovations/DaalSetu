@@ -6,29 +6,124 @@ import 'package:google_fonts/google_fonts.dart';
 
 /// Asks, before a dispatch, whether to attach bills. Returns the chosen file paths
 /// (empty = dispatch without a bill) or null when the user cancels the dispatch.
-Future<List<String>?> askDispatchBills() async {
-  return Get.dialog<List<String>>(
-    AlertDialog(
+///
+/// Picking files never dispatches by itself: the chosen files are listed and the seller must press
+/// "Confirm Dispatch" (or choose other files / remove them / cancel).
+Future<List<String>?> askDispatchBills({Future<List<String>> Function()? picker}) async {
+  return Get.dialog<List<String>>(DispatchBillsDialog(picker: picker));
+}
+
+class DispatchBillsDialog extends StatefulWidget {
+  const DispatchBillsDialog({super.key, this.picker});
+
+  /// How files are chosen (the system file picker by default; replaced in tests).
+  final Future<List<String>> Function()? picker;
+
+  @override
+  State<DispatchBillsDialog> createState() => _DispatchBillsDialogState();
+}
+
+class _DispatchBillsDialogState extends State<DispatchBillsDialog> {
+  List<String> _paths = [];
+
+  String _name(String path) => path.split(RegExp(r'[\\/]')).last;
+
+  Future<void> _choose() async {
+    final picked = await (widget.picker ?? DispatchBillServices.pickBillFiles)();
+    if (picked.isEmpty || !mounted) return;
+    // Only remembers the choice; nothing is dispatched until the seller confirms.
+    setState(() => _paths = picked);
+  }
+
+  ButtonStyle _outlined() => OutlinedButton.styleFrom(
+        minimumSize: const Size.fromHeight(46),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final hasFiles = _paths.isNotEmpty;
+    return AlertDialog(
       title: const Text('Dispatch Shipment'),
-      content: const Text(
-        'Attach the bill (PDF or image)? It is shared with the buyer, transporter and admin.',
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('Attach the bill (PDF or image)? It is shared with the buyer, transporter and admin.'),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: _choose,
+              icon: const Icon(Icons.attach_file),
+              label: Text(hasFiles ? 'Change Files' : 'Choose Files'),
+              style: _outlined(),
+            ),
+            if (hasFiles) ...[
+              const SizedBox(height: 12),
+              for (final path in _paths)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    children: [
+                      Icon(
+                        path.toLowerCase().endsWith('.pdf') ? Icons.picture_as_pdf_outlined : Icons.image_outlined,
+                        size: 18,
+                        color: const Color(0xFFF58220),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(_name(path), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      ),
+                      IconButton(
+                        tooltip: 'Remove',
+                        visualDensity: VisualDensity.compact,
+                        icon: const Icon(Icons.close, size: 18),
+                        onPressed: () => setState(() => _paths = _paths.where((p) => p != path).toList()),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ],
+        ),
       ),
+      actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+      actionsOverflowDirection: VerticalDirection.down,
       actions: [
-        FilledButton(
-          onPressed: () async {
-            final paths = await DispatchBillServices.pickBillFiles();
-            if (paths.isNotEmpty) Get.back(result: paths);
-          },
-          child: const Text('Choose Files'),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (hasFiles)
+              FilledButton(
+                onPressed: () => Get.back(result: _paths),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFF05A28),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(46),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text('Confirm Dispatch (${_paths.length} file${_paths.length == 1 ? '' : 's'})'),
+              )
+            else
+              OutlinedButton(
+                onPressed: () => Get.back(result: const <String>[]),
+                style: _outlined().copyWith(
+                  foregroundColor: const WidgetStatePropertyAll(Color(0xFFF05A28)),
+                  side: const WidgetStatePropertyAll(BorderSide(color: Color(0xFFF05A28))),
+                ),
+                child: const Text('Dispatch without bill'),
+              ),
+            const SizedBox(height: 10),
+            OutlinedButton(
+              onPressed: () => Get.back(),
+              style: _outlined(),
+              child: const Text('Cancel'),
+            ),
+          ],
         ),
-        TextButton(
-          onPressed: () => Get.back(result: const <String>[]),
-          child: const Text('Dispatch without bill'),
-        ),
-        OutlinedButton(onPressed: () => Get.back(), child: const Text('Cancel')),
       ],
-    ),
-  );
+    );
+  }
 }
 
 /// Uploads bills chosen for a dispatch; the dispatch itself already succeeded.

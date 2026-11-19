@@ -58,6 +58,21 @@ class ContractDetailModel {
   /// The person's own name (buyer_name / seller_name are the company display names).
   final String? buyerPersonName;
   final String? sellerPersonName;
+
+  /// The rest of the web "Contract Details" (trade value, what was offered / asked, dates, GST, address, changes).
+  final String? tradeValue;
+  final String? sellerQuantity;
+  final String? buyerOfferAmount;
+  final String? buyerRequiredQuantity;
+  final String? dealDate;
+  final String? deliveryDate;
+  final String? loadingFromDate;
+  final String? loadingToDate;
+  final String? buyerGst;
+  final String? sellerGst;
+  final String? buyerAddress;
+  final String? sellerAddress;
+  final List<Map<String, dynamic>> editHistory;
   final String? buyerCompany;
   final String? sellerCompany;
   final String? buyerMobile;
@@ -129,6 +144,19 @@ class ContractDetailModel {
     this.sellerEmail,
     this.buyerPersonName,
     this.sellerPersonName,
+    this.tradeValue,
+    this.sellerQuantity,
+    this.buyerOfferAmount,
+    this.buyerRequiredQuantity,
+    this.dealDate,
+    this.deliveryDate,
+    this.loadingFromDate,
+    this.loadingToDate,
+    this.buyerGst,
+    this.sellerGst,
+    this.buyerAddress,
+    this.sellerAddress,
+    this.editHistory = const [],
     this.buyerCompany,
     this.sellerCompany,
     this.buyerMobile,
@@ -249,6 +277,24 @@ class ContractDetailModel {
       confirmedBranchName: text('confirmed_branch_name'),
       createdByUserName: text('created_by_user_name'),
       assignedSubAdminName: text('assigned_sub_admin_name'),
+      tradeValue: _nonEmpty(text('trade_value')),
+      sellerQuantity: _nonEmpty(text('seller_quantity')),
+      buyerOfferAmount: _nonEmpty(text('buyer_offer_amount')),
+      buyerRequiredQuantity: _nonEmpty(text('buyer_required_quantity')),
+      dealDate: _nonEmpty(text('deal_date')),
+      deliveryDate: _nonEmpty(text('delivery_date')),
+      loadingFromDate: _nonEmpty(text('loading_from_date')),
+      loadingToDate: _nonEmpty(text('loading_to_date')),
+      buyerGst: _nonEmpty(text('buyer_gst')),
+      sellerGst: _nonEmpty(text('seller_gst')),
+      buyerAddress: _nonEmpty(text('buyer_address')),
+      sellerAddress: _nonEmpty(text('seller_address')),
+      editHistory: json['contract_edit_history'] is List
+          ? (json['contract_edit_history'] as List)
+              .whereType<Map>()
+              .map((row) => Map<String, dynamic>.from(row))
+              .toList()
+          : const [],
       buyerPersonName: _extractField(json, 'buyer', ['person_name']),
       sellerPersonName: _extractField(json, 'seller', ['person_name']),
       buyerEmail: _extractField(json, 'buyer', ['email', 'email_id', 'user_email']),
@@ -278,6 +324,11 @@ class ContractDetailModel {
           ? Map<String, dynamic>.from(json['bill_company'] as Map)
           : const {},
     );
+  }
+
+  static String? _nonEmpty(String value) {
+    final trimmed = value.trim();
+    return trimmed.isEmpty || trimmed == 'null' ? null : trimmed;
   }
 
   static String? _extractField(Map<String, dynamic> json, String prefix, List<String> fieldKeys) {

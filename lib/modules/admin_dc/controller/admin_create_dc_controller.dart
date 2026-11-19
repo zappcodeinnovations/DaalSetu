@@ -331,7 +331,7 @@ class AdminCreateDCController extends GetxController {
     buffer.writeln("Buyer: $buyer");
     buffer.writeln("Product: $product");
     buffer.writeln("Quantity: $qty $unit");
-    buffer.writeln("Deal Amount: ₹$rate");
+    buffer.writeln("Deal Amount: Rs. $rate");
     if (transporter.isNotEmpty) {
       buffer.writeln("Transporter: $transporter");
     }

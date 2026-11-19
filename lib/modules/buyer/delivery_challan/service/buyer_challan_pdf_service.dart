@@ -1,3 +1,4 @@
+import 'package:daalsetu/utils/pdf_text.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:io';
 
@@ -514,7 +515,7 @@ class BuyerChallanPdfService {
                                     pw.Expanded(
                                       child: pw.Text(
                                         (challan.narration ?? '').trim().isNotEmpty
-                                            ? challan.narration!
+                                            ? pdfSafeText(challan.narration)
                                             : 'Selected Contract Details',
                                         style: const pw.TextStyle(fontSize: 6.5),
                                         maxLines: 4,

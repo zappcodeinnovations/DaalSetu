@@ -122,12 +122,14 @@ class BuyerDeliveryChallanController extends GetxController {
     }
   }
 
-  Future<void> receiveChallan(int challanId, String remarks) async {
+  /// [closeDetails] is true when called from the details page (it is closed afterwards); the list's
+  /// quick action passes false so the list stays open.
+  Future<void> receiveChallan(int challanId, String remarks, {bool closeDetails = true}) async {
     isReceiving.value = true;
     try {
       final response = await BuyerServices.receiveDeliveryChallan(challanId, remarks);
       if (response['success'] == true) {
-        Get.back(); // Go back from details page
+        if (closeDetails) Get.back(); // Go back from details page
         AppSnackbar.showSuccess(
           title: "Success",
           message: "Challan received successfully.",
