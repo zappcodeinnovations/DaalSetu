@@ -165,7 +165,6 @@ class CategoryPageView extends StatelessWidget {
 
   void _showSendForApprovalBottomSheet(BuildContext context, CategoryController controller) {
     final theme = Theme.of(context);
-    final customNameCtrl = TextEditingController();
     final Set<int> selectedCategoryIds = {};
 
     // Get assigned category IDs & names (Approved or Pending) to filter out
@@ -246,44 +245,57 @@ class CategoryPageView extends StatelessWidget {
                   ),
                   const Divider(height: 32),
 
-                  if (unassignedSystemCategories.isNotEmpty) ...[
-                    Text(
-                      "Select Existing System Categories",
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                  Text(
+                    "Select Categories",
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (unassignedSystemCategories.isNotEmpty)
+                    // The approved categories you can still ask for: tick them and send, no typing.
+                    Container(
+                      constraints: const BoxConstraints(maxHeight: 320),
+                      decoration: BoxDecoration(
+                        color: theme.cardColor,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: unassignedSystemCategories.map((cat) {
-                        final isSelected = selectedCategoryIds.contains(cat.id);
-                        return FilterChip(
-                          label: Text(cat.categoryName),
-                          selected: isSelected,
-                          selectedColor: theme.colorScheme.primary.withOpacity(0.2),
-                          checkmarkColor: theme.colorScheme.primary,
-                          labelStyle: TextStyle(
-                            fontSize: 12,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            color: isSelected ? theme.colorScheme.primary : theme.textTheme.bodyMedium?.color,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: unassignedSystemCategories.map((cat) {
+                              final isSelected = selectedCategoryIds.contains(cat.id);
+                              return CheckboxListTile(
+                                value: isSelected,
+                                dense: true,
+                                controlAffinity: ListTileControlAffinity.leading,
+                                activeColor: theme.colorScheme.primary,
+                                title: Text(
+                                  cat.categoryName,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                  ),
+                                ),
+                                onChanged: (selected) {
+                                  setModalState(() {
+                                    if (selected == true) {
+                                      selectedCategoryIds.add(cat.id);
+                                    } else {
+                                      selectedCategoryIds.remove(cat.id);
+                                    }
+                                  });
+                                },
+                              );
+                            }).toList(),
                           ),
-                          onSelected: (selected) {
-                            setModalState(() {
-                              if (selected) {
-                                selectedCategoryIds.add(cat.id);
-                              } else {
-                                selectedCategoryIds.remove(cat.id);
-                              }
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 20),
-                  ] else ...[
+                        ),
+                      ),
+                    )
+                  else
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -297,7 +309,7 @@ class CategoryPageView extends StatelessWidget {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              "All existing system categories are already approved for your account. You can request a custom category below.",
+                              "No new category is available to request right now. Every approved category is already on your account or waiting for approval.",
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: Colors.green.shade800,
                                 fontWeight: FontWeight.w500,
@@ -307,31 +319,6 @@ class CategoryPageView extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
-                  ],
-
-                  Text(
-                    unassignedSystemCategories.isNotEmpty
-                        ? "Or Enter Custom Category Name"
-                        : "Enter Custom Category Name",
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: customNameCtrl,
-                    decoration: InputDecoration(
-                      hintText: "e.g. Yellow Peas, Rajma",
-                      prefixIcon: const Icon(IconlyLight.edit, size: 20),
-                      filled: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
                   const SizedBox(height: 24),
 
                   SizedBox(
@@ -339,8 +326,8 @@ class CategoryPageView extends StatelessWidget {
                     height: 52,
                     child: ElevatedButton(
                       onPressed: () async {
-                        if (selectedCategoryIds.isEmpty && customNameCtrl.text.trim().isEmpty) {
-                          AppSnackbar.snackbar("Notice", "Please select at least one category or enter a custom category name",
+                        if (selectedCategoryIds.isEmpty) {
+                          AppSnackbar.snackbar("Notice", "Please select at least one category",
                               snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.orange, colorText: Colors.white);
                           return;
                         }
@@ -348,7 +335,6 @@ class CategoryPageView extends StatelessWidget {
                         Get.back(); // close bottom sheet
                         await controller.sendForApproval(
                           categoryIds: selectedCategoryIds.toList(),
-                          categoryName: customNameCtrl.text.trim().isNotEmpty ? customNameCtrl.text.trim() : null,
                         );
                       },
                       style: ElevatedButton.styleFrom(
