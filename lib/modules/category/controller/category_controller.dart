@@ -14,6 +14,52 @@ class CategoryController extends GetxController {
   var recentRequests = <CategoryRequestModel>[].obs;
   var searchQuery = ''.obs;
 
+  /// Categories ticked on the page, waiting to be sent for approval.
+  final selectedRequestIds = <int>{}.obs;
+
+  /// Approved system categories this buyer can still ask for: not already on the account and not
+  /// already waiting for approval.
+  List<CategoryModel> get requestableCategories {
+    bool taken(CategoryModel c) {
+      final status = c.status?.toLowerCase();
+      return status == 'approved' || status == 'pending';
+    }
+
+    final takenIds = allCategories.where(taken).map((c) => c.id).toSet();
+    final takenNames = allCategories.where(taken).map((c) => c.categoryName.trim().toLowerCase()).toSet();
+    return systemCategories
+        .where((c) =>
+            !takenIds.contains(c.id) &&
+            !takenNames.contains(c.categoryName.trim().toLowerCase()) &&
+            c.categoryName.trim().isNotEmpty)
+        .toList();
+  }
+
+  void toggleRequest(int id, bool selected) {
+    if (selected) {
+      selectedRequestIds.add(id);
+    } else {
+      selectedRequestIds.remove(id);
+    }
+  }
+
+  /// Sends every ticked category for approval in one request.
+  Future<void> sendSelectedForApproval() async {
+    final ids = selectedRequestIds.toList();
+    if (ids.isEmpty) {
+      AppSnackbar.snackbar(
+        "Notice",
+        "Tick the categories you want to request first",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return;
+    }
+    final sent = await sendForApproval(categoryIds: ids);
+    if (sent) selectedRequestIds.clear();
+  }
+
   @override
   void onInit() {
     fetchCategories();
