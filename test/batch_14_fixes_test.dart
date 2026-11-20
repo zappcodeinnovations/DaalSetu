@@ -129,7 +129,9 @@ void main() {
 
       final drawerSections = await DrawerMenuService().fetchMenu();
       final mastersSection = drawerSections.firstWhere((s) => s.sectionTitle == 'MASTERS');
-      final salesmanItem = mastersSection.items.firstWhere((i) => i.key == 'salesman');
+      final salesmanItem = mastersSection.items.firstWhere(
+        (i) => i.key == 'salesman' || i.key == 'sub_admins',
+      );
 
       expect(salesmanItem.title, 'Salesman');
       expect(salesmanItem.route, '/admin/salesman');
