@@ -30,46 +30,46 @@ void main() {
       expect(kycConfig.customActions.length, 2);
 
       final approveAction = kycConfig.customActions.firstWhere(
-        (a) => a.title == 'Approve KYC',
+        (a) => a.title == 'Approve',
       );
       expect(approveAction, isNotNull);
       expect(approveAction.icon, Icons.verified_outlined);
 
       final rejectAction = kycConfig.customActions.firstWhere(
-        (a) => a.title == 'Reject KYC',
+        (a) => a.title == 'Reject',
       );
       expect(rejectAction, isNotNull);
       expect(rejectAction.icon, Icons.cancel_outlined);
     });
 
-    test('Approve KYC is visible for pending records and hidden for approved records', () {
+    test('Approve KYC is visible for every KYC status (like the web review page)', () {
       final kycConfig = AdminModules.byKey('kyc');
       final approveAction = kycConfig.customActions.firstWhere(
-        (a) => a.title == 'Approve KYC',
+        (a) => a.title == 'Approve',
       );
 
       final pendingRecord = {'id': 175, 'kyc_status': 'pending'};
       final approvedRecord = {'id': 175, 'kyc_status': 'approved'};
       final rejectedRecord = {'id': 175, 'kyc_status': 'rejected'};
 
-      expect(approveAction.isVisible?.call(pendingRecord), isTrue);
-      expect(approveAction.isVisible?.call(approvedRecord), isFalse);
-      expect(approveAction.isVisible?.call(rejectedRecord), isTrue);
+      expect(approveAction.isVisible?.call(pendingRecord) ?? true, isTrue);
+      expect(approveAction.isVisible?.call(approvedRecord) ?? true, isTrue);
+      expect(approveAction.isVisible?.call(rejectedRecord) ?? true, isTrue);
     });
 
-    test('Reject KYC is visible for pending/rejected records and hidden for approved records', () {
+    test('Reject KYC is visible for every KYC status (like the web review page)', () {
       final kycConfig = AdminModules.byKey('kyc');
       final rejectAction = kycConfig.customActions.firstWhere(
-        (a) => a.title == 'Reject KYC',
+        (a) => a.title == 'Reject',
       );
 
       final pendingRecord = {'id': 175, 'kyc_status': 'pending'};
       final approvedRecord = {'id': 175, 'kyc_status': 'approved'};
       final rejectedRecord = {'id': 175, 'kyc_status': 'rejected'};
 
-      expect(rejectAction.isVisible?.call(pendingRecord), isTrue);
-      expect(rejectAction.isVisible?.call(approvedRecord), isFalse);
-      expect(rejectAction.isVisible?.call(rejectedRecord), isTrue);
+      expect(rejectAction.isVisible?.call(pendingRecord) ?? true, isTrue);
+      expect(rejectAction.isVisible?.call(approvedRecord) ?? true, isTrue);
+      expect(rejectAction.isVisible?.call(rejectedRecord) ?? true, isTrue);
     });
   });
 

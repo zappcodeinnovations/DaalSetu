@@ -22,6 +22,8 @@ class SellerCompanyController extends GetxController {
   final legalNameController = TextEditingController();
   final companyTypeController = TextEditingController();
   final yearController = TextEditingController();
+  final employeesController = TextEditingController();
+  final landmarkController = TextEditingController();
   final panController = TextEditingController();
   final gstController = TextEditingController();
   final address1Controller = TextEditingController();
@@ -55,6 +57,8 @@ class SellerCompanyController extends GetxController {
     legalNameController.text = company.legalName;
     companyTypeController.text = company.companyType;
     yearController.text = company.yearOfEstablishment.toString();
+    employeesController.text = company.numberOfEmployees?.toString() ?? '';
+    landmarkController.text = company.landmark;
     panController.text = company.panNumber;
     gstController.text = company.gstNumber;
     address1Controller.text = company.addressLine1;
@@ -254,6 +258,10 @@ class SellerCompanyController extends GetxController {
       "gst_number": gstController.text.trim().toUpperCase(),
       "address_line_1": address1Controller.text.trim(),
       "address_line_2": address2Controller.text.trim(),
+      "landmark": landmarkController.text.trim(),
+      // Optional: left out when empty so an old value is not wiped by a blank.
+      if (int.tryParse(employeesController.text.trim()) != null)
+        "number_of_employees": int.parse(employeesController.text.trim()),
       "city": cityController.text.trim(),
       "state": stateController.text.trim(),
       "pincode": pincodeController.text.trim(),
@@ -277,6 +285,8 @@ class SellerCompanyController extends GetxController {
     legalNameController.clear();
     companyTypeController.clear();
     yearController.clear();
+    employeesController.clear();
+    landmarkController.clear();
     panController.clear();
     gstController.clear();
     address1Controller.clear();
@@ -292,6 +302,8 @@ class SellerCompanyController extends GetxController {
     legalNameController.dispose();
     companyTypeController.dispose();
     yearController.dispose();
+    employeesController.dispose();
+    landmarkController.dispose();
     panController.dispose();
     gstController.dispose();
     address1Controller.dispose();

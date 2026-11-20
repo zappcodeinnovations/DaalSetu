@@ -10,6 +10,7 @@ import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../../utils/app_snackbar.dart';
 import 'package:daalsetu/widgets/dispatch_bills_section.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/page_auto_refresh.dart';
 import 'package:daalsetu/widgets/back_navigation.dart';
 
 const _gold = Color(0xFFFFB300);
@@ -96,7 +97,10 @@ class TransporterBiddingView extends StatelessWidget {
             onPressed: controller.fetchMyBids,
           ),
         ),
-        body: _MyDealsTab(controller),
+        body: PageAutoRefresh(
+          onRefresh: () => controller.fetchMyBids(silent: true),
+          child: _MyDealsTab(controller),
+        ),
       );
     }
     return DefaultTabController(
@@ -139,7 +143,19 @@ class TransporterBiddingView extends StatelessWidget {
           ),
         ),
         body: TabBarView(
-          children: [_OffersTab(controller), _MyDealsTab(controller)],
+          // Both tabs refresh themselves every few seconds while they are the one on screen.
+          children: [
+            PageAutoRefresh(
+              tabIndex: 0,
+              onRefresh: () => controller.fetchOffers(silent: true),
+              child: _OffersTab(controller),
+            ),
+            PageAutoRefresh(
+              tabIndex: 1,
+              onRefresh: () => controller.fetchMyBids(silent: true),
+              child: _MyDealsTab(controller),
+            ),
+          ],
         ),
       ),
     );

@@ -504,7 +504,7 @@ class AdminCreateChallanView extends StatelessWidget {
               child: _textField(
                 controller: controller.dispatchDateController,
                 label: "Dispatch Date",
-                hint: "YYYY-MM-DD",
+                hint: "DD/MM/YYYY",
                 icon: IconlyLight.calendar,
                 isDark: isDark,
               ),

@@ -19,7 +19,7 @@ class _OfflineBiddingController extends TransporterBiddingController {
   Future<void> fetchOpenOffers() async {}
 
   @override
-  Future<void> fetchMyBids() async {}
+  Future<void> fetchMyBids({bool silent = false}) async {}
 }
 
 void main() {

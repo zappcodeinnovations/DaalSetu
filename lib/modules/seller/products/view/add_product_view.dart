@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../routes/app_routes.dart';
 import 'package:iconly/iconly.dart';
 import '../../common/seller_ui.dart';
 import '../controller/seller_product_controller.dart';
@@ -325,6 +326,40 @@ class _AddProductViewState extends State<AddProductView> {
                 onClear: () => controller.selectedVideoPath.value = null,
               ),
 
+              if (controller.companiesLoaded.value && controller.companies.isEmpty) ...[
+                const SizedBox(height: 8),
+                _sectionTitle("Company"),
+                const SizedBox(height: 12),
+                Container(
+                  key: const Key('no-company-notice'),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF7ED),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFFFB74D)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "You have not registered a company yet. An offer can be published only with a registered company and approved KYC.",
+                        style: TextStyle(color: Color(0xFF7C2D12), fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        height: 42,
+                        child: OutlinedButton.icon(
+                          onPressed: () => Get.toNamed(AppRoutes.sellerCompany),
+                          icon: const Icon(Icons.business_outlined, size: 18),
+                          label: const Text("Register company"),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               if (controller.companies.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 _sectionTitle("Company"),
@@ -349,6 +384,41 @@ class _AddProductViewState extends State<AddProductView> {
                 ),
               ],
 
+              // The branch choice is always on the form: a seller sees the branches they belong to, or - when
+              // they are in none - why the offer cannot be published and where to join one.
+              if (controller.branches.isEmpty) ...[
+                const SizedBox(height: 24),
+                _sectionTitle("Visible in Branches"),
+                const SizedBox(height: 12),
+                Container(
+                  key: const Key('no-branch-notice'),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF7ED),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFFFB74D)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "You are not in any branch yet. An offer is shown to buyers through your branches, so join a branch first.",
+                        style: TextStyle(color: Color(0xFF7C2D12), fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        height: 42,
+                        child: OutlinedButton.icon(
+                          onPressed: () => Get.toNamed(AppRoutes.sellerBranches),
+                          icon: const Icon(Icons.account_tree_outlined, size: 18),
+                          label: const Text("Join a branch"),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               if (controller.branches.isNotEmpty) ...[
                 const SizedBox(height: 24),
                 _sectionTitle("Visible in Branches"),

@@ -6,6 +6,7 @@ import 'package:daalsetu/services/product_services.dart';
 import 'package:daalsetu/widgets/authenticated_network_image.dart';
 import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:daalsetu/modules/admin_catalog/view/offer_interests_dialog.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
@@ -19,10 +20,17 @@ class ProductDetailScreen extends StatefulWidget {
   final bool isResubmit;
   final ProductModel? initialProduct;
 
+  /// True when this buyer already sent an offer on it: the button then says "Resubmit", like the offer card.
+  /// Read inside an Obx, so it flips as soon as the offer goes through.
+  final bool Function()? isOfferSubmitted;
+  final bool isResubmit;
+  final ProductModel? initialProduct;
+
   const ProductDetailScreen({
     super.key,
     required this.productId,
     this.onSubmitOffer,
+    this.isOfferSubmitted,
     this.isResubmit = false,
     this.initialProduct,
   });
@@ -179,7 +187,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   _item('Brand', product.brand?.name),
                   _item('Brand ID', product.brand?.uniqueId),
                   _item('Seller', product.seller?.fullName),
-                  _item('Seller login', product.seller?.loginUsername),
+                  // The web has no seller login field (switched off, kept commented out).
+                  // _item('Seller login', product.seller?.loginUsername),
                 ]),
                 _section('Pricing & inventory', [
                   _item('Rate', '₹${product.amount} ${product.amountUnit}'),
@@ -195,7 +204,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   _item('Quantity (Qtl)', product.quantityQtl),
                   _item('Packing weight', '${product.packingWeightKg} kg'),
                   _item('Original bags', product.originalBagCount),
-                  _item('Remaining bags', product.remainingBagCount),
+                  // The web only shows the remaining quantity (what is left after sales), not remaining bags.
+                  // _item('Remaining bags', product.remainingBagCount),
                   _item('Stock status', _label(product.stockStatus)),
                 ]),
                 _section('Loading & expiry', [
@@ -455,9 +465,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             widget.onSubmitOffer!(context);
           },
           icon: const Icon(Icons.send_rounded, color: Colors.white),
-          label: Text(
-            widget.isResubmit ? 'Resubmit' : 'Submit Offer',
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+          label: Obx(
+            () => Text(
+              ((widget.isOfferSubmitted?.call() ?? false) || widget.isResubmit)
+                  ? 'Resubmit'
+                  : 'Submit Offer',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+            ),
           ),
         ),
       ),

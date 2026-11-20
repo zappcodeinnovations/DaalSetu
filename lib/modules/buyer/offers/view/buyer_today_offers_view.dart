@@ -151,6 +151,7 @@ class BuyerTodayOffersView extends StatelessWidget {
       Get.to(() => ProductDetailScreen(
             productId: pId,
             onSubmitOffer: buyerSubmitOfferCallback(offer, tag: 'today'),
+            isOfferSubmitted: buyerOfferSubmittedCheck(offer, tag: 'today'),
             isResubmit: isSubmitted,
           ));
     } else if (offer.id != null) {

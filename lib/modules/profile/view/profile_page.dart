@@ -766,9 +766,12 @@ class ProfileScreen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF141310), // Very dark warm grey
+        // Same card surface and border as every other card of this screen (light and dark theme alike).
+        color: cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: accentGold.withOpacity(0.3)),
+        border: Border.all(
+          color: Get.isDarkMode ? Colors.white.withOpacity(0.05) : AppTheme.borderLight,
+        ),
       ),
       child: InkWell(
         onTap: () => Get.toNamed(
@@ -791,10 +794,10 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     "Manage Company",
                     style: TextStyle(
-                      color: Colors.white,
+                      color: textDark,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),

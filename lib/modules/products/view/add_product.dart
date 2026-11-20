@@ -213,7 +213,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _message('Deal expiry time must be in the future.', error: true);
       return;
     }
-    if (branches.isNotEmpty && selectedBranchIds.isEmpty) {
+    if (branches.isEmpty) {
+      _message('The selected seller is not in any branch yet. Add the seller to a branch first.', error: true);
+      return;
+    }
+    if (selectedBranchIds.isEmpty) {
       _message('Select at least one visible branch.', error: true);
       return;
     }
@@ -229,7 +233,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
         if (brand != null) 'brand': brand!.id,
         'seller': seller!.id,
         'company': company!.id,
-        'visible_branches': selectedBranchIds.toList(),
+        // The server reads visible_branch_ids; visible_branches (the old key) was ignored, so every branch got the offer.
+        'visible_branch_ids': selectedBranchIds.toList(),
         'amount': _rate.text.trim(),
         'amount_unit': rateUnit,
         'quantity': _quantity.text.trim(),
@@ -562,7 +567,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       return const Text('Select seller to load visible branches.');
     }
     if (branches.isEmpty) {
-      return const Text('No branch available for this seller.');
+      return const Text('No branch available for this seller: add the seller to a branch before creating an offer.');
     }
     return InputDecorator(
       decoration: const InputDecoration(labelText: 'Visible branches *'),

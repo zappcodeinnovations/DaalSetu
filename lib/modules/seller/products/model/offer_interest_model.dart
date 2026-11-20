@@ -91,6 +91,7 @@ class OfferInterestModel {
 
     bName ??= json['buyer_full_name']?.toString() ??
         json['buyer_name']?.toString() ??
+        json['buyer_display_id']?.toString() ??
         json['buyer_unique_id']?.toString() ??
         (buyerObj is String ? buyerObj : null);
 

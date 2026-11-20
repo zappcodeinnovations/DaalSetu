@@ -62,7 +62,20 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
         controllers[field.key] = TextEditingController(
           text: (current ?? field.defaultValue ?? '').toString(),
         );
+        if (!editing && field.defaultLoader != null) _fillDefault(field);
       }
+    }
+  }
+
+  /// Fills a new record's field from the server (never over something the user already typed).
+  Future<void> _fillDefault(AdminFieldConfig field) async {
+    try {
+      final value = await field.defaultLoader!();
+      final controller = controllers[field.key];
+      if (!mounted || controller == null || value == null || value.isEmpty) return;
+      if (controller.text.trim().isEmpty) controller.text = value;
+    } catch (_) {
+      // The field simply stays empty: it is optional.
     }
   }
 

@@ -1,6 +1,7 @@
 import 'package:daalsetu/widgets/dashboard_period_bar.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:daalsetu/widgets/header_profile_avatar.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
@@ -152,25 +153,7 @@ class TransporterDashboardView extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 4),
-          GestureDetector(
-            onTap: () => Get.toNamed(AppRoutes.profile_page),
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 1.5),
-              ),
-              child: const CircleAvatar(
-                radius: 15,
-                backgroundColor: Colors.white,
-                child: Icon(
-                  IconlyLight.user_1,
-                  size: 16,
-                  color: Color(0xFFE65100),
-                ),
-              ),
-            ),
-          ),
+          const HeaderProfileAvatar(),
           const SizedBox(width: 8),
         ],
       ),

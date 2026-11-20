@@ -4,6 +4,7 @@ import 'package:daalsetu/comman/api_url.dart';
 import 'package:daalsetu/modules/admin_catalog/view/admin_drawer.dart';
 import 'package:daalsetu/network/api_client.dart';
 import 'package:daalsetu/utils/app_preferences.dart';
+import 'package:daalsetu/utils/app_date.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -2003,13 +2004,13 @@ class _AdminBrokerageBillDetailScreenState
     }
     if (!mounted) return;
     final billDate = TextEditingController(
-      text: _billingText(current['bill_date']),
+      text: billingDateShown(current['bill_date']),
     );
     final periodFrom = TextEditingController(
-      text: _billingText(current['period_from']),
+      text: billingDateShown(current['period_from']),
     );
     final periodTo = TextEditingController(
-      text: _billingText(current['period_to']),
+      text: billingDateShown(current['period_to']),
     );
     final remarks = TextEditingController(
       text: _billingText(current['remarks']),
@@ -2102,11 +2103,11 @@ class _AdminBrokerageBillDetailScreenState
                   ),
                   const SizedBox(height: 10),
                 ],
-                _dialogInput(billDate, 'Bill date (YYYY-MM-DD)'),
+                _dateInput(billDate, 'Bill date (DD-MM-YYYY)'),
                 const SizedBox(height: 10),
-                _dialogInput(periodFrom, 'Period from (YYYY-MM-DD)'),
+                _dateInput(periodFrom, 'Period from (DD-MM-YYYY)'),
                 const SizedBox(height: 10),
-                _dialogInput(periodTo, 'Period to (YYYY-MM-DD)'),
+                _dateInput(periodTo, 'Period to (DD-MM-YYYY)'),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
                   key: ValueKey('header-commission-$commission'),
@@ -2152,9 +2153,9 @@ class _AdminBrokerageBillDetailScreenState
                 if (billingCompany.isNotEmpty)
                   'billing_company': billingCompany,
                 'assigned_sub_admin': assignedSubAdmin,
-                'bill_date': billDate.text.trim(),
-                'period_from': periodFrom.text.trim(),
-                'period_to': periodTo.text.trim(),
+                'bill_date': billingDateForApi(billDate.text),
+                'period_from': billingDateForApi(periodFrom.text),
+                'period_to': billingDateForApi(periodTo.text),
                 'remarks': remarks.text.trim(),
                 'commission_type': commission,
                 'default_brokerage_rate': rate.text.trim(),
@@ -2192,6 +2193,32 @@ class _AdminBrokerageBillDetailScreenState
     }
   }
 
+  /// A date field that reads and shows DD-MM-YYYY; tapping the calendar picks a day. The server still gets YYYY-MM-DD.
+  Widget _dateInput(TextEditingController controller, String label) => TextField(
+    controller: controller,
+    keyboardType: TextInputType.datetime,
+    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9\-/]')), LengthLimitingTextInputFormatter(10)],
+    decoration: InputDecoration(
+      labelText: label,
+      hintText: 'DD-MM-YYYY',
+      border: const OutlineInputBorder(),
+      suffixIcon: IconButton(
+        tooltip: 'Pick a date',
+        icon: const Icon(Icons.calendar_month_outlined),
+        onPressed: () async {
+          final current = AppDate.parse(controller.text) ?? DateTime.now();
+          final picked = await showDatePicker(
+            context: context,
+            initialDate: current,
+            firstDate: DateTime(2020),
+            lastDate: DateTime(2100),
+          );
+          if (picked != null) controller.text = billingDateShown(AppDate.apiDate(picked));
+        },
+      ),
+    ),
+  );
+
   Widget _dialogInput(
     TextEditingController controller,
     String label, {
@@ -2215,7 +2242,7 @@ class _AdminBrokerageBillDetailScreenState
 
   Future<void> _editLine(Map<String, dynamic> line) async {
     final deliveryDate = TextEditingController(
-      text: _billingText(line['delivery_date']),
+      text: billingDateShown(line['delivery_date']),
     );
     final buyer = TextEditingController(text: _billingText(line['buyer_name']));
     final product = TextEditingController(
@@ -2259,7 +2286,7 @@ class _AdminBrokerageBillDetailScreenState
                     ),
                   ),
                   const SizedBox(height: 14),
-                  _dialogInput(deliveryDate, 'Delivery date (YYYY-MM-DD)'),
+                  _dateInput(deliveryDate, 'Delivery date (DD-MM-YYYY)'),
                   const SizedBox(height: 10),
                   _dialogInput(buyer, 'Buyer name'),
                   const SizedBox(height: 10),
@@ -2355,7 +2382,7 @@ class _AdminBrokerageBillDetailScreenState
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: () => Navigator.pop(sheetContext, {
-                        'delivery_date': deliveryDate.text.trim(),
+                        'delivery_date': billingDateForApi(deliveryDate.text),
                         'buyer_name': buyer.text.trim(),
                         'product_name': product.text.trim(),
                         'bag_count': bags.text.trim(),
@@ -3030,4 +3057,23 @@ class _AdminBrokerageBillDetailScreenState
       ],
     ),
   );
+}
+
+/// A stored date (YYYY-MM-DD or a timestamp) as the screen shows it: DD-MM-YYYY, e.g. 20-11-2026. Empty stays empty.
+String billingDateShown(dynamic value) {
+  final text = (value ?? '').toString().trim();
+  if (text.isEmpty || text == 'null') return '';
+  final parsed = AppDate.parse(text);
+  if (parsed == null) return text;
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${two(parsed.day)}-${two(parsed.month)}-${parsed.year}';
+}
+
+/// What the user typed (DD-MM-YYYY, DD/MM/YYYY or YYYY-MM-DD) as the YYYY-MM-DD the server expects.
+/// Text that is not a date is sent as typed, so the server's own validation message still shows.
+String billingDateForApi(String text) {
+  final trimmed = text.trim();
+  if (trimmed.isEmpty) return '';
+  final parsed = AppDate.parse(trimmed);
+  return parsed == null ? trimmed : AppDate.apiDate(parsed);
 }

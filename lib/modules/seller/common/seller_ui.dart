@@ -140,7 +140,7 @@ class SellerUi {
         backgroundColor: color,
         elevation: 0,
         minimumSize: const Size(96, 46),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -149,6 +149,10 @@ class SellerUi {
       child: Text(
         confirmText,
         textAlign: TextAlign.center,
+        // One line, always: the two buttons share one width and one height (a label that wrapped made the
+        // confirm button look taller than Cancel).
+        maxLines: 1,
+        softWrap: false,
         style: TextStyle(
           // Dark text on light buttons (amber), white on dark ones.
           color: ThemeData.estimateBrightnessForColor(color) == Brightness.light
@@ -165,13 +169,13 @@ class SellerUi {
         foregroundColor: Get.theme.colorScheme.primary,
         side: BorderSide(color: Get.theme.colorScheme.primary, width: 1.2),
         minimumSize: const Size(96, 46),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
       ),
       onPressed: () => Get.back(result: false),
-      child: Text(cancelText),
+      child: Text(cancelText, maxLines: 1, softWrap: false),
     );
 
     final result = await Get.dialog<bool>(

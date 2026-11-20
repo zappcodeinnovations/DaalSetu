@@ -165,6 +165,13 @@ class _AddCompanyViewState extends State<AddCompanyView> {
                 errorKey: 'year_of_establishment',
                 required: true,
               ),
+              _buildTextField(
+                controller.employeesController,
+                "Number of Employees",
+                IconlyLight.user_1,
+                keyboardType: TextInputType.number,
+                errorKey: 'number_of_employees',
+              ),
               _buildSectionHeader("STATUTORY DETAILS", theme),
               _buildTextField(
                 controller.panController,
@@ -194,6 +201,12 @@ class _AddCompanyViewState extends State<AddCompanyView> {
                 controller.address2Controller,
                 "Address Line 2",
                 IconlyLight.location,
+              ),
+              _buildTextField(
+                controller.landmarkController,
+                "Landmark",
+                IconlyLight.location,
+                errorKey: 'landmark',
               ),
               _buildStateDropdown(theme),
               _buildCityDropdown(theme),

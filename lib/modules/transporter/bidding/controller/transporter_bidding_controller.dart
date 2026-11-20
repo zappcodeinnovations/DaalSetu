@@ -38,24 +38,27 @@ class TransporterBiddingController extends GetxController {
     return "${ApiUrls.transportBids}?${Uri(queryParameters: params).query}";
   }
 
-  Future<void> fetchOffers() async {
+  /// [silent] = the page's auto-refresh: no spinner, and an error keeps what is already on screen.
+  Future<void> fetchOffers({bool silent = false}) async {
     try {
-      isLoadingOffers(true);
-      offersError('');
+      if (!silent) isLoadingOffers(true);
+      if (!silent) offersError('');
       final response = await ApiClient.get(endpoint: _query('open', {'search': offerSearch.value}), requireAuth: true);
       final list = response is Map ? response['contracts'] : null;
       offers.value = (list is List ? list : const []).whereType<Map<String, dynamic>>().map(ShipmentOfferModel.fromJson).toList();
     } catch (e) {
-      offers.clear();
-      offersError(_message(e));
+      if (!silent) {
+        offers.clear();
+        offersError(_message(e));
+      }
     } finally {
-      isLoadingOffers(false);
+      if (!silent) isLoadingOffers(false);
     }
   }
 
-  Future<void> fetchMyBids() async {
+  Future<void> fetchMyBids({bool silent = false}) async {
     try {
-      isLoadingBids(true);
+      if (!silent) isLoadingBids(true);
       final response = await ApiClient.get(
         endpoint: _query('mine', {'status': bidStatus.value == 'all' ? '' : bidStatus.value}),
         requireAuth: true,
@@ -90,10 +93,12 @@ class TransporterBiddingController extends GetxController {
               }..removeWhere((_, value) => value.trim().isEmpty)))
           .toList();
     } catch (e) {
-      myBids.clear();
-      _snack("Error", _message(e), Colors.red);
+      if (!silent) {
+        myBids.clear();
+        _snack("Error", _message(e), Colors.red);
+      }
     } finally {
-      isLoadingBids(false);
+      if (!silent) isLoadingBids(false);
     }
   }
 

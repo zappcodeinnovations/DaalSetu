@@ -36,7 +36,7 @@ class _FakeConsignments extends SellerConsignmentController {
   }
 
   @override
-  Future<void> fetch() async {}
+  Future<void> fetch({bool silent = false}) async {}
 }
 
 void main() {
