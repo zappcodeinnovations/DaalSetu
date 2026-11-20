@@ -1,28 +1,33 @@
 # Current Task State
 
 ## Current Task
-- **Goal**: Resolve Batch 18 tester bugs safely:
-  1. Admin Dashboard Analytics Charts Numbers, Percentages, and Axis Mismatch (Pipeline by Stage, Gross Trade Value & Deals, Commodity Mix 100%)
-  2. Calendar Date Picker Defaults to Tomorrow (20) Instead of Today (19) Across All Roles
-  3. Admin Mobile Buyer Requirements Details Screen Omits Quotation Details and Chat Action
-- **Status**: **100% Implemented & Verified**
-  - **Batch 18 Fixes Summary**:
-    1. **Bug 1 (Admin Dashboard Analytics Sync & Scaling)**:
-       - In `lib/modules/dashboard/controller/dashboard_controller.dart`, `fetchDashboard()` requests with `period: selectedGtvPeriod.value` (defaulting to '7D').
-       - In `lib/modules/dashboard/view/dashboard_page.dart`:
-         - `_buildAnalyticsGrid` synchronizes `pipelineValues` with live KPI `dealsInNegotiation` (3 deals, ~23% vs ~77% Deal Confirmed).
-         - `_buildDonutCard` implements Largest Remainder Method (Hare-Niemeyer), strictly guaranteeing rounded integer percentages sum to 100%.
-         - `_buildWebGtvDealsChart` dynamically scales to 0–0.07 with 0.01 interval for 7D view, formats Deals axis without repeating zeros, and synchronizes plot rectangles with identical axis reservations on BarChart and LineChart so GTV peak aligns directly over 17 Nov.
-    2. **Bug 2 (Universal Date Picker Today Default)**:
-       - In `lib/modules/products/view/add_product.dart`, replaced hardcoded `initialDate: DateTime.now().add(const Duration(days: 1))` with `today` (`DateTime(now.year, now.month, now.day)`).
-       - In `buyer_today_offers_view.dart` and `edit_offer_view.dart`, ensured `today` is clamped safely with `firstDate`.
-    3. **Bug 3 (Admin Buyer Requirements Details Quotations & Chat)**:
-       - In `lib/modules/admin_catalog/view/admin_record_detail_screen.dart`, added `_buildBuyerRequirementQuotations` card rendering each submitted quotation with Seller Name & Branch (e.g., Agrofarm / AMR158M), Price (`₹50.00/QTL`), Quantity (`50.000 QTL`), Status Badge (e.g., Accepted), and `[Chat / Details]` action button.
-       - In `lib/modules/admin_catalog/config/admin_module_config.dart`, added `Chat / Details` `AdminCustomAction` in `customActions` navigating to `BuyerOfferDetailsView(offerId: numericId, preferBuyerRequirement: true)`.
-    4. **Automated Verification**:
-       - Created `test/batch_18_fixes_test.dart` (5/5 tests PASSED).
-       - Full regression test suite passed (31/31 tests PASSED across Batches 13–18).
-       - `flutter analyze` verified on modified files with 0 errors.
+- **Goal**: Merge `origin/rohit_app_UI` (21 incoming commits) with local branch `rohit_app_UI` (Batches 13–18 fixes, 64 bugs resolved) safely according to GEMINI.md protocol with zero regressions.
+- **Status**: **100% Merged, Verified & Clean**
+  - **Merge Commits**:
+    - `225912e`: `merge: cleanly integrate origin/rohit_app_UI with all 64 local bug fixes, resolving conflicts and unifying features`
+    - `f3706e5`: `fix(drawer): align dark mode contrast and test assertions for merged salesman and sub-category status`
+  - **Backup Branch**: `backup/batch18_pre_merge` created and preserved.
+  - **Conflicts Resolved (12 files)**:
+    1. `lib/modules/admin_catalog/config/admin_module_config.dart`: Combined remote's status options (`active`, `pending`, `inactive`, `rejected`), local's `mapped_brands` field, multi-key `'product_count|products_count|products'`, and united Assign action with remote's `AssignVehicleDialog`.
+    2. `lib/modules/admin_catalog/repository/drawer_menu_service.dart`: Retained `key: 'sub_admins'` with `requiredRoles: const ['super_admin', 'admin']` and Salesman routing.
+    3. `lib/modules/admin_catalog/view/admin_drawer.dart`: Aligned drawer Settings menu icon with dynamic dark mode contrast (slate in dark mode, indigo in light mode).
+    4. `lib/modules/admin_catalog/view/admin_module_list_screen.dart`: Removed duplicate `AppPreferences` import, unified `_isSuperAdmin` state.
+    5. `lib/modules/admin_catalog/view/admin_record_detail_screen.dart`: Adopted `goBackOrHome` back navigation while preserving complete bottom action bar with `Approve KYC` and `Reject KYC` reason modal and quotation cards.
+    6. `lib/modules/buyer/offers/controller/buyer_offers_controller.dart`: Preserved comprehensive RFQ exclusion from all non-requirement tabs.
+    7. `lib/modules/buyer/offers/view/buyer_offers_view.dart`: Integrated `buyerDeliveryLocationDefault(offer)` default destination.
+    8. `lib/modules/buyer/offers/view/buyer_request_management_view.dart`: Unified with `_chipScroll`, `_chipKeys` and `_revealStatusChip()`.
+    9. `lib/modules/buyer/offers/view/buyer_today_offers_view.dart`: Integrated `buyerDeliveryLocationDefault(offer)`.
+    10. `lib/modules/contracts/view/contract_view.dart`: Filtered In Transit tab via `ContractsScreen.isContractInTransit(item)` while supporting server-side filtering.
+    11. `lib/modules/contracts/view/contract_details_view.dart`: Maintained non-flickering stable layout while incorporating remote's detailed contract fields (trade value, GST, dates, party person/company names).
+    12. `lib/modules/dashboard/view/dashboard_page.dart`: Integrated remote's `DashboardPeriodBar` and period filters while preserving Hare-Niemeyer 100% strict sum calculation on Commodity Mix and dual-axis GTV chart scaling.
+  - **Automated Verification Results**:
+    - `test/master_integrity_and_regression_test.dart`: **15/15 Passed**
+    - `test/batch_18_fixes_test.dart`: **5/5 Passed**
+    - `test/batch_13_buyer_fixes_test.dart` through `test/batch_17_fixes_test.dart`: **All Passed**
+    - Cumulative Regression: **46/46 Passed (100% Pass Rate)**
+    - Remote developer tests (`buyer_categories_tick_list_test.dart`, `admin_challan_card_deliver_test.dart`): **All Passed**
+    - `flutter analyze`: Verified with **0 compile errors** on modified files.
+  - **Working Tree**: Clean, branch ahead of remote by 8 commits (`git status` clean).
 
 ---
 
