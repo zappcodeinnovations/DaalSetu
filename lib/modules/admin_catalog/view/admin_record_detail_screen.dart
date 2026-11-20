@@ -21,6 +21,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:daalsetu/modules/buyer/offers/view/buyer_offer_details_view.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class AdminRecordDetailScreen extends StatefulWidget {
   const AdminRecordDetailScreen({
@@ -169,7 +170,7 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
       appBar: HeroHeader(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         title: '${widget.config.title} Details',
         subtitle: 'Inspect catalog record fields & metadata',

@@ -51,7 +51,12 @@ class SellerMasterController extends GetxController {
     isLoading.value = false;
   }
 
-  Future<void> createBrand(String name, {String? description}) async {
+  Future<void> createBrand(
+    String name, {
+    String? description,
+    String? status,
+    List<int> categoryIds = const [],
+  }) async {
     try {
       Get.dialog(
         const Center(child: CircularProgressIndicator()),
@@ -60,6 +65,8 @@ class SellerMasterController extends GetxController {
       final res = await SellerServices.createBrand(
         name,
         description: description,
+        status: status,
+        categoryIds: categoryIds,
       );
       if (Get.isDialogOpen ?? false) Get.back();
 

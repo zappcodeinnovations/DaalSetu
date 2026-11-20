@@ -1,3 +1,4 @@
+import '../utils/dashboard_filter.dart';
 import '../network/api_client.dart';
 import '../comman/api_url.dart';
 import '../modules/seller/company/model/seller_company_model.dart';
@@ -65,7 +66,7 @@ class SellerServices {
   /// ============================================================
   static Future<Map<String, dynamic>> getDashboard() async {
     final response = await ApiClient.get(
-      endpoint: ApiUrls.sellerDashboard,
+      endpoint: DashboardFilter.apply(ApiUrls.sellerDashboard),
       requireAuth: true,
     );
 
@@ -931,10 +932,16 @@ class SellerServices {
   static Future<Map<String, dynamic>> createBrand(
     String name, {
     String? description,
+    String? status,
+    List<int> categoryIds = const [],
   }) async {
     final response = await ApiClient.post(
       endpoint: ApiUrls.brands,
-      body: {"brand_name": name.trim()},
+      body: {
+        "brand_name": name.trim(),
+        if (status != null) "status": status,
+        if (categoryIds.isNotEmpty) "category_ids": categoryIds,
+      },
       requireAuth: true,
       suppressErrorDialog: true,
     );

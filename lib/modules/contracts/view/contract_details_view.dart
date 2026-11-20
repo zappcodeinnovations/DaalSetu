@@ -20,6 +20,7 @@ import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/services/contract_services.dart';
 import 'package:daalsetu/utils/money_format.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class ContractDetailScreen extends StatefulWidget {
   const ContractDetailScreen({super.key});
@@ -78,7 +79,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
         subtitle: 'Deal summary & legal agreement',
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           tooltip: 'Download PDF',
@@ -122,13 +123,20 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                 if (contract.productBrand.isNotEmpty)
                   _item('Brand', contract.productBrand),
                 _item('Category', contract.productCategory),
-                if (_isSuperAdmin && contract.interestId != null && contract.interestId != 0)
                 _item(
                   'Deal amount',
                   contract.amountUnit.isEmpty
                       ? '₹${contract.dealAmount}'
                       : '₹${contract.dealAmount}/${contract.amountUnit}',
                 ),
+                if ((contract.tradeValue ?? '').isNotEmpty) _item('Trade value', '₹${contract.tradeValue}'),
+                if ((contract.sellerQuantity ?? '').isNotEmpty)
+                  _item('Seller offered quantity', '${contract.sellerQuantity} ${contract.quantityUnit}'.trim()),
+                if ((contract.buyerOfferAmount ?? '').isNotEmpty)
+                  _item('Buyer offered rate', '₹${contract.buyerOfferAmount}'),
+                if ((contract.buyerRequiredQuantity ?? '').isNotEmpty)
+                  _item('Buyer required quantity', '${contract.buyerRequiredQuantity} ${contract.quantityUnit}'.trim()),
+                if ((contract.dealDate ?? '').isNotEmpty) _item('Deal date', contract.dealDate),
                 _item(
                   'Deal quantity',
                   '${contract.dealQuantity} ${contract.quantityUnit}'.trim(),
@@ -148,21 +156,25 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
               _partySection(
                 title: 'Buyer',
                 displayPartyId: contract.displayBuyerId,
-                name: contract.buyerName,
+                name: contractPersonName(contract.buyerPersonName, contract.buyerName),
                 partyId: contract.buyerId,
                 mobile: contract.buyerMobile,
                 email: contract.buyerEmail,
-                company: contract.buyerCompany,
+                company: contractCompanyName(contract.buyerCompany, contract.buyerName, contract.buyerPersonName),
+                gst: contract.buyerGst,
+                address: contract.buyerAddress,
                 uniqueId: contract.buyerUniqueId,
               ),
               _partySection(
                 title: 'Seller',
                 displayPartyId: contract.displaySellerId,
-                name: contract.sellerName,
+                name: contractPersonName(contract.sellerPersonName, contract.sellerName),
                 partyId: contract.sellerId,
                 mobile: contract.sellerMobile,
                 email: contract.sellerEmail,
-                company: contract.sellerCompany,
+                company: contractCompanyName(contract.sellerCompany, contract.sellerName, contract.sellerPersonName),
+                gst: contract.sellerGst,
+                address: contract.sellerAddress,
                 mappedId: contract.sellerMappedId,
               ),
               if (contract.loadingFrom.isNotEmpty || contract.loadingTo.isNotEmpty)
@@ -172,7 +184,17 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                   if (contract.loadingTo.isNotEmpty)
                     _item('Delivery Location', contract.loadingTo),
                   if (contract.deliveryPeriod.isNotEmpty)
-                    _item('Delivery Period', contract.deliveryPeriod),
+                    _item('Delivery Period', contract.deliveryPeriod)
+                  else if ((contract.deliveryDate ?? '').isNotEmpty)
+                    _item('Delivery Date', contract.deliveryDate),
+                  if ((contract.loadingFromDate ?? '').isNotEmpty || (contract.loadingToDate ?? '').isNotEmpty)
+                    _item(
+                      'Loading Dates',
+                      [contract.loadingFromDate, contract.loadingToDate]
+                          .where((value) => (value ?? '').isNotEmpty)
+                          .map((value) => _date(value!))
+                          .join(' - '),
+                    ),
                   if (contract.readyForLoadingAt.isNotEmpty)
                     _item(
                       'Ready for loading at',
@@ -182,6 +204,19 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                     _item(
                       'Transporter visible at',
                       _date(contract.transporterVisibleAt),
+                    ),
+                ]),
+              if (contract.editHistory.isNotEmpty)
+                _section('Contract Changes', [
+                  for (final change in contract.editHistory)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Text(
+                        [
+                          (change['timestamp'] ?? change['at'] ?? change['created_at'] ?? '').toString(),
+                          (change['message'] ?? change['note'] ?? change['summary'] ?? change['changes'] ?? '').toString(),
+                        ].where((part) => part.trim().isNotEmpty).join('  -  '),
+                      ),
                     ),
                 ]),
               _section('Transaction Notes', [
@@ -384,6 +419,8 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     String? mobile,
     String? email,
     String? company,
+    String? gst,
+    String? address,
     String? uniqueId,
     String? mappedId,
   }) {
@@ -533,6 +570,31 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                       ),
                     ],
                   ),
+                ),
+              ),
+            // GST number and address, as on the web contract details.
+            if ((gst ?? '').isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.receipt_long_outlined, size: 16, color: AppTheme.primaryGold),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text('GST: $gst', style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13))),
+                  ],
+                ),
+              ),
+            if ((address ?? '').isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.location_on_outlined, size: 16, color: AppTheme.primaryGold),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text(address!, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13))),
+                  ],
                 ),
               ),
           ],

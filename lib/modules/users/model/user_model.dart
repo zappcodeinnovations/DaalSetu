@@ -182,6 +182,7 @@ class UserModel {
       aadharFrontImage: extractDoc([
         'aadhar_front_image',
         'adhar_front_upload',
+        'aadhar_card_upload',
         'adharcard_image',
         'adhar_card',
         'aadhar_image',
@@ -191,6 +192,8 @@ class UserModel {
       aadharBackImage: extractDoc([
         'aadhar_back_image',
         'adhar_back_upload',
+        'adharcard_back_image',
+        'aadhar_back_upload',
         'aadhar_back',
         'aadhaar_back',
       ]),

@@ -9,6 +9,7 @@ import '../../../../utils/app_preferences.dart';
 import '../../../../utils/global_error_handler.dart';
 import '../../common/seller_ui.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 /// Buyer offer requests a seller can respond to (web: "Buyer Offers").
 class SellerBuyerOffersController extends GetxController {
@@ -55,7 +56,7 @@ class SellerBuyerOffersView extends StatelessWidget {
         subtitle: "Direct offers & deal proposals from buyers",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           tooltip: 'Refresh offers',
@@ -439,7 +440,7 @@ class _SellerBuyerOfferDetailViewState
         subtitle: "Live negotiation · auto-refresh",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           onPressed: _loading ? null : _load,

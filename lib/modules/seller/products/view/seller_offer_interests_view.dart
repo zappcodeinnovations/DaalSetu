@@ -6,6 +6,7 @@ import '../controller/seller_negotiation_controller.dart';
 import '../../common/seller_ui.dart';
 import 'seller_interest_thread_view.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class SellerOfferInterestsView extends StatefulWidget {
   const SellerOfferInterestsView({super.key});
@@ -39,7 +40,7 @@ class _SellerOfferInterestsViewState extends State<SellerOfferInterestsView> {
         subtitle: "Live negotiation • auto-refresh",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           onPressed: controller.fetchInterests,
@@ -236,36 +237,6 @@ class _SellerOfferInterestsViewState extends State<SellerOfferInterestsView> {
                         Row(
                           children: [
                             Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: item.id == null
-                                    ? null
-                                    : () => controller.rejectInterest(item.id!),
-                                icon: const Icon(Icons.close, size: 16),
-                                label: const Text(
-                                  'REJECT',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.red,
-                                  side: const BorderSide(color: Colors.red),
-                                  minimumSize: const Size(0, 42),
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 10,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
                               child: ElevatedButton.icon(
                                 onPressed: item.id == null
                                     ? null
@@ -283,6 +254,36 @@ class _SellerOfferInterestsViewState extends State<SellerOfferInterestsView> {
                                   backgroundColor: Colors.green,
                                   foregroundColor: Colors.white,
                                   elevation: 0,
+                                  minimumSize: const Size(0, 42),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: item.id == null
+                                    ? null
+                                    : () => controller.rejectInterest(item.id!),
+                                icon: const Icon(Icons.close, size: 16),
+                                label: const Text(
+                                  'REJECT',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                  side: const BorderSide(color: Colors.red),
                                   minimumSize: const Size(0, 42),
                                   tapTargetSize:
                                       MaterialTapTargetSize.shrinkWrap,

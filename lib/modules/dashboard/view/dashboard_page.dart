@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/dashboard_period_bar.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -56,7 +57,9 @@ class AdminDashboardScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeroSection(context),
-                const SizedBox(height: 24),
+                const SizedBox(height: 14),
+                DashboardPeriodBar(onChanged: controller.fetchDashboard),
+                const SizedBox(height: 10),
 
                 _buildSectionHeader(context, "Dashboard KPIs"),
                 const SizedBox(height: 16),
@@ -333,6 +336,8 @@ class AdminDashboardScreen extends StatelessWidget {
                       color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                     ),
                   ),
+                  // Same identity line as the web dashboard: Name, Branch Code and Location.
+                  ..._identityLines(context, controller.dashboardData.value, fallbackName: name),
                 ],
               ),
             ),
@@ -340,6 +345,38 @@ class AdminDashboardScreen extends StatelessWidget {
         ),
       );
     });
+  }
+
+  List<Widget> _identityLines(BuildContext context, DashboardModel? data, {required String fallbackName}) {
+    final theme = Theme.of(context);
+    final style = GoogleFonts.inter(
+      fontSize: 12,
+      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.75),
+    );
+    final name = (data?.identityName ?? '').isNotEmpty ? data!.identityName : fallbackName;
+    final rows = <(String, String)>[
+      ('Name', name),
+      ('Branch Code', (data?.branchCode ?? '').isNotEmpty ? data!.branchCode : 'N/A'),
+      ('Location', (data?.branchLocation ?? '').isNotEmpty ? data!.branchLocation : 'N/A'),
+    ];
+    return [
+      const SizedBox(height: 6),
+      for (final row in rows)
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Text.rich(
+            TextSpan(
+              style: style,
+              children: [
+                TextSpan(text: '${row.$1}: '),
+                TextSpan(text: row.$2, style: const TextStyle(fontWeight: FontWeight.w700)),
+              ],
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+    ];
   }
 
   Widget _buildSectionHeader(
@@ -401,14 +438,14 @@ class AdminDashboardScreen extends StatelessWidget {
           (
             title: 'Active Contracts',
             value: '${kpis.activeContracts}',
-            subtitle: '↑ —',
+            subtitle: 'In negotiation: ${kpis.dealsInNegotiation}',
             icon: IconlyLight.document,
             onTap: _navigateToContracts,
           ),
           (
             title: 'Gross Trade Value (MTD)',
             value: formatInr(kpis.gtvMtd),
-            subtitle: '↑ —',
+            subtitle: 'Finalized deals: ${kpis.finalDealsMtd}',
             icon: IconlyLight.graph,
             onTap: _navigateToContracts,
           ),
@@ -422,7 +459,7 @@ class AdminDashboardScreen extends StatelessWidget {
           (
             title: 'Pending Dispatches',
             value: '${kpis.pendingDispatches}',
-            subtitle: '↓ —',
+            subtitle: 'On-time delivery: ${_webNum(kpis.otdPercent)}%',
             icon: IconlyLight.time_circle,
             onTap: () => Get.toNamed(AppRoutes.adminDeliveryChallans),
           ),
@@ -446,13 +483,14 @@ class AdminDashboardScreen extends StatelessWidget {
                   AdminOverviewKpisView(kpis: kpis, initialCategory: 'Network'),
             ),
           ),
-          (
-            title: 'Open Complaints',
-            value: '${kpis.openComplaints}',
-            subtitle: 'Escalations: 0',
-            icon: IconlyLight.info_circle,
-            onTap: () => Get.toNamed(AppRoutes.adminComplaints),
-          ),
+          // Open Complaints is switched off (kept, commented out, in case it comes back).
+          // (
+          //   title: 'Open Complaints',
+          //   value: '${kpis.openComplaints}',
+          //   subtitle: 'Escalations: ${kpis.escalations}',
+          //   icon: IconlyLight.info_circle,
+          //   onTap: () => Get.toNamed(AppRoutes.adminComplaints),
+          // ),
           (
             title: 'On-time Delivery %',
             value: '${_webNum(kpis.otdPercent)}%',
@@ -489,7 +527,8 @@ class AdminDashboardScreen extends StatelessWidget {
             value: '${kpis.branches}',
             subtitle: 'Admins active: ${kpis.adminsActive}',
             icon: IconlyLight.category,
-            onTap: () => Get.toNamed(AppRoutes.adminBranchReports),
+            // Same as the web card: the branch requests page.
+            onTap: () => Get.toNamed(AppRoutes.adminModule('branch_requests')),
           ),
           (
             title: 'Deals in Negotiation',
@@ -2266,6 +2305,8 @@ class AdminDashboardScreen extends StatelessWidget {
     List<int> values, {
     List<Color>? customColors,
     Color Function(String label, int index)? colorResolver,
+    // true: the legend shows each slice's real figure (e.g. 327), like the web card, not its percentage.
+    bool showValues = false,
   }) {
     final theme = Theme.of(context);
     final fallbackColors = customColors ?? [
@@ -2376,7 +2417,7 @@ class AdminDashboardScreen extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            "${roundedPercentages[index]}%",
+                            showValues ? '${values[index]}' : "${roundedPercentages[index]}%",
                             style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: itemColor),
                           ),
                         ],

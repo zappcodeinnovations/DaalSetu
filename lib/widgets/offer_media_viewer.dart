@@ -4,6 +4,7 @@ import 'package:daalsetu/widgets/authenticated_video_player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 /// Opening an offer's photo or video straight from its card.
 ///
@@ -69,7 +70,7 @@ PreferredSizeWidget _blackHeader(String title, {List<Widget>? actions}) => AppBa
       key: const Key('media-back-button'),
       tooltip: 'Back',
       icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-      onPressed: () => Navigator.of(context).maybePop(),
+      onPressed: () => goBackOrHome(context),
     ),
   ),
   title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),

@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:iconly/iconly.dart';
 import 'package:flutter/material.dart';
@@ -48,7 +49,7 @@ class KycUsersScreen extends StatelessWidget {
             }
             return IconButton(
               icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 24),
-              onPressed: () => Scaffold.of(ctx).openDrawer(),
+              onPressed: () => AppShell.openDrawer(activeKey: 'kyc'),
             );
           },
         ),
@@ -786,7 +787,7 @@ class KycUsersScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
               children: [
-                Expanded(child: _buildActionButton(IconlyLight.show, "View", colorTotal, () => _showViewDialog(context, user))),
+                Expanded(child: _buildActionButton(IconlyLight.show, "Review", colorTotal, () => _showViewDialog(context, user))),
                 if (!isApproved) ...[
                   const SizedBox(width: 6),
                   Expanded(child: _buildActionButton(IconlyLight.tick_square, "Approve", colorApproved, () => _confirmApprove(user))),

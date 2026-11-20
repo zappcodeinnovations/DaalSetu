@@ -206,18 +206,18 @@ pw.Document buildContractPdf(ContractDetailModel contract, String contractNumber
                       children: [
                         pw.Expanded(
                           child: partyCard('Buyer', [
-                            ['Buyer', dash(contract.displayBuyerId.isNotEmpty ? contract.displayBuyerId : contract.buyerName)],
-                            ['Name', dash(contract.buyerName)],
-                            ['Company', dash(contract.buyerCompany)],
+                            ['Buyer', dash(contract.displayBuyerId.isNotEmpty ? contract.displayBuyerId : contractPersonName(contract.buyerPersonName, contract.buyerName))],
+                            ['Name', dash(contractPersonName(contract.buyerPersonName, contract.buyerName))],
+                            ['Company', dash(contractCompanyName(contract.buyerCompany, contract.buyerName, contract.buyerPersonName))],
                             ['Email', dash(contract.buyerEmail)],
                           ]),
                         ),
                         pw.SizedBox(width: 12),
                         pw.Expanded(
                           child: partyCard('Seller', [
-                            ['Seller', dash(contract.displaySellerId.isNotEmpty ? contract.displaySellerId : contract.sellerName)],
-                            ['Name', dash(contract.sellerName)],
-                            ['Company', dash(contract.sellerCompany)],
+                            ['Seller', dash(contract.displaySellerId.isNotEmpty ? contract.displaySellerId : contractPersonName(contract.sellerPersonName, contract.sellerName))],
+                            ['Name', dash(contractPersonName(contract.sellerPersonName, contract.sellerName))],
+                            ['Company', dash(contractCompanyName(contract.sellerCompany, contract.sellerName, contract.sellerPersonName))],
                             ['Email', dash(contract.sellerEmail)],
                           ]),
                         ),

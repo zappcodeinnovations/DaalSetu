@@ -5,6 +5,7 @@ import '../controller/admin_category_master_controller.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:daalsetu/theme/app_theme.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class AdminCategoryMasterScreen extends StatefulWidget {
   const AdminCategoryMasterScreen({super.key});
@@ -30,7 +31,7 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
       appBar: HeroHeader(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         title: 'Category Master',
         subtitle: 'Manage agricultural commodity categories & hierarchy',
@@ -645,6 +646,7 @@ class _AdminCategoryMasterScreenState extends State<AdminCategoryMasterScreen> {
                             DropdownMenuItem(value: 'active', child: Text('Active')),
                             DropdownMenuItem(value: 'pending', child: Text('Pending')),
                             DropdownMenuItem(value: 'inactive', child: Text('Inactive')),
+                            DropdownMenuItem(value: 'rejected', child: Text('Rejected')),
                           ],
                           onChanged: (v) => controller.selectedStatus.value = v!,
                         ),

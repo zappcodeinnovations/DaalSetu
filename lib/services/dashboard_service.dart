@@ -1,3 +1,4 @@
+import '../utils/dashboard_filter.dart';
 import '../modules/dashboard/model/dashboard_model.dart';
 import '../network/api_client.dart';
 import '../comman/api_url.dart';
@@ -23,7 +24,7 @@ class DashboardService {
       endpoint = '$endpoint?period=$slug&timeframe=$slug&range=$slug';
     }
     final response = await ApiClient.get(
-      endpoint: endpoint,
+      endpoint: DashboardFilter.apply(endpoint),
       requireAuth: true,
       suppressErrorDialog: true,
     );

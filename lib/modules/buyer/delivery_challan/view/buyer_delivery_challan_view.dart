@@ -6,6 +6,7 @@ import 'package:iconly/iconly.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../../../../routes/app_routes.dart';
 import '../controller/buyer_delivery_challan_controller.dart';
+import 'buyer_receive_challan_dialog.dart';
 import '../model/buyer_delivery_challan_model.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
@@ -634,6 +635,27 @@ class BuyerDeliveryChallanView extends StatelessWidget {
                 ),
               ],
             ),
+            // One-step receipt, like the seller's dispatch on the outer card (still available in Details).
+            if (canBuyerReceiveChallan(challan.status) && challan.id != null) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () => showBuyerReceiveChallanDialog(challan.id!),
+                  icon: const Icon(Icons.check_circle_outline, size: 18),
+                  label: Text(
+                    "Mark as Received",
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

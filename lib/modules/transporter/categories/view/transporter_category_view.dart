@@ -6,6 +6,7 @@ import '../../../seller/categories/controller/seller_category_controller.dart';
 import '../../../seller/categories/model/seller_category_model.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class TransporterCategoryView extends StatelessWidget {
   const TransporterCategoryView({super.key});
@@ -23,7 +24,7 @@ class TransporterCategoryView extends StatelessWidget {
         subtitle: "Agricultural commodity taxonomy",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           icon: const Icon(IconlyLight.swap, color: Colors.white),

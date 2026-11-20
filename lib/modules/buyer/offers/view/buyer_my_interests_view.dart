@@ -98,11 +98,7 @@ class BuyerMyInterestsView extends StatelessWidget {
             ? offer.location!
             : "Shop no 12, krishna mandir, Bhopal, Bhopal, Madhya Pradesh, India");
 
-    final initialLoadingTo = (offer.pickupTo?.isNotEmpty == true)
-        ? offer.pickupTo!
-        : (offer.location?.isNotEmpty == true
-            ? offer.location!
-            : "AMR158M, Amalner, Maharashtra, India");
+    final initialLoadingTo = buyerDeliveryLocationDefault(offer);
 
     final priceCtrl = TextEditingController(text: cleanPrice);
     final qtyCtrl = TextEditingController(text: cleanQty);
@@ -335,6 +331,13 @@ class BuyerMyInterestsView extends StatelessWidget {
                                         ? offer.interestId!
                                         : (offer.id ?? 0);
 
+                                    if (locationCtrl.text.trim().isEmpty) {
+                                      AppSnackbar.showWarning(
+                                        title: "Required",
+                                        message: "Please enter your delivery location",
+                                      );
+                                      return;
+                                    }
                                     Get.back();
                                     await controller.submitInterest(
                                       prodId,

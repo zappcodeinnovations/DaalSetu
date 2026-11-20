@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class AdminRolesScreen extends StatefulWidget {
   const AdminRolesScreen({super.key, this.showAdminDrawer = true});
@@ -101,12 +102,12 @@ class _AdminRolesScreenState extends State<AdminRolesScreen> {
               builder: (ctx) => IconButton(
                 icon: const Icon(Icons.menu, color: Colors.white),
                 tooltip: 'Open navigation menu',
-                onPressed: () => Scaffold.of(ctx).openDrawer(),
+                onPressed: () => AppShell.openDrawer(activeKey: 'roles'),
               ),
             )
           : IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-              onPressed: () => Navigator.of(context).maybePop(),
+              onPressed: () => goBackOrHome(context),
             ),
       title: 'Roles',
       subtitle: 'Manage administrative roles & permissions',

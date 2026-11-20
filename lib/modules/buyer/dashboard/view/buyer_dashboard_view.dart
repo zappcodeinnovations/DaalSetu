@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/dashboard_period_bar.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -100,6 +101,10 @@ class BuyerDashboardView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeroHeader(context),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: DashboardPeriodBar(onChanged: () => controller.fetchDashboardData()),
+                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Column(
@@ -436,8 +441,8 @@ class BuyerDashboardView extends StatelessWidget {
 
     final paymentPending = kpis['pay_pending']?.toString() ?? '0';
     final pendingAmount = kpis['pending_amount']?.toString() ?? '₹0.00';
-    final issues = kpis['issues']?.toString() ?? '0';
-    final openTickets = kpis['open_tickets']?.toString() ?? '0';
+    // final issues = kpis['issues']?.toString() ?? '0';
+    // final openTickets = kpis['open_tickets']?.toString() ?? '0';
     final topSupplier = kpis['top_supplier']?.toString() ?? '—';
     final supplierShare = kpis['top_supplier_share']?.toString() ?? '—';
     final rawAvgPrice = kpis['avg_price'] ??
@@ -538,16 +543,17 @@ class BuyerDashboardView extends StatelessWidget {
                 icon: Icons.receipt_long_outlined,
               ),
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: _buildKPICard(
-                context,
-                title: "ISSUES / COMPLAINTS",
-                value: issues,
-                subtitle: "Open tickets: $openTickets",
-                icon: Icons.report_problem_outlined,
-              ),
-            ),
+            // ISSUES / COMPLAINTS is switched off (kept, commented out, in case it comes back).
+            // const SizedBox(width: 14),
+            // Expanded(
+            //   child: _buildKPICard(
+            //     context,
+            //     title: "ISSUES / COMPLAINTS",
+            //     value: issues,
+            //     subtitle: "Open tickets: $openTickets",
+            //     icon: Icons.report_problem_outlined,
+            //   ),
+            // ),
           ],
         ),
         const SizedBox(height: 14),

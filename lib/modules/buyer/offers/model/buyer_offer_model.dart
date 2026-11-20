@@ -1336,3 +1336,13 @@ class BuyerOfferModel {
 
   bool get isActionable => !isConfirmed && !isRejected;
 }
+
+/// What the "Loading To (Delivery Location)" box starts with when a buyer submits / re-submits an offer.
+///
+/// Empty for a new offer (the buyer enters their own destination - never the seller's loading location).
+/// A re-submission keeps the address the buyer gave before; a bare date is not an address and is ignored.
+String buyerDeliveryLocationDefault(BuyerOfferModel offer) {
+  if (offer.interestId == null) return '';
+  final previous = (offer.pickupTo ?? '').trim();
+  return previous.contains(',') ? previous : '';
+}

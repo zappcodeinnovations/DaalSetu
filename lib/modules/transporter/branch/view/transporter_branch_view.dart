@@ -7,6 +7,7 @@ import '../controller/transporter_branch_controller.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../../utils/app_snackbar.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class TransporterBranchView extends StatelessWidget {
   TransporterBranchView({super.key});
@@ -31,7 +32,7 @@ class TransporterBranchView extends StatelessWidget {
         subtitle: "Branch management & warehouses",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           icon: const Icon(IconlyLight.swap, color: Colors.white),

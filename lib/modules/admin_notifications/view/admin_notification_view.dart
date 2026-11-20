@@ -6,6 +6,7 @@ import '../../../theme/app_theme.dart';
 import '../controller/admin_notification_controller.dart';
 import '../model/admin_notification_model.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class AdminNotificationView extends StatelessWidget {
   const AdminNotificationView({super.key});
@@ -26,7 +27,7 @@ class AdminNotificationView extends StatelessWidget {
       appBar: HeroHeader(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         titleWidget: Row(
           mainAxisSize: MainAxisSize.min,

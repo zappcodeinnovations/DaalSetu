@@ -1,3 +1,4 @@
+import '../utils/dashboard_filter.dart';
 import '../network/api_client.dart';
 import '../comman/api_url.dart';
 import 'package:flutter/foundation.dart';
@@ -21,7 +22,7 @@ class BuyerServices {
         ? '${ApiUrls.buyerDashboard}?range=$range'
         : ApiUrls.buyerDashboard;
     final response = await ApiClient.get(
-      endpoint: endpoint,
+      endpoint: DashboardFilter.apply(endpoint),
       requireAuth: true,
       suppressErrorDialog: true,
     );

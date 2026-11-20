@@ -47,9 +47,16 @@ class AdminFieldConfig {
     this.singleSelectAsList = false,
     this.sendAsBoolean = false,
     this.requiredOnEdit = true,
+    this.derivedFrom,
+    this.derivedKey,
   });
 
   final String key;
+
+  /// A read-only field filled from the option chosen in the field [derivedFrom] (its [AdminOption.extras]
+  /// entry [derivedKey]); never sent to the server.
+  final String? derivedFrom;
+  final String? derivedKey;
 
   /// False when the field may stay empty on edit (the server keeps its value),
   /// e.g. a branch's admin when only the status changes.
@@ -141,6 +148,13 @@ class AdminModuleConfig {
   bool get canCreate => createEndpoint != null && fields.isNotEmpty;
   bool get canEdit => updateEndpoint != null && fields.isNotEmpty;
   bool get canDelete => deleteEndpoint != null;
+}
+
+/// The driver a vehicle is assigned to (for the edit form).
+Object? assignedDriverIdOf(Map<String, dynamic> record) {
+  final raw = record['assigned_driver'] ?? record['assigned_driver_id'];
+  if (raw is Map) return raw['id'];
+  return raw;
 }
 
 Object? transporterIdOf(Map<String, dynamic> record) =>
@@ -978,10 +992,9 @@ class AdminModules {
           endpoint: (record) =>
               '/api/buyer-categories/requests/${record['id']}/',
           action: 'approve',
+          // The web "Approve" asks for nothing but a confirmation, so the app does not ask for a comment either.
           confirmMessage:
               'The buyer will be able to deal in the requested categories.',
-          noteKey: 'comment',
-          noteLabel: 'Comment',
           isVisible: (record) => recordStatus(record) == 'pending',
         ),
         adminPostAction(
@@ -1021,13 +1034,14 @@ class AdminModules {
         AdminFieldConfig(
           'status',
           'Status',
-          options: ['pending', 'active', 'inactive'],
+          options: ['active', 'pending', 'inactive', 'rejected'],
           optionLabels: {
-            'pending': 'Pending',
             'active': 'Active',
+            'pending': 'Pending',
             'inactive': 'Inactive',
+            'rejected': 'Rejected',
           },
-          defaultValue: 'pending',
+          defaultValue: 'active',
         ),
         AdminFieldConfig(
           'mapped_brands',
@@ -1083,6 +1097,18 @@ class AdminModules {
       fields: const [
         AdminFieldConfig('name', 'Category name', required: true),
         AdminFieldConfig('description', 'Description', multiline: true),
+        AdminFieldConfig(
+          'status',
+          'Status',
+          options: ['active', 'pending', 'inactive', 'rejected'],
+          optionLabels: {
+            'active': 'Active',
+            'pending': 'Pending',
+            'inactive': 'Inactive',
+            'rejected': 'Rejected',
+          },
+          defaultValue: 'active',
+        ),
       ],
       detailSections: [
         const AdminDetailSection(
@@ -1163,7 +1189,7 @@ class AdminModules {
           'category_ids',
           'Categories',
           multiSelect: true,
-          optionsLoader: loadCategoryOptions,
+          optionsLoader: loadParentCategoryOptions,
         ),
       ],
       detailSections: [
@@ -1378,6 +1404,10 @@ class AdminModules {
               'Assigned Vehicle Number',
             ),
             AdminDetailField(
+              'assigned_vehicle.vehicle_type',
+              'Assigned Vehicle Type',
+            ),
+            AdminDetailField(
               'assigned_vehicle.vehicle_status_display',
               'Vehicle Status',
               type: AdminDetailFieldType.status,
@@ -1413,6 +1443,10 @@ class AdminModules {
               builder: (_) => AssignVehicleDialog(
                 driverId: record['id'].toString(),
                 driverName: (record['driver_name'] ?? record['name'] ?? 'Driver').toString(),
+                assignedVehicleNumber: record['assigned_vehicle'] is Map
+                    ? (record['assigned_vehicle'] as Map)['vehicle_number']?.toString()
+                    : null,
+                transporterId: transporterIdOf(record)?.toString(),
               ),
             );
             return result == true;
@@ -1568,6 +1602,24 @@ class AdminModules {
           'Permit name (when Permit type is Other)',
         ),
         AdminFieldConfig('permit_expiry_date', 'Permit expiry', isDate: true),
+        AdminFieldConfig(
+          'assigned_driver_id',
+          'Assign driver (optional)',
+          optionsLoader: loadDriverOptions,
+          initialValue: assignedDriverIdOf,
+        ),
+        AdminFieldConfig(
+          'driver_phone_number',
+          'Driver phone number',
+          derivedFrom: 'assigned_driver_id',
+          derivedKey: 'phone',
+        ),
+        AdminFieldConfig(
+          'driver_license_number',
+          'Driver license number',
+          derivedFrom: 'assigned_driver_id',
+          derivedKey: 'license',
+        ),
         AdminFieldConfig(
           'vehicle_status',
           'Status',

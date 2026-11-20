@@ -387,8 +387,8 @@ class AdminDrawer extends StatelessWidget {
               key: 'settings',
               title: 'Settings',
               icon: Icons.settings_outlined,
-              iconColor: const Color(0xFF64748B),
-              iconBgColor: const Color(0xFFF1F5F9),
+              iconColor: const Color(0xFF6366F1),
+              iconBgColor: const Color(0xFFEEF2FF),
               onTap: () => Get.to(() => SettingsScreen()),
             ),
             _buyerDivider(context),
@@ -774,12 +774,8 @@ class AdminDrawer extends StatelessWidget {
               key: 'settings',
               title: 'Settings',
               icon: Icons.settings_outlined,
-              iconColor: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFFCBD5E1)
-                  : const Color(0xFF475569),
-              iconBgColor: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF334155)
-                  : const Color(0xFFF1F5F9),
+              iconColor: const Color(0xFF6366F1),
+              iconBgColor: const Color(0xFFEEF2FF),
               onTap: () => Get.to(() => SettingsScreen()),
             ),
             _buyerDivider(context),
@@ -1028,12 +1024,8 @@ class AdminDrawer extends StatelessWidget {
               key: 'settings',
               title: 'Settings',
               icon: Icons.settings_outlined,
-              iconColor: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFFCBD5E1)
-                  : const Color(0xFF475569),
-              iconBgColor: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF334155)
-                  : const Color(0xFFF1F5F9),
+              iconColor: const Color(0xFF6366F1),
+              iconBgColor: const Color(0xFFEEF2FF),
               onTap: () => Get.to(() => SettingsScreen()),
             ),
             _buyerDivider(context),

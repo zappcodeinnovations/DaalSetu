@@ -141,8 +141,10 @@ class AppTheme {
           elevation: 4,
           shadowColor: secondaryOrange.withValues(alpha: 0.3),
           // Primary and secondary buttons share one size, so a pair (Accept / Cancel) is level.
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          minimumSize: const Size(112, 46),
+          // No vertical padding: the 44 high minimum centres the label, and a button squeezed into
+          // a shorter box (40-44) never clips its text. A pair of buttons shares one height.
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          minimumSize: const Size(96, 44),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
         ),
@@ -160,8 +162,10 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: secondaryOrange,
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          minimumSize: const Size(112, 46),
+          // No vertical padding: the 44 high minimum centres the label, and a button squeezed into
+          // a shorter box (40-44) never clips its text. A pair of buttons shares one height.
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          minimumSize: const Size(96, 44),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
         ),
@@ -171,8 +175,10 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: secondaryOrange,
           side: const BorderSide(color: secondaryOrange, width: 1.2),
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          minimumSize: const Size(112, 46),
+          // No vertical padding: the 44 high minimum centres the label, and a button squeezed into
+          // a shorter box (40-44) never clips its text. A pair of buttons shares one height.
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          minimumSize: const Size(96, 44),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
         ),
@@ -345,8 +351,10 @@ class AppTheme {
           elevation: 4,
           shadowColor: secondaryOrange.withValues(alpha: 0.35),
           // Primary and secondary buttons share one size, so a pair (Accept / Cancel) is level.
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          minimumSize: const Size(112, 46),
+          // No vertical padding: the 44 high minimum centres the label, and a button squeezed into
+          // a shorter box (40-44) never clips its text. A pair of buttons shares one height.
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          minimumSize: const Size(96, 44),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
         ),
@@ -364,8 +372,10 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: secondaryOrange,
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          minimumSize: const Size(112, 46),
+          // No vertical padding: the 44 high minimum centres the label, and a button squeezed into
+          // a shorter box (40-44) never clips its text. A pair of buttons shares one height.
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          minimumSize: const Size(96, 44),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
         ),
@@ -375,8 +385,10 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: secondaryOrange,
           side: const BorderSide(color: secondaryOrange, width: 1.2),
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          minimumSize: const Size(112, 46),
+          // No vertical padding: the 44 high minimum centres the label, and a button squeezed into
+          // a shorter box (40-44) never clips its text. A pair of buttons shares one height.
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          minimumSize: const Size(96, 44),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15),
         ),

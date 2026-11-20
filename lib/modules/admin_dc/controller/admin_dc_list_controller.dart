@@ -47,6 +47,33 @@ class AdminDCListController extends GetxController {
         return s == 'delivered' || s == 'received';
       }).length;
 
+  /// The card's quick "Mark as Delivered" (same call as the details screen), then the list reloads.
+  Future<void> markDelivered(AdminChallanModel challan) async {
+    final id = challan.id;
+    try {
+      final result = await AdminDCService.challanAction(id, 'deliver');
+      final ok = result['success'] != false;
+      AppSnackbar.snackbar(
+        ok ? 'Marked as delivered' : 'Cannot mark delivered',
+        (result['message'] ?? (ok ? 'Delivery challan marked as delivered.' : 'Could not mark it delivered.')).toString(),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: ok ? const Color(0xFF059669) : const Color(0xFFDC2626),
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+      );
+      if (ok) await fetchChallans(isRefresh: true);
+    } catch (e) {
+      AppSnackbar.snackbar(
+        'Cannot mark delivered',
+        e.toString().replaceFirst('Exception: ', ''),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFFDC2626),
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+      );
+    }
+  }
+
   // ── Fetch Challans from Service ──────────────────────────────────────────
   Future<void> fetchChallans({bool isRefresh = false}) async {
     try {

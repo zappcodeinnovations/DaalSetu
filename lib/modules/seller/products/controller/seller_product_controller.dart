@@ -82,12 +82,17 @@ class SellerProductController extends GetxController {
 
   bool _isCalculating = false;
 
+  /// A typed number. iOS keypads in some regions type "12,5" (comma): that is 12.5, not "not a number",
+  /// which used to stop the Bags / Packing / Quantity auto-calculation.
+  static double? parseDecimalInput(String text) =>
+      double.tryParse(text.trim().replaceAll(',', '.'));
+
   void _onBagsChanged() {
     if (_isCalculating) return;
     final bagsStr = bagCountController.text.trim();
     if (bagsStr.isEmpty) return;
 
-    final bags = double.tryParse(bagsStr);
+    final bags = parseDecimalInput(bagsStr);
     if (bags == null || bags <= 0) return;
 
     final qtyStr = quantityController.text.trim();
@@ -95,7 +100,7 @@ class SellerProductController extends GetxController {
 
     if (qtyStr.isNotEmpty) {
       // Total quantity is already specified; adjust packing weight to keep total quantity intact.
-      final qty = double.tryParse(qtyStr);
+      final qty = parseDecimalInput(qtyStr);
       if (qty != null && qty > 0) {
         final quantityInKg = qty * _unitMultiplier;
         final packing = quantityInKg / bags;
@@ -110,7 +115,7 @@ class SellerProductController extends GetxController {
       }
     } else if (packingStr.isNotEmpty) {
       // Quantity is not yet set; calculate total quantity from bags * packing weight.
-      final packing = double.tryParse(packingStr);
+      final packing = parseDecimalInput(packingStr);
       if (packing != null && packing > 0) {
         final quantityInKg = bags * packing;
         final quantity = quantityInKg / _unitMultiplier;
@@ -131,11 +136,11 @@ class SellerProductController extends GetxController {
     final qtyStr = quantityController.text.trim();
     if (qtyStr.isEmpty) return;
 
-    final qty = double.tryParse(qtyStr);
+    final qty = parseDecimalInput(qtyStr);
     if (qty == null || qty <= 0) return;
 
     final packingStr = packingWeightController.text.trim();
-    final packing = double.tryParse(packingStr);
+    final packing = parseDecimalInput(packingStr);
     if (packing != null && packing > 0) {
       final quantityInKg = qty * _unitMultiplier;
       final newBags = (quantityInKg / packing).ceil().toString();
@@ -146,7 +151,7 @@ class SellerProductController extends GetxController {
       }
     } else {
       final bagsStr = bagCountController.text.trim();
-      final bags = double.tryParse(bagsStr);
+      final bags = parseDecimalInput(bagsStr);
       if (bags != null && bags > 0) {
         final quantityInKg = qty * _unitMultiplier;
         final newPacking = (quantityInKg / bags)
@@ -166,7 +171,7 @@ class SellerProductController extends GetxController {
     final packingStr = packingWeightController.text.trim();
     if (packingStr.isEmpty) return;
 
-    final packing = double.tryParse(packingStr);
+    final packing = parseDecimalInput(packingStr);
     if (packing == null || packing <= 0) return;
 
     final qtyStr = quantityController.text.trim();
@@ -174,7 +179,7 @@ class SellerProductController extends GetxController {
 
     if (qtyStr.isNotEmpty) {
       // Updating weight adjusts number of bags, preserving total quintal quantity.
-      final qty = double.tryParse(qtyStr);
+      final qty = parseDecimalInput(qtyStr);
       if (qty != null && qty > 0) {
         final quantityInKg = qty * _unitMultiplier;
         final newBags = (quantityInKg / packing).ceil().toString();
@@ -186,7 +191,7 @@ class SellerProductController extends GetxController {
       }
     } else if (bagsStr.isNotEmpty) {
       // Quantity is not yet set; calculate total quantity from bags * packing weight.
-      final bags = double.tryParse(bagsStr);
+      final bags = parseDecimalInput(bagsStr);
       if (bags != null && bags > 0) {
         final quantityInKg = bags * packing;
         final quantity = quantityInKg / _unitMultiplier;
@@ -283,6 +288,9 @@ class SellerProductController extends GetxController {
       final labels = <int, String>{};
       void addNodes(List<CategoryTreeModel> nodes, String parentPath) {
         for (final node in nodes) {
+          // Only approved categories can carry an offer: Pending / Rejected / Inactive ones (and what is
+          // under them) stay out of the picker until an admin approves them.
+          if (node.status.toLowerCase() != 'active') continue;
           final path = parentPath.isEmpty
               ? node.name
               : '$parentPath > ${node.name}';

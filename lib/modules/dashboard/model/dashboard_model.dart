@@ -18,17 +18,29 @@ class DashboardModel {
   final List<ActivityModel> recentActivities;
   final List<ContractModel> recentContracts;
 
+  /// Who is signed in and their branch (the line under the web dashboard title).
+  final String identityName;
+  final String branchCode;
+  final String branchLocation;
+
   DashboardModel({
     required this.kpis,
     required this.charts,
     required this.branchPerformance,
     required this.recentActivities,
     required this.recentContracts,
+    this.identityName = '',
+    this.branchCode = '',
+    this.branchLocation = '',
   });
 
   factory DashboardModel.fromJson(Map<String, dynamic>? json) {
     json ??= {};
+    final header = json['header'] is Map ? Map<String, dynamic>.from(json['header'] as Map) : const <String, dynamic>{};
     return DashboardModel(
+      identityName: (header['name'] ?? '').toString(),
+      branchCode: (header['branch_code'] ?? '').toString(),
+      branchLocation: (header['branch_location'] ?? '').toString(),
       kpis: KpiModel.fromJson(json['kpis'] as Map<String, dynamic>?),
       charts: ChartsModel.fromJson(json['charts'] as Map<String, dynamic>?),
       branchPerformance: (json['branch_performance'] as List? ?? [])
@@ -59,6 +71,7 @@ class KpiModel {
   final int activeBuyers;
   final int finalDealsMtd;
   final int openComplaints;
+  final int escalations;
   final double otdPercent;
   final double avgTransitDays;
   final int paymentsOverdue;
@@ -81,6 +94,7 @@ class KpiModel {
     required this.activeBuyers,
     required this.finalDealsMtd,
     required this.openComplaints,
+    this.escalations = 0,
     required this.otdPercent,
     required this.avgTransitDays,
     required this.paymentsOverdue,
@@ -107,6 +121,7 @@ class KpiModel {
       activeBuyers: _parseInt(json['active_buyers']),
       finalDealsMtd: _parseInt(json['final_deals_mtd']),
       openComplaints: _parseInt(json['open_complaints']),
+      escalations: _parseInt(json['escalations']),
       otdPercent: _parseDouble(json['otd_percent']),
       avgTransitDays: _parseDouble(json['avg_transit_days']),
       paymentsOverdue: _parseInt(json['payments_overdue']),

@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/dashboard_period_bar.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -50,6 +51,8 @@ class TransporterDashboardView extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
             children: [
               _buildHero(context),
+              const SizedBox(height: 12),
+              DashboardPeriodBar(onChanged: controller.fetchDashboardOverview),
               if (controller.errorMessage.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text(

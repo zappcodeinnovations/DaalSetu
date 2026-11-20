@@ -6,6 +6,8 @@ import '../../../services/users_services.dart';
 import '../../../comman/api_url.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
+import 'package:daalsetu/utils/app_date.dart';
 
 class UserDetailScreen extends StatefulWidget {
   final UserModel? initialUser;
@@ -75,7 +77,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       appBar: HeroHeader(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         title: user.fullName.isNotEmpty
             ? user.fullName
@@ -114,7 +116,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 _infoRow("Mobile", user.mobile.isNotEmpty ? user.mobile : "-"),
                 _infoRow("Email", user.email ?? "-"),
                 _infoRow("Gender", user.gender ?? "-"),
-                _infoRow("DOB", user.dob ?? "-"),
+                _infoRow("DOB", AppDate.date(user.dob)),
               ],
             ),
 
@@ -146,7 +148,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               children: [
                 _passwordRow(context),
                 _infoRow("Registration Reason", user.registrationReason ?? "-"),
-                _infoRow("Date Joined", user.dateJoined ?? "-"),
+                _infoRow("Date Joined", AppDate.dateTime(user.dateJoined)),
               ],
             ),
 
@@ -693,7 +695,11 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           ),
           if (hasDoc) ...[
             const SizedBox(height: 10),
-            ClipRRect(
+            // Tap the preview to open it full screen: pinch / double-tap to zoom, back button to close.
+            InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () => _openDocumentViewer(context, title, resolvedUrl),
+              child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: Image.network(
                 resolvedUrl,
@@ -718,8 +724,18 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 ),
               ),
             ),
+            ),
           ],
         ],
+      ),
+    );
+  }
+
+  void _openDocumentViewer(BuildContext context, String title, String url) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => _DocumentViewer(title: title, url: url),
       ),
     );
   }
@@ -732,5 +748,41 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       return trimmed;
     }
     return '${ApiUrls.baseUrl}${trimmed.startsWith('/') ? '' : '/'}$trimmed';
+  }
+}
+
+/// Full-screen document preview with zoom and a back button.
+class _DocumentViewer extends StatelessWidget {
+  const _DocumentViewer({required this.title, required this.url});
+
+  final String title;
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text(title, style: const TextStyle(fontSize: 16)),
+        leading: IconButton(
+          tooltip: 'Back',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+      ),
+      body: InteractiveViewer(
+        minScale: 0.8,
+        maxScale: 6,
+        child: Center(
+          child: Image.network(
+            url,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => const Icon(Icons.broken_image_outlined, color: Colors.white, size: 60),
+          ),
+        ),
+      ),
+    );
   }
 }

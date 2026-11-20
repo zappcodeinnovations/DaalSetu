@@ -19,6 +19,10 @@ class SellerCategoryController extends GetxController {
   var selectedBrandIds = <int>[].obs;
   var isBrandsLoading = false.obs;
 
+  /// Add-category form (same fields as the web Category Master).
+  final selectedParentId = Rxn<int>();
+  final pickedImagePath = RxnString();
+
   final searchController = TextEditingController();
   final categoryNameController = TextEditingController();
 
@@ -161,21 +165,78 @@ class SellerCategoryController extends GetxController {
         : "$label added successfully";
   }
 
+  void resetAddForm() {
+    categoryNameController.clear();
+    selectedBrandIds.clear();
+    selectedParentId.value = null;
+    pickedImagePath.value = null;
+  }
+
+  Future<void> pickCategoryImage() async {
+    final image = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (image == null) return;
+    // Same limit as the web form: JPG / PNG / WEBP, max 2 MB.
+    final lower = image.path.toLowerCase();
+    final okType = lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.png') ||
+        lower.endsWith('.webp');
+    if (!okType) {
+      AppSnackbar.snackbar("Error", "Image must be JPG, PNG or WEBP");
+      return;
+    }
+    if (await image.length() > 2 * 1024 * 1024) {
+      AppSnackbar.snackbar("Error", "Image is too large. Maximum size is 2MB.");
+      return;
+    }
+    pickedImagePath.value = image.path;
+  }
+
+  int? _createdId(Map<String, dynamic> result) {
+    for (final source in [result, result['data'], result['category']]) {
+      if (source is Map && source['id'] != null) {
+        return int.tryParse(source['id'].toString());
+      }
+    }
+    return null;
+  }
+
   Future<void> addRootCategory() async {
-    if (categoryNameController.text.isEmpty) return;
+    if (categoryNameController.text.trim().isEmpty) return;
     try {
       isLoading(true);
-      final body = {
-        "category_name": categoryNameController.text.trim(),
-        "is_active": "true",
-        "brand_ids": selectedBrandIds.toList(),
-      };
-      final result = await SellerServices.createCategory(body);
-      categoryNameController.clear();
-      selectedBrandIds.clear();
+      final parentId = selectedParentId.value;
+      final Map<String, dynamic> result;
+      if (parentId != null) {
+        // Brand mapping lives on the parent; a sub-category uses it automatically.
+        result = await SellerServices.createSubCategory(
+          parentId,
+          categoryNameController.text.trim(),
+        );
+      } else {
+        result = await SellerServices.createCategory({
+          "category_name": categoryNameController.text.trim(),
+          "is_active": "true",
+          "brand_ids": selectedBrandIds.toList(),
+        });
+      }
+      final imagePath = pickedImagePath.value;
+      final newId = _createdId(result);
+      String? imageNote;
+      if (imagePath != null && newId != null) {
+        try {
+          await SellerServices.uploadCategoryImage(newId, imagePath);
+        } catch (_) {
+          imageNote = " The image could not be uploaded - add it again from the category.";
+        }
+      }
+      resetAddForm();
       await fetchAllData();
       Get.back();
-      AppSnackbar.snackbar("Success", _savedMessage(result, "Category"));
+      AppSnackbar.snackbar(
+        "Success",
+        "${_savedMessage(result, parentId != null ? "Sub-category" : "Category")}${imageNote ?? ''}",
+      );
     } catch (e) {
       AppSnackbar.snackbar("Error", e.toString());
     } finally {

@@ -5,6 +5,7 @@ import '../../../../services/seller_services.dart';
 import '../../common/seller_ui.dart';
 import 'package:daalsetu/widgets/delivery_period_picker.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 /// Edits an offer's details. Stock (bags / quantity) is changed only from the
 /// Stock dialog: sending packing fields here would reset the remaining stock.
@@ -260,7 +261,7 @@ class _EditOfferViewState extends State<EditOfferView> {
         subtitle: "Commodity pricing, delivery window & terms",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           tooltip: 'Reload',

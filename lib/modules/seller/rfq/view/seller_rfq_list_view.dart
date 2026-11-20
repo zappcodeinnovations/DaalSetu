@@ -7,6 +7,7 @@ import '../controller/seller_rfq_controller.dart';
 import '../model/seller_rfq_model.dart';
 import 'seller_rfq_detail_view.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class SellerRfqListView extends StatelessWidget {
   const SellerRfqListView({super.key});
@@ -33,7 +34,7 @@ class SellerRfqListView extends StatelessWidget {
         subtitle: "Live demands & RFQs from verified buyers",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           tooltip: 'Refresh',

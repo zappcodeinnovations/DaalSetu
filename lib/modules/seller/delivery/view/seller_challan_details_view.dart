@@ -7,6 +7,7 @@ import '../controller/seller_delivery_controller.dart';
 import 'package:daalsetu/widgets/dispatch_bills_section.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:daalsetu/utils/app_date.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 /// Full seller-facing delivery challan. The API returns the same snapshot-rich
 /// document used by the web panel, so every available party, transport, charge
@@ -92,7 +93,7 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
         subtitle: "Shipment manifest, parties & cargo charges",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           tooltip: 'Refresh',

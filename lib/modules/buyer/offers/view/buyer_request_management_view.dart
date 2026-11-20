@@ -37,7 +37,9 @@ class _BuyerRequestManagementViewState
     extends State<BuyerRequestManagementView> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
-  final _statusScrollController = ScrollController();
+  // One key per status chip, so the selected one can be scrolled into view.
+  final Map<String, GlobalKey> _chipKeys = {};
+  final _chipScroll = ScrollController();
   final _dateFormat = DateFormat('yyyy-MM-dd');
 
   final List<Map<String, dynamic>> _rows = [];
@@ -54,6 +56,35 @@ class _BuyerRequestManagementViewState
   DateTimeRange? _dateRange;
 
   bool get _isRequirement => widget.mode == BuyerRequestMode.requirements;
+
+  /// Scrolls the horizontal status tabs so the selected one is centred and fully visible.
+  void _revealStatusChip() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      void reveal() {
+        final context = _chipKeys[_status]?.currentContext;
+        if (context == null) return;
+        Scrollable.ensureVisible(
+          context,
+          alignment: 0.5,
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOut,
+        );
+      }
+
+      if (_chipKeys[_status]?.currentContext != null) {
+        reveal();
+        return;
+      }
+      // The chip is far off screen and not built yet: bring its area into view first, then centre it.
+      final index = _statuses.indexOf(_status);
+      if (index < 0 || !_chipScroll.hasClients) return;
+      final target = (index * 120.0).clamp(0.0, _chipScroll.position.maxScrollExtent);
+      _chipScroll.animateTo(target, duration: const Duration(milliseconds: 200), curve: Curves.easeOut).then((_) {
+        if (mounted) WidgetsBinding.instance.addPostFrameCallback((_) => reveal());
+      });
+    });
+  }
 
   List<String> get _statuses => _isRequirement
       ? const [
@@ -85,31 +116,8 @@ class _BuyerRequestManagementViewState
   void dispose() {
     _searchController.dispose();
     _scrollController.dispose();
-    _statusScrollController.dispose();
+    _chipScroll.dispose();
     super.dispose();
-  }
-
-  void _scrollToStatus(String status) {
-    if (!_statusScrollController.hasClients) return;
-    final index = _statuses.indexOf(status);
-    if (index < 0) {
-      _statusScrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
-      );
-      return;
-    }
-    final targetOffset = (index * 95.0) - 30.0;
-    final clamped = targetOffset.clamp(
-      0.0,
-      _statusScrollController.position.maxScrollExtent,
-    );
-    _statusScrollController.animateTo(
-      clamped,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOutCubic,
-    );
   }
 
   void _loadNextPageWhenNeeded() {
@@ -393,10 +401,8 @@ class _BuyerRequestManagementViewState
                           _dateRange = null;
                         });
                         Get.back();
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          _scrollToStatus('all');
-                        });
                         _load();
+                        _revealStatusChip();
                       },
                       child: const Text('Reset'),
                     ),
@@ -408,10 +414,8 @@ class _BuyerRequestManagementViewState
                           _branch = selectedBranch;
                         });
                         Get.back();
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          _scrollToStatus(selectedStatus);
-                        });
                         _load();
+                        _revealStatusChip();
                       },
                       child: const Text('Apply filters'),
                     ),
@@ -691,7 +695,7 @@ class _BuyerRequestManagementViewState
         SizedBox(
           height: 38,
           child: ListView.separated(
-            controller: _statusScrollController,
+            controller: _chipScroll,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             scrollDirection: Axis.horizontal,
             itemCount: _statuses.length,
@@ -699,13 +703,14 @@ class _BuyerRequestManagementViewState
             itemBuilder: (_, index) {
               final status = _statuses[index];
               return ChoiceChip(
+                key: _chipKeys.putIfAbsent(status, GlobalKey.new),
                 label: Text(_label(status)),
                 selected: _status == status,
                 onSelected: (selected) {
                   final newStatus = selected ? status : 'all';
                   setState(() => _status = newStatus);
-                  _scrollToStatus(newStatus);
                   _load();
+                  _revealStatusChip();
                 },
               );
             },

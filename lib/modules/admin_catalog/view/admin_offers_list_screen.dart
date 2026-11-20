@@ -11,6 +11,7 @@ import 'package:daalsetu/theme/app_theme.dart';
 import 'package:daalsetu/modules/products/view/edit_product.dart';
 import 'package:daalsetu/modules/products/view/product_detail.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/app_shell.dart';
 
 class AdminOffersListScreen extends StatefulWidget {
   const AdminOffersListScreen({super.key});
@@ -42,8 +43,9 @@ class _AdminOffersListScreenState extends State<AdminOffersListScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: HeroHeader(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          tooltip: 'Open menu',
+          icon: const Icon(Icons.menu_rounded, color: Colors.white),
+          onPressed: () => AppShell.openDrawer(activeKey: 'offers'),
         ),
         title: 'Admin Offers',
         subtitle: 'Live commodity trading offers & deal approvals',

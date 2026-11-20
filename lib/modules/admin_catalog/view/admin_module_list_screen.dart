@@ -1,3 +1,5 @@
+import 'package:daalsetu/widgets/dashboard_period_bar.dart';
+import 'package:daalsetu/utils/app_preferences.dart';
 import 'dart:async';
 
 import 'package:daalsetu/modules/admin_catalog/config/admin_actions.dart';
@@ -15,7 +17,7 @@ import 'package:get/get.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
-import 'package:daalsetu/utils/app_preferences.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class AdminModuleListScreen extends StatefulWidget {
   const AdminModuleListScreen({
@@ -38,13 +40,15 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
   late final TextEditingController _searchController;
   Timer? debounce;
 
+  // Only a super admin creates branches (the server refuses everybody else), so the + stays hidden until we know.
+  bool _isSuperAdmin = false;
+
   // Parity state for Category Requests module ("Approval Queue" vs "All Buyers")
   int _activeCategoryRequestTab = 0; // 0 = Approval Queue, 1 = All Buyers
   List<Map<String, dynamic>> _buyers = [];
   bool _isLoadingBuyers = false;
   String _buyerSearch = '';
   String _userRole = '';
-  bool get _isSuperAdmin => _userRole == 'super_admin';
 
   @override
   void initState() {
@@ -61,13 +65,21 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
     if (widget.moduleKey == 'category_requests') {
       _fetchBuyers();
     }
+    if (widget.moduleKey == 'branches') {
+      AppPreferences.getRole().then((role) {
+        if (mounted) setState(() => _isSuperAdmin = (role ?? '').toLowerCase() == 'super_admin');
+      });
+    }
   }
 
   Future<void> _loadUserRole() async {
     try {
       final role = await AppPreferences.getRole();
       if (mounted) {
-        setState(() => _userRole = (role ?? '').trim().toLowerCase());
+        setState(() {
+          _userRole = (role ?? '').trim().toLowerCase();
+          _isSuperAdmin = _userRole == 'super_admin';
+        });
       }
     } catch (_) {}
   }
@@ -166,11 +178,17 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
         ? AdminDrawer(activeKey: widget.moduleKey)
         : null,
     appBar: HeroHeader(
+      // Screens reached from the side menu show the menu button itself (it opens the menu every time);
+      // system back still returns to the previous page.
       leading: widget.showAdminDrawer
-          ? const AppBarLeading()
+          ? IconButton(
+              tooltip: 'Open menu',
+              icon: const Icon(Icons.menu_rounded, color: Colors.white),
+              onPressed: () => AppShell.openDrawer(activeKey: widget.moduleKey),
+            )
           : IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-              onPressed: () => Navigator.of(context).maybePop(),
+              onPressed: () => goBackOrHome(context),
             ),
       title: widget.moduleKey == 'category_requests'
           ? 'Category Requests'
@@ -185,6 +203,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
     // Only sellers add brands now (MoM point 26); admins review and edit them.
     floatingActionButton: config.canCreate &&
             widget.moduleKey != 'brands' &&
+            (widget.moduleKey != 'branches' || _isSuperAdmin) &&
             (widget.moduleKey != 'category_requests' ||
                 _activeCategoryRequestTab == 0)
         ? Container(
@@ -249,6 +268,11 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
               },
             ),
           ),
+          // One date filter (From - To / presets) on every list panel.
+          Obx(() => ListDateFilterBar(
+                value: controller.dateFilter.value,
+                onChanged: controller.setDateFilter,
+              )),
           if (config.filterOptions.isNotEmpty)
             SizedBox(
               height: 44,

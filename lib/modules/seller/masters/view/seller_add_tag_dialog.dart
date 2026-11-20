@@ -34,7 +34,7 @@ class _SellerAddTagDialogState extends State<SellerAddTagDialog> {
           TextField(
             controller: _nameController,
             decoration: InputDecoration(
-              labelText: "Tag Name",
+              labelText: "Quality Tag Name",
               hintText: "e.g. Sortex Cleaned",
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -45,7 +45,7 @@ class _SellerAddTagDialogState extends State<SellerAddTagDialog> {
         ElevatedButton(
           onPressed: () {
             if (_nameController.text.trim().isEmpty) {
-              AppSnackbar.snackbar("Error", "Tag name is required", snackPosition: SnackPosition.BOTTOM);
+              AppSnackbar.snackbar("Error", "Quality tag name is required", snackPosition: SnackPosition.BOTTOM);
               return;
             }
             Get.back();

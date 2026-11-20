@@ -110,8 +110,8 @@ class BuyerOffersController extends GetxController {
       final mapped = data
           .map((e) => BuyerOfferModel.fromJson(e))
           .where((offer) {
-            // Under Offers tabs ('all', 'today', 'pending', 'previous'),
-            // Buyer Requirements (RFQs) must never be displayed; they belong exclusively in Buyer Requirements.
+            // Buyer requirements (RFQs) belong to the Requirements screen only; the Offers screens
+            // list seller offers and the buyer's own interests.
             if (offerType != 'requirements' && offer.isRfq) {
               return false;
             }

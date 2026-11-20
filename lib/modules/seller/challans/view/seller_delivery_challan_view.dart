@@ -9,6 +9,7 @@ import '../../delivery/controller/seller_delivery_controller.dart';
 import '../../delivery/view/seller_challan_details_view.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:daalsetu/utils/app_date.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class SellerDeliveryChallanView extends StatelessWidget {
   const SellerDeliveryChallanView({super.key, this.statusFilter});
@@ -32,7 +33,7 @@ class SellerDeliveryChallanView extends StatelessWidget {
             : "Dispatched shipments & transit tracking",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           tooltip: 'Refresh challans',
@@ -274,7 +275,7 @@ class SellerDeliveryChallanView extends StatelessWidget {
                             const SizedBox(height: 14),
                             Container(
                               width: double.infinity,
-                              height: 44,
+                              height: 48,
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
                                   colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
@@ -295,11 +296,17 @@ class SellerDeliveryChallanView extends StatelessWidget {
                                 icon: const Icon(IconlyLight.send, size: 16, color: Colors.white),
                                 label: Text(
                                   "DISPATCH SHIPMENT",
+                                  maxLines: 1,
                                   style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                                 ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.transparent,
                                   shadowColor: Colors.transparent,
+                                  elevation: 0,
+                                  // The gradient box is 48 high: the button fills it with no extra padding,
+                                  // so the label is centred and never cut at the bottom.
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  minimumSize: const Size.fromHeight(48),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 ),
                               ),

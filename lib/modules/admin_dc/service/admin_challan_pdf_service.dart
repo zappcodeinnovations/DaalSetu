@@ -1,3 +1,4 @@
+import 'package:daalsetu/utils/pdf_text.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:io';
 import 'package:flutter/services.dart';
@@ -328,7 +329,7 @@ class AdminChallanPdfService {
                 children: [
                   pw.Text('Narration / Remarks:', style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)),
                   pw.SizedBox(height: 2),
-                  pw.Text(challan.narration!, style: const pw.TextStyle(fontSize: 8)),
+                  pw.Text(pdfSafeText(challan.narration), style: const pw.TextStyle(fontSize: 8)),
                 ],
               ),
             ),

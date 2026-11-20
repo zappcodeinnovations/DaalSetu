@@ -16,6 +16,7 @@ import '../../../../routes/app_routes.dart';
 import '../../../../widgets/authenticated_network_image.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:daalsetu/widgets/offer_card_parts.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class SellerProductView extends StatelessWidget {
   const SellerProductView({super.key});
@@ -45,7 +46,7 @@ class SellerProductView extends StatelessWidget {
         subtitle: "Active listings & stock inventory",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
@@ -384,23 +385,30 @@ class SellerProductView extends StatelessWidget {
             Row(
               children: [
                 Expanded(
+                  flex: 5,
                   child: OutlinedButton.icon(
                     onPressed: () => Get.to(
                       () => const SellerOfferInterestsView(),
                       arguments: product.id,
                     ),
                     icon: const Icon(IconlyLight.chat, size: 14),
-                    label: Text(
-                      'Interests (${product.interestCount})',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                    label: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'Interests (${product.interestCount})',
+                        maxLines: 1,
+                        softWrap: false,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: primaryColor,
                       side: const BorderSide(color: primaryColor),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      minimumSize: Size.zero,
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -408,41 +416,49 @@ class SellerProductView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                OutlinedButton.icon(
+                Expanded(
+                  flex: 3,
+                  child: OutlinedButton.icon(
                   onPressed: () => SellerStockUpdateDialog.show(
                     context,
                     product.id,
                     onSuccess: controller.fetchProducts,
                   ),
                   icon: const Icon(IconlyLight.work, size: 14),
-                  label: const Text("Stock", style: TextStyle(fontSize: 12)),
+                  label: const Text("Stock", maxLines: 1, style: TextStyle(fontSize: 12)),
                   style: OutlinedButton.styleFrom(
+                    minimumSize: Size.zero,
                     padding: const EdgeInsets.symmetric(
                       vertical: 10,
-                      horizontal: 12,
+                      horizontal: 8,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                 ),
+                ),
                 const SizedBox(width: 8),
-                OutlinedButton.icon(
+                Expanded(
+                  flex: 3,
+                  child: OutlinedButton.icon(
                   onPressed: () => Get.to(
                     () => SellerMediaGalleryView(productId: product.id),
                     arguments: product.id,
                   ),
                   icon: const Icon(IconlyLight.image, size: 14),
-                  label: const Text("Media", style: TextStyle(fontSize: 12)),
+                  label: const Text("Media", maxLines: 1, style: TextStyle(fontSize: 12)),
                   style: OutlinedButton.styleFrom(
+                    minimumSize: Size.zero,
                     padding: const EdgeInsets.symmetric(
                       vertical: 10,
-                      horizontal: 12,
+                      horizontal: 8,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
+                ),
                 ),
               ],
             ),

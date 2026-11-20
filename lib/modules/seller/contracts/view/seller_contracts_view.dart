@@ -7,6 +7,7 @@ import '../controller/seller_contract_controller.dart';
 import '../../common/seller_ui.dart';
 import 'seller_contract_detail_view.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class SellerContractsView extends StatelessWidget {
   const SellerContractsView({super.key});
@@ -30,7 +31,7 @@ class SellerContractsView extends StatelessWidget {
         subtitle: "Signed deals & legal trade agreements",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           tooltip: 'Refresh contracts',

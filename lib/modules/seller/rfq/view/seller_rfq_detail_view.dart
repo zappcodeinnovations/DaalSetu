@@ -9,6 +9,7 @@ import '../model/seller_rfq_model.dart';
 import 'seller_submit_quote_dialog.dart';
 import 'seller_negotiation_chat_view.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
+import 'package:daalsetu/widgets/back_navigation.dart';
 
 class SellerRfqDetailView extends StatelessWidget {
   final String rfqId;
@@ -51,7 +52,7 @@ class SellerRfqDetailView extends StatelessWidget {
         subtitle: "Specifications, target price & quote negotiation",
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () => goBackOrHome(context),
         ),
         trailing: IconButton(
           tooltip: 'Reload',

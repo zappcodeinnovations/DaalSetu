@@ -1,6 +1,7 @@
 import 'package:daalsetu/network/api_client.dart';
 import 'package:flutter/material.dart';
 import '../../../utils/app_snackbar.dart';
+import 'assign_picker_sheet.dart';
 
 /// Lets an admin select an active, unassigned driver for a vehicle.
 ///
@@ -84,27 +85,18 @@ class _AssignDriverDialogState extends State<AssignDriverDialog> {
   }
 
   Future<void> _setDriver(Object? driverId, {String? driverName}) async {
-    final action = driverId == null
+    final unassign = driverId == null;
+    final action = unassign
         ? 'unassign ${widget.assignedDriverName ?? 'the driver'}'
         : 'assign ${driverName ?? 'this driver'}';
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Confirm driver assignment'),
-        content: Text('Do you want to $action for ${widget.vehicleNumber}?'),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Confirm'),
-          ),
-          OutlinedButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
+    final confirmed = await confirmAssignment(
+      context,
+      title: 'Confirm driver assignment',
+      message: 'Do you want to $action for ${widget.vehicleNumber}?',
+      confirmText: unassign ? 'Unassign' : 'Assign',
+      confirmColor: unassign ? Colors.red : const Color(0xFFF05A28),
     );
-    if (confirmed != true || !mounted) return;
+    if (!confirmed || !mounted) return;
 
     setState(() => _saving = true);
     try {
@@ -114,246 +106,49 @@ class _AssignDriverDialogState extends State<AssignDriverDialog> {
         requireAuth: true,
       );
       if (!mounted) return;
-      AppSnackbar.showSnackBar(context, 
-        SnackBar(
-          content: Text(
-            driverId == null
-                ? 'Driver unassigned.'
-                : 'Driver assigned successfully.',
-          ),
-        ),
+      AppSnackbar.showSnackBar(
+        context,
+        SnackBar(content: Text(unassign ? 'Driver unassigned.' : 'Driver assigned successfully.')),
       );
       Navigator.pop(context, true);
     } catch (error) {
       if (!mounted) return;
-      AppSnackbar.showSnackBar(context, 
-        SnackBar(content: Text('Could not update driver: $error')),
-      );
+      AppSnackbar.showSnackBar(context, SnackBar(content: Text('Could not update driver: $error')));
       setState(() => _saving = false);
     }
   }
 
   String _driverName(Map<String, dynamic> driver) =>
-      (driver['driver_name'] ??
-              driver['name'] ??
-              driver['username'] ??
-              'Driver')
-          .toString();
+      (driver['driver_name'] ?? driver['name'] ?? driver['username'] ?? 'Driver').toString();
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return SafeArea(
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.sizeOf(context).height * .78,
-        ),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFFFFDF8),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          children: [
-            // Drag handle
-            Container(
-              margin: const EdgeInsets.only(top: 10, bottom: 6),
-              width: 44,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            // Saffron Header
-            Container(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFFEA580C), Color(0xFFF57C00)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.12),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(Icons.badge_outlined, color: Color(0xFFEA580C), size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Assign Driver',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          widget.vehicleNumber,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: _saving ? null : () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded, color: Colors.white),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(child: _body()),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _body() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    if (_loading) return const Center(child: CircularProgressIndicator());
-    if (_error != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Could not load drivers',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(_error!, textAlign: TextAlign.center),
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: _loadDrivers,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
-              ),
-            ],
+    final items = <AssignPickerItem>[
+      for (final driver in _drivers)
+        if (driver['id'] != null)
+          AssignPickerItem(
+            id: driver['id'] as Object,
+            title: _driverName(driver),
+            subtitle: [driver['phone_number'], driver['license_number']]
+                .where((value) => value != null && value.toString().trim().isNotEmpty)
+                .join(' • '),
           ),
-        ),
-      );
-    }
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        if ((widget.assignedDriverName ?? '').trim().isNotEmpty)
-          Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFEF2F2),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFFECACA), width: 1.2),
-            ),
-            child: ListTile(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              leading: Container(
-                width: 38,
-                height: 38,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFEE2E2),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.person_remove_outlined, color: Colors.red, size: 20),
-              ),
-              title: const Text(
-                'Unassign current driver',
-                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(widget.assignedDriverName!),
-              enabled: !_saving,
-              onTap: _saving ? null : () => _setDriver(null),
-            ),
-          ),
-        if (_drivers.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(24),
-            child: Text(
-              'No free active drivers are available for this transporter.',
-              textAlign: TextAlign.center,
-            ),
-          )
-        else
-          ..._drivers.map((driver) {
-            final driverId = driver['id'];
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: const Color(0xFFFFE0B2),
-                  width: 1.2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: ListTile(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                leading: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF7ED),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFFFE0B2)),
-                  ),
-                  child: const Icon(Icons.person_outline, color: Color(0xFFEA580C), size: 20),
-                ),
-                title: Text(
-                  _driverName(driver),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text(
-                  [driver['phone_number'], driver['license_number']]
-                      .where(
-                        (value) =>
-                            value != null && value.toString().trim().isNotEmpty,
-                      )
-                      .join(' • '),
-                  style: const TextStyle(fontSize: 12),
-                ),
-                trailing: const Icon(Icons.chevron_right, color: Color(0xFFEA580C)),
-                enabled: !_saving && driverId != null,
-                onTap: _saving || driverId == null
-                    ? null
-                    : () =>
-                          _setDriver(driverId, driverName: _driverName(driver)),
-              ),
-            );
-          }),
-      ],
+    ];
+    return AssignPickerSheet(
+      title: 'Assign Driver',
+      subtitle: widget.vehicleNumber,
+      icon: Icons.badge_outlined,
+      noun: 'driver',
+      items: items,
+      loading: _loading,
+      saving: _saving,
+      error: _error,
+      onRetry: _loadDrivers,
+      currentLabel: widget.assignedDriverName,
+      emptyText: 'No free active drivers are available for this transporter.',
+      onClose: () => Navigator.pop(context),
+      onAssign: (item) => _setDriver(item.id, driverName: item.title),
+      onUnassign: () => _setDriver(null),
     );
   }
 }

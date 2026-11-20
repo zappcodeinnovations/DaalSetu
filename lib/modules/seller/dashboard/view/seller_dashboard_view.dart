@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/dashboard_period_bar.dart';
 import '../../challans/view/seller_delivery_challan_view.dart';
 import 'package:flutter/material.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
@@ -55,6 +56,7 @@ class SellerDashboardView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeroSection(context, data.header),
+                DashboardPeriodBar(onChanged: controller.fetchDashboardData),
                 const SizedBox(height: 16),
                 _buildSectionHeader(
                   context,

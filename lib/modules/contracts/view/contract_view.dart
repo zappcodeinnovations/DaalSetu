@@ -57,6 +57,19 @@ class _ContractsScreenState extends State<ContractsScreen> {
     super.initState();
     selectedFilter = (widget.initialFilter ?? 'All').obs;
     _loadRole();
+    // Opened from the dashboard's In Transit card: ask for the same contracts the card counted.
+    if (selectedFilter.value == 'In Transit') {
+      controller.deliveryFilter = 'in_transit';
+      WidgetsBinding.instance.addPostFrameCallback((_) => controller.fetchContracts());
+    }
+  }
+
+  /// Reloads from the server when the In Transit tab is entered or left.
+  void _applyServerFilter() {
+    final wanted = selectedFilter.value == 'In Transit' ? 'in_transit' : null;
+    if (controller.deliveryFilter == wanted) return;
+    controller.deliveryFilter = wanted;
+    controller.fetchContracts();
   }
 
   Future<void> _loadRole() async {
@@ -74,13 +87,14 @@ class _ContractsScreenState extends State<ContractsScreen> {
     var contracts = controller.contracts.toList();
     if (selectedFilter.value != 'All') {
       final filterNorm = selectedFilter.value.toLowerCase().replaceAll(' ', '_');
-      contracts = contracts.where((item) {
-        final statusNorm = item.status.toLowerCase().replaceAll(' ', '_');
-        if (filterNorm == 'in_transit') {
-          return ContractsScreen.isContractInTransit(item);
-        }
-        return statusNorm == filterNorm;
-      }).toList();
+      if (filterNorm == 'in_transit') {
+        contracts = contracts.where((item) => ContractsScreen.isContractInTransit(item)).toList();
+      } else {
+        contracts = contracts.where((item) {
+          final statusNorm = item.status.toLowerCase().replaceAll(' ', '_');
+          return statusNorm == filterNorm;
+        }).toList();
+      }
     }
     final query = searchController.text.trim().toLowerCase();
     if (query.isNotEmpty) {
@@ -209,7 +223,10 @@ class _ContractsScreenState extends State<ContractsScreen> {
                     () => ChoiceChip(
                       label: Text(filter),
                       selected: selectedFilter.value == filter,
-                      onSelected: (_) => selectedFilter.value = filter,
+                      onSelected: (_) {
+                        selectedFilter.value = filter;
+                        _applyServerFilter();
+                      },
                     ),
                   );
                 },

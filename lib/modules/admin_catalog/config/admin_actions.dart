@@ -6,10 +6,14 @@ import '../../../utils/app_snackbar.dart';
 
 /// A choice for a dropdown field: what is sent ([value]) and what is shown ([label]).
 class AdminOption {
-  const AdminOption(this.value, this.label);
+  const AdminOption(this.value, this.label, {this.extras = const {}});
 
   final String value;
   final String label;
+
+  /// Extra details that other (read-only) fields of the form show once this option is picked,
+  /// e.g. a driver's phone number and licence number.
+  final Map<String, String> extras;
 }
 
 /// Readable text for any API value: nested objects show their name, lists are joined.
@@ -152,7 +156,7 @@ List<AdminOption> transporterOptionsFromUsers(Iterable<Map<String, dynamic>> use
       final kycStatus = (user['kyc_status'] ?? '').toString().trim().toLowerCase();
       return role == 'transporter' && user['is_active'] != false && kycStatus == 'approved';
     })
-    .map((user) => AdminOption('${user['id'] ?? ''}', _partyLabel(user)))
+    .map((user) => AdminOption('${user['id'] ?? ''}', _userLabel(user)))
     .where((option) => option.value.isNotEmpty)
     .toList();
 
@@ -160,6 +164,23 @@ Future<List<AdminOption>> loadTransporterOptions() async {
   final response = await ApiClient.get(endpoint: '/api/users/?role=transporter', requireAuth: true);
   return transporterOptionsFromUsers(adminListFrom(response));
 }
+
+/// Drivers a vehicle can be assigned to (Assign Driver on Create / Edit Registered Vehicle). The server
+/// only accepts drivers of the vehicle's own transporter.
+Future<List<AdminOption>> loadDriverOptions() => _load(
+      '/api/drivers/',
+      (d) {
+        final name = (d['driver_name'] ?? d['name'] ?? '').toString().trim();
+        final license = (d['license_number'] ?? '').toString().trim();
+        final phone = (d['phone_number'] ?? '').toString().trim();
+        return AdminOption(
+          '${d['id'] ?? ''}',
+          // The web shows "Name (phone)"; the other details fill their own fields below.
+          phone.isEmpty ? name : '$name ($phone)',
+          extras: {'phone': phone, 'license': license},
+        );
+      },
+    );
 
 Future<List<AdminOption>> loadCategoryOptions() => _load(
       '/api/categories/',
