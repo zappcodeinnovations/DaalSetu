@@ -1,258 +1,229 @@
 import 'package:daalsetu/modules/contracts/model/contract_details_model.dart';
+import 'package:daalsetu/utils/app_date.dart';
+import 'package:daalsetu/utils/pdf_text.dart';
+import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
-/// Contract PDF used when the backend has no ready-made file: brand header band,
-/// grid of deal details, Buyer and Seller cards side by side, route and footer.
-pw.Document buildContractPdf(ContractDetailModel contract, String contractNumber) {
-    final doc = pw.Document();
-    const accent = PdfColor.fromInt(0xFFF05A28);
-    const accentSoft = PdfColor.fromInt(0xFFFFF2D8);
-    const ink = PdfColor.fromInt(0xFF1F2937);
-    const muted = PdfColor.fromInt(0xFF6B7280);
-    const line = PdfColor.fromInt(0xFFE5E7EB);
+/// The contract PDF, laid out exactly like the web's: an orange band (title, contract number, status and total),
+/// then one two-column table per section - Deal, Buyer, Seller, Logistics Route, Transaction Notes,
+/// Administration (admin accounts only) and Timeline - and a "Generated on ... via DaalSetu" footer.
+pw.Document buildContractPdf(ContractDetailModel contract, String contractNumber, {DateTime? now}) {
+  final doc = pw.Document();
+  const accent = PdfColor.fromInt(0xFFF05A28);
+  const sectionBg = PdfColor.fromInt(0xFFFFF2D8);
+  const sectionInk = PdfColor.fromInt(0xFFD9481A);
+  const ink = PdfColor.fromInt(0xFF2C2C2C);
+  const muted = PdfColor.fromInt(0xFF787878);
+  const line = PdfColor.fromInt(0xFFC8C8C8);
+  const margin = 14 * PdfPageFormat.mm;
 
-    String dash(String? value) =>
-        (value == null || value.trim().isEmpty || value == 'null') ? '-' : value.trim();
+  String dash(Object? value) {
+    final text = (value ?? '').toString().replaceAll(RegExp(r'\s+'), ' ').trim();
+    return text.isEmpty || text == 'null' ? '-' : pdfSafeText(text);
+  }
 
-    pw.Widget sectionTitle(String title) => pw.Container(
-          margin: const pw.EdgeInsets.only(top: 14, bottom: 6),
-          padding: const pw.EdgeInsets.only(left: 8, top: 3, bottom: 3),
-          decoration: const pw.BoxDecoration(
-            border: pw.Border(left: pw.BorderSide(color: accent, width: 3)),
-          ),
-          child: pw.Text(
-            title.toUpperCase(),
-            style: pw.TextStyle(
-              fontSize: 10.5,
-              fontWeight: pw.FontWeight.bold,
-              color: accent,
-              letterSpacing: 0.8,
-            ),
-          ),
-        );
+  // Helvetica has no rupee glyph, so money is "Rs. 2,254.50" like the web's PDF.
+  String money(String? value) {
+    final amount = double.tryParse((value ?? '').replaceAll(',', '').trim());
+    if (amount == null) return '-';
+    return 'Rs. ${NumberFormat('#,##,##0.00', 'en_IN').format(amount)}';
+  }
 
-    pw.Widget cell(String label, String value) => pw.Container(
-          padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          decoration: pw.BoxDecoration(
-            border: pw.Border.all(color: line, width: 0.6),
-          ),
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(label, style: const pw.TextStyle(fontSize: 8, color: muted)),
-              pw.SizedBox(height: 2),
-              pw.Text(
-                value,
-                style: pw.TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: pw.FontWeight.bold,
-                  color: ink,
-                ),
-              ),
-            ],
-          ),
-        );
+  String two(int n) => n.toString().padLeft(2, '0');
 
-    // Rows of two equal cells. A Table keeps both cells of a row the same height; a Row with
-    // CrossAxisAlignment.stretch inside the page's unbounded-height Column made the whole body
-    // silently disappear (blank PDF), so it must not be used here.
-    pw.Widget grid(List<List<String>> items) {
-      final rows = <pw.TableRow>[];
-      for (var i = 0; i < items.length; i += 2) {
-        final left = items[i];
-        final right = i + 1 < items.length ? items[i + 1] : null;
-        rows.add(
-          pw.TableRow(
-            children: [
-              cell(left[0], left[1]),
-              right == null ? cell('', '') : cell(right[0], right[1]),
-            ],
-          ),
-        );
-      }
-      return pw.Table(
-        columnWidths: const {0: pw.FlexColumnWidth(), 1: pw.FlexColumnWidth()},
-        children: rows,
-      );
+  // "19/11/2026 18:36" (24 hour, like the web PDF); a value with no time is just the date.
+  String stamp(String? raw) {
+    final text = (raw ?? '').trim();
+    final parsed = AppDate.parse(text);
+    if (parsed == null) return dash(text);
+    final hasTime = RegExp(r'\d{1,2}:\d{2}').hasMatch(text);
+    final date = '${two(parsed.day)}/${two(parsed.month)}/${parsed.year}';
+    return hasTime ? '$date ${two(parsed.hour)}:${two(parsed.minute)}' : date;
+  }
+
+  String pickupDate(String? raw) {
+    final parsed = AppDate.parse(raw);
+    return parsed == null ? '-' : '${two(parsed.day)}-${two(parsed.month)}-${parsed.year}';
+  }
+
+  String statusLabel(String status) {
+    final value = status.trim();
+    if (value.isEmpty) return '-';
+    final words = value.replaceAll('_', ' ').split(' ');
+    return words.map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}').join(' ');
+  }
+
+  String generatedOn() {
+    final at = now ?? DateTime.now();
+    final hour = at.hour % 12 == 0 ? 12 : at.hour % 12;
+    return 'Generated on ${two(at.day)}/${two(at.month)}/${at.year}, $hour:${two(at.minute)}:${two(at.second)} '
+        '${at.hour >= 12 ? 'pm' : 'am'} via DaalSetu';
+  }
+
+  String firstFilled(List<String?> values) {
+    for (final value in values) {
+      if ((value ?? '').trim().isNotEmpty) return value!.trim();
     }
+    return '';
+  }
 
-    pw.Widget partyCard(String title, List<List<String>> items) => pw.Container(
-          decoration: pw.BoxDecoration(
-            border: pw.Border.all(color: line, width: 0.8),
-            borderRadius: pw.BorderRadius.circular(6),
-          ),
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Container(
-                width: double.infinity,
-                padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: const pw.BoxDecoration(
-                  color: accentSoft,
-                  borderRadius: pw.BorderRadius.only(
-                    topLeft: pw.Radius.circular(6),
-                    topRight: pw.Radius.circular(6),
-                  ),
-                ),
-                child: pw.Text(
-                  title,
-                  style: pw.TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: pw.FontWeight.bold,
-                    color: accent,
-                  ),
-                ),
-              ),
-              pw.Padding(
-                padding: const pw.EdgeInsets.all(10),
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    for (final item in items)
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.only(bottom: 5),
-                        child: pw.Column(
-                          crossAxisAlignment: pw.CrossAxisAlignment.start,
-                          children: [
-                            pw.Text(item[0], style: const pw.TextStyle(fontSize: 8, color: muted)),
-                            pw.Text(
-                              item[1],
-                              style: pw.TextStyle(
-                                fontSize: 10,
-                                fontWeight: pw.FontWeight.bold,
-                                color: ink,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
+  pw.Widget section(String title, List<List<String>> rows) {
+    pw.Widget text(String value, {bool bold = false, PdfColor color = ink}) => pw.Padding(
+          padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 4.5),
+          child: pw.Text(
+            value,
+            style: pw.TextStyle(fontSize: 9, fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal, color: color),
           ),
         );
 
-    doc.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        margin: pw.EdgeInsets.zero,
-        build: (pw.Context ctx) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              // Brand header band.
-              pw.Container(
-                width: double.infinity,
-                color: accent,
-                padding: const pw.EdgeInsets.symmetric(horizontal: 32, vertical: 22),
-                child: pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Text(
-                          'DAALSETU CONTRACT',
-                          style: pw.TextStyle(
-                            fontSize: 20,
-                            fontWeight: pw.FontWeight.bold,
-                            color: PdfColors.white,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        pw.SizedBox(height: 4),
-                        pw.Text(
-                          'Contract #: $contractNumber',
-                          style: const pw.TextStyle(fontSize: 11, color: PdfColors.white),
-                        ),
-                      ],
-                    ),
-                    pw.Container(
-                      padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                      decoration: pw.BoxDecoration(
-                        color: PdfColors.white,
-                        borderRadius: pw.BorderRadius.circular(12),
-                      ),
-                      child: pw.Text(
-                        contract.status.toUpperCase(),
-                        style: pw.TextStyle(
-                          fontSize: 10,
-                          fontWeight: pw.FontWeight.bold,
-                          color: accent,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              pw.Padding(
-                padding: const pw.EdgeInsets.symmetric(horizontal: 32, vertical: 6),
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    sectionTitle('Deal & Commodity Details'),
-                    grid([
-                      ['Product', dash(contract.productTitle)],
-                      ['Status', dash(contract.status.toUpperCase())],
-                      ['Quantity', dash('${contract.dealQuantity} ${contract.quantityUnit}')],
-                      ['Deal Rate', dash('Rs ${contract.dealAmount} ${contract.amountUnit}')],
-                    ]),
-                    sectionTitle('Buyer & Seller'),
-                    pw.Row(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Expanded(
-                          child: partyCard('Buyer', [
-                            ['Buyer', dash(contract.displayBuyerId.isNotEmpty ? contract.displayBuyerId : contractPersonName(contract.buyerPersonName, contract.buyerName))],
-                            ['Name', dash(contractPersonName(contract.buyerPersonName, contract.buyerName))],
-                            ['Company', dash(contractCompanyName(contract.buyerCompany, contract.buyerName, contract.buyerPersonName))],
-                            ['Email', dash(contract.buyerEmail)],
-                          ]),
-                        ),
-                        pw.SizedBox(width: 12),
-                        pw.Expanded(
-                          child: partyCard('Seller', [
-                            ['Seller', dash(contract.displaySellerId.isNotEmpty ? contract.displaySellerId : contractPersonName(contract.sellerPersonName, contract.sellerName))],
-                            ['Name', dash(contractPersonName(contract.sellerPersonName, contract.sellerName))],
-                            ['Company', dash(contractCompanyName(contract.sellerCompany, contract.sellerName, contract.sellerPersonName))],
-                            ['Email', dash(contract.sellerEmail)],
-                          ]),
-                        ),
-                      ],
-                    ),
-                    sectionTitle('Logistics & Route'),
-                    grid([
-                      ['Loading From', dash(contract.loadingFrom)],
-                      ['Loading To', dash(contract.loadingTo)],
-                      ['Ready For Loading', dash(contract.readyForLoadingAt)],
-                      ['Confirmed At', dash(contract.confirmedAt)],
-                    ]),
-                  ],
-                ),
-              ),
-              pw.Spacer(),
-              pw.Padding(
-                padding: const pw.EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                child: pw.Column(
-                  children: [
-                    pw.Divider(thickness: 0.6, color: line),
-                    pw.SizedBox(height: 4),
-                    pw.Center(
-                      child: pw.Text(
-                        'Generated securely via DaalSetu Platform',
-                        style: const pw.TextStyle(fontSize: 9, color: muted),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 14),
+      // A Column is not splittable, so a section moves to the next page whole instead of leaving its header behind.
+      child: pw.Column(children: [pw.Table(
+        border: pw.TableBorder.all(color: line, width: 0.5),
+        columnWidths: {
+          0: const pw.FixedColumnWidth(55 * PdfPageFormat.mm),
+          1: const pw.FlexColumnWidth(),
         },
-      ),
+        children: [
+          pw.TableRow(
+            decoration: const pw.BoxDecoration(color: sectionBg),
+            children: [
+              text(title, bold: true, color: sectionInk),
+              pw.SizedBox(),
+            ],
+          ),
+          for (final row in rows)
+            pw.TableRow(children: [text(row[0], bold: true), text(row[1])]),
+        ],
+      )]),
     );
+  }
+
+  final buyerCode = firstFilled([contract.displayBuyerId, contract.buyerUniqueId]);
+  final sellerCode = firstFilled([contract.displaySellerId, contract.sellerMappedId]);
+  final buyerPerson = contractPersonName(contract.buyerPersonName, contract.buyerName);
+  final sellerPerson = contractPersonName(contract.sellerPersonName, contract.sellerName);
+  final isAdminView = contract.confirmedByAdminName.isNotEmpty ||
+      contract.confirmedBranchName.isNotEmpty ||
+      contract.createdByUserName.isNotEmpty ||
+      contract.assignedSubAdminName.isNotEmpty ||
+      contract.confirmedByAdminId != null ||
+      contract.createdByUserId != null ||
+      contract.assignedSubAdminId != null;
+
+  final sections = <pw.Widget>[
+    section('Deal', [
+      ['Offer', dash(contract.productTitle)],
+      ['Category', dash(contract.productCategory)],
+      ['Interest ID', dash(contract.interestId)],
+      ['Quantity', dash('${contract.dealQuantity} ${contract.quantityUnit}')],
+      ['Deal Amount', '${money(contract.dealAmount)}/${dash(contract.amountUnit)}'],
+      ['Buyer Offer Amount', money(contract.buyerOfferAmount)],
+      ['Buyer Required Qty', dash(contract.buyerRequiredQuantity)],
+      ['Seller Quantity', dash(contract.sellerQuantity)],
+      ['Deal Date', stamp(firstFilled([contract.dealDate, contract.confirmedAt]))],
+      ['Delivery Period', dash(firstFilled([contract.deliveryPeriod, contract.deliveryDate]))],
+      ['Pickup From / To', '${pickupDate(contract.loadingFromDate)} - ${pickupDate(contract.loadingToDate)}'],
+    ]),
+    section('Buyer', [
+      ['Buyer ID', dash(buyerCode)],
+      ['Name', dash(buyerPerson)],
+      ['Company', dash(contractCompanyName(contract.buyerCompany, contract.buyerName, contract.buyerPersonName))],
+      ['Mobile', dash(contract.buyerMobile)],
+      ['Email', dash(contract.buyerEmail)],
+    ]),
+    section('Seller', [
+      ['Seller ID', dash(sellerCode)],
+      ['Name', dash(sellerPerson)],
+      ['Company', dash(contractCompanyName(contract.sellerCompany, contract.sellerName, contract.sellerPersonName))],
+      ['Mobile', dash(contract.sellerMobile)],
+      ['Email', dash(contract.sellerEmail)],
+    ]),
+    section('Logistics Route', [
+      ['Loading From', dash(contract.loadingFrom)],
+      ['Loading To', dash(contract.loadingTo)],
+    ]),
+    section('Transaction Notes', [
+      ['Buyer Note', dash(contract.buyerRemark)],
+      ['Seller Note', dash(contract.sellerRemark)],
+      ['Admin Note', dash(contract.adminRemark)],
+    ]),
+    if (isAdminView)
+      section('Administration', [
+        ['Confirmed By Admin', dash(contract.confirmedByAdminName)],
+        ['Branch', dash(contract.confirmedBranchName)],
+        ['Created By', dash(contract.createdByUserName)],
+        ['Assigned Sub Admin', dash(contract.assignedSubAdminName)],
+      ]),
+    section('Timeline', [
+      ['Created', stamp(contract.createdAt)],
+      ['Confirmed', stamp(contract.confirmedAt)],
+      ['Ready For Loading', stamp(contract.readyForLoadingAt)],
+      ['Updated', stamp(contract.updatedAt)],
+    ]),
+  ];
+
+  final totalText = money(firstFilled([contract.tradeValue, contract.dealAmount.isEmpty ? '' : _tradeFromRate(contract)]));
+
+  doc.addPage(
+    pw.MultiPage(
+      pageFormat: PdfPageFormat.a4,
+      margin: pw.EdgeInsets.zero,
+      header: (context) => context.pageNumber == 1
+          ? pw.Container(
+              margin: const pw.EdgeInsets.only(bottom: 6 * PdfPageFormat.mm),
+              color: accent,
+              padding: const pw.EdgeInsets.symmetric(horizontal: margin, vertical: 7 * PdfPageFormat.mm),
+              child: pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('DAALSETU CONTRACT',
+                          style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: PdfColors.white)),
+                      pw.SizedBox(height: 4),
+                      pw.Text('Contract: ${dash(contractNumber)}',
+                          style: const pw.TextStyle(fontSize: 10, color: PdfColors.white)),
+                    ],
+                  ),
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.end,
+                    children: [
+                      pw.Text('Status: ${statusLabel(contract.status)}',
+                          style: const pw.TextStyle(fontSize: 10, color: PdfColors.white)),
+                      pw.SizedBox(height: 4),
+                      pw.Text('Total: $totalText',
+                          style: const pw.TextStyle(fontSize: 10, color: PdfColors.white)),
+                    ],
+                  ),
+                ],
+              ),
+            )
+          : pw.SizedBox(height: 14 * PdfPageFormat.mm),
+      footer: (context) => pw.Padding(
+        padding: const pw.EdgeInsets.fromLTRB(margin, 0, margin, 8 * PdfPageFormat.mm),
+        child: pw.Align(
+          alignment: pw.Alignment.centerLeft,
+          child: pw.Text(generatedOn(), style: const pw.TextStyle(fontSize: 8, color: muted)),
+        ),
+      ),
+      build: (context) => [
+        for (final item in sections)
+          pw.Padding(padding: const pw.EdgeInsets.symmetric(horizontal: margin), child: item),
+      ],
+    ),
+  );
   return doc;
+}
+
+/// Total for an API that sent no trade value: rate x quantity, only when both are numbers.
+String _tradeFromRate(ContractDetailModel contract) {
+  final rate = double.tryParse(contract.dealAmount.replaceAll(',', '').trim());
+  final quantity = double.tryParse(contract.dealQuantity.replaceAll(',', '').trim());
+  if (rate == null || quantity == null) return '';
+  return (rate * quantity).toStringAsFixed(2);
 }
