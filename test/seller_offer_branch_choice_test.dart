@@ -23,6 +23,7 @@ Future<_Offline> _open(WidgetTester tester, {required List<SellerBranchModel> br
 }
 
 void main() {
+  branchListTests();
   tearDown(Get.reset);
 
   testWidgets('a seller in no branch sees why, and a Join a branch button', (tester) async {
@@ -37,5 +38,23 @@ void main() {
     expect(find.byKey(const Key('no-branch-notice')), findsNothing);
     expect(find.text('Nagpur'), findsOneWidget);
     expect(find.text('Amalner'), findsOneWidget);
+  });
+}
+
+void branchListTests() {
+  test('Create Offer lists the primary branch AND the other branches (the API keeps them apart)', () {
+    final branches = allSellerBranches({
+      'primary_branch': {'id': 1, 'branch_code': 'AMR158M', 'location_name': 'Amalner'},
+      'my_branches': [
+        {'id': 2, 'branch_code': 'NGP001', 'location_name': 'Nagpur'},
+        {'id': 1, 'branch_code': 'AMR158M', 'location_name': 'Amalner'}, // a repeat is listed once
+      ],
+    });
+    expect(branches.map((b) => b.id), [1, 2]);
+  });
+
+  test('a seller with only a primary branch still gets it', () {
+    expect(allSellerBranches({'primary_branch': {'id': 5, 'location_name': 'Only'}, 'my_branches': []}).map((b) => b.id), [5]);
+    expect(allSellerBranches({'primary_branch': null, 'my_branches': []}), isEmpty);
   });
 }

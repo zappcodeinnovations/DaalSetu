@@ -16,6 +16,20 @@ import '../../../../services/realtime_notification_service.dart';
 import '../../../nav_bar/controller/nav_controller.dart';
 import 'package:daalsetu/widgets/offer_image_picker.dart';
 
+/// Every branch the seller belongs to: the API lists the primary branch apart from `my_branches` (the others),
+/// so an offer form needs both - with only `my_branches` the primary branch was missing from the choice.
+List<SellerBranchModel> allSellerBranches(Map<String, dynamic> data) {
+  final rows = <Map<String, dynamic>>[
+    if (data['primary_branch'] is Map<String, dynamic>) data['primary_branch'] as Map<String, dynamic>,
+    ...(data['my_branches'] as List? ?? []).whereType<Map<String, dynamic>>(),
+  ];
+  final seen = <int>{};
+  return rows
+      .map(SellerBranchModel.fromJson)
+      .where((b) => b.id != null && seen.add(b.id!))
+      .toList();
+}
+
 class SellerProductController extends GetxController {
   var isLoading = true.obs;
   var isSaving = false.obs;
@@ -323,13 +337,8 @@ class SellerProductController extends GetxController {
       final res = await SellerServices.getSellerBranches();
       final data = res['data'] is Map<String, dynamic>
           ? res['data'] as Map<String, dynamic>
-          : const {};
-      branches.assignAll(
-        (data['my_branches'] as List? ?? [])
-            .whereType<Map<String, dynamic>>()
-            .map(SellerBranchModel.fromJson)
-            .where((b) => b.id != null),
-      );
+          : <String, dynamic>{};
+      branches.assignAll(allSellerBranches(data));
       // Default: visible in every branch the seller belongs to (backend default too).
       if (selectedBranchIds.isEmpty)
         selectedBranchIds.addAll(branches.map((b) => b.id!));

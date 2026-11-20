@@ -153,8 +153,14 @@ class ProductService {
       requireAuth: true,
     );
     final data = response is Map ? response["data"] : null;
-    final branches = data is Map ? data["my_branches"] : null;
-    return (branches as List? ?? [])
+    // The primary branch comes apart from my_branches (the others): the offer needs all of them.
+    final branches = [
+      if (data is Map && data["primary_branch"] is Map) data["primary_branch"],
+      ...((data is Map ? data["my_branches"] : null) as List? ?? const []),
+    ];
+    final seen = <int>{};
+    return branches
+        .where((item) => item is Map && item["id"] is int && seen.add(item["id"] as int))
         .map(
           (item) => OfferBranch(
             id: item["id"] as int,
