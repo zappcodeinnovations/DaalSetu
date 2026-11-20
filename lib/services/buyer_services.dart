@@ -262,7 +262,11 @@ class BuyerServices {
   /// ============================================================
   /// GET ALL OFFERS & REQUIREMENTS
   /// ============================================================
-  static Future<List<dynamic>> getAllOffers({String query = "", bool silent = false}) async {
+  static Future<List<dynamic>> getAllOffers({
+    String query = "",
+    bool silent = false,
+    bool includeRfqs = true,
+  }) async {
     final List<dynamic> allList = [];
     final Set<String> seenKeys = {};
     final Set<String> visibleProductIds = {};
@@ -309,14 +313,16 @@ class BuyerServices {
       print("⚠️ Products error in getAllOffers: $e");
     }
 
-    // 2. Fetch all Buyer Requirements (RFQs)
-    try {
-      final rfqs = await getOffers(query: query, silent: silent);
-      for (var item in rfqs) {
-        addUnique(item, 'rfq');
+    // 2. Fetch all Buyer Requirements (RFQs) if requested
+    if (includeRfqs) {
+      try {
+        final rfqs = await getOffers(query: query, silent: silent);
+        for (var item in rfqs) {
+          addUnique(item, 'rfq');
+        }
+      } catch (e) {
+        print("⚠️ RFQs error in getAllOffers: $e");
       }
-    } catch (e) {
-      print("⚠️ RFQs error in getAllOffers: $e");
     }
 
     // 3. Try /api/offers/list/

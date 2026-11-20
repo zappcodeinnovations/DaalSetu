@@ -30,8 +30,6 @@ class UserController extends GetxController {
 
   static const roleFilters = [
     'all',
-    'admin',
-    'sub_admin',
     'buyer',
     'seller',
     'transporter',
@@ -43,6 +41,12 @@ class UserController extends GetxController {
     switch (role.toLowerCase()) {
       case 'all':
         return 'All';
+      case 'buyer':
+        return 'Buyer';
+      case 'seller':
+        return 'Seller';
+      case 'transporter':
+        return 'Transporter';
       case 'both_sellerandbuyer':
         return 'Buyer & Seller';
       case 'sub_admin':

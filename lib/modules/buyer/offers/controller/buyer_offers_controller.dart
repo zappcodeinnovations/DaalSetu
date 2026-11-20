@@ -100,7 +100,7 @@ class BuyerOffersController extends GetxController {
           break;
         case 'all':
         default:
-          data = await BuyerServices.getAllOffers(silent: silent);
+          data = await BuyerServices.getAllOffers(silent: silent, includeRfqs: false);
           break;
       }
 
@@ -110,6 +110,11 @@ class BuyerOffersController extends GetxController {
       final mapped = data
           .map((e) => BuyerOfferModel.fromJson(e))
           .where((offer) {
+            // Under Offers tabs ('all', 'today', 'pending', 'previous'),
+            // Buyer Requirements (RFQs) must never be displayed; they belong exclusively in Buyer Requirements.
+            if (offerType != 'requirements' && offer.isRfq) {
+              return false;
+            }
             // 1. When an offer's visibility is turned off from the panel or backend,
             //    it should be immediately excluded from the public/buyer offers list ('today', 'all').
             // 2. Under the active 'today' feed, out-of-stock and expired items are excluded

@@ -37,6 +37,7 @@ class _BuyerRequestManagementViewState
     extends State<BuyerRequestManagementView> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
+  final _statusScrollController = ScrollController();
   final _dateFormat = DateFormat('yyyy-MM-dd');
 
   final List<Map<String, dynamic>> _rows = [];
@@ -84,7 +85,31 @@ class _BuyerRequestManagementViewState
   void dispose() {
     _searchController.dispose();
     _scrollController.dispose();
+    _statusScrollController.dispose();
     super.dispose();
+  }
+
+  void _scrollToStatus(String status) {
+    if (!_statusScrollController.hasClients) return;
+    final index = _statuses.indexOf(status);
+    if (index < 0) {
+      _statusScrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+      );
+      return;
+    }
+    final targetOffset = (index * 95.0) - 30.0;
+    final clamped = targetOffset.clamp(
+      0.0,
+      _statusScrollController.position.maxScrollExtent,
+    );
+    _statusScrollController.animateTo(
+      clamped,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   void _loadNextPageWhenNeeded() {
@@ -368,6 +393,9 @@ class _BuyerRequestManagementViewState
                           _dateRange = null;
                         });
                         Get.back();
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          _scrollToStatus('all');
+                        });
                         _load();
                       },
                       child: const Text('Reset'),
@@ -380,6 +408,9 @@ class _BuyerRequestManagementViewState
                           _branch = selectedBranch;
                         });
                         Get.back();
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          _scrollToStatus(selectedStatus);
+                        });
                         _load();
                       },
                       child: const Text('Apply filters'),
@@ -660,6 +691,7 @@ class _BuyerRequestManagementViewState
         SizedBox(
           height: 38,
           child: ListView.separated(
+            controller: _statusScrollController,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             scrollDirection: Axis.horizontal,
             itemCount: _statuses.length,
@@ -670,7 +702,9 @@ class _BuyerRequestManagementViewState
                 label: Text(_label(status)),
                 selected: _status == status,
                 onSelected: (selected) {
-                  setState(() => _status = selected ? status : 'all');
+                  final newStatus = selected ? status : 'all';
+                  setState(() => _status = newStatus);
+                  _scrollToStatus(newStatus);
                   _load();
                 },
               );

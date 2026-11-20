@@ -53,7 +53,9 @@ class DashboardController extends GetxController {
         debugPrint("🚀 Fetching Dashboard Data...");
       }
 
-      final data = await DashboardService.fetchDashboard();
+      final data = await DashboardService.fetchDashboard(
+        period: selectedGtvPeriod.value,
+      );
 
       dashboardData.value = data;
 

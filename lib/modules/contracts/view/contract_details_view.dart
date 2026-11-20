@@ -43,9 +43,9 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     contractId = rawArgs is int
         ? rawArgs
         : int.tryParse(rawArgs?.toString() ?? '') ?? 0;
-    final existing = controller.contracts.firstWhereOrNull((c) => c.id == contractId);
-    if (existing != null) {
-      controller.contractDetail.value = ContractDetailModel.fromContractModel(existing);
+
+    if (controller.userRole.value.isNotEmpty) {
+      _userRole = controller.userRole.value.trim().toLowerCase();
     }
     _loadRole();
     Future.microtask(() => controller.fetchContractDetail(contractId));
@@ -54,9 +54,12 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
   Future<void> _loadRole() async {
     final role = await AppPreferences.getRole();
     if (mounted) {
-      setState(() {
-        _userRole = (role ?? '').trim().toLowerCase();
-      });
+      final normalized = (role ?? '').trim().toLowerCase();
+      if (_userRole != normalized) {
+        setState(() {
+          _userRole = normalized;
+        });
+      }
     }
   }
 
@@ -89,13 +92,12 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
         ),
       ),
       body: Obx(() {
-        if (controller.isLoading.value) {
+        if (controller.isLoading.value ||
+            controller.contractDetail.value == null ||
+            controller.contractDetail.value!.id != contractId) {
           return const Center(child: CircularProgressIndicator());
         }
-        final contract = controller.contractDetail.value;
-        if (contract == null || contract.id != contractId) {
-          return const Center(child: Text('Contract details unavailable'));
-        }
+        final contract = controller.contractDetail.value!;
         return RefreshIndicator(
           onRefresh: () => controller.fetchContractDetail(contractId),
           child: ListView(
@@ -211,6 +213,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
         );
       }),
       bottomNavigationBar: Obx(() {
+        if (controller.isLoading.value) return const SizedBox.shrink();
         final contract = controller.contractDetail.value;
         final bool showCreateDC = _isSuperAdmin &&
             contract != null &&

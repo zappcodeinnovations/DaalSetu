@@ -43,6 +43,12 @@ class DrawerMenuService {
             route: AppRoutes.users,
           ),
           DrawerMenuItem(
+            key: 'salesman',
+            title: AdminModules.byKey('salesman').title,
+            icon: AdminModules.byKey('salesman').icon,
+            route: AppRoutes.adminModule('salesman'),
+          ),
+          DrawerMenuItem(
             key: 'kyc',
             title: AdminModules.byKey('kyc').title,
             icon: AdminModules.byKey('kyc').icon,

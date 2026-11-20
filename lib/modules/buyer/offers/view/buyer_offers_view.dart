@@ -1215,12 +1215,8 @@ class _OfferList extends StatelessWidget {
         .trim();
     final priceCtrl = TextEditingController(text: initialPrice);
 
-    // 3. Prefill delivery destination matching web portal
-    final defaultLocation =
-        (offer.location != null && offer.location!.isNotEmpty)
-        ? offer.location!
-        : "AMR158M, Amalner, Maharashtra, India";
-    final locationCtrl = TextEditingController(text: defaultLocation);
+    // 3. Clear seller's loading location from prefilling delivery destination so buyer enters it independently
+    final locationCtrl = TextEditingController();
     final remarkCtrl = TextEditingController();
 
     // Delivery Period: starts as the buyer's current one, else the seller's offered one.

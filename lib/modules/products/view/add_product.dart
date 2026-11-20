@@ -132,11 +132,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Future<void> _pickDate(String type) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final current = type == 'from' ? loadingFrom : loadingTo;
+    final initial = (current != null && !current.isBefore(today)) ? current : today;
     final value = await showDatePicker(
       context: context,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 730)),
-      initialDate: DateTime.now().add(const Duration(days: 1)),
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 730)),
+      initialDate: initial,
     );
     if (value == null) return;
     setState(() {
@@ -186,6 +190,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (category == null || seller == null || company == null) {
+      if (seller != null && companies.isEmpty) {
+        _message('No registered company found for the selected seller.', error: true);
+        return;
+      }
       _message('Category, seller and company are required.', error: true);
       return;
     }
@@ -300,7 +308,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 company,
                 companies,
                 (value) => setState(() => company = value),
-                enabled: seller != null,
+                enabled: seller != null && companies.isNotEmpty,
+                helperText: seller != null && companies.isEmpty
+                    ? 'No registered company found for the selected seller.'
+                    : null,
               ),
               _branches(),
             ]),
@@ -506,10 +517,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
     List<OfferOption> items,
     ValueChanged<OfferOption?> onChanged, {
     bool enabled = true,
+    String? helperText,
   }) => DropdownButtonFormField<OfferOption>(
     initialValue: value,
     isExpanded: true,
-    decoration: InputDecoration(labelText: '$label *'),
+    decoration: InputDecoration(
+      labelText: '$label *',
+      helperText: helperText,
+      helperStyle: helperText != null
+          ? const TextStyle(color: Color(0xFFE65100), fontSize: 12)
+          : null,
+    ),
     items: items
         .map(
           (item) => DropdownMenuItem(

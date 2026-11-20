@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:daalsetu/modules/buyer/offers/view/buyer_offer_details_view.dart';
 import 'package:daalsetu/modules/admin_catalog/view/assign_vehicle_dialog.dart';
 import 'package:daalsetu/modules/admin_catalog/view/assign_driver_dialog.dart';
 import 'package:daalsetu/modules/admin_catalog/view/offer_interests_dialog.dart';
@@ -291,7 +292,7 @@ class AdminModules {
     // Web "Salesman" panel = sub admin users (role sub_admin), managed with the same rules as the web form.
     'salesman': AdminModuleConfig(
       key: 'salesman',
-      title: 'Sub Admins',
+      title: 'Salesman',
       icon: Icons.support_agent_outlined,
       listEndpoint: '/api/admin/sub-admin-accounts/',
       titleKeys: const ['name', 'mobile'],
@@ -539,7 +540,7 @@ class AdminModules {
       // Same rules as the web KYC page.
       customActions: [
         adminPostAction(
-          title: 'Approve',
+          title: 'Approve KYC',
           icon: Icons.verified_outlined,
           endpoint: (record) => '/api/kyc/${record['id']}/approve/',
           action: 'approve',
@@ -549,13 +550,13 @@ class AdminModules {
               'approved',
         ),
         adminPostAction(
-          title: 'Reject',
+          title: 'Reject KYC',
           icon: Icons.cancel_outlined,
           endpoint: (record) => '/api/kyc/${record['id']}/reject/',
           action: 'reject',
           confirmMessage: 'The user will see this reason and can submit again.',
           noteKey: 'rejection_reason',
-          noteLabel: 'Rejection reason',
+          noteLabel: 'Rejection Reason',
           noteRequired: true,
           destructive: true,
           isVisible: (record) => const [
@@ -1018,11 +1019,21 @@ class AdminModules {
           optionsLoader: loadParentCategoryOptions,
         ),
         AdminFieldConfig(
-          'is_active',
+          'status',
           'Status',
-          options: ['true', 'false'],
-          optionLabels: {'true': 'Active', 'false': 'Inactive'},
-          defaultValue: 'true',
+          options: ['pending', 'active', 'inactive'],
+          optionLabels: {
+            'pending': 'Pending',
+            'active': 'Active',
+            'inactive': 'Inactive',
+          },
+          defaultValue: 'pending',
+        ),
+        AdminFieldConfig(
+          'mapped_brands',
+          'Mapped Brands',
+          multiSelect: true,
+          optionsLoader: loadBrandOptions,
         ),
         AdminFieldConfig('image', 'Image', isFile: true),
       ],
@@ -1159,13 +1170,18 @@ class AdminModules {
         const AdminDetailSection(
           title: 'Brand Information',
           fields: [
+            AdminDetailField(
+              'brand_image|logo|image|image_url|brand_logo|thumbnail',
+              'Brand Logo',
+              type: AdminDetailFieldType.image,
+            ),
             AdminDetailField('brand_name', 'Brand Name'),
             AdminDetailField(
               'status',
               'Status',
               type: AdminDetailFieldType.status,
             ),
-            AdminDetailField('product_count', 'Offers Using It'),
+            AdminDetailField('product_count|products_count|products', 'Products'),
             AdminDetailField('created_by_name', 'Created By'),
             AdminDetailField(
               'created_at',
@@ -1255,6 +1271,8 @@ class AdminModules {
       subtitleKeys: const [
         'phone_number',
         'license_number',
+        'experience',
+        'assigned_vehicle.vehicle_number',
         'assignment_status_display',
         'status_display',
       ],
@@ -1384,9 +1402,9 @@ class AdminModules {
       ],
       customActions: [
         AdminCustomAction(
-          title: 'Assign Vehicle',
+          title: 'Assign',
           icon: Icons.local_shipping_outlined,
-          isVisible: (record) => record['assigned_vehicle'] == null,
+          isVisible: (record) => true,
           onPressed: (context, record) async {
             final result = await showModalBottomSheet<bool>(
               context: context,
@@ -1394,7 +1412,7 @@ class AdminModules {
               backgroundColor: Colors.transparent,
               builder: (_) => AssignVehicleDialog(
                 driverId: record['id'].toString(),
-                driverName: (record['driver_name'] ?? 'Driver').toString(),
+                driverName: (record['driver_name'] ?? record['name'] ?? 'Driver').toString(),
               ),
             );
             return result == true;
@@ -1787,10 +1805,10 @@ class AdminModules {
       subtitleKeys: const [
         'status',
         'buyer_name',
-        'category',
         'required_quantity',
+        'required_bag_count',
         'target_price',
-        'quotation_count',
+        'expiry_datetime',
       ],
       detailEndpoint: (id) => '/api/buyer-requirements/$id/',
       filterParameter: 'status',
@@ -1849,6 +1867,26 @@ class AdminModules {
         ),
       ],
       customActions: [
+        AdminCustomAction(
+          title: 'Chat / Details',
+          icon: Icons.chat_bubble_outline,
+          onPressed: (context, record) async {
+            final offerId = int.tryParse((record['id'] ?? '').toString()) ??
+                int.tryParse(RegExp(r'\d+$').firstMatch((record['rfq_id'] ?? '').toString())?.group(0) ?? '') ??
+                0;
+            if (offerId > 0) {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => BuyerOfferDetailsView(
+                    offerId: offerId,
+                    preferBuyerRequirement: true,
+                  ),
+                ),
+              );
+            }
+            return false;
+          },
+        ),
         adminPostAction(
           title: 'Close',
           icon: Icons.lock_outline,

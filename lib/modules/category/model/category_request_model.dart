@@ -2,6 +2,7 @@ class CategoryRequestModel {
   final int id;
   final String status;
   final List<String> categoryNames;
+  final List<int> categoryIds;
   final DateTime? requestedAt;
   final DateTime? reviewedAt;
   final String? requestNote;
@@ -12,6 +13,7 @@ class CategoryRequestModel {
     required this.id,
     required this.status,
     required this.categoryNames,
+    this.categoryIds = const [],
     this.requestedAt,
     this.reviewedAt,
     this.requestNote,
@@ -25,6 +27,10 @@ class CategoryRequestModel {
         .map((c) => (c is Map ? (c["category_name"] ?? c["name"] ?? "").toString() : c.toString()))
         .where((n) => n.trim().isNotEmpty)
         .toList();
+    final ids = catList
+        .map((c) => c is Map ? (int.tryParse((c["id"] ?? 0).toString()) ?? 0) : (int.tryParse(c.toString()) ?? 0))
+        .where((id) => id > 0)
+        .toList();
 
     String? reviewer;
     if (json["reviewed_by"] is Map) {
@@ -37,6 +43,7 @@ class CategoryRequestModel {
       id: json["id"] is int ? json["id"] : (int.tryParse(json["id"]?.toString() ?? "0") ?? 0),
       status: (json["status"] ?? "pending").toString(),
       categoryNames: names,
+      categoryIds: ids,
       requestedAt: json["requested_at"] != null
           ? DateTime.tryParse(json["requested_at"].toString())
           : (json["created_at"] != null ? DateTime.tryParse(json["created_at"].toString()) : null),

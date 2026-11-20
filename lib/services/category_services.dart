@@ -162,15 +162,37 @@ class CategoryService {
           }
         }
 
+        // Filter out orphaned requests whose parent categories were deleted from the system
+        final Set<int> existingCatIds = sysCats.map((c) => c.id).toSet();
+        final Set<String> existingCatNames = sysCats
+            .map((c) => c.categoryName.trim().toLowerCase())
+            .where((n) => n.isNotEmpty)
+            .toSet();
+
+        final List<CategoryRequestModel> validRequests = [];
+        for (var req in parsedRequests) {
+          // If no categories exist anywhere in the backend/system, all approval history is orphaned
+          if (sysCats.isEmpty) continue;
+
+          final hasMatchingId = req.categoryIds.isNotEmpty &&
+              req.categoryIds.any((id) => existingCatIds.contains(id));
+          final hasMatchingName = req.categoryNames.isNotEmpty &&
+              req.categoryNames.any((name) => existingCatNames.contains(name.trim().toLowerCase()));
+
+          if (hasMatchingId || hasMatchingName) {
+            validRequests.add(req);
+          }
+        }
+
         if (response is List) {
           final list = response
               .map((item) => CategoryModel.fromJson(Map<String, dynamic>.from(item)))
               .where((c) => c.categoryName.trim().isNotEmpty)
               .toList();
-          return BuyerCategoriesResult(buyerCategories: list, systemCategories: list, requests: parsedRequests);
+          return BuyerCategoriesResult(buyerCategories: list, systemCategories: list, requests: validRequests);
         }
 
-        return BuyerCategoriesResult(buyerCategories: buyerCats, systemCategories: sysCats, requests: parsedRequests);
+        return BuyerCategoriesResult(buyerCategories: buyerCats, systemCategories: sysCats, requests: validRequests);
       }
     } catch (e) {
       print("⚠️ Buyer categories API failed gracefully: $e");

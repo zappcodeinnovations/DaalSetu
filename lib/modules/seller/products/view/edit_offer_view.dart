@@ -77,11 +77,13 @@ class _EditOfferViewState extends State<EditOfferView> {
 
   Future<void> _pickDate(DateTime? current, ValueChanged<DateTime> onPicked) async {
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final initial = (current != null && !current.isBefore(today)) ? current : today;
     final picked = await showDatePicker(
       context: context,
-      initialDate: current != null && current.isAfter(now) ? current : now,
-      firstDate: DateTime(now.year, now.month, now.day),
-      lastDate: now.add(const Duration(days: 365)),
+      initialDate: initial,
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 365)),
     );
     if (picked != null) setState(() => onPicked(picked));
   }

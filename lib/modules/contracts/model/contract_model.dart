@@ -40,6 +40,9 @@ class ContractModel {
   final int? productId;
   final int? interestId;
   final String productBrand;
+  final String? transporterVisibleAt;
+  final String? readyForLoadingAt;
+  final bool? hasDeliveryChallan;
 
   ContractModel({
     required this.id,
@@ -72,6 +75,9 @@ class ContractModel {
     this.productId,
     this.interestId,
     this.productBrand = '',
+    this.transporterVisibleAt,
+    this.readyForLoadingAt,
+    this.hasDeliveryChallan,
   });
 
   factory ContractModel.fromJson(Map<String, dynamic> json) {
@@ -129,6 +135,12 @@ class ContractModel {
       productId: number('product_id') ?? number('product') ?? number('offer_id') ?? number('offer'),
       interestId: number('interest_id') ?? number('interest'),
       productBrand: text('product_brand_name'),
+      transporterVisibleAt: text('transporter_visible_at').isNotEmpty ? text('transporter_visible_at') : null,
+      readyForLoadingAt: text('ready_for_loading_at').isNotEmpty ? text('ready_for_loading_at') : null,
+      hasDeliveryChallan: json['has_delivery_challan'] == true ||
+          json['delivery_challan_id'] != null ||
+          json['delivery_challan'] != null ||
+          text('delivery_challan_number').isNotEmpty,
     );
   }
 }

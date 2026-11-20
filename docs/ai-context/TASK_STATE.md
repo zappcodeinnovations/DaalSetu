@@ -1,8 +1,32 @@
 # Current Task State
 
 ## Current Task
-- **Goal**: Implement safe whole-card tap navigation across Buyer panel cards (`BuyerMyInterestsView`, `BuyerRequestManagementView`, `BuyerDashboardView`, `BuyerOrdersView`) without breaking any existing inner action buttons or modifying unrelated features.
-- **Status**:
+- **Goal**: Resolve Batch 18 tester bugs safely:
+  1. Admin Dashboard Analytics Charts Numbers, Percentages, and Axis Mismatch (Pipeline by Stage, Gross Trade Value & Deals, Commodity Mix 100%)
+  2. Calendar Date Picker Defaults to Tomorrow (20) Instead of Today (19) Across All Roles
+  3. Admin Mobile Buyer Requirements Details Screen Omits Quotation Details and Chat Action
+- **Status**: **100% Implemented & Verified**
+  - **Batch 18 Fixes Summary**:
+    1. **Bug 1 (Admin Dashboard Analytics Sync & Scaling)**:
+       - In `lib/modules/dashboard/controller/dashboard_controller.dart`, `fetchDashboard()` requests with `period: selectedGtvPeriod.value` (defaulting to '7D').
+       - In `lib/modules/dashboard/view/dashboard_page.dart`:
+         - `_buildAnalyticsGrid` synchronizes `pipelineValues` with live KPI `dealsInNegotiation` (3 deals, ~23% vs ~77% Deal Confirmed).
+         - `_buildDonutCard` implements Largest Remainder Method (Hare-Niemeyer), strictly guaranteeing rounded integer percentages sum to 100%.
+         - `_buildWebGtvDealsChart` dynamically scales to 0–0.07 with 0.01 interval for 7D view, formats Deals axis without repeating zeros, and synchronizes plot rectangles with identical axis reservations on BarChart and LineChart so GTV peak aligns directly over 17 Nov.
+    2. **Bug 2 (Universal Date Picker Today Default)**:
+       - In `lib/modules/products/view/add_product.dart`, replaced hardcoded `initialDate: DateTime.now().add(const Duration(days: 1))` with `today` (`DateTime(now.year, now.month, now.day)`).
+       - In `buyer_today_offers_view.dart` and `edit_offer_view.dart`, ensured `today` is clamped safely with `firstDate`.
+    3. **Bug 3 (Admin Buyer Requirements Details Quotations & Chat)**:
+       - In `lib/modules/admin_catalog/view/admin_record_detail_screen.dart`, added `_buildBuyerRequirementQuotations` card rendering each submitted quotation with Seller Name & Branch (e.g., Agrofarm / AMR158M), Price (`₹50.00/QTL`), Quantity (`50.000 QTL`), Status Badge (e.g., Accepted), and `[Chat / Details]` action button.
+       - In `lib/modules/admin_catalog/config/admin_module_config.dart`, added `Chat / Details` `AdminCustomAction` in `customActions` navigating to `BuyerOfferDetailsView(offerId: numericId, preferBuyerRequirement: true)`.
+    4. **Automated Verification**:
+       - Created `test/batch_18_fixes_test.dart` (5/5 tests PASSED).
+       - Full regression test suite passed (31/31 tests PASSED across Batches 13–18).
+       - `flutter analyze` verified on modified files with 0 errors.
+
+---
+
+## Previous Completed Batches
   - **Remote Branch Integration & Merge Status**: **100% Merged & Verified (Branch: rohit_app_UI, Commits: 42efe0b, ab81dfb)**
     1. Committed all uncommitted fixes from Batches 1 through 12 under commit `42efe0b` (`feat: ui and functional bug fixes for admin, buyer, seller and dashboard`).
     2. Created safety backup branch `backup/our_fixes_42efe0b`.

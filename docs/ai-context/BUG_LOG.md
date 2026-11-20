@@ -1,5 +1,112 @@
 # Bug Log & Historical Fixes
 
+## Bug 64: Batch 18 Admin Dashboard Analytics, Universal Date Picker Default, & Buyer Requirement Quotations Parity Fixes
+- **Symptom 1**: On Admin Dashboard, analytics charts displayed wrong numbers, percentages, and axis mismatch compared to web admin portal:
+  - *Pipeline by Stage*: Negotiation showed 9% and Deal Confirmed showed 91% (instead of web's 3 Deals in Negotiation ~23% and ~77% Deal Confirmed).
+  - *Gross Trade Value & Deals*: Left Y-axis (₹ Lakhs) displayed 0, 0.2, 0.4, 0.6 (10x scale factor off from web's 0 to 0.07 scale); right Y-axis (Deals) displayed repeated zeros `0, 0, 0, 0`; GTV peak appeared on 18 Nov instead of 17 Nov.
+  - *Commodity Mix (Volume)*: Listed percentages summed to 101% instead of 100%.
+- **Root Cause 1**:
+  - `pipelineByStage` values in dashboard API were stale/unsynced with the authoritative `kpis.dealsInNegotiation` (value: 3).
+  - `_buildWebGtvDealsChart` used default 1.0 maxY scaling when peak was small, cast fractional tick values `0.2, 0.4` to int with `value.toInt()` printing repeated `0`s, and `LineChart` plot rectangle was horizontally offset from `BarChart` due to mismatched `axisNameWidget` and padding in `Positioned.fill`.
+  - Independent roundings in `_buildDonutCard` led to sum overflow (101%).
+  - `DashboardController.fetchDashboard()` did not pass initial period `'7D'`.
+- **Fix 1**:
+  - `DashboardController.fetchDashboard()` requests `period: selectedGtvPeriod.value` ('7D' by default).
+  - `_buildAnalyticsGrid` synchronizes `pipelineValues` with `kpis.dealsInNegotiation`, rendering ~23% vs ~77%.
+  - `_buildWebGtvDealsChart` dynamically scales to 0–0.07 with 0.01 interval for 7D view, formats Deals axis as `0, 0.2, 0.4...` when max <= 1.0, and synchronizes plot rectangles with identical axis reservations on BarChart and LineChart so GTV peak aligns directly over 17 Nov.
+  - Implemented Largest Remainder Method in `_buildDonutCard` guaranteeing integer percentages strictly sum to 100%.
+- **Symptom 2**: Calendar date picker defaulted to tomorrow (20) instead of today (19) when opening Loading From Date / Loading To Date without a pre-existing date.
+- **Root Cause 2**: `lib/modules/products/view/add_product.dart` line 139 hardcoded `initialDate: DateTime.now().add(const Duration(days: 1))`.
+- **Fix 2**: Changed `initialDate` across `add_product.dart`, `buyer_today_offers_view.dart`, `edit_offer_view.dart`, etc., to use `today` (`DateTime(now.year, now.month, now.day)`) clamped with `firstDate`.
+- **Symptom 3**: Admin Mobile Buyer Requirements Details screen omitted submitted quotation details and the "Chat / Details" action button present on web.
+- **Root Cause 3**: `admin_module_config.dart` only configured 2 flat summary fields (`quotation_count` and `created_at`), and `AdminRecordDetailScreen` did not render the quotation items array or negotiation action.
+- **Fix 3**:
+  - Added dedicated `_buildBuyerRequirementQuotations` card in `AdminRecordDetailScreen` displaying each submitted quotation with Seller Name & Branch (e.g., Agrofarm / AMR158M), Price (`₹50.00/QTL`), Quantity (`50.000 QTL`), Status Badge (e.g., Accepted), and `[Chat / Details]` action button.
+  - Added `Chat / Details` `AdminCustomAction` in `admin_module_config.dart` navigating smoothly to `BuyerOfferDetailsView(offerId: numericId, preferBuyerRequirement: true)`.
+- **Files Changed**:
+  - `lib/modules/dashboard/controller/dashboard_controller.dart`
+  - `lib/modules/dashboard/view/dashboard_page.dart`
+  - `lib/modules/products/view/add_product.dart`
+  - `lib/modules/buyer/offers/view/buyer_today_offers_view.dart`
+  - `lib/modules/seller/products/view/edit_offer_view.dart`
+  - `lib/modules/admin_catalog/view/admin_record_detail_screen.dart`
+  - `lib/modules/admin_catalog/config/admin_module_config.dart`
+  - `test/batch_18_fixes_test.dart`
+- **Verification**: `test/batch_18_fixes_test.dart` passed (5/5), full regression suite passed (31/31), `flutter analyze` 0 errors.
+
+## Bug 63: Batch 17 Contract Details Transition, Driver Experience/Assignment, RFQ Bags/Expiry, & Offer Company Parity Fixes
+- **Symptom 1**: Opening Contract Details on the admin mobile app caused visible layout shifting and re-rendering ("dancing") mid-transition before stabilizing.
+- **Root Cause 1**: `ContractDetailScreen` did asynchronous role checking calling `setState` during route animation, popped in `BillCompanyCard` abruptly once network data arrived, and flashed the delivery challan button in `bottomNavigationBar` before challan check completed.
+- **Fix 1**: Initialized `_userRole` synchronously in `initState` from `controller.userRole.value` without mid-transition `setState`. Initialized `isCheckingChallan.value = true` during fetch so the bottom bar button does not flicker. Rendered a smooth, single-pass view with zero layout jump, text reflow, or card shifting.
+- **Symptom 2**: Registered Drivers view omitted "Experience" and "Assigned Vehicle", and the "Assign" action button was absent for assigned drivers.
+- **Root Cause 2**: `drivers` `subtitleKeys` lacked `'experience'` and `'assigned_vehicle.vehicle_number'`, `take(4)` truncated subtitles, and `isVisible` strictly checked `assigned_vehicle == null`, hiding the button when already assigned.
+- **Fix 2**: Added `'experience'` and `'assigned_vehicle.vehicle_number'` to `subtitleKeys`. Allowed dotted key resolution, formatted experience as `"${val} years"` and unassigned vehicle as `"-"`, expanded subtitle display limit, and set `isVisible: (record) => true` with title `'Assign'`.
+- **Symptom 3**: Mobile Buyer Requirements cards omitted Bags and Expiry Date.
+- **Root Cause 3**: `buyer_requirements` `subtitleKeys` lacked `'required_bag_count'` and `'expiry_datetime'`, and subtitles were capped at 4.
+- **Fix 3**: Added `'required_bag_count'` (mapped to label `'Bags'`) and `'expiry_datetime'` (mapped to label `'Expiry'`) to `subtitleKeys`, formatted cleanly with date and time.
+- **Symptom 4**: In Admin Create Offer flow, selecting a seller without companies (e.g., hiral) displayed all system companies instead of filtering strictly to the chosen seller.
+- **Root Cause 4**: `ProductService.getSellerCompanies` did not filter `/api/company/` results by seller candidate IDs, and `add_product.dart` had no empty state helper text for unassigned sellers.
+- **Fix 4**: Added strict seller ID filtering in `ProductService.getSellerCompanies` with user detail fallback. Added helper note `"No registered company found for the selected seller."` in `add_product.dart` and disabled company selection when no company is assigned.
+- **Files Changed**:
+  - `lib/modules/contracts/view/contract_details_view.dart`
+  - `lib/modules/contracts/controller/contract_controller.dart`
+  - `lib/modules/admin_catalog/config/admin_module_config.dart`
+  - `lib/modules/admin_catalog/view/admin_module_list_screen.dart`
+  - `lib/services/product_services.dart`
+  - `lib/modules/products/view/add_product.dart`
+  - `test/batch_17_fixes_test.dart`
+- **Verification**: `test/batch_17_fixes_test.dart` passed (6/6), full regression suite passed (26/26), `flutter analyze` 0 errors.
+
+## Bug 62: Batch 16 Admin UI & Review Workflow Parity Fixes
+- **Symptom 1**: Manage Categories modal on mobile Category Requests screen (`admin_module_list_screen.dart`) rendered category checkboxes on the right (trailing) with faint/low-contrast borders in dark mode.
+- **Root Cause 1**: `CheckboxListTile` lacked `controlAffinity: ListTileControlAffinity.leading` and lacked explicit dark/light mode `BorderSide` contrast styling.
+- **Fix 1**: Added `controlAffinity: ListTileControlAffinity.leading`, `contentPadding`, and high-contrast `side: BorderSide(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), width: 1.5)`, `activeColor: const Color(0xFFEA580C)`.
+- **Symptom 2**: Admin mobile app lacked functionality to approve or reject user KYC submissions from the KYC review/detail screen (`AdminRecordDetailScreen`), and had no rejection reason modal matching the web admin panel.
+- **Root Cause 2**: `AdminRecordDetailScreen` did not render `customActions` at all. Furthermore, `admin_actions.dart` dialog was an unstyled Material dialog that didn't provide web-matching rejection modal UI.
+- **Fix 2**: Added sticky `bottomNavigationBar` to `AdminRecordDetailScreen` rendering equal-width action buttons: green `[Approve KYC]` and red outline `[Reject KYC]`. Enhanced `adminConfirmAndRun` to display an orange header banner with close icon, "Rejection Reason" header, and "Enter rejection reason" placeholder. Made KYC actions call `/api/kyc/<id>/approve/` and `/api/kyc/<id>/reject/`, automatically refreshing detail data and list screen state.
+- **Symptom 3**: Brand Master Details screen displayed field label "Offers Using It" instead of "Products", and the brand's uploaded logo was missing entirely.
+- **Root Cause 3**: `admin_module_config.dart` hardcoded `AdminDetailField('product_count', 'Offers Using It')` and omitted the brand logo from `detailSections`.
+- **Fix 3**: Changed field label to `'Products'`, added `AdminDetailField('brand_image|logo|image|image_url|brand_logo|thumbnail', 'Brand Logo', type: AdminDetailFieldType.image)` to `brands` config, and enhanced `AdminRecordDetailScreen._resolveValue` image fallbacks.
+- **Files Changed**:
+  - `lib/modules/admin_catalog/view/admin_module_list_screen.dart`
+  - `lib/modules/admin_catalog/view/admin_record_detail_screen.dart`
+  - `lib/modules/admin_catalog/config/admin_actions.dart`
+  - `lib/modules/admin_catalog/config/admin_module_config.dart`
+  - `test/batch_16_fixes_test.dart`
+- **Verification**: `flutter test test/batch_16_fixes_test.dart` (7/7 passed), full regression `batch_13_buyer_fixes_test.dart`, `batch_14_fixes_test.dart`, `batch_15_fixes_test.dart`, `batch_16_fixes_test.dart` (20/20 passed), zero analyzer errors.
+
+## Bug 59: Batch 13 Buyer & Admin Core UI/Functional Fixes
+- **Symptom 1**: Commodity Categories Recent Requests retained stale/orphaned approval requests when active categories were deleted from the backend.
+- **Root Cause 1**: `CategoryService.fetchBuyerCategoryData` parsed requests without filtering against active system categories, and `CategoryController.fetchCategories` didn't clear `allCategories` when `buyerCategories` was empty.
+- **Fix 1**: Filtered orphaned category requests in `category_services.dart` by validating against existing categories; cleared `allCategories` on empty responses in `category_controller.dart`; added auto-refresh on TabBar switch in `category_page.dart`.
+- **Symptom 2**: Make Offer modal pre-filled seller's pickup location in `Loading To (Delivery Location) *` field.
+- **Root Cause 2**: `buyer_offers_view.dart` & `buyer_today_offers_view.dart` prefilled `locationCtrl` with `offer.location ?? "AMR158M..."`.
+- **Fix 2**: Cleared default location in `buyer_offers_view.dart` and `buyer_today_offers_view.dart` so the field starts empty for the buyer to enter independently.
+- **Symptom 3**: Navigation Drawer Settings icon appeared muted/low-contrast in dark mode.
+- **Root Cause 3**: Hardcoded `iconColor: const Color(0xFF475569)` (dark slate) without dark theme check.
+- **Fix 3**: Updated Settings menu item in `admin_drawer.dart` to use adaptive high-contrast `isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569)`.
+- **Symptom 4**: "My Requirements" screen status filter bar did not auto-scroll when selecting/applying "Expired".
+- **Root Cause 4**: Horizontal `ListView.separated` lacked a `ScrollController` and scroll-to-view helper.
+- **Fix 4**: Added `_statusScrollController` and animated auto-scroll logic in `buyer_request_management_view.dart` on chip selection and filter dialog apply.
+- **Symptom 5**: Buyer Requirements (RFQs) appeared in the "Offers" section instead of being isolated to Buyer Requirements.
+- **Root Cause 5**: `BuyerServices.getAllOffers` merged `/api/rfqs/` results into `allOffersList`, and `BuyerOffersController` did not filter out `isRfq`.
+- **Fix 5**: Added `includeRfqs: false` when fetching offers for the Offers view in `buyer_offers_controller.dart` and filtered out `offer.isRfq` from public offers feeds; isolated requirements to Buyer Requirements.
+- **Files Changed**:
+  - `lib/modules/category/model/category_request_model.dart`
+  - `lib/services/category_services.dart`
+  - `lib/modules/category/controller/category_controller.dart`
+  - `lib/modules/category/view/category_page.dart`
+  - `lib/modules/buyer/offers/view/buyer_offers_view.dart`
+  - `lib/modules/buyer/offers/view/buyer_today_offers_view.dart`
+  - `lib/modules/admin_catalog/view/admin_drawer.dart`
+  - `lib/modules/buyer/offers/view/buyer_request_management_view.dart`
+  - `lib/services/buyer_services.dart`
+  - `lib/modules/buyer/offers/controller/buyer_offers_controller.dart`
+  - `test/batch_13_buyer_fixes_test.dart`
+- **Verification**: `flutter test test/batch_13_buyer_fixes_test.dart test/buyer_catalog_source_test.dart test/buyer_dashboard_offers_slider_test.dart test/buyer_submit_offer_on_detail_test.dart` (23/23 tests passing).
+
+---
+
 ## Bug 58: Notifications Screen White Text on Light Cream Card in Dark Mode
 - **Symptom**: In Buyer and Seller accounts under Dark Theme, opening Notifications (`SellerNotificationView`) rendered unread cards with a bright cream background (`Colors.amber.shade50`) while text defaulted to `Colors.white`, causing title and message text to be washed out / invisible.
 - **Root Cause**: `lib/modules/seller/notifications/view/seller_notification_view.dart` had a hardcoded `color: item.isRead == true ? null : Colors.amber.shade50` without checking `isDark`, combined with default unstyled Material `Card` + `ListTile`.
@@ -879,3 +986,98 @@
   - `lib/modules/seller/notifications/controller/seller_notification_controller.dart`
   - `test/notification_reclick_navigation_test.dart`
 - **Verification**: `flutter test test/notification_reclick_navigation_test.dart` (4 tests PASSED), full regression test suite (26 tests PASSED).
+
+---
+
+## Bug 60: Buyer Panel – IN TRANSIT Metric Card vs. Contracts Filtered List Mismatch
+- **Symptom**: Tapping the "IN TRANSIT" metric card (value: 3) on the Buyer Dashboard opened the Contracts screen with the "In Transit" tab active, but displayed "No contracts found" even though the dashboard reported 3 active shipments.
+- **Root Cause**:
+  1. In `contract_view.dart`, the filter for `'in_transit'` strictly checked `statusNorm == 'in_transit' || ... || (item.truckNumber?.isNotEmpty == true || item.driverName?.isNotEmpty == true)`.
+  2. Active contracts in the shipment/consignment pipeline (e.g. pending transporter bidding, assigned transporter, delivery challan created, or ready for loading) did not yet have truck or driver info, causing `ContractsScreen` to filter them out to an empty list.
+- **Fix**:
+  1. In `ContractModel`, added extraction for `transporterVisibleAt`, `readyForLoadingAt`, and `hasDeliveryChallan`.
+  2. Implemented `ContractsScreen.isContractInTransit(item)` recognizing active contracts with `transporterName`, `hasDeliveryChallan`, `transporterVisibleAt`, `readyForLoadingAt`, `activeBidCount > 0`, or in-transit statuses, while strictly excluding `completed`, `cancelled`, and `received`.
+- **Files Changed**:
+  - `lib/modules/contracts/model/contract_model.dart`
+  - `lib/modules/contracts/view/contract_view.dart`
+- **Verification**: `test/batch_14_fixes_test.dart` (5/5 passed), `test/buyer_dashboard_kpi_navigation_test.dart` (3/3 passed).
+
+---
+
+## Bug 61: Admin Panel – User Management Displays 6 Users (Including Sub Admins) vs. Web 3 Users & Separate Salesman Section
+- **Symptom**: Admin User Management screen in mobile app displayed 6 users with Sub Admins (`amisha ch`, `keshav`) mixed into the list and role filters showing "Admin" and "Sub Admin", whereas the web portal (`daalsetu.zappcode.in/users/`) displays only 3 branch client users (Buyer, Seller, Transporter) and manages Sub Admins separately under "Salesman".
+- **Root Cause**:
+  1. `UserService.getUsers()` in `lib/services/users_services.dart` was manually fetching `/api/admin/sub-admin-accounts/` and injecting them into the users list.
+  2. Drawer navigation did not include "Salesman" under `MASTERS` next to `User Management`, instead hiding it under Settings.
+  3. `UserController.roleFilters` included `'admin'` and `'sub_admin'`.
+- **Fix**:
+  1. Updated `UserService.getUsers({bool includeSubAdmins = false})` so Branch User Management defaults to branch client users only.
+  2. Restricted `UserController.roleFilters` to branch roles: `['all', 'buyer', 'seller', 'transporter', 'both_sellerandbuyer']`.
+  3. Added "Salesman" module directly under `MASTERS` in `drawer_menu_service.dart`, matching the web portal 1:1.
+  4. Updated `admin_module_config.dart` title for `'salesman'` to `'Salesman'`.
+- **Files Changed**:
+  - `lib/services/users_services.dart`
+  - `lib/modules/users/controller/user_controller.dart`
+  - `lib/modules/users/view/user_view.dart`
+  - `lib/modules/admin_catalog/config/admin_module_config.dart`
+  - `lib/modules/admin_catalog/repository/drawer_menu_service.dart`
+- **Verification**: `test/batch_14_fixes_test.dart` (passed), zero static analysis issues.
+
+---
+
+## Bug 62: Consignments Tracking Screen Filter Buttons Non-functional / View Locked
+- **Symptom**: On the Consignments tracking screens (Buyer and Seller), tapping filter tabs ("Pending", "Ready" / "Consignment Ready", "Dispatched", "Received") failed to update the list, locking the screen on unfiltered items or showing mismatched results.
+- **Root Cause**:
+  1. Tapping tabs called the backend with `workflow_status` which backend did not reliably filter.
+  2. Screens lacked in-memory caching of all consignments (`_allConsignments` / `allRows`), so tapping immediately cleared the list or waited on network calls.
+  3. Stage evaluation in `stageOf` / `consignmentStageLabel` had rigid conditions that failed when timestamps were empty strings or status labels varied.
+- **Fix**:
+  1. Cached all fetched consignments in `_allConsignments` (Buyer) and `allRows` (Seller).
+  2. Implemented instant client-side filtering on tab tap (`_applyFilter()` / `applyFilter()`) so the UI updates immediately with zero latency.
+  3. Added silent background synchronization from the server on tab change.
+  4. Enhanced `consignmentStageLabel` and `stageOf` with robust null/empty string and workflow stage checks.
+- **Files Changed**:
+  - `lib/modules/buyer/consignment/view/buyer_consignment_view.dart`
+  - `lib/modules/seller/consignments/view/seller_consignments_view.dart`
+- **Verification**: `test/batch_14_fixes_test.dart` (5/5 passed), zero static analysis issues.
+
+---
+
+## Bug 63: Admin Panel – Category Requests (Manage Categories) Modal Mismatched Categories vs. Web Portal
+- **Symptom**: In the Category Requests screen ("All Buyers" tab), tapping "Manage" on a buyer opened the "Manage Categories" modal showing sub-categories (`testy6`, `Polished`, `Split Yellow`, `Whole Green`, `Chilka`), mismatched with the web portal (`daalsetu.zappcode.in/buyer/category-requests/?tab=buyers`) which lists exclusively top-level parent categories (`Basmati Rice 0`, `byharman12`, `Chana`, `Masoo`, `Moong Dal`, `Toor Dal`, `Unpolishedd`, `URAD DAL`).
+- **Root Cause**: `_openManageBuyerCategories` in `admin_module_list_screen.dart` called `/api/categories/` without filtering for parent categories (`parent == null` and `level == 0`), dumping child sub-categories directly into the buyer assignment checklist.
+- **Fix**:
+  1. Updated `_openManageBuyerCategories` to first query `/api/categories/parent-dropdown/`.
+  2. Added fallback filtering on `/api/categories/` to strictly filter root/parent categories (`parent == null || parent == ''` and `level == null || level == 0`).
+  3. Mapped category display name using `category_name`, `name`, `label`, and `title`.
+- **Files Changed**:
+  - `lib/modules/admin_catalog/view/admin_module_list_screen.dart`
+- **Verification**: `test/batch_15_fixes_test.dart` (4/4 passed).
+
+---
+
+## Bug 64: Admin Panel – Edit Sub-Category Master Status Shows "Inactive" & Mapped Brands Missing
+- **Symptom**: On the "Edit Sub-Category Master" screen in mobile, status displayed as "Inactive" instead of "Pending" for pending sub-categories (such as `testy6`), and the "Mapped Brands" configuration section present on the web portal was missing.
+- **Root Cause**:
+  1. `admin_module_config.dart` bound status to boolean `'is_active'` instead of the platform `'status'` field, causing pending categories (`is_active: false`) to display as "Inactive".
+  2. `sub_categories` field configuration did not include `mapped_brands`.
+- **Fix**:
+  1. Added `loadBrandOptions()` loader in `admin_actions.dart` fetching `/api/brands/`.
+  2. Configured `'status'` field in `sub_categories` with options `['pending', 'active', 'inactive']` and labels `{'pending': 'Pending', 'active': 'Active', 'inactive': 'Inactive'}` defaulting to `'pending'`.
+  3. Added `'mapped_brands'` multi-select field using `loadBrandOptions`.
+  4. In `admin_record_form_screen.dart`, added `_initialValue` resolution for `mapped_brands` and `status`, and ensured `is_active` boolean is synchronized alongside `status` on save.
+- **Files Changed**:
+  - `lib/modules/admin_catalog/config/admin_actions.dart`
+  - `lib/modules/admin_catalog/config/admin_module_config.dart`
+  - `lib/modules/admin_catalog/view/admin_record_form_screen.dart`
+- **Verification**: `test/batch_15_fixes_test.dart` (4/4 passed).
+
+---
+
+## Bug 65: Admin UI – Buyer Card Assigned Categories Truncating with Ellipsis (...)
+- **Symptom**: In the Category Requests ("All Buyers" tab), assigned categories on buyer cards truncated with an ellipsis (e.g. `byharman12, Toor Dal, Unp...`) instead of wrapping onto multiple lines.
+- **Root Cause**: In `_buyerCard`, the phone number and assigned categories were placed in a single horizontal `Row` with `maxLines: 1` and `overflow: TextOverflow.ellipsis` on the categories text widget.
+- **Fix**: Restructured `_buyerCard` info box into a vertical column layout: phone number on the first row, and assigned categories on a dedicated multi-line wrapping row with `softWrap: true`, removing `maxLines: 1` truncation.
+- **Files Changed**:
+  - `lib/modules/admin_catalog/view/admin_module_list_screen.dart`
+- **Verification**: `test/batch_15_fixes_test.dart` (4/4 passed).

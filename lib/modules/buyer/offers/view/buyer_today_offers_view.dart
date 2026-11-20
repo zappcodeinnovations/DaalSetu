@@ -631,11 +631,8 @@ class BuyerTodayOffersView extends StatelessWidget {
     final initialPrice = rawPriceCandidate.replaceAll('₹', '').replaceAll(RegExp(r'[^\d.]'), '').trim();
     final priceCtrl = TextEditingController(text: initialPrice);
 
-    // 3. Prefill delivery destination matching web portal
-    final defaultLocation = (offer.location != null && offer.location!.isNotEmpty)
-        ? offer.location!
-        : "AMR158M, Amalner, Maharashtra, India";
-    final locationCtrl = TextEditingController(text: defaultLocation);
+    // 3. Clear seller's loading location from prefilling delivery destination so buyer enters it independently
+    final locationCtrl = TextEditingController();
     final remarkCtrl = TextEditingController();
 
     DateTime? selectedDeliveryDate;
@@ -756,11 +753,16 @@ class BuyerTodayOffersView extends StatelessWidget {
                     const SizedBox(height: 6),
                     InkWell(
                       onTap: () async {
+                        final now = DateTime.now();
+                        final today = DateTime(now.year, now.month, now.day);
+                        final initial = (selectedDeliveryDate != null && !selectedDeliveryDate!.isBefore(today))
+                            ? selectedDeliveryDate!
+                            : today;
                         final picked = await showDatePicker(
                           context: dialogContext,
-                          initialDate: selectedDeliveryDate ?? DateTime.now(),
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime.now().add(const Duration(days: 365)),
+                          initialDate: initial,
+                          firstDate: today,
+                          lastDate: today.add(const Duration(days: 365)),
                         );
                         if (picked != null) {
                           setDialogState(() {
