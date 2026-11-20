@@ -554,17 +554,15 @@ class AdminModules {
       // Same rules as the web KYC page.
       customActions: [
         adminPostAction(
-          title: 'Approve KYC',
+          title: 'Approve',
           icon: Icons.verified_outlined,
           endpoint: (record) => '/api/kyc/${record['id']}/approve/',
           action: 'approve',
           confirmMessage: "Approve this user's KYC documents?",
-          isVisible: (record) =>
-              (record['kyc_status'] ?? '').toString().toLowerCase() !=
-              'approved',
+          // Like the web KYC Review page, Approve and Reject are there whatever the status is.
         ),
         adminPostAction(
-          title: 'Reject KYC',
+          title: 'Reject',
           icon: Icons.cancel_outlined,
           endpoint: (record) => '/api/kyc/${record['id']}/reject/',
           action: 'reject',
@@ -573,10 +571,6 @@ class AdminModules {
           noteLabel: 'Rejection Reason',
           noteRequired: true,
           destructive: true,
-          isVisible: (record) => const [
-            'pending',
-            'rejected',
-          ].contains((record['kyc_status'] ?? '').toString().toLowerCase()),
         ),
       ],
     ),

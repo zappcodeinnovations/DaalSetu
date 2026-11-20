@@ -213,7 +213,10 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
 
   Widget? _buildBottomActionBar(ThemeData theme, bool isDark) {
     if (widget.config.customActions.isEmpty) return null;
-    final currentData = _currentRecord?.data ?? widget.record.data;
+    final currentData = {
+      ...widget.record.data,
+      ...?_currentRecord?.data,
+    };
     final visibleActions = widget.config.customActions
         .where((action) => action.isVisible?.call(currentData) ?? true)
         .toList();
@@ -259,65 +262,11 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
     AdminCustomAction action,
     Map<String, dynamic> currentData,
   ) {
-    final titleLower = action.title.toLowerCase();
-    final isReject = titleLower.contains('reject');
-    final isApprove = titleLower.contains('approve');
-
-    if (isReject) {
-      return OutlinedButton.icon(
-        onPressed: () async {
-          final success = await action.onPressed(context, currentData);
-          if (success && mounted) {
-            setState(() {
-              _loadDetail();
-            });
-          }
-        },
-        icon: Icon(action.icon, size: 18, color: const Color(0xFFDC2626)),
-        label: Text(
-          action.title,
-          style: const TextStyle(
-            color: Color(0xFFDC2626),
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-        ),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: const Color(0xFFDC2626),
-          side: const BorderSide(color: Color(0xFFDC2626), width: 1.5),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
-    }
-
-    if (isApprove) {
-      return ElevatedButton.icon(
-        onPressed: () async {
-          final success = await action.onPressed(context, currentData);
-          if (success && mounted) {
-            setState(() {
-              _loadDetail();
-            });
-          }
-        },
-        icon: Icon(action.icon, size: 18, color: Colors.white),
-        label: Text(
-          action.title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF16A34A),
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
+    Color colorOf(String title) {
+      final lower = title.toLowerCase();
+      if (lower.contains('reject') || lower.contains('delete') || lower.contains('cancel')) return const Color(0xFFDC2626);
+      if (lower.contains('approve') || lower.contains('received') || lower.contains('deliver')) return const Color(0xFF059669);
+      return Theme.of(context).colorScheme.primary;
     }
 
     return ElevatedButton.icon(
@@ -332,14 +281,20 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
       icon: Icon(action.icon, size: 18),
       label: Text(
         action.title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
       ),
       style: ElevatedButton.styleFrom(
+        backgroundColor: colorOf(action.title),
+        foregroundColor: Colors.white,
+        elevation: 0,
         padding: const EdgeInsets.symmetric(vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
+
 
   Widget _buildSkeleton() {
     return ListView.builder(

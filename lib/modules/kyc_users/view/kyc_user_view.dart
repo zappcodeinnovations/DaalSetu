@@ -510,7 +510,6 @@ class KycUsersScreen extends StatelessWidget {
   Widget _buildUserCard(BuildContext context, KycUserModel user) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isPending = user.kycStatus.toLowerCase() == "pending";
     final isApproved = user.kycStatus.toLowerCase() == "approved";
     final isRejected = user.kycStatus.toLowerCase() == "rejected";
 
@@ -791,14 +790,12 @@ class KycUsersScreen extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(child: _buildActionButton(IconlyLight.show, "Review", colorTotal, () => _showViewDialog(context, user))),
-                if (!isApproved) ...[
-                  const SizedBox(width: 6),
-                  Expanded(child: _buildActionButton(IconlyLight.tick_square, "Approve", colorApproved, () => _confirmApprove(user))),
-                ],
-                if (isPending || isRejected) ...[
-                  const SizedBox(width: 6),
-                  Expanded(child: _buildActionButton(IconlyLight.close_square, "Reject", colorRejected, () => _showRejectDialog(context, user.id))),
-                ],
+                // Like the web KYC Review page: Approve and Reject stay available whatever the status is
+                // (an approved user can be rejected, a rejected one approved), for admins and super admins.
+                const SizedBox(width: 6),
+                Expanded(child: _buildActionButton(IconlyLight.tick_square, "Approve", colorApproved, () => _confirmApprove(user))),
+                const SizedBox(width: 6),
+                Expanded(child: _buildActionButton(IconlyLight.close_square, "Reject", colorRejected, () => _showRejectDialog(context, user.id))),
                 const SizedBox(width: 6),
                 Expanded(child: _buildActionButton(IconlyLight.time_circle, "History", colorRoleTransporter, () => _showHistoryDialog(context, user))),
               ],

@@ -124,16 +124,16 @@ void main() {
       await tester.pumpAndSettle();
 
       // Both action buttons exist at bottom of screen
-      expect(find.text('Approve KYC'), findsOneWidget);
-      expect(find.text('Reject KYC'), findsOneWidget);
+      expect(find.widgetWithText(ElevatedButton, 'Approve'), findsOneWidget);
+      expect(find.widgetWithText(ElevatedButton, 'Reject'), findsOneWidget);
 
-      // Tap Reject KYC
-      await tester.tap(find.text('Reject KYC'));
+      // Tap Reject button
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Reject'));
       await tester.pumpAndSettle();
 
       // Modal prompt appears requiring rejection reason
-      expect(find.text('Reject KYC'), findsWidgets);
-      expect(find.text('Enter rejection reason'), findsOneWidget);
+      expect(find.text('Reject'), findsWidgets);
+      expect(find.text('Rejection Reason'), findsOneWidget);
       expect(find.byType(TextField), findsOneWidget);
     });
   });
