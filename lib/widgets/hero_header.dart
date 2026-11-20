@@ -101,6 +101,13 @@ class HeroHeader extends StatelessWidget implements PreferredSizeWidget {
                   data: const IconThemeData(color: Colors.white),
                   child: leading!,
                 )
+              else if (Navigator.canPop(context))
+                // A pushed screen that did not bring its own back arrow still gets one (iPhone has no back key).
+                IconButton(
+                  tooltip: 'Back',
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                  onPressed: () => Navigator.of(context).maybePop(),
+                )
               else
                 const SizedBox(width: 40),
               if (titleWidget != null)

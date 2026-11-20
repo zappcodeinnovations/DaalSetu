@@ -7,6 +7,7 @@ import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 import 'widgets/realtime_notification_banner_overlay.dart';
 import 'widgets/page_auto_refresh.dart';
+import 'widgets/keyboard_dismiss_layer.dart';
 
 class AgroBrokerApp extends StatelessWidget {
   const AgroBrokerApp({super.key});
@@ -28,13 +29,14 @@ class AgroBrokerApp extends StatelessWidget {
 
         initialRoute: AppRoutes.splash,
         getPages: AppPages.routes,
-        navigatorObservers: [pageRefreshRouteObserver],
+        navigatorObservers: [pageRefreshRouteObserver, KeyboardRouteObserver()],
       builder: (context, child) {
         final theme = Theme.of(context);
         final isDark = theme.brightness == Brightness.dark;
         return Material(
           color: theme.scaffoldBackgroundColor,
-          child: Stack(
+          // Tap outside a field closes the keyboard; iPhone gets Previous / Next / Done above it.
+          child: KeyboardDismissLayer(child: Stack(
             children: [
               // The one place the system navigation bar is kept clear of every screen, dialog and sheet
               // (gesture bar or three buttons): the app ends above it. The status bar is handled by the
@@ -56,7 +58,7 @@ class AgroBrokerApp extends StatelessWidget {
               ),
               const RealtimeNotificationBannerOverlay(),
             ],
-          ),
+          )),
         );
       },
     ));

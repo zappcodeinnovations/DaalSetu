@@ -20,6 +20,8 @@ class FakeAdminCatalogRepository extends AdminCatalogRepository {
     required int pageSize,
     String search = '',
     String filter = '',
+    String dateFrom = '',
+    String dateTo = '',
   }) async {
     fetchCallCount++;
     lastSearchParam = search;

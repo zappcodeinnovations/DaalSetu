@@ -403,13 +403,6 @@ Future<bool> adminConfirmAndRun(
           ),
           actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           actions: [
-            OutlinedButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: const Text('Cancel'),
-            ),
             if (isReject)
               OutlinedButton(
                 style: OutlinedButton.styleFrom(
@@ -440,6 +433,13 @@ Future<bool> adminConfirmAndRun(
                 },
                 child: Text(confirmText),
               ),
+            OutlinedButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              style: OutlinedButton.styleFrom(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Cancel'),
+            ),
           ],
         ),
       );
