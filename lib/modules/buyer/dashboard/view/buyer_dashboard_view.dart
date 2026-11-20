@@ -2,6 +2,7 @@ import 'package:daalsetu/widgets/dashboard_period_bar.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:daalsetu/widgets/header_profile_avatar.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
@@ -235,6 +236,9 @@ class BuyerDashboardView extends StatelessWidget {
                   ),
               ],
             ),
+            const SizedBox(width: 4),
+            const HeaderProfileAvatar(),
+            const SizedBox(width: 8),
           ],
         ),
         title: "Hello, $name 👋",
