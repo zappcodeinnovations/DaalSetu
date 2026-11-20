@@ -106,7 +106,9 @@ class SellerConsignmentController extends GetxController {
     } catch (e) {
       if (requestId == _requestId && !silent) SellerUi.error(e);
     } finally {
-      if (requestId == _requestId && !silent) isLoading(false);
+      // The newest request ends the spinner even when it was a silent one: an older, non-silent request that it
+      // replaced can no longer do it, so the list would stay on the loader forever.
+      if (requestId == _requestId) isLoading(false);
     }
   }
 

@@ -252,29 +252,33 @@ class TransporterCategoryView extends StatelessWidget {
           ),
         ],
       ),
-      child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFF9800).withValues(alpha: 0.12),
-            shape: BoxShape.circle,
+      // Its own Material, so the tile's ink splash shows on top of the card's background.
+      child: Material(
+        type: MaterialType.transparency,
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF9800).withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(IconlyLight.category, color: Color(0xFFFF9800), size: 18),
           ),
-          child: const Icon(IconlyLight.category, color: Color(0xFFFF9800), size: 18),
-        ),
-        title: Text(
-          node.name,
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-            color: theme.textTheme.bodyLarge?.color,
+          title: Text(
+            node.name,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              color: theme.textTheme.bodyLarge?.color,
+            ),
           ),
+          subtitle: Text(
+            "${node.childrenCount} Subcategories",
+            style: GoogleFonts.inter(fontSize: 11, color: Colors.grey.shade600),
+          ),
+          children: node.children.map((child) => _buildChildNode(context, child)).toList(),
         ),
-        subtitle: Text(
-          "${node.childrenCount} Subcategories",
-          style: GoogleFonts.inter(fontSize: 11, color: Colors.grey.shade600),
-        ),
-        children: node.children.map((child) => _buildChildNode(context, child)).toList(),
       ),
     );
   }
