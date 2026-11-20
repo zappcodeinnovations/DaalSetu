@@ -986,14 +986,19 @@ class BuyerOfferModel {
         (json['company']['legal_name'] ?? json['company']['trade_name']),
     ]);
 
-    final isRfqItem =
-        json['source_type'] == 'rfq' ||
-        json.containsKey('rfq_id') ||
-        json.containsKey('required_quantity') ||
-        json.containsKey('target_price') ||
-        json.containsKey('visible_branches') ||
-        (json['status']?.toString().toLowerCase() == 'open' &&
-            json.containsKey('commodity'));
+    final isInterestItem = (parsedInterestId != null && parsedInterestId > 0) ||
+        json['source_type'] == 'interest' ||
+        json.containsKey('interest_id') ||
+        json.containsKey('my_interest');
+
+    final isRfqItem = !isInterestItem &&
+        (json['source_type'] == 'rfq' ||
+            json.containsKey('rfq_id') ||
+            json.containsKey('required_quantity') ||
+            json.containsKey('target_price') ||
+            json.containsKey('visible_branches') ||
+            (json['status']?.toString().toLowerCase() == 'open' &&
+                json.containsKey('commodity')));
 
     // Format display price e.g. "₹60.00/TON"
     String formattedPrice = '';

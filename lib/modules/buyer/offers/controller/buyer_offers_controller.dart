@@ -112,7 +112,7 @@ class BuyerOffersController extends GetxController {
           .where((offer) {
             // Buyer requirements (RFQs) belong to the Requirements screen only; the Offers screens
             // list seller offers and the buyer's own interests.
-            if (offerType != 'requirements' && offer.isRfq) {
+            if (offerType != 'requirements' && offerType != 'interests' && offer.isRfq) {
               return false;
             }
             // 1. When an offer's visibility is turned off from the panel or backend,
