@@ -49,6 +49,7 @@ class AdminFieldConfig {
     this.requiredOnEdit = true,
     this.derivedFrom,
     this.derivedKey,
+    this.defaultLoader,
   });
 
   final String key;
@@ -57,6 +58,10 @@ class AdminFieldConfig {
   /// entry [derivedKey]); never sent to the server.
   final String? derivedFrom;
   final String? derivedKey;
+
+  /// A default read from the server when a NEW record is started (e.g. the user's own branch code); it only
+  /// fills the field if the user has not typed anything yet.
+  final Future<String?> Function()? defaultLoader;
 
   /// False when the field may stay empty on edit (the server keeps its value),
   /// e.g. a branch's admin when only the status changes.
@@ -337,6 +342,8 @@ class AdminModules {
         AdminFieldConfig(
           'branch_ref_code',
           'Branch Ref Code',
+          // Pre-filled with the creator's own branch code, like the web form.
+          defaultLoader: loadOwnBranchCode,
         ),
         AdminFieldConfig(
           'company_id',

@@ -228,6 +228,23 @@ Future<List<AdminOption>> _fromOptions(String key, String Function(Map<String, d
       .toList();
 }
 
+/// The signed-in user's own branch code (primary branch first): the web pre-fills it on the sub admin / salesman
+/// form, so the app does too. Null when the user is in no branch.
+Future<String?> loadOwnBranchCode() async {
+  final response = await ApiClient.get(endpoint: '/api/seller/branches/', requireAuth: true);
+  final data = response is Map ? response['data'] : null;
+  if (data is! Map) return null;
+  final primary = data['primary_branch'];
+  if (primary is Map && (primary['branch_code'] ?? '').toString().isNotEmpty) return primary['branch_code'].toString();
+  final others = data['my_branches'];
+  if (others is List) {
+    for (final item in others) {
+      if (item is Map && (item['branch_code'] ?? '').toString().isNotEmpty) return item['branch_code'].toString();
+    }
+  }
+  return null;
+}
+
 Future<List<AdminOption>> loadSubAdminCompanyOptions() =>
     _fromOptions('companies', (c) => (c['legal_name'] ?? 'Company').toString());
 
