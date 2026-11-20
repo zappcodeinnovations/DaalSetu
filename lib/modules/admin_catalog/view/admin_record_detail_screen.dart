@@ -36,7 +36,7 @@ class AdminRecordDetailScreen extends StatefulWidget {
 }
 
 class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
-  late final Future<AdminRecord> detail;
+  late Future<AdminRecord> detail;
 
   @override
   void initState() {
@@ -152,6 +152,7 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
       title: '${widget.config.title} Details',
       subtitle: 'Inspect catalog record fields & metadata',
     ),
+    bottomNavigationBar: _buildActionBar(),
     body: FutureBuilder<AdminRecord>(
       future: detail,
       builder: (context, snapshot) {
@@ -185,6 +186,80 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
       },
     ),
   );
+
+  /// The record's actions (Approve / Reject for a KYC, Mark Received ...) as buttons at the bottom of the details,
+  /// like the web review pages. They come from the module's config, so the list card and this screen agree.
+  Widget _buildActionBar() {
+    if (widget.config.customActions.isEmpty) return const SizedBox.shrink();
+    return FutureBuilder<AdminRecord>(
+      future: detail,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done || snapshot.hasError || snapshot.data == null) {
+          return const SizedBox.shrink();
+        }
+        // The list row's fields, refreshed by the detail's.
+        final data = {...widget.record.data, ...snapshot.data!.data};
+        final actions = widget.config.customActions.where((action) => action.isVisible?.call(data) ?? true).toList();
+        if (actions.isEmpty) return const SizedBox.shrink();
+        final theme = Theme.of(context);
+
+        Color colorOf(String title) {
+          final lower = title.toLowerCase();
+          if (lower.contains('reject') || lower.contains('delete') || lower.contains('cancel')) return const Color(0xFFDC2626);
+          if (lower.contains('approve') || lower.contains('received') || lower.contains('deliver')) return const Color(0xFF059669);
+          return theme.colorScheme.primary;
+        }
+
+        return Container(
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            border: Border(top: BorderSide(color: theme.dividerColor.withValues(alpha: 0.4))),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+              child: Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final action in actions)
+                    SizedBox(
+                      width: actions.length == 1
+                          ? double.infinity
+                          : (MediaQuery.sizeOf(context).width - 32 - 10 * (actions.length > 2 ? 2 : 1)) / (actions.length > 2 ? 3 : 2),
+                      height: 46,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colorOf(action.title),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () async {
+                          final success = await action.onPressed(context, data);
+                          if (success && mounted) {
+                            setState(() => detail = AdminCatalogRepository(widget.config).detail(widget.record));
+                          }
+                        },
+                        icon: Icon(action.icon, size: 18),
+                        label: Text(
+                          action.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildSkeleton() {
     return ListView.builder(
