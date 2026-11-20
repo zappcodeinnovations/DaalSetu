@@ -169,7 +169,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   _item('Brand', product.brand?.name),
                   _item('Brand ID', product.brand?.uniqueId),
                   _item('Seller', product.seller?.fullName),
-                  _item('Seller login', product.seller?.loginUsername),
+                  // The web has no seller login field (switched off, kept commented out).
+                  // _item('Seller login', product.seller?.loginUsername),
                 ]),
                 _section('Pricing & inventory', [
                   _item('Rate', '₹${product.amount} ${product.amountUnit}'),
@@ -185,7 +186,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   _item('Quantity (Qtl)', product.quantityQtl),
                   _item('Packing weight', '${product.packingWeightKg} kg'),
                   _item('Original bags', product.originalBagCount),
-                  _item('Remaining bags', product.remainingBagCount),
+                  // The web only shows the remaining quantity (what is left after sales), not remaining bags.
+                  // _item('Remaining bags', product.remainingBagCount),
                   _item('Stock status', _label(product.stockStatus)),
                 ]),
                 _section('Loading & expiry', [
