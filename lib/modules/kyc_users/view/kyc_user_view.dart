@@ -719,31 +719,34 @@ class KycUsersScreen extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text("KYC Score", style: TextStyle(color: textLight, fontSize: 11)),
-                      const SizedBox(width: 8),
-                      Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          SizedBox(
-                            width: 28,
-                            height: 28,
-                            child: CircularProgressIndicator(
-                              value: user.kycScore / 100,
-                              color: colorApproved,
-                              backgroundColor: colorApproved.withOpacity(0.2),
-                              strokeWidth: 3,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text("KYC Score", style: TextStyle(color: textLight, fontSize: 11)),
+                        const SizedBox(width: 8),
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            SizedBox(
+                              width: 28,
+                              height: 28,
+                              child: CircularProgressIndicator(
+                                value: user.kycScore / 100,
+                                color: colorApproved,
+                                backgroundColor: colorApproved.withOpacity(0.2),
+                                strokeWidth: 3,
+                              ),
                             ),
-                          ),
-                          Text(
-                            "${user.kycScore}%",
-                            style: TextStyle(color: textDark, fontSize: 9, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      )
-                    ],
+                            Text(
+                              "${user.kycScore}%",
+                              style: TextStyle(color: textDark, fontSize: 9, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        )
+                      ],
+                    ),
                   ),
                 ),
                 Container(width: 1, height: 26, color: textLight.withOpacity(0.2)),

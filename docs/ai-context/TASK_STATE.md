@@ -23,11 +23,13 @@
   - **Automated Verification Results**:
     - `test/master_integrity_and_regression_test.dart`: **15/15 Passed**
     - `test/batch_18_fixes_test.dart`: **5/5 Passed**
+    - `test/kyc_flow_integration_test.dart`: **3/3 Passed** (KYC 3-lines menu opens drawer, user card action buttons & reject dialog, detail review screen Approve/Reject)
+    - `test/admin_menu_button_opens_drawer_test.dart`: **2/2 Passed** (KYC & Products screens menu icons open drawer)
     - `test/batch_13_buyer_fixes_test.dart` through `test/batch_17_fixes_test.dart`: **All Passed**
-    - Cumulative Regression: **46/46 Passed (100% Pass Rate)**
+    - Cumulative Regression: **49/49 Passed (100% Pass Rate)**
     - Remote developer tests (`buyer_categories_tick_list_test.dart`, `admin_challan_card_deliver_test.dart`): **All Passed**
     - `flutter analyze`: Verified with **0 compile errors** on modified files.
-  - **Working Tree**: Clean, branch ahead of remote by 8 commits (`git status` clean).
+  - **Working Tree**: Clean, branch ahead of remote by 9 commits (`git status` clean).
 
 ---
 
