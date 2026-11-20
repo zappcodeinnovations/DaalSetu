@@ -416,8 +416,10 @@ class SellerProductController extends GetxController {
     if (!dealExpiry.value!.isAfter(DateTime.now())) {
       return "Deal expiry time must be in the future.";
     }
-    if (branches.isNotEmpty && selectedBranchIds.isEmpty)
-      return "Select at least one branch.";
+    if (branches.isEmpty) {
+      return "You are not in any branch yet. Join a branch first, then create the offer.";
+    }
+    if (selectedBranchIds.isEmpty) return "Select at least one branch.";
     return null;
   }
 
