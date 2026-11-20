@@ -372,10 +372,26 @@ class BuyerServices {
     if (response is Map) {
       if (response['results'] is List) return response['results'] as List;
       if (response['data'] is List) return response['data'] as List;
+      if (response['data'] is Map) {
+        final inner = response['data'] as Map;
+        for (final k in const [
+          'results',
+          'interests',
+          'my_interests',
+          'buyer_interests',
+          'items',
+          'offers',
+          'buyer_offers',
+        ]) {
+          if (inner[k] is List) return inner[k] as List;
+        }
+      }
       if (response['offers'] is List) return response['offers'] as List;
       if (response['buyer_offers'] is List)
         return response['buyer_offers'] as List;
       if (response['interests'] is List) return response['interests'] as List;
+      if (response['buyer_interests'] is List)
+        return response['buyer_interests'] as List;
       if (response['my_interests'] is List)
         return response['my_interests'] as List;
       if (response['items'] is List) return response['items'] as List;
@@ -744,6 +760,7 @@ class BuyerServices {
         requireAuth: true,
         suppressErrorDialog: true,
       );
+      print("🔍 [BUYER_MY_INTERESTS RAW RESPONSE]: $response");
       return _extractList(response);
     } catch (e) {
       if (silent) rethrow;
