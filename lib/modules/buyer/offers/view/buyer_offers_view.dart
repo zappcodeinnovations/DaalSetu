@@ -34,6 +34,17 @@ void Function(BuildContext)? buyerSubmitOfferCallback(BuyerOfferModel offer, {St
   return (context) => showBuyerSubmitOfferDialog(context, offer, tag: tag);
 }
 
+/// Whether the buyer already sent an offer on this one - the same answer the offer card uses for "Resubmit".
+bool Function() buyerOfferSubmittedCheck(BuyerOfferModel offer, {String tag = 'all'}) {
+  return () {
+    if (offer.hasSubmittedOffer) return true;
+    final controller = Get.isRegistered<BuyerOffersController>(tag: tag)
+        ? Get.find<BuyerOffersController>(tag: tag)
+        : null;
+    return controller?.isOfferSubmitted(offer.productId ?? offer.id, offer: offer) ?? false;
+  };
+}
+
 class BuyerOffersView extends StatelessWidget {
   final int initialIndex;
   const BuyerOffersView({super.key, this.initialIndex = 0});
@@ -122,6 +133,7 @@ class _OfferList extends StatelessWidget {
         Get.to(() => ProductDetailScreen(
               productId: pId,
               onSubmitOffer: buyerSubmitOfferCallback(offer, tag: offerType),
+              isOfferSubmitted: buyerOfferSubmittedCheck(offer, tag: offerType),
             ));
       } else if (offer.id != null) {
         Get.to(() => BuyerOfferDetailsView(offerId: offer.id!));

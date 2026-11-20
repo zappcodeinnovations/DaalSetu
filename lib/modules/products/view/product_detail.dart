@@ -6,6 +6,7 @@ import 'package:daalsetu/services/product_services.dart';
 import 'package:daalsetu/widgets/authenticated_network_image.dart';
 import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:daalsetu/modules/admin_catalog/view/offer_interests_dialog.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
@@ -17,7 +18,11 @@ class ProductDetailScreen extends StatefulWidget {
   /// it opens the same Submit Offer dialog as the offers list.
   final void Function(BuildContext context)? onSubmitOffer;
 
-  const ProductDetailScreen({super.key, required this.productId, this.onSubmitOffer});
+  /// True when this buyer already sent an offer on it: the button then says "Resubmit", like the offer card.
+  /// Read inside an Obx, so it flips as soon as the offer goes through.
+  final bool Function()? isOfferSubmitted;
+
+  const ProductDetailScreen({super.key, required this.productId, this.onSubmitOffer, this.isOfferSubmitted});
   final int productId;
 
   @override
@@ -447,9 +452,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             widget.onSubmitOffer!(context);
           },
           icon: const Icon(Icons.send_rounded, color: Colors.white),
-          label: const Text(
-            'Submit Offer',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+          label: Obx(
+            () => Text(
+              (widget.isOfferSubmitted?.call() ?? false) ? 'Resubmit' : 'Submit Offer',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+            ),
           ),
         ),
       ),

@@ -1412,6 +1412,7 @@ class _BuyerOffersCarouselSliderState extends State<BuyerOffersCarouselSlider> {
           Get.to(() => ProductDetailScreen(
                 productId: pId,
                 onSubmitOffer: buyerSubmitOfferCallback(offer),
+                isOfferSubmitted: buyerOfferSubmittedCheck(offer),
               ));
         } else if (offer.id != null) {
           Get.to(() => BuyerOfferDetailsView(offerId: offer.id!));
