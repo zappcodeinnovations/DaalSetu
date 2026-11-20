@@ -17,8 +17,6 @@ class ProductDetailScreen extends StatefulWidget {
   /// Buyer screens pass this to show "Submit Offer" on the offer page (MoM 7);
   /// it opens the same Submit Offer dialog as the offers list.
   final void Function(BuildContext context)? onSubmitOffer;
-  final bool isResubmit;
-  final ProductModel? initialProduct;
 
   /// True when this buyer already sent an offer on it: the button then says "Resubmit", like the offer card.
   /// Read inside an Obx, so it flips as soon as the offer goes through.
@@ -43,6 +41,7 @@ class ProductDetailScreen extends StatefulWidget {
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   late Future<ProductModel> _product;
   String _role = '';
+  final RxInt _dummyRx = 0.obs;
 
   bool get _canManageInterests => const {
     'seller',
@@ -465,14 +464,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             widget.onSubmitOffer!(context);
           },
           icon: const Icon(Icons.send_rounded, color: Colors.white),
-          label: Obx(
-            () => Text(
-              ((widget.isOfferSubmitted?.call() ?? false) || widget.isResubmit)
-                  ? 'Resubmit'
-                  : 'Submit Offer',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
-            ),
-          ),
+          label: widget.isOfferSubmitted != null
+              ? Obx(() {
+                  _dummyRx.value;
+                  final isSubmitted =
+                      (widget.isOfferSubmitted?.call() ?? false) || widget.isResubmit;
+                  return Text(
+                    isSubmitted ? 'Resubmit' : 'Submit Offer',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                  );
+                })
+              : Text(
+                  widget.isResubmit ? 'Resubmit' : 'Submit Offer',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                ),
         ),
       ),
     );
