@@ -80,7 +80,8 @@ class MainNavigationScreen extends StatelessWidget {
 
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        extendBody: true,
+        // Pages end above the floating bar (not behind it), so their last item can always be reached.
+        extendBody: false,
         resizeToAvoidBottomInset: navController.userRole.value == 'admin' ? false : true,
         body: Container(
           color: Theme.of(context).scaffoldBackgroundColor,

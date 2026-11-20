@@ -36,7 +36,10 @@ class AgroBrokerApp extends StatelessWidget {
           color: theme.scaffoldBackgroundColor,
           child: Stack(
             children: [
-              if (child != null) child,
+              // The one place the system navigation bar is kept clear of every screen, dialog and sheet
+              // (gesture bar or three buttons): the app ends above it. The status bar is handled by the
+              // headers themselves. Nothing inside needs its own bottom padding for it.
+              if (child != null) SafeArea(top: false, left: false, right: false, child: child),
               Positioned.fill(
                 child: IgnorePointer(
                   child: Center(
