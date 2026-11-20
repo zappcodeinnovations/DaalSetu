@@ -402,6 +402,7 @@ class _BuyerRequestManagementViewState
                         });
                         Get.back();
                         _load();
+                        _revealStatusChip();
                       },
                       child: const Text('Reset'),
                     ),
@@ -706,7 +707,8 @@ class _BuyerRequestManagementViewState
                 label: Text(_label(status)),
                 selected: _status == status,
                 onSelected: (selected) {
-                  setState(() => _status = selected ? status : 'all');
+                  final newStatus = selected ? status : 'all';
+                  setState(() => _status = newStatus);
                   _load();
                   _revealStatusChip();
                 },
@@ -874,8 +876,19 @@ class _BuyerRequestManagementViewState
       }
     }
 
-    return GlassCard(
-      padding: const EdgeInsets.all(14),
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: numericId == null
+          ? null
+          : () => Get.to(
+              () => BuyerOfferDetailsView(
+                offerId: numericId,
+                preferBuyerOffer: !_isRequirement,
+                preferBuyerRequirement: _isRequirement,
+              ),
+            ),
+      child: GlassCard(
+        padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1006,7 +1019,8 @@ class _BuyerRequestManagementViewState
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 
   Widget _statusBadge(String status, ThemeData theme) {

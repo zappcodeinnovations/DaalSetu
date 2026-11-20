@@ -61,6 +61,7 @@ class DeliveryPeriodPicker extends StatelessWidget {
       initialDate: current != null && !current.isBefore(first) ? current : first,
       firstDate: first,
       lastDate: _today.add(const Duration(days: 365)),
+      locale: const Locale('en', 'GB'),
     );
     if (picked == null) return;
     if (isFrom) {
@@ -78,7 +79,7 @@ class DeliveryPeriodPicker extends StatelessWidget {
             onTap: () => _pick(context, isFrom: isFrom),
             borderRadius: BorderRadius.circular(12),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
               decoration: BoxDecoration(
                 color: theme.cardColor,
                 borderRadius: BorderRadius.circular(12),
@@ -86,27 +87,27 @@ class DeliveryPeriodPicker extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          caption,
-                          style: GoogleFonts.inter(fontSize: 10, color: Colors.grey),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          value == null ? 'dd-mm-yyyy' : displayDate(value),
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: value == null ? Colors.grey : null,
-                          ),
-                        ),
-                      ],
+                  Text(
+                    '$caption: ',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const Icon(IconlyLight.calendar, size: 18),
+                  Expanded(
+                    child: Text(
+                      value == null ? 'dd-mm-yyyy' : displayDate(value),
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: value == null ? Colors.grey : null,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(IconlyLight.calendar, size: 16),
                 ],
               ),
             ),

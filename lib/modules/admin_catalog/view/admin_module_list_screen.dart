@@ -48,10 +48,12 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
   List<Map<String, dynamic>> _buyers = [];
   bool _isLoadingBuyers = false;
   String _buyerSearch = '';
+  String _userRole = '';
 
   @override
   void initState() {
     super.initState();
+    _loadUserRole();
     _searchController = TextEditingController();
     config = AdminModules.byKey(widget.moduleKey);
     controller = Get.put(
@@ -68,6 +70,18 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
         if (mounted) setState(() => _isSuperAdmin = (role ?? '').toLowerCase() == 'super_admin');
       });
     }
+  }
+
+  Future<void> _loadUserRole() async {
+    try {
+      final role = await AppPreferences.getRole();
+      if (mounted) {
+        setState(() {
+          _userRole = (role ?? '').trim().toLowerCase();
+          _isSuperAdmin = _userRole == 'super_admin';
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _fetchBuyers() async {
@@ -628,7 +642,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
             ),
             const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF0F172A) : const Color(0xFFFFF7ED),
                 borderRadius: BorderRadius.circular(12),
@@ -636,33 +650,46 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
                   color: const Color(0xFFFFE0B2).withValues(alpha: 0.6),
                 ),
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.phone_outlined,
-                      size: 14, color: Color(0xFFD97706)),
-                  const SizedBox(width: 6),
-                  Text(
-                    mobile.isNotEmpty ? mobile : '-',
-                    style: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(width: 16),
-                  const Icon(Icons.category_outlined,
-                      size: 14, color: Color(0xFFEA580C)),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      assignedStr,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: assignedStr == 'No categories assigned'
-                            ? Colors.grey
-                            : const Color(0xFFEA580C),
-                        fontWeight: FontWeight.w600,
+                  Row(
+                    children: [
+                      const Icon(Icons.phone_outlined,
+                          size: 14, color: Color(0xFFD97706)),
+                      const SizedBox(width: 6),
+                      Text(
+                        mobile.isNotEmpty ? mobile : '-',
+                        style: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w600),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(top: 2),
+                        child: Icon(Icons.category_outlined,
+                            size: 14, color: Color(0xFFEA580C)),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          assignedStr,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: assignedStr == 'No categories assigned'
+                                ? Colors.grey
+                                : const Color(0xFFEA580C),
+                            fontWeight: FontWeight.w600,
+                            height: 1.35,
+                          ),
+                          softWrap: true,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -679,16 +706,40 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
 
     List<dynamic> allCategories = [];
     try {
-      final res = await ApiClient.get(
-        endpoint: '/api/categories/',
+      // First try parent dropdown endpoint which returns only parent categories
+      dynamic res = await ApiClient.get(
+        endpoint: '/api/categories/parent-dropdown/',
         requireAuth: true,
+        suppressErrorDialog: true,
       );
-      if (res is List) {
+      if (res is List && res.isNotEmpty) {
         allCategories = res;
-      } else if (res is Map && res['results'] is List) {
+      } else if (res is Map && res['results'] is List && (res['results'] as List).isNotEmpty) {
         allCategories = res['results'];
-      } else if (res is Map && res['data'] is List) {
-        allCategories = res['data'];
+      } else {
+        // Fallback to /api/categories/ filtered strictly for root/parent categories (parent == null)
+        res = await ApiClient.get(
+          endpoint: '/api/categories/',
+          requireAuth: true,
+        );
+        List raw = [];
+        if (res is List) {
+          raw = res;
+        } else if (res is Map && res['results'] is List) {
+          raw = res['results'];
+        } else if (res is Map && res['data'] is List) {
+          raw = res['data'];
+        }
+        allCategories = raw.where((c) {
+          if (c is! Map) return false;
+          final parent = c['parent'];
+          final level = c['level'];
+          return (parent == null || parent.toString().isEmpty || parent.toString() == 'null') &&
+              (level == null || level == 0 || level == '0');
+        }).toList();
+        if (allCategories.isEmpty && raw.isNotEmpty) {
+          allCategories = raw;
+        }
       }
     } catch (_) {}
 
@@ -708,6 +759,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) {
           final theme = Theme.of(ctx);
+          final isDark = theme.brightness == Brightness.dark;
           return Container(
             height: MediaQuery.of(ctx).size.height * 0.75,
             decoration: BoxDecoration(
@@ -754,10 +806,26 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
                                     0;
                             final catName = cat['category_name'] ??
                                 cat['name'] ??
+                                cat['label'] ??
+                                cat['title'] ??
                                 'Category $id';
                             final isChecked = selectedCategoryIds.contains(id);
                             return CheckboxListTile(
-                              title: Text(catName.toString()),
+                              controlAffinity: ListTileControlAffinity.leading,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                              side: BorderSide(
+                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                width: 1.5,
+                              ),
+                              activeColor: const Color(0xFFEA580C),
+                              checkColor: Colors.white,
+                              title: Text(
+                                catName.toString(),
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark ? Colors.white : Colors.black87,
+                                ),
+                              ),
                               value: isChecked,
                               onChanged: (val) {
                                 setModalState(() {
@@ -817,10 +885,41 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final title = _first(record, config.titleKeys);
+
+    dynamic resolveValue(dynamic rec, String key) {
+      if (key.contains('.')) {
+        final parts = key.split('.');
+        dynamic cur = rec;
+        for (final p in parts) {
+          if (cur is Map) {
+            cur = cur[p];
+          } else {
+            return null;
+          }
+        }
+        return cur;
+      }
+      return rec is Map ? rec[key] : null;
+    }
+
     final subtitles = config.subtitleKeys
-        .map((key) => MapEntry(key, _display(record[key], key: key)))
+        .map((key) {
+          final rawVal = resolveValue(record.data, key);
+          String displayVal = '';
+          if (key == 'experience' && rawVal != null && rawVal.toString().trim().isNotEmpty) {
+            final exp = int.tryParse(rawVal.toString()) ?? 0;
+            displayVal = '$exp ${exp == 1 ? 'year' : 'years'}';
+          } else if (key == 'assigned_vehicle.vehicle_number') {
+            displayVal = (rawVal == null || rawVal.toString().trim().isEmpty || rawVal.toString().toLowerCase() == 'null')
+                ? '-'
+                : rawVal.toString();
+          } else {
+            displayVal = _display(rawVal, key: key);
+          }
+          return MapEntry(key, displayVal);
+        })
         .where((entry) => entry.value.isNotEmpty)
-        .take(4)
+        .take(8)
         .toList();
     return Container(
       decoration: BoxDecoration(
@@ -1023,7 +1122,7 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
                         visualDensity: VisualDensity.compact,
                       ),
                     ),
-                  if (config.canDelete)
+                  if (config.canDelete && (widget.moduleKey != 'salesman' || _isSuperAdmin))
                     OutlinedButton.icon(
                       onPressed: () => _delete(record),
                       style: OutlinedButton.styleFrom(
@@ -1064,14 +1163,23 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
         : const SizedBox(height: 1),
   );
 
-  Future<void> _view(AdminRecord record) => Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => AdminRecordDetailScreen(config: config, record: record),
-    ),
-  );
+  Future<void> _view(AdminRecord record) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AdminRecordDetailScreen(config: config, record: record),
+      ),
+    );
+    if (mounted) {
+      controller.load(refresh: true);
+    }
+  }
 
   Future<void> _delete(AdminRecord record) async {
+    if (widget.moduleKey == 'salesman' && !_isSuperAdmin) {
+      AppSnackbar.showError(message: 'Only Super Admin can delete sub admins.');
+      return;
+    }
     if (await showAdminDeleteDialog(context)) {
       await controller.delete(record);
     }
@@ -1124,6 +1232,10 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
     'page_label': 'Page',
     'is_primary': 'Primary',
     'both_sellerandbuyer': 'Buyer & Seller',
+    'experience': 'Experience',
+    'assigned_vehicle.vehicle_number': 'Assigned Vehicle',
+    'required_bag_count': 'Bags',
+    'expiry_datetime': 'Expiry',
   };
 
   String _label(String key) => _shortLabels[key] ?? key

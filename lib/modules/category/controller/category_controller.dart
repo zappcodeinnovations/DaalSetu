@@ -72,13 +72,9 @@ class CategoryController extends GetxController {
 
       final result = await CategoryService.fetchBuyerCategoryData();
       recentRequests.assignAll(result.requests);
-      if (result.buyerCategories.isNotEmpty) {
-        allCategories.assignAll(result.buyerCategories);
-        systemCategories.assignAll(result.systemCategories);
-        _applyFilter();
-      } else if (allCategories.isEmpty && result.systemCategories.isNotEmpty) {
-        systemCategories.assignAll(result.systemCategories);
-      }
+      allCategories.assignAll(result.buyerCategories);
+      systemCategories.assignAll(result.systemCategories);
+      _applyFilter();
     } catch (e) {
       // Background and screen-load failures should fail silently with graceful fallback
       // rather than interrupting the user with generic server error toasts.

@@ -16,6 +16,28 @@ class ContractsScreen extends StatefulWidget {
   final String? initialFilter;
   const ContractsScreen({super.key, this.initialFilter});
 
+  static bool isContractInTransit(ContractModel item) {
+    final statusNorm = item.status.toLowerCase().replaceAll(' ', '_');
+    if (statusNorm == 'completed' ||
+        statusNorm == 'cancelled' ||
+        statusNorm == 'received') {
+      return false;
+    }
+    return statusNorm == 'in_transit' ||
+        statusNorm == 'transit' ||
+        statusNorm == 'dispatched' ||
+        statusNorm == 'on_the_way' ||
+        statusNorm == 'transport' ||
+        statusNorm == 'ready_for_loading' ||
+        item.truckNumber?.isNotEmpty == true ||
+        item.driverName?.isNotEmpty == true ||
+        item.transporterName?.isNotEmpty == true ||
+        item.hasDeliveryChallan == true ||
+        item.transporterVisibleAt?.isNotEmpty == true ||
+        item.readyForLoadingAt?.isNotEmpty == true ||
+        item.activeBidCount > 0;
+  }
+
   @override
   State<ContractsScreen> createState() => _ContractsScreenState();
 }
@@ -65,8 +87,9 @@ class _ContractsScreenState extends State<ContractsScreen> {
     var contracts = controller.contracts.toList();
     if (selectedFilter.value != 'All') {
       final filterNorm = selectedFilter.value.toLowerCase().replaceAll(' ', '_');
-      // In Transit is answered by the server (contracts whose challan is dispatched, like the dashboard card).
-      if (filterNorm != 'in_transit') {
+      if (filterNorm == 'in_transit') {
+        contracts = contracts.where((item) => ContractsScreen.isContractInTransit(item)).toList();
+      } else {
         contracts = contracts.where((item) {
           final statusNorm = item.status.toLowerCase().replaceAll(' ', '_');
           return statusNorm == filterNorm;

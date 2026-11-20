@@ -277,6 +277,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           Icons.shopping_cart_outlined, Colors.blue),
       _StatData('Sellers', controller.sellerCount.toString(),
           Icons.storefront_outlined, Colors.purple),
+      _StatData('Transporters', controller.transporterCount.toString(),
+          Icons.local_shipping_outlined, Colors.teal),
       _StatData('KYC ✓', controller.kycApprovedCount.toString(),
           Icons.verified_rounded, Colors.green),
       _StatData('Pending', controller.kycPendingCount.toString(),

@@ -81,7 +81,60 @@ class ProductService {
             : (response is Map && response['data'] is List)
                 ? response['data']
                 : null;
-    return (rawList as List? ?? [])
+
+    final allItems = (rawList as List? ?? []).whereType<Map>().toList();
+
+    // Filter strictly to companies assigned/belonging to the chosen seller
+    final matchingItems = allItems.where((item) {
+      final user = item['user'];
+      final userId = item['user_id'];
+      final seller = item['seller'];
+      final sellerIdField = item['seller_id'];
+      final createdBy = item['created_by'];
+
+      final candidateIds = [
+        if (user is int) user,
+        if (user is Map && user['id'] is int) user['id'],
+        if (user is String) int.tryParse(user),
+        if (userId is int) userId,
+        if (userId is String) int.tryParse(userId),
+        if (seller is int) seller,
+        if (seller is Map && seller['id'] is int) seller['id'],
+        if (seller is String) int.tryParse(seller),
+        if (sellerIdField is int) sellerIdField,
+        if (sellerIdField is String) int.tryParse(sellerIdField),
+        if (createdBy is int) createdBy,
+        if (createdBy is Map && createdBy['id'] is int) createdBy['id'],
+      ].whereType<int>().toSet();
+
+      return candidateIds.contains(sellerId);
+    }).toList();
+
+    // If none matched, also check user details endpoint for direct assigned company
+    if (matchingItems.isEmpty) {
+      try {
+        final userRes = await ApiClient.get(
+          endpoint: '/api/users/$sellerId/',
+          requireAuth: true,
+        );
+        if (userRes is Map) {
+          final comp = userRes['company'] ?? userRes['registered_company'];
+          if (comp is Map && comp['id'] != null) {
+            return [
+              OfferOption(
+                id: comp['id'] as int,
+                name: comp['legal_name']?.toString() ?? comp['company_name']?.toString() ?? '',
+                subtitle: [comp['city'], comp['state']]
+                    .where((value) => value?.toString().trim().isNotEmpty ?? false)
+                    .join(', '),
+              ),
+            ];
+          }
+        }
+      } catch (_) {}
+    }
+
+    return matchingItems
         .map(
           (item) => OfferOption(
             id: item["id"] as int,

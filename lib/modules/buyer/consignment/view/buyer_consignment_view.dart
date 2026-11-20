@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -14,11 +13,26 @@ import 'package:daalsetu/widgets/hero_header.dart';
 /// Dispatched shipment behind "Pending".)
 @visibleForTesting
 String consignmentStageLabel(Map<String, dynamic> item) {
-  if (item['is_delivered'] == true || item['status'] == 'received') return 'Consignment Received';
-  if (item['is_dispatched'] == true) return 'Dispatch';
-  final visibleAt = item['transporter_visible_at'];
-  if (visibleAt != null && visibleAt.toString().isNotEmpty && visibleAt.toString() != 'null') {
+  final status = (item['status'] ?? '').toString().toLowerCase();
+  if (item['is_delivered'] == true || status == 'received' || status == 'completed') {
+    return 'Consignment Received';
+  }
+  if (item['is_dispatched'] == true || status == 'dispatched' || status == 'in_transit') {
+    return 'Dispatch';
+  }
+  final visibleAt = item['transporter_visible_at']?.toString().trim();
+  if (visibleAt != null && visibleAt.isNotEmpty && visibleAt != 'null') {
     return 'Consignment Ready';
+  }
+  final workflow = (item['workflow_status'] ?? item['workflow_stage'] ?? '').toString().toLowerCase();
+  if (workflow == 'ready' || workflow == 'consignment_ready') {
+    return 'Consignment Ready';
+  }
+  if (workflow == 'dispatch' || workflow == 'dispatched') {
+    return 'Dispatch';
+  }
+  if (workflow == 'received') {
+    return 'Consignment Received';
   }
   return 'Pending';
 }
@@ -32,6 +46,7 @@ class BuyerConsignmentView extends StatefulWidget {
 
 class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
   final _searchController = TextEditingController();
+  final _allConsignments = <Map<String, dynamic>>[];
   final _items = <Map<String, dynamic>>[];
   String _workflow = 'all';
   String _error = '';
@@ -72,15 +87,45 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
     super.dispose();
   }
 
+  void _applyFilter() {
+    final stage = _stageOfFilter[_workflow];
+    final query = _searchController.text.trim().toLowerCase();
+    var list = _allConsignments.toList();
+    if (stage != null) {
+      list = list.where((item) => consignmentStageLabel(item) == stage).toList();
+    }
+    if (query.isNotEmpty) {
+      list = list.where((item) {
+        final contractId = (item['contract_id'] ?? '').toString().toLowerCase();
+        final productTitle = (item['product_title'] ?? '').toString().toLowerCase();
+        final sellerName = (item['seller_name'] ?? '').toString().toLowerCase();
+        final from = (item['loading_from'] ?? '').toString().toLowerCase();
+        final to = (item['loading_to'] ?? '').toString().toLowerCase();
+        return contractId.contains(query) ||
+            productTitle.contains(query) ||
+            sellerName.contains(query) ||
+            from.contains(query) ||
+            to.contains(query);
+      }).toList();
+    }
+    setState(() {
+      _items
+        ..clear()
+        ..addAll(list);
+    });
+  }
+
   /// Only the latest request may fill the list (an older, slower answer must not overwrite it).
   int _requestId = 0;
 
-  Future<void> _load() async {
+  Future<void> _load({bool silent = false}) async {
     final requestId = ++_requestId;
-    setState(() {
-      _loading = true;
-      _error = '';
-    });
+    if (!silent) {
+      setState(() {
+        _loading = true;
+        _error = '';
+      });
+    }
     try {
       final response = await BuyerServices.getConsignments(
         workflowStatus: _workflow,
@@ -88,31 +133,27 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
       );
       final raw = response['results'];
       if (mounted && requestId == _requestId) {
-        setState(() {
-          _items
-            ..clear()
-            ..addAll(
-              (raw is List
-                      ? raw.whereType<Map>().map(
-                          (item) => Map<String, dynamic>.from(item),
-                        )
-                      : const <Map<String, dynamic>>[])
-                  // A filter only shows cards of its own stage, whatever the server sends.
-                  .where((item) {
-                    final stage = _stageOfFilter[_workflow];
-                    return stage == null || consignmentStageLabel(item) == stage;
-                  }),
-            );
-        });
+        final list = (raw is List
+                ? raw.whereType<Map>().map(
+                    (item) => Map<String, dynamic>.from(item),
+                  )
+                : const <Map<String, dynamic>>[])
+            .toList();
+        _allConsignments
+          ..clear()
+          ..addAll(list);
+        _applyFilter();
       }
     } catch (error) {
-      if (mounted && requestId == _requestId) {
+      if (mounted && requestId == _requestId && !silent) {
         setState(
           () => _error = error.toString().replaceFirst('Exception: ', ''),
         );
       }
     } finally {
-      if (mounted && requestId == _requestId) setState(() => _loading = false);
+      if (mounted && requestId == _requestId && !silent) {
+        setState(() => _loading = false);
+      }
     }
   }
 
@@ -189,6 +230,7 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: TextField(
               controller: _searchController,
+              onChanged: (_) => _applyFilter(),
               onSubmitted: (_) => _load(),
               decoration: InputDecoration(
                 hintText: 'Search contract, product, seller or route',
@@ -216,8 +258,11 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
                   label: Text(_label(value)),
                   selected: _workflow == value,
                   onSelected: (_) {
-                    setState(() => _workflow = value);
-                    _load();
+                    if (_workflow != value) {
+                      setState(() => _workflow = value);
+                      _applyFilter();
+                      _load(silent: true);
+                    }
                   },
                 );
               },

@@ -17,6 +17,9 @@ import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:daalsetu/modules/buyer/offers/view/buyer_offer_details_view.dart';
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/widgets/back_navigation.dart';
 
@@ -37,11 +40,23 @@ class AdminRecordDetailScreen extends StatefulWidget {
 
 class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
   late Future<AdminRecord> detail;
+  AdminRecord? _currentRecord;
 
   @override
   void initState() {
     super.initState();
-    detail = AdminCatalogRepository(widget.config).detail(widget.record);
+    _loadDetail();
+  }
+
+  void _loadDetail() {
+    detail = AdminCatalogRepository(widget.config).detail(widget.record).then((rec) {
+      if (mounted) {
+        setState(() {
+          _currentRecord = rec;
+        });
+      }
+      return rec;
+    });
   }
 
   dynamic _resolveValue(Map<String, dynamic> data, String keyPath) {
@@ -119,8 +134,12 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
     // Smart fallback derivation for image and media fields
     if (keyPath.contains('image') ||
         keyPath.contains('photo') ||
-        keyPath.contains('thumbnail')) {
+        keyPath.contains('thumbnail') ||
+        keyPath.contains('logo')) {
       for (final candidate in const [
+        'brand_image',
+        'logo',
+        'brand_logo',
         'image_url',
         'image',
         'category_image',
@@ -143,123 +162,139 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: HeroHeader(
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-        onPressed: () => goBackOrHome(context),
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Scaffold(
+      appBar: HeroHeader(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => goBackOrHome(context),
+        ),
+        title: '${widget.config.title} Details',
+        subtitle: 'Inspect catalog record fields & metadata',
       ),
-      title: '${widget.config.title} Details',
-      subtitle: 'Inspect catalog record fields & metadata',
-    ),
-    bottomNavigationBar: _buildActionBar(),
-    body: FutureBuilder<AdminRecord>(
-      future: detail,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return _buildSkeleton();
-        }
-        if (snapshot.hasError) {
-          return _buildError(snapshot.error.toString());
-        }
-        final data = snapshot.data!.data;
+      body: FutureBuilder<AdminRecord>(
+        future: detail,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return _buildSkeleton();
+          }
+          if (snapshot.hasError) {
+            return _buildError(snapshot.error.toString());
+          }
+          final data = snapshot.data!.data;
 
-        // If detailSections are provided, use the new layout engine
-        if (widget.config.detailSections.isNotEmpty) {
-          return ListView.builder(
+          // If detailSections are provided, use the new layout engine
+          if (widget.config.detailSections.isNotEmpty) {
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: widget.config.detailSections.length,
+              itemBuilder: (context, index) {
+                return _buildSection(widget.config.detailSections[index], data);
+              },
+            );
+          }
+
+          // Fallback to generic view if no detailSections are provided
+          return ListView(
             padding: const EdgeInsets.all(16),
-            itemCount: widget.config.detailSections.length,
-            itemBuilder: (context, index) {
-              return _buildSection(widget.config.detailSections[index], data);
-            },
+            children: data.entries
+                .where((entry) => entry.value != null)
+                .map((entry) => _fallbackValueCard(entry.key, entry.value))
+                .toList(),
           );
-        }
-
-        // Fallback to generic view if no detailSections are provided
-        return ListView(
-          padding: const EdgeInsets.all(16),
-          children: data.entries
-              .where((entry) => entry.value != null)
-              .map((entry) => _fallbackValueCard(entry.key, entry.value))
-              .toList(),
-        );
-      },
-    ),
-  );
-
-  /// The record's actions (Approve / Reject for a KYC, Mark Received ...) as buttons at the bottom of the details,
-  /// like the web review pages. They come from the module's config, so the list card and this screen agree.
-  Widget _buildActionBar() {
-    if (widget.config.customActions.isEmpty) return const SizedBox.shrink();
-    return FutureBuilder<AdminRecord>(
-      future: detail,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done || snapshot.hasError || snapshot.data == null) {
-          return const SizedBox.shrink();
-        }
-        // The list row's fields, refreshed by the detail's.
-        final data = {...widget.record.data, ...snapshot.data!.data};
-        final actions = widget.config.customActions.where((action) => action.isVisible?.call(data) ?? true).toList();
-        if (actions.isEmpty) return const SizedBox.shrink();
-        final theme = Theme.of(context);
-
-        Color colorOf(String title) {
-          final lower = title.toLowerCase();
-          if (lower.contains('reject') || lower.contains('delete') || lower.contains('cancel')) return const Color(0xFFDC2626);
-          if (lower.contains('approve') || lower.contains('received') || lower.contains('deliver')) return const Color(0xFF059669);
-          return theme.colorScheme.primary;
-        }
-
-        return Container(
-          decoration: BoxDecoration(
-            color: theme.cardColor,
-            border: Border(top: BorderSide(color: theme.dividerColor.withValues(alpha: 0.4))),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-              child: Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  for (final action in actions)
-                    SizedBox(
-                      width: actions.length == 1
-                          ? double.infinity
-                          : (MediaQuery.sizeOf(context).width - 32 - 10 * (actions.length > 2 ? 2 : 1)) / (actions.length > 2 ? 3 : 2),
-                      height: 46,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colorOf(action.title),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        onPressed: () async {
-                          final success = await action.onPressed(context, data);
-                          if (success && mounted) {
-                            setState(() => detail = AdminCatalogRepository(widget.config).detail(widget.record));
-                          }
-                        },
-                        icon: Icon(action.icon, size: 18),
-                        label: Text(
-                          action.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
+        },
+      ),
+      bottomNavigationBar: _buildBottomActionBar(theme, isDark),
     );
   }
+
+  Widget? _buildBottomActionBar(ThemeData theme, bool isDark) {
+    if (widget.config.customActions.isEmpty) return null;
+    final currentData = {
+      ...widget.record.data,
+      ...?_currentRecord?.data,
+    };
+    final visibleActions = widget.config.customActions
+        .where((action) => action.isVisible?.call(currentData) ?? true)
+        .toList();
+    if (visibleActions.isEmpty) return null;
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        12,
+        16,
+        MediaQuery.of(context).padding.bottom + 12,
+      ),
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+        border: Border(
+          top: BorderSide(
+            color: isDark ? const Color(0xFF2C394F) : const Color(0xFFE2E8F0),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          for (int i = 0; i < visibleActions.length; i++) ...[
+            if (i > 0) const SizedBox(width: 12),
+            Expanded(
+              child: _buildDetailActionButton(visibleActions[i], currentData),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailActionButton(
+    AdminCustomAction action,
+    Map<String, dynamic> currentData,
+  ) {
+    Color colorOf(String title) {
+      final lower = title.toLowerCase();
+      if (lower.contains('reject') || lower.contains('delete') || lower.contains('cancel')) return const Color(0xFFDC2626);
+      if (lower.contains('approve') || lower.contains('received') || lower.contains('deliver')) return const Color(0xFF059669);
+      return Theme.of(context).colorScheme.primary;
+    }
+
+    return ElevatedButton.icon(
+      onPressed: () async {
+        final success = await action.onPressed(context, currentData);
+        if (success && mounted) {
+          setState(() {
+            _loadDetail();
+          });
+        }
+      },
+      icon: Icon(action.icon, size: 18),
+      label: Text(
+        action.title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: colorOf(action.title),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
 
   Widget _buildSkeleton() {
     return ListView.builder(
@@ -366,11 +401,200 @@ class _AdminRecordDetailScreenState extends State<AdminRecordDetailScreen> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
-              children: section.fields.map((field) {
-                final value = _resolveValue(data, field.key);
-                return _buildField(field, value);
-              }).toList(),
+              children: [
+                ...section.fields.map((field) {
+                  final value = _resolveValue(data, field.key);
+                  return _buildField(field, value);
+                }),
+                if (section.title.toLowerCase().contains('quotation') &&
+                    widget.config.key == 'buyer_requirements')
+                  _buildBuyerRequirementQuotations(data),
+              ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBuyerRequirementQuotations(Map<String, dynamic> data) {
+    final rawQuotes = data['quotations'] ?? data['submitted_quotations'] ?? data['quotes'];
+    final List<dynamic> quotations = (rawQuotes is List) ? rawQuotes : [];
+    if (quotations.isEmpty) return const SizedBox.shrink();
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final numericId = int.tryParse((data['id'] ?? '').toString()) ??
+        int.tryParse(RegExp(r'\d+$').firstMatch((data['rfq_id'] ?? '').toString())?.group(0) ?? '') ??
+        0;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Divider(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Submitted Quotations (${quotations.length})',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : const Color(0xFF1E293B),
+                ),
+              ),
+              if (numericId > 0)
+                TextButton.icon(
+                  onPressed: () => Get.to(
+                    () => BuyerOfferDetailsView(
+                      offerId: numericId,
+                      preferBuyerRequirement: true,
+                    ),
+                  ),
+                  icon: const Icon(Icons.forum_outlined, size: 16),
+                  label: const Text('All Chats', style: TextStyle(fontSize: 12)),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          for (final q in quotations)
+            if (q is Map) _buildQuotationItemCard(q, numericId, isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuotationItemCard(Map q, int numericId, bool isDark) {
+    final sellerName = q['seller_name'] ??
+        (q['seller'] is Map ? q['seller']['name'] : null) ??
+        'Seller';
+    final branch = q['branch_name'] ?? q['branch'] ?? q['seller_branch'] ?? '';
+    final sellerTitle = branch.toString().trim().isNotEmpty
+        ? '$sellerName / $branch'
+        : sellerName.toString();
+
+    final price = q['offered_price'] ?? q['price'] ?? q['rate'] ?? '-';
+    final priceUnit = q['price_unit'] ?? q['unit'] ?? 'QTL';
+    final qty = q['offered_quantity'] ?? q['quantity'] ?? '-';
+    final qtyUnit = q['quantity_unit'] ?? q['unit'] ?? 'QTL';
+    final status = (q['status'] ?? 'pending').toString();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.35)
+            : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  sellerTitle,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              _buildStatusBadge(status),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Price',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '₹$price / $priceUnit',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFFF05A28),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Quantity',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$qty $qtyUnit',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  if (numericId > 0) {
+                    Get.to(
+                      () => BuyerOfferDetailsView(
+                        offerId: numericId,
+                        preferBuyerRequirement: true,
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.chat_bubble_outline, size: 14),
+                label: const Text(
+                  'Chat / Details',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF05A28),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

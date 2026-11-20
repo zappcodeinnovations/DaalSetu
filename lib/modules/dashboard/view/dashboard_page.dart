@@ -12,8 +12,8 @@ import '../../profile/controller/profile_controller.dart';
 import '../../../theme/glass_widgets.dart';
 import '../../../routes/app_routes.dart';
 import '../../admin_notifications/controller/admin_notification_controller.dart';
-import '../../admin_notifications/view/admin_notification_view.dart';
 import '../../contracts/view/contract_view.dart';
+import '../../nav_bar/controller/nav_controller.dart';
 import 'admin_overview_kpis_view.dart';
 import '../../../utils/money_format.dart';
 import '../../../widgets/app_shell.dart';
@@ -25,6 +25,14 @@ class AdminDashboardScreen extends StatelessWidget {
 
   final DashboardController controller = Get.put(DashboardController());
   final ProfileController profileController = Get.put(ProfileController());
+
+  static void _navigateToContracts() {
+    if (Get.isRegistered<BottomNavController>()) {
+      Get.find<BottomNavController>().changeIndex(1);
+    } else {
+      Get.to(() => const ContractsScreen());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +69,7 @@ class AdminDashboardScreen extends StatelessWidget {
                 _buildWebGtvDealsSection(context, controller, data),
 
                 const SizedBox(height: 24),
-                _buildAnalyticsGrid(context, data.charts),
+                _buildAnalyticsGrid(context, data.charts, data.kpis),
 
                 const SizedBox(height: 24),
                 _buildSectionHeader(
@@ -78,9 +86,6 @@ class AdminDashboardScreen extends StatelessWidget {
                 _buildSectionHeader(
                   context,
                   "Recent Activities",
-                  trailingText: "View All",
-                  onTrailingTap: () =>
-                      Get.to(() => const AdminNotificationView()),
                 ),
                 const SizedBox(height: 16),
                 _buildRecentActivity(context, data.recentActivities),
@@ -102,7 +107,7 @@ class AdminDashboardScreen extends StatelessWidget {
                   context,
                   "Recent Contracts",
                   trailingText: "View All",
-                  onTrailingTap: () => Get.to(() => const ContractsScreen()),
+                  onTrailingTap: _navigateToContracts,
                 ),
                 const SizedBox(height: 16),
                 _buildRecentContracts(context, data.recentContracts),
@@ -181,18 +186,28 @@ class AdminDashboardScreen extends StatelessWidget {
           const SizedBox(width: 4),
           GestureDetector(
             onTap: () => Get.toNamed(AppRoutes.profile_page),
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 1.5),
-              ),
-              child: const CircleAvatar(
-                radius: 14,
-                backgroundColor: Colors.white24,
-                child: Icon(IconlyLight.user_1, size: 16, color: Colors.white),
-              ),
-            ),
+            child: Obx(() {
+              final profile = profileController.profile.value;
+              final imgUrl = profile != null
+                  ? profileController.profileImageUrl(profile.profileImage)
+                  : '';
+              return Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 1.5),
+                ),
+                child: CircleAvatar(
+                  radius: 14,
+                  backgroundColor: Colors.white24,
+                  backgroundImage:
+                      imgUrl.isNotEmpty ? NetworkImage(imgUrl) : null,
+                  child: imgUrl.isEmpty
+                      ? const Icon(IconlyLight.user_1, size: 16, color: Colors.white)
+                      : null,
+                ),
+              );
+            }),
           ),
           const SizedBox(width: 8),
         ],
@@ -239,23 +254,49 @@ class AdminDashboardScreen extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFFF9800).withValues(alpha: 0.3),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
+            Builder(builder: (context) {
+              final imgUrl = profile != null
+                  ? profileController.profileImageUrl(profile.profileImage)
+                  : '';
+              if (imgUrl.isNotEmpty) {
+                return Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFFF9800), width: 2),
+                    image: DecorationImage(
+                      image: NetworkImage(imgUrl),
+                      fit: BoxFit.cover,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF9800).withValues(alpha: 0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: const Icon(IconlyBold.shield_done, color: Colors.white, size: 20),
-            ),
+                );
+              }
+              return Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF9800).withValues(alpha: 0.3),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(IconlyBold.shield_done, color: Colors.white, size: 20),
+              );
+            }),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -399,14 +440,14 @@ class AdminDashboardScreen extends StatelessWidget {
             value: '${kpis.activeContracts}',
             subtitle: 'In negotiation: ${kpis.dealsInNegotiation}',
             icon: IconlyLight.document,
-            onTap: () => Get.to(() => const ContractsScreen()),
+            onTap: _navigateToContracts,
           ),
           (
             title: 'Gross Trade Value (MTD)',
             value: formatInr(kpis.gtvMtd),
             subtitle: 'Finalized deals: ${kpis.finalDealsMtd}',
             icon: IconlyLight.graph,
-            onTap: () => Get.toNamed(AppRoutes.adminBranchReports),
+            onTap: _navigateToContracts,
           ),
           (
             title: 'Brokerage Earned (MTD)',
@@ -848,7 +889,26 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAnalyticsGrid(BuildContext context, ChartsModel charts) {
+  Widget _buildAnalyticsGrid(
+    BuildContext context,
+    ChartsModel charts, [
+    KpiModel? kpis,
+  ]) {
+    final pipelineLabels = List<String>.from(charts.pipelineByStage.labels);
+    final pipelineValues = List<int>.from(charts.pipelineByStage.values);
+
+    // Synchronize Deals in Negotiation count with authoritative live KPI
+    if (kpis != null && kpis.dealsInNegotiation > 0) {
+      final negIdx = pipelineLabels.indexWhere(
+        (l) => l.trim().toLowerCase().contains('negotiat'),
+      );
+      if (negIdx != -1) {
+        if (pipelineValues[negIdx] < kpis.dealsInNegotiation) {
+          pipelineValues[negIdx] = kpis.dealsInNegotiation;
+        }
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -863,8 +923,8 @@ class AdminDashboardScreen extends StatelessWidget {
                     context,
                     "Pipeline by Stage",
                     "Deals in negotiation & signed",
-                    charts.pipelineByStage.labels,
-                    charts.pipelineByStage.values,
+                    pipelineLabels,
+                    pipelineValues,
                     colorResolver: resolvePipelineStageColor,
                   ),
                   const SizedBox(height: 12),
@@ -875,7 +935,6 @@ class AdminDashboardScreen extends StatelessWidget {
                     charts.commodityMix.labels,
                     charts.commodityMix.volumes,
                     colorResolver: resolveCommodityColor,
-                    showValues: true,
                   ),
                 ],
               );
@@ -887,9 +946,9 @@ class AdminDashboardScreen extends StatelessWidget {
                   child: _buildDonutCard(
                     context,
                     "Pipeline by Stage",
-"Deals in negotiation & signed",
-                    charts.pipelineByStage.labels,
-                    charts.pipelineByStage.values,
+                    "Deals in negotiation & signed",
+                    pipelineLabels,
+                    pipelineValues,
                     colorResolver: resolvePipelineStageColor,
                   ),
                 ),
@@ -897,12 +956,11 @@ class AdminDashboardScreen extends StatelessWidget {
                 Expanded(
                   child: _buildDonutCard(
                     context,
-"Commodity Mix (Volume)",
+                    "Commodity Mix (Volume)",
                     "Volume distribution by crop",
                     charts.commodityMix.labels,
                     charts.commodityMix.volumes,
                     colorResolver: resolveCommodityColor,
-                    showValues: true,
                   ),
                 ),
               ],
@@ -2278,6 +2336,28 @@ class AdminDashboardScreen extends StatelessWidget {
 
     final total = values.fold<int>(0, (sum, item) => sum + item);
 
+    // Compute normalized integer percentages that strictly sum to 100% (Largest Remainder Method)
+    final List<int> roundedPercentages = List<int>.filled(labels.length, 0);
+    if (total > 0) {
+      final List<double> remainders = [];
+      int currentSum = 0;
+      for (int i = 0; i < values.length; i++) {
+        final p = (values[i] / total) * 100.0;
+        final floorVal = p.floor();
+        roundedPercentages[i] = floorVal;
+        remainders.add(p - floorVal);
+        currentSum += floorVal;
+      }
+      int diff = 100 - currentSum;
+      if (diff > 0) {
+        final order = List<int>.generate(values.length, (i) => i);
+        order.sort((a, b) => remainders[b].compareTo(remainders[a]));
+        for (int i = 0; i < diff && i < order.length; i++) {
+          roundedPercentages[order[i]]++;
+        }
+      }
+    }
+
     return GlassCard(
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -2313,7 +2393,6 @@ class AdminDashboardScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: List.generate(labels.length, (index) {
-                    final percent = total == 0 ? 0 : (values[index] / total) * 100;
                     final itemColor = getColor(index);
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 6.0),
@@ -2323,7 +2402,7 @@ class AdminDashboardScreen extends StatelessWidget {
                           Container(width: 8, height: 8, decoration: BoxDecoration(color: itemColor, shape: BoxShape.circle)),
                           const SizedBox(width: 6),
                           Expanded(
-child: Text(
+                            child: Text(
                               labels[index],
                               maxLines: 2,
                               softWrap: true,
@@ -2338,7 +2417,7 @@ child: Text(
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            showValues ? '${values[index]}' : "${percent.toStringAsFixed(0)}%",
+                            showValues ? '${values[index]}' : "${roundedPercentages[index]}%",
                             style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: itemColor),
                           ),
                         ],
@@ -2579,13 +2658,46 @@ child: Text(
     final labels = data.labels.take(count).toList();
     final gtvLakhs = data.gtvValues.take(count).map((value) => value / 100000).toList();
     final deals = data.dealsValues.take(count).map((value) => value.toDouble()).toList();
-    // Scale to the data, like the web chart (a week of ~0.07 Lakhs must not sit on a 0-1.2 axis).
+
+    // Scale to the data, matching web portal (7D view scale 0 - 0.07 with peak at ~0.065 Lakhs)
     final gtvPeak = gtvLakhs.fold<double>(0, (max, value) => math.max(max, value));
-    final gtvTop = (gtvPeak <= 0 ? 1.0 : gtvPeak) * 1.2;
-    // Whole deals only: 0, 1, 2 ... with no repeated labels.
-    final dealsTop = math.max(1, deals.fold<double>(0, (max, value) => math.max(max, value)).ceil()).toDouble();
-    final dealsStep = math.max(1, (dealsTop / 5).ceil()).toDouble();
-    String lakhsLabel(double v) => v == 0 ? '0' : v.toStringAsFixed(gtvTop < 1 ? 3 : (gtvTop < 10 ? 2 : 0));
+    final double gtvTop;
+    final double gtvInterval;
+    if (gtvPeak <= 0.07) {
+      gtvTop = 0.07;
+      gtvInterval = 0.01;
+    } else if (gtvPeak <= 0.5) {
+      gtvTop = 0.5;
+      gtvInterval = 0.1;
+    } else if (gtvPeak <= 1.0) {
+      gtvTop = 1.0;
+      gtvInterval = 0.2;
+    } else {
+      gtvTop = (gtvPeak * 1.15).ceilToDouble();
+      gtvInterval = gtvTop / 5;
+    }
+
+    final maxDeals = deals.fold<double>(0, (max, value) => math.max(max, value));
+    final double dealsTop;
+    final double dealsInterval;
+    if (maxDeals <= 1.0) {
+      dealsTop = 1.0;
+      dealsInterval = 0.2;
+    } else if (maxDeals <= 5.0) {
+      dealsTop = 5.0;
+      dealsInterval = 1.0;
+    } else {
+      dealsTop = maxDeals.ceilToDouble();
+      dealsInterval = math.max(1, (dealsTop / 5).ceil()).toDouble();
+    }
+
+    String lakhsLabel(double v) {
+      if (v <= 0.0001) return '0';
+      if (gtvTop <= 0.1) return v.toStringAsFixed(2);
+      if (gtvTop <= 1.0) return v.toStringAsFixed(2);
+      if (gtvTop < 10) return v.toStringAsFixed(1);
+      return v.toStringAsFixed(0);
+    }
     const gtvColor = Color(0xFFEA7C1C);
     const dealsColor = Color(0xFF4CC9A6);
 
@@ -2687,12 +2799,18 @@ child: Text(
                       topTitles: const AxisTitles(
                         sideTitles: SideTitles(showTitles: false),
                       ),
-                      // Same left room as the line chart's GTV axis, so bars and line share one plot area.
-                      leftTitles: const AxisTitles(
-                        axisNameWidget: SizedBox.shrink(),
-                        sideTitles: SideTitles(
+                      // Mirror the LineChart's left axis layout for pixel-perfect plot synchronization
+                      leftTitles: AxisTitles(
+                        axisNameWidget: Text(
+                          '₹ Lakhs',
+                          style: GoogleFonts.inter(
+                            fontSize: 9,
+                            color: Colors.transparent,
+                          ),
+                        ),
+                        sideTitles: const SideTitles(
                           showTitles: true,
-                          reservedSize: 32,
+                          reservedSize: 34,
                           getTitlesWidget: _emptyAxisLabel,
                         ),
                       ),
@@ -2703,17 +2821,31 @@ child: Text(
                         ),
                         sideTitles: SideTitles(
                           showTitles: true,
-                          reservedSize: 30,
-                          interval: dealsStep,
-                          getTitlesWidget: (value, meta) => value % 1 != 0
-                              ? const SizedBox.shrink()
-                              : Text(
-                            value.toInt().toString(),
-                            style: GoogleFonts.inter(
-                              fontSize: 8,
-                              color: theme.textTheme.bodySmall?.color,
-                            ),
-                          ),
+                          reservedSize: 32,
+                          interval: dealsInterval,
+                          getTitlesWidget: (value, meta) {
+                            if (value < -0.01 || value > dealsTop + 0.01) {
+                              return const SizedBox.shrink();
+                            }
+                            if (dealsTop <= 1.0) {
+                              return Text(
+                                value <= 0.0001 ? '0' : value.toStringAsFixed(1),
+                                style: GoogleFonts.inter(
+                                  fontSize: 8,
+                                  color: theme.textTheme.bodySmall?.color,
+                                ),
+                              );
+                            }
+                            return value % 1 != 0
+                                ? const SizedBox.shrink()
+                                : Text(
+                                    value.toInt().toString(),
+                                    style: GoogleFonts.inter(
+                                      fontSize: 8,
+                                      color: theme.textTheme.bodySmall?.color,
+                                    ),
+                                  );
+                          },
                         ),
                       ),
                       bottomTitles: AxisTitles(
@@ -2757,16 +2889,11 @@ child: Text(
                   ),
                 ),
                 Positioned.fill(
-                  // The bar chart's right axis: 30 for the labels + 16 for the "Deals" name.
-                  right: 46,
-                  bottom: 28,
                   child: IgnorePointer(
                     child: LineChart(
                       LineChartData(
                         minY: 0,
                         maxY: gtvTop,
-                        // Bars sit in the middle of equal slots, so the line's points do too:
-                        // otherwise the GTV peak lands one day away from its deals bar.
                         minX: -0.5,
                         maxX: count - 0.5,
                         lineTouchData: const LineTouchData(enabled: false),
@@ -2775,11 +2902,27 @@ child: Text(
                           topTitles: const AxisTitles(
                             sideTitles: SideTitles(showTitles: false),
                           ),
-                          rightTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
+                          // Mirror BarChart right axis layout for identical plot rectangle
+                          rightTitles: AxisTitles(
+                            axisNameWidget: Text(
+                              'Deals',
+                              style: GoogleFonts.inter(
+                                fontSize: 9,
+                                color: Colors.transparent,
+                              ),
+                            ),
+                            sideTitles: const SideTitles(
+                              showTitles: true,
+                              reservedSize: 32,
+                              getTitlesWidget: _emptyAxisLabel,
+                            ),
                           ),
                           bottomTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 28,
+                              getTitlesWidget: _emptyAxisLabel,
+                            ),
                           ),
                           leftTitles: AxisTitles(
                             axisNameWidget: Text(
@@ -2788,7 +2931,8 @@ child: Text(
                             ),
                             sideTitles: SideTitles(
                               showTitles: true,
-                              reservedSize: 32,
+                              reservedSize: 34,
+                              interval: gtvInterval,
                               getTitlesWidget: (value, meta) => Text(
                                 lakhsLabel(value),
                                 style: GoogleFonts.inter(
@@ -3201,6 +3345,11 @@ child: Text(
       itemBuilder: (context, index) {
         final activity = activities[index];
         final theme = Theme.of(context);
+        final cleanedDesc = activity.description
+            .replaceAll(RegExp(r'\.{2,}\s*•'), ' •')
+            .replaceAll(RegExp(r'\.{2,}$'), '')
+            .replaceAll('  ', ' ')
+            .trim();
 
         return GlassCard(
           padding: const EdgeInsets.all(12),
@@ -3233,21 +3382,23 @@ child: Text(
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      activity.description,
+                      cleanedDesc,
                       style: GoogleFonts.inter(
-                        fontSize: 10,
+                        fontSize: 11,
+                        height: 1.4,
                         color: theme.textTheme.bodyMedium?.color,
                       ),
-                      maxLines: 2,
+                      maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               Text(
                 activity.time,
                 style: GoogleFonts.inter(
-                  fontSize: 8,
+                  fontSize: 10,
                   color: theme.textTheme.bodyMedium?.color,
                 ),
               ),

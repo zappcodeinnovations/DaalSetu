@@ -471,13 +471,16 @@ class BuyerMyInterestsView extends StatelessWidget {
             itemCount: offers.length,
             separatorBuilder: (_, __) => const SizedBox(height: 14),
             itemBuilder: (context, index) {
+              final isDark = theme.brightness == Brightness.dark;
               final offer = offers[index];
               final isConfirmed = offer.isConfirmed;
               final isRejected = offer.isRejected;
               final status = offer.displayStatus ?? 'Interested';
-              final isInterestedCard =
+              final isInterestedStatus =
                   status.trim().toLowerCase() == 'interested' ||
-                  (offer.status ?? '').trim().toLowerCase() == 'interested' ||
+                  (offer.status ?? '').trim().toLowerCase() == 'interested';
+              final isInterestedCard =
+                  isInterestedStatus ||
                   offer.isInterested ||
                   offer.canEditInterest;
               Color badgeColor = const Color(0xFFFFB300);
@@ -505,8 +508,11 @@ class BuyerMyInterestsView extends StatelessWidget {
                         ? "₹${offer.requestedAmount}"
                         : "Open");
 
-              return GlassCard(
-                padding: const EdgeInsets.all(16),
+              return InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () => _openDetails(offer),
+                child: GlassCard(
+                  padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -733,22 +739,35 @@ class BuyerMyInterestsView extends StatelessWidget {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        OutlinedButton(
+                        OutlinedButton.icon(
                           onPressed: () => _openDetails(offer),
+                          icon: Icon(
+                            IconlyLight.show,
+                            size: 15,
+                            color: theme.textTheme.bodyLarge?.color,
+                          ),
+                          label: Text(
+                            "View",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12.5,
+                              color: theme.textTheme.bodyLarge?.color,
+                            ),
+                          ),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: theme.textTheme.bodyLarge?.color,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
+                            minimumSize: const Size(0, 36),
                             side: BorderSide(
-                              color: theme.dividerColor.withValues(alpha: 0.6),
+                              color: isDark
+                                  ? const Color(0xFF64748B)
+                                  : const Color(0xFF94A3B8),
+                              width: 1.2,
                             ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: const Text(
-                            "View",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
                             ),
                           ),
                         ),
@@ -756,47 +775,94 @@ class BuyerMyInterestsView extends StatelessWidget {
                           OutlinedButton.icon(
                             onPressed: () =>
                                 _showEditDialog(context, controller, offer),
-                            icon: const Icon(Icons.edit_outlined, size: 15),
-                            label: const Text(
+                            icon: const Icon(
+                              IconlyLight.edit,
+                              size: 15,
+                              color: Color(0xFFE65100),
+                            ),
+                            label: Text(
                               "Edit",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12.5,
+                                color: const Color(0xFFE65100),
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              minimumSize: const Size(0, 36),
+                              side: const BorderSide(
+                                color: Color(0xFFF57C00),
+                                width: 1.2,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
                               ),
                             ),
                           ),
-                        if (offer.canCancelInterest && isInterestedCard)
+                        if (offer.canCancelInterest && !isInterestedStatus)
                           OutlinedButton.icon(
                             onPressed: () =>
                                 _cancelInterest(context, controller, offer),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: theme.colorScheme.error,
+                            icon: Icon(
+                              Icons.close_rounded,
+                              size: 15,
+                              color: theme.colorScheme.error,
                             ),
-                            icon: const Icon(Icons.close, size: 15),
-                            label: const Text(
+                            label: Text(
                               "Cancel",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12.5,
+                                color: theme.colorScheme.error,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              minimumSize: const Size(0, 36),
+                              foregroundColor: theme.colorScheme.error,
+                              side: BorderSide(
+                                color: theme.colorScheme.error.withValues(alpha: 0.6),
+                                width: 1.2,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
                               ),
                             ),
                           ),
                         if (!offer.isConfirmed && !isRejected)
                           ElevatedButton.icon(
                             onPressed: () => _openNegotiation(offer),
+                            icon: const Icon(
+                              IconlyLight.chat,
+                              size: 15,
+                              color: Colors.white,
+                            ),
+                            label: Text(
+                              "Negotiation",
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12.5,
+                                color: Colors.white,
+                              ),
+                            ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFE65100),
                               foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              minimumSize: const Size(0, 36),
+                              elevation: 1,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            icon: const Icon(Icons.chat_outlined, size: 15),
-                            label: const Text(
-                              "Negotiation",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
                               ),
                             ),
                           ),
@@ -804,7 +870,8 @@ class BuyerMyInterestsView extends StatelessWidget {
                     ),
                   ],
                 ),
-              );
+              ),
+            );
             },
           ),
         );

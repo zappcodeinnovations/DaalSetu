@@ -194,6 +194,14 @@ Future<List<AdminOption>> loadParentCategoryOptions() => _load(
           : const AdminOption('', ''),
     );
 
+Future<List<AdminOption>> loadBrandOptions() => _load(
+      '/api/brands/',
+      (b) => AdminOption(
+        '${b['id'] ?? ''}',
+        (b['brand_name'] ?? b['name'] ?? 'Brand').toString(),
+      ),
+    );
+
 Future<List<AdminOption>> loadOfferOptions() => _load(
       '/api/products/',
       (o) => AdminOption('${o['id'] ?? ''}', '#${o['id']} ${(o['title'] ?? 'Offer').toString()}'),
@@ -327,41 +335,111 @@ Future<bool> adminConfirmAndRun(
     context: context,
     builder: (dialogContext) {
       var showError = false;
+      final theme = Theme.of(dialogContext);
+      final isReject = title.toLowerCase().contains('reject') || destructive;
+
       return StatefulBuilder(
         builder: (dialogContext, setState) => AlertDialog(
-          title: Text(title),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          clipBehavior: Clip.antiAlias,
+          titlePadding: EdgeInsets.zero,
+          title: isReject
+              ? Container(
+                  color: const Color(0xFFEA580C),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(dialogContext, false),
+                        child: const Icon(Icons.close, color: Colors.white, size: 20),
+                      ),
+                    ],
+                  ),
+                )
+              : Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                  child: Text(title),
+                ),
+          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(message),
+              if (message.isNotEmpty && (!isReject || noteLabel == null)) ...[
+                Text(message),
+                const SizedBox(height: 12),
+              ],
               if (noteLabel != null) ...[
-                const SizedBox(height: 14),
+                Text(
+                  noteLabel,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
                 TextField(
                   controller: noteController,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    labelText: noteRequired ? '$noteLabel *' : noteLabel,
+                    hintText: 'Enter ${noteLabel.toLowerCase()}',
                     errorText: showError ? '$noteLabel is required' : null,
-                    border: const OutlineInputBorder(),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    contentPadding: const EdgeInsets.all(12),
                   ),
                 ),
               ],
             ],
           ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           actions: [
-            FilledButton(
-              style: destructive ? FilledButton.styleFrom(backgroundColor: Theme.of(dialogContext).colorScheme.error) : null,
-              onPressed: () {
-                if (noteRequired && noteController.text.trim().isEmpty) {
-                  setState(() => showError = true);
-                  return;
-                }
-                Navigator.pop(dialogContext, true);
-              },
-              child: Text(confirmText),
+            OutlinedButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              style: OutlinedButton.styleFrom(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Cancel'),
             ),
-            OutlinedButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+            if (isReject)
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFDC2626),
+                  side: const BorderSide(color: Color(0xFFDC2626), width: 1.2),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () {
+                  if (noteRequired && noteController.text.trim().isEmpty) {
+                    setState(() => showError = true);
+                    return;
+                  }
+                  Navigator.pop(dialogContext, true);
+                },
+                child: Text(confirmText),
+              )
+            else
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () {
+                  if (noteRequired && noteController.text.trim().isEmpty) {
+                    setState(() => showError = true);
+                    return;
+                  }
+                  Navigator.pop(dialogContext, true);
+                },
+                child: Text(confirmText),
+              ),
           ],
         ),
       );
@@ -407,11 +485,29 @@ AdminCustomAction adminPostAction({
       noteLabel: noteLabel,
       noteRequired: noteRequired,
       destructive: destructive,
-      request: (note) => ApiClient.post(
-        endpoint: endpoint(record),
-        body: {'action': action, ...extra, if (noteKey != null && note.isNotEmpty) noteKey: note},
-        requireAuth: true,
-      ),
+      request: (note) {
+        final ep = endpoint(record);
+        if (ep.contains('/api/kyc/')) {
+          if (noteKey != null && note.isNotEmpty) {
+            return ApiClient.post(
+              endpoint: ep,
+              body: {noteKey: note},
+              requireAuth: true,
+            );
+          } else {
+            return ApiClient.post(
+              endpoint: ep,
+              body: {},
+              requireAuth: true,
+            );
+          }
+        }
+        return ApiClient.post(
+          endpoint: ep,
+          body: {'action': action, ...extra, if (noteKey != null && note.isNotEmpty) noteKey: note},
+          requireAuth: true,
+        );
+      },
     ),
   );
 }

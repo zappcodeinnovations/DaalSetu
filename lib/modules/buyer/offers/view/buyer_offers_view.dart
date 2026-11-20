@@ -60,9 +60,21 @@ class BuyerOffersView extends StatelessWidget {
                 : null,
           ),
           title: "Offers",
-          bottom: const TabBar(
-            isScrollable: true,
-            tabs: [
+          bottom: TabBar(
+            isScrollable: false,
+            indicatorColor: Colors.white,
+            indicatorWeight: 3,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white.withValues(alpha: 0.75),
+            labelStyle: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+            unselectedLabelStyle: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+            tabs: const [
               Tab(text: "Offers"),
               Tab(text: "Today"),
               Tab(text: "Pending"),
@@ -964,13 +976,17 @@ class _OfferList extends StatelessWidget {
               },
             )
           else if (offer.canSubmitOffer)
-            _ActionBtn(
-              label: "Submit Offer",
-              color: Theme.of(context).colorScheme.primary,
-              icon: IconlyLight.send,
-              onTap: () =>
-                  _showInterestDialog(context, controller, productId, offer),
-            ),
+            Obx(() {
+              final isSubmitted =
+                  controller.isOfferSubmitted(productId, offer: offer);
+              return _ActionBtn(
+                label: isSubmitted ? "Resubmit" : "Submit Offer",
+                color: Theme.of(context).colorScheme.primary,
+                icon: IconlyLight.send,
+                onTap: () =>
+                    _showInterestDialog(context, controller, productId, offer),
+              );
+            }),
         ],
       );
     }
@@ -1222,6 +1238,8 @@ class _OfferList extends StatelessWidget {
         child: StatefulBuilder(
           builder: (dialogContext, setDialogState) {
             final theme = Theme.of(dialogContext);
+            final isSubmitted =
+                controller.isOfferSubmitted(productId, offer: offer);
             return GlassCard(
               padding: const EdgeInsets.all(20),
               child: SingleChildScrollView(
@@ -1231,7 +1249,7 @@ class _OfferList extends StatelessWidget {
                   children: [
                     // Header Title
                     Text(
-                      "Submit Offer",
+                      isSubmitted ? "Resubmit Offer" : "Submit Offer",
                       style: GoogleFonts.poppins(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
@@ -1432,8 +1450,20 @@ DeliveryPeriodPicker(
 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFF7A00),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 12),
+                            minimumSize: const Size(0, 44),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            elevation: 2,
+                          ),
                           onPressed: () async {
                             if (qtyCtrl.text.trim().isEmpty ||
                                 priceCtrl.text.trim().isEmpty) {
@@ -1474,12 +1504,45 @@ DeliveryPeriodPicker(
                               interestId: offer.interestId,
                             );
                           },
-                          child: const Text("Submit Offer"),
+                          child: Text(
+                            isSubmitted ? "Resubmit" : "Submit Offer",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: theme.brightness == Brightness.dark
+                                ? const Color(0xFFCBD5E1)
+                                : const Color(0xFFE65100),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                            minimumSize: const Size(0, 44),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            side: BorderSide(
+                              color: theme.brightness == Brightness.dark
+                                  ? const Color(0xFF475569)
+                                  : const Color(0xFFFFB74D),
+                              width: 1.2,
+                            ),
+                          ),
                           onPressed: () => Get.back(),
-                          child: const Text("Cancel"),
+                          child: Text(
+                            "Cancel",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: theme.brightness == Brightness.dark
+                                  ? const Color(0xFFCBD5E1)
+                                  : const Color(0xFFE65100),
+                            ),
+                          ),
                         ),
                       ],
                     ),

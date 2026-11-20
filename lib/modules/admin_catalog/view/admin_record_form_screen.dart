@@ -71,6 +71,21 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
     if (record == null) return null;
     if (field.initialValue != null) return field.initialValue!(record.data);
     var current = record[field.key];
+    if (field.key == 'status' && (current == null || current.toString().isEmpty)) {
+      if (record['status'] != null) {
+        current = record['status'].toString().toLowerCase();
+      } else if (record['is_active'] == true) {
+        current = 'active';
+      } else if (record['is_active'] == false) {
+        current = 'pending';
+      }
+    }
+    if (field.key == 'mapped_brands') {
+      current = record['mapped_brands'] ??
+          record['brands'] ??
+          record['brand_ids'] ??
+          record['mapped_brand_ids'];
+    }
     if (current == null && field.key.endsWith('_id')) {
       final relation = record[field.key.substring(0, field.key.length - 3)];
       if (relation is Map) current = relation['id'];
@@ -132,13 +147,24 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
     for (final field in widget.config.fields) {
       if (field.isFile || field.derivedFrom != null || (editing && field.createOnly)) continue;
       if (field.multiSelect) {
-        body[field.key] = (multiValues[field.key] ?? {})
+        final list = (multiValues[field.key] ?? {})
             .map((id) => int.tryParse(id) ?? id)
             .toList();
+        body[field.key] = list;
+        if (field.key == 'mapped_brands') {
+          body['brands'] = list;
+        }
         continue;
       }
       final raw =
           field.hiddenValue ?? controllers[field.key]?.text.trim() ?? '';
+      if (field.key == 'status' &&
+          (widget.config.key == 'sub_categories' ||
+              widget.config.key == 'categories')) {
+        body['status'] = raw.toString().toLowerCase();
+        body['is_active'] = raw.toString().toLowerCase() == 'active';
+        continue;
+      }
       if (field.singleSelectAsList) {
         body[field.key] = raw.toString().isEmpty
             ? <dynamic>[]

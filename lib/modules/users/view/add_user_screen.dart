@@ -7,7 +7,6 @@ import 'package:image_picker/image_picker.dart';
 import '../controller/add_user_controller.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import '../controller/user_controller.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/utils/input_validators.dart';
 import 'package:daalsetu/widgets/back_navigation.dart';

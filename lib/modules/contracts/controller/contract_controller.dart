@@ -77,12 +77,12 @@ class ContractController extends GetxController {
   /// ===============================
   Future<void> fetchContractDetail(int contractId) async {
     try {
-      if (contractDetail.value == null || contractDetail.value!.id != contractId) {
-        isLoading.value = true;
-        hasDeliveryChallan.value = false;
-        deliveryChallanId.value = null;
-        deliveryChallanNumber.value = '';
-      }
+      isLoading.value = true;
+      isCheckingChallan.value = true;
+      hasDeliveryChallan.value = false;
+      deliveryChallanId.value = null;
+      deliveryChallanNumber.value = '';
+
       final result = await ContractService.getContractDetail(contractId);
       contractDetail.value = result;
       await checkDeliveryChallanStatus(result);
@@ -99,6 +99,7 @@ class ContractController extends GetxController {
       }
     } finally {
       isLoading.value = false;
+      isCheckingChallan.value = false;
     }
   }
 

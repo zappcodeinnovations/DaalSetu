@@ -6,6 +6,7 @@ import 'package:iconly/iconly.dart';
 import '../../../theme/app_theme.dart';
 import '../../../routes/app_routes.dart';
 import '../../contracts/view/contract_view.dart';
+import '../../nav_bar/controller/nav_controller.dart';
 import '../model/dashboard_model.dart';
 import '../../../utils/money_format.dart';
 import 'package:daalsetu/widgets/app_shell.dart';
@@ -26,6 +27,15 @@ class AdminOverviewKpisView extends StatefulWidget {
 
 class _AdminOverviewKpisViewState extends State<AdminOverviewKpisView> {
   late String _selectedCategory;
+
+  void _openContracts() {
+    if (Get.isRegistered<BottomNavController>()) {
+      Get.back();
+      Get.find<BottomNavController>().changeIndex(1);
+    } else {
+      Get.to(() => const ContractsScreen());
+    }
+  }
 
   final List<String> _categories = const [
     'All',
@@ -114,8 +124,8 @@ class _AdminOverviewKpisViewState extends State<AdminOverviewKpisView> {
                 icon: IconlyLight.graph,
                 accentColor: const Color(0xFF2563EB),
                 isDark: isDark,
-                actionLabel: "View Branch Reports",
-                onActionTap: () => Get.toNamed(AppRoutes.adminBranchReports),
+                actionLabel: "View Contracts",
+                onActionTap: _openContracts,
               ),
               const SizedBox(height: 10),
               _buildDetailedKpiCard(
@@ -175,7 +185,7 @@ class _AdminOverviewKpisViewState extends State<AdminOverviewKpisView> {
                 accentColor: AppTheme.primaryGold,
                 isDark: isDark,
                 actionLabel: "View All Contracts",
-                onActionTap: () => Get.to(() => const ContractsScreen()),
+                onActionTap: _openContracts,
               ),
               const SizedBox(height: 10),
               _buildDetailedKpiCard(

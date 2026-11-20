@@ -16,10 +16,10 @@ import '../controller/contract_controller.dart';
 import 'package:daalsetu/modules/admin_catalog/view/transport_bids_sheet.dart';
 import 'contract_edit_view.dart';
 import '../services/contract_pdf.dart';
-import 'package:daalsetu/widgets/app_shell.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/services/contract_services.dart';
+import 'package:daalsetu/utils/money_format.dart';
 import 'package:daalsetu/widgets/back_navigation.dart';
 
 class ContractDetailScreen extends StatefulWidget {
@@ -44,9 +44,9 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     contractId = rawArgs is int
         ? rawArgs
         : int.tryParse(rawArgs?.toString() ?? '') ?? 0;
-    final existing = controller.contracts.firstWhereOrNull((c) => c.id == contractId);
-    if (existing != null) {
-      controller.contractDetail.value = ContractDetailModel.fromContractModel(existing);
+
+    if (controller.userRole.value.isNotEmpty) {
+      _userRole = controller.userRole.value.trim().toLowerCase();
     }
     _loadRole();
     Future.microtask(() => controller.fetchContractDetail(contractId));
@@ -55,9 +55,12 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
   Future<void> _loadRole() async {
     final role = await AppPreferences.getRole();
     if (mounted) {
-      setState(() {
-        _userRole = (role ?? '').trim().toLowerCase();
-      });
+      final normalized = (role ?? '').trim().toLowerCase();
+      if (_userRole != normalized) {
+        setState(() {
+          _userRole = normalized;
+        });
+      }
     }
   }
 
@@ -90,13 +93,12 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
         ),
       ),
       body: Obx(() {
-        if (controller.isLoading.value) {
+        if (controller.isLoading.value ||
+            controller.contractDetail.value == null ||
+            controller.contractDetail.value!.id != contractId) {
           return const Center(child: CircularProgressIndicator());
         }
-        final contract = controller.contractDetail.value;
-        if (contract == null || contract.id != contractId) {
-          return const Center(child: Text('Contract details unavailable'));
-        }
+        final contract = controller.contractDetail.value!;
         return RefreshIndicator(
           onRefresh: () => controller.fetchContractDetail(contractId),
           child: ListView(
@@ -139,6 +141,8 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                   'Deal quantity',
                   '${contract.dealQuantity} ${contract.quantityUnit}'.trim(),
                 ),
+                if (_calculateTotalPrice(contract).isNotEmpty)
+                  _item('Total deal price', _calculateTotalPrice(contract)),
                 if (contract.quantityQtl.isNotEmpty && contract.quantityQtl != contract.dealQuantity)
                   _item('Quantity (Qtl)', contract.quantityQtl),
                 if (contract.bagCount != null && contract.bagCount != 0)
@@ -153,6 +157,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                 title: 'Buyer',
                 displayPartyId: contract.displayBuyerId,
                 name: contractPersonName(contract.buyerPersonName, contract.buyerName),
+                partyId: contract.buyerId,
                 mobile: contract.buyerMobile,
                 email: contract.buyerEmail,
                 company: contractCompanyName(contract.buyerCompany, contract.buyerName, contract.buyerPersonName),
@@ -164,6 +169,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                 title: 'Seller',
                 displayPartyId: contract.displaySellerId,
                 name: contractPersonName(contract.sellerPersonName, contract.sellerName),
+                partyId: contract.sellerId,
                 mobile: contract.sellerMobile,
                 email: contract.sellerEmail,
                 company: contractCompanyName(contract.sellerCompany, contract.sellerName, contract.sellerPersonName),
@@ -242,6 +248,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
         );
       }),
       bottomNavigationBar: Obx(() {
+        if (controller.isLoading.value) return const SizedBox.shrink();
         final contract = controller.contractDetail.value;
         final bool showCreateDC = _isSuperAdmin &&
             contract != null &&
@@ -313,25 +320,55 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     );
   }
 
+  String _calculateTotalPrice(ContractDetailModel contract) {
+    final rate = double.tryParse(contract.dealAmount.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+    final qty = double.tryParse(contract.dealQuantity.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+    if (rate > 0 && qty > 0) {
+      return formatInr(rate * qty);
+    }
+    return '';
+  }
+
   Widget _header(ContractDetailModel contract) {
     final color = _statusColor(contract.status);
     final contractTitle = contract.contractId.isNotEmpty
         ? 'Contract: ${contract.contractId}'
         : 'Contract';
+    final totalPrice = _calculateTotalPrice(contract);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
-              child: Text(
-                contractTitle,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    contractTitle,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  if (totalPrice.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      'Total: $totalPrice',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? const Color(0xFFFFA726) : const Color(0xFFE65100),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
+            const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: 12,
@@ -378,6 +415,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     required String title,
     required String displayPartyId,
     required String name,
+    int? partyId,
     String? mobile,
     String? email,
     String? company,
@@ -390,31 +428,36 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     final isMobileNumeric = mobile != null && RegExp(r'^\+?[0-9]{7,15}$').hasMatch(mobile.trim());
     final phoneToDisplay = isMobileNumeric ? mobile.trim() : (RegExp(r'^\+?[0-9]{7,15}$').hasMatch(name.trim()) ? name.trim() : null);
 
-    // If displayPartyId has "Name (ID: ...)", extract the leading name, or fallback to name
-    String headingName = name;
-    String? subtitleId = displayPartyId.isNotEmpty ? displayPartyId : (uniqueId ?? mappedId);
-    if (displayPartyId.isNotEmpty && displayPartyId.contains('(')) {
-      final parts = displayPartyId.split('(');
-      headingName = parts[0].trim();
-      subtitleId = '(${parts.sublist(1).join('(').trim()}';
-      if (subtitleId.startsWith('(') && subtitleId.endsWith(')')) {
-        subtitleId = subtitleId.substring(1, subtitleId.length - 1).trim();
+    // Main heading is the party name (e.g. Mariegold farm / Agrofarm)
+    String headingName = name.trim();
+    if (headingName.isEmpty && displayPartyId.isNotEmpty) {
+      if (displayPartyId.contains('(')) {
+        headingName = displayPartyId.split('(').first.trim();
+      } else {
+        headingName = displayPartyId.trim();
       }
-    } else if (headingName.isEmpty || RegExp(r'^\+?[0-9]{7,15}$').hasMatch(headingName)) {
-      if (displayPartyId.isNotEmpty) headingName = displayPartyId;
     }
 
-    // The heading is the company (the name that is billed); the person becomes a "Contact" line.
-    final companyName = (company ?? '').trim();
-    String? contactName;
-    if (companyName.isNotEmpty) {
-      if (headingName.isNotEmpty &&
-          headingName.toLowerCase() != companyName.toLowerCase() &&
-          !RegExp(r'^\+?[0-9]{7,15}$').hasMatch(headingName)) {
-        contactName = headingName;
+    // Build subtitle entity ID string matching web portal (e.g. "ID: 166 | BUY8855C2A68")
+    String? subtitleId;
+    final idCode = (uniqueId != null && uniqueId.isNotEmpty)
+        ? uniqueId
+        : ((mappedId != null && mappedId.isNotEmpty)
+            ? mappedId
+            : (displayPartyId.isNotEmpty ? displayPartyId : null));
+
+    if (partyId != null && partyId != 0) {
+      if (idCode != null && idCode.isNotEmpty && idCode != partyId.toString()) {
+        subtitleId = 'ID: $partyId | $idCode';
+      } else {
+        subtitleId = 'ID: $partyId';
       }
-      headingName = companyName;
+    } else if (idCode != null && idCode.isNotEmpty) {
+      subtitleId = idCode.startsWith('ID:') ? idCode : 'ID: $idCode';
     }
+
+    // Company line (e.g. "Company: Test company" / "Company: Agrotech")
+    final companyName = (company ?? '').trim();
 
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
@@ -454,7 +497,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                           fontSize: 15,
                         ),
                       ),
-                      if (_isSuperAdmin && subtitleId != null && subtitleId.isNotEmpty) ...[
+                      if (subtitleId != null && subtitleId.isNotEmpty) ...[
                         const SizedBox(height: 3),
                         Text(
                           subtitleId,
@@ -465,10 +508,10 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                           ),
                         ),
                       ],
-                      if (contactName != null) ...[
+                      if (companyName.isNotEmpty) ...[
                         const SizedBox(height: 3),
                         Text(
-                          'Contact: $contactName',
+                          'Company: $companyName',
                           style: TextStyle(
                             color: Colors.grey.shade700,
                             fontSize: 12,

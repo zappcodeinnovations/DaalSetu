@@ -78,6 +78,7 @@ class BuyerOfferModel {
     this.isRfq = false,
     this.isActive = true,
     this.isExpired = false,
+    this.hasSubmittedOffer = false,
     this.expiresAt,
     this.deliveryFrom,
     this.deliveryTo,
@@ -87,6 +88,7 @@ class BuyerOfferModel {
   });
 
   final bool isExpired;
+  final bool hasSubmittedOffer;
 
   /// Delivery Period the seller offers (yyyy-MM-dd), shown to buyers (MoM point 8).
   final String? deliveryFrom;
@@ -203,6 +205,7 @@ class BuyerOfferModel {
     bool? isRfq,
     bool? isActive,
     bool? isExpired,
+    bool? hasSubmittedOffer,
     DateTime? expiresAt,
     String? deliveryFrom,
     String? deliveryTo,
@@ -248,6 +251,7 @@ class BuyerOfferModel {
       isRfq: isRfq ?? this.isRfq,
       isActive: isActive ?? this.isActive,
       isExpired: isExpired ?? this.isExpired,
+      hasSubmittedOffer: hasSubmittedOffer ?? this.hasSubmittedOffer,
       expiresAt: expiresAt ?? this.expiresAt,
       deliveryFrom: deliveryFrom ?? this.deliveryFrom,
       deliveryTo: deliveryTo ?? this.deliveryTo,
@@ -437,6 +441,8 @@ class BuyerOfferModel {
       parsedInterestId = int.tryParse(json['interest']['id'].toString());
     } else if (json['interest'] is int) {
       parsedInterestId = json['interest'];
+    } else if (json['my_interest'] is Map && json['my_interest']['id'] != null) {
+      parsedInterestId = int.tryParse(json['my_interest']['id'].toString());
     }
 
     final rootId = json['id'] != null
@@ -980,14 +986,19 @@ class BuyerOfferModel {
         (json['company']['legal_name'] ?? json['company']['trade_name']),
     ]);
 
-    final isRfqItem =
-        json['source_type'] == 'rfq' ||
-        json.containsKey('rfq_id') ||
-        json.containsKey('required_quantity') ||
-        json.containsKey('target_price') ||
-        json.containsKey('visible_branches') ||
-        (json['status']?.toString().toLowerCase() == 'open' &&
-            json.containsKey('commodity'));
+    final isInterestItem = (parsedInterestId != null && parsedInterestId > 0) ||
+        json['source_type'] == 'interest' ||
+        json.containsKey('interest_id') ||
+        json.containsKey('my_interest');
+
+    final isRfqItem = !isInterestItem &&
+        (json['source_type'] == 'rfq' ||
+            json.containsKey('rfq_id') ||
+            json.containsKey('required_quantity') ||
+            json.containsKey('target_price') ||
+            json.containsKey('visible_branches') ||
+            (json['status']?.toString().toLowerCase() == 'open' &&
+                json.containsKey('commodity')));
 
     // Format display price e.g. "₹60.00/TON"
     String formattedPrice = '';
@@ -1213,7 +1224,7 @@ class BuyerOfferModel {
       ),
       canCancelInterest: boolValue(
         'can_cancel',
-        fallback: normalizedStatus == 'interested',
+        fallback: false,
       ),
       canOpenNegotiation: terminal
           ? false
@@ -1261,6 +1272,13 @@ class BuyerOfferModel {
         if (json['interest'] is Map) json['interest']['delivery_date_to'],
       ]),
       maxQuantity: json['max_quantity']?.toString(),
+      hasSubmittedOffer: boolValue('has_submitted_offer', fallback: false) ||
+          boolValue('has_submitted', fallback: false) ||
+          boolValue('has_interest', fallback: false) ||
+          boolValue('is_interested', fallback: false) ||
+          (json['my_interest'] != null) ||
+          (parsedInterestId != null && parsedInterestId > 0) ||
+          normalizedStatus == 'interested',
     );
   }
 

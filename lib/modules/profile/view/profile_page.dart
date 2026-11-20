@@ -75,9 +75,9 @@ class ProfileScreen extends StatelessWidget {
             if (value == 'edit') {
               Get.toNamed(AppRoutes.editProfile);
             } else if (value == 'terms') {
-              _openLegal('https://www.daall-setu.com/terms-and-conditions/');
+              _openLegal(context, 'Terms & Conditions', 'https://www.daall-setu.com/terms-and-conditions/');
             } else if (value == 'privacy') {
-              _openLegal('https://www.daall-setu.com/privacy-policy/');
+              _openLegal(context, 'Privacy Policy', 'https://www.daall-setu.com/privacy-policy/');
             }
           },
           itemBuilder: (context) => const [
@@ -181,6 +181,7 @@ class ProfileScreen extends StatelessWidget {
                   iconColor: accentGreen,
                   iconText: "PAN",
                   documentUrl: user.panImage,
+                  fieldKey: 'pan_image',
                 ),
                 const SizedBox(height: 12),
                 _buildDocumentRow(
@@ -189,6 +190,7 @@ class ProfileScreen extends StatelessWidget {
                   iconColor: accentBlue,
                   iconText: "GST",
                   documentUrl: user.gstImage,
+                  fieldKey: 'gst_image',
                 ),
                 const SizedBox(height: 12),
                 _buildDocumentRow(
@@ -197,6 +199,7 @@ class ProfileScreen extends StatelessWidget {
                   iconColor: const Color(0xFF8B5CF6),
                   iconText: "ID",
                   documentUrl: user.aadhaarImage,
+                  fieldKey: 'aadhaar_image',
                 ),
 
                 const SizedBox(height: 28),
@@ -396,11 +399,94 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _openLegal(String url) async {
-    final opened = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    if (!opened) {
-      AppSnackbar.showError(message: 'Could not open the page.');
-    }
+  void _openLegal(BuildContext context, String title, String url) {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => Get.back(),
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "Open official $title in your browser:",
+                style: TextStyle(
+                  fontSize: 13,
+                  color: textLight,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: cardLighter,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  url,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.secondaryOrange,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton.icon(
+                    onPressed: () => Get.back(),
+                    icon: const Icon(Icons.arrow_back, size: 16),
+                    label: const Text("Back"),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      Get.back();
+                      launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.secondaryOrange,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: const Text("Open"),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _legalRow(
@@ -411,7 +497,7 @@ class ProfileScreen extends StatelessWidget {
   }) {
     return InkWell(
       borderRadius: BorderRadius.circular(16),
-      onTap: () => _openLegal(url),
+      onTap: () => _openLegal(context, title, url),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
@@ -728,12 +814,74 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _deleteDocument(String title, String fieldKey) async {
+    final confirm = await Get.dialog<bool>(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Delete $title',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        content: Text('Are you sure you want to remove your uploaded $title?'),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Get.back(result: true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Delete'),
+          ),
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      AppSnackbar.showInfo(
+        message: 'Removing $title...',
+        duration: const Duration(seconds: 1),
+      );
+      final success = await controller.updateProfile({fieldKey: ''});
+      if (success) {
+        AppSnackbar.snackbar(
+          'Success',
+          '$title removed successfully.',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+        controller.fetchProfile();
+      } else {
+        AppSnackbar.snackbar(
+          'Error',
+          'Failed to remove $title.',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      AppSnackbar.snackbar(
+        'Error',
+        e.toString(),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
   Widget _buildDocumentRow(
     BuildContext context, {
     required String title,
     required Color iconColor,
     required String iconText,
     required String documentUrl,
+    required String fieldKey,
   }) {
     final resolvedUrl = controller.profileImageUrl(documentUrl);
     final hasDocument = documentUrl.trim().isNotEmpty;
@@ -796,7 +944,7 @@ class ProfileScreen extends StatelessWidget {
           ),
           if (hasDocument) ...[
             InkWell(
-              onTap: () => _openDocument(resolvedUrl, inApp: true),
+              onTap: () => _openDocument(resolvedUrl, inApp: true, title: title),
               borderRadius: BorderRadius.circular(8),
               child: Container(
                 height: 32,
@@ -826,7 +974,7 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             InkWell(
-              onTap: () => _openDocument(resolvedUrl, inApp: false),
+              onTap: () => _openDocument(resolvedUrl, inApp: false, title: title),
               borderRadius: BorderRadius.circular(8),
               child: Container(
                 width: 32,
@@ -843,6 +991,27 @@ class ProfileScreen extends StatelessWidget {
                 child: Icon(
                   Icons.file_download_outlined,
                   color: textDark,
+                  size: 16,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () => _deleteDocument(title, fieldKey),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.red.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Colors.redAccent,
                   size: 16,
                 ),
               ),
@@ -893,7 +1062,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _openDocument(String url, {required bool inApp}) async {
+  Future<void> _openDocument(String url, {required bool inApp, String title = 'Document'}) async {
     if (url.trim().isEmpty) {
       AppSnackbar.snackbar(
         "Notice",
@@ -939,6 +1108,7 @@ class ProfileScreen extends StatelessWidget {
 
       var fileName = uri.pathSegments.isEmpty ? 'profile_document' : uri.pathSegments.last;
       fileName = fileName.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+      final lowerName = fileName.toLowerCase();
       if (!fileName.contains('.')) {
         final contentType = response.headers['content-type'] ?? '';
         fileName += contentType.contains('pdf') ? '.pdf' : '.jpg';
@@ -952,6 +1122,82 @@ class ProfileScreen extends StatelessWidget {
         bytes: response.bodyBytes,
         mimeType: response.headers['content-type'],
       );
+
+      if (inApp) {
+        final isImage = lowerName.endsWith('.jpg') ||
+            lowerName.endsWith('.jpeg') ||
+            lowerName.endsWith('.png') ||
+            lowerName.endsWith('.webp') ||
+            (response.headers['content-type']?.contains('image') ?? false);
+
+        Get.to(
+          () => Scaffold(
+            backgroundColor: Colors.black,
+            appBar: AppBar(
+              backgroundColor: const Color(0xFF1E293B),
+              elevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => Get.back(),
+              ),
+              title: Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.open_in_new, color: Colors.white),
+                  tooltip: 'Open in external app',
+                  onPressed: () => OpenFilex.open(file.path),
+                ),
+              ],
+            ),
+            body: Center(
+              child: isImage
+                  ? InteractiveViewer(
+                      panEnabled: true,
+                      minScale: 0.5,
+                      maxScale: 4.0,
+                      child: Image.file(file),
+                    )
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.insert_drive_file_outlined,
+                          size: 64,
+                          color: Colors.white70,
+                        ),
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Text(
+                            fileName,
+                            style: const TextStyle(color: Colors.white, fontSize: 14),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: () => OpenFilex.open(file.path),
+                          icon: const Icon(Icons.open_in_new),
+                          label: const Text('Open with External App'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.secondaryOrange,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+        );
+        return;
+      }
 
       final result = await OpenFilex.open(file.path);
       if (result.type != ResultType.done) {
@@ -1144,6 +1390,8 @@ class ProfileScreen extends StatelessWidget {
     final normalized = _normalizedRole(role);
     return normalized == 'seller' ||
         normalized == 'transporter' ||
-        normalized == 'both_sellerandbuyer';
+        normalized == 'both_sellerandbuyer' ||
+        normalized == 'admin' ||
+        normalized == 'super_admin';
   }
 }

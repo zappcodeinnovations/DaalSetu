@@ -125,9 +125,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       } catch (_) {}
     }
 
-    // Date of birth must be a past date: today and future dates are not allowed.
+    // Date of birth: future dates are not allowed, today is permitted.
     final today = DateTime.now();
-    final lastAllowed = DateTime(today.year, today.month, today.day).subtract(const Duration(days: 1));
+    final lastAllowed = DateTime(today.year, today.month, today.day);
     if (initial.isAfter(lastAllowed)) {
       initial = lastAllowed;
     }
@@ -180,7 +180,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         }
       }
     } catch (_) {}
-    if (bytes == null) {
+    if (bytes == null || bytes.length < 50) {
       AppSnackbar.showError(message: 'Choose a photo first, then crop it.');
       return;
     }
@@ -218,6 +218,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _pickImage(String type) async {
     final picked = await _picker.pickImage(
       source: ImageSource.gallery,
+      maxWidth: 1200,
+      maxHeight: 1200,
       imageQuality: 85,
     );
     if (picked == null || !mounted) return;

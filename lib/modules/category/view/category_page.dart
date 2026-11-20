@@ -38,6 +38,7 @@ class CategoryPageView extends StatelessWidget {
             onPressed: controller.sendSelectedForApproval,
           ),
           bottom: TabBar(
+            onTap: (_) => controller.fetchCategories(),
             indicatorColor: Colors.white,
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white.withValues(alpha: 0.75),

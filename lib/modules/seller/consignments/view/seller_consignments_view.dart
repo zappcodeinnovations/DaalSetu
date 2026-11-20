@@ -11,6 +11,7 @@ import 'package:daalsetu/widgets/back_navigation.dart';
 /// Consignment management (single API: /api/consignments/).
 class SellerConsignmentController extends GetxController {
   var isLoading = false.obs;
+  var allRows = <Map<String, dynamic>>[].obs;
   var rows = <Map<String, dynamic>>[].obs;
   var workflowStatus = 'all'.obs;
   var search = ''.obs;
@@ -19,7 +20,10 @@ class SellerConsignmentController extends GetxController {
   void onInit() {
     super.onInit();
     fetch();
-    debounce(search, (_) => fetch(), time: const Duration(milliseconds: 400));
+    debounce(search, (_) {
+      applyFilter();
+      fetch(silent: true);
+    }, time: const Duration(milliseconds: 300));
   }
 
   /// Counts requests: only the latest one may fill the list. Without this a slower, older
@@ -29,41 +33,88 @@ class SellerConsignmentController extends GetxController {
   /// The stage a consignment card shows (and the filter it belongs to).
   static String stageOf(Map<String, dynamic> row) {
     // Delivered counts as received even while the contract itself is still Active.
-    if (row['status'] == 'received' || row['is_delivered'] == true) return 'received';
-    if (row['is_dispatched'] == true) return 'dispatched';
-    if (row['transporter_visible_at'] != null) return 'ready';
+    final status = (row['status'] ?? '').toString().toLowerCase();
+    if (status == 'received' || status == 'completed' || row['is_delivered'] == true) {
+      return 'received';
+    }
+    if (row['is_dispatched'] == true || status == 'dispatched' || status == 'in_transit') {
+      return 'dispatched';
+    }
+    final visibleAt = row['transporter_visible_at']?.toString().trim();
+    if (visibleAt != null && visibleAt.isNotEmpty && visibleAt != 'null') {
+      return 'ready';
+    }
+    final workflowStage = (row['workflow_status'] ?? row['workflow_stage'] ?? '').toString().toLowerCase();
+    if (workflowStage == 'ready' || workflowStage == 'consignment_ready') {
+      return 'ready';
+    }
+    if (workflowStage == 'dispatch' || workflowStage == 'dispatched' || workflowStage == 'in_transit') {
+      return 'dispatched';
+    }
+    if (workflowStage == 'received') {
+      return 'received';
+    }
     return 'pending';
   }
 
   /// Filter key -> the stage its cards must have.
-  static const _stageOfFilter = {'pending': 'pending', 'ready': 'ready', 'dispatch': 'dispatched', 'received': 'received'};
+  static const _stageOfFilter = {
+    'pending': 'pending',
+    'ready': 'ready',
+    'dispatch': 'dispatched',
+    'received': 'received',
+  };
 
-  Future<void> fetch() async {
+  void applyFilter() {
+    final filter = workflowStatus.value;
+    final stage = _stageOfFilter[filter];
+    final q = search.value.trim().toLowerCase();
+    var list = allRows.toList();
+    if (stage != null) {
+      list = list.where((row) => stageOf(row) == stage).toList();
+    }
+    if (q.isNotEmpty) {
+      list = list.where((row) {
+        final contractId = (row['contract_id'] ?? '').toString().toLowerCase();
+        final productTitle = (row['product_title'] ?? '').toString().toLowerCase();
+        final buyerId = (row['display_buyer_id'] ?? '').toString().toLowerCase();
+        final from = (row['loading_from'] ?? '').toString().toLowerCase();
+        final to = (row['loading_to'] ?? '').toString().toLowerCase();
+        return contractId.contains(q) ||
+            productTitle.contains(q) ||
+            buyerId.contains(q) ||
+            from.contains(q) ||
+            to.contains(q);
+      }).toList();
+    }
+    rows.assignAll(list);
+  }
+
+  Future<void> fetch({bool silent = false}) async {
     final requestId = ++_requestId;
     final filter = workflowStatus.value;
     try {
-      isLoading(true);
+      if (!silent) isLoading(true);
       final data = await SellerServices.getConsignments(
         workflowStatus: filter == 'all' ? null : filter,
         search: search.value,
       );
       if (requestId != _requestId) return; // a newer filter / search took over
       final all = (data['results'] as List? ?? []).whereType<Map<String, dynamic>>().toList();
-      final stage = _stageOfFilter[filter];
-      // Safety net: whatever the server sends, a filter only shows cards of its own stage.
-      rows.value = stage == null ? all : all.where((row) => stageOf(row) == stage).toList();
+      allRows.assignAll(all);
+      applyFilter();
     } catch (e) {
-      if (requestId == _requestId) SellerUi.error(e);
+      if (requestId == _requestId && !silent) SellerUi.error(e);
     } finally {
-      if (requestId == _requestId) isLoading(false);
+      if (requestId == _requestId && !silent) isLoading(false);
     }
   }
 
   void setStatus(String status) {
     if (workflowStatus.value == status) return;
     workflowStatus.value = status;
-    rows.clear(); // never leave the previous filter's cards on screen while loading
-    fetch();
+    applyFilter(); // Instant local filter response
+    fetch(silent: true); // Background server sync
   }
 
   Future<void> markReady(Map<String, dynamic> row) async {

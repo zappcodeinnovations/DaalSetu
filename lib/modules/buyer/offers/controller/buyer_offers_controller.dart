@@ -21,6 +21,14 @@ class BuyerOffersController extends GetxController {
   // The type of offers to fetch (e.g., 'all', 'today', 'pending', 'previous', 'interests')
   final String offerType;
 
+  final RxSet<int> submittedProductIds = <int>{}.obs;
+
+  bool isOfferSubmitted(int? productId, {BuyerOfferModel? offer}) {
+    if (offer != null && offer.hasSubmittedOffer) return true;
+    if (productId != null && submittedProductIds.contains(productId)) return true;
+    return false;
+  }
+
   BuyerOffersController({required this.offerType});
 
   Timer? _liveTimer;
@@ -92,7 +100,7 @@ class BuyerOffersController extends GetxController {
           break;
         case 'all':
         default:
-          data = await BuyerServices.getAllOffers(silent: silent);
+          data = await BuyerServices.getAllOffers(silent: silent, includeRfqs: false);
           break;
       }
 
@@ -104,7 +112,9 @@ class BuyerOffersController extends GetxController {
           .where((offer) {
             // Buyer requirements (RFQs) belong to the Requirements screen only; the Offers screens
             // list seller offers and the buyer's own interests.
-            if ((offerType == 'today' || offerType == 'all' || offerType == 'previous') && offer.isRfq) return false;
+            if (offerType != 'requirements' && offerType != 'interests' && offer.isRfq) {
+              return false;
+            }
             // 1. When an offer's visibility is turned off from the panel or backend,
             //    it should be immediately excluded from the public/buyer offers list ('today', 'all').
             // 2. Under the active 'today' feed, out-of-stock and expired items are excluded
@@ -121,8 +131,17 @@ class BuyerOffersController extends GetxController {
       if (isClosed) return;
       isError(false);
       allOffersList.assignAll(mapped);
+      for (final o in mapped) {
+        if (o.hasSubmittedOffer) {
+          final pId = o.productId ?? o.id;
+          if (pId != null && pId > 0) {
+            submittedProductIds.add(pId);
+          }
+        }
+      }
       _applyFilter();
       _enrichMissingImages();
+      _syncSubmittedInterests();
     } catch (e) {
       if (silent || isClosed) return;
       isError(true);
@@ -138,6 +157,21 @@ class BuyerOffersController extends GetxController {
       _fetchingOffers = false;
       if (!isClosed && !silent) isLoading(false);
     }
+  }
+
+  Future<void> _syncSubmittedInterests() async {
+    try {
+      final myInterests = await BuyerServices.getMyInterests(silent: true);
+      for (final item in myInterests) {
+        if (item is Map) {
+          final rawPid = item['product_id'] ?? (item['product'] is Map ? item['product']['id'] : null);
+          final pId = rawPid is int ? rawPid : int.tryParse(rawPid?.toString() ?? '');
+          if (pId != null && pId > 0) {
+            submittedProductIds.add(pId);
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> _enrichMissingImages() async {
@@ -237,6 +271,12 @@ class BuyerOffersController extends GetxController {
         title: "Success",
         message: res['message'] ?? "Interest submitted successfully",
       );
+      if (effectiveProductId > 0) {
+        submittedProductIds.add(effectiveProductId);
+      }
+      if (productId > 0) {
+        submittedProductIds.add(productId);
+      }
       fetchOffers();
       return true;
     } catch (e) {
