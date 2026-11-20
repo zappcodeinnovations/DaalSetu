@@ -41,6 +41,10 @@ class SellerProductController extends GetxController {
   var brands = <BrandModel>[].obs;
   var isBrandsLoading = false.obs;
   var companies = <SellerCompanyModel>[].obs;
+
+  /// True once the company list has really been read (so "no company" is not shown while it is still loading
+  /// or when the request failed).
+  var companiesLoaded = false.obs;
   var branches = <SellerBranchModel>[].obs;
   var selectedCategoryId = Rxn<int>();
   var selectedBrandId = Rxn<int>();
@@ -322,6 +326,7 @@ class SellerProductController extends GetxController {
     }
     try {
       companies.assignAll(await SellerServices.getCompanies());
+      companiesLoaded.value = true;
       if (selectedCompanyId.value == null && companies.isNotEmpty) {
         final primary = companies.firstWhere(
           (c) => c.isPrimary,
@@ -424,6 +429,9 @@ class SellerProductController extends GetxController {
     if (dealExpiry.value == null) return "Deal expiry is required.";
     if (!dealExpiry.value!.isAfter(DateTime.now())) {
       return "Deal expiry time must be in the future.";
+    }
+    if (companiesLoaded.value && companies.isEmpty) {
+      return "Register your company first (an offer needs a registered company and approved KYC).";
     }
     if (branches.isEmpty) {
       return "You are not in any branch yet. Join a branch first, then create the offer.";

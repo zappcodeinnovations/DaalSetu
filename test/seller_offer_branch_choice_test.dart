@@ -33,6 +33,19 @@ void main() {
     expect(find.text('Visible in Branches'), findsOneWidget);
   });
 
+  testWidgets('a seller with no registered company is told so, with a Register company button', (tester) async {
+    final controller = await _open(tester, branches: []);
+    controller.companiesLoaded.value = true; // the list was read and is empty
+    await tester.pump();
+    expect(find.byKey(const Key('no-company-notice')), findsOneWidget);
+    expect(find.text('Register company'), findsOneWidget);
+  });
+
+  testWidgets('no company notice while the company list has not been read yet', (tester) async {
+    await _open(tester, branches: []);
+    expect(find.byKey(const Key('no-company-notice')), findsNothing);
+  });
+
   testWidgets('a seller with branches picks among them', (tester) async {
     await _open(tester, branches: [SellerBranchModel(id: 1, locationName: 'Nagpur'), SellerBranchModel(id: 2, locationName: 'Amalner')]);
     expect(find.byKey(const Key('no-branch-notice')), findsNothing);
