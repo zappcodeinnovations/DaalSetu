@@ -554,9 +554,7 @@ class AdminModules {
           endpoint: (record) => '/api/kyc/${record['id']}/approve/',
           action: 'approve',
           confirmMessage: "Approve this user's KYC documents?",
-          isVisible: (record) =>
-              (record['kyc_status'] ?? '').toString().toLowerCase() !=
-              'approved',
+          // Like the web KYC Review page, Approve and Reject are there whatever the status is.
         ),
         adminPostAction(
           title: 'Reject',
@@ -568,10 +566,6 @@ class AdminModules {
           noteLabel: 'Rejection reason',
           noteRequired: true,
           destructive: true,
-          isVisible: (record) => const [
-            'pending',
-            'rejected',
-          ].contains((record['kyc_status'] ?? '').toString().toLowerCase()),
         ),
       ],
     ),
