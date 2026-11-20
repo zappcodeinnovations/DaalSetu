@@ -119,9 +119,16 @@ class _OfferList extends StatelessWidget {
     } else {
       final pId = offer.productId ?? offer.id;
       if (pId != null) {
+        final controller = Get.isRegistered<BuyerOffersController>(tag: offerType)
+            ? Get.find<BuyerOffersController>(tag: offerType)
+            : null;
+        final isSubmitted =
+            controller?.isOfferSubmitted(pId, offer: offer) ??
+            offer.hasSubmittedOffer;
         Get.to(() => ProductDetailScreen(
               productId: pId,
               onSubmitOffer: buyerSubmitOfferCallback(offer, tag: offerType),
+              isResubmit: isSubmitted,
             ));
       } else if (offer.id != null) {
         Get.to(() => BuyerOfferDetailsView(offerId: offer.id!));

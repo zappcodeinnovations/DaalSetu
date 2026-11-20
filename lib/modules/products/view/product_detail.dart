@@ -16,8 +16,16 @@ class ProductDetailScreen extends StatefulWidget {
   /// Buyer screens pass this to show "Submit Offer" on the offer page (MoM 7);
   /// it opens the same Submit Offer dialog as the offers list.
   final void Function(BuildContext context)? onSubmitOffer;
+  final bool isResubmit;
+  final ProductModel? initialProduct;
 
-  const ProductDetailScreen({super.key, required this.productId, this.onSubmitOffer});
+  const ProductDetailScreen({
+    super.key,
+    required this.productId,
+    this.onSubmitOffer,
+    this.isResubmit = false,
+    this.initialProduct,
+  });
   final int productId;
 
   @override
@@ -39,7 +47,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _product = ProductService.getProductDetail(widget.productId, silent: true);
+    _product = widget.initialProduct != null
+        ? Future.value(widget.initialProduct!)
+        : ProductService.getProductDetail(widget.productId, silent: true);
     _loadRole();
   }
 
@@ -445,9 +455,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             widget.onSubmitOffer!(context);
           },
           icon: const Icon(Icons.send_rounded, color: Colors.white),
-          label: const Text(
-            'Submit Offer',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+          label: Text(
+            widget.isResubmit ? 'Resubmit' : 'Submit Offer',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
           ),
         ),
       ),

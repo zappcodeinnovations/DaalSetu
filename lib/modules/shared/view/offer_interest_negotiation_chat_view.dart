@@ -58,6 +58,38 @@ class OfferInterestNegotiationChatView extends StatefulWidget {
   @override
   State<OfferInterestNegotiationChatView> createState() =>
       _OfferInterestNegotiationChatViewState();
+
+  /// The banner text of a status event ("Buyer Confirmed the Deal", ...).
+  static String statusBannerTitle({
+    required String role,
+    required String status,
+    required String action,
+    String? remark,
+  }) {
+    final cleanStatus = status.isNotEmpty
+        ? status
+        : (action.isNotEmpty ? action : (remark ?? ''));
+    final lower = cleanStatus.toLowerCase();
+    if (lower.contains('confirm') ||
+        lower.contains('approv') ||
+        lower.contains('accept') ||
+        lower.contains('won')) {
+      if (lower.contains('buyer') || role == 'buyer') return 'Buyer Confirmed the Deal';
+      if (lower.contains('seller') || role == 'seller') return 'Seller Confirmed the Deal';
+      return 'Deal Confirmed';
+    }
+    if (lower.contains('reject') || lower.contains('cancel') || lower.contains('lost')) {
+      if (lower.contains('buyer') || role == 'buyer') return 'Buyer Rejected Negotiation';
+      if (lower.contains('seller') || role == 'seller') return 'Seller Rejected Negotiation';
+      return 'Negotiation Closed';
+    }
+    if (lower.contains('negotiat') || lower.contains('counter') || lower.contains('pend')) {
+      return 'Negotiation In Progress';
+    }
+    return cleanStatus.isNotEmpty
+        ? cleanStatus[0].toUpperCase() + cleanStatus.substring(1)
+        : 'System Notification';
+  }
 }
 
 class _OfferInterestNegotiationChatViewState
@@ -1378,12 +1410,35 @@ class _OfferInterestNegotiationChatViewState
           (msg['actor_role'] ?? msg['sender_role'])?.toString().toLowerCase() ??
           '';
 
-      final isProposal =
+      final hasProposalTerms =
           price.isNotEmpty ||
           quantity.isNotEmpty ||
           bags.isNotEmpty ||
-          delivery.isNotEmpty ||
-          (remark.isNotEmpty && !remark.toLowerCase().startsWith('status'));
+          delivery.isNotEmpty;
+
+      final lowerRemark = remark.toLowerCase().trim();
+      final lowerAction = action.toLowerCase().trim();
+      final lowerStatus = status.toLowerCase().trim();
+
+      final isStatusEvent = !hasProposalTerms &&
+          (role == 'system' ||
+              role.isEmpty ||
+              lowerRemark.startsWith('status') ||
+              lowerRemark.contains('confirmed') ||
+              lowerRemark.contains('approved') ||
+              lowerRemark.contains('rejected') ||
+              lowerRemark.contains('cancelled') ||
+              lowerRemark.contains('accepted') ||
+              lowerAction.contains('confirm') ||
+              lowerAction.contains('approv') ||
+              lowerAction.contains('reject') ||
+              lowerAction.contains('cancel') ||
+              lowerAction.contains('status') ||
+              lowerAction.contains('accept') ||
+              lowerStatus.isNotEmpty);
+
+      final isProposal =
+          hasProposalTerms || (!isStatusEvent && remark.isNotEmpty);
 
       if (isProposal) {
         lastStatusKey = null; // reset status dedup on new proposal
@@ -1395,11 +1450,14 @@ class _OfferInterestNegotiationChatViewState
               ? msg['timestamp']
               : msg['created_at'],
         );
-        final statusDesc = status.isNotEmpty ? status : action;
+        final statusDesc = status.isNotEmpty
+            ? status
+            : (action.isNotEmpty ? action : remark);
         // One confirmation event can be logged twice with slightly different seconds / wording
         // ("buyer confirmed" status + "status changed to buyer confirmed" action). Same banner
         // text at the same displayed minute is the same event, so it is shown once.
-        final currentKey = "${statusBannerTitle(role: role, status: status, action: action)}_${_formatNegotiationDateTime(timeRaw)}";
+        final currentKey =
+            "${statusBannerTitle(role: role, status: status, action: action, remark: remark)}_${_formatNegotiationDateTime(timeRaw)}";
 
         if (currentKey == lastStatusKey && statusDesc.isNotEmpty) {
           continue;
@@ -1412,6 +1470,7 @@ class _OfferInterestNegotiationChatViewState
             role: role,
             status: status,
             action: action,
+            remark: remark,
             time: timeRaw,
           ),
         );
@@ -1422,10 +1481,20 @@ class _OfferInterestNegotiationChatViewState
   }
 
   /// The banner text of a status event ("Buyer Confirmed the Deal", ...).
-  static String statusBannerTitle({required String role, required String status, required String action}) {
-    final cleanStatus = status.isNotEmpty ? status : action;
+  static String statusBannerTitle({
+    required String role,
+    required String status,
+    required String action,
+    String? remark,
+  }) {
+    final cleanStatus = status.isNotEmpty
+        ? status
+        : (action.isNotEmpty ? action : (remark ?? ''));
     final lower = cleanStatus.toLowerCase();
-    if (lower.contains('confirm') || lower.contains('approv') || lower.contains('accept') || lower.contains('won')) {
+    if (lower.contains('confirm') ||
+        lower.contains('approv') ||
+        lower.contains('accept') ||
+        lower.contains('won')) {
       if (lower.contains('buyer') || role == 'buyer') return 'Buyer Confirmed the Deal';
       if (lower.contains('seller') || role == 'seller') return 'Seller Confirmed the Deal';
       return 'Deal Confirmed';
@@ -1438,7 +1507,9 @@ class _OfferInterestNegotiationChatViewState
     if (lower.contains('negotiat') || lower.contains('counter') || lower.contains('pend')) {
       return 'Negotiation In Progress';
     }
-    return cleanStatus.isNotEmpty ? cleanStatus[0].toUpperCase() + cleanStatus.substring(1) : 'System Notification';
+    return cleanStatus.isNotEmpty
+        ? cleanStatus[0].toUpperCase() + cleanStatus.substring(1)
+        : 'System Notification';
   }
 
   Widget _statusEventBanner(
@@ -1446,9 +1517,12 @@ class _OfferInterestNegotiationChatViewState
     required String role,
     required String status,
     required String action,
+    String? remark,
     required String? time,
   }) {
-    final cleanStatus = status.isNotEmpty ? status : action;
+    final cleanStatus = status.isNotEmpty
+        ? status
+        : (action.isNotEmpty ? action : (remark ?? ''));
     final lower = cleanStatus.toLowerCase();
     final formattedTime = _formatNegotiationDateTime(time);
 
@@ -1609,6 +1683,27 @@ class _OfferInterestNegotiationChatViewState
       if (status.isNotEmpty && (price.isNotEmpty || quantity.isNotEmpty))
         'Status: $status',
     ].join('\n');
+
+    if (changes.isEmpty &&
+        (body.isEmpty ||
+            body.toLowerCase().startsWith('status') ||
+            body.toLowerCase().contains('confirmed'))) {
+      final timeRaw = text(
+        message['timestamp'] != null &&
+                message['timestamp'].toString().isNotEmpty
+            ? message['timestamp']
+            : message['created_at'],
+      );
+      return _statusEventBanner(
+        context,
+        role: role,
+        status: status,
+        action: action,
+        remark: remark,
+        time: timeRaw,
+      );
+    }
+
     return Align(
       alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
       child: _messageCard(

@@ -28,7 +28,7 @@ class RegisterController {
 
   Map<String, String> buildFields() => {
     'mobile': mobileController.text.trim(),
-    'email': emailController.text.trim(),
+    'email': emailController.text.trim().toLowerCase(),
     'first_name': firstNameController.text.trim(),
     'last_name': lastNameController.text.trim(),
     'company_name': companyNameController.text.trim(),

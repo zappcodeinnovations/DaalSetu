@@ -226,6 +226,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         hintText: 'Enter email address',
                         prefixIcon: IconlyLight.message,
                         keyboardType: TextInputType.emailAddress,
+                        textCapitalization: TextCapitalization.none,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                          TextInputFormatter.withFunction((oldValue, newValue) {
+                            return newValue.copyWith(
+                              text: newValue.text.toLowerCase(),
+                            );
+                          }),
+                        ],
                         textInputAction: TextInputAction.next,
                         autofillHints: const [AutofillHints.email],
                         validator: (value) =>

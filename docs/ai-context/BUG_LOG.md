@@ -1,5 +1,34 @@
 # Bug Log & Historical Fixes
 
+## Bug 65: Buyer Offers Detail Screen "Resubmit" Dynamic Label, Negotiation Status Banners vs Chat Bubbles, & Email Formatter Normalization
+- **Symptom 1**: On the Buyer Offers screen, when a buyer previously submitted an offer for a seller listing, the outer card displayed "Resubmit", but tapping the card to open `ProductDetailScreen` showed a hardcoded "Submit Offer" button inside.
+- **Root Cause 1**: `ProductDetailScreen` hardcoded `'Submit Offer'` in `_buildSubmitOfferButton` and lacked an `isResubmit` constructor parameter. The calling views (`buyer_offers_view.dart` and `buyer_today_offers_view.dart`) did not pass the submission state into `ProductDetailScreen`.
+- **Fix 1**:
+  - Added `final bool isResubmit;` (default: `false`) and `final ProductModel? initialProduct;` to `ProductDetailScreen`.
+  - Updated `_buildSubmitOfferButton` to dynamically render `widget.isResubmit ? 'Resubmit' : 'Submit Offer'`.
+  - Updated `_openDetails` in `buyer_offers_view.dart` and `buyer_today_offers_view.dart` to compute `isSubmitted = controller?.isOfferSubmitted(pId, offer: offer) ?? offer.hasSubmittedOffer` and pass `isResubmit: isSubmitted`.
+- **Symptom 2**: On the Negotiation History screen, notification logs or status messages (such as "Status: buyer confirmed", "Buyer confirmed the deal") were displayed incorrectly as chat bubbles from entities like Buyer or System rather than clean, dedicated activity logs/status banners.
+- **Root Cause 2**: In `offer_interest_negotiation_chat_view.dart`, `isProposal` logic evaluated to `true` whenever `msg['message']` or `remark` was non-empty and didn't start with `'status'`, routing status transitions into `_bubble(...)`.
+- **Fix 2**:
+  - Refined `isProposal` in `offer_interest_negotiation_chat_view.dart`: messages without proposal terms (`counter_price`, `counter_quantity`, `counter_bag_count`, `counter_delivery_from`) that indicate status transitions or system logs are strictly routed to `_statusEventBanner`.
+  - Added an extra guard in `_bubble` against empty-change messages displaying pure status strings.
+  - Exposed static `statusBannerTitle` on `OfferInterestNegotiationChatView` with semantic title mapping (`Buyer Confirmed the Deal`, `Seller Confirmed the Deal`, `Deal Confirmed`).
+- **Symptom 3**: Registration and Profile forms accepted uppercase letters in the Email input field (e.g. `Nawgharekajal01@gmail.com`) and did not sanitize or auto-lowercase input on typing.
+- **Root Cause 3**: `GlassTextField` for Email lacked `inputFormatters` and `textCapitalization: TextCapitalization.none`. `RegisterController` and `EditProfilePage` submitted raw `trim()` email without `.toLowerCase()`.
+- **Fix 3**:
+  - Added `textCapitalization: TextCapitalization.none` and `inputFormatters` (`FilteringTextInputFormatter.deny(RegExp(r'\s'))` + `toLowerCase()` formatter) to `register_page.dart` and `edit_profile_page.dart`.
+  - Added `.toLowerCase()` sanitization in `RegisterController.buildFields()` and `EditProfilePage._submitProfile()`.
+- **Files Changed**:
+  - `lib/modules/products/view/product_detail.dart`
+  - `lib/modules/buyer/offers/view/buyer_offers_view.dart`
+  - `lib/modules/buyer/offers/view/buyer_today_offers_view.dart`
+  - `lib/modules/shared/view/offer_interest_negotiation_chat_view.dart`
+  - `lib/modules/Auth/register/view/register_page.dart`
+  - `lib/modules/Auth/register/controller/register_controller.dart`
+  - `lib/modules/profile/view/edit_profile_page.dart`
+  - `test/batch_18_fixes_test.dart`
+- **Verification**: `test/batch_18_fixes_test.dart` (8/8 passed), `test/buyer_my_interests_fix_test.dart` (3/3 passed), cumulative test suite passing, zero git commits created as requested.
+
 ## Bug 64: Batch 18 Admin Dashboard Analytics, Universal Date Picker Default, & Buyer Requirement Quotations Parity Fixes
 - **Symptom 1**: On Admin Dashboard, analytics charts displayed wrong numbers, percentages, and axis mismatch compared to web admin portal:
   - *Pipeline by Stage*: Negotiation showed 9% and Deal Confirmed showed 91% (instead of web's 3 Deals in Negotiation ~23% and ~77% Deal Confirmed).

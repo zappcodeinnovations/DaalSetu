@@ -142,9 +142,16 @@ class BuyerTodayOffersView extends StatelessWidget {
   void _openDetails(BuyerOfferModel offer) {
     final pId = offer.productId ?? offer.id;
     if (pId != null) {
+      final controller = Get.isRegistered<BuyerOffersController>(tag: 'today')
+          ? Get.find<BuyerOffersController>(tag: 'today')
+          : null;
+      final isSubmitted =
+          controller?.isOfferSubmitted(pId, offer: offer) ??
+          offer.hasSubmittedOffer;
       Get.to(() => ProductDetailScreen(
             productId: pId,
             onSubmitOffer: buyerSubmitOfferCallback(offer, tag: 'today'),
+            isResubmit: isSubmitted,
           ));
     } else if (offer.id != null) {
       Get.to(() => BuyerOfferDetailsView(offerId: offer.id!));

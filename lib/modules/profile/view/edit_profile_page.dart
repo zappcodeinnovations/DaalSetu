@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'dart:typed_data';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -297,8 +297,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
     }
 
-    final email = _emailController.text.trim();
-    if (email.isNotEmpty && email != (controller.profile.value?.email ?? '')) {
+    final email = _emailController.text.trim().toLowerCase();
+    if (email.isNotEmpty && email != (controller.profile.value?.email ?? '').toLowerCase()) {
       data['email'] = email;
     }
 
@@ -561,6 +561,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     hintText: "Enter email (e.g. buyer@gmail.com)",
                     prefixIcon: IconlyLight.message,
                     keyboardType: TextInputType.emailAddress,
+                    textCapitalization: TextCapitalization.none,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                      TextInputFormatter.withFunction((oldValue, newValue) {
+                        return newValue.copyWith(
+                          text: newValue.text.toLowerCase(),
+                        );
+                      }),
+                    ],
                     readOnly: (controller.profile.value?.email ?? '').isNotEmpty,
                     suffixIcon: (controller.profile.value?.email ?? '').isNotEmpty
                         ? const Icon(Icons.lock_outline, size: 18, color: Colors.grey)
