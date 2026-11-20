@@ -8,11 +8,20 @@ class AdminChallanCard extends StatelessWidget {
   final AdminChallanModel challan;
   final VoidCallback onTap;
 
+  /// When set, a dispatched challan shows a full-width "Mark as Delivered" button on the card.
+  final VoidCallback? onMarkDelivered;
+
   const AdminChallanCard({
     super.key,
     required this.challan,
     required this.onTap,
+    this.onMarkDelivered,
   });
+
+  static bool canMarkDelivered(String? status) {
+    final value = (status ?? '').toLowerCase().trim().replaceAll(' ', '_');
+    return value == 'dispatched' || value == 'in_transit';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -308,6 +317,27 @@ class AdminChallanCard extends StatelessWidget {
                   ),
                 ],
               ),
+              if (onMarkDelivered != null && canMarkDelivered(challan.status)) ...[
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF059669),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: onMarkDelivered,
+                    icon: const Icon(Icons.task_alt_rounded, size: 18),
+                    label: const Text(
+                      'Mark as Delivered',
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

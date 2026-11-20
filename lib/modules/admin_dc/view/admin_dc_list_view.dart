@@ -4,12 +4,47 @@ import 'package:iconly/iconly.dart';
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_theme.dart';
 import '../controller/admin_dc_list_controller.dart';
+import '../model/admin_challan_model.dart';
 import '../widgets/admin_challan_card.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:daalsetu/widgets/back_navigation.dart';
 
 class AdminChallanListView extends StatelessWidget {
   const AdminChallanListView({super.key});
+
+  void _confirmDelivered(BuildContext context, AdminDCListController controller, AdminChallanModel challan) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Mark Delivered'),
+        content: const Text('Confirm the goods reached the buyer?'),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF059669), foregroundColor: Colors.white),
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                    controller.markDelivered(challan);
+                  },
+                  child: const Text('Mark Delivered'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -146,13 +181,14 @@ class AdminChallanListView extends StatelessWidget {
                               crossAxisCount: 2,
                               crossAxisSpacing: 16,
                               mainAxisSpacing: 14,
-                              mainAxisExtent: 220,
+                              mainAxisExtent: 280,
                             ),
                             delegate: SliverChildBuilderDelegate(
                               (context, index) {
                                 final challan = controller.filteredChallans[index];
                                 return AdminChallanCard(
                                   challan: challan,
+                                  onMarkDelivered: () => _confirmDelivered(context, controller, challan),
                                   onTap: () {
                                     Get.toNamed(
                                       AppRoutes.adminDCDetails,
@@ -176,6 +212,7 @@ class AdminChallanListView extends StatelessWidget {
                               final challan = controller.filteredChallans[index];
                               return AdminChallanCard(
                                 challan: challan,
+                                onMarkDelivered: () => _confirmDelivered(context, controller, challan),
                                 onTap: () {
                                   Get.toNamed(
                                     AppRoutes.adminDCDetails,
