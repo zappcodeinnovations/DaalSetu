@@ -1,28 +1,39 @@
 # Current Task State
 
 ## Current Task
-- **Goal**: Merge `origin/rohit_app_UI` (21 incoming commits) with local branch `rohit_app_UI` (Batches 13–18 fixes, 64 bugs resolved) safely according to GEMINI.md protocol with zero regressions.
+- **Goal**: Merge latest 14 remote commits from `origin/rohit_app_UI` with local Batch 18 fixes (Bug 65: Dynamic Resubmit button, Negotiation status banners, Email lowercase sanitization) safely per GEMINI.md protocol.
 - **Status**: **100% Merged, Verified & Clean**
   - **Merge Commits**:
-    - `225912e`: `merge: cleanly integrate origin/rohit_app_UI with all 64 local bug fixes, resolving conflicts and unifying features`
-    - `f3706e5`: `fix(drawer): align dark mode contrast and test assertions for merged salesman and sub-category status`
-  - **Backup Branch**: `backup/batch18_pre_merge` created and preserved.
-  - **Conflicts Resolved (12 files)**:
-    1. `lib/modules/admin_catalog/config/admin_module_config.dart`: Combined remote's status options (`active`, `pending`, `inactive`, `rejected`), local's `mapped_brands` field, multi-key `'product_count|products_count|products'`, and united Assign action with remote's `AssignVehicleDialog`.
-    2. `lib/modules/admin_catalog/repository/drawer_menu_service.dart`: Retained `key: 'sub_admins'` with `requiredRoles: const ['super_admin', 'admin']` and Salesman routing.
-    3. `lib/modules/admin_catalog/view/admin_drawer.dart`: Aligned drawer Settings menu icon with dynamic dark mode contrast (slate in dark mode, indigo in light mode).
-    4. `lib/modules/admin_catalog/view/admin_module_list_screen.dart`: Removed duplicate `AppPreferences` import, unified `_isSuperAdmin` state.
-    5. `lib/modules/admin_catalog/view/admin_record_detail_screen.dart`: Adopted `goBackOrHome` back navigation while preserving complete bottom action bar with `Approve KYC` and `Reject KYC` reason modal and quotation cards.
-    6. `lib/modules/buyer/offers/controller/buyer_offers_controller.dart`: Preserved comprehensive RFQ exclusion from all non-requirement tabs.
-    7. `lib/modules/buyer/offers/view/buyer_offers_view.dart`: Integrated `buyerDeliveryLocationDefault(offer)` default destination.
-    8. `lib/modules/buyer/offers/view/buyer_request_management_view.dart`: Unified with `_chipScroll`, `_chipKeys` and `_revealStatusChip()`.
-    9. `lib/modules/buyer/offers/view/buyer_today_offers_view.dart`: Integrated `buyerDeliveryLocationDefault(offer)`.
-    10. `lib/modules/contracts/view/contract_view.dart`: Filtered In Transit tab via `ContractsScreen.isContractInTransit(item)` while supporting server-side filtering.
-    11. `lib/modules/contracts/view/contract_details_view.dart`: Maintained non-flickering stable layout while incorporating remote's detailed contract fields (trade value, GST, dates, party person/company names).
-    12. `lib/modules/dashboard/view/dashboard_page.dart`: Integrated remote's `DashboardPeriodBar` and period filters while preserving Hare-Niemeyer 100% strict sum calculation on Commodity Mix and dual-axis GTV chart scaling.
+    - `d640b41`: `feat: batch 18 fixes - dynamic resubmit button, negotiation status banners, email lowercase normalization`
+    - `5e53460`: `merge: cleanly integrate origin/rohit_app_UI with Batch 18 fixes`
+    - `be62366`: `fix(product_detail): safe reactive and static resubmit label support without GetX Obx empty observable error`
+  - **Backup Branches**:
+    - `backup/batch18_pre_remote_merge_base`: points to HEAD before local commit.
+    - `backup/batch18_local_commit`: points to local commit `d640b41`.
+  - **Conflicts Resolved (3 files)**:
+    1. `lib/modules/products/view/product_detail.dart`: Unified remote's `isOfferSubmitted` callback with local `isResubmit` and `initialProduct`. Added safe `_dummyRx` guard ensuring `Obx` never throws empty-observable exception when callback returns static booleans.
+    2. `lib/modules/buyer/offers/view/buyer_offers_view.dart`: Integrated remote's `buyerOfferSubmittedCheck(offer, tag: offerType)` while passing `isResubmit: isSubmitted`.
+    3. `lib/modules/buyer/offers/view/buyer_today_offers_view.dart`: Integrated remote's `buyerOfferSubmittedCheck(offer, tag: 'today')` while passing `isResubmit: isSubmitted`.
+  - **Features Merged from Remote (14 Commits)**:
+    - Global Keyboard dismissal on tap outside + iOS Previous/Next/Done toolbar + consistent header back arrow (`5cf459b`).
+    - App-wide global `SafeArea` preventing content hiding behind floating nav bar (`ee74159`).
+    - Transporter shipments live auto-refresh (`498c067`).
+    - Dashboard header profile avatar showing user's real uploaded photo (`e7ae19e`).
+    - Seller Create Offer branch choice selection (`3caa6fa`, `a6d3f8a`).
+    - Seller Register Company Landmark + Number of Employees fields (`a6d576d`).
+    - Brokerage bill date picker and DD-MM-YYYY display format (`be91f6c`).
+    - Offer details parity: hidden seller login and remaining bags (`c52b43d`).
   - **Automated Verification Results**:
-    - `test/master_integrity_and_regression_test.dart`: **15/15 Passed**
-    - `test/batch_18_fixes_test.dart`: **5/5 Passed**
+    - `test/batch_18_fixes_test.dart`: **8/8 Passed**
+    - `test/buyer_my_interests_fix_test.dart`: **3/3 Passed**
+    - `test/brokerage_date_format_test.dart`: **3/3 Passed**
+    - `test/product_detail_resubmit_test.dart`: **1/1 Passed**
+    - `test/product_detail_fields_test.dart`: **1/1 Passed**
+    - `test/seller_offer_branch_choice_test.dart`: **3/3 Passed**
+    - `test/transporter_shipments_auto_refresh_test.dart`: **1/1 Passed**
+    - `test/keyboard_and_back_global_test.dart`: **1/1 Passed**
+    - Cumulative Test Suite: **21/21 Passed (100% Pass Rate)**
+    - Static Analysis: **0 Errors** across all merged files.
     - `test/kyc_flow_integration_test.dart`: **3/3 Passed** (KYC 3-lines menu opens drawer, user card action buttons & reject dialog, detail review screen Approve/Reject)
     - `test/admin_menu_button_opens_drawer_test.dart`: **2/2 Passed** (KYC & Products screens menu icons open drawer)
     - `test/batch_13_buyer_fixes_test.dart` through `test/batch_17_fixes_test.dart`: **All Passed**
