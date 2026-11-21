@@ -7,6 +7,7 @@ import '../../../../routes/app_routes.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../theme/glass_widgets.dart';
 import '../controller/login_controller.dart';
+import 'widgets/login_art_background.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -42,110 +43,125 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? AppTheme.textPrimary : AppTheme.textPrimaryLight;
+    final textColor = isDark ? AppTheme.textPrimary : const Color(0xFF1E2238);
     final subtextColor = isDark
         ? AppTheme.textSecondary
-        : AppTheme.textSecondaryLight;
-    final mutedColor = isDark ? AppTheme.textMuted : AppTheme.textMutedLight;
+        : const Color(0xFF475569);
+    final mutedColor = isDark ? AppTheme.textMuted : const Color(0xFF64748B);
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: Container(
-        decoration: BoxDecoration(color: theme.scaffoldBackgroundColor),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFFFFDFB),
+        ),
         child: Stack(
           children: [
+            // Exact background art: fluid curves & authentic wheat stalks watermark
+            LoginArtBackground(isDark: isDark),
+
+            // Top soft ambient golden halo behind logo
             Positioned(
-              top: 0,
+              top: 30,
               left: 0,
               right: 0,
-              height: 280,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isDark
-                        ? [
-                            const Color(0xFFE65100).withValues(alpha: 0.22),
-                            const Color(0xFFF57C00).withValues(alpha: 0.10),
-                            Colors.transparent,
-                          ]
-                        : [
-                            const Color(0xFFFFE0B2).withValues(alpha: 0.65),
-                            const Color(0xFFFFF3E0).withValues(alpha: 0.35),
-                            Colors.transparent,
-                          ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
+              child: Center(
+                child: Container(
+                  width: 180,
+                  height: 180,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        const Color(0xFFFFB74D).withValues(alpha: isDark ? 0.18 : 0.22),
+                        Colors.transparent,
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-            Positioned(
-              top: -110,
-              right: -90,
-              child: _Glow(
-                size: 280,
-                color: const Color(0xFFFFB300),
-                isDark: isDark,
-              ),
-            ),
-            Positioned(
-              bottom: -100,
-              left: -100,
-              child: _Glow(
-                size: 250,
-                color: const Color(0xFFFF6D00),
-                isDark: isDark,
-              ),
-            ),
+
             SafeArea(
               child: Center(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 22,
-                    vertical: 24,
+                    horizontal: 20,
+                    vertical: 12,
                   ),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 460),
+                    constraints: const BoxConstraints(maxWidth: 420),
                     child: Form(
                       key: controller.formKey,
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           _brandHeader(textColor, subtextColor, isDark),
-                          const SizedBox(height: 28),
-                          GlassCard(
-                            borderRadius: 24,
-                            blur: 24,
-                            padding: const EdgeInsets.all(24),
-                            borderColor: isDark
-                                ? const Color(0xFFFFB300).withValues(alpha: 0.28)
-                                : const Color(0xFFFFB74D).withValues(alpha: 0.45),
-                            glowColor: isDark ? AppTheme.primaryGold : const Color(0xFFFFE082),
+                          const SizedBox(height: 18),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? const Color(0xFF1E2538).withValues(alpha: 0.96)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: isDark
+                                    ? const Color(0xFFFFB300).withValues(alpha: 0.22)
+                                    : const Color(0xFFF1F5F9),
+                                width: 1.2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF0F172A).withValues(
+                                    alpha: isDark ? 0.35 : 0.06,
+                                  ),
+                                  blurRadius: 26,
+                                  spreadRadius: 0,
+                                  offset: const Offset(0, 8),
+                                ),
+                                BoxShadow(
+                                  color: const Color(0xFFFF9800).withValues(
+                                    alpha: isDark ? 0.06 : 0.03,
+                                  ),
+                                  blurRadius: 12,
+                                  spreadRadius: 1,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 20,
+                            ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
                                     Text(
                                       'Sign In',
                                       style: TextStyle(
                                         color: textColor,
-                                        fontSize: 24,
+                                        fontSize: 22,
                                         fontWeight: FontWeight.w900,
-                                        letterSpacing: -0.5,
+                                        letterSpacing: -0.4,
                                       ),
                                     ),
                                     Container(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 9,
-                                        vertical: 3,
+                                        vertical: 3.5,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                                        color: const Color(0xFF10B981)
+                                            .withValues(alpha: 0.12),
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
-                                          color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                                          color: const Color(0xFF10B981)
+                                              .withValues(alpha: 0.30),
                                         ),
                                       ),
                                       child: const Row(
@@ -153,7 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         children: [
                                           Icon(
                                             Icons.lock_outline_rounded,
-                                            size: 13,
+                                            size: 12,
                                             color: Color(0xFF059669),
                                           ),
                                           SizedBox(width: 4),
@@ -161,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             'Encrypted',
                                             style: TextStyle(
                                               color: Color(0xFF059669),
-                                              fontSize: 11,
+                                              fontSize: 10.5,
                                               fontWeight: FontWeight.w700,
                                             ),
                                           ),
@@ -170,18 +186,30 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 5),
                                 Text(
                                   'Use your registered mobile number to continue.',
                                   style: TextStyle(
                                     color: subtextColor,
-                                    fontSize: 13,
-                                    height: 1.45,
+                                    fontSize: 12.5,
+                                    height: 1.4,
                                   ),
                                 ),
-                                const SizedBox(height: 22),
-                                _label('Mobile number', textColor),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 16),
+
+                                // Mobile field label with orange mobile icon
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.phone_android_rounded,
+                                      size: 16,
+                                      color: Color(0xFFF57C00),
+                                    ),
+                                    const SizedBox(width: 7),
+                                    _label('Mobile number', textColor),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
                                 GlassTextField(
                                   controller: controller.usernameController,
                                   hintText: '10-digit mobile number',
@@ -206,24 +234,45 @@ class _LoginScreenState extends State<LoginScreen> {
                                     return null;
                                   },
                                 ),
-                                const SizedBox(height: 18),
-                                _label('Password', textColor),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 14),
+
+                                // Password field label with orange lock icon
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.lock_rounded,
+                                      size: 16,
+                                      color: Color(0xFFF57C00),
+                                    ),
+                                    const SizedBox(width: 7),
+                                    _label('Password', textColor),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
                                 Obx(
                                   () {
-                                    final isVisible = controller.isPasswordVisible.value;
+                                    final isVisible =
+                                        controller.isPasswordVisible.value;
                                     return GlassTextField(
                                       controller: controller.passwordController,
                                       hintText: 'Enter your password',
                                       prefixIcon: IconlyLight.lock,
                                       obscureText: !isVisible,
                                       textInputAction: TextInputAction.done,
-                                      autofillHints: const [AutofillHints.password],
-                                      onFieldSubmitted: (_) => controller.login(),
+                                      autofillHints: const [
+                                        AutofillHints.password,
+                                      ],
+                                      onFieldSubmitted: (_) =>
+                                          controller.login(),
                                       suffixIcon: IconButton(
-                                        key: const Key('login_password_visibility_toggle'),
-                                        focusNode: FocusNode(skipTraversal: true),
-                                        onPressed: controller.togglePasswordVisibility,
+                                        key: const Key(
+                                          'login_password_visibility_toggle',
+                                        ),
+                                        focusNode: FocusNode(
+                                          skipTraversal: true,
+                                        ),
+                                        onPressed: controller
+                                            .togglePasswordVisibility,
                                         icon: Icon(
                                           isVisible
                                               ? Icons.visibility_off_outlined
@@ -231,16 +280,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                           color: isDark
                                               ? AppTheme.primaryGold
                                               : AppTheme.secondaryOrange,
-                                          size: 20,
+                                          size: 19,
                                         ),
                                       ),
-                                      validator: (value) => (value?.isEmpty ?? true)
-                                          ? 'Enter your password'
-                                          : null,
+                                      validator: (value) =>
+                                          (value?.isEmpty ?? true)
+                                              ? 'Enter your password'
+                                              : null,
                                     );
                                   },
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 6),
                                 Align(
                                   alignment: Alignment.centerRight,
                                   child: TextButton(
@@ -257,16 +307,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                     child: const Text(
                                       'Forgot password?',
-                                      style: TextStyle(fontWeight: FontWeight.w600),
+                                      style: TextStyle(
+                                        color: Color(0xFFE65100),
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 12.5,
+                                      ),
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 18),
+                                const SizedBox(height: 14),
                                 Obx(
                                   () => GlassButton(
                                     isLoading: controller.isLoading.value,
                                     onPressed: controller.login,
-                                    borderRadius: 16,
+                                    borderRadius: 14,
                                     gradientColors: const [
                                       Color(0xFFE65100),
                                       Color(0xFFF57C00),
@@ -281,15 +335,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                           style: TextStyle(
                                             color: Colors.white,
                                             fontWeight: FontWeight.w800,
-                                            fontSize: 16,
+                                            fontSize: 15,
                                             letterSpacing: 0.2,
                                           ),
                                         ),
-                                        SizedBox(width: 10),
+                                        SizedBox(width: 8),
                                         Icon(
                                           Icons.arrow_forward_rounded,
                                           color: Colors.white,
-                                          size: 20,
+                                          size: 18,
                                         ),
                                       ],
                                     ),
@@ -298,15 +352,16 @@ class _LoginScreenState extends State<LoginScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 18),
+                          const SizedBox(height: 12),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
                                 'New to DaalSetu? ',
                                 style: TextStyle(
-                                  color: mutedColor,
-                                  fontSize: 14,
+                                  color: textColor,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
                                 ),
                               ),
                               TextButton(
@@ -324,31 +379,78 @@ class _LoginScreenState extends State<LoginScreen> {
                                 child: const Text(
                                   'Create account',
                                   style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14,
+                                    color: Color(0xFFE65100),
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 13,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 10),
+
+                          // Decorative security separator line with centered shield badge
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  height: 1,
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.10)
+                                      : const Color(0xFFE2E8F0),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.all(3.5),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: isDark
+                                        ? const Color(0xFF1E2538)
+                                        : const Color(0xFFFFF3E0),
+                                    border: Border.all(
+                                      color: const Color(0xFFF57C00)
+                                          .withValues(alpha: 0.35),
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    Icons.shield_outlined,
+                                    size: 12,
+                                    color: Color(0xFFE65100),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Container(
+                                  height: 1,
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.10)
+                                      : const Color(0xFFE2E8F0),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+
+                          // Protected secure access
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.lock_outline_rounded,
-                                size: 15,
-                                color: isDark
-                                    ? AppTheme.primaryGold
-                                    : AppTheme.secondaryOrange,
+                              const Icon(
+                                Icons.shield_outlined,
+                                size: 14,
+                                color: Color(0xFFE65100),
                               ),
-                              const SizedBox(width: 6),
+                              const SizedBox(width: 5),
                               Text(
                                 'Protected secure access',
                                 style: TextStyle(
                                   color: mutedColor,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ],
@@ -370,28 +472,36 @@ class _LoginScreenState extends State<LoginScreen> {
     return Column(
       children: [
         Container(
-          width: 96,
-          height: 96,
+          width: 82,
+          height: 82,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.white,
             boxShadow: [
+              // Outer diffused ambient halo
               BoxShadow(
-                color: const Color(0xFFE65100).withValues(alpha: 0.30),
-                blurRadius: 30,
-                spreadRadius: 4,
-                offset: const Offset(0, 4),
+                color: const Color(0xFFFF9800).withValues(
+                  alpha: isDark ? 0.32 : 0.25,
+                ),
+                blurRadius: 36,
+                spreadRadius: 6,
               ),
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 10,
+                color: const Color(0xFFE65100).withValues(alpha: 0.18),
+                blurRadius: 16,
+                spreadRadius: 2,
+                offset: const Offset(0, 3),
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 8,
                 spreadRadius: 0,
                 offset: const Offset(0, 2),
               ),
             ],
             border: Border.all(
               color: isDark ? const Color(0xFFFFB300) : Colors.white,
-              width: 2.5,
+              width: 2.2,
             ),
           ),
           child: ClipOval(
@@ -404,45 +514,68 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Text(
           'DaalSetu',
           style: TextStyle(
             color: textColor,
-            fontSize: 30,
+            fontSize: 27,
             fontWeight: FontWeight.w900,
-            letterSpacing: -0.6,
+            letterSpacing: -0.5,
           ),
         ),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE65100).withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: const Color(0xFFE65100).withValues(alpha: 0.25),
-              width: 1,
+        const SizedBox(height: 5),
+
+        // Tagline flanked by horizontal decorative accent lines
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            // Decorative line spanning behind the badge
+            Container(
+              height: 1.2,
+              margin: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.transparent,
+                    const Color(0xFFE65100).withValues(alpha: 0.40),
+                    const Color(0xFFE65100).withValues(alpha: 0.40),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
             ),
-          ),
-          child: const Text(
-            'Smarter Trading. Stronger Connections.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Color(0xFFE65100),
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.3,
+            // Tagline badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF261D1A) : const Color(0xFFFFE0B2),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: const Color(0xFFE65100).withValues(alpha: 0.30),
+                  width: 1,
+                ),
+              ),
+              child: const Text(
+                'Smarter Trading. Stronger Connections.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFFBF360C),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.2,
+                ),
+              ),
             ),
-          ),
+          ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Text(
           'Pulse Trading Platform',
           style: TextStyle(
             color: subtextColor,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ],
@@ -451,31 +584,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _label(String text, Color color) => Text(
     text,
-    style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w700),
+    style: TextStyle(color: color, fontSize: 12.5, fontWeight: FontWeight.w700),
   );
-}
-
-class _Glow extends StatelessWidget {
-  const _Glow({required this.size, required this.color, this.isDark = true});
-
-  final double size;
-  final Color color;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [
-            color.withValues(alpha: isDark ? 0.18 : 0.08),
-            color.withValues(alpha: 0),
-          ],
-        ),
-      ),
-    );
-  }
 }
