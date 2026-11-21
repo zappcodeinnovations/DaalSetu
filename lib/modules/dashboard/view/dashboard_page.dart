@@ -935,6 +935,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     charts.commodityMix.labels,
                     charts.commodityMix.volumes,
                     colorResolver: resolveCommodityColor,
+                    showValues: true,
                   ),
                 ],
               );
@@ -961,6 +962,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     charts.commodityMix.labels,
                     charts.commodityMix.volumes,
                     colorResolver: resolveCommodityColor,
+                    showValues: true,
                   ),
                 ),
               ],
