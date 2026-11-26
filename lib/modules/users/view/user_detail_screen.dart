@@ -639,8 +639,11 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
 
           _documentRow(context, "PAN Card", user.panImage, isDark: isDark),
           _documentRow(context, "GST Certificate", user.gstImage, isDark: isDark),
-          _documentRow(context, "Aadhaar Card (Front)", user.aadharFrontImage, isDark: isDark),
-          _documentRow(context, "Aadhaar Card (Back)", user.aadharBackImage, isDark: isDark),
+          // The account keeps one Aadhaar image (the web shows "Aadhaar Card Image"); a back side is listed
+          // only when one exists, instead of a permanent "Back: Not Uploaded".
+          _documentRow(context, "Aadhaar Card", user.aadharFrontImage, isDark: isDark),
+          if ((user.aadharBackImage ?? '').trim().isNotEmpty)
+            _documentRow(context, "Aadhaar Card (Back)", user.aadharBackImage, isDark: isDark),
         ],
       ),
     );

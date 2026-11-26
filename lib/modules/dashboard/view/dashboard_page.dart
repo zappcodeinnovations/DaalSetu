@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/chart_tooltips.dart';
 import 'package:daalsetu/widgets/dashboard_period_bar.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -1062,6 +1063,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     pipelineLabels,
                     pipelineValues,
                     colorResolver: resolvePipelineStageColor,
+                    showValues: true,
                   ),
                   const SizedBox(height: 12),
                   _buildDonutCard(
@@ -1087,6 +1089,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     pipelineLabels,
                     pipelineValues,
                     colorResolver: resolvePipelineStageColor,
+                    showValues: true,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -2531,13 +2534,14 @@ class AdminDashboardScreen extends StatelessWidget {
                 child: PieChart(
                   PieChartData(
                     sectionsSpace: 2,
-                    centerSpaceRadius: 24,
+                    centerSpaceRadius: 20,
+                    // Each slice shows its number on the chart, as the web does (QA: point value missing).
                     sections: List.generate(labels.length, (index) {
-                      return PieChartSectionData(
+                      return valuePieSection(
                         value: values[index].toDouble(),
+                        total: total.toDouble(),
                         color: getColor(index),
-                        radius: 16,
-                        showTitle: false,
+                        radius: 22,
                       );
                     }),
                   ),

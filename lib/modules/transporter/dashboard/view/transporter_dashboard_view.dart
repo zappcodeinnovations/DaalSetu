@@ -1064,11 +1064,12 @@ class TransporterDashboardView extends StatelessWidget {
                       sections: [
                         for (var i = 0; i < status.values.length; i++)
                           if (status.values[i] > 0)
-                            PieChartSectionData(
+                            valuePieSection(
                               value: status.values[i],
+                              total: status.values.fold<double>(0, (a, b) => a + b),
                               color: colors[i % colors.length],
-                              title: '',
                               radius: 26,
+                              fontSize: 10,
                             ),
                       ],
                     ),

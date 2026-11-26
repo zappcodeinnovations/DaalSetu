@@ -230,6 +230,8 @@ class AdminModules {
     ),
     AdminFieldConfig('pan_number', 'PAN number'),
     AdminFieldConfig('gst_number', 'GST number'),
+    // Same as the web Edit User "Brand" (the brand name is stored on the user).
+    AdminFieldConfig('brand', 'Brand', optionsLoader: loadBrandNameOptions),
   ];
 
   static const userDetailSections = [

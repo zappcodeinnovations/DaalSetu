@@ -17,3 +17,29 @@ BarTouchData cleanNumberBarTouch() => BarTouchData(
         ),
       ),
     );
+
+/// A pie / donut slice that prints its own value on the chart (QA: "point value missing"), like the web
+/// chart's numbers. Slices under 6% of the total keep their value in the legend only, so labels never overlap.
+PieChartSectionData valuePieSection({
+  required double value,
+  required double total,
+  required Color color,
+  required double radius,
+  double fontSize = 9,
+}) {
+  final big = total > 0 && value / total >= 0.06;
+  return PieChartSectionData(
+    value: value,
+    color: color,
+    radius: radius,
+    showTitle: big,
+    title: big ? chartValueLabel(value) : '',
+    titlePositionPercentageOffset: 0.55,
+    titleStyle: TextStyle(
+      fontSize: fontSize,
+      fontWeight: FontWeight.w800,
+      color: Colors.white,
+      shadows: const [Shadow(color: Colors.black54, blurRadius: 2)],
+    ),
+  );
+}

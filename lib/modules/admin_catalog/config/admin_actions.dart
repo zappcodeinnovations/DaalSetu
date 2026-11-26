@@ -215,6 +215,16 @@ Future<List<AdminOption>> loadBrandOptions() => _load(
       ),
     );
 
+/// Brand names for a user's Brand (the web stores the name, not the brand id).
+Future<List<AdminOption>> loadBrandNameOptions() async {
+  final brands = await _load('/api/brands/', (b) {
+    final name = (b['brand_name'] ?? b['name'] ?? '').toString().trim();
+    return AdminOption(name, name);
+  });
+  final seen = <String>{};
+  return [for (final b in brands) if (seen.add(b.value.toLowerCase())) b];
+}
+
 Future<List<AdminOption>> loadOfferOptions() => _load(
       '/api/products/',
       (o) => AdminOption('${o['id'] ?? ''}', (o['title'] ?? 'Offer').toString()),
