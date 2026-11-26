@@ -103,7 +103,7 @@ class BuyerDashboardView extends StatelessWidget {
               children: [
                 _buildHeroHeader(context),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  padding: const EdgeInsets.fromLTRB(16, 2, 16, 0),
                   child: DashboardPeriodBar(onChanged: () => controller.fetchDashboardData()),
                 ),
                 Padding(
@@ -243,6 +243,8 @@ class BuyerDashboardView extends StatelessWidget {
         ),
         title: "Hello, $name 👋",
         subtitle: "Welcome back! Here's what's happening today.",
+        bottomSpacing: 6,
+        preferredHeight: 140,
       );
     });
   }
@@ -307,6 +309,79 @@ class BuyerDashboardView extends StatelessWidget {
     );
   }
 
+  Widget _buildEmptySectionCard({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE65100).withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 22, color: const Color(0xFFE65100)),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: theme.textTheme.bodyLarge?.color,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              color: theme.textTheme.bodyMedium?.color,
+            ),
+          ),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 10),
+            OutlinedButton(
+              onPressed: onAction,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFE65100),
+                side: const BorderSide(color: Color(0xFFE65100), width: 1),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                visualDensity: VisualDensity.compact,
+              ),
+              child: Text(
+                actionLabel,
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildCategoriesList(
     BuildContext context,
     List<CategoryModel> categories,
@@ -315,15 +390,13 @@ class BuyerDashboardView extends StatelessWidget {
       if (!controller.categoriesLoaded.value) {
         return const Center(child: CircularProgressIndicator());
       }
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Text(
-          'No categories assigned yet. Tap View All to request categories.',
-          style: TextStyle(
-            fontSize: 12.5,
-            color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
-          ),
-        ),
+      return _buildEmptySectionCard(
+        context: context,
+        icon: Icons.category_outlined,
+        title: "No categories assigned yet",
+        subtitle: "Request commodities from admin to browse available lots.",
+        actionLabel: "View All Categories",
+        onAction: () => Get.to(() => CategoryPageView()),
       );
     }
 
@@ -443,8 +516,14 @@ class BuyerDashboardView extends StatelessWidget {
     String avgEta =
         kpis['avg_eta']?.toString() ?? kpis['eta']?.toString() ?? "—";
 
-    final paymentPending = kpis['pay_pending']?.toString() ?? '0';
-    final pendingAmount = kpis['pending_amount']?.toString() ?? '₹0.00';
+    final paymentPendingRaw = kpis['pay_pending']?.toString() ?? '0';
+    final pendingAmountRaw = kpis['pending_amount']?.toString() ?? '₹0.00';
+    final paymentPending = paymentPendingRaw.toLowerCase().contains('not tracked')
+        ? '₹0.00'
+        : paymentPendingRaw;
+    final pendingAmount = pendingAmountRaw.toLowerCase().contains('not tracked')
+        ? 'No pending payables'
+        : pendingAmountRaw;
     // final issues = kpis['issues']?.toString() ?? '0';
     // final openTickets = kpis['open_tickets']?.toString() ?? '0';
     final topSupplier = kpis['top_supplier']?.toString() ?? '—';
@@ -541,31 +620,6 @@ class BuyerDashboardView extends StatelessWidget {
             Expanded(
               child: _buildKPICard(
                 context,
-                title: "PAYMENT PENDING",
-                value: paymentPending,
-                subtitle: pendingAmount,
-                icon: Icons.receipt_long_outlined,
-              ),
-            ),
-            // ISSUES / COMPLAINTS is switched off (kept, commented out, in case it comes back).
-            // const SizedBox(width: 14),
-            // Expanded(
-            //   child: _buildKPICard(
-            //     context,
-            //     title: "ISSUES / COMPLAINTS",
-            //     value: issues,
-            //     subtitle: "Open tickets: $openTickets",
-            //     icon: Icons.report_problem_outlined,
-            //   ),
-            // ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        Row(
-          children: [
-            Expanded(
-              child: _buildKPICard(
-                context,
                 title: "TOP SUPPLIER (MTD)",
                 value: topSupplier,
                 subtitle: supplierShare,
@@ -586,6 +640,31 @@ class BuyerDashboardView extends StatelessWidget {
                     Get.to(() => const BuyerOffersView(initialIndex: 0)),
               ),
             ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Expanded(
+              child: _buildKPICard(
+                context,
+                title: "PAYMENT PENDING",
+                value: paymentPending,
+                subtitle: pendingAmount,
+                icon: Icons.receipt_long_outlined,
+              ),
+            ),
+            // ISSUES / COMPLAINTS is switched off (kept, commented out, in case it comes back).
+            // const SizedBox(width: 14),
+            // Expanded(
+            //   child: _buildKPICard(
+            //     context,
+            //     title: "ISSUES / COMPLAINTS",
+            //     value: issues,
+            //     subtitle: "Open tickets: $openTickets",
+            //     icon: Icons.report_problem_outlined,
+            //   ),
+            // ),
           ],
         ),
       ],
@@ -744,8 +823,13 @@ class BuyerDashboardView extends StatelessWidget {
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     if (requirements.isEmpty) {
-      return const Center(
-        child: Text("No recent requirements or negotiations."),
+      return _buildEmptySectionCard(
+        context: context,
+        icon: IconlyLight.swap,
+        title: "No active requirements or negotiations",
+        subtitle: "Post a buy requirement to receive quotes from verified sellers.",
+        actionLabel: "Post Requirement",
+        onAction: () => Get.to(() => const AddBuyerOfferScreen()),
       );
     }
     return ListView.separated(
@@ -987,7 +1071,14 @@ class BuyerDashboardView extends StatelessWidget {
 
   Widget _buildRecentOrdersList(BuildContext context, List<dynamic> orders) {
     if (orders.isEmpty) {
-      return const Center(child: Text("No recent orders"));
+      return _buildEmptySectionCard(
+        context: context,
+        icon: IconlyLight.buy,
+        title: "No recent orders",
+        subtitle: "Confirmed purchases and trade contracts will be listed here.",
+        actionLabel: "Browse Offers",
+        onAction: () => Get.to(() => const BuyerOffersView()),
+      );
     }
 
     return ListView.separated(

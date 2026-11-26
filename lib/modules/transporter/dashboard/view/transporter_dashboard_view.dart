@@ -63,10 +63,9 @@ class TransporterDashboardView extends StatelessWidget {
               ],
               if (!companyController.isLoading.value &&
                   companyController.companies.isEmpty) ...[
-                const SizedBox(height: 16),
                 _buildRegisterBanner(context),
+                const SizedBox(height: 10),
               ],
-              const SizedBox(height: 20),
               _sectionTitle(context, "Overview KPIs"),
               const SizedBox(height: 12),
               _buildKpiGrid(context),
@@ -234,32 +233,38 @@ class TransporterDashboardView extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF282828) : const Color(0xFFFFF8E1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFFFB300).withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(IconlyBold.home, size: 14, color: Color(0xFFE65100)),
-                    const SizedBox(width: 5),
-                    Text(
-                      controller.branchCodes.isEmpty
-                          ? 'No branch assigned'
-                          : 'Branch: ${controller.branchCodes.join(' - ')}',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.grey.shade300 : const Color(0xFF5D4037),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF282828) : const Color(0xFFFFF8E1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFFFB300).withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(IconlyBold.home, size: 14, color: Color(0xFFE65100)),
+                      const SizedBox(width: 5),
+                      Flexible(
+                        child: Text(
+                          controller.branchCodes.isEmpty
+                              ? 'No branch assigned'
+                              : 'Branch: ${controller.branchCodes.join(' - ')}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.grey.shade300 : const Color(0xFF5D4037),
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               if (kyc.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -588,14 +593,12 @@ class TransporterDashboardView extends StatelessWidget {
           // An all-zero period still shows the chart (zero line, 0-1.0 axes) like the web;
           // the message is only for a period with no buckets at all.
           if (earnings.labels.isEmpty && shipments.labels.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 30),
-              child: Center(
-                child: Text(
-                  "No accepted shipments in this period",
-                  style: TextStyle(color: theme.disabledColor),
-                ),
-              ),
+            _buildAnalyticsEmptyState(
+              context: context,
+              icon: Icons.trending_up_rounded,
+              title: "No accepted shipments in this period",
+              subtitle: "Earnings and shipment activity will be plotted here.",
+              height: 140,
             )
           else ...[
             const SizedBox(height: 16),
@@ -963,6 +966,63 @@ class TransporterDashboardView extends StatelessWidget {
     return const SizedBox.shrink();
   }
 
+  Widget _buildAnalyticsEmptyState({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    double height = 120,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return SizedBox(
+      height: height,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE65100).withValues(alpha: isDark ? 0.18 : 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  size: 22,
+                  color: const Color(0xFFE65100),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: theme.textTheme.bodyLarge?.color,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w400,
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildDeliveryStatusCard(BuildContext context) {
     final theme = Theme.of(context);
     final status = controller.deliveryStatus.value;
@@ -982,14 +1042,12 @@ class TransporterDashboardView extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           if (total == 0)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Center(
-                child: Text(
-                  "No deliveries yet",
-                  style: TextStyle(color: theme.disabledColor),
-                ),
-              ),
+            _buildAnalyticsEmptyState(
+              context: context,
+              icon: Icons.local_shipping_outlined,
+              title: "No deliveries yet",
+              subtitle: "Completed and active delivery statuses will appear here.",
+              height: 130,
             )
           else
             Row(
@@ -1098,14 +1156,12 @@ class TransporterDashboardView extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           if (series.labels.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Center(
-                child: Text(
-                  "No vehicle fleet data yet",
-                  style: TextStyle(color: theme.disabledColor, fontSize: 12),
-                ),
-              ),
+            _buildAnalyticsEmptyState(
+              context: context,
+              icon: Icons.directions_bus_outlined,
+              title: "No vehicle fleet data yet",
+              subtitle: "Vehicle fleet breakdown will appear once vehicles are assigned.",
+              height: 120,
             )
           else ...[
             for (var i = 0; i < series.labels.length; i++) ...[
@@ -1203,14 +1259,12 @@ class TransporterDashboardView extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           if (series.labels.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Center(
-                child: Text(
-                  "No route trips completed yet",
-                  style: TextStyle(color: theme.disabledColor, fontSize: 12),
-                ),
-              ),
+            _buildAnalyticsEmptyState(
+              context: context,
+              icon: Icons.alt_route_rounded,
+              title: "No route trips completed yet",
+              subtitle: "Frequent transit routes will be listed as shipments complete.",
+              height: 120,
             )
           else ...[
             for (var i = 0; i < series.labels.length; i++) ...[
@@ -1474,14 +1528,12 @@ class TransporterDashboardView extends StatelessWidget {
               },
             ),
           ] else
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Center(
-                child: Text(
-                  "No driver SLA recorded yet",
-                  style: TextStyle(color: theme.disabledColor, fontSize: 12),
-                ),
-              ),
+            _buildAnalyticsEmptyState(
+              context: context,
+              icon: Icons.verified_rounded,
+              title: "No driver SLA recorded yet",
+              subtitle: "On-time driver performance will be tracked here.",
+              height: 120,
             ),
         ],
       ),

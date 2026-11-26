@@ -72,6 +72,52 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
     );
   }
 
+  Widget _buildAnalyticsEmptyState({
+    required BuildContext context,
+    required IconData icon,
+    required String message,
+    double height = 110,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return SizedBox(
+      height: height,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE65100).withValues(alpha: isDark ? 0.15 : 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: const Color(0xFFE65100),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final trendMap = widget.charts['trend'] is Map
@@ -244,9 +290,11 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
           ),
           const SizedBox(height: 12),
           if (!hasData)
-            const SizedBox(
-              height: 180,
-              child: Center(child: Text('No trend data available.')),
+            _buildAnalyticsEmptyState(
+              context: context,
+              icon: Icons.trending_up_rounded,
+              message: 'No trend data available for this period',
+              height: 140,
             )
           else ...[
             Row(
@@ -542,9 +590,11 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
           ),
           const SizedBox(height: 16),
           if (data.values.isEmpty)
-            const SizedBox(
-              height: 120,
-              child: Center(child: Text('No supplier spend data.')),
+            _buildAnalyticsEmptyState(
+              context: context,
+              icon: Icons.storefront_outlined,
+              message: 'No supplier spend recorded for this period',
+              height: 100,
             )
           else ...[
             LayoutBuilder(
@@ -700,7 +750,12 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
           ),
           const SizedBox(height: 10),
           if (!hasData)
-            const SizedBox(height: 130, child: Center(child: Text('No data')))
+            _buildAnalyticsEmptyState(
+              context: context,
+              icon: Icons.pie_chart_outline_rounded,
+              message: 'No commodity volume recorded yet',
+              height: 100,
+            )
           else
             Row(
               children: [
@@ -782,7 +837,12 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
           ),
           const SizedBox(height: 10),
           if (!hasData)
-            const SizedBox(height: 112, child: Center(child: Text('No data')))
+            _buildAnalyticsEmptyState(
+              context: context,
+              icon: Icons.donut_large_rounded,
+              message: 'No $title data recorded for this period',
+              height: 95,
+            )
           else
             Row(
               children: [
@@ -853,49 +913,195 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
   }
 
   Widget _trackingCard(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final tracking = widget.transportTracking
         .whereType<Map>()
         .map((item) => Map<String, dynamic>.from(item))
         .toList();
-    return GlassCard(
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 2, bottom: 8),
+          child: Text(
             'Transport Tracking',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          if (tracking.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 18),
-              child: Center(child: Text('No transport tracking available.')),
-            )
-          else
-            ...tracking.map(
-              (item) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.local_shipping_outlined),
-                title: Text(
-                  '${item['contract'] ?? '-'} • ${item['route'] ?? '-'}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Text(
-                  'Transporter: ${item['transporter'] ?? '-'} • ${item['last_scan'] ?? '-'}',
-                ),
-                trailing: Text(
-                  item['status']?.toString() ?? '-',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
+              color: theme.textTheme.bodyLarge?.color,
             ),
-        ],
-      ),
+          ),
+        ),
+        if (tracking.isEmpty)
+          GlassCard(
+            padding: const EdgeInsets.all(14),
+            child: _buildAnalyticsEmptyState(
+              context: context,
+              icon: Icons.local_shipping_outlined,
+              message: 'No active shipments to track',
+              height: 80,
+            ),
+          )
+        else
+          ListView.separated(
+            padding: EdgeInsets.zero,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: tracking.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            itemBuilder: (context, index) {
+              final item = tracking[index];
+              final contract = (item['contract'] ?? '').toString().trim();
+              final route = (item['route'] ?? '').toString().trim();
+              final transporter = (item['transporter'] ?? '').toString().trim();
+              final lastScan = (item['last_scan'] ?? '').toString().trim();
+              final status = (item['status'] ?? 'Delivered').toString().trim();
+              final statusLower = status.toLowerCase();
+
+              Color statusColor = const Color(0xFF10B981); // Green Delivered
+              Color statusBg = isDark
+                  ? const Color(0xFF064E3B).withValues(alpha: 0.35)
+                  : const Color(0xFFD1FAE5);
+
+              if (statusLower.contains('transit')) {
+                statusColor = const Color(0xFF3B82F6); // Blue
+                statusBg = isDark
+                    ? const Color(0xFF1E3A8A).withValues(alpha: 0.35)
+                    : const Color(0xFFDBEAFE);
+              } else if (statusLower.contains('pickup') ||
+                  statusLower.contains('due') ||
+                  statusLower.contains('pending')) {
+                statusColor = const Color(0xFFF59E0B); // Amber
+                statusBg = isDark
+                    ? const Color(0xFF78350F).withValues(alpha: 0.35)
+                    : const Color(0xFFFEF3C7);
+              } else if (statusLower.contains('cancel') ||
+                  statusLower.contains('delay')) {
+                statusColor = const Color(0xFFEF4444); // Red
+                statusBg = isDark
+                    ? const Color(0xFF7F1D1D).withValues(alpha: 0.35)
+                    : const Color(0xFFFEE2E2);
+              }
+
+              final headerTitle = [
+                if (contract.isNotEmpty) contract,
+                if (route.isNotEmpty) route,
+              ].join(' • ');
+
+              final subtitleText = [
+                if (transporter.isNotEmpty) 'Transporter: $transporter',
+                if (lastScan.isNotEmpty) lastScan,
+              ].join(' • ');
+
+              return GlassCard(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(9),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.local_shipping_outlined,
+                        size: 20,
+                        color: statusColor,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  contract.isNotEmpty ? contract : 'Shipment Tracking',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12.5,
+                                    color: isDark ? Colors.white : Colors.black87,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: statusBg,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: statusColor.withValues(alpha: 0.3),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: BoxDecoration(
+                                        color: statusColor,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      status,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: statusColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (route.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              route,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w500,
+                                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 4),
+                          Text(
+                            subtitleText.isNotEmpty ? subtitleText : 'Status update pending',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+      ],
     );
   }
 

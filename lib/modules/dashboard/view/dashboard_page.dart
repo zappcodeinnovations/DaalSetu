@@ -58,7 +58,10 @@ class AdminDashboardScreen extends StatelessWidget {
               children: [
                 _buildHeroSection(context),
                 const SizedBox(height: 14),
-                DashboardPeriodBar(onChanged: controller.fetchDashboard),
+                DashboardPeriodBar(
+                  onChanged: controller.fetchDashboard,
+                  margin: EdgeInsets.zero,
+                ),
                 const SizedBox(height: 10),
 
                 _buildSectionHeader(context, "Dashboard KPIs"),
@@ -415,6 +418,139 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
       ],
     );
+  }
+
+  Widget _buildEmptySectionCard({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE65100).withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 22, color: const Color(0xFFE65100)),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: theme.textTheme.bodyLarge?.color,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w400,
+              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+            ),
+          ),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: onAction,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE65100),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                textStyle: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600),
+              ),
+              child: Text(actionLabel),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnalyticsEmptyState({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    double? height,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    Widget content = Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(9),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE65100).withValues(alpha: isDark ? 0.18 : 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: const Color(0xFFE65100),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w400,
+                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (height != null) {
+      return Container(
+        constraints: BoxConstraints(minHeight: height),
+        child: content,
+      );
+    }
+    return content;
   }
 
   /// Numbers as the web dashboard prints them (JavaScript): 20.0 -> "20", 2.4 -> "2.4".
@@ -1009,9 +1145,12 @@ class AdminDashboardScreen extends StatelessWidget {
           Divider(color: theme.dividerColor.withValues(alpha: 0.6)),
           const SizedBox(height: 12),
           if (count == 0)
-            const SizedBox(
+            _buildAnalyticsEmptyState(
+              context: context,
+              icon: Icons.bar_chart_rounded,
+              title: "No buyer trade data available",
+              subtitle: "Top purchasing buyers will appear here once deals close.",
               height: 150,
-              child: Center(child: Text('No buyer trade data available')),
             )
           else
             ...List.generate(count, (index) {
@@ -1104,7 +1243,13 @@ class AdminDashboardScreen extends StatelessWidget {
           SizedBox(
             height: 220,
             child: count == 0
-                ? const Center(child: Text('No transporter SLA data available'))
+                ? _buildAnalyticsEmptyState(
+                    context: context,
+                    icon: Icons.local_shipping_outlined,
+                    title: "No transporter SLA data available",
+                    subtitle: "On-time delivery performance will appear here.",
+                    height: 180,
+                  )
                 : BarChart(
                     BarChartData(
                       minY: 0,
@@ -1594,11 +1739,12 @@ class AdminDashboardScreen extends StatelessWidget {
           SizedBox(
             height: 210,
             child: labels.isEmpty
-                ? Center(
-                    child: Text(
-                      'No payment data available',
-                      style: theme.textTheme.bodySmall,
-                    ),
+                ? _buildAnalyticsEmptyState(
+                    context: context,
+                    icon: Icons.account_balance_wallet_outlined,
+                    title: "No payment data available",
+                    subtitle: "Received and outstanding payments will appear here.",
+                    height: 180,
                   )
                 : BarChart(
                     BarChartData(
@@ -1748,14 +1894,12 @@ class AdminDashboardScreen extends StatelessWidget {
           Divider(color: theme.dividerColor.withValues(alpha: 0.6)),
           const SizedBox(height: 12),
           if (itemCount == 0)
-            SizedBox(
-              height: 190,
-              child: Center(
-                child: Text(
-                  'No user distribution data available',
-                  style: theme.textTheme.bodySmall,
-                ),
-              ),
+            _buildAnalyticsEmptyState(
+              context: context,
+              icon: Icons.group_outlined,
+              title: "No user distribution data available",
+              subtitle: "Registered users by role will appear here.",
+              height: 180,
             )
           else ...[
             Center(
@@ -2329,9 +2473,19 @@ class AdminDashboardScreen extends StatelessWidget {
     if (labels.isEmpty || values.isEmpty) {
       return GlassCard(
         padding: const EdgeInsets.all(12),
-        child: const SizedBox(
-          height: 110,
-          child: Center(child: Text("No Data")),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
+            Text(subtitle, style: GoogleFonts.inter(fontSize: 10, color: theme.textTheme.bodyMedium?.color)),
+            const SizedBox(height: 8),
+            _buildAnalyticsEmptyState(
+              context: context,
+              icon: Icons.pie_chart_outline_rounded,
+              title: "No data available",
+              subtitle: "Breakdown will appear as trading activity is recorded.",
+            ),
+          ],
         ),
       );
     }
@@ -2650,9 +2804,28 @@ class AdminDashboardScreen extends StatelessWidget {
     if (count == 0) {
       return GlassCard(
         padding: const EdgeInsets.all(16),
-        child: const SizedBox(
-          height: 220,
-          child: Center(child: Text('No trade trend data available')),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Gross Trade Value & Deals',
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Divider(color: theme.dividerColor.withValues(alpha: 0.6)),
+            const SizedBox(height: 10),
+            _buildAnalyticsEmptyState(
+              context: context,
+              icon: Icons.trending_up_rounded,
+              title: "No trade trend data available",
+              subtitle: "Gross trade value and deal volume trends will appear here.",
+              height: 180,
+            ),
+          ],
         ),
       );
     }
@@ -3130,7 +3303,14 @@ class AdminDashboardScreen extends StatelessWidget {
     BuildContext context,
     List<BranchPerformanceModel> branches,
   ) {
-    if (branches.isEmpty) return const Text("No branch data.");
+    if (branches.isEmpty) {
+      return _buildEmptySectionCard(
+        context: context,
+        icon: Icons.storefront_outlined,
+        title: "No branch performance data",
+        subtitle: "Branch-level revenue and activity will appear here.",
+      );
+    }
 
     return ListView.separated(
       shrinkWrap: true,
@@ -3231,7 +3411,14 @@ class AdminDashboardScreen extends StatelessWidget {
     BuildContext context,
     List<ContractModel> contracts,
   ) {
-    if (contracts.isEmpty) return const Text("No recent contracts.");
+    if (contracts.isEmpty) {
+      return _buildEmptySectionCard(
+        context: context,
+        icon: Icons.description_outlined,
+        title: "No recent contracts",
+        subtitle: "Executed contracts and legal agreements will be listed here.",
+      );
+    }
 
     return ListView.separated(
       shrinkWrap: true,
@@ -3337,7 +3524,14 @@ class AdminDashboardScreen extends StatelessWidget {
     BuildContext context,
     List<ActivityModel> activities,
   ) {
-    if (activities.isEmpty) return const Text("No recent activity.");
+    if (activities.isEmpty) {
+      return _buildEmptySectionCard(
+        context: context,
+        icon: Icons.history_rounded,
+        title: "No recent activity",
+        subtitle: "Real-time system events, trades, and updates will be logged here.",
+      );
+    }
 
     return ListView.separated(
       shrinkWrap: true,

@@ -63,7 +63,7 @@ class _PageAutoRefreshState extends State<PageAutoRefresh>
 
   void _visibilityChanged() {
     final visible =
-        TickerMode.valuesOf(context).enabled &&
+        TickerMode.of(context) &&
         (widget.tabIndex == null || _tabs?.index == widget.tabIndex);
     final becameVisible = visible && !_visible;
     _visible = visible;

@@ -58,14 +58,14 @@ class SellerDashboardView extends StatelessWidget {
               children: [
                 _buildHeroSection(context, data.header),
                 DashboardPeriodBar(onChanged: controller.fetchDashboardData),
-                const SizedBox(height: 16),
+                const SizedBox(height: 2),
                 _buildSectionHeader(
                   context,
                   "Overview KPIs",
                   trailingText: "View All",
                   onTrailingTap: () => _showKpiDetails(context, data.kpis),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 _buildTodaysOverview(context, data.kpis),
 
                 const SizedBox(height: 24),
@@ -318,23 +318,81 @@ class SellerDashboardView extends StatelessWidget {
     );
   }
 
+  IconData _getKpiIcon(SellerKpi kpi) {
+    final titleLower = kpi.title.toLowerCase();
+    final screenLower = kpi.screen.toLowerCase();
+
+    if (kpi.type == 'currency' || titleLower.contains('earning') || titleLower.contains('revenue')) {
+      return IconlyLight.wallet;
+    }
+    if (screenLower == 'buyer_offers' || titleLower.contains('deal') || titleLower.contains('negotiat')) {
+      return IconlyLight.swap;
+    }
+    if (screenLower == 'contracts' || titleLower.contains('contract')) {
+      return IconlyLight.document;
+    }
+    if (screenLower == 'offers' || titleLower.contains('listing') || titleLower.contains('product')) {
+      return Icons.inventory_2_outlined;
+    }
+    if (screenLower == 'challans' || titleLower.contains('transit') || titleLower.contains('shipment')) {
+      return Icons.local_shipping_outlined;
+    }
+    return IconlyLight.chart;
+  }
+
   Widget _buildTodaysOverview(BuildContext context, List<SellerKpi> kpis) {
     if (kpis.isEmpty) return const SizedBox();
 
-    // All KPIs visible at once in a two-column grid (no sideways scrolling).
     return LayoutBuilder(
       builder: (context, constraints) {
         final cardWidth = (constraints.maxWidth - 12) / 2;
+        final hasFeaturedFirst = kpis.length.isOdd && kpis.length > 1;
+
+        if (hasFeaturedFirst) {
+          final firstKpi = kpis.first;
+          final remainingKpis = kpis.skip(1).toList();
+
+          return Column(
+            children: [
+              SizedBox(
+                width: constraints.maxWidth,
+                child: _buildDynamicMetricCard(
+                  context,
+                  firstKpi,
+                  _getKpiIcon(firstKpi),
+                  isFullWidth: true,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: remainingKpis.map((kpi) {
+                  return SizedBox(
+                    width: cardWidth,
+                    child: _buildDynamicMetricCard(
+                      context,
+                      kpi,
+                      _getKpiIcon(kpi),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          );
+        }
+
         return Wrap(
           spacing: 12,
           runSpacing: 12,
           children: kpis.map((kpi) {
-            IconData icon = IconlyLight.document;
-            if (kpi.type == 'currency') icon = IconlyLight.wallet;
-            if (kpi.type == 'number') icon = IconlyLight.graph;
             return SizedBox(
               width: cardWidth,
-              child: _buildDynamicMetricCard(context, kpi, icon),
+              child: _buildDynamicMetricCard(
+                context,
+                kpi,
+                _getKpiIcon(kpi),
+              ),
             );
           }).toList(),
         );
@@ -345,8 +403,9 @@ class SellerDashboardView extends StatelessWidget {
   Widget _buildDynamicMetricCard(
     BuildContext context,
     SellerKpi metric,
-    IconData icon,
-  ) {
+    IconData icon, {
+    bool isFullWidth = false,
+  }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -371,66 +430,128 @@ class SellerDashboardView extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(7),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE65100).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
+        child: isFullWidth
+            ? Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE65100).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(icon, size: 22, color: const Color(0xFFE65100)),
                   ),
-                  child: Icon(icon, size: 18, color: const Color(0xFFE65100)),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 12,
-                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade500,
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              metric.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: theme.textTheme.bodyMedium?.color,
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          metric.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: theme.textTheme.bodyMedium?.color,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          metric.type == 'currency'
+                              ? "₹${metric.value}"
+                              : metric.value.toString(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
+                        ),
+                        if (metric.subtitle.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            metric.subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade500,
+                  ),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE65100).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(icon, size: 18, color: const Color(0xFFE65100)),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 12,
+                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade500,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    metric.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: theme.textTheme.bodyMedium?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    metric.type == 'currency'
+                        ? "₹${metric.value}"
+                        : metric.value.toString(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                  ),
+                  if (metric.subtitle.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      metric.subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              metric.type == 'currency'
-                  ? "₹${metric.value}"
-                  : metric.value.toString(),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
-              ),
-            ),
-            if (metric.subtitle.isNotEmpty) ...[
-              const SizedBox(height: 2),
-              Text(
-                metric.subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-                ),
-              ),
-            ],
-          ],
-        ),
       ),
     );
   }
@@ -611,6 +732,7 @@ class SellerDashboardView extends StatelessWidget {
     final values = pipeline.values
         .map((e) => double.tryParse('$e') ?? 0)
         .toList();
+    final bool hasData = values.any((v) => v > 0);
     double maxY = values.isNotEmpty
         ? values.reduce((a, b) => a > b ? a : b)
         : 10;
@@ -621,63 +743,140 @@ class SellerDashboardView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "Deal Pipeline",
-            style: GoogleFonts.poppins(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: theme.textTheme.bodyLarge?.color,
-            ),
-          ),
-          Text(
-            "By Stage",
-            style: GoogleFonts.inter(
-              fontSize: 8,
-              color: theme.textTheme.bodyMedium?.color,
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 112,
-            child: BarChart(
-              BarChartData(
-                maxY: maxY * 1.2,
-                alignment: BarChartAlignment.spaceAround,
-                groupsSpace: 16,
-                gridData: FlGridData(show: false),
-                borderData: FlBorderData(show: false),
-                titlesData: FlTitlesData(
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Deal Pipeline",
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
                   ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
+                  Text(
+                    "By Stage",
+                    style: GoogleFonts.inter(
+                      fontSize: 8,
+                      color: theme.textTheme.bodyMedium?.color,
+                    ),
                   ),
-                  topTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
+                ],
+              ),
+              if (!hasData)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: theme.dividerColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
                   ),
-                  rightTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
+                  child: Text(
+                    "0 Active",
+                    style: GoogleFonts.inter(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w600,
+                      color: theme.textTheme.bodySmall?.color,
+                    ),
                   ),
                 ),
-                barGroups: List.generate(labels.length, (index) {
-                  return BarChartGroupData(
-                    x: index,
-                    barRods: [
-                      BarChartRodData(
-                        toY: values[index],
-                        width: 8,
-                        color: theme.colorScheme.primary,
-                        borderRadius: BorderRadius.circular(2),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (hasData)
+            SizedBox(
+              height: 112,
+              child: BarChart(
+                BarChartData(
+                  maxY: maxY * 1.2,
+                  alignment: BarChartAlignment.spaceAround,
+                  groupsSpace: 16,
+                  gridData: FlGridData(show: false),
+                  borderData: FlBorderData(show: false),
+                  titlesData: FlTitlesData(
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    topTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                  ),
+                  barGroups: List.generate(labels.length, (index) {
+                    return BarChartGroupData(
+                      x: index,
+                      barRods: [
+                        BarChartRodData(
+                          toY: values[index],
+                          width: 8,
+                          color: theme.colorScheme.primary,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ],
+                    );
+                  }),
+                ),
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: List.generate(labels.length, (index) {
+                  return Column(
+                    children: [
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE65100).withValues(alpha: 0.08),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFFE65100).withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            "0",
+                            style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFFE65100),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      SizedBox(
+                        width: 60,
+                        child: Text(
+                          labels[index].replaceAll('_', ' '),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                            fontSize: 8,
+                            height: 1.15,
+                            fontWeight: FontWeight.w600,
+                            color: theme.textTheme.bodyMedium?.color,
+                          ),
+                        ),
                       ),
                     ],
                   );
                 }),
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          if (labels.isNotEmpty)
+          if (hasData && labels.isNotEmpty) ...[
+            const SizedBox(height: 8),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: labels
@@ -702,6 +901,7 @@ class SellerDashboardView extends StatelessWidget {
                   )
                   .toList(),
             ),
+          ],
         ],
       ),
     );
@@ -725,9 +925,50 @@ class SellerDashboardView extends StatelessWidget {
     if (items.isEmpty) {
       return GlassCard(
         padding: const EdgeInsets.all(12),
-        child: const SizedBox(
-          height: 110,
-          child: Center(child: Text("No Data")),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
+            ),
+            Text(
+              subtitle,
+              style: GoogleFonts.inter(
+                fontSize: 8,
+                color: theme.textTheme.bodyMedium?.color,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      IconlyLight.chart,
+                      size: 26,
+                      color: const Color(0xFFE65100).withValues(alpha: 0.35),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      "No commodity volume data available yet",
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        color: theme.textTheme.bodyMedium?.color,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -830,8 +1071,95 @@ class SellerDashboardView extends StatelessWidget {
     );
   }
 
+  Widget _buildEmptySectionCard({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE65100).withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 22, color: const Color(0xFFE65100)),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: theme.textTheme.bodyLarge?.color,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              color: theme.textTheme.bodyMedium?.color,
+            ),
+          ),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 10),
+            OutlinedButton(
+              onPressed: onAction,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFE65100),
+                side: const BorderSide(color: Color(0xFFE65100), width: 1),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                visualDensity: VisualDensity.compact,
+              ),
+              child: Text(
+                actionLabel,
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildRecentDeals(BuildContext context, List<SellerDeal> deals) {
-    if (deals.isEmpty) return const Text("No recent deals.");
+    if (deals.isEmpty) {
+      return _buildEmptySectionCard(
+        context: context,
+        icon: IconlyLight.swap,
+        title: "No recent deals",
+        subtitle: "Deals will appear here once buyers confirm quotes.",
+        actionLabel: "Post Offer",
+        onAction: () {
+          if (!Get.isRegistered<SellerProductController>()) {
+            Get.put(SellerProductController());
+          }
+          Get.to(() => const AddProductView());
+        },
+      );
+    }
 
     return ListView.separated(
       shrinkWrap: true,
@@ -928,7 +1256,14 @@ class SellerDashboardView extends StatelessWidget {
     BuildContext context,
     List<SellerContract> contracts,
   ) {
-    if (contracts.isEmpty) return const Text("No recent contracts.");
+    if (contracts.isEmpty) {
+      return _buildEmptySectionCard(
+        context: context,
+        icon: IconlyLight.document,
+        title: "No recent contracts",
+        subtitle: "Signed trade contracts will be listed here.",
+      );
+    }
 
     return ListView.separated(
       shrinkWrap: true,

@@ -5,9 +5,14 @@ import '../utils/dashboard_filter.dart';
 /// The date filter bar at the top of every dashboard (admin, seller, buyer, transporter): the active period,
 /// a "Change" button (quick ranges, a month, or a custom range) and a clear (x). [onChanged] reloads the dashboard.
 class DashboardPeriodBar extends StatelessWidget {
-  const DashboardPeriodBar({super.key, required this.onChanged});
+  const DashboardPeriodBar({
+    super.key,
+    required this.onChanged,
+    this.margin,
+  });
 
   final VoidCallback onChanged;
+  final EdgeInsetsGeometry? margin;
 
   Future<void> _open(BuildContext context) async {
     final picked = await showPeriodSheet(context, DashboardFilter.current.value);
@@ -24,7 +29,7 @@ class DashboardPeriodBar extends StatelessWidget {
       builder: (context, value, _) {
         final color = theme.colorScheme.primary;
         return Container(
-          margin: const EdgeInsets.only(bottom: 14),
+          margin: margin ?? const EdgeInsets.only(bottom: 14),
           padding: const EdgeInsets.fromLTRB(14, 8, 6, 8),
           decoration: BoxDecoration(
             color: theme.cardColor,
