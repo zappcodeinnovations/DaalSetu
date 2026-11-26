@@ -294,7 +294,7 @@ class _SellerChallanDetailsViewState extends State<SellerChallanDetailsView> {
             children: [
               _row(
                 'Challan number',
-                '#${_show(data['challan_number'] ?? data['id'])}',
+                _show(data['challan_number']),
               ),
               _row('Challan date', _formatDate(data['challan_date'])),
               if (_text(data['order']).isNotEmpty)

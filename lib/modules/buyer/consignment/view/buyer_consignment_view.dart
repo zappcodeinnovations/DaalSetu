@@ -307,7 +307,7 @@ class _BuyerConsignmentViewState extends State<BuyerConsignmentView> {
 
   Widget _card(ThemeData theme, Map<String, dynamic> item) {
     final title = item['product_title'] ?? item['title'] ?? 'Consignment';
-    final contract = item['contract_id'] ?? item['id'] ?? '-';
+    final contract = item['contract_id'] ?? '-';
     final status = consignmentStageLabel(item);
     final route =
         '${item['loading_from'] ?? '-'} → ${item['loading_to'] ?? '-'}';

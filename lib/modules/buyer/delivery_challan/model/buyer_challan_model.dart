@@ -26,7 +26,7 @@ class BuyerChallanModel {
   factory BuyerChallanModel.fromJson(Map<String, dynamic> json) {
     return BuyerChallanModel(
       id: json['id'],
-      challanNumber: json['challan_number'] ?? json['id'].toString(),
+      challanNumber: json['challan_number'] ?? '',
       truckNumber: json['truck_number'] ?? "N/A",
       dispatchedByName: json['dispatched_by_name'] ?? "N/A",
       status: json['status'] ?? "pending",

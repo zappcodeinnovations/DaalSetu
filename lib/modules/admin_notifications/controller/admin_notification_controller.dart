@@ -375,7 +375,7 @@ class AdminNotificationController extends GetxController {
     Get.dialog(
       OfferInterestsDialog(
         offerId: offerId,
-        offerTitle: title ?? 'Offer #$offerId',
+        offerTitle: title ?? 'Offer',
       ),
       barrierDismissible: true,
     );

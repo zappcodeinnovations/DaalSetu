@@ -53,7 +53,7 @@ class _BuyerOrdersViewState extends State<BuyerOrdersView> {
           fetched = contracts.map((c) {
             if (c is Map<String, dynamic>) {
               return {
-                'id': c['contract_number'] ?? c['id']?.toString() ?? '',
+                'id': c['contract_number'] ?? c['contract_id'] ?? '',
                 'commodity': c['commodity'] ?? c['title'] ?? 'Commodity',
                 'quantity': '${c['quantity'] ?? ''} ${c['unit'] ?? ''}'.trim(),
                 'value': c['total_amount'] ?? c['rate'] ?? '0',

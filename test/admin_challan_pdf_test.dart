@@ -50,6 +50,13 @@ void main() {
     if (out != null) File(out).writeAsBytesSync(bytes);
   });
 
+  test('a challan never shows its database id', () {
+    final challan = AdminChallanModel.fromJson({'id': 57, 'order': 91, 'contract_id': 33});
+    expect(challan.displayChallanNo, '-');
+    expect(challan.displayContract, '-');
+    expect(AdminChallanModel.fromJson(_json).displayChallanNo, 'DC-20261120-0003');
+  });
+
   test('the Transporter SLA shows one decimal like the web', () {
     expect(slaPercentText(76.923), '76.9');
     expect(slaPercentText(100), '100');

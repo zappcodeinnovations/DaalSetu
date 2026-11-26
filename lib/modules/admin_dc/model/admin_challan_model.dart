@@ -137,20 +137,14 @@ class AdminChallanModel {
     if (challanNumber != null && challanNumber!.isNotEmpty) {
       return challanNumber!;
     }
-    return "#DC-$id";
+    return '-';
   }
 
   String get displayContract {
     if (contractCode != null && contractCode!.isNotEmpty) {
       return contractCode!;
     }
-    if (contractId != null) {
-      return "Contract #$contractId";
-    }
-    if (orderId != null) {
-      return "Contract #$orderId";
-    }
-    return "Contract N/A";
+    return '-';
   }
 
   String get displaySeller {

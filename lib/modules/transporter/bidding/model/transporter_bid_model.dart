@@ -61,7 +61,7 @@ class ShipmentOfferModel {
 
     return ShipmentOfferModel(
       id: json['id'] is int ? json['id'] : int.tryParse('${json['id']}') ?? 0,
-      contractId: text('contract_id') ?? '${json['id']}',
+      contractId: text('contract_id') ?? '-',
       productTitle: text('product_title') ?? 'Consignment',
       pickupLocation: text('pickup_location') ?? '-',
       deliveryLocation: text('delivery_location') ?? '-',

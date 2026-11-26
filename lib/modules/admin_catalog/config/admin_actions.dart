@@ -217,7 +217,7 @@ Future<List<AdminOption>> loadBrandOptions() => _load(
 
 Future<List<AdminOption>> loadOfferOptions() => _load(
       '/api/products/',
-      (o) => AdminOption('${o['id'] ?? ''}', '#${o['id']} ${(o['title'] ?? 'Offer').toString()}'),
+      (o) => AdminOption('${o['id'] ?? ''}', (o['title'] ?? 'Offer').toString()),
     );
 
 Future<List<AdminOption>> loadSubAdminOptions() =>

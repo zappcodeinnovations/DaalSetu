@@ -455,7 +455,7 @@ class _MyAnalyticsScreenState extends State<MyAnalyticsScreen> {
     final last = '${user['last_name'] ?? ''}'.trim();
     final display = '$first $last'.trim();
     return display.isEmpty
-        ? '${user['username'] ?? user['id'] ?? ''}'
+        ? '${user['username'] ?? '-'}'
         : display;
   }
 

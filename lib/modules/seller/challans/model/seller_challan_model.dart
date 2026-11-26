@@ -54,7 +54,7 @@ class SellerChallanModel {
     final company = json['company'];
     return SellerChallanModel(
       id: json['id'] as int?,
-      challanNumber: json['challan_number'] ?? json['challan_no'] ?? json['id']?.toString(),
+      challanNumber: json['challan_number'] ?? json['challan_no'],
       challanDate: json['challan_date'] ?? json['date'] ?? json['created_at'],
       sellerName: json['seller_name_display'] ?? json['seller_name'] ?? (json['seller'] is Map ? json['seller']['name'] : null),
       buyerName: json['buyer_name_display'] ?? json['buyer_name'] ?? (json['buyer'] is Map ? json['buyer']['name'] : null),

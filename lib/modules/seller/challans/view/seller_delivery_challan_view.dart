@@ -133,7 +133,7 @@ class SellerDeliveryChallanView extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: Text(
-                                  "Challan #${item.challanNumber ?? item.id}",
+                                  "Challan ${item.challanNumber ?? '-'}",
                                   style: GoogleFonts.poppins(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
