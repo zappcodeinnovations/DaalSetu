@@ -44,14 +44,15 @@ class _SellerAddBrandDialogState extends State<SellerAddBrandDialog> {
             ),
           ),
           const SizedBox(height: 12),
-          TextField(
-            controller: _descController,
-            decoration: InputDecoration(
-              labelText: "Description (Optional)",
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-          const SizedBox(height: 12),
+          // The web brand form has no description, so the app does not ask for one either (kept commented out).
+          // TextField(
+          //   controller: _descController,
+          //   decoration: InputDecoration(
+          //     labelText: "Description (Optional)",
+          //     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          //   ),
+          // ),
+          // const SizedBox(height: 12),
           // A new brand is live at once (the server always saves it as Approved), so the status is shown,
           // not chosen - the same as the web form.
           InputDecorator(
@@ -125,7 +126,6 @@ class _SellerAddBrandDialogState extends State<SellerAddBrandDialog> {
             Get.back();
             controller.createBrand(
               _nameController.text.trim(),
-              description: _descController.text.trim().isNotEmpty ? _descController.text.trim() : null,
               status: _status,
               categoryIds: _categoryIds.toList(),
             );

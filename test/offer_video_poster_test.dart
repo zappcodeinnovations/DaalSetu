@@ -15,10 +15,10 @@ Widget _slide({String? poster}) => MaterialApp(
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  testWidgets('with an offer photo the video poster is that photo (no black box)', (tester) async {
+  testWidgets('the preview never uses the offer photo: only the opening frame of the video', (tester) async {
     await tester.pumpWidget(_slide(poster: '/media/p.jpg'));
     await tester.pump();
-    expect(find.byKey(const Key('offer-video-poster-photo')), findsOneWidget);
+    expect(find.byKey(const Key('offer-video-poster-photo')), findsNothing);
   });
 
   testWidgets('without a photo or a readable frame the poster is the branded gradient, not black', (tester) async {

@@ -674,14 +674,13 @@ class _OfferVideoSlideState extends State<OfferVideoSlide> {
   VideoPlayerController? _frame;
   bool _frameReady = false;
 
-  bool get _hasPhoto => (widget.posterUrl ?? '').trim().isNotEmpty;
+  bool _frameFailed = false;
 
   @override
   void initState() {
     super.initState();
-    // With a photo of the offer the poster is that photo (always shows); the video's own frame is only read
-    // when there is no photo, because on many phones a paused video paints a black frame.
-    if (!_hasPhoto) _loadFrame();
+    // The preview is the video's own opening picture (not a photo, not a black box).
+    _loadFrame();
   }
 
   /// Opens the video muted and paused just after the start, so its first picture is the poster.
@@ -700,15 +699,20 @@ class _OfferVideoSlideState extends State<OfferVideoSlide> {
       await controller.setVolume(0);
       // Past the usual black first frames, then play a moment and pause: Android only paints the picture of a
       // video that has started playing once.
-      final duration = controller.value.duration;
-      final target = duration > const Duration(seconds: 2) ? const Duration(seconds: 1) : const Duration(milliseconds: 300);
-      await controller.seekTo(target);
+      // Play the opening moment muted, then pause on it: Android paints a video's picture only after it has
+      // played, so a merely paused/seeked video shows black.
+      await controller.seekTo(Duration.zero);
       await controller.play();
-      await Future<void>.delayed(const Duration(milliseconds: 250));
+      final started = DateTime.now();
+      while (mounted && controller.value.position < const Duration(milliseconds: 400) &&
+          DateTime.now().difference(started) < const Duration(seconds: 3)) {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      }
       await controller.pause();
       if (mounted) setState(() => _frameReady = true);
     } catch (_) {
-      // No frame (offline, unsupported format ...): the photo / gradient poster stays.
+      // The video cannot be opened (offline, unsupported format ...): a neutral placeholder stays.
+      if (mounted) setState(() => _frameFailed = true);
     }
   }
 
@@ -720,7 +724,7 @@ class _OfferVideoSlideState extends State<OfferVideoSlide> {
 
   Widget _poster() {
     final frame = _frame;
-    if (!_hasPhoto && _frameReady && frame != null && frame.value.isInitialized) {
+    if (_frameReady && frame != null && frame.value.isInitialized) {
       return FittedBox(
         key: const Key('offer-video-poster-frame'),
         fit: BoxFit.cover,
@@ -732,16 +736,19 @@ class _OfferVideoSlideState extends State<OfferVideoSlide> {
         ),
       );
     }
-    final photo = widget.posterUrl;
-    if (_hasPhoto && photo != null) {
-      return AuthenticatedNetworkImage(
-        key: const Key('offer-video-poster-photo'),
-        url: photo,
-        fit: BoxFit.cover,
-        fallback: const _PosterGradient(),
-      );
-    }
-    return const _PosterGradient();
+    // While the opening picture loads: the branded placeholder with a small loader; if it cannot load, just
+    // the placeholder.
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        const _PosterGradient(),
+        if (!_frameFailed)
+          const Align(
+            alignment: Alignment(0, 0.45),
+            child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70)),
+          ),
+      ],
+    );
   }
 
   @override
