@@ -50,9 +50,21 @@ class AdminFieldConfig {
     this.derivedFrom,
     this.derivedKey,
     this.defaultLoader,
+    this.dependsOn,
+    this.dependentOptionsLoader,
+    this.sendEmptyAsNull = false,
   });
 
   final String key;
+
+  /// Choices that depend on another field's value (e.g. a transporter's own drivers). The loader gets that
+  /// field's current value and the id of the record being edited (null for a new one); picking a new parent
+  /// value clears this field and reloads its choices.
+  final String? dependsOn;
+  final Future<List<AdminOption>> Function(String parentValue, String? recordId)? dependentOptionsLoader;
+
+  /// An empty choice is sent as null (so the server clears it) instead of being left out.
+  final bool sendEmptyAsNull;
 
   /// A read-only field filled from the option chosen in the field [derivedFrom] (its [AdminOption.extras]
   /// entry [derivedKey]); never sent to the server.
@@ -156,11 +168,7 @@ class AdminModuleConfig {
 }
 
 /// The driver a vehicle is assigned to (for the edit form).
-Object? assignedDriverIdOf(Map<String, dynamic> record) {
-  final raw = record['assigned_driver'] ?? record['assigned_driver_id'];
-  if (raw is Map) return raw['id'];
-  return raw;
-}
+Object? assignedDriverIdOf(Map<String, dynamic> record) => record['assigned_driver_profile_id'];
 
 Object? transporterIdOf(Map<String, dynamic> record) =>
     record['transporter'] is Map
@@ -1604,22 +1612,26 @@ class AdminModules {
           'Permit name (when Permit type is Other)',
         ),
         AdminFieldConfig('permit_expiry_date', 'Permit expiry', isDate: true),
+        // The web form sends the Driver profile id (driver_profile_id); assigned_driver_id is a user id and
+        // gave "Invalid pk" errors. Only the chosen transporter's active, unassigned drivers are offered.
         AdminFieldConfig(
-          'assigned_driver_id',
+          'driver_profile_id',
           'Assign driver (optional)',
-          optionsLoader: loadDriverOptions,
+          dependsOn: 'transporter_id',
+          dependentOptionsLoader: loadTransporterDriverOptions,
           initialValue: assignedDriverIdOf,
+          sendEmptyAsNull: true,
         ),
         AdminFieldConfig(
           'driver_phone_number',
           'Driver phone number',
-          derivedFrom: 'assigned_driver_id',
+          derivedFrom: 'driver_profile_id',
           derivedKey: 'phone',
         ),
         AdminFieldConfig(
           'driver_license_number',
           'Driver license number',
-          derivedFrom: 'assigned_driver_id',
+          derivedFrom: 'driver_profile_id',
           derivedKey: 'license',
         ),
         AdminFieldConfig(
