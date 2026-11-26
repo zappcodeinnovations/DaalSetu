@@ -242,7 +242,7 @@ class ProductScreen extends StatelessWidget {
                         ],
                       ),
                       child: Text(
-                        product.status.toUpperCase(),
+                        _formatStatus(product.status),
                         style: GoogleFonts.inter(
                           color: Colors.white,
                           fontSize: 10,
@@ -490,6 +490,16 @@ class ProductScreen extends StatelessWidget {
         color: theme.colorScheme.primary,
       ),
     );
+  }
+
+  String _formatStatus(String status) {
+    final clean = status.trim().toLowerCase();
+    if (clean == 'available') return 'Available';
+    if (clean == 'out_of_stock' || clean == 'out of stock') return 'Out of Stock';
+    return clean
+        .split('_')
+        .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+        .join(' ');
   }
 
   Future<void> _confirmDelete(ProductModel product) async {

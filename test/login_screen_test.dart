@@ -15,7 +15,9 @@ void main() {
     await tester.pump();
 
     // Verify logo image
-    final imageFinder = find.byType(Image);
+    final imageFinder = find.byWidgetPredicate(
+      (w) => w is Image && (w.image is AssetImage) && (w.image as AssetImage).assetName == 'assets/images/app_icon.jpeg',
+    );
     expect(imageFinder, findsOneWidget);
 
     final imageWidget = tester.widget<Image>(imageFinder);

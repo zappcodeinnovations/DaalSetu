@@ -1,5 +1,65 @@
 # Bug Log & Historical Fixes
 
+## Bug 69: Dashboard Gross Trade Value & Deals Chart X-Axis Label Collision & Right-Edge Separation
+- **Symptom**: On the Admin Dashboard in the Gross Trade Value & Deals chart card, when viewing the `1Y` or `3M` time range, horizontal x-axis date labels (`Dec 25`, `Jan 26`, `Feb 26`, ..., `Nov 26`) crowded and collided directly on top of each other, rendering an unreadable black text line. Concurrently, the vertical green bar for Deals Closed sat flush against the right Y-axis (`Deals`) tick labels.
+- **Root Cause**:
+  1. `_buildWebGtvDealsChart` in `dashboard_page.dart:3026` configured `bottomTitles` with `SideTitles(showTitles: true, reservedSize: 28)` without an interval or stride check. On mobile viewports (~270px plot width), drawing 12 date labels (~36px wide each) gave only ~22.5px per label, causing all 12 labels to horizontally overlap.
+  2. Right Y-axis (`Deals`) had `reservedSize: 32` without any inner padding between the plot edge and axis numbers (`0, 1, ..., 5`). With `BarChartAlignment.spaceAround`, the last bar had only ~6px clearance from the axis labels.
+- **Fix**:
+  1. Implemented dynamic downsampling algorithm `_computeVisibleLabelIndices(count)`: when `count > 7` (e.g., 12 months for 1Y), it calculates 4-5 evenly distributed milestone dates across the period. It always renders the first date (`Dec 25`) and the last date (`Nov 26`), while ensuring any adjacent shown labels are separated by $\ge 2$ steps ($\ge 55\text{px}$ apart) with `fontSize: 8`, `maxLines: 1`, and `TextOverflow.ellipsis`. For `count <= 7` (e.g., 7D and 1M), all points remain fully visible.
+  2. Increased `rightTitles` `reservedSize` to 38 in both `BarChart` and `LineChart` and added `Padding(left: 6)` to the Deals numbers, creating clean breathing space between the green deals bar and the Y-axis.
+- **Files Changed**:
+  - `lib/modules/dashboard/view/dashboard_page.dart`
+  - `test/batch_19_bug5_gtv_deals_chart_test.dart`
+- **Verification**: `test/batch_19_bug5_gtv_deals_chart_test.dart` (3/3 passed), all batch 19 tests (8/8 passed), `flutter analyze lib/modules/dashboard/view/dashboard_page.dart` (0 errors).
+
+## Bug 68: Reset Password Top-Anchored Back Navigation & Deals in Negotiation Dashboard Route
+- **Symptom 1**: On the Reset/Forgot Password screen (`forgot_password_page.dart`), the back arrow floated midway down the screen inside a vertically-centered `Column`, rather than being anchored to the top corner.
+- **Root Cause 1**: The back `IconButton` was placed inside `Center(child: SingleChildScrollView(child: Column(...)))`. On tall screens, the entire form was centered, making the back arrow float in the middle of empty space.
+- **Fix 1**: Extracted the back button into a top-anchored `Positioned(top: 0, left: 0, child: SafeArea(child: Padding(padding: EdgeInsets.only(left: 8, top: 4), child: IconButton(...))))`, permanently anchoring it to the top-left of the viewport.
+- **Symptom 2**: On Admin Dashboard, clicking the "Deals in Negotiation" card navigated to the finalized Contracts screen (`AppRoutes.adminContracts`) with mismatched deal counts instead of leading to the Buyer Offers page.
+- **Root Cause 2**: `dashboard_page.dart:674` originally mapped the card's `onTap` to `_navigateToContracts` / `AppRoutes.adminContracts`.
+- **Fix 2**: Updated `onTap` to direct navigation `Get.to(() => const AdminModuleListScreen(moduleKey: 'buyer_offers'))` on both the Dashboard KPI card and the detailed `AdminOverviewKpisView` card.
+- **Files Changed**:
+  - `lib/modules/Auth/forgot_password/view/forgot_password_page.dart`
+  - `lib/modules/dashboard/view/dashboard_page.dart`
+  - `lib/modules/dashboard/view/admin_overview_kpis_view.dart`
+  - `test/batch_19_bug3_and_bug4_test.dart`
+- **Verification**: `test/batch_19_bug3_and_bug4_test.dart` (3/3 passed: verified tap triggers navigation directly to `AdminModuleListScreen` with `buyer_offers`), all batch 19 tests (9/9 passed), static analysis clean.
+
+## Bug 67: Out of Stock Status Badge Copy & Category Requests Web Parity
+- **Symptom 1**: On the Admin Products screen, the product card status badge displayed raw, all-caps text with underscores (`OUT_OF_STOCK`).
+- **Root Cause 1**: `product_view.dart` line 245 had `Text(product.status.toUpperCase(), ...)` rendering raw enum values directly without title-case formatting.
+- **Fix 1**: Added `_formatStatus` helper mapping `'out_of_stock'` to `'Out of Stock'`, `'available'` to `'Available'`, and cleanly formatting any other status values.
+- **Symptom 2**: The "Manage Categories" modal on mobile Category Requests displayed child subcategories and pending entries (`new category`, `testy6`, `Polished`, `Split Yellow`, `Whole Green`, `Chilka`), mismatching the 8 root commodities on the web portal (*Basmati Rice 0, byharman12, Chana, Masoo, Moong Dal, Toor Dal, Unpolishedd, URAD DAL*). Modal layout also differed from web.
+- **Root Cause 2**: In `admin_module_list_screen.dart:710`, the modal called `/api/categories/parent-dropdown/` which returned subcategories without filtering out children (`parent != null` or `level > 0`) or pending items.
+- **Fix 2**:
+  - Fetched authoritative system categories via `CategoryService.fetchBuyerCategoryData()` with fallback to `/api/categories/`.
+  - Filtered strictly for root/parent commodities: `parent == null`, `level == 0`, and `status != 'pending' && status != 'inactive'`.
+  - Deduplicated by category ID and sorted alphabetically.
+  - Aligned modal UI with web portal: subtitle `Update assigned categories for $buyerName.`, leading sprout icon `Icons.eco_outlined` on list tiles, and dual action buttons `[Cancel]` and `[Save Changes]`.
+- **Files Changed**:
+  - `lib/modules/products/view/product_view.dart`
+  - `lib/modules/admin_catalog/view/admin_module_list_screen.dart`
+  - `test/batch_19_bug1_and_bug2_test.dart`
+- **Verification**: `test/batch_19_bug1_and_bug2_test.dart` (3/3 passed), `test/batch_15_fixes_test.dart` & `test/batch_16_fixes_test.dart` (11/11 passed), `flutter analyze` clean (0 errors).
+
+## Bug 66: Password Visibility Toggle Eye Icon State Alignment with Client Expectation
+- **Symptom**: On the Login screen (and across Auth password fields), the eye icon behaved according to Google Material Design's action model (open eye when obscured, crossed-out eye when visible). The client and QA tester reported this as inverted ("ulti"), expecting a status-representation model.
+- **Root Cause**: The icon expression `isVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined` displayed `visibility_outlined` (open eye) when password text was hidden (`isVisible == false`), and `visibility_off_outlined` (slashed eye) when visible.
+- **Fix**:
+  - Updated `lib/modules/Auth/login/view/login_screen.dart` to `isVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined`.
+  - Aligned `lib/modules/Auth/register/view/register_page.dart` to `visible ? Icons.visibility_outlined : Icons.visibility_off_outlined`.
+  - Aligned `lib/modules/Auth/change_password/view/change_password_page.dart` to `obscureText.value ? IconlyLight.hide : IconlyLight.show`.
+  - Updated `test/login_password_eye_icon_test.dart` and `test/login_screen_test.dart` asserting exact icon transitions and app icon verification.
+- **Files Changed**:
+  - `lib/modules/Auth/login/view/login_screen.dart`
+  - `lib/modules/Auth/register/view/register_page.dart`
+  - `lib/modules/Auth/change_password/view/change_password_page.dart`
+  - `test/login_password_eye_icon_test.dart`
+  - `test/login_screen_test.dart`
+- **Verification**: `test/login_password_eye_icon_test.dart` (2/2 passed), `test/login_screen_test.dart` (2/2 passed), `flutter analyze lib/modules/Auth/login/ lib/modules/Auth/register/ lib/modules/Auth/change_password/` (0 issues).
+
 ## Bug 65: Buyer Offers Detail Screen "Resubmit" Dynamic Label, Negotiation Status Banners vs Chat Bubbles, & Email Formatter Normalization
 - **Symptom 1**: On the Buyer Offers screen, when a buyer previously submitted an offer for a seller listing, the outer card displayed "Resubmit", but tapping the card to open `ProductDetailScreen` showed a hardcoded "Submit Offer" button inside.
 - **Root Cause 1**: `ProductDetailScreen` hardcoded `'Submit Offer'` in `_buildSubmitOfferButton` and lacked an `isResubmit` constructor parameter. The calling views (`buyer_offers_view.dart` and `buyer_today_offers_view.dart`) did not pass the submission state into `ProductDetailScreen`.

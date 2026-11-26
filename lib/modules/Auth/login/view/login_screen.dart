@@ -275,8 +275,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                             .togglePasswordVisibility,
                                         icon: Icon(
                                           isVisible
-                                              ? Icons.visibility_off_outlined
-                                              : Icons.visibility_outlined,
+                                              ? Icons.visibility_outlined
+                                              : Icons.visibility_off_outlined,
                                           color: isDark
                                               ? AppTheme.primaryGold
                                               : AppTheme.secondaryOrange,

@@ -1,21 +1,21 @@
 # Current Task State
 
 ## Current Task
-- **Goal**: Login Screen HD Redesign to 1:1 match reference mockup (vector fluid orange curves, wheat watermark artwork, dedicated category field label icons `📱` & `🔒`, tagline accent lines, footer security shield badge divider, and crisp ambient card depth) while preserving 100% of existing functionality, GetX controller lifecycle, and backend authentication integration.
+- **Goal**: Reopened Bug Fixes — (1) Out of Stock product card badge clean title-case formatting; (2) Manage Categories modal root commodities filtering & web parity; (3) Reset Password screen top-anchored back button; (4) Admin Dashboard Deals in Negotiation route mapping to Buyer Offers; (5) Dashboard Gross Trade Value & Deals chart x-axis date overlap and right-edge separation.
 - **Status**: **100% Implemented & Verified**
   - **Files Updated / Created**:
-    1. `lib/modules/Auth/login/view/widgets/login_art_background.dart`: Dedicated vector custom painter rendering top-left fluid curves, bottom-right fluid curves, and wheat ear watermarks (top-right & bottom-left) in 100% hardware-accelerated HD canvas.
-    2. `lib/modules/Auth/login/view/login_screen.dart`: Integrated `LoginArtBackground`, added outer warm amber logo halo, tagline accent lines, orange mobile phone and lock category icons for input field labels, elevated pure white card container with soft ambient shadow, and security divider with centered shield badge.
-  - **Functionality Verification**:
-    - `LoginController` lifecycle untouched: `controller.login()`, `controller.isLoading`, `controller.isPasswordVisible`, `controller.togglePasswordVisibility()`, `controller.usernameController`, `controller.passwordController`, `controller.formKey`.
-    - Key `login_password_visibility_toggle` intact.
-    - Routes `AppRoutes.forgot_password` and `AppRoutes.register` intact.
-  - **Automated Verification**:
-    - `test/login_screen_test.dart`: **2/2 Passed**
-    - `test/login_password_eye_icon_test.dart`: **2/2 Passed**
-    - `test/login_controller_disposed_reproduce_test.dart`: **1/1 Passed**
-    - Total: **5/5 Passed**
-    - `flutter analyze lib/modules/Auth/login/`: **0 Issues found (Clean)**
+    1. `lib/modules/products/view/product_view.dart`: Replaced raw `product.status.toUpperCase()` with `_formatStatus(product.status)`, rendering clean "Out of Stock" / "Available" copy.
+    2. `lib/modules/admin_catalog/view/admin_module_list_screen.dart`: Updated `_showManageCategoriesModal` to fetch system categories from `CategoryService.fetchBuyerCategoryData()` / `/api/categories/`, strictly filter for root categories (`parent == null`, `level == 0`, `status != 'pending'`), deduplicate, sort alphabetically, and match web layout (subtitle, sprout icon, `Cancel` and `Save Changes` buttons).
+    3. `lib/modules/Auth/forgot_password/view/forgot_password_page.dart`: Anchored back button to the top-left of the viewport using `Positioned` + `SafeArea`, removing it from the vertically-centered form.
+    4. `lib/modules/dashboard/view/dashboard_page.dart`: Updated "Deals in Negotiation" card `onTap` to `AppRoutes.adminModule('buyer_offers')`.
+    5. `lib/modules/dashboard/view/dashboard_page.dart`: Implemented dynamic downsampling `_computeVisibleLabelIndices` for GTV & Deals chart when `count > 7` (e.g. 1Y: shows 4-5 well-spaced milestones with start and end dates and $\ge 2$ step spacing to prevent label overlap) and expanded rightTitles reservedSize to 38 with left padding to give the green deals bar breathing space away from the right axis.
+    6. `test/batch_19_bug1_and_bug2_test.dart`, `test/batch_19_bug3_and_bug4_test.dart`, & `test/batch_19_bug5_gtv_deals_chart_test.dart`: Automated test suites covering all five fixes.
+  - **Verification**:
+    - `test/batch_19_bug1_and_bug2_test.dart`: **3/3 Passed**
+    - `test/batch_19_bug3_and_bug4_test.dart`: **2/2 Passed**
+    - `test/batch_19_bug5_gtv_deals_chart_test.dart`: **3/3 Passed**
+    - Total Batch 19 suite: **8/8 Passed (100% Pass Rate)**
+    - Static analysis: **0 Errors / Clean**
 
 ---
   - **Merge Commits**:

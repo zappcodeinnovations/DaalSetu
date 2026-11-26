@@ -222,7 +222,7 @@ class ChangePasswordScreen extends StatelessWidget {
             prefixIcon: IconlyLight.lock,
             suffixIcon: IconButton(
               icon: Icon(
-                obscureText.value ? IconlyLight.show : IconlyLight.hide,
+                obscureText.value ? IconlyLight.hide : IconlyLight.show,
                 color: theme.textTheme.bodyMedium?.color,
                 size: 20,
               ),

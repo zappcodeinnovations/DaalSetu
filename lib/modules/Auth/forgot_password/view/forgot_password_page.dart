@@ -68,6 +68,22 @@ class ForgotPasswordScreen extends StatelessWidget {
             ),
           ),
 
+          // Top-anchored Back Button & Navigation
+          Positioned(
+            top: 0,
+            left: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8, top: 4),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                  tooltip: 'Back',
+                  onPressed: () => Get.back(),
+                ),
+              ),
+            ),
+          ),
+
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -77,17 +93,6 @@ class ForgotPasswordScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Back Button & Navigation
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-                          tooltip: 'Back',
-                          onPressed: () => Get.back(),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-
                       // Brand Logo & Platform Badge
                       Container(
                         width: 76,

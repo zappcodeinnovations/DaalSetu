@@ -2,6 +2,7 @@ import 'package:daalsetu/widgets/dashboard_period_bar.dart';
 import 'package:daalsetu/utils/app_preferences.dart';
 import 'dart:async';
 
+import 'package:daalsetu/services/category_services.dart';
 import 'package:daalsetu/modules/admin_catalog/config/admin_actions.dart';
 import 'package:daalsetu/modules/admin_catalog/config/admin_module_config.dart';
 import 'package:daalsetu/modules/admin_catalog/controller/admin_catalog_controller.dart';
@@ -706,21 +707,25 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
 
     List<dynamic> allCategories = [];
     try {
-      // First try parent dropdown endpoint which returns only parent categories
-      dynamic res = await ApiClient.get(
-        endpoint: '/api/categories/parent-dropdown/',
-        requireAuth: true,
-        suppressErrorDialog: true,
-      );
-      if (res is List && res.isNotEmpty) {
-        allCategories = res;
-      } else if (res is Map && res['results'] is List && (res['results'] as List).isNotEmpty) {
-        allCategories = res['results'];
-      } else {
-        // Fallback to /api/categories/ filtered strictly for root/parent categories (parent == null)
-        res = await ApiClient.get(
+      // 1. First fetch authoritative system categories from buyer category data
+      final catResult = await CategoryService.fetchBuyerCategoryData();
+      if (catResult.systemCategories.isNotEmpty) {
+        allCategories = catResult.systemCategories.map((c) => {
+          'id': c.id,
+          'name': c.categoryName,
+          'category_name': c.categoryName,
+          'parent': null,
+          'level': 0,
+          'status': 'active',
+        }).toList();
+      }
+
+      // 2. Fallback to /api/categories/ if systemCategories was empty
+      if (allCategories.isEmpty) {
+        dynamic res = await ApiClient.get(
           endpoint: '/api/categories/',
           requireAuth: true,
+          suppressErrorDialog: true,
         );
         List raw = [];
         if (res is List) {
@@ -730,17 +735,57 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
         } else if (res is Map && res['data'] is List) {
           raw = res['data'];
         }
-        allCategories = raw.where((c) {
-          if (c is! Map) return false;
-          final parent = c['parent'];
-          final level = c['level'];
-          return (parent == null || parent.toString().isEmpty || parent.toString() == 'null') &&
-              (level == null || level == 0 || level == '0');
-        }).toList();
-        if (allCategories.isEmpty && raw.isNotEmpty) {
-          allCategories = raw;
-        }
+        allCategories = raw;
       }
+
+      // 3. Strictly isolate root/parent categories and exclude pending/child subcategories
+      final Set<int> seenIds = {};
+      final List<Map<String, dynamic>> filteredCategories = [];
+
+      for (var item in allCategories) {
+        if (item is! Map) continue;
+        final map = Map<String, dynamic>.from(item);
+        final id = map['id'] is int
+            ? map['id']
+            : int.tryParse(map['id']?.toString() ?? '0') ?? 0;
+        if (id <= 0 || seenIds.contains(id)) continue;
+
+        final parent = map['parent'];
+        final level = map['level'];
+        final status = (map['status'] ?? '').toString().trim().toLowerCase();
+        final isSub = map['is_sub'] == true ||
+            map['is_subcategory'] == true ||
+            map['is_sub_category'] == true;
+
+        final hasParent = parent != null &&
+            parent.toString().isNotEmpty &&
+            parent.toString() != 'null' &&
+            parent.toString() != '0';
+        final hasLevel = level != null &&
+            level.toString().isNotEmpty &&
+            level.toString() != 'null' &&
+            level.toString() != '0';
+
+        // Root/parent check: Must have no parent and level 0
+        if (isSub || hasParent || hasLevel) continue;
+
+        // Status check: Exclude pending, inactive, rejected categories
+        if (status == 'pending' || status == 'inactive' || status == 'rejected') {
+          continue;
+        }
+
+        seenIds.add(id);
+        filteredCategories.add(map);
+      }
+
+      // 4. Sort alphabetically by category name matching the web portal format
+      filteredCategories.sort((a, b) {
+        final nameA = (a['category_name'] ?? a['name'] ?? '').toString().toLowerCase();
+        final nameB = (b['category_name'] ?? b['name'] ?? '').toString().toLowerCase();
+        return nameA.compareTo(nameB);
+      });
+
+      allCategories = filteredCategories;
     } catch (_) {}
 
     final dynamic assigned =
@@ -781,7 +826,8 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
                           Text('Manage Categories',
                               style: theme.textTheme.titleMedium
                                   ?.copyWith(fontWeight: FontWeight.bold)),
-                          Text('Buyer: $buyerName',
+                          const SizedBox(height: 4),
+                          Text('Update assigned categories for $buyerName.',
                               style: theme.textTheme.bodySmall),
                         ],
                       ),
@@ -819,12 +865,24 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
                               ),
                               activeColor: const Color(0xFFEA580C),
                               checkColor: Colors.white,
-                              title: Text(
-                                catName.toString(),
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                  color: isDark ? Colors.white : Colors.black87,
-                                ),
+                              title: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.eco_outlined,
+                                    size: 16,
+                                    color: Color(0xFFEA580C),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      catName.toString(),
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        fontWeight: FontWeight.w500,
+                                        color: isDark ? Colors.white : Colors.black87,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                               value: isChecked,
                               onChanged: (val) {
@@ -840,38 +898,76 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
                           },
                         ),
                 ),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      try {
-                        await ApiClient.post(
-                          endpoint: '/api/buyer-categories/',
-                          body: {
-                            'buyer_id': buyerId,
-                            'category_ids': selectedCategoryIds.toList(),
-                          },
-                          requireAuth: true,
-                        );
-                        if (ctx.mounted) Navigator.pop(ctx);
-                        AppSnackbar.snackbar(
-                          'Success',
-                          'Buyer categories updated successfully',
-                          snackPosition: SnackPosition.TOP,
-                          backgroundColor: Colors.green,
-                          colorText: Colors.white,
-                          duration: const Duration(seconds: 3),
-                        );
-                        _fetchBuyers();
-                      } catch (e) {
-                        AppSnackbar.snackbar('Error', e.toString(),
-                            backgroundColor: Colors.red,
-                            colorText: Colors.white);
-                      }
-                    },
-                    child: const Text('Save Categories'),
-                  ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          side: BorderSide(
+                            color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                          ),
+                        ),
+                        onPressed: () => Navigator.pop(ctx),
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFEA580C),
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: () async {
+                          try {
+                            await ApiClient.post(
+                              endpoint: '/api/buyer-categories/',
+                              body: {
+                                'buyer_id': buyerId,
+                                'category_ids': selectedCategoryIds.toList(),
+                              },
+                              requireAuth: true,
+                            );
+                            if (ctx.mounted) Navigator.pop(ctx);
+                            AppSnackbar.snackbar(
+                              'Success',
+                              'Buyer categories updated successfully',
+                              snackPosition: SnackPosition.TOP,
+                              backgroundColor: Colors.green,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 3),
+                            );
+                            _fetchBuyers();
+                          } catch (e) {
+                            AppSnackbar.snackbar('Error', e.toString(),
+                                backgroundColor: Colors.red,
+                                colorText: Colors.white);
+                          }
+                        },
+                        child: const Text(
+                          'Save Changes',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

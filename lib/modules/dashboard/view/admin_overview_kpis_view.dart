@@ -5,6 +5,7 @@ import 'package:iconly/iconly.dart';
 
 import '../../../theme/app_theme.dart';
 import '../../../routes/app_routes.dart';
+import '../../admin_catalog/view/admin_module_list_screen.dart';
 import '../../contracts/view/contract_view.dart';
 import '../../nav_bar/controller/nav_controller.dart';
 import '../model/dashboard_model.dart';
@@ -220,6 +221,8 @@ class _AdminOverviewKpisViewState extends State<AdminOverviewKpisView> {
                 icon: IconlyLight.swap,
                 accentColor: const Color(0xFF8B5CF6),
                 isDark: isDark,
+                actionLabel: "View Buyer Offers",
+                onActionTap: () => Get.to(() => const AdminModuleListScreen(moduleKey: 'buyer_offers')),
               ),
               const SizedBox(height: 10),
               _buildDetailedKpiCard(

@@ -555,7 +555,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       tooltip: visible ? 'Hide password' : 'Show password',
       onPressed: onPressed,
       icon: Icon(
-        visible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+        visible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
       ),
     );
   }
