@@ -1,6 +1,7 @@
 import 'package:daalsetu/utils/pdf_text.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:daalsetu/modules/downloads/service/downloads_service.dart';
 import 'package:get/get.dart';
@@ -78,13 +79,49 @@ class BuyerChallanPdfService {
     BuyerDeliveryChallanModel challan, {
     bool openShareSheet = true,
   }) async {
+    final pdfBytes = await buildPdf(challan);
+    final safeNumber =
+        (challan.challanNumber ?? challan.id?.toString() ?? 'challan')
+            .replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
+    final fileName = 'Delivery-Challan-$safeNumber.pdf';
+
+    final directory = await getTemporaryDirectory();
+    final file = File('${directory.path}/$fileName');
+    await file.writeAsBytes(pdfBytes, flush: true);
+
+    // Same save as every other download: phone Downloads + the app's Downloads screen.
+    try {
+      await DownloadsService.saveBytes(fileName: fileName, bytes: pdfBytes, mimeType: 'application/pdf');
+    } catch (error) {
+      debugPrint('📂 Challan PDF not saved to Downloads: $error');
+    }
+
+    if (!openShareSheet) return file.path;
+
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(file.path, mimeType: 'application/pdf')],
+        subject: 'Delivery Challan ${challan.challanNumber ?? ''}'.trim(),
+        text: 'Delivery challan generated from DaalSetu.',
+      ),
+    );
+    return file.path;
+  }
+
+  /// The Delivery Challan PDF in the web panel's layout (the same file for buyer, seller and admin).
+  /// [ownPhoneAsBuyerPhone]: when the challan has no buyer phone, use the logged-in user's number; only
+  /// right when the buyer is the one downloading.
+  static Future<Uint8List> buildPdf(
+    BuyerDeliveryChallanModel challan, {
+    bool ownPhoneAsBuyerPhone = true,
+  }) async {
     final document = pw.Document();
     final company = challan.company;
 
     // Company Header Info
-    final companyName = (company?.legalName ?? challan.companyNameDisplay ?? 'FARMLAND').toUpperCase();
-    final companyAddress = (company?.addressDisplay ?? challan.sellerAddress ?? 'NAGPUR, NAGPUR, Nagpur, Maharashtra, 440023, India').toUpperCase();
-    final companyGst = (company?.gstNumber ?? challan.sellerGst ?? '23ABVSC1223F1Z4').toUpperCase();
+    final companyName = (company?.legalName ?? challan.companyNameDisplay ?? '').toUpperCase();
+    final companyAddress = (company?.addressDisplay ?? challan.sellerAddress ?? '').toUpperCase();
+    final companyGst = (company?.gstNumber ?? challan.sellerGst ?? '').toUpperCase();
     String resolvedPan = (company?.panNumber ?? '').trim();
     if (resolvedPan.isEmpty || resolvedPan.toLowerCase() == 'null') {
       final cleanGst = companyGst.replaceAll(RegExp(r'\s+'), '');
@@ -92,14 +129,12 @@ class BuyerChallanPdfService {
         resolvedPan = cleanGst.substring(2, 12);
       }
     }
-    if (resolvedPan.isEmpty || resolvedPan.toLowerCase() == 'null') {
-      resolvedPan = 'ABVSC1223F';
-    }
+    if (resolvedPan.toLowerCase() == 'null') resolvedPan = '';
     final companyPan = resolvedPan.toUpperCase();
 
     // Resolve buyer telephone number (consignee contact)
     String buyerPhone = (challan.buyerMobile ?? '').trim();
-    if (buyerPhone.isEmpty || buyerPhone.toLowerCase() == 'null') {
+    if (ownPhoneAsBuyerPhone && (buyerPhone.isEmpty || buyerPhone.toLowerCase() == 'null')) {
       try {
         if (Get.isRegistered<ProfileController>()) {
           final m = Get.find<ProfileController>().profile.value?.mobile;
@@ -109,7 +144,7 @@ class BuyerChallanPdfService {
         }
       } catch (_) {}
     }
-    if (buyerPhone.isEmpty || buyerPhone.toLowerCase() == 'null') {
+    if (ownPhoneAsBuyerPhone && (buyerPhone.isEmpty || buyerPhone.toLowerCase() == 'null')) {
       try {
         final u = await AppPreferences.getUsername();
         if (u != null && RegExp(r'^\d{10}$').hasMatch(u.trim())) {
@@ -252,7 +287,7 @@ class BuyerChallanPdfService {
                                 ),
                                 children: [
                                   pw.TextSpan(
-                                    text: challan.buyerName ?? challan.buyerNameDisplay ?? 'Test Buyer',
+                                    text: challan.buyerName ?? challan.buyerNameDisplay ?? '-',
                                     style: pw.TextStyle(
                                       fontSize: 8.5,
                                       fontWeight: pw.FontWeight.bold,
@@ -263,7 +298,7 @@ class BuyerChallanPdfService {
                             ),
                             pw.SizedBox(height: 2),
                             pw.Text(
-                              challan.buyerCompanyName ?? challan.buyerName ?? 'Indigo land',
+                              challan.buyerCompanyName ?? '',
                               style: const pw.TextStyle(fontSize: 8),
                             ),
                             if ((challan.buyerAddress ?? '').isNotEmpty) ...[
@@ -448,7 +483,7 @@ class BuyerChallanPdfService {
                 ),
                 padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                 child: pw.Text(
-                  'Driver Info :  ${challan.driverName ?? 'driver'}, ${challan.driverMobile ?? ''}'.trim(),
+                  'Driver Info :  ${challan.driverName ?? '-'}, ${challan.driverMobile ?? ''}'.trim(),
                   style: const pw.TextStyle(fontSize: 7.5),
                 ),
               ),
@@ -635,33 +670,7 @@ class BuyerChallanPdfService {
     ),
   );
 
-    final safeNumber =
-        (challan.challanNumber ?? challan.id?.toString() ?? 'challan')
-            .replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
-    final fileName = 'Delivery-Challan-$safeNumber.pdf';
-    final pdfBytes = await document.save();
-
-    final directory = await getTemporaryDirectory();
-    final file = File('${directory.path}/$fileName');
-    await file.writeAsBytes(pdfBytes, flush: true);
-
-    // Same save as every other download: phone Downloads + the app's Downloads screen.
-    try {
-      await DownloadsService.saveBytes(fileName: fileName, bytes: pdfBytes, mimeType: 'application/pdf');
-    } catch (error) {
-      debugPrint('📂 Challan PDF not saved to Downloads: $error');
-    }
-
-    if (!openShareSheet) return file.path;
-
-    await SharePlus.instance.share(
-      ShareParams(
-        files: [XFile(file.path, mimeType: 'application/pdf')],
-        subject: 'Delivery Challan ${challan.challanNumber ?? ''}'.trim(),
-        text: 'Delivery challan generated from DaalSetu.',
-      ),
-    );
-    return file.path;
+    return document.save();
   }
 
   static pw.Widget _th(String title) {
