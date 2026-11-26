@@ -1197,11 +1197,12 @@ class AdminModules {
         const AdminDetailSection(
           title: 'Brand Information',
           fields: [
-            AdminDetailField(
-              'brand_image|logo|image|image_url|brand_logo|thumbnail',
-              'Brand Logo',
-              type: AdminDetailFieldType.image,
-            ),
+            // Brands have no logo (upload is switched off): no empty "Brand Logo: Not Available" row.
+            // AdminDetailField(
+            //   'brand_image|logo|image|image_url|brand_logo|thumbnail',
+            //   'Brand Logo',
+            //   type: AdminDetailFieldType.image,
+            // ),
             AdminDetailField('brand_name', 'Brand Name'),
             AdminDetailField(
               'status',

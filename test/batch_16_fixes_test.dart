@@ -90,19 +90,10 @@ void main() {
       expect(productsField.key, contains('product_count'));
     });
 
-    test('brands module detailSections includes Brand Logo image field', () {
+    test('brands module detailSections has no Brand Logo row (brands have no logo)', () {
       final brandConfig = AdminModules.byKey('brands');
-      final allDetailFields = brandConfig.detailSections
-          .expand((s) => s.fields)
-          .toList();
-
-      final logoField = allDetailFields.firstWhere(
-        (f) => f.label == 'Brand Logo',
-      );
-      expect(logoField, isNotNull);
-      expect(logoField.type, AdminDetailFieldType.image);
-      expect(logoField.key, contains('brand_image'));
-      expect(logoField.key, contains('logo'));
+      final labels = brandConfig.detailSections.expand((s) => s.fields).map((f) => f.label);
+      expect(labels, isNot(contains('Brand Logo')));
     });
   });
 }

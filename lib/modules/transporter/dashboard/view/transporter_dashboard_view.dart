@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/chart_tooltips.dart';
 import 'package:daalsetu/widgets/dashboard_period_bar.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -768,6 +769,7 @@ class TransporterDashboardView extends StatelessWidget {
             Positioned.fill(
               child: BarChart(
                 BarChartData(
+                  barTouchData: cleanNumberBarTouch(),
                   // Bar centres at (i + 0.5) / count, matching the line's x range below.
                   alignment: BarChartAlignment.spaceAround,
                   minY: 0,

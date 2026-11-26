@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/chart_tooltips.dart';
 import 'package:daalsetu/widgets/dashboard_period_bar.dart';
 import '../../challans/view/seller_delivery_challan_view.dart';
 import 'package:flutter/material.dart';
@@ -790,6 +791,7 @@ class SellerDashboardView extends StatelessWidget {
               height: 112,
               child: BarChart(
                 BarChartData(
+                  barTouchData: cleanNumberBarTouch(),
                   maxY: maxY * 1.2,
                   alignment: BarChartAlignment.spaceAround,
                   groupsSpace: 16,

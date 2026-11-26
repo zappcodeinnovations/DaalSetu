@@ -674,10 +674,14 @@ class _OfferVideoSlideState extends State<OfferVideoSlide> {
   VideoPlayerController? _frame;
   bool _frameReady = false;
 
+  bool get _hasPhoto => (widget.posterUrl ?? '').trim().isNotEmpty;
+
   @override
   void initState() {
     super.initState();
-    _loadFrame();
+    // With a photo of the offer the poster is that photo (always shows); the video's own frame is only read
+    // when there is no photo, because on many phones a paused video paints a black frame.
+    if (!_hasPhoto) _loadFrame();
   }
 
   /// Opens the video muted and paused just after the start, so its first picture is the poster.
@@ -694,7 +698,14 @@ class _OfferVideoSlideState extends State<OfferVideoSlide> {
       _frame = controller;
       await controller.initialize();
       await controller.setVolume(0);
-      await controller.seekTo(const Duration(milliseconds: 300));
+      // Past the usual black first frames, then play a moment and pause: Android only paints the picture of a
+      // video that has started playing once.
+      final duration = controller.value.duration;
+      final target = duration > const Duration(seconds: 2) ? const Duration(seconds: 1) : const Duration(milliseconds: 300);
+      await controller.seekTo(target);
+      await controller.play();
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      await controller.pause();
       if (mounted) setState(() => _frameReady = true);
     } catch (_) {
       // No frame (offline, unsupported format ...): the photo / gradient poster stays.
@@ -709,7 +720,7 @@ class _OfferVideoSlideState extends State<OfferVideoSlide> {
 
   Widget _poster() {
     final frame = _frame;
-    if (_frameReady && frame != null && frame.value.isInitialized) {
+    if (!_hasPhoto && _frameReady && frame != null && frame.value.isInitialized) {
       return FittedBox(
         key: const Key('offer-video-poster-frame'),
         fit: BoxFit.cover,
@@ -722,7 +733,7 @@ class _OfferVideoSlideState extends State<OfferVideoSlide> {
       );
     }
     final photo = widget.posterUrl;
-    if (photo != null && photo.trim().isNotEmpty) {
+    if (_hasPhoto && photo != null) {
       return AuthenticatedNetworkImage(
         key: const Key('offer-video-poster-photo'),
         url: photo,
@@ -802,13 +813,19 @@ class _PosterGradient extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // A branded poster (never a plain black box) when neither a photo nor a video frame is available.
     return const DecoratedBox(
+      key: Key('offer-video-poster-gradient'),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF334155), Color(0xFF0B0F19)],
+          colors: [Color(0xFFE65100), Color(0xFFF57C00), Color(0xFFFFA000)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
+      ),
+      child: Align(
+        alignment: Alignment(0, -0.45),
+        child: Icon(Icons.movie_outlined, color: Colors.white38, size: 54),
       ),
     );
   }

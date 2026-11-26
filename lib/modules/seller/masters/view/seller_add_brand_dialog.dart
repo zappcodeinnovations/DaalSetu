@@ -14,7 +14,7 @@ class SellerAddBrandDialog extends StatefulWidget {
 class _SellerAddBrandDialogState extends State<SellerAddBrandDialog> {
   final _nameController = TextEditingController();
   final _descController = TextEditingController();
-  String _status = 'active';
+  final String _status = 'active';
   final Set<int> _categoryIds = {};
 
   @override
@@ -52,20 +52,16 @@ class _SellerAddBrandDialogState extends State<SellerAddBrandDialog> {
             ),
           ),
           const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            initialValue: _status,
-            isExpanded: true,
+          // A new brand is live at once (the server always saves it as Approved), so the status is shown,
+          // not chosen - the same as the web form.
+          InputDecorator(
+            key: const Key('brand-status-readonly'),
             decoration: InputDecoration(
               labelText: "Status",
+              helperText: "New brands are live as soon as they are created.",
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            items: const [
-              DropdownMenuItem(value: 'pending', child: Text("Pending")),
-              DropdownMenuItem(value: 'active', child: Text("Approved")),
-              DropdownMenuItem(value: 'inactive', child: Text("Inactive")),
-              DropdownMenuItem(value: 'rejected', child: Text("Rejected")),
-            ],
-            onChanged: (v) => setState(() => _status = v ?? 'active'),
+            child: const Text("Approved", style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF15803D))),
           ),
           const SizedBox(height: 12),
           const Align(

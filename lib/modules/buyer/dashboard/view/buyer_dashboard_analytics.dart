@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/chart_tooltips.dart';
 import 'dart:math' as math;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -358,6 +359,7 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
                   BarChart(
                     key: const Key('buyer-spend-orders-bars'),
                     BarChartData(
+                      barTouchData: cleanNumberBarTouch(),
                       minY: 0,
                       maxY: ordersMaxY,
                       alignment: BarChartAlignment.spaceAround,

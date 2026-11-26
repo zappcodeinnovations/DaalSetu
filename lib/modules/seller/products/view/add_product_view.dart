@@ -430,14 +430,20 @@ class _AddProductViewState extends State<AddProductView> {
                     final selected = controller.selectedBranchIds.contains(
                       b.id,
                     );
+                    // Selected chips: a solid brand fill with high-contrast text and tick in both themes
+                    // (dark text on the light theme's amber, white on the dark theme's orange).
+                    final isDarkTheme = theme.brightness == Brightness.dark;
+                    final selectedText = isDarkTheme ? Colors.white : const Color(0xFF172033);
                     return FilterChip(
                       label: Text(b.locationName ?? b.branchCode ?? 'Branch'),
                       selected: selected,
-                      selectedColor: primaryColor.withValues(alpha: 0.25),
-                      checkmarkColor: const Color(0xFF172033),
+                      selectedColor: isDarkTheme
+                          ? const Color(0xFFE65100)
+                          : primaryColor.withValues(alpha: 0.35),
+                      checkmarkColor: selectedText,
                       labelStyle: TextStyle(
                         color: selected
-                            ? const Color(0xFF172033)
+                            ? selectedText
                             : theme.colorScheme.onSurface,
                         fontWeight: selected
                             ? FontWeight.w600

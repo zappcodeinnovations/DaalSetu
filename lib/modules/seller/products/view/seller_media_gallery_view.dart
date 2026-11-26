@@ -103,27 +103,44 @@ class _SellerMediaGalleryViewState extends State<SellerMediaGalleryView> {
               maxWidth: math.min(screenSize.width * 0.95, 600.0),
               maxHeight: screenSize.height * 0.85,
             ),
-            child: Stack(
+            // Close sits in its own header row above the photo (like the video preview), never on top of it.
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                InteractiveViewer(
-                  maxScale: 4.0,
-                  child: AuthenticatedNetworkImage(
-                    url: url,
-                    fit: BoxFit.contain,
-                    fallback: const SizedBox(
-                      height: 260,
-                      child: Center(child: Text('Image could not be loaded')),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 4, 4),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Product Image',
+                          style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      IconButton(
+                        key: const Key('image-preview-close'),
+                        tooltip: 'Close',
+                        onPressed: () => Navigator.pop(dialogContext),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: InteractiveViewer(
+                    maxScale: 4.0,
+                    child: AuthenticatedNetworkImage(
+                      url: url,
+                      fit: BoxFit.contain,
+                      fallback: const SizedBox(
+                        height: 260,
+                        child: Center(child: Text('Image could not be loaded')),
+                      ),
                     ),
                   ),
                 ),
-                Positioned(
-                  right: 6,
-                  top: 6,
-                  child: IconButton.filledTonal(
-                    onPressed: () => Navigator.pop(dialogContext),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ),
+                const SizedBox(height: 12),
               ],
             ),
           ),
