@@ -236,7 +236,7 @@ class AdminChallanDetailsView extends StatelessWidget {
           ),
           const Divider(height: 18),
           if (challan.orderId != null)
-            _metaRow("Associated Contract / Order ID", "#${challan.orderId}", isDark),
+            _metaRow("Contract", challan.displayContract, isDark),
           if (challan.dispatchedAt != null)
             _metaRow("Dispatched At", _formatDate(challan.dispatchedAt), isDark),
           if (challan.receivedAt != null)

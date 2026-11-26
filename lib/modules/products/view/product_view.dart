@@ -409,6 +409,7 @@ class ProductScreen extends StatelessWidget {
           offerTitle: product.title,
           availableStock: product.availableQuantity,
           sellerOfferAmount: product.amount.toString(),
+          priceUnit: product.amountUnit,
           dealExpiry: product.dealExpiryDatetime,
         ),
       );

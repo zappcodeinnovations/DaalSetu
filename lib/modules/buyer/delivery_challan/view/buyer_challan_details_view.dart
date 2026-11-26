@@ -53,7 +53,7 @@ class BuyerChallanDetailsView extends StatelessWidget {
               
               _sectionTitle("Challan Information"),
               _detailCard([
-                _infoRow("Challan ID", "#${data['challan_number'] ?? data['id']}"),
+                _infoRow("Challan No.", "${data['challan_number'] ?? '-'}"),
                 _infoRow("Truck Number", data['truck_number'] ?? "N/A"),
                 _infoRow("Dispatched By", data['dispatched_by_name'] ?? "N/A"),
               ]),

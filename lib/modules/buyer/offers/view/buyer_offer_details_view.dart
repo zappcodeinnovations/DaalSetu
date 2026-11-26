@@ -390,7 +390,7 @@ class _BuyerOfferDetailsViewState extends State<BuyerOfferDetailsView> {
                       final sellerName =
                           q['seller_name'] ??
                           (q['seller'] is Map ? q['seller']['name'] : null) ??
-                          "Seller Quote #$quoteId";
+                          "Seller Quote ${index + 1}";
                       final quotePrice =
                           q['offered_price'] ??
                           q['price'] ??

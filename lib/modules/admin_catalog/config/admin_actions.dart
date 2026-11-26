@@ -167,9 +167,23 @@ Future<List<AdminOption>> loadTransporterOptions() async {
 
 /// Drivers a vehicle can be assigned to (Assign Driver on Create / Edit Registered Vehicle). The server
 /// only accepts drivers of the vehicle's own transporter.
-Future<List<AdminOption>> loadDriverOptions() => _load(
-      '/api/drivers/',
-      (d) {
+Future<List<AdminOption>> loadDriverOptions() => _load('/api/drivers/', _driverOption);
+
+/// A vehicle's driver picker: the chosen transporter's active drivers that are free (or already on this
+/// vehicle when editing), as the web Register Vehicle form offers. No transporter chosen means no drivers.
+Future<List<AdminOption>> loadTransporterDriverOptions(String transporterId, String? vehicleId) async {
+  if (transporterId.trim().isEmpty) return const [];
+  final query = {
+    'status': 'active',
+    'exclude_assigned': '1',
+    'transporter_id': transporterId.trim(),
+    'page_size': '500',
+    if (vehicleId != null && vehicleId.isNotEmpty) 'current_vehicle_id': vehicleId,
+  };
+  return _load(Uri(path: '/api/drivers/', queryParameters: query).toString(), _driverOption);
+}
+
+AdminOption _driverOption(Map<String, dynamic> d) {
         final name = (d['driver_name'] ?? d['name'] ?? '').toString().trim();
         final license = (d['license_number'] ?? '').toString().trim();
         final phone = (d['phone_number'] ?? '').toString().trim();
@@ -179,8 +193,7 @@ Future<List<AdminOption>> loadDriverOptions() => _load(
           phone.isEmpty ? name : '$name ($phone)',
           extras: {'phone': phone, 'license': license},
         );
-      },
-    );
+}
 
 Future<List<AdminOption>> loadCategoryOptions() => _load(
       '/api/categories/',
@@ -202,9 +215,19 @@ Future<List<AdminOption>> loadBrandOptions() => _load(
       ),
     );
 
+/// Brand names for a user's Brand (the web stores the name, not the brand id).
+Future<List<AdminOption>> loadBrandNameOptions() async {
+  final brands = await _load('/api/brands/', (b) {
+    final name = (b['brand_name'] ?? b['name'] ?? '').toString().trim();
+    return AdminOption(name, name);
+  });
+  final seen = <String>{};
+  return [for (final b in brands) if (seen.add(b.value.toLowerCase())) b];
+}
+
 Future<List<AdminOption>> loadOfferOptions() => _load(
       '/api/products/',
-      (o) => AdminOption('${o['id'] ?? ''}', '#${o['id']} ${(o['title'] ?? 'Offer').toString()}'),
+      (o) => AdminOption('${o['id'] ?? ''}', (o['title'] ?? 'Offer').toString()),
     );
 
 Future<List<AdminOption>> loadSubAdminOptions() =>

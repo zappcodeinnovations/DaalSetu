@@ -502,6 +502,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           offerTitle: product.title,
           availableStock: product.availableQuantity,
           sellerOfferAmount: product.amount.toString(),
+          priceUnit: product.amountUnit,
           dealExpiry: product.dealExpiryDatetime,
         ),
       );
@@ -674,9 +675,12 @@ class _OfferVideoSlideState extends State<OfferVideoSlide> {
   VideoPlayerController? _frame;
   bool _frameReady = false;
 
+  bool _frameFailed = false;
+
   @override
   void initState() {
     super.initState();
+    // The preview is the video's own opening picture (not a photo, not a black box).
     _loadFrame();
   }
 
@@ -694,10 +698,22 @@ class _OfferVideoSlideState extends State<OfferVideoSlide> {
       _frame = controller;
       await controller.initialize();
       await controller.setVolume(0);
-      await controller.seekTo(const Duration(milliseconds: 300));
+      // Past the usual black first frames, then play a moment and pause: Android only paints the picture of a
+      // video that has started playing once.
+      // Play the opening moment muted, then pause on it: Android paints a video's picture only after it has
+      // played, so a merely paused/seeked video shows black.
+      await controller.seekTo(Duration.zero);
+      await controller.play();
+      final started = DateTime.now();
+      while (mounted && controller.value.position < const Duration(milliseconds: 400) &&
+          DateTime.now().difference(started) < const Duration(seconds: 3)) {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      }
+      await controller.pause();
       if (mounted) setState(() => _frameReady = true);
     } catch (_) {
-      // No frame (offline, unsupported format ...): the photo / gradient poster stays.
+      // The video cannot be opened (offline, unsupported format ...): a neutral placeholder stays.
+      if (mounted) setState(() => _frameFailed = true);
     }
   }
 
@@ -721,16 +737,19 @@ class _OfferVideoSlideState extends State<OfferVideoSlide> {
         ),
       );
     }
-    final photo = widget.posterUrl;
-    if (photo != null && photo.trim().isNotEmpty) {
-      return AuthenticatedNetworkImage(
-        key: const Key('offer-video-poster-photo'),
-        url: photo,
-        fit: BoxFit.cover,
-        fallback: const _PosterGradient(),
-      );
-    }
-    return const _PosterGradient();
+    // While the opening picture loads: the branded placeholder with a small loader; if it cannot load, just
+    // the placeholder.
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        const _PosterGradient(),
+        if (!_frameFailed)
+          const Align(
+            alignment: Alignment(0, 0.45),
+            child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70)),
+          ),
+      ],
+    );
   }
 
   @override
@@ -802,13 +821,19 @@ class _PosterGradient extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // A branded poster (never a plain black box) when neither a photo nor a video frame is available.
     return const DecoratedBox(
+      key: Key('offer-video-poster-gradient'),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF334155), Color(0xFF0B0F19)],
+          colors: [Color(0xFFE65100), Color(0xFFF57C00), Color(0xFFFFA000)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
+      ),
+      child: Align(
+        alignment: Alignment(0, -0.45),
+        child: Icon(Icons.movie_outlined, color: Colors.white38, size: 54),
       ),
     );
   }

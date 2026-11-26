@@ -36,6 +36,9 @@ void main() {
     expect(find.text('Mapped Parent Categories'), findsOneWidget);
     expect(find.text('Toor Dal'), findsOneWidget);
     expect(find.text('CREATE BRAND'), findsOneWidget);
+    // Like the web form: no description field; the status is shown read-only.
+    expect(find.text('Description (Optional)'), findsNothing);
+    expect(find.byKey(const Key('brand-status-readonly')), findsOneWidget);
 
     // Ticking a category and the dialog still works.
     await tester.tap(find.text('Toor Dal'));

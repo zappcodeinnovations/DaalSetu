@@ -92,7 +92,20 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
         if (!editing && field.defaultLoader != null) _fillDefault(field);
       }
     }
+    for (final field in visibleFields) {
+      if (field.dependentOptionsLoader != null) _loadDependentOptions(field);
+    }
   }
+
+  /// Loads [field]'s choices for the current value of the field it depends on.
+  void _loadDependentOptions(AdminFieldConfig field) {
+    final parent = controllers[field.dependsOn]?.text.trim() ?? '';
+    final recordId = editing ? widget.config.recordId(widget.record!) : null;
+    optionFutures[field.key] = field.dependentOptionsLoader!(parent, recordId);
+  }
+
+  bool _hasLoadedOptions(AdminFieldConfig field) =>
+      field.optionsLoader != null || field.dependentOptionsLoader != null;
 
   /// Fills a new record's field from the server (never over something the user already typed).
   Future<void> _fillDefault(AdminFieldConfig field) async {
@@ -216,7 +229,11 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
         body[field.key] = raw.toString().toLowerCase() == 'true';
         continue;
       }
-      final isChoice = field.options.isNotEmpty || field.optionsLoader != null;
+      final isChoice = field.options.isNotEmpty || _hasLoadedOptions(field);
+      if (raw.toString().isEmpty && field.sendEmptyAsNull) {
+        body[field.key] = null;
+        continue;
+      }
       if (raw.toString().isEmpty && (field.isDate || isChoice)) {
         // An unpicked choice is left out so the backend keeps its default instead of rejecting "".
         if (field.isDate) body[field.key] = null;
@@ -401,6 +418,10 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
       widget.config.key == 'salesman' && field.key == 'access_role_ids';
 
   void _reloadOptions(AdminFieldConfig field) {
+    if (field.dependentOptionsLoader != null) {
+      setState(() => _loadDependentOptions(field));
+      return;
+    }
     final loader = field.optionsLoader;
     if (loader == null) return;
     setState(() => optionFutures[field.key] = loader());
@@ -457,7 +478,7 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
           filled: true,
         ),
       );
-    } else if (field.optionsLoader != null) {
+    } else if (_hasLoadedOptions(field)) {
       child = FutureBuilder<List<AdminOption>>(
         future: optionFutures[field.key],
         builder: (context, snapshot) {
@@ -621,6 +642,8 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
                 )
               : isLicenseField
               ? InputValidators.licenseNumber(value, required: _isRequired(field))
+              : field.key == 'vehicle_type'
+              ? _vehicleTypeError(value)
               : null;
           return emailError ??
               taxError ??
@@ -635,6 +658,28 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
     return Padding(padding: const EdgeInsets.only(bottom: 14), child: child);
   }
 
+  /// The vehicle type must be a kind of vehicle, not the registration number (same rule as the server).
+  String? _vehicleTypeError(String? value) {
+    final type = (value ?? '').replaceAll(RegExp(r'\s+'), '').toUpperCase();
+    if (type.isEmpty) return null;
+    final number = (controllers['vehicle_number']?.text ?? '').replaceAll(RegExp(r'\s+'), '').toUpperCase();
+    final looksLikeNumber = RegExp(r'^[A-Z]{2}[0-9]{1,2}[A-Z]{1,2}[0-9]{4}$').hasMatch(type);
+    if (type == number || looksLikeNumber) {
+      return 'Vehicle type cannot be the vehicle number. Enter a type such as Truck or Trailer.';
+    }
+    return null;
+  }
+
+  /// Why a dependent picker is empty: its parent is not chosen yet, or the parent has nothing free.
+  String? _emptyDependentHint(AdminFieldConfig field) {
+    final parentKey = field.dependsOn;
+    if (parentKey == null) return null;
+    final parent = widget.config.fields.where((f) => f.key == parentKey);
+    final parentLabel = parent.isEmpty ? parentKey : parent.first.label;
+    if ((controllers[parentKey]?.text.trim() ?? '').isEmpty) return 'Select the $parentLabel first.';
+    return 'No free active choice for this $parentLabel.';
+  }
+
   Widget _dropdown(AdminFieldConfig field, List<AdminOption> options) {
     final current = controllers[field.key]!.text;
     return DropdownButtonFormField<String>(
@@ -645,6 +690,8 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
       decoration: InputDecoration(
         labelText: _label(field),
         errorText: serverErrors[field.key],
+        helperText: options.isEmpty ? _emptyDependentHint(field) : null,
+        helperMaxLines: 2,
       ),
       items: options
           .map(
@@ -666,6 +713,15 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
         }
         setState(() {
           serverErrors.remove(field.key);
+          // Choices that belong to the old value (e.g. another transporter's drivers) are reset.
+          for (final child in visibleFields) {
+            if (child.dependsOn != field.key || child.dependentOptionsLoader == null) continue;
+            controllers[child.key]?.text = '';
+            for (final other in widget.config.fields) {
+              if (other.derivedFrom == child.key) controllers[other.key]?.text = '';
+            }
+            _loadDependentOptions(child);
+          }
         });
       },
       validator: (value) {

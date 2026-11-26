@@ -20,6 +20,9 @@ class OfferInterestsDialog extends StatefulWidget {
   final String? sellerOfferAmount;
   final String? dealExpiry;
 
+  /// The offer's price unit (qtl / kg / ton). The rate used to be labelled "/TON" whatever the offer used.
+  final String? priceUnit;
+
   const OfferInterestsDialog({
     super.key,
     required this.offerId,
@@ -27,6 +30,7 @@ class OfferInterestsDialog extends StatefulWidget {
     this.availableStock,
     this.sellerOfferAmount,
     this.dealExpiry,
+    this.priceUnit,
   });
 
   @override
@@ -94,7 +98,8 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
     if (widget.sellerOfferAmount != null &&
         widget.sellerOfferAmount!.isNotEmpty) {
       final amt = widget.sellerOfferAmount!;
-      return amt.startsWith('₹') ? amt : "₹$amt/TON";
+      final unit = (widget.priceUnit ?? '').trim().isEmpty ? 'QTL' : widget.priceUnit!.trim().toUpperCase();
+      return amt.startsWith('₹') ? amt : "₹$amt/$unit";
     }
     return "-";
   }
@@ -174,7 +179,8 @@ class _OfferInterestsDialogState extends State<OfferInterestsDialog> {
               }
               final amt =
                   map['amount'] ?? map['seller_offer_amount'] ?? map['price'];
-              final unit = (map['amount_unit'] ?? map['quantity_unit'] ?? 'TON')
+              // The rate's own unit; never a made-up TON (quantity units are a different thing).
+              final unit = (map['amount_unit'] ?? widget.priceUnit ?? 'QTL')
                   .toString()
                   .toUpperCase();
               if (amt != null) _loadedPrice = '₹$amt/$unit';

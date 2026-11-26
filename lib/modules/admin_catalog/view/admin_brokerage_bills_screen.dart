@@ -52,7 +52,7 @@ String _billingUser(Object? value) {
   final fullName = '$first $last'.trim();
   return fullName.isNotEmpty
       ? fullName
-      : _billingText(value['username'] ?? value['name'] ?? value['id']);
+      : _billingText(value['username'] ?? value['name']);
 }
 
 String _billingMessage(Object error) =>
@@ -484,7 +484,7 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
         ? user
         : (_billingText(found['name'] ?? found['label']).isNotEmpty
             ? _billingText(found['name'] ?? found['label'])
-            : 'Sub Admin #$id');
+            : '-');
   }
 
   String _sellerName(String id) {
@@ -493,7 +493,7 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
       orElse: () => const {},
     );
     final user = _billingUser(found);
-    return user.isNotEmpty ? user : 'Seller #$id';
+    return user.isNotEmpty ? user : '-';
   }
 
   String _buyerName(String id) {
@@ -502,7 +502,7 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
       orElse: () => const {},
     );
     final user = _billingUser(found);
-    return user.isNotEmpty ? user : 'Buyer #$id';
+    return user.isNotEmpty ? user : '-';
   }
 
   String _companyName(String id) {
@@ -512,7 +512,7 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
     );
     final name = _billingText(
         found['label'] ?? found['company_name'] ?? found['name'] ?? found['legal_name']);
-    return name.isNotEmpty ? name : 'Company #$id';
+    return name.isNotEmpty ? name : '-';
   }
 
   Widget _activeFilterChips() {
@@ -962,7 +962,7 @@ class _AdminBrokerageBillsScreenState extends State<AdminBrokerageBillsScreen> {
                   Expanded(
                     child: Text(
                       _billingText(bill['bill_number']).isEmpty
-                          ? 'Draft bill #${bill['id']}'
+                          ? 'Draft bill'
                           : _billingText(bill['bill_number']),
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
@@ -2992,7 +2992,7 @@ class _AdminBrokerageBillDetailScreenState
               Expanded(
                 child: Text(
                   _billingText(line['challan_number']).isEmpty
-                      ? 'Challan #${line['delivery_challan']}'
+                      ? 'Challan'
                       : _billingText(line['challan_number']),
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),

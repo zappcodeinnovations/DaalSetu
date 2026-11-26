@@ -36,6 +36,9 @@ class AdminChallanModel {
   final String? buyerPan;
   final List<AdminChallanItem> items;
 
+  /// The server JSON this challan was read from (the PDF uses the shared web-format layout, which reads it).
+  final Map<String, dynamic> raw;
+
   AdminChallanModel({
     required this.id,
     this.challanNumber,
@@ -70,6 +73,7 @@ class AdminChallanModel {
     this.buyerGst,
     this.buyerPan,
     required this.items,
+    this.raw = const {},
   });
 
   factory AdminChallanModel.fromJson(Map<String, dynamic> json) {
@@ -123,6 +127,7 @@ class AdminChallanModel {
       buyerGst: json['buyer_gst']?.toString(),
       buyerPan: json['buyer_pan']?.toString(),
       items: itemsList,
+      raw: json,
     );
   }
 
@@ -132,20 +137,14 @@ class AdminChallanModel {
     if (challanNumber != null && challanNumber!.isNotEmpty) {
       return challanNumber!;
     }
-    return "#DC-$id";
+    return '-';
   }
 
   String get displayContract {
     if (contractCode != null && contractCode!.isNotEmpty) {
       return contractCode!;
     }
-    if (contractId != null) {
-      return "Contract #$contractId";
-    }
-    if (orderId != null) {
-      return "Contract #$orderId";
-    }
-    return "Contract N/A";
+    return '-';
   }
 
   String get displaySeller {

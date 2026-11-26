@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/chart_tooltips.dart';
 import 'package:daalsetu/widgets/dashboard_period_bar.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -1063,6 +1064,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     pipelineLabels,
                     pipelineValues,
                     colorResolver: resolvePipelineStageColor,
+                    showValues: true,
                   ),
                   const SizedBox(height: 12),
                   _buildDonutCard(
@@ -1088,6 +1090,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     pipelineLabels,
                     pipelineValues,
                     colorResolver: resolvePipelineStageColor,
+                    showValues: true,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -1260,7 +1263,7 @@ class AdminDashboardScreen extends StatelessWidget {
                         touchTooltipData: BarTouchTooltipData(
                           getTooltipItem: (group, groupIndex, rod, rodIndex) {
                             return BarTooltipItem(
-                              '${sla.otdPercentages[groupIndex].toStringAsFixed(0)}% on-time',
+                              '${slaPercentText(sla.otdPercentages[groupIndex])}% on-time',
                               const TextStyle(
                                 color: Colors.white,
                                 fontSize: 10,
@@ -1663,7 +1666,7 @@ class AdminDashboardScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            "${otd.toStringAsFixed(0)}% On-Time",
+                            "${slaPercentText(otd)}% On-Time",
                             style: GoogleFonts.inter(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
@@ -2532,13 +2535,14 @@ class AdminDashboardScreen extends StatelessWidget {
                 child: PieChart(
                   PieChartData(
                     sectionsSpace: 2,
-                    centerSpaceRadius: 24,
+                    centerSpaceRadius: 20,
+                    // Each slice shows its number on the chart, as the web does (QA: point value missing).
                     sections: List.generate(labels.length, (index) {
-                      return PieChartSectionData(
+                      return valuePieSection(
                         value: values[index].toDouble(),
+                        total: total.toDouble(),
                         color: getColor(index),
-                        radius: 16,
-                        showTitle: false,
+                        radius: 22,
                       );
                     }),
                   ),
@@ -3613,4 +3617,10 @@ class AdminDashboardScreen extends StatelessWidget {
       },
     );
   }
+}
+
+/// An on-time % as the web dashboard shows it: one decimal (76.9), no ".0" on whole numbers (100).
+String slaPercentText(double value) {
+  final text = value.toStringAsFixed(1);
+  return text.endsWith('.0') ? text.substring(0, text.length - 2) : text;
 }

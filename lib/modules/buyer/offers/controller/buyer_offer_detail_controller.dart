@@ -64,7 +64,7 @@ class BuyerOfferDetailController extends GetxController {
               thread['available_quantity'] ??= qty;
             }
             if (thread['price_unit'] == null || thread['price_unit'].toString().isEmpty) {
-              thread['price_unit'] = productDetail.amountUnit.isNotEmpty ? productDetail.amountUnit : 'TON';
+              thread['price_unit'] = productDetail.amountUnit.isNotEmpty ? productDetail.amountUnit : 'QTL';
             }
             if (thread['quantity_unit'] == null || thread['quantity_unit'].toString().isEmpty) {
               thread['quantity_unit'] = productDetail.quantityUnit.isNotEmpty ? productDetail.quantityUnit : 'QTL';

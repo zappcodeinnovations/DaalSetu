@@ -41,7 +41,7 @@ class SellerChallanModel {
 
     return SellerChallanModel(
       id: json['id'],
-      challanNumber: json['challan_number'] ?? json['id'].toString(),
+      challanNumber: json['challan_number'] ?? '',
       truckNumber: json['truck_number'] ?? "N/A",
       driverName: json['driver_name'] ?? json['dispatched_by_name'] ?? "N/A",
       driverPhone: json['driver_mobile'] ?? json['driver_phone'] ?? "N/A",

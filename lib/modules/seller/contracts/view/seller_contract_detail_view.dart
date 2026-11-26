@@ -160,7 +160,7 @@ class _SellerContractDetailViewState extends State<SellerContractDetailView> {
   Widget _summaryCard(BuildContext context, Map<String, dynamic> c) {
     final theme = Theme.of(context);
     final offer = _text(c['product_title']);
-    return SellerUi.section(context, 'Contract ${_text(c['contract_id'], '#${c['id']}')}', [
+    return SellerUi.section(context, 'Contract ${_text(c['contract_id'], '-')}', [
       Row(
         children: [
           SellerUi.statusChip(_text(c['status'], 'active')),

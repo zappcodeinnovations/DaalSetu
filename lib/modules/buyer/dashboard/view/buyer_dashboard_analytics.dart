@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/chart_tooltips.dart';
 import 'dart:math' as math;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -358,6 +359,7 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
                   BarChart(
                     key: const Key('buyer-spend-orders-bars'),
                     BarChartData(
+                      barTouchData: cleanNumberBarTouch(),
                       minY: 0,
                       maxY: ordersMaxY,
                       alignment: BarChartAlignment.spaceAround,
@@ -856,10 +858,10 @@ class _BuyerDashboardAnalyticsState extends State<BuyerDashboardAnalytics> {
                       sections: [
                         for (var index = 0; index < data.values.length; index++)
                           if (data.values[index] > 0)
-                            PieChartSectionData(
+                            valuePieSection(
                               value: data.values[index],
+                              total: data.values.fold<double>(0, (a, b) => a + b),
                               color: colors[index % colors.length],
-                              title: '',
                               radius: 19,
                             ),
                       ],
@@ -1180,6 +1182,31 @@ class _PolarAreaPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.0;
       canvas.drawPath(path, borderPaint);
+
+      // The slice's own volume on it (the web shows the number on the chart point).
+      final label = TextPainter(
+        textDirection: TextDirection.ltr,
+        text: TextSpan(
+          text: chartValueLabel(val),
+          style: const TextStyle(
+            fontSize: 8,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+            shadows: [Shadow(color: Colors.black54, blurRadius: 2)],
+          ),
+        ),
+      )..layout();
+      final mid = startAngle + sectorAngle / 2;
+      final labelRadius = math.max(radius * 0.62, label.width * 0.75);
+      if (radius > label.width * 0.9) {
+        label.paint(
+          canvas,
+          Offset(
+            center.dx + math.cos(mid) * labelRadius - label.width / 2,
+            center.dy + math.sin(mid) * labelRadius - label.height / 2,
+          ),
+        );
+      }
     }
 
     // Ring labels above the sectors on a light pill, skipping any that would

@@ -135,7 +135,7 @@ class SellerContractsView extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                "Contract #${item.contractId ?? item.id}",
+                                "Contract ${item.contractId ?? '-'}",
                                 style: GoogleFonts.poppins(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,

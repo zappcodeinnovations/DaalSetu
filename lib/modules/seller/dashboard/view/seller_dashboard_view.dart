@@ -1,3 +1,4 @@
+import 'package:daalsetu/widgets/chart_tooltips.dart';
 import 'package:daalsetu/widgets/dashboard_period_bar.dart';
 import '../../challans/view/seller_delivery_challan_view.dart';
 import 'package:flutter/material.dart';
@@ -706,7 +707,7 @@ class SellerDashboardView extends StatelessWidget {
                   (item) => ListTile(
                     contentPadding: EdgeInsets.zero,
                     title: Text(item.categoryName),
-                    trailing: Text('${item.volume.toStringAsFixed(0)}%'),
+                    trailing: Text('${chartValueLabel(item.volume)} Qtl'),
                   ),
                 ),
             ],
@@ -797,23 +798,61 @@ class SellerDashboardView extends StatelessWidget {
           const SizedBox(height: 12),
           if (hasData)
             SizedBox(
-              height: 112,
+              height: 150,
               child: BarChart(
                 BarChartData(
+                  barTouchData: cleanNumberBarTouch(),
                   maxY: maxY * 1.2,
                   alignment: BarChartAlignment.spaceAround,
                   groupsSpace: 16,
                   gridData: FlGridData(show: false),
                   borderData: FlBorderData(show: false),
+                  // Each stage shows its count above the bar and its name below (QA: numbers in the pipeline).
                   titlesData: FlTitlesData(
                     bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 26,
+                        getTitlesWidget: (value, meta) {
+                          final i = value.toInt();
+                          if (i < 0 || i >= labels.length || value != i.toDouble()) {
+                            return const SizedBox.shrink();
+                          }
+                          return SizedBox(
+                            width: 56,
+                            child: Text(
+                              labels[i].replaceAll('_', ' '),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.inter(fontSize: 7, height: 1.1, fontWeight: FontWeight.w600),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(showTitles: false),
                     ),
                     topTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 16,
+                        getTitlesWidget: (value, meta) {
+                          final i = value.toInt();
+                          if (i < 0 || i >= values.length || value != i.toDouble()) {
+                            return const SizedBox.shrink();
+                          }
+                          return Text(
+                            chartValueLabel(values[i]),
+                            style: GoogleFonts.poppins(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              color: theme.colorScheme.primary,
+                            ),
+                          );
+                        },
+                      ),
                     ),
                     rightTitles: AxisTitles(
                       sideTitles: SideTitles(showTitles: false),
@@ -1012,13 +1051,14 @@ class SellerDashboardView extends StatelessWidget {
                 child: PieChart(
                   PieChartData(
                     sectionsSpace: 0,
-                    centerSpaceRadius: 20,
+                    centerSpaceRadius: 15,
                     sections: items.asMap().entries.map((e) {
-                      return PieChartSectionData(
+                      return valuePieSection(
                         value: e.value.volume,
+                        total: items.fold<double>(0, (sum, item) => sum + item.volume),
                         color: colors[e.key % colors.length],
-                        radius: 12,
-                        showTitle: false,
+                        radius: 19,
+                        fontSize: 8,
                       );
                     }).toList(),
                   ),
@@ -1061,7 +1101,8 @@ class SellerDashboardView extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            "${e.value.volume.toInt()}%",
+                            // Volume in quintals (the server's volumeQtl), not a percentage.
+                            "${chartValueLabel(e.value.volume)} Qtl",
                             style: GoogleFonts.inter(
                               fontSize: 8,
                               fontWeight: FontWeight.bold,
