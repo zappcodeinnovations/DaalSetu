@@ -1,6 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:daalsetu/services/push_notification_service.dart';
+import 'package:daalsetu/utils/app_snackbar.dart';
 
 class AppPreferences {
   AppPreferences._();
@@ -161,6 +162,8 @@ class AppPreferences {
   /// LOGOUT (Clear Only Auth Data)
   /// ===============================
   static Future<void> logout() async {
+    // Dismiss any active session toasts/snackbars before switching to Sign In.
+    AppSnackbar.dismissAll();
     // Stop push notifications for this user on this phone (needs the token, so first).
     await PushNotificationService.unregister();
     sessionVersion++;

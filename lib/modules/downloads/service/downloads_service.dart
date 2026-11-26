@@ -68,6 +68,13 @@ class DownloadsService {
   }) async {
     final safeName = fileName.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
     final type = mimeType ?? mimeTypeFor(safeName);
+
+    // Always save to app's internal documents directory first so it is GUARANTEED
+    // to be available in the app's Downloads screen and never lost.
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}${Platform.pathSeparator}$safeName');
+    await file.writeAsBytes(bytes, flush: true);
+
     if (Platform.isAndroid) {
       final args = <String, dynamic>{
         'fileName': safeName,
@@ -76,22 +83,24 @@ class DownloadsService {
       };
       try {
         // Phone's Downloads folder (and so the app's Downloads screen).
-        return await _channel.invokeMethod<String>('saveFileToDownloads', args) ?? '';
-      } on MissingPluginException {
-        // Older APK: its PDF-only save, else keep the file inside the app.
+        final uri = await _channel.invokeMethod<String>('saveFileToDownloads', args);
+        if (uri != null && uri.isNotEmpty) {
+          return uri;
+        }
+      } catch (error) {
+        // Older APK or duplicate file / scoped storage collision: try fallback or preserve app copy
         if (type == 'application/pdf') {
           try {
-            return await _channel.invokeMethod<String>('savePdfToDownloads', args) ?? '';
-          } on MissingPluginException {
-            // fall through
-          }
+            final uri = await _channel.invokeMethod<String>('savePdfToDownloads', args);
+            if (uri != null && uri.isNotEmpty) {
+              return uri;
+            }
+          } catch (_) {}
         }
+        debugPrint('📂 Native downloads save exception ($error); app document copy preserved: ${file.path}');
       }
     }
 
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}${Platform.pathSeparator}$safeName');
-    await file.writeAsBytes(bytes, flush: true);
     return file.path;
   }
 

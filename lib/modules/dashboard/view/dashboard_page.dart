@@ -664,8 +664,8 @@ class AdminDashboardScreen extends StatelessWidget {
             value: '${kpis.branches}',
             subtitle: 'Admins active: ${kpis.adminsActive}',
             icon: IconlyLight.category,
-            // Same as the web card: the branch requests page.
-            onTap: () => Get.toNamed(AppRoutes.adminModule('branch_requests')),
+            // Navigates directly to the Branch Master screen.
+            onTap: () => Get.toNamed(AppRoutes.adminModule('branches')),
           ),
           (
             title: 'Deals in Negotiation',
@@ -2791,10 +2791,6 @@ class AdminDashboardScreen extends StatelessWidget {
   }
 
   @visibleForTesting
-  static Set<int> computeVisibleLabelIndices(int count) =>
-      _computeVisibleLabelIndices(count);
-
-  @visibleForTesting
   Widget buildWebGtvDealsChartForTesting(
     BuildContext context,
     GtvDealsChart data,
@@ -2803,25 +2799,6 @@ class AdminDashboardScreen extends StatelessWidget {
       _buildWebGtvDealsChart(context, data, controller);
 
   static Widget _emptyAxisLabel(double value, TitleMeta meta) => const SizedBox.shrink();
-
-  static Set<int> _computeVisibleLabelIndices(int count) {
-    if (count <= 7) {
-      return List.generate(count, (i) => i).toSet();
-    }
-    const maxLabels = 5;
-    final rawStep = (count - 1) / (maxLabels - 1);
-    final step = math.max(2, rawStep.round());
-    final visible = <int>{0};
-    int current = step;
-    while (current < count - 1) {
-      if ((count - 1) - current >= 2) {
-        visible.add(current);
-      }
-      current += step;
-    }
-    visible.add(count - 1);
-    return visible;
-  }
 
   Widget _buildWebGtvDealsChart(
     BuildContext context,
@@ -2865,7 +2842,6 @@ class AdminDashboardScreen extends StatelessWidget {
     final labels = data.labels.take(count).toList();
     final gtvLakhs = data.gtvValues.take(count).map((value) => value / 100000).toList();
     final deals = data.dealsValues.take(count).map((value) => value.toDouble()).toList();
-    final visibleLabelIndices = _computeVisibleLabelIndices(count);
 
     // Scale to the data, matching web portal (7D view scale 0 - 0.07 with peak at ~0.065 Lakhs)
     final gtvPeak = gtvLakhs.fold<double>(0, (max, value) => math.max(max, value));
@@ -3029,34 +3005,28 @@ class AdminDashboardScreen extends StatelessWidget {
                         ),
                         sideTitles: SideTitles(
                           showTitles: true,
-                          reservedSize: 38,
+                          reservedSize: 32,
                           interval: dealsInterval,
                           getTitlesWidget: (value, meta) {
                             if (value < -0.01 || value > dealsTop + 0.01) {
                               return const SizedBox.shrink();
                             }
                             if (dealsTop <= 1.0) {
-                              return Padding(
-                                padding: const EdgeInsets.only(left: 6),
-                                child: Text(
-                                  value <= 0.0001 ? '0' : value.toStringAsFixed(1),
-                                  style: GoogleFonts.inter(
-                                    fontSize: 8,
-                                    color: theme.textTheme.bodySmall?.color,
-                                  ),
+                              return Text(
+                                value <= 0.0001 ? '0' : value.toStringAsFixed(1),
+                                style: GoogleFonts.inter(
+                                  fontSize: 8,
+                                  color: theme.textTheme.bodySmall?.color,
                                 ),
                               );
                             }
                             return value % 1 != 0
                                 ? const SizedBox.shrink()
-                                : Padding(
-                                    padding: const EdgeInsets.only(left: 6),
-                                    child: Text(
-                                      value.toInt().toString(),
-                                      style: GoogleFonts.inter(
-                                        fontSize: 8,
-                                        color: theme.textTheme.bodySmall?.color,
-                                      ),
+                                : Text(
+                                    value.toInt().toString(),
+                                    style: GoogleFonts.inter(
+                                      fontSize: 8,
+                                      color: theme.textTheme.bodySmall?.color,
                                     ),
                                   );
                           },
@@ -3071,18 +3041,12 @@ class AdminDashboardScreen extends StatelessWidget {
                             if (index < 0 || index >= labels.length) {
                               return const SizedBox.shrink();
                             }
-                            if (!visibleLabelIndices.contains(index)) {
-                              return const SizedBox.shrink();
-                            }
                             return Padding(
                               padding: const EdgeInsets.only(top: 7),
                               child: Text(
                                 labels[index],
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.inter(
-                                  fontSize: count > 8 ? 8 : 9,
+                                  fontSize: 9,
                                   color: theme.textTheme.bodySmall?.color,
                                 ),
                               ),
@@ -3133,7 +3097,7 @@ class AdminDashboardScreen extends StatelessWidget {
                             ),
                             sideTitles: const SideTitles(
                               showTitles: true,
-                              reservedSize: 38,
+                              reservedSize: 32,
                               getTitlesWidget: _emptyAxisLabel,
                             ),
                           ),

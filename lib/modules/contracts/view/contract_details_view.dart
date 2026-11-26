@@ -438,7 +438,8 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
       }
     }
 
-    // Build subtitle entity ID string matching web portal (e.g. "ID: 166 | BUY8855C2A68")
+    // Build subtitle entity ID string (e.g. "ID: BUY-20261105-F9PJ" / "ID: SEL7C2A76102D"),
+    // displaying the clean public code and hiding internal database user IDs.
     String? subtitleId;
     final idCode = (uniqueId != null && uniqueId.isNotEmpty)
         ? uniqueId
@@ -446,14 +447,10 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
             ? mappedId
             : (displayPartyId.isNotEmpty ? displayPartyId : null));
 
-    if (partyId != null && partyId != 0) {
-      if (idCode != null && idCode.isNotEmpty && idCode != partyId.toString()) {
-        subtitleId = 'ID: $partyId | $idCode';
-      } else {
-        subtitleId = 'ID: $partyId';
-      }
-    } else if (idCode != null && idCode.isNotEmpty) {
+    if (idCode != null && idCode.isNotEmpty) {
       subtitleId = idCode.startsWith('ID:') ? idCode : 'ID: $idCode';
+    } else if (partyId != null && partyId != 0) {
+      subtitleId = 'ID: $partyId';
     }
 
     // Company line (e.g. "Company: Test company" / "Company: Agrotech")
@@ -788,7 +785,13 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
               Uri.parse(url),
               headers: {'Authorization': 'Bearer $token'},
             );
-            if (res.statusCode == 200 && res.bodyBytes.length > 500) {
+            // Verify the response is genuinely a PDF file (starts with '%PDF-')
+            if (res.statusCode == 200 &&
+                res.bodyBytes.length >= 4 &&
+                res.bodyBytes[0] == 0x25 &&
+                res.bodyBytes[1] == 0x50 &&
+                res.bodyBytes[2] == 0x44 &&
+                res.bodyBytes[3] == 0x46) {
               await file.writeAsBytes(res.bodyBytes, flush: true);
               downloaded = true;
               break;

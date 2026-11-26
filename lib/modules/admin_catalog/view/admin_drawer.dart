@@ -377,8 +377,12 @@ class AdminDrawer extends StatelessWidget {
               key: 'downloads',
               title: 'Downloads',
               icon: Icons.download_rounded,
-              iconColor: const Color(0xFF475569),
-              iconBgColor: const Color(0xFFF1F5F9),
+              iconColor: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFFCBD5E1)
+                  : const Color(0xFF475569),
+              iconBgColor: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF334155)
+                  : const Color(0xFFF1F5F9),
               onTap: () => Get.toNamed(AppRoutes.downloads),
             ),
             _buyerDivider(context),

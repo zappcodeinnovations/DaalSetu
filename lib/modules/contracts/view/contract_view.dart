@@ -48,8 +48,8 @@ class _ContractsScreenState extends State<ContractsScreen> {
   late final RxString selectedFilter;
   final selectedContracts = <int>{}.obs;
   final isSelectionMode = false.obs;
-  // Backend contract statuses: active, in_transit, received, completed, cancelled.
-  final filters = const ['All', 'Active', 'In Transit', 'Received', 'Completed', 'Cancelled'];
+  // Backend contract statuses: active, reserved (or active with bids), in_transit, received, completed, cancelled.
+  final filters = const ['All', 'Active', 'Reserved', 'In Transit', 'Received', 'Completed', 'Cancelled'];
   String _userRole = '';
 
   @override
@@ -91,7 +91,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
         contracts = contracts.where((item) => ContractsScreen.isContractInTransit(item)).toList();
       } else {
         contracts = contracts.where((item) {
-          final statusNorm = item.status.toLowerCase().replaceAll(' ', '_');
+          final statusNorm = _effectiveStatus(item).toLowerCase().replaceAll(' ', '_');
           return statusNorm == filterNorm;
         }).toList();
       }
@@ -345,7 +345,7 @@ class _ContractsScreenState extends State<ContractsScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      _statusBadge(contract.status),
+                      _statusBadge(_effectiveStatus(contract)),
                       // MoM 15: contracts with new transport bids are listed first.
                       if (contract.activeBidCount > 0)
                         Container(
@@ -591,10 +591,21 @@ class _ContractsScreenState extends State<ContractsScreen> {
     return text.isEmpty ? '—' : text;
   }
 
+  /// Mirrors the web panel: active contracts that have incoming transporter bids are Reserved.
+  static String _effectiveStatus(ContractModel contract) {
+    final raw = contract.status.trim().toLowerCase();
+    if (raw == 'active' && contract.activeBidCount > 0) {
+      return 'reserved';
+    }
+    return contract.status;
+  }
+
   Color _statusColor(String status) {
     switch (status.toLowerCase()) {
       case 'active':
         return AppTheme.successGreen;
+      case 'reserved':
+        return Colors.amber.shade700;
       case 'pending':
         return AppTheme.secondaryOrange;
       case 'cancelled':

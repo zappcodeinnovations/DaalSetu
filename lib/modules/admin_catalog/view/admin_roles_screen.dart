@@ -336,7 +336,15 @@ class _AdminRolesScreenState extends State<AdminRolesScreen> {
             onPressed: () => Navigator.pop(dialogContext, true),
             child: const Text('Delete'),
           ),
-          TextButton(
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF475569)
+                    : const Color(0xFFCBD5E1),
+              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
             onPressed: () => Navigator.pop(dialogContext, false),
             child: const Text('Cancel'),
           ),

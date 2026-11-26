@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:daalsetu/theme/app_theme.dart';
 import 'package:daalsetu/utils/app_date.dart';
+import 'package:daalsetu/utils/app_preferences.dart';
 import 'package:daalsetu/utils/input_validators.dart';
 import 'package:daalsetu/utils/tax_id_formatters.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
@@ -17,10 +18,16 @@ import '../../../utils/app_snackbar.dart';
 import 'package:daalsetu/widgets/back_navigation.dart';
 
 class AdminRecordFormScreen extends StatefulWidget {
-  const AdminRecordFormScreen({super.key, required this.config, this.record});
+  const AdminRecordFormScreen({
+    super.key,
+    required this.config,
+    this.record,
+    this.userRole,
+  });
 
   final AdminModuleConfig config;
   final AdminRecord? record;
+  final String? userRole;
 
   @override
   State<AdminRecordFormScreen> createState() => _AdminRecordFormScreenState();
@@ -35,6 +42,7 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
   final serverErrors = <String, String>{};
   bool saving = false;
   bool creatingRole = false;
+  String _userRole = '';
 
   bool get editing => widget.record != null;
 
@@ -42,12 +50,31 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
       field.required && (!editing || field.requiredOnEdit);
 
   Iterable<AdminFieldConfig> get visibleFields => widget.config.fields.where(
-    (field) => field.hiddenValue == null && !(editing && field.createOnly),
+    (field) {
+      if (field.hiddenValue != null || (editing && field.createOnly)) return false;
+      // Bug 3: The unnecessary "Under Admin" dropdown field should be completely removed
+      // across Seller, Buyer, and Transporter mobile apps.
+      if (field.key == 'parent_admin_id') {
+        final role = _userRole;
+        if (role == 'seller' || role == 'buyer' || role == 'transporter') {
+          return false;
+        }
+      }
+      return true;
+    },
   );
 
   @override
   void initState() {
     super.initState();
+    _userRole = widget.userRole?.trim().toLowerCase() ?? '';
+    if (_userRole.isEmpty) {
+      AppPreferences.getRole().then((role) {
+        if (mounted && role != null) {
+          setState(() => _userRole = role.trim().toLowerCase());
+        }
+      });
+    }
     for (final field in visibleFields) {
       if (field.optionsLoader != null) {
         optionFutures[field.key] = field.optionsLoader!();
@@ -159,6 +186,7 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
     final body = <String, dynamic>{};
     for (final field in widget.config.fields) {
       if (field.isFile || field.derivedFrom != null || (editing && field.createOnly)) continue;
+      if (field.key == 'parent_admin_id' && (_userRole == 'seller' || _userRole == 'buyer' || _userRole == 'transporter')) continue;
       if (field.multiSelect) {
         final list = (multiValues[field.key] ?? {})
             .map((id) => int.tryParse(id) ?? id)
@@ -494,8 +522,10 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
           : null;
       final isVehicleNumberField = field.key == 'vehicle_number' || field.key == 'rc_number';
       final isLicenseField = field.key == 'license_number';
+      final isReadOnly = field.readOnly || field.key == 'branch_ref_code' || field.derivedFrom != null;
       child = TextFormField(
         controller: controllers[field.key],
+        readOnly: isReadOnly,
         textCapitalization: isVehicleNumberField || isLicenseField
             ? TextCapitalization.characters
             : TextCapitalization.none,
@@ -519,6 +549,8 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
             ? 15
             : isPhoneField
             ? 10
+            : isVehicleNumberField
+            ? 10
             : null,
         buildCounter:
             (
@@ -529,6 +561,15 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
             }) => null,
         decoration: InputDecoration(
           labelText: _label(field),
+          filled: isReadOnly ? true : null,
+          fillColor: isReadOnly
+              ? (Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1E293B)
+                  : const Color(0xFFF1F5F9))
+              : null,
+          hintText: isVehicleNumberField
+              ? 'e.g., MH31 AB 1234'
+              : (field.key == 'license_number' ? 'e.g., MH12 20110012345' : (field.key == 'branch_ref_code' ? 'Read-only branch code' : null)),
           alignLabelWithHint: field.multiline,
           counterText: '',
           errorText: serverErrors[field.key],
@@ -541,12 +582,19 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
           }
         },
         validator: (value) {
+          if (isReadOnly) return null;
           if (serverErrors[field.key] != null) {
             return serverErrors[field.key];
           }
           if (isPhoneField && value != null && value.trim().isNotEmpty) {
             if (value.trim().length != 10) {
               return 'Phone number must be 10 digits';
+            }
+          }
+          if (isVehicleNumberField && value != null && value.trim().isNotEmpty) {
+            final cleaned = value.trim().replaceAll(RegExp(r'[\s-]'), '');
+            if (cleaned.length != 10) {
+              return 'RC number must be 10 characters (e.g., MH31AB1234)';
             }
           }
           if (field.numeric && value != null && value.trim().isNotEmpty) {
@@ -696,7 +744,7 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
     final path = filePaths[field.key];
     final name = path?.split(RegExp(r'[\\/]')).last;
     final isVideo = field.key.contains('video');
-    return OutlinedButton.icon(
+    final button = OutlinedButton.icon(
       onPressed: () async {
         final picker = ImagePicker();
         final file = isVideo
@@ -718,6 +766,20 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
         minimumSize: const Size.fromHeight(52),
         alignment: Alignment.centerLeft,
       ),
+    );
+
+    if (name == null) return button;
+
+    return Row(
+      children: [
+        Expanded(child: button),
+        const SizedBox(width: 6),
+        IconButton(
+          tooltip: 'Remove document',
+          icon: const Icon(Icons.close_rounded, color: Colors.redAccent),
+          onPressed: () => setState(() => filePaths.remove(field.key)),
+        ),
+      ],
     );
   }
 
@@ -777,11 +839,3 @@ class _AdminRecordFormScreenState extends State<AdminRecordFormScreen> {
   }
 }
 
-/// Upper-cases what is typed (vehicle and licence numbers).
-class _UpperCaseFormatter extends TextInputFormatter {
-  const _UpperCaseFormatter();
-
-  @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) =>
-      newValue.copyWith(text: newValue.text.toUpperCase());
-}

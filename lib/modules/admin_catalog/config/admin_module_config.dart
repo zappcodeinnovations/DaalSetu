@@ -50,9 +50,11 @@ class AdminFieldConfig {
     this.derivedFrom,
     this.derivedKey,
     this.defaultLoader,
+    this.readOnly = false,
   });
 
   final String key;
+  final bool readOnly;
 
   /// A read-only field filled from the option chosen in the field [derivedFrom] (its [AdminOption.extras]
   /// entry [derivedKey]); never sent to the server.
@@ -344,6 +346,7 @@ class AdminModules {
           'Branch Ref Code',
           // Pre-filled with the creator's own branch code, like the web form.
           defaultLoader: loadOwnBranchCode,
+          readOnly: true,
         ),
         AdminFieldConfig(
           'company_id',

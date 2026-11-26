@@ -8,8 +8,13 @@ import 'package:pdf/widgets.dart' as pw;
 /// The contract PDF, laid out exactly like the web's: an orange band (title, contract number, status and total),
 /// then one two-column table per section - Deal, Buyer, Seller, Logistics Route, Transaction Notes,
 /// Administration (admin accounts only) and Timeline - and a "Generated on ... via DaalSetu" footer.
-pw.Document buildContractPdf(ContractDetailModel contract, String contractNumber, {DateTime? now}) {
-  final doc = pw.Document();
+pw.Document buildContractPdf(
+  ContractDetailModel contract,
+  String contractNumber, {
+  DateTime? now,
+  DeflateCallback? deflate,
+}) {
+  final doc = pw.Document(deflate: deflate);
   const accent = PdfColor.fromInt(0xFFF05A28);
   const sectionBg = PdfColor.fromInt(0xFFFFF2D8);
   const sectionInk = PdfColor.fromInt(0xFFD9481A);
@@ -25,7 +30,8 @@ pw.Document buildContractPdf(ContractDetailModel contract, String contractNumber
 
   // Helvetica has no rupee glyph, so money is "Rs. 2,254.50" like the web's PDF.
   String money(String? value) {
-    final amount = double.tryParse((value ?? '').replaceAll(',', '').trim());
+    final sanitized = pdfSafeText(value).replaceAll('Rs.', '').trim();
+    final amount = double.tryParse(sanitized.replaceAll(',', '').trim());
     if (amount == null) return '-';
     return 'Rs. ${NumberFormat('#,##,##0.00', 'en_IN').format(amount)}';
   }
@@ -72,7 +78,7 @@ pw.Document buildContractPdf(ContractDetailModel contract, String contractNumber
     pw.Widget text(String value, {bool bold = false, PdfColor color = ink}) => pw.Padding(
           padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 4.5),
           child: pw.Text(
-            value,
+            pdfSafeText(value),
             style: pw.TextStyle(fontSize: 9, fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal, color: color),
           ),
         );
@@ -101,11 +107,12 @@ pw.Document buildContractPdf(ContractDetailModel contract, String contractNumber
     );
   }
 
-  final buyerCode = firstFilled([contract.displayBuyerId, contract.buyerUniqueId]);
-  final sellerCode = firstFilled([contract.displaySellerId, contract.sellerMappedId]);
+  final buyerCode = firstFilled([contract.buyerUniqueId, contract.displayBuyerId]);
+  final sellerCode = firstFilled([contract.sellerMappedId, contract.displaySellerId]);
   final buyerPerson = contractPersonName(contract.buyerPersonName, contract.buyerName);
   final sellerPerson = contractPersonName(contract.sellerPersonName, contract.sellerName);
-  final isAdminView = contract.confirmedByAdminName.isNotEmpty ||
+  final isAdminView = contract.adminRemark.isNotEmpty ||
+      contract.confirmedByAdminName.isNotEmpty ||
       contract.confirmedBranchName.isNotEmpty ||
       contract.createdByUserName.isNotEmpty ||
       contract.assignedSubAdminName.isNotEmpty ||
@@ -116,16 +123,24 @@ pw.Document buildContractPdf(ContractDetailModel contract, String contractNumber
   final sections = <pw.Widget>[
     section('Deal', [
       ['Offer', dash(contract.productTitle)],
+      if (contract.productBrand.isNotEmpty) ['Brand', dash(contract.productBrand)],
       ['Category', dash(contract.productCategory)],
-      ['Interest ID', dash(contract.interestId)],
-      ['Quantity', dash('${contract.dealQuantity} ${contract.quantityUnit}')],
       ['Deal Amount', '${money(contract.dealAmount)}/${dash(contract.amountUnit)}'],
-      ['Buyer Offer Amount', money(contract.buyerOfferAmount)],
-      ['Buyer Required Qty', dash(contract.buyerRequiredQuantity)],
-      ['Seller Quantity', dash(contract.sellerQuantity)],
+      ['Trade Value', (contract.tradeValue ?? '').isNotEmpty ? 'Rs. ${pdfSafeText(contract.tradeValue).replaceAll('Rs.', '').trim()}' : money(contract.tradeValue)],
+      ['Seller Offered Quantity', dash('${contract.sellerQuantity ?? ''} ${contract.quantityUnit}'.trim())],
+      ['Buyer Offered Rate', money(contract.buyerOfferAmount)],
+      ['Buyer Required Qty', dash('${contract.buyerRequiredQuantity ?? ''} ${contract.quantityUnit}'.trim())],
       ['Deal Date', stamp(firstFilled([contract.dealDate, contract.confirmedAt]))],
-      ['Delivery Period', dash(firstFilled([contract.deliveryPeriod, contract.deliveryDate]))],
-      ['Pickup From / To', '${pickupDate(contract.loadingFromDate)} - ${pickupDate(contract.loadingToDate)}'],
+      ['Deal Quantity', dash('${contract.dealQuantity} ${contract.quantityUnit}'.trim())],
+      ['Total Deal Price', money(firstFilled([contract.tradeValue, contract.dealAmount.isEmpty ? '' : _tradeFromRate(contract)]))],
+      if (contract.bagCount != null && contract.bagCount != 0)
+        ['Bag Count', contract.bagCount.toString()],
+      if (contract.packingWeightKg.isNotEmpty)
+        ['Packing Weight', '${contract.packingWeightKg} kg'],
+      if (contract.deliveryPeriod.isNotEmpty || contract.deliveryDate != null)
+        ['Delivery Period', dash(firstFilled([contract.deliveryPeriod, contract.deliveryDate]))],
+      if (contract.loadingFromDate != null || contract.loadingToDate != null)
+        ['Pickup From / To', '${pickupDate(contract.loadingFromDate)} - ${pickupDate(contract.loadingToDate)}'],
     ]),
     section('Buyer', [
       ['Buyer ID', dash(buyerCode)],
@@ -133,6 +148,7 @@ pw.Document buildContractPdf(ContractDetailModel contract, String contractNumber
       ['Company', dash(contractCompanyName(contract.buyerCompany, contract.buyerName, contract.buyerPersonName))],
       ['Mobile', dash(contract.buyerMobile)],
       ['Email', dash(contract.buyerEmail)],
+      ['GST No.', dash(contract.buyerGst)],
     ]),
     section('Seller', [
       ['Seller ID', dash(sellerCode)],
@@ -140,6 +156,7 @@ pw.Document buildContractPdf(ContractDetailModel contract, String contractNumber
       ['Company', dash(contractCompanyName(contract.sellerCompany, contract.sellerName, contract.sellerPersonName))],
       ['Mobile', dash(contract.sellerMobile)],
       ['Email', dash(contract.sellerEmail)],
+      ['GST No.', dash(contract.sellerGst)],
     ]),
     section('Logistics Route', [
       ['Loading From', dash(contract.loadingFrom)],
@@ -152,6 +169,7 @@ pw.Document buildContractPdf(ContractDetailModel contract, String contractNumber
     ]),
     if (isAdminView)
       section('Administration', [
+        ['Admin Remark', dash(contract.adminRemark)],
         ['Confirmed By Admin', dash(contract.confirmedByAdminName)],
         ['Branch', dash(contract.confirmedBranchName)],
         ['Created By', dash(contract.createdByUserName)],

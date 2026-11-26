@@ -410,7 +410,7 @@ class SellerDashboardView extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return GestureDetector(
-      onTap: () => _openKpi(metric.screen),
+      onTap: () => _openKpi(metric),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -564,23 +564,33 @@ class SellerDashboardView extends StatelessWidget {
     return number == number.roundToDouble() ? number.toInt().toString() : number.toString();
   }
 
-  void _openKpi(String screen) {
-    switch (screen) {
-      case 'challans':
-        // In Transit: the dispatched, not yet delivered shipments (the same ones the count shows).
-        Get.to(() => const SellerDeliveryChallanView(statusFilter: 'dispatched'));
-        return;
-      case 'buyer_offers':
-        Get.to(() => const SellerBuyerOffersView());
-        return;
-      case 'contracts':
-        Get.to(() => const SellerContractsView());
-        return;
-      case 'offers':
-        Get.to(() => const SellerProductView());
-        return;
-      default:
-        return;
+  void _openKpi(dynamic kpiOrScreen, [String? fallbackTitle]) {
+    String screen = '';
+    String title = '';
+    if (kpiOrScreen is SellerKpi) {
+      screen = kpiOrScreen.screen.toLowerCase().trim();
+      title = kpiOrScreen.title.toLowerCase().trim();
+    } else if (kpiOrScreen is String) {
+      screen = kpiOrScreen.toLowerCase().trim();
+      title = fallbackTitle?.toLowerCase().trim() ?? '';
+    }
+
+    if (screen == 'contracts' || screen == 'contract' || title.contains('contract')) {
+      Get.to(() => const SellerContractsView());
+      return;
+    }
+    if (screen == 'challans' || screen == 'challan' || title.contains('transit') || title.contains('shipment') || title.contains('challan')) {
+      // In Transit: the dispatched, not yet delivered shipments (the same ones the count shows).
+      Get.to(() => const SellerDeliveryChallanView(statusFilter: 'dispatched'));
+      return;
+    }
+    if (screen == 'buyer_offers' || screen == 'buyer_offer' || screen == 'negotiation' || title.contains('deal') || title.contains('negotiat')) {
+      Get.to(() => const SellerBuyerOffersView());
+      return;
+    }
+    if (screen == 'offers' || screen == 'offer' || title.contains('listing') || title.contains('product')) {
+      Get.to(() => const SellerProductView());
+      return;
     }
   }
 
@@ -630,7 +640,7 @@ class SellerDashboardView extends StatelessWidget {
                             ),
                             onTap: () {
                               Get.back();
-                              _openKpi(kpi.screen);
+                              _openKpi(kpi);
                             },
                           );
                         },
@@ -1177,7 +1187,7 @@ class SellerDashboardView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.secondary.withOpacity(0.1),
+                  color: theme.colorScheme.secondary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -1228,9 +1238,9 @@ class SellerDashboardView extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
                       border: Border.all(
-                        color: theme.colorScheme.primary.withOpacity(0.5),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.5),
                       ),
                       borderRadius: BorderRadius.circular(4),
                     ),
@@ -1281,7 +1291,7 @@ class SellerDashboardView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
+                  color: Colors.green.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -1350,8 +1360,8 @@ class SellerDashboardView extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
-                      border: Border.all(color: Colors.green.withOpacity(0.5)),
+                      color: Colors.green.withValues(alpha: 0.1),
+                      border: Border.all(color: Colors.green.withValues(alpha: 0.5)),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(

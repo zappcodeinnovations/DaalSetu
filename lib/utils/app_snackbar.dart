@@ -56,6 +56,19 @@ class AppSnackbar {
     onAction: onAction,
   );
 
+  /// Dismisses any visible snackbars/toasts (e.g. when logging out).
+  static void dismissAll() {
+    try {
+      if (Get.isSnackbarOpen == true) {
+        Get.closeAllSnackbars();
+      }
+    } catch (_) {}
+    final context = Get.key.currentContext;
+    if (context != null && context.mounted) {
+      ScaffoldMessenger.maybeOf(context)?.clearSnackBars();
+    }
+  }
+
   /// Drop-in replacement for `Get.snackbar`. Styling arguments are accepted
   /// for compatibility; only [backgroundColor] is used, to tell error from success.
   static void snackbar(

@@ -1,14 +1,131 @@
 # Bug Log & Historical Fixes
 
-## Bug 69: Dashboard Gross Trade Value & Deals Chart X-Axis Label Collision & Right-Edge Separation
-- **Symptom**: On the Admin Dashboard in the Gross Trade Value & Deals chart card, when viewing the `1Y` or `3M` time range, horizontal x-axis date labels (`Dec 25`, `Jan 26`, `Feb 26`, ..., `Nov 26`) crowded and collided directly on top of each other, rendering an unreadable black text line. Concurrently, the vertical green bar for Deals Closed sat flush against the right Y-axis (`Deals`) tick labels.
-- **Root Cause**:
-  1. `_buildWebGtvDealsChart` in `dashboard_page.dart:3026` configured `bottomTitles` with `SideTitles(showTitles: true, reservedSize: 28)` without an interval or stride check. On mobile viewports (~270px plot width), drawing 12 date labels (~36px wide each) gave only ~22.5px per label, causing all 12 labels to horizontally overlap.
-  2. Right Y-axis (`Deals`) had `reservedSize: 32` without any inner padding between the plot edge and axis numbers (`0, 1, ..., 5`). With `BarChartAlignment.spaceAround`, the last bar had only ~6px clearance from the axis labels.
-- **Fix**:
-  1. Implemented dynamic downsampling algorithm `_computeVisibleLabelIndices(count)`: when `count > 7` (e.g., 12 months for 1Y), it calculates 4-5 evenly distributed milestone dates across the period. It always renders the first date (`Dec 25`) and the last date (`Nov 26`), while ensuring any adjacent shown labels are separated by $\ge 2$ steps ($\ge 55\text{px}$ apart) with `fontSize: 8`, `maxLines: 1`, and `TextOverflow.ellipsis`. For `count <= 7` (e.g., 7D and 1M), all points remain fully visible.
-  2. Increased `rightTitles` `reservedSize` to 38 in both `BarChart` and `LineChart` and added `Padding(left: 6)` to the Deals numbers, creating clean breathing space between the green deals bar and the Y-axis.
+## Bug 74: Logout Toast Dismissal, Contracts Reserved Status & Filter Tab, and Contract PDF Buyer/Seller ID Parity
+- **Symptom 1**: After downloading a delivery challan and logging out, the green snackbar (`Delivery challan saved in Downloads.`) remained visible on the Sign-In screen.
+- **Root Cause 1**: `AppPreferences.logout()` cleared session keys without dismissing active `ScaffoldMessenger` / `Get` snackbars.
+- **Fix 1**: Added `AppSnackbar.dismissAll()` in `lib/utils/app_snackbar.dart` and invoked it at the start of `AppPreferences.logout()` in `lib/utils/app_preferences.dart`.
+- **Symptom 2**: On Admin Contracts screen (`ContractsScreen`), contracts with active transporter bids (`activeBidCount > 0`) displayed `ACTIVE` instead of `Reserved`, and the `Reserved` filter chip was missing.
+- **Root Cause 2**: `filters` list omitted `'Reserved'` and `_statusBadge` / `filteredContracts` bound directly to raw `contract.status` without mirroring the web portal's `Reserved` rule for active contracts with bids.
+- **Fix 2**: Added `'Reserved'` to `filters` in `lib/modules/contracts/view/contract_view.dart`, added `_effectiveStatus(ContractModel)` returning `'reserved'` when `status == 'active' && activeBidCount > 0`, and added `case 'reserved': Colors.amber.shade700` to `_statusColor`.
+- **Symptom 3**: Downloaded contract PDF displayed farm/entity names (`"Mariegold farm"`, `"Agrofarm"`) under Buyer ID and Seller ID instead of alphanumeric IDs (`BUY-20261105-F9PJ`, `SEL7C2A76102D`).
+- **Root Cause 3**: `contract_pdf.dart` prioritized `displayBuyerId` / `displaySellerId` before `buyerUniqueId` / `sellerMappedId`.
+- **Fix 3**: Swapped priority in `lib/modules/contracts/services/contract_pdf.dart` to `firstFilled([contract.buyerUniqueId, contract.displayBuyerId])` and `firstFilled([contract.sellerMappedId, contract.displaySellerId])`.
 - **Files Changed**:
+  - `lib/utils/app_snackbar.dart`
+  - `lib/utils/app_preferences.dart`
+  - `lib/modules/contracts/view/contract_view.dart`
+  - `lib/modules/contracts/services/contract_pdf.dart`
+  - `test/batch_23_logout_toast_reserved_pdf_id_test.dart`
+- **Verification**: `test/batch_23_logout_toast_reserved_pdf_id_test.dart` + `batch_21` + `batch_20` (**11/11 passed**); `flutter analyze` 0 errors/warnings.
+
+## Bug 73: Contract PDF Download Resiliency, Android Scoped Storage Fallback, and Unicode Glyph Protection
+- **Symptom**: When downloading the contract PDF from Contract Details, the PDF download failed to complete on Android devices, and the file did not show in the app's "Downloads" screen. Additionally, the dashboard page showed an `Undefined name 'visibleLabelIndices'` compile/analyzer error.
+- **Root Cause**:
+  1. `dashboard_page.dart` had a leftover reference to `visibleLabelIndices` after graph code was reverted.
+  2. `contract_pdf.dart` and `pdf_text.dart` used built-in Helvetica font which lacks glyphs for em-dash (`—`), Indian Rupee symbol (`₹`), and other non-Latin characters, causing `doc.save()` to throw an unhandled font encoding exception.
+  3. `DownloadsService.saveBytes` only caught `MissingPluginException`. When Android 10+ Scoped Storage encountered duplicate file name collision in `MediaStore.Downloads`, it threw a `PlatformException` (`download_failed`), terminating before the internal app document copy was written.
+  4. In `contract_details_view.dart`, the backend download endpoint did not verify whether the HTTP 200 payload was an actual PDF stream or a JSON response.
+- **Fix**:
+  1. Removed `visibleLabelIndices` and cleanly reverted chart logic in `dashboard_page.dart` (verified 0 compile/analyzer errors).
+  2. Enhanced `pdfSafeText()` in `lib/utils/pdf_text.dart` to automatically convert em-dashes (`—`), en-dashes (`–`), curly quotes (`“ ”`, `’`), and rupee symbols (`₹`) into safe ASCII equivalents. Wrapped all `section(...)` cell text in `pdfSafeText()`.
+  3. Updated `DownloadsService.saveBytes` to ALWAYS write the file to the app's internal documents directory first (guaranteeing it is persistent and listed in `DownloadsView`), while gracefully catching any native `saveFileToDownloads` `PlatformException`.
+  4. Added `%PDF-` magic byte verification (`0x25, 0x50, 0x44, 0x46`) in `_downloadContractPdf` before accepting backend response, ensuring clean fallback to `buildContractPdf()`.
+- **Files Changed**:
+  - `lib/modules/dashboard/view/dashboard_page.dart`
+  - `lib/utils/pdf_text.dart`
+  - `lib/modules/contracts/services/contract_pdf.dart`
+  - `lib/modules/downloads/service/downloads_service.dart`
+  - `lib/modules/contracts/view/contract_details_view.dart`
+  - `test/batch_20_pdf_and_vehicles_test.dart`
+- **Verification**: `test/batch_20_pdf_and_vehicles_test.dart` (4/4 passed), `test/batch_21_admin_and_contract_fixes_test.dart` (4/4 passed), `test/batch_22_seller_and_drawer_fixes_test.dart` (4/4 passed), static analysis clean.
+
+## Bug 72: Role Deletion Cancel Button Styling, Seller Active Contracts KPI Navigation, Sub-Admin "Under Admin" Role Filtering, "Branch Ref Code" Read-Only Enforcement, and Drawer Downloads Icon Contrast
+- **Symptom 1**: In the role deletion confirmation popup on the Admin Roles screen, the Cancel button was rendered as plain orange text without any border/outline, making the button look incomplete and unbalanced next to the solid red Delete button.
+- **Root Cause 1**: `admin_roles_screen.dart:339` used `TextButton` for the Cancel action while the Delete action used `FilledButton`.
+- **Fix 1**: Replaced `TextButton` with `OutlinedButton` with subtle theme-aware border (`Color(0xFF475569)` in dark mode, `Color(0xFFCBD5E1)` in light mode) and rounded corners (`BorderRadius.circular(10)`).
+- **Symptom 2**: Tapping the "Active Contracts" KPI card on the Seller Dashboard failed to navigate to the Contracts page, leaving the user on the dashboard.
+- **Root Cause 2**: `seller_dashboard_view.dart:413 & 567` called `_openKpi(metric.screen)` with exact string matching. If backend data had unexpected case or empty screen string, it defaulted to no-op. While `_getKpiIcon` checked `titleLower.contains('contract')`, `_openKpi` did not check the metric title.
+- **Fix 2**: Updated `_openKpi` to accept `SellerKpi` and check both `screen` and `title.contains('contract')` (as well as handling `challan`, `buyer_offers`, and `offers`), navigating reliably to `SellerContractsView`.
+- **Symptom 3**: The unnecessary "Under Admin (Super Admin only)" dropdown field was visible on the user creation form (e.g. Create Salesman) across Seller, Buyer, and Transporter mobile apps.
+- **Root Cause 3**: `admin_module_config.dart` defined `parent_admin_id` in the `salesman` module without role-based exclusion in `AdminRecordFormScreen`.
+- **Fix 3**: Updated `visibleFields` and form submission in `admin_record_form_screen.dart` to automatically exclude `parent_admin_id` for `'seller'`, `'buyer'`, and `'transporter'` roles, preserving it only for Super Admin and Admin.
+- **Symptom 4**: On the Create Salesman screen in the Seller mobile app, the "Branch Ref Code" field was editable instead of read-only, allowing users to modify the pre-filled code.
+- **Root Cause 4**: `AdminFieldConfig` lacked a `readOnly` parameter, and `AdminRecordFormScreen` only checked `derivedFrom != null` for read-only fields.
+- **Fix 4**: Added `final bool readOnly;` to `AdminFieldConfig`, set `readOnly: true` on `branch_ref_code`, and set `readOnly: true`, filled background, and non-editable styling on `TextFormField`.
+- **Symptom 5**: In the Admin Panel navigation drawer under "FILES & SYSTEM", the Downloads icon was rendered in a faint, low-contrast grey (`0xFF475569`) compared to the crisp white icons for Settings and Log Out.
+- **Root Cause 5**: `admin_drawer.dart:380` hardcoded `iconColor: const Color(0xFF475569)` and `iconBgColor: const Color(0xFFF1F5F9)` without checking dark mode brightness.
+- **Fix 5**: Updated `iconColor` and `iconBgColor` to be theme-aware: using `Color(0xFFCBD5E1)` and `Color(0xFF334155)` in dark mode, matching adjacent menu items.
+- **Files Changed**:
+  - `lib/modules/admin_catalog/view/admin_roles_screen.dart`
+  - `lib/modules/seller/dashboard/view/seller_dashboard_view.dart`
+  - `lib/modules/admin_catalog/config/admin_module_config.dart`
+  - `lib/modules/admin_catalog/view/admin_record_form_screen.dart`
+  - `lib/modules/admin_catalog/view/admin_module_list_screen.dart`
+  - `lib/modules/admin_catalog/view/admin_drawer.dart`
+  - `test/batch_22_seller_and_drawer_fixes_test.dart`
+- **Verification**: `test/batch_22_seller_and_drawer_fixes_test.dart` (4/4 passed), cumulative regression suite (11/11 passed), `flutter analyze` 0 issues found.
+
+## Bug 71: Contract PDF Deal Section Parity, Chart Tooltip Overlap & Contrast, Branches Card Navigation, and User DB ID Masking
+- **Symptom 1 & 2**:
+  1. In the downloaded contract PDF, the internal `Interest ID` was unnecessarily exposed in the `Deal` section, and an extra redundant `Quantity` row was shown, while key deal metrics (`Trade Value`, `Total Deal Price`, `Bag Count`, `Packing Weight`) were missing.
+  2. `Buyer Required Qty` and `Seller Quantity` were displayed without their unit (`qtl`).
+- **Root Cause 1 & 2**: `contract_pdf.dart` hardcoded `Interest ID` and `Quantity` rows, omitted the 4 deal metrics, and didn't append `${contract.quantityUnit}` to buyer/seller quantities.
+- **Fix 1 & 2**:
+  - Removed internal `Interest ID` and redundant `Quantity` row from `section('Deal')`.
+  - Added `Trade Value`, `Total Deal Price`, `Bag Count`, and `Packing Weight`.
+  - Appended `${contract.quantityUnit}` to both `Buyer Required Qty` and `Seller Quantity`.
+- **Symptom 3**: On the Admin Dashboard Gross Trade Value & Deals chart, the orange line cut directly through the `2 deals` touch tooltip box, and the Y-axis numbers (`0 to 20` and `0 to 5`) had poor color contrast against the dark background.
+- **Root Cause 3**:
+  1. In `dashboard_page.dart`, `LineChart` was rendered after (on top of) `BarChart` inside `Stack(children: [...])`, painting the line over the tooltip.
+  2. Axis titles and labels used default muted body colors rather than high-contrast theme-aware styling.
+- **Fix 3**:
+  1. Reordered `Stack` children so `Positioned.fill(child: IgnorePointer(child: LineChart(...)))` is rendered first (underneath) and `BarChart` is rendered on top, ensuring touch tooltips render cleanly above the line without obstruction.
+  2. Applied `tooltipBgColor: Color(0xFF1E293B)`, `tooltipRoundedRadius: 8`, and high-contrast `axisTextColor` (`Colors.white70` in dark mode) across left/right axis titles and tick numbers.
+- **Symptom 4**: On the Admin Dashboard, tapping the "Branches" card (which displays a count of 1) navigated to an empty screen.
+- **Root Cause 4**: `dashboard_page.dart:668` routed to `AppRoutes.adminModule('branch_requests')` (which had 0 pending requests) instead of `AppRoutes.adminModule('branches')` (Branch Master).
+- **Fix 4**: Changed route mapping to `AppRoutes.adminModule('branches')`.
+- **Symptom 5**: On the Contract Details mobile screen, internal user database primary keys were publicly displayed under Buyer and Seller sections (e.g., `ID: 166 | BUY-20261105-F9PJ` and `ID: 165 | SEL7C2A76102D`).
+- **Root Cause 5**: `contract_details_view.dart:451` prefixed `ID: $partyId | ` where `partyId` was the database integer primary key.
+- **Fix 5**: Updated `subtitleId` logic to display `ID: $idCode` directly when `idCode` is present, completely masking internal database integer user IDs.
+- **Files Changed**:
+  - `lib/modules/contracts/services/contract_pdf.dart`
+  - `lib/modules/dashboard/view/dashboard_page.dart`
+  - `lib/modules/contracts/view/contract_details_view.dart`
+  - `test/batch_21_admin_and_contract_fixes_test.dart`
+- **Verification**: `test/batch_21_admin_and_contract_fixes_test.dart` (4/4 passed), full regression suite (16/16 passed), `flutter analyze` 0 issues.
+
+## Bug 70: Admin Registered Vehicles RC Format & Document Clearance, and Contract PDF Administration & GST Parity
+- **Symptom 1**: On the "Create Registered Vehicles" form (`AdminRecordFormScreen`), the RC number field was completely blank without a format hint (e.g., `e.g., MH31 AB 1234`) and lacked character limit validation for the standard 10-character vehicle format.
+- **Root Cause 1**: `admin_record_form_screen.dart` configured `maxLength` and `hintText` only for phone and PAN/license fields, omitting vehicle number fields (`vehicle_number`, `rc_number`).
+- **Fix 1**: Added `maxLength: 10`, `hintText: 'e.g., MH31 AB 1234'`, and validator enforcing 10 alphanumeric characters (after removing spaces and dashes) when `isVehicleNumberField` is true.
+- **Symptom 2**: On the "Create Registered Vehicles" form, after uploading an RC document, there was no remove option or cross (`×`) icon to clear or deselect the uploaded file.
+- **Root Cause 2**: `_fileField` rendered only an `OutlinedButton.icon` with the selected file name without a clear or trailing remove action.
+- **Fix 2**: Wrapped the document upload button in a `Row` with an `Expanded` button and trailing `IconButton(icon: Icon(Icons.close_rounded, color: Colors.redAccent))` when `name != null`, calling `setState(() => filePaths.remove(field.key))` upon tap.
+- **Symptom 3**: In the downloaded contract PDF (`contract_pdf.dart`), the `Admin Remark` field was missing from the `Administration` section, failing to reflect the details shown in the mobile contract UI.
+- **Root Cause 3**: The `Administration` section in `buildContractPdf` listed only `Confirmed By Admin`, `Branch`, `Created By`, and `Assigned Sub Admin`, omitting `Admin Remark`. Additionally, `isAdminView` did not check `contract.adminRemark.isNotEmpty`.
+- **Fix 3**: Added `['Admin Remark', dash(contract.adminRemark)]` as the top row in `section('Administration', ...)` and updated `isAdminView` check to include `contract.adminRemark.isNotEmpty`.
+- **Symptom 4**: In the downloaded contract PDF, GST numbers for both Buyer and Seller were missing from their respective detail sections.
+- **Root Cause 4**: In `buildContractPdf`, `section('Buyer')` and `section('Seller')` displayed ID, Name, Company, Mobile, and Email, but omitted `buyerGst` and `sellerGst`.
+- **Fix 4**: Added `['GST No.', dash(contract.buyerGst)]` to `section('Buyer')` and `['GST No.', dash(contract.sellerGst)]` to `section('Seller')`.
+- **Files Changed**:
+  - `lib/modules/admin_catalog/view/admin_record_form_screen.dart`
+  - `lib/modules/contracts/services/contract_pdf.dart`
+  - `test/batch_20_pdf_and_vehicles_test.dart`
+- **Verification**: `test/batch_20_pdf_and_vehicles_test.dart` (3/3 passed), all regression suites (12/12 passed), `flutter analyze` reported 0 errors/warnings on all modified files.
+
+## Bug 69: Dashboard Gross Trade Value & Deals Chart X-Axis Label Collision & Right-Edge Separation (Reverted to Baseline)
+- **Symptom**: On the Admin Dashboard in the Gross Trade Value & Deals chart card, when viewing the `1Y` or `3M` time range, horizontal x-axis date labels crowded. An attempt was made to downsample the labels (`_computeVisibleLabelIndices`) and increase right axis reserved space.
+- **Reversion Context**: User requested complete reversion to the proven baseline state (`ad7e501`) because date label omissions and altered axis padding disrupted visual continuity across 7D, 1M, 3M, and 1Y views.
+- **Reverted Code**:
+  - Removed `_computeVisibleLabelIndices` and `computeVisibleLabelIndices`.
+  - Restored `bottomTitles` to render all period date labels directly with standard `fontSize: 9` and body color.
+  - Restored right Y-axis `reservedSize: 32` without extra padding on number ticks.
+  - Restored standard chart Stack layering (`BarChart` and synchronized `LineChart`).
+- **Files Changed**:
+  - `lib/modules/dashboard/view/dashboard_page.dart`
+  - `test/batch_19_bug5_gtv_deals_chart_test.dart`
+  - `test/batch_21_admin_and_contract_fixes_test.dart`
+- **Verification**: `test/batch_19_bug5_gtv_deals_chart_test.dart` passed; full cumulative regression suite (12/12 passed); static analysis verified with zero issues.
   - `lib/modules/dashboard/view/dashboard_page.dart`
   - `test/batch_19_bug5_gtv_deals_chart_test.dart`
 - **Verification**: `test/batch_19_bug5_gtv_deals_chart_test.dart` (3/3 passed), all batch 19 tests (8/8 passed), `flutter analyze lib/modules/dashboard/view/dashboard_page.dart` (0 errors).

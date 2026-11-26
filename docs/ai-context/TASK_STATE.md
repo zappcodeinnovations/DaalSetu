@@ -1,6 +1,60 @@
 # Current Task State
 
 ## Current Task
+- **Goal**: Batch 23 App-Side Fixes — (1) Dismiss active snackbars/toasts on logout; (2) Add `Reserved` filter tab and `RESERVED` badge parity for active contracts with incoming bids; (3) Fix Contract PDF `Buyer ID` and `Seller ID` priority to show alphanumeric IDs (`buyerUniqueId`, `sellerMappedId`) before farm/display names.
+- **Status**: **100% Implemented & Verified (No Backend API Changes)**
+  - **Changes Made**:
+    1. `lib/utils/app_snackbar.dart` & `lib/utils/app_preferences.dart`: Added `AppSnackbar.dismissAll()` and called it in `AppPreferences.logout()`.
+    2. `lib/modules/contracts/view/contract_view.dart`: Added `'Reserved'` to `filters`, added `_effectiveStatus(contract)` mapping `active` + `activeBidCount > 0` to `'reserved'`, and styled `'reserved'` badge with `Colors.amber.shade700`.
+    3. `lib/modules/contracts/services/contract_pdf.dart`: Prioritized `contract.buyerUniqueId` and `contract.sellerMappedId` ahead of `displayBuyerId`/`displaySellerId`.
+    4. `test/batch_23_logout_toast_reserved_pdf_id_test.dart`: Added automated tests covering all 3 fixes.
+  - **Verification**:
+    - `test/batch_23_logout_toast_reserved_pdf_id_test.dart`, `test/batch_21_admin_and_contract_fixes_test.dart`, `test/batch_20_pdf_and_vehicles_test.dart`: **11/11 Passed (100% Pass Rate)**.
+    - Static analysis: **0 Errors / 0 Warnings** across all modified files.
+
+---
+
+## Current Task
+- **Goal**: Bug 73 — (1) Fix `visibleLabelIndices` error in `dashboard_page.dart`; (2) Make PDF download bulletproof with Android Scoped Storage auto-fallback in `DownloadsService.saveBytes`; (3) Protect PDF generator against Helvetica Unicode glyph crashes using comprehensive `pdfSafeText()` mapping; (4) Validate backend PDF download response header (`%PDF-` magic bytes).
+- **Status**: **100% Implemented & Verified**
+  - **Changes Made**:
+    1. `lib/modules/dashboard/view/dashboard_page.dart`: Cleaned up any remaining compiler references to `visibleLabelIndices`.
+    2. `lib/utils/pdf_text.dart`: Sanitized em-dash (`—`), en-dash (`–`), curly quotes (`“ ”`, `’`), and rupee symbols (`₹`) into safe ASCII equivalents.
+    3. `lib/modules/contracts/services/contract_pdf.dart`: Protected all section text cells with `pdfSafeText()`, sanitized `tradeValue` and `money()`.
+    4. `lib/modules/downloads/service/downloads_service.dart`: Guaranteed internal documents storage write first (guaranteeing downloads appear in DownloadsView) and safely caught native Android `saveFileToDownloads` `PlatformException`.
+    5. `lib/modules/contracts/view/contract_details_view.dart`: Verified `%PDF-` magic bytes before accepting backend response, falling back reliably to client generator.
+    6. `test/batch_20_pdf_and_vehicles_test.dart`: Added test for special characters / em-dash in PDF generator.
+  - **Verification**:
+    - Cumulative regression suite (batches 20, 21, 22): **12/12 Passed (100% Pass Rate)**
+    - Static analysis: **0 Errors / 0 Warnings / 0 Issues**.
+
+---
+
+## Previous Tasks (Batch 22)
+- **Goal**: Batch 20 Fixes — (1) Admin Registered Vehicles RC number placeholder (`e.g., MH31 AB 1234`), 10-character limit, and 10-character format validation; (2) Downloaded Contract PDF `Administration` section `Admin Remark` field parity; (3) Admin Registered Vehicles RC document clear/remove (`×`) cross icon; (4) Downloaded Contract PDF `Buyer` and `Seller` sections `GST No.` parity.
+- **Status**: **100% Implemented & Verified**
+  - **Files Updated / Created**:
+    1. `lib/modules/admin_catalog/view/admin_record_form_screen.dart`:
+       - Added `maxLength: 10` for vehicle number fields (`vehicle_number`, `rc_number`).
+       - Added `hintText: 'e.g., MH31 AB 1234'` for vehicle number fields.
+       - Added validation enforcing 10 alphanumeric characters when non-empty.
+       - Updated `_fileField`: when `name != null`, wrapped in a `Row` with `Expanded(child: button)` and a trailing red remove `IconButton(icon: Icon(Icons.close_rounded, color: Colors.redAccent))` that clears `filePaths[field.key]` upon tap.
+    2. `lib/modules/contracts/services/contract_pdf.dart`:
+       - Added `['Admin Remark', dash(contract.adminRemark)]` as the top row under `section('Administration', ...)`.
+       - Updated `isAdminView` check to also inspect `contract.adminRemark.isNotEmpty`.
+       - Added `['GST No.', dash(contract.buyerGst)]` to `section('Buyer')`.
+       - Added `['GST No.', dash(contract.sellerGst)]` to `section('Seller')`.
+       - Added `DeflateCallback? deflate` parameter to `buildContractPdf` for uncompressed stream testing.
+    3. `test/batch_20_pdf_and_vehicles_test.dart`:
+       - Automated test suite verifying all 4 fixes (RC format placeholder & length validator, RC document remove button & state clearance, and Contract PDF Administration & GST numbers generation).
+  - **Verification**:
+    - `test/batch_20_pdf_and_vehicles_test.dart`: **3/3 Passed**
+    - Full regression suite (`test/batch_19_bug1_and_bug2_test.dart`, `test/batch_19_bug3_and_bug4_test.dart`, `test/batch_19_bug5_gtv_deals_chart_test.dart`, `test/batch_20_pdf_and_vehicles_test.dart`): **12/12 Passed (100% Pass Rate)**
+    - Static analysis: **0 Errors / 0 Warnings** across all modified files.
+
+---
+
+## Previous Tasks (Batch 19)
 - **Goal**: Reopened Bug Fixes — (1) Out of Stock product card badge clean title-case formatting; (2) Manage Categories modal root commodities filtering & web parity; (3) Reset Password screen top-anchored back button; (4) Admin Dashboard Deals in Negotiation route mapping to Buyer Offers; (5) Dashboard Gross Trade Value & Deals chart x-axis date overlap and right-edge separation.
 - **Status**: **100% Implemented & Verified**
   - **Files Updated / Created**:

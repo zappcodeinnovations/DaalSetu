@@ -167,7 +167,11 @@ class _AdminModuleListScreenState extends State<AdminModuleListScreen> {
     final changed = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => AdminRecordFormScreen(config: config, record: record),
+        builder: (_) => AdminRecordFormScreen(
+          config: config,
+          record: record,
+          userRole: _userRole,
+        ),
       ),
     );
     if (changed == true) await controller.load(refresh: true);
