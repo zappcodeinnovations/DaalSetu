@@ -145,6 +145,11 @@ class AppSnackbar {
     final text = _clean(message);
 
     void show() {
+      // Errors and permission alerts are a centred popup (like the web), not a strip at the screen edge.
+      if (isError) {
+        _showErrorDialog(text);
+        return;
+      }
       if (Get.isDialogOpen == true || Get.isBottomSheetOpen == true) {
         if (Get.isSnackbarOpen == true) {
           Get.closeCurrentSnackbar();
@@ -261,6 +266,55 @@ class AppSnackbar {
     } else {
       show();
     }
+  }
+
+  static bool _errorDialogOpen = false;
+  static String? _lastErrorText;
+  static DateTime? _lastErrorAt;
+
+  /// One centred error popup at a time; the same message repeated within a few seconds (a background
+  /// refresh failing again) is not shown twice.
+  static void _showErrorDialog(String text) {
+    final now = DateTime.now();
+    if (_errorDialogOpen) return;
+    if (_lastErrorText == text && _lastErrorAt != null && now.difference(_lastErrorAt!) < const Duration(seconds: 5)) {
+      return;
+    }
+    final context = Get.key.currentContext;
+    if (context == null || !context.mounted) return;
+    _errorDialogOpen = true;
+    _lastErrorText = text;
+    _lastErrorAt = now;
+    Get.dialog<void>(
+      AlertDialog(
+        key: const Key('app-error-dialog'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        icon: const Icon(Icons.error_outline_rounded, color: AppTheme.errorRed, size: 40),
+        title: Text(
+          'Something went wrong',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16),
+        ),
+        content: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inter(fontSize: 14, height: 1.4),
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          SizedBox(
+            width: 140,
+            height: 44,
+            child: FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFFEA7C1C)),
+              onPressed: () => Get.back(),
+              child: const Text('OK'),
+            ),
+          ),
+        ],
+      ),
+      barrierDismissible: true,
+    ).whenComplete(() => _errorDialogOpen = false);
   }
 
   /// Decides error vs success from the old background colour, then the title,

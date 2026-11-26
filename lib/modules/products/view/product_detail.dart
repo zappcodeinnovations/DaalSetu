@@ -502,6 +502,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           offerTitle: product.title,
           availableStock: product.availableQuantity,
           sellerOfferAmount: product.amount.toString(),
+          priceUnit: product.amountUnit,
           dealExpiry: product.dealExpiryDatetime,
         ),
       );

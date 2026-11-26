@@ -142,7 +142,7 @@ class _OfferInterestNegotiationChatViewState
         'initial_required_quantity': widget.initialRequestedQty,
         'initial_offered_amount': widget.initialOfferedPrice,
         'created_at': widget.initialCreatedAt,
-        'price_unit': widget.priceUnit ?? 'TON',
+        'price_unit': widget.priceUnit ?? 'QTL',
         'quantity_unit': widget.quantityUnit ?? 'QTL',
       };
     }
@@ -232,7 +232,7 @@ class _OfferInterestNegotiationChatViewState
               newThread['price_unit'].toString().isEmpty) {
             newThread['price_unit'] = productDetail.amountUnit.isNotEmpty
                 ? productDetail.amountUnit
-                : 'TON';
+                : 'QTL';
           }
           if (newThread['quantity_unit'] == null ||
               newThread['quantity_unit'].toString().isEmpty) {
@@ -558,7 +558,7 @@ class _OfferInterestNegotiationChatViewState
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final status = (thread['status']?.toString() ?? 'pending').replaceAll('_', ' ');
-    final priceUnit = (thread['price_unit'] ?? thread['amount_unit'] ?? 'TON').toString().toUpperCase();
+    final priceUnit = (thread['price_unit'] ?? thread['amount_unit'] ?? 'QTL').toString().toUpperCase();
     final qtyUnit = (thread['quantity_unit'] ?? 'QTL').toString().toUpperCase();
 
     String money(dynamic raw) {
@@ -932,7 +932,7 @@ class _OfferInterestNegotiationChatViewState
     final sellerOfferedQty = thread['seller_offer_quantity'];
     final hasSellerOfferedQty =
         sellerOfferedQty != null && sellerOfferedQty.toString().trim().isNotEmpty;
-    final priceUnit = (thread['price_unit'] ?? thread['amount_unit'] ?? 'TON')
+    final priceUnit = (thread['price_unit'] ?? thread['amount_unit'] ?? 'QTL')
         .toString()
         .toUpperCase();
     final availableQty =
@@ -1182,7 +1182,7 @@ class _OfferInterestNegotiationChatViewState
         thread['buyer_offered_amount'] ??
         thread['offered_amount'] ??
         '-';
-    final priceUnit = (thread['price_unit'] ?? thread['amount_unit'] ?? 'TON')
+    final priceUnit = (thread['price_unit'] ?? thread['amount_unit'] ?? 'QTL')
         .toString()
         .toUpperCase();
     final rawQuantity =
@@ -1938,7 +1938,7 @@ class _OfferInterestNegotiationChatViewState
 
   Widget _composer(BuildContext context) {
     final rawPriceUnit = _thread?['price_unit']?.toString().toUpperCase() ?? '';
-    final priceUnit = rawPriceUnit.isNotEmpty ? rawPriceUnit : 'TON';
+    final priceUnit = rawPriceUnit.isNotEmpty ? rawPriceUnit : 'QTL';
     final rawQuantityUnit =
         _thread?['quantity_unit']?.toString().toUpperCase() ?? '';
     final quantityUnit = rawQuantityUnit.isNotEmpty ? rawQuantityUnit : 'QTL';
