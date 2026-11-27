@@ -1,3 +1,4 @@
+import 'package:daalsetu/utils/mobile_number_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -215,10 +216,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   hintText: '10-digit mobile number',
                                   prefixIcon: IconlyLight.call,
                                   keyboardType: TextInputType.phone,
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.digitsOnly,
-                                    LengthLimitingTextInputFormatter(10),
-                                  ],
+                                  // 10 digits only: an autofilled +91 / 0 is dropped, not cut into a wrong number.
+                                  inputFormatters: const [MobileNumberFormatter()],
                                   textInputAction: TextInputAction.next,
                                   autofillHints: const [
                                     AutofillHints.telephoneNumber,
