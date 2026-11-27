@@ -48,6 +48,21 @@ class SellerProductController extends GetxController {
   var branches = <SellerBranchModel>[].obs;
   var selectedCategoryId = Rxn<int>();
   var selectedBrandId = Rxn<int>();
+
+  /// Product tags the offer can carry (id -> name) and the ones ticked; a picked brand ticks its own tags.
+  final productTags = <int, String>{}.obs;
+  final selectedTagIds = <int>{}.obs;
+  final Map<int, List<int>> _brandTagIds = {};
+
+  void selectBrand(int? brandId) {
+    selectedBrandId.value = brandId;
+    final brandTags = brandId == null ? const <int>[] : (_brandTagIds[brandId] ?? const <int>[]);
+    if (brandTags.isNotEmpty) selectedTagIds.assignAll(brandTags.where(productTags.containsKey));
+  }
+
+  void toggleTag(int tagId) {
+    if (!selectedTagIds.remove(tagId)) selectedTagIds.add(tagId);
+  }
   var selectedCompanyId = Rxn<int>();
   var selectedBranchIds = <int>{}.obs;
   var amountUnit = 'qtl'.obs;
@@ -300,6 +315,16 @@ class SellerProductController extends GetxController {
   Future<void> fetchSupportData() async {
     sellerName.value = await AppPreferences.getUsername() ?? 'Seller';
     try {
+      // Sellers get the active product tags (Dhadha, Polish ...).
+      final tags = await SellerServices.getTagsList();
+      productTags.assignAll({
+        for (final t in tags.whereType<Map>())
+          if (int.tryParse('${t['id']}') != null) int.parse('${t['id']}'): '${t['tag_name'] ?? t['name'] ?? ''}',
+      });
+    } catch (e) {
+      debugPrint("Error fetching product tags: $e");
+    }
+    try {
       // Create Offer: only the seller's own approved categories (not the admins' or another seller's).
       final catData = await SellerServices.getCategoriesTree(forOffer: true);
       final roots = catData.map((e) => CategoryTreeModel.fromJson(e)).toList();
@@ -365,6 +390,17 @@ class SellerProductController extends GetxController {
     try {
       isBrandsLoading(true);
       final brandData = await SellerServices.getCategoryBrands(categoryId);
+      _brandTagIds.clear();
+      for (final item in brandData.whereType<Map>()) {
+        final id = int.tryParse('${item['id']}');
+        final tags = item['tags'];
+        if (id != null && tags is List) {
+          _brandTagIds[id] = [
+            for (final t in tags)
+              if (t is Map && int.tryParse('${t['id']}') != null) int.parse('${t['id']}'),
+          ];
+        }
+      }
       brands.assignAll(
         brandData
             .whereType<Map>()
@@ -454,6 +490,8 @@ class SellerProductController extends GetxController {
       "description": descController.text.trim(),
       "category_id": selectedCategoryId.value,
       if (selectedBrandId.value != null) "brand_id": selectedBrandId.value,
+      // Always sent, so an offer can also be saved without any tag.
+      "tag_ids": selectedTagIds.toList(),
       "amount": amountController.text.trim(),
       "amount_unit": amountUnit.value,
       "quantity_unit": quantityUnit.value,

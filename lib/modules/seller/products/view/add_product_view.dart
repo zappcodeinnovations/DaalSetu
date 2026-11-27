@@ -125,9 +125,36 @@ class _AddProductViewState extends State<AddProductView> {
                     controller.selectedCategoryId.value == null ||
                         controller.isBrandsLoading.value
                     ? null
-                    : (val) => controller.selectedBrandId.value = val,
+                    : controller.selectBrand,
                 icon: IconlyLight.info_square,
               ),
+              // Product tags: a picked brand ticks its own; the seller can change them.
+              Obx(() {
+                if (controller.productTags.isEmpty) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Product Tags', style: theme.textTheme.labelLarge),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          for (final entry in controller.productTags.entries)
+                            FilterChip(
+                              key: Key('offer-tag-${entry.key}'),
+                              label: Text(entry.value),
+                              selected: controller.selectedTagIds.contains(entry.key),
+                              onSelected: (_) => controller.toggleTag(entry.key),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              }),
               const SizedBox(height: 12),
               Container(
                 width: double.infinity,
