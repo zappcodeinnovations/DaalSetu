@@ -262,6 +262,8 @@ class AdminDrawer extends StatelessWidget {
       case 'brands':
         return (color: const Color(0xFFD97706), bg: const Color(0xFFFEF3C7));
       case 'tags':
+      case 'product_tags':
+      case 'user_tags':
         return (color: const Color(0xFF9333EA), bg: const Color(0xFFFAF5FF));
       case 'drivers':
         return (color: const Color(0xFF0D9488), bg: const Color(0xFFF0FDFA));

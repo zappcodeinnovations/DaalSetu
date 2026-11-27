@@ -310,7 +310,49 @@ class AdminModules {
     ),
   ];
 
+  /// Tag Master as two sections: Product Tags (offers / brands) and User Tags (buyers / sellers). The same
+  /// /api/tags/ list, filtered by type; a new tag gets the section's type.
+  static AdminModuleConfig _tagSection(String key, String title, String tagType) => AdminModuleConfig(
+        key: key,
+        title: title,
+        icon: Icons.sell_outlined,
+        listEndpoint: '/api/tags/',
+        titleKeys: const ['tag_name', 'name'],
+        subtitleKeys: const ['owner_label', 'branch_code', 'is_active', 'created_at'],
+        staticQuery: {'tag_type': tagType},
+        createEndpoint: '/api/tags/',
+        updateEndpoint: (id) => '/api/tags/$id/',
+        deleteEndpoint: (id) => '/api/tags/$id/',
+        fields: [
+          const AdminFieldConfig('tag_name', 'Tag name', required: true),
+          AdminFieldConfig('tag_type', 'Tag type', hiddenValue: tagType),
+          const AdminFieldConfig(
+            'is_active',
+            'Active Status',
+            options: ['true', 'false'],
+            optionLabels: {'true': 'Active', 'false': 'Inactive'},
+            defaultValue: 'true',
+            sendAsBoolean: true,
+          ),
+        ],
+        detailSections: const [
+          AdminDetailSection(
+            title: 'Tag Information',
+            fields: [
+              AdminDetailField('tag_name', 'Tag Name'),
+              AdminDetailField('tag_type', 'Tag Type'),
+              AdminDetailField('owner_label', 'Owner'),
+              AdminDetailField('branch_code', 'Branch'),
+              AdminDetailField('created_by_name', 'Created By'),
+              AdminDetailField('is_active', 'Active Status', type: AdminDetailFieldType.boolean),
+            ],
+          ),
+        ],
+      );
+
   static final Map<String, AdminModuleConfig> all = {
+    'product_tags': _tagSection('product_tags', 'Product Tags', 'product'),
+    'user_tags': _tagSection('user_tags', 'User Tags', 'user'),
     'users': AdminModuleConfig(
       key: 'users',
       title: 'User Management',
