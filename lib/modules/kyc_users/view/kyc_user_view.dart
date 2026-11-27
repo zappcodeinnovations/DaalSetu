@@ -863,6 +863,18 @@ class KycUsersScreen extends StatelessWidget {
                 _detailRow("Last Name", formatVal(user.lastName)),
                 _detailRow("PAN Number", formatVal(user.panNumber)),
                 _detailRow("GST Number", formatVal(user.gstNumber)),
+                _detailRow("Company", formatVal(user.companyName)),
+                _detailRow("Company GST", formatVal(user.companyGst)),
+                _detailRow("Country", formatVal(user.country)),
+                _detailRow("State / Province", formatVal(user.state)),
+                _detailRow("City", formatVal(user.city)),
+                _detailRow("Complete Address", formatVal(user.fullAddress)),
+                _detailRow(
+                  "Branch Membership",
+                  user.branchCode == null || user.branchCode!.isEmpty
+                      ? user.branchStatus
+                      : '${user.branchStatus} (${user.branchCode})',
+                ),
                 _detailRow("Account Status", user.accountStatus.isNotEmpty ? user.accountStatus : "active"),
                 _detailRow("KYC Status", user.kycStatus.isNotEmpty ? user.kycStatus : "pending"),
                 _detailRow("Submitted At", formatTimestamp(user.kycSubmittedAt)),

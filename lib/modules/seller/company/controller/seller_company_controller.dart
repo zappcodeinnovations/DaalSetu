@@ -1,3 +1,4 @@
+import 'package:daalsetu/utils/company_location.dart';
 import '../model/seller_company_model.dart';
 import '../../../../services/seller_services.dart';
 import '../../common/seller_ui.dart';
@@ -112,22 +113,25 @@ class SellerCompanyController extends GetxController {
           "Year must be between 1800 and $currentYear.";
     }
 
+    // PAN / GST are Indian tax ids: PAN required in India, GST optional (checked when given).
+    final india = CompanyLocation.isIndia(countryController.text);
     final pan = panController.text.trim().toUpperCase();
     panController.text = pan;
-    final panError = TaxIdValidator.pan(pan, required: true);
-    if (panError != null) {
-      errors['pan_number'] = panError;
-    }
-
     final gst = gstController.text.trim().toUpperCase();
     gstController.text = gst;
-    final gstError = TaxIdValidator.gst(gst, required: true);
-    if (gstError != null) {
-      errors['gst_number'] = gstError;
-    } else {
-      final gstPanError = TaxIdValidator.gstMatchesPan(pan, gst);
-      if (gstPanError != null) {
-        errors['gst_number'] = gstPanError;
+    if (india) {
+      final panError = TaxIdValidator.pan(pan, required: true);
+      if (panError != null) {
+        errors['pan_number'] = panError;
+      }
+      final gstError = TaxIdValidator.gst(gst, required: false);
+      if (gstError != null) {
+        errors['gst_number'] = gstError;
+      } else if (gst.isNotEmpty) {
+        final gstPanError = TaxIdValidator.gstMatchesPan(pan, gst);
+        if (gstPanError != null) {
+          errors['gst_number'] = gstPanError;
+        }
       }
     }
 
@@ -135,11 +139,9 @@ class SellerCompanyController extends GetxController {
       errors['address_line_1'] = "Please enter Address Line 1.";
     }
 
-    final pincode = pincodeController.text.trim();
-    if (!RegExp(r'^\d{6}$').hasMatch(pincode)) {
-      errors['pincode'] = pincode.isEmpty
-          ? "Please enter Pincode."
-          : "Pincode must be exactly 6 digits.";
+    final pincodeError = CompanyLocation.postalCodeError(countryController.text, pincodeController.text);
+    if (pincodeError != null) {
+      errors['pincode'] = pincodeError;
     }
 
     if (cityController.text.trim().isEmpty) {
@@ -254,8 +256,9 @@ class SellerCompanyController extends GetxController {
       "legal_name": legalNameController.text.trim(),
       "company_type": companyTypeController.text.trim(),
       "year_of_establishment": int.tryParse(yearController.text.trim()) ?? 0,
-      "pan_number": panController.text.trim().toUpperCase(),
-      "gst_number": gstController.text.trim().toUpperCase(),
+      // A company outside India has no PAN / GST (the server drops them too).
+      "pan_number": CompanyLocation.isIndia(countryController.text) ? panController.text.trim().toUpperCase() : "",
+      "gst_number": CompanyLocation.isIndia(countryController.text) ? gstController.text.trim().toUpperCase() : "",
       "address_line_1": address1Controller.text.trim(),
       "address_line_2": address2Controller.text.trim(),
       "landmark": landmarkController.text.trim(),

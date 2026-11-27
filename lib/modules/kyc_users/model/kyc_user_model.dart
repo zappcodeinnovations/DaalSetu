@@ -18,6 +18,15 @@ class KycUserModel {
   final String? branchName;
   final String? companyName;
 
+  /// The user's primary company location and branch membership (from /api/kyc/list/).
+  final String? companyGst;
+  final String? country;
+  final String? state;
+  final String? city;
+  final String? fullAddress;
+  final String branchStatus;
+  final String? branchCode;
+
   KycUserModel({
     required this.id,
     required this.name,
@@ -37,10 +46,19 @@ class KycUserModel {
     this.dateJoined,
     this.branchName,
     this.companyName,
+    this.companyGst,
+    this.country,
+    this.state,
+    this.city,
+    this.fullAddress,
+    this.branchStatus = 'none',
+    this.branchCode,
   });
 
   factory KycUserModel.fromJson(Map<String, dynamic> json) {
     final userObj = json['user'] is Map ? Map<String, dynamic>.from(json['user'] as Map) : null;
+    final company = json['company'] is Map ? Map<String, dynamic>.from(json['company'] as Map) : null;
+    final branch = json['branch_membership'] is Map ? Map<String, dynamic>.from(json['branch_membership'] as Map) : null;
     String rawName = (json['name'] ?? '').toString().trim();
     if (rawName.isEmpty) {
       rawName = (json['username'] ?? userObj?['username'] ?? '').toString().trim();
@@ -90,7 +108,14 @@ class KycUserModel {
       accountStatus: (json['account_status'] ?? (json['is_active'] == true ? 'active' : (json['is_active'] == false ? 'inactive' : ''))).toString().trim(),
       dateJoined: dateJoined,
       branchName: json['branch_name']?.toString(),
-      companyName: json['company_name']?.toString(),
+      companyName: (json['company_name'] ?? company?['legal_name'])?.toString(),
+      companyGst: company?['gst_number']?.toString(),
+      country: company?['country']?.toString(),
+      state: company?['state']?.toString(),
+      city: company?['city']?.toString(),
+      fullAddress: company?['address']?.toString(),
+      branchStatus: (branch?['status'] ?? 'none').toString(),
+      branchCode: branch?['branch_code']?.toString(),
     );
   }
 

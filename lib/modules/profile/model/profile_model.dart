@@ -19,6 +19,22 @@ class ProfileModel {
   final String accountStatus;
   final bool isActive;
 
+  /// Server permission data (same as the web): trading needs KYC approval, then an approved branch.
+  final bool canPerformActions;
+  final String actionBlockMessage;
+
+  /// KYC approved but no branch yet (or the last request was rejected): ask for a branch code.
+  final bool needsBranchCode;
+
+  /// none / pending / rejected / approved, the requested branch, and the admin's rejection remark.
+  final String branchStatus;
+  final String branchCode;
+  final String branchName;
+  final String branchReviewNote;
+
+  /// Why trading is still closed after KYC approval (null once the branch is approved).
+  final String? branchMessage;
+
   ProfileModel({
     required this.id,
     required this.username,
@@ -39,6 +55,14 @@ class ProfileModel {
     this.hasPendingKycRequest = false,
     required this.accountStatus,
     required this.isActive,
+    this.canPerformActions = true,
+    this.actionBlockMessage = '',
+    this.needsBranchCode = false,
+    this.branchStatus = 'none',
+    this.branchCode = '',
+    this.branchName = '',
+    this.branchReviewNote = '',
+    this.branchMessage,
   });
 
   ProfileModel copyWith({
@@ -82,6 +106,14 @@ class ProfileModel {
       hasPendingKycRequest: hasPendingKycRequest ?? this.hasPendingKycRequest,
       accountStatus: accountStatus ?? this.accountStatus,
       isActive: isActive ?? this.isActive,
+      canPerformActions: canPerformActions,
+      actionBlockMessage: actionBlockMessage,
+      needsBranchCode: needsBranchCode,
+      branchStatus: branchStatus,
+      branchCode: branchCode,
+      branchName: branchName,
+      branchReviewNote: branchReviewNote,
+      branchMessage: branchMessage,
     );
   }
 
@@ -133,6 +165,10 @@ class ProfileModel {
       }
       return "";
     }
+
+    final branch = data['branch_membership'] is Map
+        ? Map<String, dynamic>.from(data['branch_membership'] as Map)
+        : const <String, dynamic>{};
 
     final rawDob = data["dob"] ?? data["date_of_birth"];
     final String parsedDob = (rawDob == null || rawDob.toString() == 'null')
@@ -201,6 +237,16 @@ class ProfileModel {
       hasPendingKycRequest: data['has_pending_kyc_request'] == true,
       accountStatus: data["account_status"] ?? "",
       isActive: data["is_active"] ?? false,
+      canPerformActions: data['can_perform_actions'] != false,
+      actionBlockMessage: (data['action_block_message'] ?? '').toString(),
+      needsBranchCode: data['needs_branch_code'] == true,
+      branchStatus: (branch['status'] ?? 'none').toString(),
+      branchCode: (branch['branch_code'] ?? '').toString(),
+      branchName: (branch['branch_name'] ?? '').toString(),
+      branchReviewNote: (branch['review_note'] ?? '').toString(),
+      branchMessage: (data['branch_message'] ?? '').toString().trim().isEmpty
+          ? null
+          : data['branch_message'].toString(),
     );
   }
 }

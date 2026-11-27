@@ -611,6 +611,23 @@ class AdminModules {
               type: AdminDetailFieldType.phone,
             ),
             AdminDetailField('user.role', 'Role'),
+            AdminDetailField(
+              'user.kyc_status',
+              'KYC Status',
+              type: AdminDetailFieldType.status,
+            ),
+          ],
+        ),
+        // The applicant's company (same as the web branch request list).
+        const AdminDetailSection(
+          title: 'Company',
+          fields: [
+            AdminDetailField('company.legal_name', 'Company'),
+            AdminDetailField('company.gst_number', 'GST Number', copyable: true),
+            AdminDetailField('company.country', 'Country'),
+            AdminDetailField('company.state', 'State / Province'),
+            AdminDetailField('company.city', 'City'),
+            AdminDetailField('company.address', 'Complete Address'),
           ],
         ),
         const AdminDetailSection(
