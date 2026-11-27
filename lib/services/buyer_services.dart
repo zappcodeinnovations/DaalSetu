@@ -4,6 +4,25 @@ import '../comman/api_url.dart';
 import 'package:flutter/foundation.dart';
 
 class BuyerServices {
+  /// Branches a buyer requirement can be sent to: the buyer's own branches (server form options, as the web).
+  static Future<List<Map<String, dynamic>>> getRequirementBranches() async {
+    final response = await ApiClient.get(
+      endpoint: '${ApiUrls.buyerRequirements}?view=form_options',
+      requireAuth: true,
+    );
+    final data = response is Map ? response['data'] : null;
+    final branches = data is Map ? data['branches'] : null;
+    if (branches is! List) return const [];
+    return [
+      for (final b in branches)
+        if (b is Map)
+          {
+            'id': b['id'],
+            'location_name': (b['name'] ?? b['location_name'] ?? '').toString(),
+          },
+    ];
+  }
+
   static Future<void> updateBuyerRequirement(dynamic id, Map<String, dynamic> values) async {
     final response = await ApiClient.post(
       endpoint: ApiUrls.buyerRequirementDetails(id),

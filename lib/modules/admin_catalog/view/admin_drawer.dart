@@ -1,3 +1,4 @@
+import 'package:daalsetu/utils/kyc_lock.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -1227,6 +1228,8 @@ class AdminDrawer extends StatelessWidget {
     required VoidCallback onTap,
     bool isSubItem = false,
   }) {
+    // KYC pending: business sections are locked (Dashboard, Company, Branches stay open).
+    final locked = KycLock.locks(key);
     final active = activeKey == key ||
         (activeKey == 'deals' && (key == 'deals' || key == 'contracts')) ||
         (activeKey == 'buyer_offers' &&
@@ -1235,7 +1238,9 @@ class AdminDrawer extends StatelessWidget {
 
     return Padding(
       padding: EdgeInsets.only(bottom: 3, left: isSubItem ? 12 : 0),
-      child: ListTile(
+      child: Opacity(
+        opacity: locked ? 0.55 : 1,
+        child: ListTile(
         selected: active,
         selectedTileColor: AppTheme.primaryGold.withValues(alpha: .13),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1254,7 +1259,9 @@ class AdminDrawer extends StatelessWidget {
             fontWeight: active ? FontWeight.w800 : FontWeight.w500,
           ),
         ),
-        trailing: active
+        trailing: locked
+            ? const Icon(Icons.lock_outline_rounded, size: 18, color: Color(0xFFB45309))
+            : active
             ? Container(
                 width: 5,
                 height: 22,
@@ -1265,9 +1272,14 @@ class AdminDrawer extends StatelessWidget {
               )
             : null,
         onTap: () {
+          if (locked) {
+            KycLock.explain(context);
+            return;
+          }
           _closeDrawer(context);
           onTap();
         },
+        ),
       ),
     );
   }
@@ -1348,6 +1360,8 @@ class AdminDrawer extends StatelessWidget {
     required VoidCallback onTap,
     Widget? trailingBadge,
   }) {
+    // KYC pending: business sections are locked (Dashboard, Company, Branches stay open).
+    final locked = KycLock.locks(key);
     final active = activeKey == key ||
         (activeKey == 'deals' && (key == 'deals' || key == 'contracts')) ||
         (activeKey == 'buyer_offers' &&
@@ -1362,6 +1376,10 @@ class AdminDrawer extends StatelessWidget {
           : Colors.transparent,
       child: InkWell(
         onTap: () {
+          if (locked) {
+            KycLock.explain(context);
+            return;
+          }
           _closeDrawer(context);
           onTap();
         },
@@ -1418,7 +1436,9 @@ class AdminDrawer extends StatelessWidget {
                   padding: const EdgeInsets.only(right: 6),
                   child: trailingBadge,
                 ),
-              if (!active)
+              if (locked)
+                const Icon(Icons.lock_outline_rounded, size: 18, color: Color(0xFFB45309))
+              else if (!active)
                 Icon(
                   Icons.chevron_right_rounded,
                   size: 18,

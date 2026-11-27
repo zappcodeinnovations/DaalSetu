@@ -155,47 +155,13 @@ class _AddBuyerOfferScreenState extends State<AddBuyerOfferScreen> {
         }
       }
 
-      // Load branches with multi-source fallback (seller branches, public branches, default branch)
+      // The buyer's own branches only, the same list the web form offers (server form options). There is no
+      // fallback to every public branch or a fixed branch: the server accepts only the buyer's branches.
       List<Map<String, dynamic>> branchList = [];
       try {
-        final branchRes = await SellerServices.getBranches();
-        if (branchRes['data'] is Map<String, dynamic>) {
-          final data = branchRes['data'] as Map<String, dynamic>;
-          if (data['my_branches'] is List) {
-            for (var b in data['my_branches']) {
-              if (b is Map<String, dynamic>) branchList.add(b);
-            }
-          }
-          if (data['primary_branch'] is Map<String, dynamic>) {
-            final pb = data['primary_branch'] as Map<String, dynamic>;
-            if (!branchList.any((e) => e['id'] == pb['id'])) {
-              branchList.insert(0, pb);
-            }
-          }
-        }
+        branchList = await BuyerServices.getRequirementBranches();
       } catch (e) {
         print("⚠️ Branches fetch error: $e");
-      }
-
-      // If user has no branches assigned via seller endpoint, load public branches
-      if (branchList.isEmpty) {
-        try {
-          final publicBranches = await SellerServices.getPublicBranches();
-          if (publicBranches.isNotEmpty) {
-            branchList.addAll(publicBranches);
-          }
-        } catch (e) {
-          print("⚠️ Public branches fetch error: $e");
-        }
-      }
-
-      // Guarantee at least the primary AMR158M / default branch so branches are never empty or non-selectable
-      if (branchList.isEmpty) {
-        branchList.add({
-          'id': 1,
-          'branch_code': 'AMR158M',
-          'location_name': 'AMR158M',
-        });
       }
 
       final branchIdsToSelect = <int>{};

@@ -1,3 +1,4 @@
+import 'package:daalsetu/utils/kyc_lock.dart';
 import 'package:daalsetu/widgets/branch_join_gate.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -101,7 +102,9 @@ class MainNavigationScreen extends StatelessWidget {
             ),
           ),
         ),
+        // Keyed on the KYC lock so the bar redraws its lock icons once the profile has loaded.
         bottomNavigationBar: GlassNavBar(
+          key: ValueKey('nav-kyc-${KycLock.active}'),
           currentIndex: navController.selectedIndex.value,
           role: navController.userRole.value,
           onTap: _onTap,
@@ -118,9 +121,24 @@ class MainNavigationScreen extends StatelessWidget {
 
   static const _sellerMenuTab = 2;
 
+  /// KYC pending: business tabs are locked (Dashboard, the Menu drawer, Settings and the buyer's Branch
+  /// tab stay open), the same sections the web sidebar locks.
+  static bool tabLocked(String role, int index) {
+    if (!KycLock.active) return false;
+    if (role == 'seller' || role == 'both_sellerandbuyer') return index == 1 || index == 3;
+    if (role == 'transporter') return index >= 1 && index <= 3;
+    if (role == 'buyer' || role == 'buyer_seller' || role == 'both') return index >= 1 && index <= 3;
+    return false;
+  }
+
   void _onTap(int index) {
     final role = navController.userRole.value;
     final isSeller = role == 'seller' || role == 'both_sellerandbuyer';
+    if (tabLocked(role, index)) {
+      final context = Get.context;
+      if (context != null) KycLock.explain(context);
+      return;
+    }
     if (isSeller && index == _sellerMenuTab) {
       // The seller tools live in the side drawer, the same list on every page.
       AppShell.openDrawer();
@@ -351,10 +369,21 @@ class GlassNavBar extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                isSelected ? item.activeIcon : item.icon,
-                size: 20,
-                color: isSelected ? Colors.white : theme.iconTheme.color,
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(
+                    isSelected ? item.activeIcon : item.icon,
+                    size: 20,
+                    color: isSelected ? Colors.white : theme.iconTheme.color,
+                  ),
+                  if (MainNavigationScreen.tabLocked(role, index))
+                    const Positioned(
+                      right: -6,
+                      top: -4,
+                      child: Icon(Icons.lock_rounded, size: 11, color: Color(0xFFB45309)),
+                    ),
+                ],
               ),
               const SizedBox(height: 3),
               AnimatedDefaultTextStyle(

@@ -300,7 +300,8 @@ class SellerProductController extends GetxController {
   Future<void> fetchSupportData() async {
     sellerName.value = await AppPreferences.getUsername() ?? 'Seller';
     try {
-      final catData = await SellerServices.getCategoriesTree();
+      // Create Offer: only the seller's own approved categories (not the admins' or another seller's).
+      final catData = await SellerServices.getCategoriesTree(forOffer: true);
       final roots = catData.map((e) => CategoryTreeModel.fromJson(e)).toList();
       final flat = <CategoryTreeModel>[];
       final labels = <int, String>{};

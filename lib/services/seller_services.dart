@@ -255,9 +255,10 @@ class SellerServices {
   /// ============================================================
   /// CATEGORIES TREE (GET)
   /// ============================================================
-  static Future<List<dynamic>> getCategoriesTree() async {
+  /// [forOffer]: only the categories a new offer can use (the seller's own approved ones), as the web form.
+  static Future<List<dynamic>> getCategoriesTree({bool forOffer = false}) async {
     final response = await ApiClient.get(
-      endpoint: ApiUrls.categoriesTree,
+      endpoint: forOffer ? '${ApiUrls.categoriesTree}?for_offer=1' : ApiUrls.categoriesTree,
       requireAuth: true,
     );
 

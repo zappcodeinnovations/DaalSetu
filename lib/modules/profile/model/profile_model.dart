@@ -35,6 +35,9 @@ class ProfileModel {
   /// Why trading is still closed after KYC approval (null once the branch is approved).
   final String? branchMessage;
 
+  /// KYC not approved: only Dashboard, Company and Branch stay open; business sections are locked.
+  final bool kycLocked;
+
   ProfileModel({
     required this.id,
     required this.username,
@@ -63,6 +66,7 @@ class ProfileModel {
     this.branchName = '',
     this.branchReviewNote = '',
     this.branchMessage,
+    this.kycLocked = false,
   });
 
   ProfileModel copyWith({
@@ -114,6 +118,7 @@ class ProfileModel {
       branchName: branchName,
       branchReviewNote: branchReviewNote,
       branchMessage: branchMessage,
+      kycLocked: kycLocked,
     );
   }
 
@@ -244,6 +249,7 @@ class ProfileModel {
       branchCode: (branch['branch_code'] ?? '').toString(),
       branchName: (branch['branch_name'] ?? '').toString(),
       branchReviewNote: (branch['review_note'] ?? '').toString(),
+      kycLocked: data['kyc_locked'] == true,
       branchMessage: (data['branch_message'] ?? '').toString().trim().isEmpty
           ? null
           : data['branch_message'].toString(),

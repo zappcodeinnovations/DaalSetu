@@ -2,6 +2,8 @@ import 'package:daalsetu/modules/profile/controller/profile_controller.dart';
 import 'package:daalsetu/modules/profile/model/profile_model.dart';
 import 'package:daalsetu/utils/company_location.dart';
 import 'package:daalsetu/widgets/branch_join_gate.dart';
+import 'package:daalsetu/utils/kyc_lock.dart';
+import 'package:daalsetu/modules/nav_bar/view/nav_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
@@ -116,5 +118,27 @@ void main() {
     });
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('branch-join-banner')), findsNothing);
+  });
+
+  test('KYC pending locks business menus and tabs; Company and Branch stay open', () {
+    final controller = Get.put<ProfileController>(_OfflineProfile());
+    controller.profile.value = _profile({'kyc_status': 'pending', 'kyc_locked': true});
+    expect(KycLock.active, isTrue);
+    for (final key in ['offers', 'create_offer', 'masters', 'deals', 'contracts', 'buyer_requirements', 'drivers']) {
+      expect(KycLock.locks(key), isTrue, reason: key);
+    }
+    for (final key in ['dashboard', 'company', 'registered_company', 'branches', 'settings', 'logout']) {
+      expect(KycLock.locks(key), isFalse, reason: key);
+    }
+    expect(MainNavigationScreen.tabLocked('seller', 0), isFalse); // Dashboard
+    expect(MainNavigationScreen.tabLocked('seller', 1), isTrue); // Offers
+    expect(MainNavigationScreen.tabLocked('seller', 2), isFalse); // Menu drawer
+    expect(MainNavigationScreen.tabLocked('seller', 3), isTrue); // Contracts
+    expect(MainNavigationScreen.tabLocked('buyer', 4), isFalse); // Branch
+    expect(MainNavigationScreen.tabLocked('transporter', 2), isTrue); // Drivers
+
+    controller.profile.value = _profile({'kyc_status': 'approved', 'kyc_locked': false});
+    expect(KycLock.locks('offers'), isFalse);
+    expect(MainNavigationScreen.tabLocked('seller', 1), isFalse);
   });
 }

@@ -88,7 +88,10 @@ class _AddProductViewState extends State<AddProductView> {
               const SizedBox(height: 16),
               _buildDropdown<int>(
                 hint: "Select Category *",
-                value: controller.selectedCategoryId.value,
+                // Only a category from the list (the seller's own approved ones) can be the selected value.
+                value: controller.categories.any((c) => c.id == controller.selectedCategoryId.value)
+                    ? controller.selectedCategoryId.value
+                    : null,
                 items: controller.categories
                     .map(
                       (cat) => DropdownMenuItem(
