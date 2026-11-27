@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:daalsetu/utils/company_location.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:flutter/material.dart';
@@ -92,6 +94,10 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
     setState(() => _cities = cities);
   }
 
+  Timer? _pincodeTimer;
+  String _lastPincodeLookup = '';
+
+  /// A complete pincode / postal code fills State and City (India Post or the country's postal codes).
   void _onPincodeChanged() {
     final pin = _pincodeCtrl.text.trim();
     if (_isIndia && pin.length == 6) {
@@ -103,11 +109,29 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
         });
       }
     }
+    _pincodeTimer?.cancel();
+    if (CompanyLocation.postalCodeError(_country, pin) != null) return;
+    _pincodeTimer = Timer(const Duration(milliseconds: 400), () async {
+      final key = '$_country|$pin';
+      if (key == _lastPincodeLookup) return;
+      _lastPincodeLookup = key;
+      final found = await CompanyLocation.lookupPostalCode(_country, pin);
+      if (!mounted || found == null || _pincodeCtrl.text.trim() != pin) return;
+      setState(() {
+        if (found.state.isNotEmpty) _stateCtrl.text = found.state;
+        if (found.city.isNotEmpty) {
+          _cityCtrl.text = found.city;
+          _customCities.add(found.city);
+        }
+      });
+      await _loadCities();
+    });
   }
 
   @override
   void dispose() {
     _pincodeCtrl.removeListener(_onPincodeChanged);
+    _pincodeTimer?.cancel();
     _legalNameCtrl.dispose();
     _typeCtrl.dispose();
     _yearCtrl.dispose();

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
@@ -83,9 +85,14 @@ class _AddCompanyViewState extends State<AddCompanyView> {
   @override
   void dispose() {
     controller.pincodeController.removeListener(_onPincodeChanged);
+    _pincodeTimer?.cancel();
     super.dispose();
   }
 
+  Timer? _pincodeTimer;
+  String _lastPincodeLookup = '';
+
+  /// A complete pincode / postal code fills State and City (India Post or the country's postal codes).
   void _onPincodeChanged() {
     final pin = controller.pincodeController.text.trim();
     if (_isIndia && pin.length == 6) {
@@ -98,6 +105,25 @@ class _AddCompanyViewState extends State<AddCompanyView> {
         });
       }
     }
+    _pincodeTimer?.cancel();
+    if (CompanyLocation.postalCodeError(_country, pin) != null) return;
+    _pincodeTimer = Timer(const Duration(milliseconds: 400), () async {
+      final key = '$_country|$pin';
+      if (key == _lastPincodeLookup) return;
+      _lastPincodeLookup = key;
+      final found = await CompanyLocation.lookupPostalCode(_country, pin);
+      if (!mounted || found == null || controller.pincodeController.text.trim() != pin) return;
+      setState(() {
+        if (found.state.isNotEmpty) controller.stateController.text = found.state;
+        if (found.city.isNotEmpty) {
+          controller.cityController.text = found.city;
+          _customCities.add(found.city);
+        }
+      });
+      controller.clearError('state');
+      controller.clearError('city');
+      await _loadCities();
+    });
   }
 
   List<String> _getAvailableCities() {

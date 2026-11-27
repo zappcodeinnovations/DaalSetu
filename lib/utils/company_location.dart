@@ -72,6 +72,28 @@ class CompanyLocation {
     return list;
   }
 
+  /// State and city of a pincode / postal code (server lookup: India Post, or the country's postal codes).
+  /// Null when the code is not complete yet or unknown.
+  static Future<({String state, String city})?> lookupPostalCode(String country, String code) async {
+    final value = code.trim();
+    if (postalCodeError(country, value) != null) return null;
+    try {
+      final response = await ApiClient.get(
+        endpoint: '/api/locations/?pincode=${Uri.encodeQueryComponent(value)}'
+            '&country=${Uri.encodeQueryComponent(isIndia(country) ? india : country.trim())}',
+        requireAuth: true,
+        suppressErrorDialog: true,
+      );
+      if (response is! Map || response['success'] != true) return null;
+      final state = '${response['state'] ?? ''}'.trim();
+      final city = '${response['city'] ?? ''}'.trim();
+      if (state.isEmpty && city.isEmpty) return null;
+      return (state: state, city: city);
+    } catch (_) {
+      return null; // Unknown code or no network: the user picks the state and city as before.
+    }
+  }
+
   static Future<List<String>> _load(String endpoint, String key) async {
     try {
       final response = await ApiClient.get(endpoint: endpoint, requireAuth: true, suppressErrorDialog: true);
