@@ -39,4 +39,39 @@ void main() {
     expect(tester.getRect(find.text('Select State')), before);
     expect(find.text('Goa'), findsOneWidget);
   });
+
+  testWidgets('a list that takes typed names offers Use "typed" when nothing matches', (tester) async {
+    String? picked;
+    await tester.pumpWidget(MaterialApp(
+      home: Builder(
+        builder: (context) => Scaffold(
+          body: TextButton(
+            onPressed: () async => picked = await showSearchableSelectionSheet<String>(
+              context: context,
+              title: 'Select State',
+              options: const ['Bagmati', 'Gandaki'],
+              labelBuilder: (v) => v,
+              customOption: (typed) => typed,
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Lumbini');
+    await tester.pumpAndSettle();
+    expect(find.text('Use "Lumbini"'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('searchable-sheet-use-typed')));
+    await tester.pumpAndSettle();
+    expect(picked, 'Lumbini');
+
+    // An exact match is just picked from the list: no extra row.
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'bagmati');
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('searchable-sheet-use-typed')), findsNothing);
+  });
 }

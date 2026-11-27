@@ -1,6 +1,5 @@
 import 'package:daalsetu/network/api_client.dart';
 import 'package:daalsetu/utils/india_location_data.dart';
-import 'package:flutter/material.dart';
 
 /// Country rules and location lists for a company address (web parity: any country, typed entries allowed).
 ///
@@ -84,36 +83,4 @@ class CompanyLocation {
       return const [];
     }
   }
-
-  /// "Other": the user types a state / city that is not in the list.
-  static Future<String?> askName(BuildContext context, {required String title, required String hint}) {
-    final input = TextEditingController();
-    return showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(title),
-        content: TextField(
-          controller: input,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          decoration: InputDecoration(
-            hintText: hint,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-          onSubmitted: (value) => Navigator.of(dialogContext).pop(value.trim()),
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.of(dialogContext).pop(input.text.trim()),
-            child: const Text('Select'),
-          ),
-          OutlinedButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancel')),
-        ],
-      ),
-    ).then((value) => (value ?? '').trim().isEmpty ? null : value!.trim());
-  }
-
-  /// Option key for "type my own" in a selection sheet.
-  static const String otherOption = '__other__';
 }

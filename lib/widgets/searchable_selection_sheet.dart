@@ -9,6 +9,7 @@ Future<T?> showSearchableSelectionSheet<T>({
   required String Function(T option) labelBuilder,
   T? selectedValue,
   String searchHint = 'Search...',
+  T Function(String typed)? customOption,
 }) {
   // A keyboard left open by the previous field would push the page and the list around.
   FocusManager.instance.primaryFocus?.unfocus();
@@ -23,6 +24,7 @@ Future<T?> showSearchableSelectionSheet<T>({
       labelBuilder: labelBuilder,
       selectedValue: selectedValue,
       searchHint: searchHint,
+      customOption: customOption,
     ),
   );
 }
@@ -34,6 +36,7 @@ class _SearchableSelectionSheet<T> extends StatefulWidget {
     required this.labelBuilder,
     required this.searchHint,
     this.selectedValue,
+    this.customOption,
   });
 
   final String title;
@@ -41,6 +44,10 @@ class _SearchableSelectionSheet<T> extends StatefulWidget {
   final String Function(T option) labelBuilder;
   final T? selectedValue;
   final String searchHint;
+
+  /// When set, a search with no exact match offers `Use "typed text"` (same as the web lists), so a name
+  /// that is not in the list (a state or city) can still be picked.
+  final T Function(String typed)? customOption;
 
   @override
   State<_SearchableSelectionSheet<T>> createState() =>
@@ -73,6 +80,10 @@ class _SearchableSelectionSheetState<T>
           .toLowerCase()
           .contains(normalizedQuery);
     }).toList();
+    final typed = _query.trim();
+    final offerTyped = widget.customOption != null &&
+        typed.isNotEmpty &&
+        !widget.options.any((o) => widget.labelBuilder(o).trim().toLowerCase() == normalizedQuery);
 
     return Align(
       alignment: Alignment.bottomCenter,
@@ -142,10 +153,12 @@ class _SearchableSelectionSheetState<T>
               ),
               const SizedBox(height: 12),
               Expanded(
-                child: filteredOptions.isEmpty
+                child: filteredOptions.isEmpty && !offerTyped
                     ? Center(
                         child: Text(
-                          'No matching options found.',
+                          widget.customOption != null
+                              ? 'No match. Type the name to add it.'
+                              : 'No matching options found.',
                           style: theme.textTheme.bodyMedium,
                         ),
                       )
@@ -154,12 +167,24 @@ class _SearchableSelectionSheetState<T>
                         padding: EdgeInsets.fromLTRB(12, 0, 12, 20 + keyboard),
                         keyboardDismissBehavior:
                             ScrollViewKeyboardDismissBehavior.onDrag,
-                        itemCount: filteredOptions.length,
+                        itemCount: filteredOptions.length + (offerTyped ? 1 : 0),
                         separatorBuilder: (_, __) => Divider(
                           height: 1,
                           color: theme.dividerColor.withValues(alpha: 0.55),
                         ),
                         itemBuilder: (context, index) {
+                          if (index == filteredOptions.length) {
+                            return ListTile(
+                              key: const Key('searchable-sheet-use-typed'),
+                              minTileHeight: 52,
+                              leading: Icon(Icons.add_rounded, color: theme.colorScheme.primary),
+                              title: Text(
+                                'Use "$typed"',
+                                style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w600),
+                              ),
+                              onTap: () => Navigator.of(context).pop(widget.customOption!(typed)),
+                            );
+                          }
                           final option = filteredOptions[index];
                           final selected = option == widget.selectedValue;
                           return ListTile(

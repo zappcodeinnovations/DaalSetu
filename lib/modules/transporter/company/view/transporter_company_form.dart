@@ -495,21 +495,18 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
           ? 'City is required'
           : null,
       onTap: (field) async {
+        // Search the list or type a city that is not in it (same as the web).
         final selected = await showSearchableSelectionSheet<String>(
           context: context,
           title: 'Select City',
-          searchHint: 'Search city...',
-          options: [...availableCities, '__custom__'],
+          searchHint: 'Search or type the city...',
+          options: availableCities,
           selectedValue: selectedCity,
-          labelBuilder: (value) => value == '__custom__'
-              ? 'Other (Enter Custom City)'
-              : value,
+          labelBuilder: (value) => value,
+          customOption: (typed) => typed,
         );
         if (!mounted || selected == null) return;
-        if (selected == '__custom__') {
-          _showCustomCityDialog();
-          return;
-        }
+        _customCities.add(selected);
         setState(() {
           _cityCtrl.text = selected;
           if (!_isIndia) return;
@@ -605,20 +602,16 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
           ? 'State is required'
           : null,
       onTap: (field) async {
-        final selected = states.isEmpty
-            ? CompanyLocation.otherOption
-            : await showSearchableSelectionSheet<String>(
-                context: context,
-                title: 'Select State',
-                searchHint: 'Search state...',
-                options: [...states, CompanyLocation.otherOption],
-                selectedValue: matched.isNotEmpty ? matched : null,
-                labelBuilder: (value) => value == CompanyLocation.otherOption ? 'Other (type it)' : value,
-              );
-        if (!mounted || selected == null) return;
-        final state = selected == CompanyLocation.otherOption
-            ? await CompanyLocation.askName(context, title: 'Enter State / Province', hint: 'e.g. Bagmati')
-            : selected;
+        // Search the list or type a state that is not in it (same as the web).
+        final state = await showSearchableSelectionSheet<String>(
+          context: context,
+          title: 'Select State',
+          searchHint: 'Search or type the state...',
+          options: states,
+          selectedValue: matched.isNotEmpty ? matched : null,
+          labelBuilder: (value) => value,
+          customOption: (typed) => typed,
+        );
         if (!mounted || state == null) return;
         setState(() {
           _stateCtrl.text = state;
@@ -755,38 +748,4 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
     return list;
   }
 
-  void _showCustomCityDialog() {
-    final textController = TextEditingController();
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text("Enter City Name"),
-        content: TextField(
-          controller: textController,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          decoration: InputDecoration(
-            hintText: "e.g. Wardha",
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              final newCity = textController.text.trim();
-              if (newCity.isNotEmpty) {
-                setState(() {
-                  _customCities.add(newCity);
-                  _cityCtrl.text = newCity;
-                });
-                Get.back();
-              }
-            },
-            child: const Text("Select"),
-          ),
-          OutlinedButton(onPressed: () => Get.back(), child: const Text("Cancel")),
-        ],
-      ),
-    );
-  }
 }
