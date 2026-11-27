@@ -1,3 +1,4 @@
+import 'package:daalsetu/utils/kyc_lock.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'routes/app_pages.dart';
@@ -29,7 +30,7 @@ class AgroBrokerApp extends StatelessWidget {
 
         initialRoute: AppRoutes.splash,
         getPages: AppPages.routes,
-        navigatorObservers: [pageRefreshRouteObserver, KeyboardRouteObserver()],
+        navigatorObservers: [pageRefreshRouteObserver, KeyboardRouteObserver(), KycRouteGuard()],
       builder: (context, child) {
         final theme = Theme.of(context);
         final isDark = theme.brightness == Brightness.dark;

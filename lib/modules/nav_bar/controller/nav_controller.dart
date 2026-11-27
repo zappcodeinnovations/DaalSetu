@@ -1,3 +1,4 @@
+import 'package:daalsetu/utils/kyc_lock.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../../../utils/app_preferences.dart';
@@ -27,6 +28,12 @@ class BottomNavController extends GetxController {
 
   void changeIndex(int index) {
     debugPrint("Changing to index: $index");
+    // KYC pending: a dashboard button / KPI card cannot switch to a locked tab either.
+    if (KycLock.tabLocked(userRole.value, index)) {
+      final context = Get.context;
+      if (context != null) KycLock.explain(context);
+      return;
+    }
     if (selectedIndex.value == index) {
       selectedIndex.refresh();
     } else {

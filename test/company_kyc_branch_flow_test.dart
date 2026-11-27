@@ -141,4 +141,40 @@ void main() {
     expect(KycLock.locks('offers'), isFalse);
     expect(MainNavigationScreen.tabLocked('seller', 1), isFalse);
   });
+
+  test('screens opened from KPI cards / buttons are locked by name; company, branch, KYC stay open', () {
+    final controller = Get.put<ProfileController>(_OfflineProfile());
+    controller.profile.value = _profile({'kyc_status': 'pending', 'kyc_locked': true});
+    for (final name in ['/SellerProductView', '/seller/contracts', '/buyer/offers/today', '/SellerConsignmentsView',
+        '/transporter/bidding', '/TransporterDriversView', '/admin/deals/contracts', '/BuyerOrdersView']) {
+      expect(KycLock.screenLocked(name), isTrue, reason: name);
+    }
+    for (final name in ['/AddCompanyView', '/seller/branches', '/transporter/kyc', '/transporter/dashboard',
+        '/profile', '/notifications', '/settings', '/BuyerBranchView', '/TransporterCompanyForm']) {
+      expect(KycLock.screenLocked(name), isFalse, reason: name);
+    }
+    controller.profile.value = _profile({'kyc_status': 'approved', 'kyc_locked': false});
+    expect(KycLock.screenLocked('/SellerProductView'), isFalse);
+  });
+
+  testWidgets('opening a business screen while KYC is pending closes it and explains why', (tester) async {
+    final controller = Get.put<ProfileController>(_OfflineProfile());
+    controller.profile.value = _profile({'kyc_status': 'pending', 'kyc_locked': true});
+    await tester.pumpWidget(GetMaterialApp(
+      navigatorObservers: [KycRouteGuard()],
+      home: const Scaffold(body: Center(child: Text('dashboard'))),
+    ));
+    Get.to(() => const _FakeOfferView());
+    await tester.pumpAndSettle();
+    expect(find.text('offer screen'), findsNothing);
+    expect(find.byKey(const Key('kyc-lock-dialog')), findsOneWidget);
+    expect(find.text('dashboard'), findsOneWidget);
+  });
+}
+
+class _FakeOfferView extends StatelessWidget {
+  const _FakeOfferView();
+
+  @override
+  Widget build(BuildContext context) => const Scaffold(body: Text('offer screen'));
 }

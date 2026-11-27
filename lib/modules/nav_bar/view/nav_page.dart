@@ -123,13 +123,7 @@ class MainNavigationScreen extends StatelessWidget {
 
   /// KYC pending: business tabs are locked (Dashboard, the Menu drawer, Settings and the buyer's Branch
   /// tab stay open), the same sections the web sidebar locks.
-  static bool tabLocked(String role, int index) {
-    if (!KycLock.active) return false;
-    if (role == 'seller' || role == 'both_sellerandbuyer') return index == 1 || index == 3;
-    if (role == 'transporter') return index >= 1 && index <= 3;
-    if (role == 'buyer' || role == 'buyer_seller' || role == 'both') return index >= 1 && index <= 3;
-    return false;
-  }
+  static bool tabLocked(String role, int index) => KycLock.tabLocked(role, index);
 
   void _onTap(int index) {
     final role = navController.userRole.value;
