@@ -303,8 +303,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     width: width,
                     child: _field(
                       label: 'Branch Code',
+                      // Every new user signs up under a branch (the server refuses a missing code too).
+                      required: true,
                       child: GlassTextField(
                         controller: _controller.branchCodeController,
+                        validator: (value) => _required(value, 'Branch code'),
                         hintText: 'Enter branch code',
                         prefixIcon: IconlyLight.home,
                         textCapitalization: TextCapitalization.characters,
