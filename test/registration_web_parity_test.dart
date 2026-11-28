@@ -76,4 +76,21 @@ void main() {
     expect(find.textContaining('GST'), findsNothing);
     expect(find.textContaining('Date of Birth'), findsNothing);
   });
+
+  testWidgets('the branch code is required to create an account', (tester) async {
+    tester.view.physicalSize = const Size(390, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      GetMaterialApp(theme: AppTheme.lightTheme, home: const RegisterScreen()),
+    );
+    await tester.pump();
+    final submit = find.text('Create Account').last;
+    await tester.ensureVisible(submit);
+    await tester.tap(submit);
+    await tester.pump();
+    expect(find.text('Branch code is required'), findsOneWidget);
+  });
 }

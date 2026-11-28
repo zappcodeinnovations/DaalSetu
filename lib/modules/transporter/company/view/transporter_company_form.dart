@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:daalsetu/utils/company_location.dart';
 import 'package:daalsetu/widgets/hero_header.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -66,11 +69,38 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
     _landmarkCtrl = TextEditingController(text: c?.landmark ?? '');
 
     _pincodeCtrl.addListener(_onPincodeChanged);
+    _loadStates();
   }
 
+  /// States / cities of the selected country (India: built-in list; elsewhere from the server).
+  List<String> _states = const [];
+  List<String> _cities = const [];
+
+  String get _country =>
+      _countryCtrl.text.trim().isEmpty ? CompanyLocation.india : _countryCtrl.text.trim();
+
+  bool get _isIndia => CompanyLocation.isIndia(_country);
+
+  Future<void> _loadStates() async {
+    final states = await CompanyLocation.states(_country);
+    if (!mounted) return;
+    setState(() => _states = states);
+    await _loadCities();
+  }
+
+  Future<void> _loadCities() async {
+    final cities = await CompanyLocation.cities(_country, _stateCtrl.text);
+    if (!mounted) return;
+    setState(() => _cities = cities);
+  }
+
+  Timer? _pincodeTimer;
+  String _lastPincodeLookup = '';
+
+  /// A complete pincode / postal code fills State and City (India Post or the country's postal codes).
   void _onPincodeChanged() {
     final pin = _pincodeCtrl.text.trim();
-    if (pin.length == 6) {
+    if (_isIndia && pin.length == 6) {
       final detected = IndiaLocationData.getStateFromPincode(pin);
       if (detected != null &&
           detected.toLowerCase() != _stateCtrl.text.trim().toLowerCase()) {
@@ -79,11 +109,29 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
         });
       }
     }
+    _pincodeTimer?.cancel();
+    if (CompanyLocation.postalCodeError(_country, pin) != null) return;
+    _pincodeTimer = Timer(const Duration(milliseconds: 400), () async {
+      final key = '$_country|$pin';
+      if (key == _lastPincodeLookup) return;
+      _lastPincodeLookup = key;
+      final found = await CompanyLocation.lookupPostalCode(_country, pin);
+      if (!mounted || found == null || _pincodeCtrl.text.trim() != pin) return;
+      setState(() {
+        if (found.state.isNotEmpty) _stateCtrl.text = found.state;
+        if (found.city.isNotEmpty) {
+          _cityCtrl.text = found.city;
+          _customCities.add(found.city);
+        }
+      });
+      await _loadCities();
+    });
   }
 
   @override
   void dispose() {
     _pincodeCtrl.removeListener(_onPincodeChanged);
+    _pincodeTimer?.cancel();
     _legalNameCtrl.dispose();
     _typeCtrl.dispose();
     _yearCtrl.dispose();
@@ -102,10 +150,9 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    final gstPanError = TaxIdValidator.gstMatchesPan(
-      _panCtrl.text,
-      _gstCtrl.text,
-    );
+    final gstPanError = _isIndia
+        ? TaxIdValidator.gstMatchesPan(_panCtrl.text, _gstCtrl.text)
+        : null;
     if (gstPanError != null) {
       AppSnackbar.snackbar('Validation error', gstPanError);
       return;
@@ -118,8 +165,9 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
       "company_type": _typeCtrl.text.trim(),
       "year_of_establishment": int.tryParse(_yearCtrl.text.trim()),
       "number_of_employees": int.tryParse(_employeesCtrl.text.trim()),
-      "gst_number": _gstCtrl.text.trim().toUpperCase(),
-      "pan_number": _panCtrl.text.trim().toUpperCase(),
+      // A company outside India has no PAN / GST (the server drops them too).
+      "gst_number": _isIndia ? _gstCtrl.text.trim().toUpperCase() : "",
+      "pan_number": _isIndia ? _panCtrl.text.trim().toUpperCase() : "",
       "address_line_1": _address1Ctrl.text.trim(),
       "address_line_2": _address2Ctrl.text.trim(),
       "state": _stateCtrl.text.trim(),
@@ -223,19 +271,22 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
                   ],
                 ),
 
-                const SizedBox(height: 16),
-                _buildSectionTitle("Tax Information"),
-                _buildTextField(
-                  label: "GST Number",
-                  controller: _gstCtrl,
-                  validateGst: true,
-                ),
-                _buildTextField(
-                  label: "PAN Number",
-                  controller: _panCtrl,
-                  isRequired: true,
-                  validatePan: true,
-                ),
+                // PAN / GST are Indian tax ids; GST is optional.
+                if (_isIndia) ...[
+                  const SizedBox(height: 16),
+                  _buildSectionTitle("Tax Information"),
+                  _buildTextField(
+                    label: "GST Number (optional)",
+                    controller: _gstCtrl,
+                    validateGst: true,
+                  ),
+                  _buildTextField(
+                    label: "PAN Number",
+                    controller: _panCtrl,
+                    isRequired: true,
+                    validatePan: true,
+                  ),
+                ],
 
                 const SizedBox(height: 16),
                 _buildSectionTitle("Address"),
@@ -248,6 +299,7 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
                   controller: _address2Ctrl,
                 ),
                 _buildTextField(label: "Landmark", controller: _landmarkCtrl),
+                _buildCountryField(),
                 Row(
                   children: [
                     Expanded(child: _buildCityDropdown()),
@@ -255,24 +307,7 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
                     Expanded(child: _buildStateDropdown()),
                   ],
                 ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        label: "Pincode",
-                        controller: _pincodeCtrl,
-                        isNumber: true,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildTextField(
-                        label: "Country",
-                        controller: _countryCtrl,
-                      ),
-                    ),
-                  ],
-                ),
+                _buildPostalCodeField(),
 
                 const SizedBox(height: 32),
                 Container(
@@ -484,23 +519,21 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
           ? 'City is required'
           : null,
       onTap: (field) async {
+        // Search the list or type a city that is not in it (same as the web).
         final selected = await showSearchableSelectionSheet<String>(
           context: context,
           title: 'Select City',
-          searchHint: 'Search city...',
-          options: [...availableCities, '__custom__'],
+          searchHint: 'Search or type the city...',
+          options: availableCities,
           selectedValue: selectedCity,
-          labelBuilder: (value) => value == '__custom__'
-              ? 'Other (Enter Custom City)'
-              : value,
+          labelBuilder: (value) => value,
+          customOption: (typed) => typed,
         );
         if (!mounted || selected == null) return;
-        if (selected == '__custom__') {
-          _showCustomCityDialog();
-          return;
-        }
+        _customCities.add(selected);
         setState(() {
           _cityCtrl.text = selected;
+          if (!_isIndia) return;
           final inferredState = IndiaLocationData.getStateForCity(selected);
           if (inferredState != null &&
               _stateCtrl.text.trim().toLowerCase() !=
@@ -513,18 +546,79 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
     );
   }
 
+  Widget _buildCountryField() {
+    return _selectionFormField(
+      key: ValueKey('country_$_country'),
+      label: 'Country',
+      hint: 'Select Country',
+      value: _country,
+      icon: Icons.public,
+      validator: (_) => _country.isEmpty ? 'Country is required' : null,
+      onTap: (field) async {
+        final countries = await CompanyLocation.countries();
+        if (!mounted) return;
+        final selected = await showSearchableSelectionSheet<String>(
+          context: context,
+          title: 'Select Country',
+          searchHint: 'Search country...',
+          options: countries,
+          selectedValue: _country,
+          labelBuilder: (value) => value,
+        );
+        if (!mounted || selected == null || selected == _country) return;
+        setState(() {
+          _countryCtrl.text = selected;
+          // A new country: its own states, cities and postal code; PAN / GST only for India.
+          _stateCtrl.clear();
+          _cityCtrl.clear();
+          _customCities.clear();
+          _states = const [];
+          _cities = const [];
+        });
+        field.didChange(selected);
+        await _loadStates();
+      },
+    );
+  }
+
+  Widget _buildPostalCodeField() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        controller: _pincodeCtrl,
+        keyboardType: _isIndia ? TextInputType.number : TextInputType.text,
+        maxLength: 12,
+        buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
+        decoration: InputDecoration(
+          labelText: CompanyLocation.postalCodeLabel(_country),
+          labelStyle: GoogleFonts.inter(fontSize: 13, color: Colors.grey.shade600),
+          hintText: _isIndia ? 'e.g. 400001' : 'e.g. 44600',
+          floatingLabelBehavior: FloatingLabelBehavior.always,
+          counterText: '',
+          filled: true,
+          fillColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF252525)
+              : const Color(0xFFFFF8E1).withValues(alpha: 0.5),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        validator: (value) => CompanyLocation.postalCodeError(_country, value ?? ''),
+      ),
+    );
+  }
+
   Widget _buildStateDropdown() {
-    final states = IndiaLocationData.stateCities.keys.toList()..sort();
+    final states = List<String>.from(_states);
     final currentState = _stateCtrl.text.trim();
     final matched = states.firstWhere(
       (s) => s.toLowerCase() == currentState.toLowerCase(),
       orElse: () => '',
     );
-    final matchedState = matched.isNotEmpty ? matched : null;
+    // A typed state (manual entry) is shown as it is.
+    final matchedState = matched.isNotEmpty ? matched : (currentState.isEmpty ? null : currentState);
 
     return _selectionFormField(
-      key: ValueKey("state_$matchedState"),
-      label: 'State',
+      key: ValueKey("state_${_country}_$matchedState"),
+      label: _isIndia ? 'State' : 'State / Province',
       hint: 'Select State',
       value: matchedState,
       icon: Icons.map_outlined,
@@ -532,28 +626,32 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
           ? 'State is required'
           : null,
       onTap: (field) async {
-        final selected = await showSearchableSelectionSheet<String>(
+        // Search the list or type a state that is not in it (same as the web).
+        final state = await showSearchableSelectionSheet<String>(
           context: context,
           title: 'Select State',
-          searchHint: 'Search state...',
+          searchHint: 'Search or type the state...',
           options: states,
-          selectedValue: matchedState,
+          selectedValue: matched.isNotEmpty ? matched : null,
           labelBuilder: (value) => value,
+          customOption: (typed) => typed,
         );
-        if (!mounted || selected == null) return;
+        if (!mounted || state == null) return;
         setState(() {
-          _stateCtrl.text = selected;
-          final stateCities = IndiaLocationData.stateCities[selected] ?? [];
-          if (!stateCities.any(
-            (city) =>
-                city.toLowerCase() == _cityCtrl.text.trim().toLowerCase(),
-          )) {
-            _cityCtrl.text = stateCities.isNotEmpty
-                ? stateCities.first
-                : '';
+          _stateCtrl.text = state;
+          if (_isIndia) {
+            final stateCities = IndiaLocationData.stateCities[state] ?? [];
+            if (!stateCities.any(
+              (city) => city.toLowerCase() == _cityCtrl.text.trim().toLowerCase(),
+            )) {
+              _cityCtrl.text = stateCities.isNotEmpty ? stateCities.first : '';
+            }
+          } else {
+            _cityCtrl.clear();
           }
         });
-        field.didChange(selected);
+        field.didChange(state);
+        await _loadCities();
       },
     );
   }
@@ -637,6 +735,12 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
   }
 
   List<String> _getAvailableCities() {
+    if (!_isIndia) {
+      final list = List<String>.from(_cities);
+      final cur = _cityCtrl.text.trim();
+      if (cur.isNotEmpty && !list.contains(cur)) list.insert(0, cur);
+      return list;
+    }
     final state = _stateCtrl.text.trim();
     final matched = IndiaLocationData.stateCities.keys.firstWhere(
       (k) => k.toLowerCase() == state.toLowerCase(),
@@ -668,38 +772,4 @@ class _TransporterCompanyFormState extends State<TransporterCompanyForm> {
     return list;
   }
 
-  void _showCustomCityDialog() {
-    final textController = TextEditingController();
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text("Enter City Name"),
-        content: TextField(
-          controller: textController,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          decoration: InputDecoration(
-            hintText: "e.g. Wardha",
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              final newCity = textController.text.trim();
-              if (newCity.isNotEmpty) {
-                setState(() {
-                  _customCities.add(newCity);
-                  _cityCtrl.text = newCity;
-                });
-                Get.back();
-              }
-            },
-            child: const Text("Select"),
-          ),
-          OutlinedButton(onPressed: () => Get.back(), child: const Text("Cancel")),
-        ],
-      ),
-    );
-  }
 }

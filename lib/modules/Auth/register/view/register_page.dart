@@ -1,3 +1,4 @@
+import 'package:daalsetu/utils/mobile_number_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -254,14 +255,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         keyboardType: TextInputType.phone,
                         textInputAction: TextInputAction.next,
                         autofillHints: const [AutofillHints.telephoneNumber],
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(10),
-                        ],
-                        validator: (value) =>
-                            RegExp(r'^\d{10}$').hasMatch(value?.trim() ?? '')
-                            ? null
-                            : 'Enter a valid 10-digit mobile number',
+                        // 10 digits only: an autofilled / pasted +91 or 0 is dropped, never kept.
+                        inputFormatters: const [MobileNumberFormatter()],
+                        validator: mobileNumberError,
                       ),
                     ),
                   ),
@@ -303,8 +299,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     width: width,
                     child: _field(
                       label: 'Branch Code',
+                      // Every new user signs up under a branch (the server refuses a missing code too).
+                      required: true,
                       child: GlassTextField(
                         controller: _controller.branchCodeController,
+                        validator: (value) => _required(value, 'Branch code'),
                         hintText: 'Enter branch code',
                         prefixIcon: IconlyLight.home,
                         textCapitalization: TextCapitalization.characters,

@@ -239,7 +239,10 @@ class SellerMasterManagementView extends StatelessWidget {
                                 fontSize: 12,
                               ),
                             ),
-                            onPressed: () => Get.bottomSheet(
+                            // Admin tags are for every seller of the branch: used, not changed here.
+                            onPressed: () => !tag.canEdit
+                                ? Get.snackbar('Admin tag', 'You can use this tag on offers; only the admin can change it.')
+                                : Get.bottomSheet(
                               Container(
                                 color: theme.cardColor,
                                 child: SafeArea(

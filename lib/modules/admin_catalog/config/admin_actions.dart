@@ -195,6 +195,17 @@ AdminOption _driverOption(Map<String, dynamic> d) {
         );
 }
 
+/// Product tags (offers / brands) and User tags (buyers and sellers) for the tag pickers.
+Future<List<AdminOption>> loadProductTagOptions() => _load(
+      '/api/tags/dropdown/?tag_type=product',
+      (t) => AdminOption('${t['id'] ?? ''}', (t['tag_name'] ?? t['name'] ?? '').toString()),
+    );
+
+Future<List<AdminOption>> loadUserTagOptions() => _load(
+      '/api/tags/dropdown/?tag_type=user',
+      (t) => AdminOption('${t['id'] ?? ''}', (t['tag_name'] ?? t['name'] ?? '').toString()),
+    );
+
 Future<List<AdminOption>> loadCategoryOptions() => _load(
       '/api/categories/',
       (c) => AdminOption('${c['id'] ?? ''}', (c['full_path'] ?? c['category_name'] ?? c['name'] ?? '').toString()),

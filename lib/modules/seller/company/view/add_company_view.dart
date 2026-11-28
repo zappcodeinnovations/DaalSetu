@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconly/iconly.dart';
+import 'package:daalsetu/utils/company_location.dart';
 import 'package:daalsetu/utils/india_location_data.dart';
 import 'package:daalsetu/utils/tax_id_formatters.dart';
 import 'package:daalsetu/widgets/searchable_selection_sheet.dart';
@@ -28,17 +31,71 @@ class _AddCompanyViewState extends State<AddCompanyView> {
         ? Get.find<SellerCompanyController>()
         : Get.put(SellerCompanyController());
     controller.pincodeController.addListener(_onPincodeChanged);
+    _loadStates();
+  }
+
+  /// States of the selected country (India: built-in list; elsewhere from the server, may be empty).
+  List<String> _states = const [];
+  List<String> _cities = const [];
+
+  String get _country => controller.countryController.text.trim().isEmpty
+      ? CompanyLocation.india
+      : controller.countryController.text.trim();
+
+  bool get _isIndia => CompanyLocation.isIndia(_country);
+
+  Future<void> _loadStates() async {
+    final states = await CompanyLocation.states(_country);
+    if (!mounted) return;
+    setState(() => _states = states);
+    await _loadCities();
+  }
+
+  Future<void> _loadCities() async {
+    final cities = await CompanyLocation.cities(_country, controller.stateController.text);
+    if (!mounted) return;
+    setState(() => _cities = cities);
+  }
+
+  Future<void> _pickCountry() async {
+    final countries = await CompanyLocation.countries();
+    if (!mounted) return;
+    final selected = await showSearchableSelectionSheet<String>(
+      context: context,
+      title: 'Select Country',
+      searchHint: 'Search country...',
+      options: countries,
+      selectedValue: _country,
+      labelBuilder: (value) => value,
+    );
+    if (!mounted || selected == null || selected == _country) return;
+    controller.clearError('country');
+    setState(() {
+      controller.countryController.text = selected;
+      // A new country: its own states, cities and postal code; PAN / GST only for India.
+      controller.stateController.clear();
+      controller.cityController.clear();
+      _customCities.clear();
+      _states = const [];
+      _cities = const [];
+    });
+    await _loadStates();
   }
 
   @override
   void dispose() {
     controller.pincodeController.removeListener(_onPincodeChanged);
+    _pincodeTimer?.cancel();
     super.dispose();
   }
 
+  Timer? _pincodeTimer;
+  String _lastPincodeLookup = '';
+
+  /// A complete pincode / postal code fills State and City (India Post or the country's postal codes).
   void _onPincodeChanged() {
     final pin = controller.pincodeController.text.trim();
-    if (pin.length == 6) {
+    if (_isIndia && pin.length == 6) {
       final detected = IndiaLocationData.getStateFromPincode(pin);
       if (detected != null &&
           detected.toLowerCase() !=
@@ -48,9 +105,34 @@ class _AddCompanyViewState extends State<AddCompanyView> {
         });
       }
     }
+    _pincodeTimer?.cancel();
+    if (CompanyLocation.postalCodeError(_country, pin) != null) return;
+    _pincodeTimer = Timer(const Duration(milliseconds: 400), () async {
+      final key = '$_country|$pin';
+      if (key == _lastPincodeLookup) return;
+      _lastPincodeLookup = key;
+      final found = await CompanyLocation.lookupPostalCode(_country, pin);
+      if (!mounted || found == null || controller.pincodeController.text.trim() != pin) return;
+      setState(() {
+        if (found.state.isNotEmpty) controller.stateController.text = found.state;
+        if (found.city.isNotEmpty) {
+          controller.cityController.text = found.city;
+          _customCities.add(found.city);
+        }
+      });
+      controller.clearError('state');
+      controller.clearError('city');
+      await _loadCities();
+    });
   }
 
   List<String> _getAvailableCities() {
+    if (!_isIndia) {
+      final list = List<String>.from(_cities);
+      final cur = controller.cityController.text.trim();
+      if (cur.isNotEmpty && !list.contains(cur)) list.insert(0, cur);
+      return list;
+    }
     final state = controller.stateController.text.trim();
     final matched = IndiaLocationData.stateCities.keys.firstWhere(
       (k) => k.toLowerCase() == state.toLowerCase(),
@@ -80,41 +162,6 @@ class _AddCompanyViewState extends State<AddCompanyView> {
     }
 
     return list;
-  }
-
-  void _showCustomCityDialog() {
-    final textController = TextEditingController();
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text("Enter City Name"),
-        content: TextField(
-          controller: textController,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          decoration: InputDecoration(
-            hintText: "e.g. Wardha",
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              final newCity = textController.text.trim();
-              if (newCity.isNotEmpty) {
-                setState(() {
-                  _customCities.add(newCity);
-                  controller.cityController.text = newCity;
-                });
-                Get.back();
-              }
-            },
-            child: const Text("Select"),
-          ),
-          OutlinedButton(onPressed: () => Get.back(), child: const Text("Cancel")),
-        ],
-      ),
-    );
   }
 
   @override
@@ -172,23 +219,25 @@ class _AddCompanyViewState extends State<AddCompanyView> {
                 keyboardType: TextInputType.number,
                 errorKey: 'number_of_employees',
               ),
-              _buildSectionHeader("STATUTORY DETAILS", theme),
-              _buildTextField(
-                controller.panController,
-                "PAN Number",
-                IconlyLight.document,
-                textCapitalization: TextCapitalization.characters,
-                errorKey: 'pan_number',
-                required: true,
-              ),
-              _buildTextField(
-                controller.gstController,
-                "GST Number",
-                IconlyLight.document,
-                textCapitalization: TextCapitalization.characters,
-                errorKey: 'gst_number',
-                required: true,
-              ),
+              // PAN / GST are Indian tax ids; GST is optional.
+              if (_isIndia) ...[
+                _buildSectionHeader("STATUTORY DETAILS", theme),
+                _buildTextField(
+                  controller.panController,
+                  "PAN Number",
+                  IconlyLight.document,
+                  textCapitalization: TextCapitalization.characters,
+                  errorKey: 'pan_number',
+                  required: true,
+                ),
+                _buildTextField(
+                  controller.gstController,
+                  "GST Number (optional)",
+                  IconlyLight.document,
+                  textCapitalization: TextCapitalization.characters,
+                  errorKey: 'gst_number',
+                ),
+              ],
               _buildSectionHeader("Registered Address", theme),
               _buildTextField(
                 controller.address1Controller,
@@ -208,31 +257,16 @@ class _AddCompanyViewState extends State<AddCompanyView> {
                 IconlyLight.location,
                 errorKey: 'landmark',
               ),
+              _buildCountryField(theme),
               _buildStateDropdown(theme),
               _buildCityDropdown(theme),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _buildTextField(
-                      controller.pincodeController,
-                      "Pincode",
-                      null,
-                      keyboardType: TextInputType.number,
-                      required: true,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildTextField(
-                      controller.countryController,
-                      "Country",
-                      null,
-                      errorKey: 'country',
-                      required: true,
-                    ),
-                  ),
-                ],
+              _buildTextField(
+                controller.pincodeController,
+                CompanyLocation.postalCodeLabel(_country),
+                null,
+                keyboardType: _isIndia ? TextInputType.number : TextInputType.text,
+                errorKey: 'pincode',
+                required: true,
               ),
               const SizedBox(height: 32),
               SizedBox(
@@ -286,24 +320,22 @@ class _AddCompanyViewState extends State<AddCompanyView> {
         icon: Icons.location_city_outlined,
         errorText: errorText,
         onTap: () async {
+          // Search the list or type a city that is not in it (same as the web).
           final selected = await showSearchableSelectionSheet<String>(
             context: context,
             title: 'Select City',
-            searchHint: 'Search city...',
-            options: [...availableCities, '__custom__'],
+            searchHint: 'Search or type the city...',
+            options: availableCities,
             selectedValue: selectedCity,
-            labelBuilder: (value) => value == '__custom__'
-                ? 'Other (Custom City)'
-                : value,
+            labelBuilder: (value) => value,
+            customOption: (typed) => typed,
           );
           if (!mounted || selected == null) return;
           controller.clearError('city');
-          if (selected == '__custom__') {
-            _showCustomCityDialog();
-            return;
-          }
+          _customCities.add(selected);
           setState(() {
             controller.cityController.text = selected;
+            if (!_isIndia) return;
             final inferredState = IndiaLocationData.getStateForCity(selected);
             if (inferredState != null &&
                 controller.stateController.text.trim().toLowerCase() !=
@@ -317,48 +349,67 @@ class _AddCompanyViewState extends State<AddCompanyView> {
     });
   }
 
+  Widget _buildCountryField(ThemeData theme) {
+    return Obx(() {
+      final errorText = controller.errors['country'];
+      return _selectionField(
+        theme: theme,
+        label: 'Country',
+        hint: 'Select Country',
+        value: _country,
+        icon: Icons.public,
+        errorText: errorText,
+        onTap: _pickCountry,
+      );
+    });
+  }
+
   Widget _buildStateDropdown(ThemeData theme) {
-    final states = IndiaLocationData.stateCities.keys.toList()..sort();
+    final states = List<String>.from(_states);
     final currentState = controller.stateController.text.trim();
     final matched = states.firstWhere(
       (s) => s.toLowerCase() == currentState.toLowerCase(),
       orElse: () => '',
     );
-    final matchedState = matched.isNotEmpty ? matched : null;
+    // A typed state (manual entry) is shown as it is.
+    final matchedState = matched.isNotEmpty ? matched : (currentState.isEmpty ? null : currentState);
 
     return Obx(() {
       final errorText = controller.errors['state'];
       return _selectionField(
         theme: theme,
-        label: 'State',
-        hint: 'Select State',
+        label: _isIndia ? 'State' : 'State / Province',
+        hint: _isIndia ? 'Select State' : 'Select or type the state',
         value: matchedState,
         icon: Icons.map_outlined,
         errorText: errorText,
         onTap: () async {
-          final selected = await showSearchableSelectionSheet<String>(
+          // Search the list or type a state that is not in it (same as the web).
+          final state = await showSearchableSelectionSheet<String>(
             context: context,
             title: 'Select State',
-            searchHint: 'Search state...',
+            searchHint: 'Search or type the state...',
             options: states,
-            selectedValue: matchedState,
+            selectedValue: matched.isNotEmpty ? matched : null,
             labelBuilder: (value) => value,
+            customOption: (typed) => typed,
           );
-          if (!mounted || selected == null) return;
+          if (!mounted || state == null) return;
           controller.clearError('state');
           setState(() {
-            controller.stateController.text = selected;
-            final stateCities = IndiaLocationData.stateCities[selected] ?? [];
-            if (!stateCities.any(
-              (city) =>
-                  city.toLowerCase() ==
-                  controller.cityController.text.trim().toLowerCase(),
-            )) {
-              controller.cityController.text = stateCities.isNotEmpty
-                  ? stateCities.first
-                  : '';
+            controller.stateController.text = state;
+            if (_isIndia) {
+              final stateCities = IndiaLocationData.stateCities[state] ?? [];
+              if (!stateCities.any(
+                (city) => city.toLowerCase() == controller.cityController.text.trim().toLowerCase(),
+              )) {
+                controller.cityController.text = stateCities.isNotEmpty ? stateCities.first : '';
+              }
+            } else {
+              controller.cityController.clear();
             }
           });
+          await _loadCities();
         },
       );
     });

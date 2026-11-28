@@ -1,3 +1,5 @@
+import 'package:daalsetu/utils/kyc_lock.dart';
+import 'package:daalsetu/widgets/branch_join_gate.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -85,19 +87,24 @@ class MainNavigationScreen extends StatelessWidget {
         resizeToAvoidBottomInset: false,
         body: Container(
           color: Theme.of(context).scaffoldBackgroundColor,
-          child: IndexedStack(
-            index: navController.selectedIndex.value,
-            children: _getPages(navController.userRole.value)
-                .asMap()
-                .entries
-                .map((entry) => TickerMode(
-                      enabled: entry.key == navController.selectedIndex.value,
-                      child: entry.value,
-                    ))
-                .toList(),
+          child: _withBranchGate(
+            navController.userRole.value,
+            IndexedStack(
+              index: navController.selectedIndex.value,
+              children: _getPages(navController.userRole.value)
+                  .asMap()
+                  .entries
+                  .map((entry) => TickerMode(
+                        enabled: entry.key == navController.selectedIndex.value,
+                        child: entry.value,
+                      ))
+                  .toList(),
+            ),
           ),
         ),
+        // Keyed on the KYC lock so the bar redraws its lock icons once the profile has loaded.
         bottomNavigationBar: GlassNavBar(
+          key: ValueKey('nav-kyc-${KycLock.active}'),
           currentIndex: navController.selectedIndex.value,
           role: navController.userRole.value,
           onTap: _onTap,
@@ -106,11 +113,26 @@ class MainNavigationScreen extends StatelessWidget {
     });
   }
 
+  /// Buyers, sellers and transporters join a branch after KYC approval (Branch Code popup + status).
+  static const _tradingRoles = {'seller', 'buyer', 'both_sellerandbuyer', 'buyer_seller', 'both', 'transporter'};
+
+  Widget _withBranchGate(String role, Widget pages) =>
+      _tradingRoles.contains(role) ? BranchJoinGate(child: pages) : pages;
+
   static const _sellerMenuTab = 2;
+
+  /// KYC pending: business tabs are locked (Dashboard, the Menu drawer, Settings and the buyer's Branch
+  /// tab stay open), the same sections the web sidebar locks.
+  static bool tabLocked(String role, int index) => KycLock.tabLocked(role, index);
 
   void _onTap(int index) {
     final role = navController.userRole.value;
     final isSeller = role == 'seller' || role == 'both_sellerandbuyer';
+    if (tabLocked(role, index)) {
+      final context = Get.context;
+      if (context != null) KycLock.explain(context);
+      return;
+    }
     if (isSeller && index == _sellerMenuTab) {
       // The seller tools live in the side drawer, the same list on every page.
       AppShell.openDrawer();
@@ -341,10 +363,21 @@ class GlassNavBar extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                isSelected ? item.activeIcon : item.icon,
-                size: 20,
-                color: isSelected ? Colors.white : theme.iconTheme.color,
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(
+                    isSelected ? item.activeIcon : item.icon,
+                    size: 20,
+                    color: isSelected ? Colors.white : theme.iconTheme.color,
+                  ),
+                  if (MainNavigationScreen.tabLocked(role, index))
+                    const Positioned(
+                      right: -6,
+                      top: -4,
+                      child: Icon(Icons.lock_rounded, size: 11, color: Color(0xFFB45309)),
+                    ),
+                ],
               ),
               const SizedBox(height: 3),
               AnimatedDefaultTextStyle(

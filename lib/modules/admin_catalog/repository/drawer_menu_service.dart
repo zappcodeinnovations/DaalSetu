@@ -80,11 +80,18 @@ class DrawerMenuService {
             icon: AdminModules.byKey('brands').icon,
             route: AppRoutes.adminModule('brands'),
           ),
+          // Tag Master in two sections: Product Tags and User Tags.
           DrawerMenuItem(
-            key: 'tags',
-            title: AdminModules.byKey('tags').title,
-            icon: AdminModules.byKey('tags').icon,
-            route: AppRoutes.adminModule('tags'),
+            key: 'product_tags',
+            title: AdminModules.byKey('product_tags').title,
+            icon: AdminModules.byKey('product_tags').icon,
+            route: AppRoutes.adminModule('product_tags'),
+          ),
+          DrawerMenuItem(
+            key: 'user_tags',
+            title: AdminModules.byKey('user_tags').title,
+            icon: Icons.group_work_outlined,
+            route: AppRoutes.adminModule('user_tags'),
           ),
           DrawerMenuItem(
             key: 'drivers',

@@ -172,6 +172,9 @@ class AdminModuleConfig {
 /// The driver a vehicle is assigned to (for the edit form).
 Object? assignedDriverIdOf(Map<String, dynamic> record) => record['assigned_driver_profile_id'];
 
+/// A record's tags ([{id, tag_name}]) for a tag multi-select.
+Object? tagsOf(Map<String, dynamic> record) => record['tags'];
+
 Object? transporterIdOf(Map<String, dynamic> record) =>
     record['transporter'] is Map
     ? (record['transporter'] as Map)['id']
@@ -232,6 +235,14 @@ class AdminModules {
     ),
     AdminFieldConfig('pan_number', 'PAN number'),
     AdminFieldConfig('gst_number', 'GST number'),
+    // User tags: a tagged seller's offers reach only buyers who share a tag (and the other way round).
+    AdminFieldConfig(
+      'tag_ids',
+      'User tags',
+      multiSelect: true,
+      optionsLoader: loadUserTagOptions,
+      initialValue: tagsOf,
+    ),
     // Same as the web Edit User "Brand" (the brand name is stored on the user).
     AdminFieldConfig('brand', 'Brand', optionsLoader: loadBrandNameOptions),
   ];
@@ -301,7 +312,49 @@ class AdminModules {
     ),
   ];
 
+  /// Tag Master as two sections: Product Tags (offers / brands) and User Tags (buyers / sellers). The same
+  /// /api/tags/ list, filtered by type; a new tag gets the section's type.
+  static AdminModuleConfig _tagSection(String key, String title, String tagType) => AdminModuleConfig(
+        key: key,
+        title: title,
+        icon: Icons.sell_outlined,
+        listEndpoint: '/api/tags/',
+        titleKeys: const ['tag_name', 'name'],
+        subtitleKeys: const ['owner_label', 'branch_code', 'is_active', 'created_at'],
+        staticQuery: {'tag_type': tagType},
+        createEndpoint: '/api/tags/',
+        updateEndpoint: (id) => '/api/tags/$id/',
+        deleteEndpoint: (id) => '/api/tags/$id/',
+        fields: [
+          const AdminFieldConfig('tag_name', 'Tag name', required: true),
+          AdminFieldConfig('tag_type', 'Tag type', hiddenValue: tagType),
+          const AdminFieldConfig(
+            'is_active',
+            'Active Status',
+            options: ['true', 'false'],
+            optionLabels: {'true': 'Active', 'false': 'Inactive'},
+            defaultValue: 'true',
+            sendAsBoolean: true,
+          ),
+        ],
+        detailSections: const [
+          AdminDetailSection(
+            title: 'Tag Information',
+            fields: [
+              AdminDetailField('tag_name', 'Tag Name'),
+              AdminDetailField('tag_type', 'Tag Type'),
+              AdminDetailField('owner_label', 'Owner'),
+              AdminDetailField('branch_code', 'Branch'),
+              AdminDetailField('created_by_name', 'Created By'),
+              AdminDetailField('is_active', 'Active Status', type: AdminDetailFieldType.boolean),
+            ],
+          ),
+        ],
+      );
+
   static final Map<String, AdminModuleConfig> all = {
+    'product_tags': _tagSection('product_tags', 'Product Tags', 'product'),
+    'user_tags': _tagSection('user_tags', 'User Tags', 'user'),
     'users': AdminModuleConfig(
       key: 'users',
       title: 'User Management',
@@ -614,6 +667,23 @@ class AdminModules {
               type: AdminDetailFieldType.phone,
             ),
             AdminDetailField('user.role', 'Role'),
+            AdminDetailField(
+              'user.kyc_status',
+              'KYC Status',
+              type: AdminDetailFieldType.status,
+            ),
+          ],
+        ),
+        // The applicant's company (same as the web branch request list).
+        const AdminDetailSection(
+          title: 'Company',
+          fields: [
+            AdminDetailField('company.legal_name', 'Company'),
+            AdminDetailField('company.gst_number', 'GST Number', copyable: true),
+            AdminDetailField('company.country', 'Country'),
+            AdminDetailField('company.state', 'State / Province'),
+            AdminDetailField('company.city', 'City'),
+            AdminDetailField('company.address', 'Complete Address'),
           ],
         ),
         const AdminDetailSection(
@@ -1205,6 +1275,14 @@ class AdminModules {
           multiSelect: true,
           optionsLoader: loadParentCategoryOptions,
         ),
+        // Product tags: an offer in this brand gets them filled in.
+        AdminFieldConfig(
+          'tag_ids',
+          'Product tags',
+          multiSelect: true,
+          optionsLoader: loadProductTagOptions,
+          initialValue: tagsOf,
+        ),
       ],
       detailSections: [
         const AdminDetailSection(
@@ -1258,12 +1336,26 @@ class AdminModules {
       icon: Icons.sell_outlined,
       listEndpoint: '/api/tags/',
       titleKeys: const ['tag_name', 'name'],
-      subtitleKeys: const ['is_active', 'created_at'],
+      subtitleKeys: const ['tag_type', 'is_active', 'created_at'],
+      // Product tags (offers / brands) or User tags (given to buyers and sellers).
+      filterParameter: 'tag_type',
+      filterOptions: const ['product', 'user'],
       createEndpoint: '/api/tags/',
       updateEndpoint: (id) => '/api/tags/$id/',
       deleteEndpoint: (id) => '/api/tags/$id/',
       fields: const [
         AdminFieldConfig('tag_name', 'Tag name', required: true),
+        AdminFieldConfig(
+          'tag_type',
+          'Tag type',
+          required: true,
+          options: ['product', 'user'],
+          optionLabels: {
+            'product': 'Product Tag (offers / brands)',
+            'user': 'User Tag (buyers and sellers)',
+          },
+          defaultValue: 'product',
+        ),
         AdminFieldConfig(
           'is_active',
           'Active Status',
@@ -1278,6 +1370,7 @@ class AdminModules {
           title: 'Tag Information',
           fields: [
             AdminDetailField('tag_name', 'Tag Name'),
+            AdminDetailField('tag_type', 'Tag Type'),
             AdminDetailField(
               'is_active',
               'Active Status',
